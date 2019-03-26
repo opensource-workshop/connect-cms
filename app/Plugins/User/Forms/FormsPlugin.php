@@ -514,9 +514,14 @@ class FormsPlugin extends UserPluginBase
             }
             // 追加
             else {
-                $id = DB::table('forms_columns')->insert(
-                    ['forms_id' => $forms_id, 'column_type' => $row['column_type'], 'column_name' => $row['column_name'], 'required' => $row['required'], 'frame_col' => $frame_col, 'display_sequence' => $row_no]
-                );
+                $id = DB::table('forms_columns')->insert([
+                    'forms_id' => $forms_id,
+                    'column_type' => $row['column_type'],
+                    'column_name' => $row['column_name'],
+                    'required' => ( array_key_exists('required', $row) ? $row['required'] : 0 ),
+                    'frame_col' => $frame_col,
+                    'display_sequence' => $row_no
+                ]);
             }
         }
 
