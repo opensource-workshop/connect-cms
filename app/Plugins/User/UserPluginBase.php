@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Plugins\User;
+
+use App\Plugins\PluginBase;
+
+/**
+ * ユーザープラグイン
+ *
+ * ユーザ用プラグインの基底クラス
+ *
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category ユーザープラグイン
+ * @package Contoroller
+ */
+class UserPluginBase extends PluginBase
+{
+    /**
+     *  画面表示用にページやフレームなど呼び出し
+     *
+     * @param String $plugin_name
+     * @return view
+     */
+    public function invoke($obj, $request, $action, $page_id, $frame_id, $id)
+    {
+        // 画面(コアの cms_frame)で指定されたクラスのアクションのメソッドを呼び出す。
+        // 戻り値は各アクションでのメソッドでview 関数などで生成したHTML なので、そのままreturn して元の画面に戻す。
+        return $obj->$action($request, $page_id, $frame_id, $id);
+    }
+}

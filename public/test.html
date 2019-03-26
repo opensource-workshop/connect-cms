@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="6A25OPg5MWE1Be96qZzjip5HeeEsQT0VfDgy3Z6i">
+
+    <title>Laravel</title>
+
+    <!-- Styles -->
+    <link href="http://cms.localhost/css/app.css" rel="stylesheet">
+
+    <!-- Styles -->
+    <link href="http://cms.localhost/css/osws_add.css" rel="stylesheet">
+
+</head>
+<body>
+
+
+<div class="container">
+
+    <h3>bootstrap3 Horizontal Form 記述例</h3>
+
+    <!-- 
+        ラベルと入力欄を同じ行に並べるタイプのフォーム  
+        → form に class="form-horizontal"
+    -->
+    <form class="form-horizontal">
+
+        <h4>1. 基本形</h4>
+        <!-- 行 -->
+        <div class="form-group">
+            <!-- ラベル列 *1-1 -->
+            <label class="col-sm-2 control-label">ラベル1</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10">
+                <input class="form-control" placeholder="入力欄">
+                <span class="help-block">これは説明です。</span> <!-- *1-2 -->
+            </div>
+        </div>
+
+        <!--
+            *1-1 ラベルは右寄せになる。
+               <div class="col-xx"><label></div> とすると、ラベルは左寄せになってしまう。 
+            *1-2 help-blockは、後述のとおり has-error で赤色となるため、説明文への利用には向かない。
+                 説明文用に自前でクラス定義したほうが無難。
+        -->
+
+        <h4>2. エラー有り: ラベル・入力欄・メッセージを赤く</h4>
+
+        <div class="form-group has-error">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル2</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10">
+                <input class="form-control" placeholder="入力欄">
+                <span class="help-block"><span class="glyphicon glyphicon-exclamation-sign"></span> これはエラーメッセージです。</span>
+            </div>
+        </div>
+        
+        <!--
+            *2-1 ラベル、入力欄、help-block が class="has-error" のタグの子孫の場合に色が付く。
+                 ラベル、入力欄、help-block自身に has-error を与えても効果なし。
+                 has-error 赤
+                 has-warning 茶
+                 has-success 緑
+        -->
+
+        <h4>3. 入力欄各種</h4>
+
+        <div class="form-group">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル3</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10">
+                <!-- プレーンテキスト -->
+                <div class="form-control-static">プレーンテキスト</div>
+                <!-- input, textarea, select は class="form-control" -->
+                <input class="form-control" placeholder="入力欄">
+                <textarea class="form-control">aaa bbb</textarea>
+                <select class="form-control">
+                    <option>選択肢1</option>
+                    <option>選択肢2</option>
+                </select>
+                <!-- ボタン -->
+                <button type="button" class="btn btn-default">ボタン</button>
+                <!-- チェックボックスとラジオボタン: 各々を div class="..." で囲む -->
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox"> チェック1
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <input type="radio"> ラジオボタン1
+                    </label>
+                </div>
+                
+            </div>
+        </div>
+
+        <h4>4. 行内に複数の入力欄を横並びで</h4>
+
+        <div class="form-group">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル4</label>
+            <!-- 入力欄列  class="form-inline" を指定 -->
+            <div class="col-sm-10 form-inline">
+                <input class="form-control" placeholder="000">
+                <div class="form-control-static">-</div>
+                <input class="form-control" placeholder="0000">
+                <button type="button" class="btn btn-default">ボタン</button>
+                <span class="help-block">これは説明です説明です説明です説明です説明です説明です説明です。</span> 
+            </div>
+        </div>
+
+
+        <h4>5. 行内に複数の入力欄を横並びで (指定した一部だけ横並び)</h4>
+
+        <div class="form-group">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル5</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10">
+                <input class="form-control" placeholder="入力欄A">
+                <div class="form-inline">
+                    <input class="form-control" placeholder="入力欄B">
+                    <input class="form-control" placeholder="入力欄C">
+                </div>
+                <span class="help-block">これは説明です説明です説明です説明です説明です説明です説明です。</span>
+            </div>
+        </div>
+        
+        <!--
+            *5 横並びにしたい部分を div class="form-inline" で囲む
+        -->
+
+        <h4>6. 行内に複数の入力欄を横並びで (ラベルも付ける)</h4>
+
+        <div class="form-group">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル6</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10 form-inline">
+                <label>ラベルA</label> <!-- *6-1 -->
+                <input class="form-control" placeholder="入力欄A">
+                <label>ラベルB</label>
+                <input class="form-control" placeholder="入力欄B">
+                <span class="help-block">これは説明です説明です説明です説明です説明です説明です説明です。</span>
+            </div>
+        </div>
+
+        <!--
+            *6-1 ラベルのベースラインが少し上にずれてしまう。
+                 div class="form-group" で label と input を囲むとベースラインは合うが、
+                 ラベルと入力欄が左に寄りすぎてしまう。
+        -->
+        
+        
+        <h4>7. チェックボックス・ラジオボタンを横並びで</h4>
+
+        <div class="form-group">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル7</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10">
+                <label class="checkbox-inline"> <!-- *7-1 -->
+                    <input type="checkbox"> チェック1
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox"> チェック2
+                </label>
+                <span class="help-block">これは説明です説明です説明です説明です説明です説明です説明です。</span>
+            </div>
+        </div>
+        
+        <!--
+            *7-1  div で囲ってdivにclassを指定するのではなく、divで囲わずにlabelにclassを指定する。
+                  チェックボックス checkbox-inline
+                  ラジオボタン     radio-inline
+        -->
+
+        <h4>8. input の前後にテキスト追加 (input-group)</h4>
+
+        <div class="form-group">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル8</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <div class="input-group-addon">約</div>
+                    <input class="form-control" placeholder="金額">
+                    <div class="input-group-addon">円</div>
+                </div>
+                <span class="help-block">これは説明です。</span>
+            </div>
+        </div>
+
+        <h4>9. input の前後にボタン追加 (input-group)</h4>
+
+        <div class="form-group">
+            <!-- ラベル列 -->
+            <label class="col-sm-2 control-label">ラベル8</label>
+            <!-- 入力欄列 -->
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <input class="form-control" placeholder="キーワード">
+                    <a class="input-group-addon btn">検索</a> <!-- *9-1 -->
+                </div>
+                <span class="help-block">これは説明です。</span>
+            </div>
+        </div>
+
+        <!--
+            *9-1  buttonタグではなくaタグを使うと input-group-addon と併用できた。
+                  見た目がボタンに見えないから悪手かも。
+        -->
+
+        
+        <h4>10. 2段組</h4>
+
+        <div class="form-group">
+            <!-- 1段目 -->
+            <div> <!-- *10-1 -->
+                <!-- ラベル列 -->
+                <label class="col-sm-2 control-label">ラベル10-1</label>
+                <!-- 入力欄列 -->
+                <div class="col-sm-4">
+                    <input class="form-control" placeholder="入力欄A">
+                    <span class="help-block">これは説明です。</span>
+                </div>
+            </div>
+            <!-- 2段目 -->
+            <div class="has-error">  <!-- *10-1 -->
+                <!-- ラベル列 -->
+                <label class="col-sm-2 control-label">ラベル10-2</label>
+                <!-- 入力欄列 -->
+                <div class="col-sm-4">
+                    <input class="form-control" placeholder="入力欄B">
+                    <span class="help-block"><span class="glyphicon glyphicon-exclamation-sign"></span> これはエラーメッセージです。</span>
+                </div>
+            </div>
+        </div>
+
+        <!--
+            *10-1  各段をdivで囲い、エラー有りのときは 段のdivにhas-errorをつける。
+        -->
+
+    </form>
+
+</div>
+
+
+</body>
+</html>
