@@ -24,10 +24,10 @@
     <!-- Styles -->
     <link href="{{ asset('css/osws_add.css') }}" rel="stylesheet">
 
-{{--
     <!-- jQuery -->
     <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
 
+{{--
     <!-- bootstrap-treeview -->
     <link href="{{ asset('css/bootstrap-treeview.css') }}" rel="stylesheet">
     <script src="{{ asset('js/bootstrap-treeview.js') }}"></script>

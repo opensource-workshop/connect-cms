@@ -112,7 +112,7 @@ class DefaultController extends ConnectController
         }
 
         // Page データがあれば、そのページに遷移
-        if ( !empty($id) ) {
+        if ( !empty($page_id) ) {
             $page = Page::where('id', $page_id)->first();
             return redirect($page->permanent_link);
         }

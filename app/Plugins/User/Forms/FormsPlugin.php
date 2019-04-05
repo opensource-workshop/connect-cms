@@ -353,7 +353,7 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
-     *  ページ上移動
+     *  カラム上移動
      */
     public function sequenceUp($request, $page_id, $frame_id, $columns_id)
     {
@@ -390,7 +390,7 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
-     *  ページ下移動
+     *  カラム下移動
      */
     public function sequenceDown($request, $page_id, $frame_id, $columns_id)
     {
