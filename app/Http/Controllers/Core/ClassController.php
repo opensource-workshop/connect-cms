@@ -43,6 +43,7 @@ class ClassController extends ConnectController
      */
     public function invokeGetManage(Request $request, $plugin_name, $action = 'index', $page_id = null)
     {
+Log::debug("invokeGetManage");
         // インスタンス生成
         $plugin_instance = self::createManageInstance($plugin_name);
 

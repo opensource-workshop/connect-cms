@@ -4,6 +4,7 @@ namespace App\Plugins\Manage\PageManage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 use DB;
 
@@ -25,7 +26,7 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-	public function index($request, $page_id = null)
+	public function index($request, $page_id = null, $errors = array())
 	{
         // ページデータの取得(laravel-nestedset 使用)
         $pages = Page::defaultOrderWithDepth();
@@ -35,10 +36,11 @@ class PageManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('manage.page.page',[
-            "page" => new Page(),
-            "pages" => $pages,
-            "pages_select" => $pages_select
+        return view('plugins.manage.page.page',[
+            "page"         => new Page(),
+            "pages"        => $pages,
+            "pages_select" => $pages_select,
+            "errors"       => $errors,
         ]);
 
     }
@@ -54,7 +56,7 @@ class PageManage extends ManagePluginBase
         $page = Page::where('id', $page_id)->first();
 
         // 画面呼び出し
-        return view('manage.page.page_edit',[
+        return view('plugins.manage.page.page_edit',[
             "page" => $page
         ]);
     }
@@ -64,6 +66,19 @@ class PageManage extends ManagePluginBase
      */
     public function store($request)
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'page_name' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'page_name' => 'ページ名',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return ( $this->index($request, null, $validator->errors()) );
+        }
+
         // ページデータの登録
         $page = new Page;
         $page->page_name        = $request->page_name;

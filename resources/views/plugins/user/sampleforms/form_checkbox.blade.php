@@ -6,13 +6,13 @@
  * @category プラグイン・パーツ
  --}}
 {{-- チェックボックスをon にする --}}
-@php $column_checkbox_on = false; @endphp
+@php $column_checkbox_checked = ""; @endphp
 @if(!empty($checkbox))
     @foreach(explode('|',$checkbox) as $checkbox_item)
         @if($checkbox_item == $check_value)
-            @php $column_checkbox_on = true; @endphp
+            @php $column_checkbox_checked = ' checked'; @endphp
             @break
         @endif
     @endforeach
 @endif
-{{Form::checkbox($checkbox_name, $check_value, $column_checkbox_on)}}
+<input type="checkbox" name="{{$checkbox_name}}" value="{{$check_value}}"{{$column_checkbox_checked}}>

@@ -30,7 +30,7 @@
 
 		{{-- 管理メニュー --}}
 		<div class="col-sm-3 col-sm-pull-9">
-			@include('manage/menus')
+			@include('plugins.manage.menus')
 		</div>
 
 	</div>{{-- /row --}}

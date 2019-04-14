@@ -6,13 +6,13 @@
  * @category ページ管理
  --}}
 {{-- 管理画面ベース画面 --}}
-@extends('manage.manage')
+@extends('plugins.manage.manage')
 
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
 {{-- 入力フォーム --}}
-@include('manage.page.page_form')
+@include('plugins.manage.page.page_form')
 
 <!-- Pages list -->
 @if (count($pages) > 0)

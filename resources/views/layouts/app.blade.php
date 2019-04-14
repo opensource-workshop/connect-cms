@@ -6,23 +6,48 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
+{{-- ページ名 --}}
+<?php
+
+    // URL から現在のURL パスを判定する。
+    $current_url = url()->current();
+    $base_url = url('/');
+    $current_permanent_link = str_replace( $base_url, '', $current_url);
+
+    // トップページの判定
+    if (empty($current_permanent_link)) {
+        $current_permanent_link = "/";
+    }
+
+    // URL パスでPage テーブル検索
+    $current_page = \App\Page::where('permanent_link', '=', $current_permanent_link)->first();
+
+    // ページ一覧の取得
+    $class_name = "App\Page";
+    $page_obj = new $class_name;
+    //$menu_pages = $page_obj::orderBy('display_sequence')->get();
+    $menu_pages = $page_obj::defaultOrderWithDepth();
+?>
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{csrf_token()}}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
-
-    <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <title>{{config('app.name', 'Laravel')}}</title>
 
     <!-- Styles -->
-    <link href="{{ asset('css/osws_add.css') }}" rel="stylesheet">
+    <link href="{{asset('css/app.css')}}" rel="stylesheet">
+
+    <!-- Styles -->
+    <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
+    @if ($current_page)
+        <link href="/file/css/{{$current_page->id}}" rel="stylesheet">
+    @endif
 
     <!-- jQuery -->
     <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
@@ -69,29 +94,6 @@
                         &nbsp;
                     </ul>
 
-{{-- ページ名 --}}
-<?php
-
-	// URL から現在のURL パスを判定する。
-	$current_url = url()->current();
-	$base_url = url('/');
-	$current_permanent_link = str_replace( $base_url, '', $current_url);
-
-	// トップページの判定
-	if (empty($current_permanent_link)) {
-		$current_permanent_link = "/";
-	}
-
-	// URL パスでPage テーブル検索
-	$current_page = \App\Page::where('permanent_link', '=', $current_permanent_link)->first();
-
-	// ページ一覧の取得
-	$class_name = "App\Page";
-	$page_obj = new $class_name;
-	//$menu_pages = $page_obj::orderBy('display_sequence')->get();
-	$menu_pages = $page_obj::defaultOrderWithDepth();
-?>
-
 <div class="list-group visible-xs">
 @foreach($menu_pages as $page)
 
@@ -110,31 +112,31 @@
 
 <div class="list-group visible-xs">
 
-	@guest
-		<a class="list-group-item" href="{{ route('login') }}">Login</a>
-		<a class="list-group-item" href="{{ route('register') }}">Register</a>
-	@else
-		<li class="dropdown list-unstyled">
-			<a href="#" class="dropdown-toggle list-group-item" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
-				{{ Auth::user()->name }} <span class="caret"></span>
-			</a>
+    @guest
+        <a class="list-group-item" href="{{ route('login') }}">Login</a>
+        <a class="list-group-item" href="{{ route('register') }}">Register</a>
+    @else
+        <li class="dropdown list-unstyled">
+            <a href="#" class="dropdown-toggle list-group-item" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
+                {{ Auth::user()->name }} <span class="caret"></span>
+            </a>
 
-			<ul class="dropdown-menu">
-				<li>
-					<a href="{{ route('logout') }}"
-						onclick="event.preventDefault();
-						document.getElementById('logout-form').submit();">
-						Logout
-					</a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a href="{{ route('logout') }}"
+                        onclick="event.preventDefault();
+                        document.getElementById('logout-form').submit();">
+                        Logout
+                    </a>
 
-					<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-						{{ csrf_field() }}
-					</form>
-				</li>
-			</ul>
-		</li>
-		<a href="{{ url('/manage/page/') }}" class="list-group-item">ページ管理</a>
-	@endguest
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        {{ csrf_field() }}
+                    </form>
+                </li>
+            </ul>
+        </li>
+        <a href="{{ url('/manage/page/') }}" class="list-group-item">管理ページ</a>
+    @endguest
 </div>
 
 
@@ -145,7 +147,7 @@
                             <li><a href="{{ route('login') }}">Login</a></li>
                             <li><a href="{{ route('register') }}">Register</a></li>
                         @else
-                            <li><a href="{{ url('/manage/page/') }}">ページ管理</a></li>
+                            <li><a href="{{ url('/manage/page/') }}">管理ページ</a></li>
                             <li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
                                     {{ Auth::user()->name }} <span class="caret"></span>

@@ -33,6 +33,12 @@
                 {{-- プラグが選択されていたら --}}
                 @include('plug_call', [$frame])
 
+            {{-- ルーティングする新しい呼び方 --}}
+            @elseif (isset( $action ) && $action != '' && $frame_id == $frame->frame_id)
+                {{-- アクションが指定されていてフレームID の指定があれば、プラグインのアクションを呼ぶ --}}
+                {!! $plugin_instances[$frame->plugin_name]->invoke($plugin_instances[$frame->plugin_name], app('request'), $action, $current_page->id, $frame->frame_id, $id) !!}
+
+            {{-- パラメータ指定する古い呼び方 --}}
             @elseif (app('request')->input('action') != '' && app('request')->input('frame_id') == $frame->frame_id)
                 {{-- アクションが指定されていてフレームID の指定があれば、プラグインのアクションを呼ぶ --}}
                 {!! $plugin_instances[$frame->plugin_name]->invoke($plugin_instances[$frame->plugin_name], app('request'), Request::get('action'), $current_page->id, $frame->frame_id, Request::get('id')) !!}

@@ -6,13 +6,13 @@
  * @category ページ管理
  --}}
 {{-- 管理画面ベース画面 --}}
-@extends('manage.manage')
+@extends('plugins.manage.manage')
 
 {{-- 管理画面メイン部分への挿入 --}}
 @section('manage_content')
 
 {{-- 編集画面(入力フォーム) --}}
-@include('manage.page.page_form')
+@include('plugins.manage.page.page_form')
 
 {{-- 削除画面(入力フォーム) --}}
 <div class="panel panel-danger">

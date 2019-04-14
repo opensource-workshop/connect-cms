@@ -31,8 +31,8 @@
                     <div class="form-group container-fluid">
                         <div class="pull-right">
                             <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($current_page->permanent_link)}}'">キャンセル</button>
-                            <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('ページを削除します。\nよろしいですか？')">
-                                ページ削除
+                            <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('フレームを削除します。\nよろしいですか？')">
+                                フレーム削除
                             </button>
                         </div>
                     </div>

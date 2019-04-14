@@ -31,8 +31,20 @@ Route::get('/manage/{plugin_name}/{action?}/{page_id?}', 'Core\ClassController@i
 // 管理画面postアクション
 Route::post('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokePostManage');
 
-// 一般プラグインの更新系アクション
+// 一般プラグインの表示系アクション
+Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost');
+
+// 一般プラグインの更新系アクション（画面がある場合）
 Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost');
+
+// 一般プラグインの更新系アクション（リダイレクトする場合）
+Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect');
+
+// CSS の取得アクション
+Route::get('/file/css/{page_id?}', 'Core\UploadController@getCss');
+
+// アップロードファイルの取得アクション
+Route::get('/file/{id?}', 'Core\UploadController@getFile');
 
 // 基本のアクション
 // コアの画面処理や各プラグインの処理はここから呼び出す。

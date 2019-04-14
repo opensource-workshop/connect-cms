@@ -1,0 +1,25 @@
+
+/*  Connect-CMS add CSS
+------------------------------------- */
+
+body { font-family: inherit; }
+
+@media screen and (max-width: 480px) {
+	.cc_responsive_table td, .cc_responsive_table th {
+		display: block;
+	}
+	.cc_responsive_table th {
+		background-color: #f0f0f0;
+	}
+	.cc_responsive_table thead {
+		display: none;
+	}
+}
+
+.margin_bottom_0 {
+    margin-bottom: 0;
+}
+
+.vertical_middle {
+    vertical-align: middle !important;
+}
