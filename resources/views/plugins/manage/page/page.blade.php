@@ -67,20 +67,22 @@
             <input type="hidden" name="destination_id" value="">
         </form>
 
-        <div class="panel-body">
+        <div class="panel-body table-responsive">
             <table class="table table-striped">
             <thead>
                 <th></th>
-                <th>移動先</th>
-                <th>ページ名</th>
-                <th>固定リンク</th>
-                <th>&nbsp;</th>
+                <th nowrap>移動先</th>
+                <th nowrap>ページ名</th>
+                <th nowrap>固定リンク</th>
+                <th nowrap>背景色</th>
+                <th nowrap>ヘッダー</th>
+                <th nowrap>レイアウト</th>
             </thead>
             <tbody>
                 @foreach($pages as $page)
                 <tr>
                     <!-- Task Name -->
-                    <td class="table-text col-md-2">
+                    <td class="table-text col-md-2" nowrap>
                         <a href="{{url('/manage/page/edit')}}/{{$page->id}}" class="btn btn-primary btn-xs"><span class="glyphicon glyphicon-edit"></span> <span>編集</span></a>
 
                         {{-- 上移動 --}}
@@ -111,7 +113,7 @@
                             </select>
                         </form>
                     </td>
-                    <td class="table-text">
+                    <td class="table-text" nowrap>
                         {{-- 各ページの深さをもとにインデントの表現 --}}
                         @for ($i = 0; $i < $page->depth; $i++)
                             <span @if ($i+1==$page->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
@@ -122,6 +124,13 @@
                         <div>{{ $page->permanent_link }}</div>
                     </td>
                     <td class="table-text">
+                        <div>{{ $page->background_color }}</div>
+                    </td>
+                    <td class="table-text">
+                        <div>{{ $page->header_color }}</div>
+                    </td>
+                    <td class="table-text">
+                        <div>{{ $page->layout }}</div>
                     </td>
                 </tr>
                 @endforeach

@@ -11,17 +11,37 @@
 @extends('layouts.app')
 @section('content')
 <div class="container">
+
+    {{-- ヘッダーエリア --}}
+    @if ($layouts_info[0]['exists'])
+    <div class="row">
+        <div class="container">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <p class="text-center" style="margin: 0;">
+                        ヘッダー
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div class="row">
 
+{{--
         <div class="col-sm-12">
             <div class="row container-fluid">
+--}}
                 {{-- プラグイン追加フォーム --}}
+{{--
                 @include('core.cms_add_plugin')
             </div>
         </div>
+--}}
 
         {{-- メインエリア --}}
-        <div class="col-sm-9 col-sm-push-3">
+        <div class="{{$layouts_info[2]['col']}}">
             <div class="row">
 
                 {{-- ページ内のフレームのループ --}}
@@ -32,7 +52,8 @@
         </div>
 
         {{-- 左エリア --}}
-        <div class="col-sm-3 col-sm-pull-9">
+        @if ($layouts_info[1]['exists'])
+        <div class="{{$layouts_info[1]['col']}}">
             <div class="row container-fluid">
                 {{-- サービス取得 --}}
                 {{-- Todo：実際には、ページ内で使用されているプラグインを動的に定義する必要がある --}}
@@ -40,20 +61,42 @@
                 {!! $menu->viewInit() !!}
             </div>
         </div>
+        @endif
 
-{{--
-    右カラムアリの場合
-        <div class="col-sm-6 col-sm-push-3">    メイン
-        <div class="col-sm-3 col-sm-pull-6">    左
-
+        {{-- 右エリア --}}
+        @if ($layouts_info[3]['exists'])
         <div class="col-sm-3">
             <div class="row container-fluid">
-                右
+
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <p class="text-center" style="margin: 0;">
+                        右
+                    </p>
+                </div>
+            </div>
+
             </div>
         </div>
---}}
+        @endif
 
     </div>{{-- /row --}}
+
+    {{-- フッターエリア --}}
+    @if ($layouts_info[4]['exists'])
+    <div class="row">
+        <div class="container">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <p class="text-center" style="margin: 0;">
+                        Powered by Connect-CMS
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
 </div>{{-- /container --}}
 
 @endsection

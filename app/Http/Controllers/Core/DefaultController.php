@@ -32,24 +32,11 @@ class DefaultController extends ConnectController
      */
     public function __invoke()
     {
-        // ページデータ取得のため、URL から現在のURL パスを判定する。
-        $current_url = url()->current();
-        $base_url = url('/');
-        $current_permanent_link = str_replace( $base_url, '', $current_url);
-
-        // トップページの判定
-        if (empty($current_permanent_link)) {
-            $current_permanent_link = "/";
-        }
-
-        // URL パスでPage テーブル検索
-        $current_page = Page::where('permanent_link', '=', $current_permanent_link)->first();
-        if (empty($current_page)) {
-            return view('404_not_found');
-        }
+        // カレントページの取得
+//        $current_page = $this->getCurrentPage();
 
         // Page_id
-        $pages_id = $current_page->id;
+        $pages_id = $this->current_page->id;
 
         // フレーム一覧取得
         $frames = DB::table('pages')
@@ -77,14 +64,15 @@ class DefaultController extends ConnectController
 
         // view の場所を変更するテスト
         //$plugin_instances = ['contents' => new $class_name("User", "contents")];
-
-        // メインページを呼び出し
+//print_r($this->getLayoutsInfo());
+        // メインページを呼び出し(coreのinvokeコントローラでは、スーパークラスのviewを使用)
         // 各フレーム内容の表示はメインページから行う。
-        return view('core.cms', [
-            'current_page'     => $current_page,
+        return $this->view('core.cms', [
+            'current_page'     => $this->current_page,
             'frames'           => $frames,
             'pages'            => $pages,
-            'plugin_instances' => $plugin_instances
+            'plugin_instances' => $plugin_instances,
+            'layouts_info'     => $this->getLayoutsInfo(),
         ]);
     }
 
@@ -99,7 +87,7 @@ class DefaultController extends ConnectController
 
 
         if (empty($page_id)) {
-
+/*
             // ページデータ取得のため、URL から現在のURL パスを判定する。
             $current_url = url()->current();
             $base_url = url('/');
@@ -115,6 +103,10 @@ class DefaultController extends ConnectController
             if (empty($current_page)) {
                 return view('404_not_found');
             }
+*/
+            // カレントページの取得
+            //$current_page = $this->getCurrentPage();
+            $current_page = $this->current_page();
 
             // Page_id
             $pages_id = $current_page->id;
@@ -160,7 +152,7 @@ class DefaultController extends ConnectController
 
         // メインページを呼び出し
         // 各フレーム内容の表示はメインページから行う。
-        return view('core.cms', [
+        return $this->view('core.cms', [
             'action'           => $action,
             'frame_id'         => $frame_id,
             'id'               => $id,
@@ -168,7 +160,8 @@ class DefaultController extends ConnectController
             'current_page'     => $current_page,
             'frames'           => $frames,
             'pages'            => $pages,
-            'plugin_instances' => $plugin_instances
+            'plugin_instances' => $plugin_instances,
+            'layouts_info'     => $this->getLayoutsInfo(),
         ]);
 
 

@@ -41,7 +41,7 @@ Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core
 Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect');
 
 // CSS の取得アクション
-Route::get('/file/css/{page_id?}', 'Core\UploadController@getCss');
+Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss');
 
 // アップロードファイルの取得アクション
 Route::get('/file/{id?}', 'Core\UploadController@getFile');

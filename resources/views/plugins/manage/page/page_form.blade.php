@@ -39,6 +39,29 @@
                     <input type="text" name="permanent_link" id="permanent_link" value="{{$page->permanent_link}}" class="form-control">
                 </div>
             </div>
+            <div class="form-group">
+                <label for="permanent_link" class="col-md-3 control-label">背景色</label>
+                <div class="col-md-9">
+                    <input type="text" name="background_color" id="background_color" value="{{$page->background_color}}" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="permanent_link" class="col-md-3 control-label">ヘッダーの背景色</label>
+                <div class="col-md-9">
+                    <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="permanent_link" class="col-md-3 control-label">レイアウト</label>
+                <div class="col-md-9">
+                    <select name="layout" class="form-control">
+                        <option value=""@if($page->layout == "") selected @endif>設定なし</option>
+                        <option value="1|1|0|1"@if($page->layout == "1|1|0|1") selected @endif>ヘッダー＆フッター＆レフト</option>
+                        <option value="1|1|1|1"@if($page->layout == "1|1|1|1") selected @endif>ヘッダー＆フッター＆レフト＆ライト</option>
+                        <option value="0|0|0|0"@if($page->layout == "0|0|0|0") selected @endif>メインのみ</option>
+                    </select>
+                </div>
+            </div>
 
             <!-- Add or Update Page Button -->
             <div class="form-group">

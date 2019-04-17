@@ -51,10 +51,22 @@ class SiteManage extends ManagePluginBase
      */
     public function update($request, $page_id = null, $errors = array())
     {
+        // サイト名
+        $configs = Configs::updateOrCreate(
+            ['name' => 'base_site_name'],
+            ['value' => $request->base_site_name]
+        );
+
         // 画面の基本の背景色
         $configs = Configs::updateOrCreate(
             ['name' => 'base_background_color'],
             ['value' => $request->base_background_color]
+        );
+
+        // 画面の基本のヘッダー背景色
+        $configs = Configs::updateOrCreate(
+            ['name' => 'base_header_color'],
+            ['value' => $request->base_header_color]
         );
 
         return $this->index($request, $page_id, $errors);

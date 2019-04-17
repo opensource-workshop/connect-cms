@@ -17,6 +17,7 @@ class CreateConfigsTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->string('value');
+            $table->string('category')->nullable();
             $table->string('additional1')->nullable();
             $table->string('additional2')->nullable();
             $table->string('additional3')->nullable();

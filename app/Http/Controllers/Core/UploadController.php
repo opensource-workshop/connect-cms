@@ -54,11 +54,47 @@ class UploadController extends ConnectController
      */
     public function getCss(Request $request, $page_id = null)
     {
+        // 自分のページと親ページを遡って取得し、ページの背景色を探す。
+        // 最下位に設定されているものが採用される。
 
-        $base_background_color = Configs::where('name', '=', 'base_background_color')->first();
+        // 背景色
+        $background_color = null;
+
+        // ヘッダーの背景色
+        $base_header_color = null;
+
+        if (!empty($page_id)) {
+            $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+            foreach ( $page_tree as $page ) {
+
+                // 背景色
+                if (empty($background_color) && $page->background_color) {
+                    $background_color = $page->background_color;
+                }
+                // ヘッダーの背景色
+                if (empty($header_color) && $page->header_color) {
+                    $header_color = $page->header_color;
+                }
+            }
+        }
+
+        // ページ設定で背景色が指定されていなかった場合は、基本設定を使用する。
+
+        // 背景色
+        if (empty($background_color)) {
+            $base_background_color = Configs::where('name', '=', 'base_background_color')->first();
+            $background_color = $base_background_color->value;
+        }
+
+        // ヘッダーの背景色
+        if (empty($header_color)) {
+            $base_header_color = Configs::where('name', '=', 'base_header_color')->first();
+            $header_color = $base_header_color->value;
+        }
 
         header('Content-Type: text/css');
-        echo 'body { background-color: ' . $base_background_color->value . '; }';
+        echo "body { background-color: " . $background_color . "; }\n";
+        echo ".navbar-default { background-color: " . $header_color . "; }\n";
         exit;
     }
 }

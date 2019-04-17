@@ -16,22 +16,26 @@
 
 {{-- 削除画面(入力フォーム) --}}
 <div class="panel panel-danger">
-	<div class="panel-heading">
-		ページ削除
-	</div>
-	<div class="panel-body">
+    <div class="panel-heading">
+        ページ削除
+    </div>
+    <div class="panel-body">
 
-		<form action="{{url('/manage/page/destroy')}}/{{$page->id}}" method="POST" class="form-horizontal">
-			{{ csrf_field() }}
-			ページを削除します。<br />
-			元に戻すことはできないため、よく確認して実行してください。<br />
-			<div class="form-group pull-right col-md-2">
-				<button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('ページを削除します。\nよろしいですか？')">
-					ページ削除
-				</button>
-			</div>
-		</form>
-	</div>
+        @if ($page->isRoot())
+            <p>トップページは削除できません。</p>
+        @else
+            <form action="{{url('/manage/page/destroy')}}/{{$page->id}}" method="POST" class="form-horizontal">
+                {{ csrf_field() }}
+                ページを削除します。<br />
+                元に戻すことはできないため、よく確認して実行してください。<br />
+                <div class="form-group pull-right col-md-2">
+                    <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('ページを削除します。\nよろしいですか？')">
+                        ページ削除
+                    </button>
+                </div>
+            </form>
+        @endif
+    </div>
 </div>
 
 @endsection

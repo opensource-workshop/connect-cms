@@ -83,6 +83,9 @@ class PageManage extends ManagePluginBase
         $page = new Page;
         $page->page_name        = $request->page_name;
         $page->permanent_link   = $request->permanent_link;
+        $page->background_color = $request->background_color;
+        $page->header_color     = $request->header_color;
+        $page->layout           = $request->layout;
         $page->save();
 
         // ページ管理画面に戻る
@@ -98,7 +101,10 @@ class PageManage extends ManagePluginBase
         Page::where('id', $page_id)
             ->update([
                 'page_name'        => $request->page_name,
-                'permanent_link'   => $request->permanent_link
+                'permanent_link'   => $request->permanent_link,
+                'background_color' => $request->background_color,
+                'header_color'     => $request->header_color,
+                'layout'           => $request->layout,
         ]);
 
         // ページ管理画面に戻る
