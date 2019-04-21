@@ -58,6 +58,16 @@
     <!-- jQuery -->
     <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
 
+    <!-- Context -->
+    <script>
+    @if (isset($configs) && ($configs['base_mousedown_off'] == '1'))
+        $(document).on('mousedown', 'img', function (e) { e.preventDefault(); });
+    @endif
+    @if (isset($configs) && ($configs['base_contextmenu_off'] == '1'))
+        $(document).on('contextmenu', 'img', function () { return false; });
+    @endif
+    </script>
+
 {{--
     <!-- bootstrap-treeview -->
     <link href="{{ asset('css/bootstrap-treeview.css') }}" rel="stylesheet">
@@ -109,7 +119,11 @@
                     @foreach($page_list as $page)
 
                         {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
+                        @if (isset($current_page) && $page->id == $current_page->id)
+                        <a href="{{ url("$page->permanent_link") }}" class="list-group-item active">
+                        @else
                         <a href="{{ url("$page->permanent_link") }}" class="list-group-item">
+                        @endif
 
                         {{-- 各ページの深さをもとにインデントの表現 --}}
                         @for ($i = 0; $i < $page->depth; $i++)
@@ -126,7 +140,9 @@
                     <div class="list-group visible-xs">
 
                         @guest
-                            <a class="list-group-item" href="{{ route('login') }}">ログイン</a>
+                            @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
+                                <a class="list-group-item" href="{{ route('login') }}">ログイン</a>
+                            @endif
                             <a class="list-group-item" href="{{ route('register') }}">ユーザ登録</a>
                         @else
                             <li class="dropdown list-unstyled">
@@ -157,7 +173,9 @@
                     <ul class="nav navbar-nav navbar-right hidden-xs">
                         <!-- Authentication Links -->
                         @guest
-                            <li><a href="{{ route('login') }}">ログイン</a></li>
+                            @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
+                                <li><a href="{{ route('login') }}">ログイン</a></li>
+                            @endif
                             <li><a href="{{ route('register') }}">ユーザ登録</a></li>
                         @else
                             {{-- <li><a href="{{ url('/manage/page/') }}">管理ページ</a></li> --}}
@@ -222,28 +240,44 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <div class="row">
-                                <div class="col-md-4 col-md-offset-4">
-                                    @include('layouts.add_plugin',['area_name' => 'ヘッダー', 'area_no' => 1])
+                                <div class="col-xs-4 col-md-offset-4">
+                                    @if ($layouts_info[0]['exists'] == 1)
+                                        @include('layouts.add_plugin',['area_name' => 'ヘッダー', 'area_id' => 0])
+                                    @else
+                                        <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                        <table class="table table-bordered">
-                            <tr>
-                                <td>
-                                    @include('layouts.add_plugin',['area_name' => '左', 'area_no' => 2])
-                                </td>
-                                <td>
-                                    @include('layouts.add_plugin',['area_name' => '主', 'area_no' => 3])
-                                </td>
-                                <td>
-                                    @include('layouts.add_plugin',['area_name' => '右', 'area_no' => 4])
-                                </td>
-                            </tr>
-                        </table>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    @if ($layouts_info[1]['exists'] == 1)
+                                        @include('layouts.add_plugin',['area_name' => '左', 'area_id' => 1])
+                                    @else
+                                        <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                                    @endif
+                                </div>
+                                <div class="col-xs-4">
+                                    @include('layouts.add_plugin',['area_name' => '主', 'area_id' => 2])
+                                </div>
+                                <div class="col-xs-4">
+                                    @if ($layouts_info[3]['exists'] == 1)
+                                        @include('layouts.add_plugin',['area_name' => '右', 'area_id' => 3])
+                                    @else
+                                        <span class="form-control" style="background-color: #f0f0f0;">右カラムなし</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                         <div class="panel-footer" style="background-color: #ffffff;">
                             <div class="row">
-                                <div class="col-md-4 col-md-offset-4">
-                                    @include('layouts.add_plugin',['area_name' => 'フッター', 'area_no' => 5])
+                                <div class="col-xs-4 col-md-offset-4">
+                                    @if ($layouts_info[4]['exists'] == 1)
+                                        @include('layouts.add_plugin',['area_name' => 'フッター', 'area_id' => 4])
+                                    @else
+                                        <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>

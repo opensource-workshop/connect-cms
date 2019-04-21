@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\Controller;
 use App\Configs;
+use App\Frame;
 use App\Page;
 
 
@@ -42,8 +43,13 @@ class ConnectController extends Controller
             return null;
         }
 
-        $layout_array = explode('|',$this->getLayout());
+        // ページの系統取得
+        $page_tree = $this->getPageTree($this->current_page->id);
 
+        // ページのレイアウト取得
+        $layout_array = explode('|',$this->getLayout($page_tree));
+
+        // 現ページの表示エリアの有無と幅の設定
         $layouts_info = array();
         $layouts_info[0]['exists'] = $layout_array[0];
         $layouts_info[0]['col'] = 'col-sm-12';
@@ -71,18 +77,71 @@ class ConnectController extends Controller
         }
 
         $layouts_info[3]['exists'] = $layout_array[2];
-        $layouts_info[3]['col'] = ($layout_array[2] == '1' ? 'col-sm-3 col-sm-pull-6' : '' );
+        $layouts_info[3]['col'] = ($layout_array[2] == '1' ? 'col-sm-3' : '' );
 
         $layouts_info[4]['exists'] = $layout_array[3];
         $layouts_info[4]['col'] = 'col-sm-12';
+
+        // 共通エリアのフレーム取得
+
+        // フレームを取得するページID
+        $page_ins = array();
+        foreach($page_tree as $page) {
+            $page_ins[] = $page->id;
+        }
+
+        // メインエリア以外のフレームの取得
+        $frames = Frame::where('area_id', '!=', 2)
+                       ->select('frames.*', 'frames.id as frame_id')
+                       ->whereIn('page_id', $page_ins)
+                       ->orderBy('area_id', 'asc')
+                       ->orderBy('page_id', 'desc')
+                       ->orderBy('display_sequence', 'asc')
+                       ->get();
+
+        // 共通エリアの継承処理
+        foreach($frames as $frame) {
+
+            // すでに子の設定で共通エリアにフレームがある場合は、対象外。
+            if (array_key_exists($frame['area_id'], $layouts_info) && array_key_exists('frames', $layouts_info[$frame['area_id']]) && !empty($layouts_info[$frame['area_id']]['frames']) ) {
+
+                // 同じページの複数フレームは使用する。
+                if ($layouts_info[$frame['area_id']]['frames'][0]['page_id'] == $frame['page_id']) {
+                    $layouts_info[$frame['area_id']]['frames'][] = $frame;
+                }
+            }
+            // 子から遡って最初に出てきた共通エリアのフレーム
+            else {
+                $layouts_info[$frame['area_id']]['frames'][] = $frame;
+            }
+        }
+        //print_r($layouts_info);
 
         return $layouts_info;
     }
 
     /**
+     *  ページの系統取得
+     */
+    public function getPageTree($page_id)
+    {
+        // トップページを取得
+        $top_page = Page::orderBy('_lft', 'asc')->first();
+
+        // 自分のページから親を遡って取得
+        $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+
+        // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
+        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
+            $page_tree->push($top_page);
+        }
+        return $page_tree;
+    }
+
+    /**
      *  ページのレイアウト取得
      */
-    public function getLayout()
+    public function getLayout($page_tree)
     {
         // レイアウトの初期値
         $layout_defalt = '1|1|0|1';
@@ -94,7 +153,6 @@ class ConnectController extends Controller
         // レイアウト
         $layout = null;
 
-        $page_tree = Page::reversed()->ancestorsAndSelf($this->current_page->id);
         foreach ( $page_tree as $page ) {
 
             // レイアウト

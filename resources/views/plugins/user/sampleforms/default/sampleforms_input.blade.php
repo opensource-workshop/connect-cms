@@ -79,7 +79,7 @@
             <div class="input-group">
                 <span class="input-group-addon">
                     {{-- チェックボックスを生成する --}}
-                    @include('plugins.user.sampleforms.form_checkbox', [
+                    @include('plugins.user.sampleforms.default.form_checkbox', [
                         'checkbox_name' => 'column_checkbox[]',
                         'checkbox' => $sampleform->column_checkbox,
                         'check_value' => "選択肢$i"

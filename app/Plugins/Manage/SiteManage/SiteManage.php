@@ -53,20 +53,64 @@ class SiteManage extends ManagePluginBase
     {
         // サイト名
         $configs = Configs::updateOrCreate(
-            ['name' => 'base_site_name'],
-            ['value' => $request->base_site_name]
+            ['name'     => 'base_site_name'],
+            ['category' => 'general',
+             'value'    => $request->base_site_name]
         );
 
         // 画面の基本の背景色
         $configs = Configs::updateOrCreate(
-            ['name' => 'base_background_color'],
-            ['value' => $request->base_background_color]
+            ['name'     => 'base_background_color'],
+            ['category' => 'general',
+             'value'    => $request->base_background_color]
         );
 
         // 画面の基本のヘッダー背景色
         $configs = Configs::updateOrCreate(
-            ['name' => 'base_header_color'],
-            ['value' => $request->base_header_color]
+            ['name'     => 'base_header_color'],
+            ['category' => 'general',
+             'value'    => $request->base_header_color]
+        );
+
+        // 基本のヘッダー固定設定
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_fix_xs'],
+            ['category' => 'general',
+             'value'    => (isset($request->base_header_fix_xs) ? $request->base_header_fix_xs : 0)]
+        );
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_fix_sm'],
+            ['category' => 'general',
+             'value'    => (isset($request->base_header_fix_sm) ? $request->base_header_fix_sm : 0)]
+        );
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_fix_md'],
+            ['category' => 'general',
+             'value'    => (isset($request->base_header_fix_md) ? $request->base_header_fix_md : 0)]
+        );
+
+        // ログインリンクの表示
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_login_link'],
+            ['category' => 'general',
+             'value'    => $request->base_header_login_link]
+        );
+
+        // 画像の保存機能の無効化
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_mousedown_off'],
+            ['category' => 'general',
+             'value'    => (isset($request->base_mousedown_off) ? $request->base_mousedown_off : 0)]
+        );
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_contextmenu_off'],
+            ['category' => 'general',
+             'value'    => (isset($request->base_contextmenu_off) ? $request->base_contextmenu_off : 0)]
+        );
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_touch_callout'],
+            ['category' => 'general',
+             'value'    => (isset($request->base_touch_callout) ? $request->base_touch_callout : 0)]
         );
 
         return $this->index($request, $page_id, $errors);

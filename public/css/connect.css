@@ -4,22 +4,31 @@
 
 body { font-family: inherit; }
 
+/* table のレスポンシブ対応
+------------------------------------- */
 @media screen and (max-width: 480px) {
-	.cc_responsive_table td, .cc_responsive_table th {
-		display: block;
-	}
-	.cc_responsive_table th {
-		background-color: #f0f0f0;
-	}
-	.cc_responsive_table thead {
-		display: none;
-	}
+    .cc_responsive_table td, .cc_responsive_table th {
+        display: block;
+    }
+    .cc_responsive_table th {
+        background-color: #f0f0f0;
+    }
+    .cc_responsive_table thead {
+        display: none;
+    }
 }
 
-.margin_bottom_0 {
+/* 入力(input)関係
+------------------------------------- */
+
+/* チェックボックス、ラジオボタンの選択用グループラベル */
+
+.cc_label_input_group {
+    font-weight: normal;
+    width: 100%;
+    display: inherit;
     margin-bottom: 0;
+    cursor: pointer;
 }
 
-.vertical_middle {
-    vertical-align: middle !important;
-}
+

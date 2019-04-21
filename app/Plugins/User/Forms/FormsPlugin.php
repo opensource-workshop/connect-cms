@@ -125,7 +125,8 @@ class FormsPlugin extends UserPluginBase
         $page = Page::where('id', $page_id)->first();
 
         // 表示テンプレートを呼び出す。
-        return view('plugins.user.forms.forms', [
+        return view(
+            $this->getViewPath('forms'), [
             'frame_id' => $frame_id,
             'page' => $page,
             'form' => $form,
@@ -152,7 +153,8 @@ class FormsPlugin extends UserPluginBase
         $forms_columns = $this->getFormsColumns($form);
 //Log::debug($forms_columns);
         // 表示テンプレートを呼び出す。
-        return view('plugins.user.forms.forms_confirm', [
+        return view(
+            $this->getViewPath('forms_confirm'), [
             'request' => $request,
             'page' => $page,
             'frame_id' => $frame_id,
@@ -190,7 +192,8 @@ class FormsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return view('plugins.user.forms.forms_thanks', [
+        return view(
+            $this->getViewPath('forms_thanks'), [
             'page_id' => $page_id,
             'frame_id' => $frame_id
         ]);
@@ -287,7 +290,8 @@ class FormsPlugin extends UserPluginBase
         //Log::debug($rows);
 
         // 編集画面テンプレートを呼び出す。
-        return view('plugins.user.forms.forms_edit', [
+        return view(
+            $this->getViewPath('forms_edit'), [
             'frame_id' => $frame_id,
             'page' => $page,
             'forms_id' => $forms_id,

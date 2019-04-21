@@ -112,7 +112,7 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public function invokePostCore(Request $request, $action_type, $action, $page_id = null, $frame_id = null)
+    public function invokePostCore(Request $request, $action_type, $action, $page_id = null, $frame_id = null, $area_id = null)
     {
         // インスタンス生成
         $plugin_instance = self::createCoreInstance($action_type);
@@ -120,6 +120,6 @@ class ClassController extends ConnectController
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
         // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
-        return $plugin_instance->$action($request, $page_id, $frame_id);
+        return $plugin_instance->$action($request, $page_id, $frame_id, $area_id);
     }
 }

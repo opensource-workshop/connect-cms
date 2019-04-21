@@ -17,6 +17,7 @@
 
             {{-- Todo：今は個別にプラグイン記述 ＞ 最終的にはインストールされているプラグインを同期に追加 --}}
             <option value="contents">contents</option>
+            <option value="menus">menus</option>
             <option value="forms">forms</option>
             <option value="sampleforms">sampleforms</option>
         </select>

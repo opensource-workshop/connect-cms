@@ -7,7 +7,7 @@
  --}}
 
 {{-- 機能選択タブ --}}
-@include('plugins.user.contents.contents_edit_tab')
+@include('plugins.user.contents.default.contents_edit_tab')
 
 {{-- データ --}}
 <p>
@@ -17,7 +17,7 @@
         </div>
     </div>
 </p>
-<form action="/plugin/contents/destroy/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="form-horizontal">
+<form action="/redirect/plugin/contents/destroy/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="form-horizontal">
     {{ csrf_field() }}
     <span class="text-danger">
     <p>

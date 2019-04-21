@@ -7,7 +7,7 @@
  --}}
 
 {{-- 機能選択タブ --}}
-@include('plugins.user.contents.contents_edit_tab')
+@include('plugins.user.contents.default.contents_edit_tab')
 
 <form action="/plugin/contents/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}

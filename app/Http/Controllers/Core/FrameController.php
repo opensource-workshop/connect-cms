@@ -39,10 +39,12 @@ class FrameController extends ConnectController
         // bucket_id はnull。プラグイン側で更新してもらう。
         $frame = new Frame;
         $frame->page_id = $page_id;
+        $frame->area_id = $request->area_id;
         $frame->frame_title = "[無題]";
         $frame->frame_design = "default";
         $frame->plugin_name = $request->add_plugin;
         $frame->frame_col = 0;
+        $frame->template = "default";
         $frame->bucket_id = null;
         $frame->display_sequence = 0;
         $frame->save();
@@ -85,10 +87,11 @@ class FrameController extends ConnectController
 
         // Frame データの更新
         Frame::where('id', $frame_id)
-            ->update(['frame_title' => $request->frame_title,
+            ->update(['frame_title'  => $request->frame_title,
                       'frame_design' => $request->frame_design,
-                      'frame_col' => $request->frame_col,
-                      'plug_name' => $request->plug_name
+                      'frame_col'    => $request->frame_col,
+                      'template'     => $request->template,
+                      'plug_name'    => $request->plug_name
         ]);
 
         return redirect($page->permanent_link."#".$frame_id);
@@ -99,7 +102,7 @@ class FrameController extends ConnectController
      *
      * @return view
      */
-    public function sequenceDown($request, $page_id, $frame_id)
+    public function sequenceDown($request, $page_id, $frame_id, $area_id)
     {
         // Page データ
         $page = Page::where('id', $page_id)->first();
@@ -107,8 +110,10 @@ class FrameController extends ConnectController
         // 一度、現在のページ内のフレーム順を取得し、ページ番号を再採番。その際、指定されたフレームと次のフレームのみロジックで入れ替え。
         // 対象ページのフレームレコードを全て更新するが、ページ内のフレーム数分なので、レスポンスにも問題ないと判断。
         $frames = DB::table('frames')
-                ->select('id', 'display_sequence')
+                ->select('frames.id', 'display_sequence')
+                ->join('pages', 'pages.id', '=', 'frames.page_id')
                 ->where('page_id', $page_id)
+                ->where('area_id', $area_id)
                 ->orderBy('display_sequence')
                 ->get();
 
@@ -206,47 +211,5 @@ class FrameController extends ConnectController
         //
         echo "frame_setting";
         exit;
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 }

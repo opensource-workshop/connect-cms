@@ -23,7 +23,7 @@ Auth::routes();
 //Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore');
 
 // コアのpost処理(Frame関係)
-Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokePostCore');
+Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\ClassController@invokePostCore');
 
 // 管理画面getアクション：管理画面用のクラスをURL をもとに、ClassController で呼び出す。
 Route::get('/manage/{plugin_name}/{action?}/{page_id?}', 'Core\ClassController@invokeGetManage');

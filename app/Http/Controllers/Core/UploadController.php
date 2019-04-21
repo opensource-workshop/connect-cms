@@ -54,6 +54,15 @@ class UploadController extends ConnectController
      */
     public function getCss(Request $request, $page_id = null)
     {
+
+        // config のgeneral カテゴリーを読み込んでおく。
+        // id のファイルを読んでhttp request に返す。
+        $config_generals = array();
+        $config_generals_rs = Configs::where('category', 'general')->get();
+        foreach ($config_generals_rs as $config_general) {
+            $config_generals[$config_general['name']]['value'] = $config_general['value'];
+            $config_generals[$config_general['name']]['category'] = $config_general['category'];
+        }
         // 自分のページと親ページを遡って取得し、ページの背景色を探す。
         // 最下位に設定されているものが採用される。
 
@@ -92,9 +101,82 @@ class UploadController extends ConnectController
             $header_color = $base_header_color->value;
         }
 
+        // ヘッダー固定設定
+        if (empty($header_color)) {
+            $base_header_color = Configs::where('name', '=', 'base_header_color')->first();
+            $header_color = $base_header_color->value;
+        }
+
         header('Content-Type: text/css');
-        echo "body { background-color: " . $background_color . "; }\n";
+
+        // 背景色
+        echo "body {background-color: " . $background_color . "; }\n";
+
+        // ヘッダーの背景色
         echo ".navbar-default { background-color: " . $header_color . "; }\n";
+
+        // bootstrap の@screen-xs-max 指定が効かないので、数値指定
+
+        // ヘッダー固定設定(スマートフォン)
+        if ($config_generals['base_header_fix_xs']['value'] == '1') {
+            echo <<<EOD
+@media (max-width: 767px) {
+    .navbar-static-top {
+        position: fixed;
+        top: 0;
+        width: 100%;
+    }
+    body {
+        padding-top: 72px;
+    }
+}
+
+EOD;
+        }
+
+        // ヘッダー固定設定(タブレット)
+        if ($config_generals['base_header_fix_sm']['value'] == '1') {
+            echo <<<EOD
+@media (min-width:768px) and (max-width:991px) {
+    .navbar-static-top {
+        position: fixed;
+        top: 0;
+        width: 100%;
+    }
+    body {
+        padding-top: 72px;
+    }
+}
+
+EOD;
+        }
+
+        // ヘッダー固定設定(PC)
+        if ($config_generals['base_header_fix_md']['value'] == '1') {
+            echo <<<EOD
+@media (min-width:992px) {
+    .navbar-static-top {
+        position: fixed;
+        top: 0;
+        width: 100%;
+    }
+    body {
+        padding-top: 72px;
+    }
+}
+
+EOD;
+        }
+
+        // 画像の保存機能の無効化(スマホ長押し禁止)
+        if ($config_generals['base_touch_callout']['value'] == '1') {
+            echo <<<EOD
+img {
+    -webkit-touch-callout: none;
+}
+
+EOD;
+        }
         exit;
     }
 }

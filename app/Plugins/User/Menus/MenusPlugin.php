@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Plugins\User\Menu;
+namespace App\Plugins\User\Menus;
 
 use Illuminate\Support\Facades\Log;
 
@@ -20,7 +20,7 @@ use App\Plugins\User\UserPluginBase;
  * @category ページプラグイン
  * @package Contoroller
  */
-class Menu extends UserPluginBase
+class MenusPlugin extends UserPluginBase
 {
 
     /**
@@ -28,18 +28,19 @@ class Menu extends UserPluginBase
      *
      *  ページデータを取得し、深さを追加して画面に。
      *
-     * @param int $frame_id
      * @return view
      */
-    public function viewInit($frame_id = null)
+    public function index($request, $page_id, $frame_id)
     {
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
         $pages = Page::defaultOrderWithDepth();
 
         // 画面へ
-        return view('plugins.user.menu.menu', [
-            'pages' => $pages
+        return view(
+            $this->getViewPath('menus'), [
+            'page_id' => $page_id,
+            'pages'   => $pages,
         ]);
     }
 }

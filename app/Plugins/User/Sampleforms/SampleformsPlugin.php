@@ -40,7 +40,8 @@ class SampleformsPlugin extends UserPluginBase
                        ->paginate(2);
 
         // 表示テンプレートを呼び出す。
-        return view('plugins.user.sampleforms.sampleforms', [
+        return view(
+            $this->getViewPath('sampleforms'), [
             'page'        => $page,
             'frame_id'    => $frame_id,
             'sampleforms' => $sampleforms,
@@ -62,7 +63,8 @@ class SampleformsPlugin extends UserPluginBase
         $sampleform = new Sampleforms();
 
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
-        return view('plugins.user.sampleforms.sampleforms_input', [
+        return view(
+            $this->getViewPath('sampleforms_input'), [
             'frame_id' => $frame_id,
             'page' => $page,
             'sampleform' => $sampleform,
@@ -85,7 +87,8 @@ class SampleformsPlugin extends UserPluginBase
         $sampleform = Sampleforms::where('id', $id)->first();
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
-        return view('plugins.user.sampleforms.sampleforms_input', [
+        return view(
+            $this->getViewPath('sampleforms_input'), [
             'frame_id' => $frame_id,
             'id' => $id,
             'page' => $page,
@@ -142,7 +145,8 @@ class SampleformsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
-        return view('plugins.user.sampleforms.sampleforms_confirm', [
+        return view(
+            $this->getViewPath('sampleforms_confirm'), [
             'frame_id'     => $frame_id,
             'id'           => $id,
             'page'         => $page,

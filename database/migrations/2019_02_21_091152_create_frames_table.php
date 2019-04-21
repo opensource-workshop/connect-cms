@@ -16,10 +16,12 @@ class CreateFramesTable extends Migration
         Schema::create('frames', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('page_id');
+            $table->integer('area_id')->nullable();
             $table->string('frame_title')->nullable();
             $table->string('frame_design')->nullable();
             $table->string('plugin_name');
             $table->integer('frame_col')->nullable();
+            $table->string('template')->nullable();
             $table->string('plug_name')->nullable();
             $table->integer('bucket_id')->nullable();
             $table->integer('display_sequence')->nullable();

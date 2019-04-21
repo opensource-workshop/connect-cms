@@ -86,12 +86,12 @@
             </thead>
             <tbody>
                 @foreach($rows as $row)
-                    @include('plugins.user.forms.forms_edit_row',['select_flag' => 1, 'row_no' => $loop->iteration, 'delete_flag' => $row['delete_flag']])
+                    @include('plugins.user.forms.default.forms_edit_row',['select_flag' => 1, 'row_no' => $loop->iteration, 'delete_flag' => $row['delete_flag']])
                 @endforeach
                 <tr>
                     <th colspan="4">【項目の追加行】</th>
                 </tr>
-                @include('plugins.user.forms.forms_edit_row',['select_flag' => 0, 'row_no' => 0, 'delete_flag' => 0])
+                @include('plugins.user.forms.default.forms_edit_row',['select_flag' => 0, 'row_no' => 0, 'delete_flag' => 0])
                 </tr>
             </tbody>
             </table>
