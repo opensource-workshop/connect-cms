@@ -21,6 +21,7 @@ class CreatePagesTable extends Migration
             $table->string('background_color')->nullable();
             $table->string('header_color')->nullable();
             $table->string('layout')->nullable();
+            $table->integer('base_display_flag')->default(1);
             $table->nestedSet();
             $table->timestamps();
         });

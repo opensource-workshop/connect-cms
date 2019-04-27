@@ -202,6 +202,28 @@ class FrameController extends ConnectController
     }
 
     /**
+     * 編集画面
+     *
+     */
+    public function edit($request, $page_id, $frame_id)
+    {
+        // Page データ
+        $page = Page::where('id', $page_id)->first();
+
+        // Frame データ
+        $frame = Frame::where('id', $frame_id)->first();
+
+        return $this->view('core.frame', [
+            'page_id'                => $page_id,
+            'page'                   => $page,
+            'frame_id'               => $frame_id,
+            'frame'                  => $frame,
+            'current_page'           => $this->current_page,
+            'target_frame_templates' => $this->target_frame_templates,
+        ]);
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response

@@ -12,6 +12,34 @@
 @section('content')
 <div class="container">
 
+
+{{-- *********************************************************** --}}
+
+{{-- <a href="#" data-href="/test_dir/load.html" data-toggle="modal" data-target="#modalDetails">リンク</a> --}}
+{{-- <a href="#" data-href="{{URL::to('/')}}/test/1" data-toggle="modal" data-target="#modalDetails">リンク</a> --}}
+
+<!-- Modal -->
+<div class="modal fade" id="modalDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+    </div>
+  </div>
+</div>
+
+<script>
+$(function () {
+    //任意のリンクをモーダル内に読み込む
+    $("#modalDetails").on("show.bs.modal", function(e) {
+        var link = $(e.relatedTarget); //クリックしたセルのオブジェクトデータ
+        $(this).find(".modal-content").load(link.attr("data-href"));
+    });
+});
+</script>
+
+{{-- *********************************************************** --}}
+
+
+
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
     <div class="row">

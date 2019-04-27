@@ -19,8 +19,12 @@ use App\Http\Controllers\Core\DefaultController;
 // 認証系アクション
 Auth::routes();
 
+// テスト用アクション
+Route::get('/test/{id?}', 'Core\TestController@invokeGet');
+Route::post('/test/{id?}', 'Core\TestController@invokePost');
+
 // コアのget処理(Frame関係)
-//Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore');
+Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore');
 
 // コアのpost処理(Frame関係)
 Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\ClassController@invokePostCore');

@@ -118,19 +118,23 @@
                     <div class="list-group visible-xs">
                     @foreach($page_list as $page)
 
-                        {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                        @if (isset($current_page) && $page->id == $current_page->id)
-                        <a href="{{ url("$page->permanent_link") }}" class="list-group-item active">
-                        @else
-                        <a href="{{ url("$page->permanent_link") }}" class="list-group-item">
-                        @endif
+                        {{-- 非表示のページは対象外 --}}
+                        @if ($page->display_flag == 1)
 
-                        {{-- 各ページの深さをもとにインデントの表現 --}}
-                        @for ($i = 0; $i < $page->depth; $i++)
-                            <span @if ($i+1==$page->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
-                        @endfor
-                        {{$page->page_name}}
-                        </a>
+                            {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
+                            @if (isset($current_page) && $page->id == $current_page->id)
+                            <a href="{{ url("$page->permanent_link") }}" class="list-group-item active">
+                            @else
+                            <a href="{{ url("$page->permanent_link") }}" class="list-group-item">
+                            @endif
+
+                            {{-- 各ページの深さをもとにインデントの表現 --}}
+                            @for ($i = 0; $i < $page->depth; $i++)
+                                <span @if ($i+1==$page->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
+                            @endfor
+                            {{$page->page_name}}
+                            </a>
+                        @endif
 
                     @endforeach
                     </div>

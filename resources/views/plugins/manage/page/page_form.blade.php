@@ -62,6 +62,25 @@
                     </select>
                 </div>
             </div>
+            <div class="form-group">
+                <label for="permanent_link" class="col-md-3 control-label">メニュー表示</label>
+                <div class="col-md-9">
+
+                    <label class="cc_label_input_group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                @if(isset($page->base_display_flag) && $page->base_display_flag == 1)
+                                    <input name="base_display_flag" value="1" type="checkbox" checked="checked">
+                                @else
+                                    <input name="base_display_flag" value="1" type="checkbox">
+                                @endif
+                            </span>
+                            <span class="form-control" style="height: auto;">表示する</span>
+                        </div>
+                    </label>
+
+                </div>
+            </div>
 
             <!-- Add or Update Page Button -->
             <div class="form-group">

@@ -27,7 +27,7 @@ class UserPluginBase extends PluginBase
     /**
      *  コンストラクタ
      */
-    function __construct($frame)
+    function __construct($frame = null)
     {
         // フレームの保持
         //$this->frame = Frame::where('id', $frame->frame_id)->first();

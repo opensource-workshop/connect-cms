@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 
 use App\Http\Controllers\Controller;
 use App\Configs;
@@ -22,6 +23,21 @@ class ConnectController extends Controller
 {
 
     /**
+     *  ページID
+     */
+    public $page_id = null;
+
+    /**
+     *  フレームID
+     */
+    public $frame_id = null;
+
+    /**
+     *  テンプレート情報
+     */
+    public $target_frame_templates = array();
+
+    /**
      *  カレントページ
      */
     public $current_page = null;
@@ -29,9 +45,39 @@ class ConnectController extends Controller
     /**
      *  コンストラクタ
      */
-    function __construct()
+    function __construct($page_id = null, $frame_id = null)
     {
-        $this->current_page = $this->getCurrentPage();
+        // ページID
+        $this->page_id = $page_id;
+
+        // フレームID
+        $this->frame_id = $frame_id;
+
+        // ページID が渡ってきた場合
+        if (!empty($page_id)) {
+             $this->current_page = Page::where('id', $page_id)->first();
+        }
+        // ページID が渡されなかった場合、URL から取得
+        else {
+            $this->current_page = $this->getCurrentPage();
+        }
+
+        // Frame データがあれば、画面のテンプレート情報をセット
+        if (!empty($frame_id)) {
+            $frame = Frame::where('id', $frame_id)->first();
+            $finder = View::getFinder();
+            $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name;
+
+            $file_list = scandir($plugin_view_path);
+            foreach ($file_list as $file) {
+                if (in_array($file, array('.', '..', 'default'))) {
+                    continue;
+                }
+                if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name . '/' . $file))) {
+                    $this->target_frame_templates[] = $file;
+                }
+            }
+        }
     }
 
     /**
@@ -40,7 +86,12 @@ class ConnectController extends Controller
     public function getLayoutsInfo()
     {
         if (empty($this->current_page)) {
-            return null;
+            //return null;
+            abort(404);
+        }
+        if (empty($this->current_page->id)) {
+            //return null;
+            abort(404);
         }
 
         // ページの系統取得

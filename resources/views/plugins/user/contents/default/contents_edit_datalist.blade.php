@@ -9,7 +9,7 @@
 {{-- 機能選択タブ --}}
 @include('plugins.user.contents.default.contents_edit_tab')
 
-<form action="/plugin/contents/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="/redirect/plugin/contents/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
     <table class="table table-hover" style="margin-bottom: 0;">
     <thead>

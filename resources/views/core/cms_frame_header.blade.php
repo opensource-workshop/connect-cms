@@ -32,19 +32,31 @@
             {{-- 上移動。POSTのためのフォーム --}}
             <form action="/core/frame/sequenceUp/{{$current_page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="visible-lg-inline visible-md-inli	ne visible-sm-inline visible-xs-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();"><span class="glyphicon glyphicon-chevron-up bg-{{$frame->frame_design}}"></a> 
+                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();"><span class="glyphicon glyphicon-chevron-up bg-{{$frame->frame_design}}"></span></a> 
             </form>
 
             {{-- 下移動。POSTのためのフォーム --}}
             <form action="/core/frame/sequenceDown/{{$current_page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_down" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();"><span class="glyphicon glyphicon-chevron-down bg-{{$frame->frame_design}}"></a> 
+                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();"><span class="glyphicon glyphicon-chevron-down bg-{{$frame->frame_design}}"></span></a> 
             </form>
 
             {{-- 変更画面へのリンク --}}
-            <a href="{{$current_page->permanent_link}}?core_action=frame_setting&frame_id={!!$frame->frame_id!!}#{!!$frame->frame_id!!}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></a>
+            <a href="{{$current_page->permanent_link}}?core_action=frame_setting&frame_id={!!$frame->frame_id!!}#{!!$frame->frame_id!!}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
+
+{{-- モーダル実装 --}}
+            {{-- 変更画面へのリンク --}}
+{{--
+            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$current_page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
+--}}
 
             {{-- 削除。POSTのためのフォーム --}}
+        </div>
+        @else
+        <div class="pull-right">
+            <span class="glyphicon glyphicon-chevron-up bg-{{$frame->frame_design}}" style="color:#ccc;"></span> 
+            <span class="glyphicon glyphicon-chevron-down bg-{{$frame->frame_design}}" style="color:#ccc;"></span> 
+            <span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}" style="color:#ccc;"></span> 
         </div>
         @endif
 

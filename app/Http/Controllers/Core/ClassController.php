@@ -75,18 +75,17 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public static function createCoreInstance($plugin_name)
+    public static function createCoreInstance($plugin_name, $page_id, $frame_id)
     {
         // Todo：コアの場合、ホワイトリストを作成して、呼び出せるクラストアクションを指定する。
-
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
         $file_path = base_path() . "/app/Http/Controllers/Core/" . ucfirst($plugin_name) . "Controller.php";
         require $file_path;
 
-        /// 引数のアクションと同じメソッドを呼び出す。
+        /// インスタンス生成
         $class_name = "app\Http\Controllers\Core\\" . ucfirst($plugin_name) . "Controller";
-        $plugin_instance = new $class_name;
-        return new $plugin_instance;
+        $plugin_instance = new $class_name($page_id, $frame_id);
+        return $plugin_instance;
     }
 
     /**
@@ -95,15 +94,15 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public function invokeGetCore(Request $request, $action_type, $action, $page_id = null, $id = null)
+    public function invokeGetCore(Request $request, $action_type, $action, $page_id = null, $frame_id = null)
     {
         // インスタンス生成
-        $plugin_instance = self::createCoreInstance($action_type);
+        $plugin_instance = self::createCoreInstance($action_type, $page_id, $frame_id);
 
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
         // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
-        return $plugin_instance->$action($request, $page_id, $id);
+        return $plugin_instance->$action($request, $page_id, $frame_id);
     }
 
     /**
@@ -115,7 +114,7 @@ class ClassController extends ConnectController
     public function invokePostCore(Request $request, $action_type, $action, $page_id = null, $frame_id = null, $area_id = null)
     {
         // インスタンス生成
-        $plugin_instance = self::createCoreInstance($action_type);
+        $plugin_instance = self::createCoreInstance($action_type, $page_id, $frame_id);
 
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。

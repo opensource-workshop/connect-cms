@@ -36,11 +36,15 @@ class MenusPlugin extends UserPluginBase
         // 表示順は入れ子集合モデルの順番
         $pages = Page::defaultOrderWithDepth();
 
+        // 表示ページ
+        $current_page = Page::where('id', $page_id)->first();
+
         // 画面へ
         return view(
             $this->getViewPath('menus'), [
-            'page_id' => $page_id,
-            'pages'   => $pages,
+            'page_id'      => $page_id,
+            'pages'        => $pages,
+            'current_page' => $current_page,
         ]);
     }
 }

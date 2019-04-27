@@ -3,6 +3,8 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
+
 use Kalnoy\Nestedset\NodeTrait;
 
 class Page extends Model
@@ -10,7 +12,7 @@ class Page extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'path'];
+    protected $fillable = ['page_name', 'permanent_link', 'path', 'base_display_flag'];
 
     use NodeTrait;
 
@@ -31,6 +33,17 @@ class Page extends Model
 
         // クロージャでページ配列を再帰ループし、深さを追加する。
         // テンプレートでは深さをもとにデザイン処理する。
+        $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse) {
+            $depth = $depth+1;
+            foreach ($pages as $page) {
+                $page->depth = $depth;
+                //$page->page_name = $page->page_name;
+                // 表示フラグを親を引き継いで保持
+                $page->display_flag = ($page->base_display_flag == 0 || $display_flag == 0 ? 0 : 1);
+                $traverse($page->children, $prefix.'-', $depth, $page->display_flag);
+            }
+        };
+/*
         $traverse = function ($pages, $prefix = '-', $depth = -1) use (&$traverse) {
             $depth = $depth+1;
             foreach ($pages as $page) {
@@ -39,8 +52,8 @@ class Page extends Model
                 $traverse($page->children, $prefix.'-', $depth);
             }
         };
+*/
         $traverse($tree);
-
         return $pages;
     }
 }

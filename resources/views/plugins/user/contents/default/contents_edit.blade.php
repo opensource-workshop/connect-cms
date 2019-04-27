@@ -19,7 +19,10 @@
         menubar  : false,
         relative_urls : false,
         height: 200,
-        branding: false
+        branding: false,
+        protect: [
+            /\<\/?(script)\>/g
+        ],
     });
 </script>
 

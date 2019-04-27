@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\Log;
 
 class Handler extends ExceptionHandler
 {
@@ -36,6 +37,24 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $exception)
     {
+
+        // エラー処理
+/*
+        if (!$this->isHttpException($exception)) {
+
+            Log::debug("-------------");
+            Log::debug("--- Error ---");
+            Log::debug("-------------");
+            Log::debug('--- $_SERVER');
+            Log::debug($_SERVER);
+            Log::debug('--- $_REQUEST');
+            Log::debug($_REQUEST);
+            Log::debug('--- $exception');
+            Log::debug($exception);
+
+            abort(500);
+        }
+*/
         parent::report($exception);
     }
 

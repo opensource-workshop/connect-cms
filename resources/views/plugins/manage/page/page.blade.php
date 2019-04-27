@@ -73,6 +73,7 @@
                 <th></th>
                 <th nowrap>移動先</th>
                 <th nowrap>ページ名</th>
+                <th nowrap>On</th>
                 <th nowrap>固定リンク</th>
                 <th nowrap>背景色</th>
                 <th nowrap>ヘッダー</th>
@@ -119,6 +120,13 @@
                             <span @if ($i+1==$page->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
                         @endfor
                         {{$page->page_name}}{{-- ページ名 --}}
+                    </td>
+                    <td class="table-text">
+                        @if ($page->base_display_flag == 1)
+                            <div><span class="glyphicon glyphicon-ok"></div>
+                        @else
+                            <div><span class="glyphicon glyphicon-remove"></div>
+                        @endif
                     </td>
                     <td class="table-text">
                         <div>{{ $page->permanent_link }}</div>

@@ -36,7 +36,7 @@ class DefaultController extends ConnectController
         // フレーム一覧取得（メインエリアのみ）
         $frames = $this->getFramesMain($this->current_page->id);
 
-        // インスタンス取得（メインエリアのみ）
+        // プラグインのインスタンス取得（メインエリアのみ）
         $plugin_instances = $this->createInstanceMain($frames);
 
         // レイアウト取得
