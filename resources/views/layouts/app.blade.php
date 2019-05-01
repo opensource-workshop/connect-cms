@@ -58,6 +58,13 @@
     <!-- jQuery -->
     <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
 
+    <!-- bootstrap-datepicker -->
+{{--
+    <link href="{{asset('js/bootstrap-datepicker/css/bootstrap-datepicker.min.css')}}" rel="stylesheet">
+    <script src="{{ asset('js/bootstrap-datepicker/js/bootstrap-datepicker.min.js') }}"></script>
+    <script src="{{ asset('js/bootstrap-datepicker/locales/bootstrap-datepicker.ja.min.js') }}"></script>
+--}}
+
     <!-- Context -->
     <script>
     @if (isset($configs) && ($configs['base_mousedown_off'] == '1'))

@@ -24,7 +24,6 @@
     {{$frame->frame_title}}
 
     @auth
-    @if (request()->core_action != 'frame_setting') {{-- フレーム内容を設定中は誤操作防止のためフレーム移動系の処理は隠す --}}
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
         @if ($frame->page_id == $current_page->id)
@@ -42,7 +41,10 @@
             </form>
 
             {{-- 変更画面へのリンク --}}
-            <a href="{{$current_page->permanent_link}}?core_action=frame_setting&frame_id={!!$frame->frame_id!!}#{!!$frame->frame_id!!}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
+            <a href="{{$current_page->permanent_link}}?frame_action={{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}&frame_id={!!$frame->frame_id!!}#{!!$frame->frame_id!!}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
+{{--
+            <a href="{{$current_page->permanent_link}}?frame_action=frame_setting&frame_id={!!$frame->frame_id!!}#{!!$frame->frame_id!!}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
+--}}
 
 {{-- モーダル実装 --}}
             {{-- 変更画面へのリンク --}}
@@ -60,7 +62,6 @@
         </div>
         @endif
 
-    @endif
     @endauth
 </div>
 @endif

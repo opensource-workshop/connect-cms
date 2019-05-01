@@ -31,4 +31,17 @@ body { font-family: inherit; }
     cursor: pointer;
 }
 
+/* p ŠÖŒW
+------------------------------------- */
+
+.cc_margin_bottom_0 {
+    margin-bottom: 0;
+}
+
+/* ‹LŽ–ŠÖŒW
+------------------------------------- */
+
+.cc_article {
+    border-bottom: 1px solid #c0c0c0;
+}
 

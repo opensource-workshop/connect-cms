@@ -16,10 +16,11 @@
             <option value="">add plugin...</option>
 
             {{-- Todo：今は個別にプラグイン記述 ＞ 最終的にはインストールされているプラグインを同期に追加 --}}
-            <option value="contents">contents</option>
-            <option value="menus">menus</option>
-            <option value="forms">forms</option>
-            <option value="sampleforms">sampleforms</option>
+            <option value="contents">固定記事</option>
+            <option value="blogs">ブログ</option>
+            <option value="menus">メニュー</option>
+            <option value="forms">登録フォーム</option>
+            <option value="sampleforms">サンプルフォーム</option>
         </select>
     </div>
 </form>

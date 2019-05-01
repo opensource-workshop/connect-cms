@@ -2,6 +2,8 @@
 
 namespace App\Plugins\User;
 
+use Illuminate\Support\Facades\Log;
+
 use App\Plugins\PluginBase;
 
 use App\Frame;
@@ -56,6 +58,16 @@ class UserPluginBase extends PluginBase
     public function getViewPath($blade_name)
     {
         return 'plugins.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
+    }
+
+    /**
+     *  編集画面の最初のタブ
+     *
+     *  フレームの編集画面がある各プラグインからオーバーライドされることを想定。
+     */
+    public function getFirstFrameEditAction()
+    {
+        return "frame_setting";
     }
 
     /**

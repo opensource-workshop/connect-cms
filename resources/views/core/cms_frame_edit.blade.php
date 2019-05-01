@@ -19,11 +19,15 @@
         $class_input = "col-md-9";
     }
 @endphp
-<table class="table"><tr><td>
+{{-- <table class="table"><tr><td> --}}
     <div class="panel-body">
         <ul class="nav nav-tabs">
-            <li role="presentation" class="active"><a href="{{URL::to($current_page->permanent_link)}}/?action=frame_setting&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">編集</a></li>
-            <li role="presentation"><a href="{{URL::to($current_page->permanent_link)}}/?core_action=frame_delete&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">削除</a></li>
+            {{-- プラグイン側のフレームメニュー --}}
+            {{$action_core_frame->includeFrameTab($current_page, $frame)}}
+
+            {{-- コア側のフレームメニュー --}}
+            <li role="presentation" class="active"><a href="{{URL::to($current_page->permanent_link)}}/?frame_action=frame_setting&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム編集</a></li>
+            <li role="presentation"><a href="{{URL::to($current_page->permanent_link)}}/?frame_action=frame_delete&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム削除</a></li>
         </ul>
     </div>
 
@@ -80,7 +84,7 @@
                 <div class="{{$class_input}}">
                     <select class="form-control" name="template" id="template">
                         <option value="default">default</option>
-                        @foreach ($target_frame_templates as $template_name)
+                        @foreach ($action_core_frame->getTemplates() as $template_name)
                             <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_name}}</option>
                         @endforeach
                     </select>
@@ -100,10 +104,10 @@
 
             <div class="form-group">
                 <div class="col-md-offset-3 {{$class_input}}">
-                    <button type="submit" class="btn btn-primary form-horizontal">更新</button>
+                    <button type="submit" class="btn btn-primary form-horizontal"><span class="glyphicon glyphicon-ok"></span> 更新</button>
                     <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($current_page->permanent_link)}}'">キャンセル</button>
                 </div>
             </div>
         </form>
     </div>
-</td></tr></table>
+{{-- </td></tr></table> --}}

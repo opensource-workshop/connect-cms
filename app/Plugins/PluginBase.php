@@ -35,6 +35,17 @@ class PluginBase
     }
 
     /**
+     * invoke（プラグインのフレーム用メソッドをコア（cms_frame.blade.php）から呼ぶ）
+     *
+     */
+/*
+    public function invoke($request, $page_id, $frame_id)
+    {
+        return $request['frame_action'];
+    }
+*/
+
+    /**
      * レンダリングエンジンのう回路  (※ 保留 2019-03-15 @include で見に行くパスが変更できなかった)
      *
      */

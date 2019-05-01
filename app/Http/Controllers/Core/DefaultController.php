@@ -49,24 +49,27 @@ class DefaultController extends ConnectController
         $pages = Page::defaultOrder()->get();
 
 
+        // フレームで使用するテンプレート・リスト
         // とりあえずココで処理。後でcore 系のアクションを見直してリファクタリングすること。
+        $action_core_frame = null;
         $target_frame_templates = array();
-        if (!empty($request->core_action)) {
+        if (!empty($request->frame_action)) {
  
             // Frame データ
-            $frame = Frame::where('id', $request->frame_id)->first();
+            $action_core_frame = Frame::where('id', $request->frame_id)->first();
             $finder = View::getFinder();
-            $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name;
+            $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name;
 
             $file_list = scandir($plugin_view_path);
             foreach ($file_list as $file) {
                 if (in_array($file, array('.', '..', 'default'))) {
                     continue;
                 }
-                if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name . '/' . $file))) {
+                if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
                     $target_frame_templates[] = $file;
                 }
             }
+            $action_core_frame->setTemplates($target_frame_templates);
         }
 
         // view の場所を変更するテスト
@@ -75,12 +78,12 @@ class DefaultController extends ConnectController
         // メインページを呼び出し(coreのinvokeコントローラでは、スーパークラスのviewを使用)
         // 各フレーム内容の表示はメインページから行う。
         return $this->view('core.cms', [
-            'current_page'     => $this->current_page,
-            'frames'           => $frames,
-            'pages'            => $pages,
-            'plugin_instances' => $plugin_instances,
-            'layouts_info'     => $layouts_info,
-            'target_frame_templates' => $target_frame_templates,
+            'current_page'      => $this->current_page,
+            'frames'            => $frames,
+            'pages'             => $pages,
+            'plugin_instances'  => $plugin_instances,
+            'layouts_info'      => $layouts_info,
+            'action_core_frame' => $action_core_frame,
         ]);
     }
 
@@ -144,7 +147,6 @@ class DefaultController extends ConnectController
             'layouts_info'     => $this->getLayoutsInfo(),
         ]);
 
-
         return;
     }
 
@@ -159,9 +161,15 @@ class DefaultController extends ConnectController
         // プラグイン毎に動的にnew する。
         // Todo：プラグインを動的にインスタンス生成すること。
 
+        // フレームのインスタンス生成、プラグインクラスに渡すこと
+        $action_frame = null;
+        if (!empty($frame_id)) {
+            $action_frame = Frame::where('id', $frame_id)->first();
+        }
+
         // 引数のアクションと同じメソッドを呼び出す。
         $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
-        $contentsPlugin = new $class_name;
+        $contentsPlugin = new $class_name($action_frame);
         $contentsPlugin->$action($request, $page_id, $frame_id, $id);
 
         // 2ページ目以降を表示している場合は、表示ページに遷移
@@ -170,11 +178,12 @@ class DefaultController extends ConnectController
             $page_no_link = "page=" . $request->page;
         }
 
-        // return_mode があれば、編集中ページに遷移
-        if ( $request->return_mode ) {
+        // return_frame_action があれば、編集中ページに遷移
+        if ( $request->return_frame_action ) {
             $page = Page::where('id', $page_id)->first();
             $base_url = url('/');
-            return redirect($base_url . $page->permanent_link . "?action=edit&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
+            return redirect($base_url . $page->permanent_link . "?frame_action=" . $request->return_frame_action . "&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
+//            return redirect($base_url . $page->permanent_link . "?action=" . $return_frame_action . "&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
         }
 
         // Page データがあれば、そのページに遷移
@@ -209,7 +218,7 @@ class DefaultController extends ConnectController
     {
         // フレーム一覧取得（メインエリアのみ）
         $frames = DB::table('pages')
-                    ->select('pages.page_name', 'pages.id as page_id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
+                    ->select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
                             'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id')
                     ->join('frames', 'frames.page_id', '=', 'pages.id')
                     ->where('pages.id', $pages_id)

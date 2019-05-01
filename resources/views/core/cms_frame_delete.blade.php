@@ -8,11 +8,15 @@
  * @category コア
 --}}
 {{-- フレーム(削除) --}}
-<table class="table"><tr><td>
+{{-- <table class="table"><tr><td> --}}
     <div class="panel-body">
         <ul class="nav nav-tabs">
-            <li role="presentation"><a href="{{URL::to($current_page->permanent_link)}}/?core_action=frame_setting&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">編集</a></li>
-            <li role="presentation" class="active"><a href="{{URL::to($current_page->permanent_link)}}/?core_action=frame_delete&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">削除</a></li>
+            {{-- プラグイン側のフレームメニュー --}}
+            {{$action_core_frame->includeFrameTab($current_page, $frame)}}
+
+            {{-- コア側のフレームメニュー --}}
+            <li role="presentation"><a href="{{URL::to($current_page->permanent_link)}}/?frame_action=frame_setting&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム編集</a></li>
+            <li role="presentation" class="active"><a href="{{URL::to($current_page->permanent_link)}}/?frame_action=frame_delete&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム削除</a></li>
         </ul>
     </div>
 
@@ -32,7 +36,7 @@
                         <div class="pull-right">
                             <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($current_page->permanent_link)}}'">キャンセル</button>
                             <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('フレームを削除します。\nよろしいですか？')">
-                                フレーム削除
+                                <span class="glyphicon glyphicon-ok"></span> フレーム削除
                             </button>
                         </div>
                     </div>
@@ -40,4 +44,4 @@
             </div>
         </div>
     </div>
-</td></tr></table>
+{{-- </td></tr></table> --}}

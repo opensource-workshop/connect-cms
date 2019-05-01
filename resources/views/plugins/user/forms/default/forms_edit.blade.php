@@ -11,7 +11,7 @@
 {{--
 <form action="{{URL::to($page->permanent_link)}}?action=confirm&frame_id={{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST">
     {{ csrf_field() }}
-    <input type="hidden" name="return_mode" value="edit">
+    <input type="hidden" name="return_frame_action" value="edit">
     <div class="col-sm-3" style="padding-right: 0; margin-bottom: 5px;">
         <select name="add_plugin" class="form-control" onchange="javascript:form_add_column{{$frame_id}}.submit();">
             <option value="">フォームの項目追加...</option>
@@ -66,7 +66,7 @@
         {{ csrf_field() }}
         <input type="hidden" name="forms_id" value="{{$forms_id}}">
         <input type="hidden" name="destroy_no" value="">
-        <input type="hidden" name="return_mode" value="edit">
+        <input type="hidden" name="return_frame_action" value="edit">
 
         <div class="panel panel-info">
             <div class="panel-heading">項目設定</div>
