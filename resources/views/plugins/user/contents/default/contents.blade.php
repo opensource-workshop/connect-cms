@@ -8,19 +8,23 @@
  * @category コンテンツプラグイン
  --}}
 @if ($contents)
-{!! nl2br($contents->content_text) !!}
+{!! $contents->content_text !!}
     @auth
 
     <p class="text-right">
         {{-- 変更画面へのリンク --}}
-        <a href="{{$page->permanent_link}}?action=edit&frame_id={!!$frame_id!!}&id={!!$contents->id!!}#{!!$frame_id!!}"><span class="glyphicon glyphicon-edit"></a>
+        <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#{{$frame_id}}">
+            <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
+        </a>
     </p>
     @endauth
 @else
     @auth
     <p class="text-right">
         {{-- 追加画面へのリンク --}}
-        <a href="{{$page->permanent_link}}?action=edit&frame_id={!!$frame_id!!}#{!!$frame_id!!}"><span class="glyphicon glyphicon-edit"></a>
+        <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}#{{$frame_id}}">
+            <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
+        </a>
     </p>
     @endauth
 @endif

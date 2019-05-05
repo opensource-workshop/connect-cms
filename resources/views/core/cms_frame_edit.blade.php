@@ -2,7 +2,7 @@
  * CMSフレーム編集画面
  *
  * @param obj $frames 表示すべきフレームの配列
- * @param obj $current_page 現在表示中のページ
+ * @param obj $page 現在表示中のページ
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
@@ -23,16 +23,20 @@
     <div class="panel-body">
         <ul class="nav nav-tabs">
             {{-- プラグイン側のフレームメニュー --}}
-            {{$action_core_frame->includeFrameTab($current_page, $frame)}}
+            {{$action_core_frame->includeFrameTab($page, $frame, $action)}}
 
             {{-- コア側のフレームメニュー --}}
-            <li role="presentation" class="active"><a href="{{URL::to($current_page->permanent_link)}}/?frame_action=frame_setting&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム編集</a></li>
-            <li role="presentation"><a href="{{URL::to($current_page->permanent_link)}}/?frame_action=frame_delete&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム削除</a></li>
+            <li role="presentation" class="active"><a href="{{URL::to('/')}}/plugin/blogs/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li>
+            <li role="presentation"><a href="{{URL::to('/')}}/plugin/blogs/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム削除</a></li>
+{{--
+            <li role="presentation" class="active"><a href="{{URL::to($page->permanent_link)}}/?action=frame_setting&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム編集</a></li>
+            <li role="presentation"><a href="{{URL::to($page->permanent_link)}}/?action=frame_delete&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム削除</a></li>
+--}}
         </ul>
     </div>
 
     <div class="panel-body">
-        <form action="/core/frame/update/{{$current_page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST" class="form-horizontal">
+        <form action="/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST" class="form-horizontal">
             {{ csrf_field() }}
             <div class="form-group">
                 <label for="page-name" class="{{$class_label}}">フレームタイトル</label>
@@ -105,7 +109,7 @@
             <div class="form-group">
                 <div class="col-md-offset-3 {{$class_input}}">
                     <button type="submit" class="btn btn-primary form-horizontal"><span class="glyphicon glyphicon-ok"></span> 更新</button>
-                    <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($current_page->permanent_link)}}'">キャンセル</button>
+                    <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
                 </div>
             </div>
         </form>

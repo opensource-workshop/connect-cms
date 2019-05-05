@@ -24,6 +24,16 @@ use App\Http\Controllers\Core\ConnectController;
  */
 class FrameController extends ConnectController
 {
+
+
+    /**
+     *  コンストラクタ
+     */
+    function __construct($page_id, $frame_id)
+    {
+        // ルートパラメータを取得する
+    }
+
     /**
      *  プラグインの追加
      *

@@ -127,6 +127,41 @@
             <div class="help-block">ログインリンクを表示するかどうかを選択</div>
         </div>
 
+        {{-- 自動ユーザ登録の使用 --}}
+        <div class="form-group">
+            <label class="control-label">自動ユーザ登録の使用</label>
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="cc_label_input_group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                @if(isset($configs["user_register_enable"]) && $configs["user_register_enable"] == "1")
+                                    <input name="user_register_enable" type="radio" value="1" checked="checked">
+                                @else
+                                    <input name="user_register_enable" type="radio" value="1">
+                                @endif
+                            </span>
+                            <span class="form-control" style="height: auto;">許可する</span>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-4">
+                    <label class="cc_label_input_group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                @if(isset($configs["user_register_enable"]) && $configs["user_register_enable"] == "0")
+                                    <input name="user_register_enable" type="radio" value="0" checked="checked">
+                                @else
+                                    <input name="user_register_enable" type="radio" value="0">
+                                @endif
+                            </span>
+                            <span class="form-control" style="height: auto;">許可しない</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div class="help-block">自動ユーザ登録を使用するかどうかを選択</div>
+        </div>
 
         {{-- 画像の保存機能の無効化 --}}
         <div class="form-group">

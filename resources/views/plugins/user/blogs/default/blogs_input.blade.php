@@ -23,14 +23,14 @@
     });
 </script>
 
-{{-- 新規登録用フォーム --}}
+{{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))
     <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="">
 @else
     <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="">
 @endif
     {{ csrf_field() }}
-    <input type="hidden" name="blogs_id" value="{{$frame->blogs_id}}">
+    <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
 
     <div class="form-group">
         <label class="control-label">タイトル <span class="label label-danger">必須</span></label>
@@ -57,11 +57,11 @@
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
-                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 登録</button>
+                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 登録確定</button>
                     @else
-                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 変更</button>
+                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 変更確定</button>
                     @endif
-                    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'">キャンセル</button>
+                    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
                 </div>
             </div>
             <div class="col-sm-3 pull-right text-right">

@@ -96,6 +96,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_header_login_link]
         );
 
+        // 自動ユーザ登録の使用
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'user_register_enable'],
+            ['category' => 'user_register',
+             'value'    => $request->user_register_enable]
+        );
+
         // 画像の保存機能の無効化
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_mousedown_off'],

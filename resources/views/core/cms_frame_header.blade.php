@@ -2,7 +2,7 @@
  * CMSフレームヘッダー
  *
  * @param obj $frames 表示すべきフレームの配列
- * @param obj $current_page 現在表示中のページ
+ * @param obj $page 現在表示中のページ
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
@@ -26,30 +26,27 @@
     @auth
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
-        @if ($frame->page_id == $current_page->id)
+        @if ($frame->page_id == $page->id)
         <div class="pull-right">
             {{-- 上移動。POSTのためのフォーム --}}
-            <form action="/core/frame/sequenceUp/{{$current_page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="visible-lg-inline visible-md-inli	ne visible-sm-inline visible-xs-inline">
+            <form action="/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="visible-lg-inline visible-md-inli	ne visible-sm-inline visible-xs-inline">
                 {{ csrf_field() }}
                 <a href="javascript:form_{{ $frame->frame_id }}_up.submit();"><span class="glyphicon glyphicon-chevron-up bg-{{$frame->frame_design}}"></span></a> 
             </form>
 
             {{-- 下移動。POSTのためのフォーム --}}
-            <form action="/core/frame/sequenceDown/{{$current_page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_down" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
+            <form action="/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_down" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
                 {{ csrf_field() }}
                 <a href="javascript:form_{{ $frame->frame_id }}_down.submit();"><span class="glyphicon glyphicon-chevron-down bg-{{$frame->frame_design}}"></span></a> 
             </form>
 
             {{-- 変更画面へのリンク --}}
-            <a href="{{$current_page->permanent_link}}?frame_action={{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}&frame_id={!!$frame->frame_id!!}#{!!$frame->frame_id!!}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
-{{--
-            <a href="{{$current_page->permanent_link}}?frame_action=frame_setting&frame_id={!!$frame->frame_id!!}#{!!$frame->frame_id!!}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
---}}
+            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#{{$frame->frame_id}}"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
 
 {{-- モーダル実装 --}}
             {{-- 変更画面へのリンク --}}
 {{--
-            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$current_page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
+            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></span></a>
 --}}
 
             {{-- 削除。POSTのためのフォーム --}}

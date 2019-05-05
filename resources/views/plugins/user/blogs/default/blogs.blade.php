@@ -6,6 +6,7 @@
  * @category ブログプラグイン
  --}}
 
+{{-- 新規登録 --}}
 @auth
     @if (isset($frame) && $frame->bucket_id)
         <p class="text-right">
@@ -21,32 +22,34 @@
     @endif
 @endauth
 
+{{-- ブログ表示 --}}
 @if (isset($blogs_posts))
-@foreach($blogs_posts as $post)
+    @foreach($blogs_posts as $post)
 
-    <h2>{{$post->post_title}}</h2>
-    <b>{{$post->posted_at->format('Y年n月j日')}}</b>
-    @if ($loop->last)
-        <article>
-    @else
-        <article class="cc_article">
-    @endif
-        {!! nl2br($post->post_text) !!}
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+            @if ($loop->last)
+                <article>
+            @else
+                <article class="cc_article">
+            @endif
+            {{-- 記事本文 --}}
+            {!! $post->post_text !!}
+            @auth
+                <p class="text-right">
+                    <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
+                        <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
+                    </a>
+                </p>
+            @endauth
+        </article>
+    @endforeach
 
-        @auth
-        <p class="text-right">
-            <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
-                <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
-            </a>
-        </p>
-        @endauth
-    </article>
-
-@endforeach
-
-{{-- ページング処理 --}}
-<div class="text-center">
+    {{-- ページング処理 --}}
+    <div class="text-center">
         {{ $blogs_posts->links() }}
-</div>
+    </div>
 @endif
 

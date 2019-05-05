@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Core;
 
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
@@ -40,26 +41,35 @@ class ConnectController extends Controller
     /**
      *  カレントページ
      */
-    public $current_page = null;
+    public $page = null;
 
     /**
      *  コンストラクタ
      */
-    function __construct($page_id = null, $frame_id = null)
+    function __construct(Router $router)
     {
+        // ルートパラメータを取得する
+        $allRouteParams = $router->getCurrentRoute()->parameters();
+
         // ページID
-        $this->page_id = $page_id;
+        if ( !empty($allRouteParams) && array_key_exists('page_id', $allRouteParams)) {
+            $this->page_id = $allRouteParams['page_id'];
+        }
 
         // フレームID
-        $this->frame_id = $frame_id;
+        if ( !empty($allRouteParams) && array_key_exists('frame_id', $allRouteParams)) {
+            $this->frame_id = $allRouteParams['frame_id'];
+        }
 
         // ページID が渡ってきた場合
-        if (!empty($page_id)) {
-             $this->current_page = Page::where('id', $page_id)->first();
+        if (!empty($this->page_id)) {
+             $this->page = Page::where('id', $this->page_id)->first();
+//Log::debug($this->page);
         }
         // ページID が渡されなかった場合、URL から取得
         else {
-            $this->current_page = $this->getCurrentPage();
+            $this->page = $this->getCurrentPage();
+//Log::debug($this->page);
         }
 
         // Frame データがあれば、画面のテンプレート情報をセット
@@ -85,17 +95,17 @@ class ConnectController extends Controller
      */
     public function getLayoutsInfo()
     {
-        if (empty($this->current_page)) {
+        if (empty($this->page)) {
             //return null;
             abort(404);
         }
-        if (empty($this->current_page->id)) {
+        if (empty($this->page->id)) {
             //return null;
             abort(404);
         }
 
         // ページの系統取得
-        $page_tree = $this->getPageTree($this->current_page->id);
+        $page_tree = $this->getPageTree($this->page->id);
 
         // ページのレイアウト取得
         $layout_array = explode('|',$this->getLayout($page_tree));
@@ -197,7 +207,7 @@ class ConnectController extends Controller
         // レイアウトの初期値
         $layout_defalt = '1|1|0|1';
 
-        if (empty($this->current_page)) {
+        if (empty($this->page)) {
             return $layout_defalt;
         }
 
@@ -234,12 +244,11 @@ class ConnectController extends Controller
         }
 
         // URL パスでPage テーブル検索
-        $current_page = Page::where('permanent_link', '=', $current_permanent_link)->first();
-        if (empty($current_page)) {
+        $page = Page::where('permanent_link', '=', $current_permanent_link)->first();
+        if (empty($page)) {
             return view('404_not_found');
         }
-
-        return $current_page;
+        return $page;
     }
 
     /**
@@ -265,7 +274,7 @@ class ConnectController extends Controller
     public function view($blade_path, $args)
     {
         // 一般設定の取得
-        $configs = Configs::where('category', 'general')->get();
+        $configs = Configs::where('category', 'general')->orWhere('category', 'user_register')->get();
         $configs_array = array();
         foreach ($configs as $config) {
             $configs_array[$config['name']] = $config['value'];

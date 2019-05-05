@@ -21,7 +21,7 @@
     </div>
     <div class="panel-body">
 
-        @if ($page->isRoot())
+        @if ($pages[0]->id == $page->id)
             <p>トップページは削除できません。</p>
         @else
             <form action="{{url('/manage/page/destroy')}}/{{$page->id}}" method="POST" class="form-horizontal">

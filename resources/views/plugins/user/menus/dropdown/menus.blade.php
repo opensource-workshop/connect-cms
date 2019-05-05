@@ -9,22 +9,22 @@
 @if ($pages)
 
 <ul class="nav nav-tabs nav-justified hidden-xs" style="">
-@foreach($pages as $page)
+@foreach($pages as $page_obj)
 
     {{-- 非表示のページは対象外 --}}
-    @if ($page->display_flag == 1)
+    @if ($page_obj->display_flag == 1)
 
         {{-- parent_idがnullのものを第一階層ページとして、最初のリストの対象とする --}}
-        @if ($page->parent_id == null)
+        @if ($page_obj->parent_id == null)
 
             {{-- カレントページ、もしくは自分が親の場合の処理 --}}
-            @if ($page->id == $page_id || $current_page->isDescendantOf($page))
+            @if ($page_obj->id == $page_id || $page->isDescendantOf($page_obj))
 
                 {{-- 子供のページがある場合 --}}
-                @if (count($page->children) > 0)
+                @if (count($page_obj->children) > 0)
 
                     {{-- カレント --}}
-                    @if ($page->id == $page_id)
+                    @if ($page_obj->id == $page_id)
                     <li role="presentation" class="active dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="background-color: #3097d1; color: #ffffff;">
                     @else
@@ -32,31 +32,31 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                     @endif
 
-                            {{$page->page_name}}
+                            {{$page_obj->page_name}}
                             <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
 
                             {{-- 自分へのリンク（ドロップダウンでリンクができなくなるため） --}}
-                            <li role="presentation"><a href="{{ url("$page->permanent_link") }}">{{$page->page_name}}</a></li>
+                            <li role="presentation"><a href="{{ url("$page_obj->permanent_link") }}">{{$page_obj->page_name}}</a></li>
                             <li role="separator" class="divider"></li>
 
                             {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
-                            @include('plugins.user.menus.dropdown.menu_children',['children' => $page->children[0]])
+                            @include('plugins.user.menus.dropdown.menu_children',['children' => $page_obj->children[0]])
                         </ul>
                     </li>
                 @else
                     <li role="presentation" class="active">
-                        <a href="{{ url("$page->permanent_link") }}" style="background-color: #3097d1; color: #ffffff;">
-                            {{$page->page_name}}
+                        <a href="{{ url("$page_obj->permanent_link") }}" style="background-color: #3097d1; color: #ffffff;">
+                            {{$page_obj->page_name}}
                         </a>
                     </li>
                 @endif
             @else
                 <li role="presentation">
-                    <a href="{{ url("$page->permanent_link") }}">
-                        {{$page->page_name}}
-                            @if (count($page->children) > 0)
+                    <a href="{{ url("$page_obj->permanent_link") }}">
+                        {{$page_obj->page_name}}
+                            @if (count($page_obj->children) > 0)
                             <span class="caret"></span>
                         @endif
                     </a>

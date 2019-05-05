@@ -9,7 +9,7 @@ use DB;
 use App\Buckets;
 use App\Contents;
 use App\Frame;
-use App\Page;
+
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -22,9 +22,18 @@ use App\Plugins\User\UserPluginBase;
  * @category コンテンツプラグイン
  * @package Contoroller
  */
-//class ContentsPlugin extends Authenticatable
 class ContentsPlugin extends UserPluginBase
 {
+
+    /**
+     *  編集画面の最初のタブ
+     *
+     *  スーパークラスをオーバーライド
+     */
+    public function getFirstFrameEditAction()
+    {
+        return "edit";
+    }
 
     /**
      *  データ取得
@@ -40,7 +49,7 @@ class ContentsPlugin extends UserPluginBase
                         $join->on('frames.bucket_id', '=', 'buckets.id');
                     })
                     ->where('frames.id', $frame_id)
-                    ->get();
+                    ->first();
 
         return $contents;
     }
@@ -54,23 +63,10 @@ class ContentsPlugin extends UserPluginBase
         // データ取得
         $contents = $this->getContents($frame_id);
 
-        // Page データ
-        $page = Page::where('id', $page_id)->first();
-
-        // コンテンツ1件分の変数
-        $content = null;
-
-        // DB::table では、コレクションで返されるので、データがない場合は[0]件目とすると例外がでるので、空を返す。
-        if (!$contents->isEmpty()) {
-            $content = $contents[0];
-        }
-
         // 表示テンプレートを呼び出す。
-        return view(
-            $this->getViewPath('contents'), [
-            'frame_id' => $frame_id,
-            'contents' => $content,
-            'page' => $page,
+        return $this->view(
+            'contents', [
+            'contents' => $contents,
         ]);
     }
 
@@ -83,30 +79,20 @@ class ContentsPlugin extends UserPluginBase
         // データ取得
         $contents = $this->getContents($frame_id);
 
-        // Page データ
-        $page = Page::where('id', $page_id)->first();
-
-        // コンテンツ1件分の変数
-        $content = null;
-
-        // DB::table では、コレクションで返されるので、データがない場合は[0]件目とすると例外がでるので、空を返す。
-        if ($contents->isEmpty()) {
+        // データの存在確認をして、画面を切り替える
+        if (empty($contents)) {
 
             // データなしの表示テンプレートを呼び出す。
-            return view(
-                $this->getViewPath('contents_edit_nodata'), [
-                'frame_id' => $frame_id,
+            return $this->view(
+                'contents_edit_nodata', [
                 'contents' => null,
-                'page' => $page,
             ]);
         }
 
         // 表示テンプレートを呼び出す。
-        return view(
-            $this->getViewPath('contents_edit_show'), [
-            'frame_id' => $frame_id,
-            'contents' => $contents[0],
-            'page' => $page,
+        return $this->view(
+            'contents_edit_show', [
+            'contents' => $contents,
         ]);
     }
 
@@ -119,26 +105,19 @@ class ContentsPlugin extends UserPluginBase
         // データ取得
         $contents = $this->getContents($frame_id);
 
-        // Page データ
-        $page = Page::where('id', $page_id)->first();
-
-        // DB::table では、コレクションで返されるので、データがない場合は[0]件目に空のクラスを用意しておく。
-        if ($contents->isEmpty()) {
+        // データがない場合は、新規登録用画面
+        if (empty($contents)) {
             // 新規登録画面を呼び出す
-            return view(
-                $this->getViewPath('contents_create'), [
-                'frame_id' => $frame_id,
-                'page' => $page
+            return $this->view(
+                'contents_create', [
             ]);
 
         }
         else {
-            // [0]件目を返し、編集画面テンプレートを呼び出す。
-            return view(
-                $this->getViewPath('contents_edit'), [
-                'frame_id' => $frame_id,
-                'contents' => $contents[0],
-                'page' => $page
+            // 編集画面テンプレートを呼び出す。
+            return $this->view(
+                'contents_edit', [
+                'contents' => $contents,
             ]);
         }
     }
@@ -148,9 +127,6 @@ class ContentsPlugin extends UserPluginBase
      */
     public function datalist($request, $page_id, $frame_id, $id = null)
     {
-        // Page データ
-        $page = Page::where('id', $page_id)->first();
-
         // ソート設定に初期設定値をセット
         $sort_inits = [
             "contents_updated_at" => ["desc", "asc"],
@@ -195,12 +171,10 @@ class ContentsPlugin extends UserPluginBase
                     ->orderBy($request_order_by[0],        $request_order_by[1])
                     ->paginate(10);
 
-        return view(
-            $this->getViewPath('contents_edit_datalist'), [
-            'frame_id' => $frame_id,
-            'page' => $page,
-            'buckets' => $buckets,
-            'order_link' => $order_link,
+        return $this->view(
+            'contents_edit_datalist', [
+            'buckets'           => $buckets,
+            'order_link'        => $order_link,
             'request_order_str' => implode( '|', $request_order_by )
         ]);
     }
@@ -210,7 +184,6 @@ class ContentsPlugin extends UserPluginBase
     */
     public function store($request, $page_id = null, $frame_id = null, $id = null)
     {
-//Log::debug("store");
         // バケツの登録
         $bucket_id = DB::table('buckets')->insertGetId([
               'bucket_name' => '無題',
@@ -234,7 +207,6 @@ class ContentsPlugin extends UserPluginBase
     */
     public function update($request, $page_id = null, $frame_id = null, $id = null)
     {
-//Log::debug("update");
         Contents::where('id', $id)
                   ->update(['content_text' => $request->contents]);
         return;
@@ -246,8 +218,8 @@ class ContentsPlugin extends UserPluginBase
     public function change($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
-        \App\Frame::where('id', $frame_id)
-                  ->update(['bucket_id' => $request->select_bucket]);
+        Frame::where('id', $frame_id)
+               ->update(['bucket_id' => $request->select_bucket]);
         return;
     }
 

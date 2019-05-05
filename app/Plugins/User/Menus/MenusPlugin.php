@@ -37,14 +37,14 @@ class MenusPlugin extends UserPluginBase
         $pages = Page::defaultOrderWithDepth();
 
         // 表示ページ
-        $current_page = Page::where('id', $page_id)->first();
+//        $current_page = Page::where('id', $page_id)->first();
 
         // 画面へ
         return view(
             $this->getViewPath('menus'), [
-            'page_id'      => $page_id,
-            'pages'        => $pages,
-            'current_page' => $current_page,
+            'page_id' => $page_id,
+            'pages'   => $pages,
+            'page'    => $this->page,
         ]);
     }
 }

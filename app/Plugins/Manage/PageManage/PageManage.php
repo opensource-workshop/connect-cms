@@ -55,9 +55,13 @@ class PageManage extends ManagePluginBase
         // ページID で1件取得
         $page = Page::where('id', $page_id)->first();
 
+        // ページデータの取得(laravel-nestedset 使用)
+        $pages = Page::defaultOrderWithDepth();
+
         // 画面呼び出し
         return view('plugins.manage.page.page_edit',[
-            "page" => $page
+            "page"  => $page,
+            "pages" => $pages,
         ]);
     }
 

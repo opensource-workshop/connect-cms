@@ -19,19 +19,28 @@ class PluginBase
 {
 
     // プラグインの対象者（User or Manager）：view ファイルの呼び出しでディレクトリ判定に使用するため。
-    var $plugin_target = null;
+//    var $plugin_target = null;
 
     // プラグイン名：view ファイルの呼び出しでディレクトリ判定に使用するため。
-    var $plugin_name = null;
+//    var $plugin_name = null;
 
     /**
      * コンストラクタ（プラグインの対象者とプラグイン名を受け取る）
      *
      */
-    public function __construct($plugin_target = null, $plugin_name = null)
+//    public function __construct($plugin_target = null, $plugin_name = null)
+//    {
+//        $this->plugin_target = $plugin_target;
+//        $this->plugin_name = $plugin_name;
+//    }
+
+    /**
+     * 関数の有無
+     *
+     */
+    public function function_exists($function_name)
     {
-        $this->plugin_target = $plugin_target;
-        $this->plugin_name = $plugin_name;
+        return method_exists($this, $function_name);
     }
 
     /**
@@ -49,6 +58,7 @@ class PluginBase
      * レンダリングエンジンのう回路  (※ 保留 2019-03-15 @include で見に行くパスが変更できなかった)
      *
      */
+/*
     public function view($dir, $arg = null)
     {
         $app = app();
@@ -72,5 +82,6 @@ class PluginBase
         // 画面内容を呼びもとに返す。
         return $str;
     }
+*/
 }
 

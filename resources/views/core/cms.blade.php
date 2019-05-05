@@ -2,7 +2,7 @@
  * CMSメイン画面
  *
  * @param obj $frames 表示すべきフレームの配列
- * @param obj $current_page 現在表示中のページ
+ * @param obj $page 現在表示中のページ
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア

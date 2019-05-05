@@ -7,7 +7,13 @@
  --}}
 
 {{-- 機能選択タブ --}}
-@include('plugins.user.contents.default.contents_edit_tab')
+<ul class="nav nav-tabs">
+    {{-- プラグイン側のフレームメニュー --}}
+    @include('plugins.user.contents.frame_edit_tab')
+
+    {{-- コア側のフレームメニュー --}}
+    @include('core.cms_frame_edit_tab')
+</ul>
 
 {{-- データ --}}
 <p>

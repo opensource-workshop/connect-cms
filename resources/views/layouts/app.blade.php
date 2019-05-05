@@ -51,8 +51,8 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
-    @if (isset($current_page))
-        <link href="/file/css/{{$current_page->id}}.css" rel="stylesheet">
+    @if (isset($page))
+        <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
     @endif
 
     <!-- jQuery -->
@@ -123,23 +123,23 @@
 
                     @if(isset($page_list))
                     <div class="list-group visible-xs">
-                    @foreach($page_list as $page)
+                    @foreach($page_list as $page_obj)
 
                         {{-- 非表示のページは対象外 --}}
-                        @if ($page->display_flag == 1)
+                        @if ($page_obj->display_flag == 1)
 
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                            @if (isset($current_page) && $page->id == $current_page->id)
-                            <a href="{{ url("$page->permanent_link") }}" class="list-group-item active">
+                            @if (isset($page_obj) && $page_obj->id == $page->id)
+                            <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item active">
                             @else
-                            <a href="{{ url("$page->permanent_link") }}" class="list-group-item">
+                            <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item">
                             @endif
 
                             {{-- 各ページの深さをもとにインデントの表現 --}}
-                            @for ($i = 0; $i < $page->depth; $i++)
-                                <span @if ($i+1==$page->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
+                            @for ($i = 0; $i < $page_obj->depth; $i++)
+                                <span @if ($i+1==$page_obj->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
                             @endfor
-                            {{$page->page_name}}
+                            {{$page_obj->page_name}}
                             </a>
                         @endif
 
@@ -154,7 +154,9 @@
                             @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
                                 <a class="list-group-item" href="{{ route('login') }}">ログイン</a>
                             @endif
-                            <a class="list-group-item" href="{{ route('register') }}">ユーザ登録</a>
+                            @if (isset($configs) && ($configs['user_register_enable'] == '1'))
+                                <a class="list-group-item" href="{{ route('register') }}">ユーザ登録</a>
+                            @endif
                         @else
                             <li class="dropdown list-unstyled">
                                 <a href="#" class="dropdown-toggle list-group-item" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
@@ -187,7 +189,9 @@
                             @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
                                 <li><a href="{{ route('login') }}">ログイン</a></li>
                             @endif
-                            <li><a href="{{ route('register') }}">ユーザ登録</a></li>
+                            @if (isset($configs) && ($configs['user_register_enable'] == '1'))
+                                <li><a href="{{ route('register') }}">ユーザ登録</a></li>
+                            @endif
                         @else
                             {{-- <li><a href="{{ url('/manage/page/') }}">管理ページ</a></li> --}}
                             <li class="dropdown">
@@ -197,8 +201,8 @@
 
                                 <ul class="dropdown-menu">
 {{--
-                                    @if (isset($current_page))
-                                        <li><a href="{{ url('/manage/pluginadd') }}/index/{{$current_page->id}}">プラグイン追加</a></li>
+                                    @if (isset($page_obj))
+                                        <li><a href="{{ url('/manage/pluginadd') }}/index/{{$page_obj->id}}">プラグイン追加</a></li>
                                     @else
                                         <li><a href="{{ url('/manage/pluginadd') }}">プラグイン追加</a></li>
                                     @endif
@@ -239,7 +243,7 @@
 
     {{-- プラグイン追加・ダイアログ --}}
     @auth
-    @if (isset($current_page))
+    @if (isset($page) && isset($layouts_info))
     <div class="modal fade" id="sampleModal" tabindex="-1" data-backdrop="static">
         <div class="modal-dialog">
             <div class="modal-content">

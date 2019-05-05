@@ -34,7 +34,7 @@ class DefaultController extends ConnectController
     public function __invoke(Request $request)
     {
         // フレーム一覧取得（メインエリアのみ）
-        $frames = $this->getFramesMain($this->current_page->id);
+        $frames = $this->getFramesMain($this->page->id);
 
         // プラグインのインスタンス取得（メインエリアのみ）
         $plugin_instances = $this->createInstanceMain($frames);
@@ -49,11 +49,39 @@ class DefaultController extends ConnectController
         $pages = Page::defaultOrder()->get();
 
 
-        // フレームで使用するテンプレート・リスト
+        // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
+        $action_core_frame = $this->getActionCoreFrame($request);
+
+        // view の場所を変更するテスト
+        //$plugin_instances = ['contents' => new $class_name("User", "contents")];
+
+        // メインページを呼び出し(coreのinvokeコントローラでは、スーパークラスのviewを使用)
+        // 各フレーム内容の表示はメインページから行う。
+        return $this->view('core.cms', [
+            'action'            => $request->action,
+            'frame_id'          => $request->frame_id,
+            'page'              => $this->page,
+            'frames'            => $frames,
+            'pages'             => $pages,
+            'plugin_instances'  => $plugin_instances,
+            'layouts_info'      => $layouts_info,
+            'action_core_frame' => $action_core_frame,
+        ]);
+    }
+
+
+    /**
+     *  フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
+     *
+     */
+    public function getActionCoreFrame($request)
+    {
+        // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
         // とりあえずココで処理。後でcore 系のアクションを見直してリファクタリングすること。
         $action_core_frame = null;
         $target_frame_templates = array();
-        if (!empty($request->frame_action)) {
+
+        if (!empty($request->action)) {
  
             // Frame データ
             $action_core_frame = Frame::where('id', $request->frame_id)->first();
@@ -71,20 +99,7 @@ class DefaultController extends ConnectController
             }
             $action_core_frame->setTemplates($target_frame_templates);
         }
-
-        // view の場所を変更するテスト
-        //$plugin_instances = ['contents' => new $class_name("User", "contents")];
-
-        // メインページを呼び出し(coreのinvokeコントローラでは、スーパークラスのviewを使用)
-        // 各フレーム内容の表示はメインページから行う。
-        return $this->view('core.cms', [
-            'current_page'      => $this->current_page,
-            'frames'            => $frames,
-            'pages'             => $pages,
-            'plugin_instances'  => $plugin_instances,
-            'layouts_info'      => $layouts_info,
-            'action_core_frame' => $action_core_frame,
-        ]);
+        return $action_core_frame;
     }
 
     /**
@@ -95,10 +110,13 @@ class DefaultController extends ConnectController
      */
     public function invokePost(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
+
+// 親クラスで取得しているはず
+/*
         if (empty($page_id)) {
 
             // カレントページの取得
-            $this->current_page = $this->current_page();
+            $this->page = $this->current_page();
 
             // Page_id
             $pages_id = $this->current_page->id;
@@ -114,9 +132,10 @@ class DefaultController extends ConnectController
             // Page_id
             $pages_id = $page_id;
         }
+*/
 
         // フレーム一覧取得
-        $frames = $this->getFramesMain($this->current_page->id);
+        $frames = $this->getFramesMain($this->page->id);
 
         // インスタンス取得（メインエリアのみ）
         $plugin_instances = $this->createInstanceMain($frames);
@@ -133,18 +152,24 @@ class DefaultController extends ConnectController
         // view の場所を変更するテスト
         //$plugin_instances = ['contents' => new $class_name("User", "contents")];
 
+        // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
+        $action_core_frame = $this->getActionCoreFrame($request);
+
         // メインページを呼び出し
         // 各フレーム内容の表示はメインページから行う。
+//Log::debug($action);
+//Log::debug($frame_id);
         return $this->view('core.cms', [
             'action'           => $action,
             'frame_id'         => $frame_id,
             'id'               => $id,
 
-            'current_page'     => $this->current_page,
+            'page'             => $this->page,
             'frames'           => $frames,
             'pages'            => $pages,
             'plugin_instances' => $plugin_instances,
             'layouts_info'     => $this->getLayoutsInfo(),
+            'action_core_frame' => $action_core_frame,
         ]);
 
         return;
@@ -169,7 +194,7 @@ class DefaultController extends ConnectController
 
         // 引数のアクションと同じメソッドを呼び出す。
         $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
-        $contentsPlugin = new $class_name($action_frame);
+        $contentsPlugin = new $class_name($this->page, $action_frame);
         $contentsPlugin->$action($request, $page_id, $frame_id, $id);
 
         // 2ページ目以降を表示している場合は、表示ページに遷移
@@ -205,7 +230,9 @@ class DefaultController extends ConnectController
         $plugin_instances = array();
         foreach ($frames as $frame) {
             $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
-            $plugin_instances[$frame->frame_id] = new $class_name($frame);
+//Log::debug($this->page);
+//Log::debug(print_r($frame,true));
+            $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame);
         }
         return $plugin_instances;
     }
@@ -239,7 +266,7 @@ class DefaultController extends ConnectController
             if (array_key_exists('frames', $area)) {
                 foreach ($area['frames'] as $frame) {
                     $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
-                    $plugin_instances[$frame->frame_id] = new $class_name($frame);
+                    $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame);
                 }
             }
         }

@@ -1,7 +1,7 @@
 {{--
  * プラグイン追加 画面パーツ
  *
- * @param obj $current_page 現在表示中のページ
+ * @param obj $page 現在表示中のページ
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
@@ -12,7 +12,7 @@
         form_add_plugin{{$area_id}}.submit();
     }
 </script>
-<form action="{{url('/core/frame/addPlugin')}}/{{$current_page->id}}" name="form_add_plugin{{$area_id}}" id="form_add_plugin{{$area_id}}" method="POST">
+<form action="{{url('/core/frame/addPlugin')}}/{{$page->id}}" name="form_add_plugin{{$area_id}}" id="form_add_plugin{{$area_id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="action" value="plugin_add">
     <input type="hidden" name="area_id" value="{{$area_id}}">

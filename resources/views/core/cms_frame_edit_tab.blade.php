@@ -10,17 +10,20 @@
 {{-- コア側のフレームメニュー --}}
 
 {{-- フレーム編集 --}}
-@if (app('request')->input('frame_action') == 'frame_setting')
+@if (app('request')->input('action') == 'frame_setting')
     <li role="presentation" class="active">
 @else
     <li role="presentation">
 @endif
-<a href="{{URL::to($page->permanent_link)}}/?frame_action=frame_setting&frame_id={{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li>
+{{-- <a href="{{URL::to($page->permanent_link)}}/?action=frame_setting&frame_id={{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li> --}}
+{{-- <a href="{{URL::to('/')}}/plugin/blogs/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li> --}}
+<a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li>
 
 {{-- フレーム削除 --}}
-@if (app('request')->input('frame_action') == 'frame_delete')
+@if (app('request')->input('action') == 'frame_delete')
     <li role="presentation" class="active">
 @else
     <li role="presentation">
 @endif
-<a href="{{URL::to($page->permanent_link)}}/?frame_action=frame_delete&frame_id={{ $frame->id }}#{{ $frame->id }}">フレーム削除</a></li>
+{{-- <a href="{{URL::to($page->permanent_link)}}/?action=frame_delete&frame_id={{ $frame->id }}#{{ $frame->id }}">フレーム削除</a></li> --}}
+<a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム削除</a></li>

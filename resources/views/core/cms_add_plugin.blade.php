@@ -1,14 +1,14 @@
 {{--
  * プラグイン追加 画面パーツ
  *
- * @param obj $current_page 現在表示中のページ
+ * @param obj $page 現在表示中のページ
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
  --}}
 {{-- Todo：今は認証有無のみチェック ＞ 最終的には権限をチェック --}}
 @auth
-<form action="{{url('/core/frame/addPlugin')}}/{{$current_page->id}}" name="form_add_plugin" method="POST">
+<form action="{{url('/core/frame/addPlugin')}}/{{$page->id}}" name="form_add_plugin" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="action" value="plugin_add">
     <div class="col-sm-2 pull-right" style="padding-right: 0; margin-bottom: 5px;">

@@ -7,7 +7,13 @@
  --}}
 
 {{-- 機能選択タブ --}}
-@include('plugins.user.contents.default.contents_edit_tab')
+<ul class="nav nav-tabs">
+    {{-- プラグイン側のフレームメニュー --}}
+    @include('plugins.user.contents.frame_edit_tab')
+
+    {{-- コア側のフレームメニュー --}}
+    @include('core.cms_frame_edit_tab')
+</ul>
 
 {{-- データ --}}
 <p>
@@ -41,10 +47,10 @@
     <div class="row">
         <div class="form-group container-fluid row">
             <div class="text-center">
-                <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}/'">キャンセル</button>
                 <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')">
-                    データ削除
+                    <span class="glyphicon glyphicon-ok"></span> データ削除
                 </button>
+                <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}/'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
             </div>
         </div>
     </div>
