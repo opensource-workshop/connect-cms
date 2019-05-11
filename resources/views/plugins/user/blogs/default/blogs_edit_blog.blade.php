@@ -8,7 +8,7 @@
 
 <ul class="nav nav-tabs">
     {{-- プラグイン側のフレームメニュー --}}
-    @include('plugins.user.blogs.frame_edit_tab')
+    @include('plugins.user.blogs.blogs_frame_edit_tab')
 
     {{-- コア側のフレームメニュー --}}
     @include('core.cms_frame_edit_tab')

@@ -13,9 +13,11 @@
 
     <p class="text-right">
         {{-- 変更画面へのリンク --}}
+        @if ($frame->page_id == $page->id)
         <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#{{$frame_id}}">
             <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
         </a>
+        @endif
     </p>
     @endauth
 @else

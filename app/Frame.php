@@ -37,8 +37,8 @@ class Frame extends Model
     public function includeFrameTab($page, $frame, $action)
     {
         // プラグイン側のフレームメニューが存在する場合は、読み込む
-        if (file_exists(resource_path() . '/views/plugins/user/' . $this->plugin_name . '/frame_edit_tab.blade.php')) {
-            $frame_view = view('plugins.user.' . $this->plugin_name . '.frame_edit_tab', ['page' => $page, 'frame' => $frame, 'action' => $action]);
+        if (file_exists(resource_path() . '/views/plugins/user/' . $this->plugin_name . '/' . $this->plugin_name . '_frame_edit_tab.blade.php')) {
+            $frame_view = view('plugins.user.' . $this->plugin_name . '.' . $this->plugin_name . '_frame_edit_tab', ['page' => $page, 'frame' => $frame, 'action' => $action]);
             echo $frame_view->render();
         }
     }

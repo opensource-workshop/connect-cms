@@ -6,6 +6,15 @@
  * @category フォーム・プラグイン
  --}}
 
+{{-- 機能選択タブ --}}
+<ul class="nav nav-tabs">
+    {{-- プラグイン側のフレームメニュー --}}
+    @include('plugins.user.forms.forms_frame_edit_tab')
+
+    {{-- コア側のフレームメニュー --}}
+    @include('core.cms_frame_edit_tab')
+</ul>
+
 @auth
 {{-- カラムの追加 --}}
 {{--
@@ -31,45 +40,84 @@
 <script type="text/javascript">
     {{-- 項目追加のsubmit JavaScript --}}
     function submit_setting_column() {
-        form_columns.action = "/plugin/forms/settingColumn/{{$page->id}}/{{$frame_id}}";
+        form_columns.action = "/plugin/forms/settingColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
         form_columns.submit();
     }
 
     {{-- 項目削除のsubmit JavaScript --}}
     function submit_destroy_column(row_no) {
-        form_columns.action = "/plugin/forms/destroyColumn/{{$page->id}}/{{$frame_id}}";
+        form_columns.action = "/plugin/forms/destroyColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
         form_columns.destroy_no.value = row_no;
         form_columns.submit();
     }
 
     {{-- ページの上移動用フォームのsubmit JavaScript --}}
     function submit_sequence_up( id ) {
-        form_columns.action = "/plugin/forms/sequenceUp/{{$page->id}}/{{$frame_id}}/" + id;
+        form_columns.action = "/plugin/forms/sequenceUp/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
         form_columns.submit();
     }
 
     {{-- ページの下移動用フォームのsubmit JavaScript --}}
     function submit_sequence_down( id ) {
-        form_columns.action = "/plugin/forms/sequenceDown/{{$page->id}}/{{$frame_id}}/" + id;
+        form_columns.action = "/plugin/forms/sequenceDown/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
         form_columns.submit();
+    }
+
+    {{-- 項目の再設定フォームのsubmit JavaScript --}}
+    function submit_reload_column(row_no) {
+
+        {{-- POPUP画面の選択肢をメインのフォームに取り込んでsubmitする --}}
+        $('#column_detail_tbody' + row_no + ' input[name^=forms]').each(function(i, elem) {
+            //console.log(elem);
+            var clone_elem = $(elem).clone();
+            clone_elem.css('display', 'none');
+            $('#form_columns').append(clone_elem);
+        });
+        //console.log($('#form_columns'));
+
+        form_columns.action = "/plugin/forms/reloadColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        form_columns.submit();
+    }
+
+    {{-- 選択肢の追加 --}}
+    function add_select_row(row_no) {
+
+        {{-- 選択肢の行番号用変数のカウントアップ --}}
+        var select_count = $("#select_count"+row_no).val();
+        var new_count = parseInt(select_count,10)+1;
+        $("#select_count"+row_no).val(new_count);
+
+        {{-- 選択肢の行番号取得（tr の数） --}}
+        // var size = $('#column_detail_tbody' + row_no + ' tr').length;
+
+        {{-- 選択肢の行をクローンして、クラス名を付け直す --}}
+        var clone_tr = $(".column_detail_row_hidden"+row_no).clone();
+        clone_tr.removeClass("column_detail_row_hidden"+row_no).addClass("column_detail_row_"+row_no+"_"+new_count);
+        clone_tr.find('.select_value').attr('name', 'forms[{{$frame_id}}][' + row_no + '][select][' + new_count + '][value]');
+        clone_tr.css('display', 'table-row');
+        clone_tr.appendTo($("#column_detail_tbody"+row_no));
+    }
+
+    {{-- 選択肢の削除 --}}
+    function remove_select_row(row_no,select_no) {
+        $(".column_detail_row_" + row_no + '_' + select_no).remove();
     }
 </script>
 
 {{-- キャンセル用のフォーム。キャンセル時はセッションをクリアするため、トークン付きでPOST でsubmit したい。 --}}
-<form action="/plugin/forms/cancel/{{$page->id}}/{{$frame_id}}" name="forms_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
+<form action="/redirect/plugin/forms/cancel/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" name="forms_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
     {{ csrf_field() }}
 </form>
 
 <!-- Add or Update Form Button -->
 <div class="form-group">
-    <form action="/plugin/forms/save/{{$page->id}}/{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
+    <form action="/plugin/forms/save/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="forms_id" value="{{$forms_id}}">
         <input type="hidden" name="destroy_no" value="">
         <input type="hidden" name="return_frame_action" value="edit">
 
-        <div class="panel panel-info">
-            <div class="panel-heading">項目設定</div>
+        <div class="panel panel-info table-responsive">
 
             {{-- カラムの一覧 --}}
             <table class="table table-hover" style="margin-bottom: 0;">
@@ -80,7 +128,7 @@
                     <th>型</th>
                     <th>必須</th>
                     <th>まとめ数</th>
-                    <th>サイズ</th>
+                    <th>削除</th>
                     <th></th>
                 </tr>
             </thead>
@@ -98,12 +146,16 @@
         </div>
         <div class="text-center">
             <button type="submit" class="btn btn-primary form-horizontal">
-                フォーム保存
+                <span class="glyphicon glyphicon-ok"></span> フォーム保存
             </button>
-{{--            <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'">キャンセル</button> --}}
-            <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="javascript:forms_cancel.submit();">キャンセル</button>
+            <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="javascript:forms_cancel.submit();"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
         </div>
     </form>
 </div>
+
+{{-- POPUP用、各行の詳細画面 --}}
+@foreach($rows as $row)
+    @include('plugins.user.forms.default.forms_edit_row_detail',['row_no' => $loop->iteration])
+@endforeach
 
 @endauth

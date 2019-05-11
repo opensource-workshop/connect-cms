@@ -6,7 +6,7 @@
  * @category フォーム・プラグイン
  --}}
 <tr @if ($delete_flag == '1') class="hidden" @endif>
-    <td style="vertical-align: middle;">
+    <td style="vertical-align: middle;" nowrap>
         @if ($select_flag)
             {{-- 上移動 --}}
             <button type="button" class="btn btn-default btn-xs" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row['columns_id']}})">
@@ -20,7 +20,7 @@
         @endif
     </td>
     <td>
-        <input class="form-control" type="text" name="forms[{{$frame_id}}][{{$row_no}}][column_name]" value="@if($select_flag){{$row['column_name']}}@endif">
+        <input class="form-control" type="text" name="forms[{{$frame_id}}][{{$row_no}}][column_name]" value="@if($select_flag){{$row['column_name']}}@endif" style="min-width: 150px;">
         {{-- forms_columns テーブルのid を隠しておく。DB更新の際、変更分とわかるようにするため。 --}}
         @if ($select_flag)
             <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][columns_id]" value="{{$row['columns_id']}}">
@@ -36,7 +36,7 @@
         @endif
     </td>
     <td>
-        <select class="form-control" name="forms[{{$frame_id}}][{{$row_no}}][column_type]">
+        <select class="form-control" name="forms[{{$frame_id}}][{{$row_no}}][column_type]" style="min-width: 100px;">
             <option value="">項目追加...</option>
             <option value="text"     @if ($select_flag && $row['column_type'] == 'text')     selected @endif>1行文字列型</option>
             <option value="textarea" @if ($select_flag && $row['column_type'] == 'textarea') selected @endif>複数行文字列型</option>
@@ -66,14 +66,37 @@
             </select>
         @elseif ($select_flag == 0)
             <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][frame_col]" value="0">
+        @else
+            @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox')
+                <button class="btn btn-primary form-horizontal" onclick="javascript:return false;" data-toggle="modal" data-target="#formsDetailModal{{$row_no}}"><span class="glyphicon glyphicon-new-window"></span> <span class="hidden-sm hidden-xs">詳細</span></button>
+            @endif
         @endif
     </td>
     <td style="vertical-align: middle;">
         @if ($select_flag == 1)
-            <input type="button" class="btn btn-danger form-horizontal" onclick="javascript:submit_destroy_column({{$row_no}});" value="削除">
+            <button class="btn btn-danger form-horizontal" onclick="javascript:submit_destroy_column({{$row_no}});"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-sm hidden-xs">削除</span></button>
             {{-- <span class="glyphicon glyphicon-trash"> --}}
         @else
-            <input type="button" class="btn btn-primary form-horizontal" onclick="javascript:submit_setting_column();" value="追加">
+            <button class="btn btn-primary form-horizontal" onclick="javascript:submit_setting_column();"><span class="glyphicon glyphicon-pencil"></span> <span class="hidden-sm hidden-xs">追加</span></button>
         @endif
     </td>
 </tr>
+@if ($select_flag)
+    @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox')
+    <tr>
+        <td style="border-top: none; padding-top: 0;"></td>
+        <td style="border-top: none; padding-top: 0;" colspan="2">
+        @if (isset($row['select']))
+            <span class="glyphicon glyphicon-list-alt"></span> 
+            @foreach ($row['select'] as $select)
+                {{$select['value']}}
+                @if (!$loop->last),@endif
+            @endforeach
+        @else
+            <div class="text-danger"><span class="glyphicon glyphicon-info-sign"></span> 選択肢がありません。設定してください。</div>
+        @endif
+        </td>
+        <td style="border-top: none; padding-top: 0;" colspan="3"></td>
+    </tr>
+    @endif
+@endif

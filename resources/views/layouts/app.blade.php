@@ -207,7 +207,7 @@
                                         <li><a href="{{ url('/manage/pluginadd') }}">プラグイン追加</a></li>
                                     @endif
 --}}
-                                    <li><a href="#" data-toggle="modal" data-target="#sampleModal">プラグイン追加</a></li>
+                                    <li><a href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a></li>
                                     <li role="separator" class="divider" style="margin: 4px 0 10px 0;"></li>
                                     <li><a href="{{ url('/manage/page') }}">ページ管理</a></li>
                                     <li><a href="{{ url('/manage/site') }}">サイト管理</a></li>
@@ -244,7 +244,7 @@
     {{-- プラグイン追加・ダイアログ --}}
     @auth
     @if (isset($page) && isset($layouts_info))
-    <div class="modal fade" id="sampleModal" tabindex="-1" data-backdrop="static">
+    <div class="modal fade" id="pluginAddModal" tabindex="-1" data-backdrop="static">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
