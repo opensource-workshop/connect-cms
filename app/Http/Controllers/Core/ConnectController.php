@@ -153,7 +153,8 @@ class ConnectController extends Controller
 
         // メインエリア以外のフレームの取得
         $frames = Frame::where('area_id', '!=', 2)
-                       ->select('frames.*', 'frames.id as frame_id')
+                       ->select('frames.*', 'frames.id as frame_id', 'plugins.plugin_name_full')
+                       ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
                        ->whereIn('page_id', $page_ins)
                        ->orderBy('area_id', 'asc')
                        ->orderBy('page_id', 'desc')

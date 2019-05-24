@@ -4,8 +4,9 @@ namespace App\Plugins\User;
 
 use Illuminate\Support\Facades\Log;
 
-use App\Plugins\PluginBase;
+use DB;
 
+use App\Plugins\PluginBase;
 use App\Frame;
 
 /**
@@ -75,6 +76,16 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  View のパス
+     *
+     * @return view
+     */
+    public function getCommonViewPath($blade_name)
+    {
+        return 'plugins.common' . '.' . $blade_name;
+    }
+
+    /**
      *  編集画面の最初のタブ
      *
      *  フレームの編集画面がある各プラグインからオーバーライドされることを想定。
@@ -98,7 +109,7 @@ class UserPluginBase extends PluginBase
      * view 関数のラッパー
      * 共通的な要素を追加する。
      */
-    public function view($blade_name, $arg = null)
+    public function addArg($arg)
     {
         // アクションをview に渡す
         $arg['action'] = $this->action;
@@ -115,7 +126,58 @@ class UserPluginBase extends PluginBase
         // 表示しているフレームID
         $arg['frame_id'] = $this->frame->id;
 
+        return $arg;
+    }
+    /**
+     * view 関数のラッパー
+     * 共通的な要素を追加する。
+     */
+    public function view($blade_name, $arg = null)
+    {
+        // view の共通引数のセット
+        $arg = $this->addArg($arg);
+
         // 表示テンプレートを呼び出す。
-        return view( $this->getViewPath($blade_name), $arg);
+        return view($this->getViewPath($blade_name), $arg);
+    }
+
+    /**
+     * view 関数のラッパー
+     * 共通的な要素を追加する。
+     */
+    public function commonView($blade_name, $arg = null)
+    {
+        // view の共通引数のセット
+        $arg = $this->addArg($arg);
+
+        // 表示テンプレートを呼び出す。
+        return view($this->getCommonViewPath($blade_name), $arg);
+    }
+
+    /**
+     * フォーム選択表示関数
+     */
+    public function datalist($request, $page_id, $frame_id, $id = null)
+    {
+        // 対象のプラグイン
+        $plugin_name = $this->frame->plugin_name;
+
+        // Frame データ
+        $plugin_frame = DB::table('frames')
+                            ->select('frames.*')
+                            ->where('frames.id', $frame_id)->first();
+
+        // データ取得（1ページの表示件数指定）
+        $plugins = DB::table($plugin_name)
+                       ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
+                       ->orderBy('created_at', 'desc')
+                       ->paginate(10);
+
+        // 表示テンプレートを呼び出す。
+        return $this->commonView(
+            'edit_datalist', [
+            'plugin_frame' => $plugin_frame,
+            'plugins'      => $plugins,
+        ]);
     }
 }

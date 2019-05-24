@@ -19,7 +19,7 @@
             <option value="contents">固定記事</option>
             <option value="blogs">ブログ</option>
             <option value="menus">メニュー</option>
-            <option value="forms">登録フォーム</option>
+            <option value="forms">フォーム</option>
             <option value="sampleforms">サンプルフォーム</option>
         </select>
     </div>

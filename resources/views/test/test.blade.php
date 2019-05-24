@@ -1,9 +1,10 @@
 <div class="modal-header">
 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-<h4 class="modal-title" id="myModalLabel">ƒ^ƒCƒgƒ‹</h4>
+<h4 class="modal-title" id="myModalLabel">ã‚¿ã‚¤ãƒˆãƒ«</h4>
 </div>
 <div class="modal-body">
-“®“I‚É‚¢‚ê‚½‚¢“à—e‚ð‘}“ü
+å‹•çš„ã«ã„ã‚ŒãŸã„å†…å®¹ã‚’æŒ¿å…¥
+{{-- $frame_id --}}
 </div>
 <div class="modal-footer">
 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

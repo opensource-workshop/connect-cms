@@ -22,25 +22,40 @@
             @case("group")
                 @php
                     // グループカラムの幅の計算
-                    $col_count = floor(10/count($form_column->group));
+                    $col_count = floor(12/count($form_column->group));
+                    if ($col_count < 3) {
+                        $col_count = 3;
+                    }
                 @endphp
+                <div class="col-sm-10" style="padding-left: 0px; padding-right: 0px;">
+                <div class="container-fluid" style="padding: 0;">
                 @foreach($form_column->group as $group_row)
                     <div class="col-sm-{{$col_count}}">
                         @if ($group_row->required)<label class="label label-danger">必須</label> @endif
                         <label class="control-label" style="vertical-align: top;">{{$group_row->column_name}}</label>
+
+                        @include('plugins.user.forms.default.forms_input_text',['form_obj' => $group_row])
+{{--
                         <input name="forms_columns_value[{{$group_row->id}}]" class="form-control" type="{{$group_row->column_type}}" value="{{old('forms_columns_value.'.$group_row->id, $request->forms_columns_value[$group_row->id])}}" />
                         @if ($errors && $errors->has("forms_columns_value.$group_row->id"))
                             <div class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$group_row->id")}}</div>
                         @endif
+--}}
                     </div>
                 @endforeach
+                </div>
+                </div>
                 @break
             @case("text")
                 <div class="col-sm-10">
-                <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="{{$form_column->column_type}}" value="{{old('forms_columns_value.'.$form_column->id, $request->forms_columns_value[$form_column->id])}}">
+
+                    @include('plugins.user.forms.default.forms_input_text',['form_obj' => $form_column])
+{{--
+                    <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="{{$form_column->column_type}}" value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_column->id, $request->forms_columns_value[$form_column->id])}}@endif">
                     @if ($errors && $errors->has("forms_columns_value.$form_column->id"))
                         <div class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$form_column->id")}}</div>
                     @endif
+--}}
                 </div>
                 @break
             @case("textarea")

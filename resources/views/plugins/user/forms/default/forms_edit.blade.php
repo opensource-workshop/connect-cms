@@ -1,5 +1,5 @@
 {{--
- * 設定画面テンプレート。
+ * カラム編集画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -16,6 +16,13 @@
 </ul>
 
 @auth
+@if (empty($forms_id))
+    <div class="alert alert-warning" style="margin-top: 10px;">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        フォーム選択画面から選択するか、フォーム新規作成で作成してください。
+    </div>
+@else
+
 {{-- カラムの追加 --}}
 {{--
 <form action="{{URL::to($page->permanent_link)}}?action=confirm&frame_id={{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST">
@@ -134,12 +141,12 @@
             </thead>
             <tbody>
                 @foreach($rows as $row)
-                    @include('plugins.user.forms.default.forms_edit_row',['select_flag' => 1, 'row_no' => $loop->iteration, 'delete_flag' => $row['delete_flag']])
+                    @include('plugins.user.forms.default.forms_edit_row',['row_no' => $loop->iteration, 'delete_flag' => $row['delete_flag']])
                 @endforeach
                 <tr>
                     <th colspan="4">【項目の追加行】</th>
                 </tr>
-                @include('plugins.user.forms.default.forms_edit_row',['select_flag' => 0, 'row_no' => 0, 'delete_flag' => 0])
+                @include('plugins.user.forms.default.forms_edit_row_add',['row_no' => 0, 'delete_flag' => 0])
                 </tr>
             </tbody>
             </table>
@@ -158,4 +165,5 @@
     @include('plugins.user.forms.default.forms_edit_row_detail',['row_no' => $loop->iteration])
 @endforeach
 
+@endif
 @endauth

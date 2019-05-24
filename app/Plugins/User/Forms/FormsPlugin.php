@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 
 use App\Buckets;
+use App\Forms;
 use App\FormsColumns;
 use App\Frame;
 use App\Page;
@@ -32,7 +33,14 @@ class FormsPlugin extends UserPluginBase
      */
     public function getFirstFrameEditAction()
     {
-        return "edit";
+        // フォームの設定がまだの場合は、フォームの新規作成に遷移する。
+        $form = $this->getForms($this->frame->id);
+        if (empty($form)) {
+            return "createPlugin";
+        }
+
+        // カラムの設定画面
+        return "editColumn";
     }
 
     /**
@@ -59,6 +67,11 @@ class FormsPlugin extends UserPluginBase
         $form_columns = [];
         if ( !empty($form) ) {
             $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
+        }
+
+        // カラムデータがない場合
+        if (empty($forms_columns)) {
+            return null;
         }
 
         // グループがあれば、結果配列をネストする。
@@ -120,9 +133,11 @@ class FormsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-
-//Log::debug(print_r($request->forms_columns_value, true));
-
+//Log::debug("index:" . $frame_id);
+//$all = $request->session()->all();
+//Log::debug($all);
+//Log::debug($frame_id);
+//Log::debug($request->frame_id);
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -131,42 +146,12 @@ class FormsPlugin extends UserPluginBase
 
         // フォームのカラムデータ
         $forms_columns = $this->getFormsColumns($form);
-//Log::debug($forms_columns);
-//        $form_columns = [];
-//        if ( !empty($form) ) {
-//            $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
-//        }
 
         // カラムの選択肢用データ
-        $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
-
-
-
-// 階層表現の途中
-//Log::debug(print_r(json_decode($forms_columns), true));
-/*
-        $ret_array = array();
-        for ($i = 0; $i < count($forms_columns); $i++) {
-            if ($forms_columns[$i]->column_type == "group") {
-
-                $tmp_group = $forms_columns[$i];
-                $group_row = array();
-                for ($j = 1; $j <= $forms_columns[$i]->frame_col; $j++) {
-                    $group_row[] = $forms_columns[$i + $j];
-                }
-                $tmp_group->group = $group_row;
-
-                $ret_array[] = $tmp_group;
-                $i = $i + $forms_columns[$i]->frame_col;
-            }
-            else {
-                $ret_array[] = $forms_columns[$i];
-            }
+        $forms_columns_id_select = null;
+        if ($form) {
+            $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
         }
-//Log::debug(print_r($ret_array, true));
-*/
-
-
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -174,7 +159,6 @@ class FormsPlugin extends UserPluginBase
             'request' => $request,
             'frame_id' => $frame_id,
             'form' => $form,
-//            'forms_columns' => $ret_array,
             'forms_columns' => $forms_columns,
             'forms_columns_id_select' => $forms_columns_id_select,
             'errors'      => $errors,
@@ -186,11 +170,13 @@ class FormsPlugin extends UserPluginBase
      */
     public function confirm($request, $page_id, $frame_id, $id = null)
     {
+
+//Log::debug("confirm:" . $frame_id);
+//$all = $request->session()->all();
+//Log::debug($all);
+
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
-
-        // フォームのカラムデータ
-//        $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
 
         // フォームのカラムデータ
         $forms_columns = $this->getFormsColumns($form);
@@ -198,7 +184,6 @@ class FormsPlugin extends UserPluginBase
         // エラーチェック配列
         $validator_array = array( 'column' => array(), 'message' => array());
 
-//Log::debug($forms_columns);
         foreach($forms_columns as $forms_column) {
             // グループ内
             if ($forms_column->group) {
@@ -227,9 +212,6 @@ class FormsPlugin extends UserPluginBase
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
-
-
-//Log::debug($forms_columns);
         // 表示テンプレートを呼び出す。
         return $this->view(
             'forms_confirm', [
@@ -283,9 +265,170 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
-     * 編集画面の表示関数
+     *  紐づくフォームID とフレームデータの取得
      */
-    public function edit($request, $page_id, $frame_id, $id = null)
+    public function getFormFrame($frame_id)
+    {
+        // Frame データ
+        $frame = DB::table('frames')
+                 ->select('frames.*', 'forms.id as forms_id')
+                 ->leftJoin('forms', 'forms.bucket_id', '=', 'frames.bucket_id')
+                 ->where('frames.id', $frame_id)
+                 ->first();
+        return $frame;
+    }
+
+    /**
+     * フォーム設定変更画面の表示
+     */
+    public function editPlugin($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // フォーム＆フレームデータ
+        $form_frame = $this->getFormFrame($frame_id);
+
+        // フォームデータ
+        $form = new Forms();
+
+        // forms_id が渡ってくればforms_id が対象
+        if (!empty($forms_id)) {
+            $form = Forms::where('id', $forms_id)->first();
+        }
+        // Frame のbucket_id があれば、bucket_id からフォームデータ取得、なければ、新規作成か選択へ誘導
+        else if (!empty($form_frame->bucket_id) && $create_flag == false) {
+            $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
+        }
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'forms_edit_form', [
+            'form_frame'  => $form_frame,
+            'form'        => $form,
+            'create_flag' => $create_flag,
+            'message'     => $message,
+            'errors'      => $errors,
+        ])->withInput($request->all);
+    }
+
+    /**
+     * フォーム新規作成画面
+     */
+    public function createPlugin($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
+    {
+        // 新規作成フラグを付けてフォーム設定変更画面を呼ぶ
+        $create_flag = true;
+        return $this->editPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $errors);
+    }
+
+    /**
+     *  フォーム登録処理
+     */
+    public function savePlugin($request, $page_id, $frame_id, $forms_id = null)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'forms_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'forms_name'  => 'フォーム名',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        $message = null;
+        if ($validator->fails()) {
+
+            if (empty($forms_id)) {
+                $create_flag = true;
+                return $this->createPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
+            }
+            else  {
+                $create_flag = false;
+                return $this->editPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
+            }
+        }
+
+        // 更新後のメッセージ
+        $message = null;
+
+        // 画面から渡ってくるforms_id が空ならバケツとブログを新規登録
+        if (empty($request->forms_id)) {
+
+            // バケツの登録
+            $bucket_id = DB::table('buckets')->insertGetId([
+                  'bucket_name' => '無題',
+                  'plugin_name' => 'forms'
+            ]);
+
+            // ブログデータ新規オブジェクト
+            $forms = new Forms();
+            $forms->bucket_id = $bucket_id;
+
+            // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
+            // Frame にBuckets が設定されていない ＞ 新規のフレーム＆ブログ作成
+            // Frame にBuckets が設定されている ＞ 既存のフレーム＆ブログ更新
+            // （表示フォーム選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
+            $frame = Frame::where('id', $frame_id)->first();
+            if (empty($frame->bucket_id)) {
+
+                // FrameのバケツIDの更新
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+            }
+
+            $message = 'フォーム設定を追加しました。<br />　 カラムを設定してください。［ <a href="/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">カラム設定</a> ］';
+        }
+        // forms_id があれば、フォームを更新
+        else {
+
+            // フォームデータ取得
+            $forms = Forms::where('id', $request->forms_id)->first();
+
+            $message = 'フォーム設定を変更しました。';
+        }
+
+        // フォーム設定
+        $forms->forms_name  = $request->forms_name;
+
+        // データ保存
+        $forms->save();
+
+        // 新規作成フラグを付けてフォーム設定変更画面を呼ぶ
+        $create_flag = false;
+
+        return $this->editPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message);
+    }
+
+    /**
+     *  フォーム削除処理
+     */
+    public function destroyPlugin($request, $page_id, $frame_id, $forms_id)
+    {
+        // forms_id がある場合、データを削除
+        if ( $forms_id ) {
+
+            // カラムデータを削除する。
+            FormsColumns::where('forms_id', $forms_id)->delete();
+
+            // フォーム設定を削除する。
+            Forms::destroy($forms_id);
+
+            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            $frame = Frame::where('id', $frame_id)->first();
+
+            // FrameのバケツIDの更新
+            Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+
+            // backetsの削除
+            Buckets::where('id', $frame->bucket_id)->delete();
+        }
+        // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * カラム編集画面の表示
+     */
+    public function editColumn($request, $page_id, $frame_id, $id = null)
     {
         /* Session の構造
 
@@ -334,7 +477,10 @@ class FormsPlugin extends UserPluginBase
 
 
         // Session データに該当フォームのデータがあるか確認
-        $form_my_frame = $forms_session[$frame_id];
+        $form_my_frame = null;
+        if (is_array($forms_session) && array_key_exists($frame_id, $forms_session)) {
+            $form_my_frame = $forms_session[$frame_id];
+        }
         if (empty($form_my_frame)) {
 
             // データベースから画面の値を作成
@@ -346,7 +492,6 @@ class FormsPlugin extends UserPluginBase
                 $rows[$index]['column_name'] = $record->column_name;
                 $rows[$index]['required']    = $record->required;
                 $rows[$index]['frame_col']   = $record->frame_col;
-//                $rows[$index]['size']        = $record->frame_col;
 
                 if (array_key_exists($rows[$index]['columns_id'], $forms_columns_id_select)) {
                     $rows[$index]['select'] = $forms_columns_id_select[$rows[$index]['columns_id']];
@@ -357,9 +502,6 @@ class FormsPlugin extends UserPluginBase
         // Session データあり。(画面で編集中)
         else {
             if (!empty($forms_session) && array_key_exists($frame_id, $forms_session) && array_key_exists($forms_id, $forms_session[$frame_id])) {
-//                $rows = $forms_session[$frame_id][$forms_id];
-
-
 
                 $index = 1;
                 foreach($forms_session[$frame_id][$forms_id] as $record) {
@@ -369,7 +511,6 @@ class FormsPlugin extends UserPluginBase
                     $rows[$index]['column_name'] = $record["column_name"];
                     $rows[$index]['required']    = ( array_key_exists('required', $record) ? $record['required'] : 0 );
                     $rows[$index]['frame_col']   = ( array_key_exists('frame_col', $record) ? $record['frame_col'] : 0 );
-//                    $rows[$index]['size']        = ( array_key_exists('frame_col', $record) ? $record['frame_col'] : 0 );
                     $rows[$index]['delete_flag'] = $record["delete_flag"];
 
                     if (array_key_exists("select", $record)) {
@@ -380,8 +521,6 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
-//Log::debug($rows);
-
         // セッションに保持しなおしておく。
         //（保存時にセッションを見る、詳細画面でセッションを使用するなど、操作の度にセッションを使用するため）
         $forms = array();
@@ -389,8 +528,6 @@ class FormsPlugin extends UserPluginBase
             $forms[$frame_id][$forms_id][$key] = $row;
         }
         session(['forms' => $forms]);
-
-//Log::debug($forms);
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
@@ -427,14 +564,15 @@ class FormsPlugin extends UserPluginBase
         }
 
         // Session に保持している詳細画面情報も付与する。
+//Log::debug($request);
+//Log::debug($forms);
         $forms = $this->formSessionMarge($request, $forms);
+//Log::debug($forms);
 
         session(['forms' => $forms]);
 
-//Log::debug($forms);
-
         // 編集画面へ戻る。
-        return $this->edit($request, $page_id, $frame_id, $id);
+        return $this->editColumn($request, $page_id, $frame_id, $id);
     }
 
     /**
@@ -461,10 +599,8 @@ class FormsPlugin extends UserPluginBase
 
         session(['forms' => $forms]);
 
-//Log::debug($forms);
-
         // 編集画面へ戻る。
-        return $this->edit($request, $page_id, $frame_id, $id);
+        return $this->editColumn($request, $page_id, $frame_id, $id);
     }
 
     /**
@@ -494,10 +630,14 @@ class FormsPlugin extends UserPluginBase
             }
             $forms[$frame_id][$forms_id][$row_no] = $row;
         }
+
+        // Session に保持している詳細画面情報も付与する。
+        $forms = $this->formSessionMarge($request, $forms);
+
         session(['forms' => $forms]);
 
         // 編集画面へ戻る。
-        return $this->edit($request, $page_id, $frame_id, $id);
+        return $this->editColumn($request, $page_id, $frame_id, $id);
     }
 
     /**
@@ -512,6 +652,9 @@ class FormsPlugin extends UserPluginBase
         // Session データ
         $forms_session = session('forms');
 
+//Log::debug($forms_session);
+//Log::debug($request->forms);
+
         // 階層を手繰ってselect があれば追加
         foreach($forms_session as $frame_id => $frame) {
 
@@ -524,8 +667,11 @@ class FormsPlugin extends UserPluginBase
                     // リクエストがあれば優先（画面で入力してリロードのケースなので）
                     $select_array = null;
                     foreach ($request->forms as $request_frame) {
-                        foreach ($request_frame as $request_row) {
-                            if ( $row['columns_id'] == $request_row['columns_id'] && array_key_exists('select', $request_row) ) {
+                        foreach ($request_frame as $request_row_no => $request_row) {
+//Log::debug("-");
+//Log::debug("-" . $row_no . "/" . $request_row_no);
+//                            if ( $row['columns_id'] == $request_row && array_key_exists('select', $request_row) ) {
+                            if ( $row_no == $request_row_no && array_key_exists('select', $request_row) ) {
                                 $select_array = $request_row['select'];
                             }
                         }
@@ -569,7 +715,8 @@ class FormsPlugin extends UserPluginBase
     /**
      *  カラム上移動
      */
-    public function sequenceUp($request, $page_id, $frame_id, $columns_id)
+//    public function sequenceUp($request, $page_id, $frame_id, $columns_id)
+    public function sequenceUp($request, $page_id, $frame_id, $target_row_no)
     {
         // フレームに紐づくフォームID を探して取得
         $form_db = $this->getForms($frame_id);
@@ -594,7 +741,8 @@ class FormsPlugin extends UserPluginBase
             }
 
             // ループで合致した対象行を一つ上に移動。
-            if ( $row['columns_id'] == $columns_id ) {
+//            if ( $row['columns_id'] == $columns_id ) {
+            if ( $target_row_no == $row_no ) {
                 $forms[$frame_id][$forms_id][$row_no] = $forms[$frame_id][$forms_id][$row_no - 1];
                 $forms[$frame_id][$forms_id][$row_no - 1] = $row;
 
@@ -613,13 +761,14 @@ class FormsPlugin extends UserPluginBase
         session(['forms' => $forms]);
 
         // 編集画面へ戻る。
-        return $this->edit($request, $page_id, $frame_id, null);
+        return $this->editColumn($request, $page_id, $frame_id, null);
     }
 
     /**
      *  カラム下移動
      */
-    public function sequenceDown($request, $page_id, $frame_id, $columns_id)
+//    public function sequenceDown($request, $page_id, $frame_id, $columns_id)
+    public function sequenceDown($request, $page_id, $frame_id, $target_row_no)
     {
         // フレームに紐づくフォームID を探して取得
         $form_db = $this->getForms($frame_id);
@@ -650,7 +799,8 @@ class FormsPlugin extends UserPluginBase
                 continue;
             }
             // ループで合致した対象行を一つ下に移動。
-            if ( $row['columns_id'] == $columns_id ) {
+//            if ( $row['columns_id'] == $columns_id ) {
+            if ( $target_row_no == $row_no ) {
                 $forms[$frame_id][$forms_id][$row_no + 1] = $row;
                 $skip = true;
 
@@ -670,7 +820,7 @@ class FormsPlugin extends UserPluginBase
         session(['forms' => $forms]);
 
         // 編集画面へ戻る。
-        return $this->edit($request, $page_id, $frame_id, null);
+        return $this->editColumn($request, $page_id, $frame_id, null);
     }
 
     /**
@@ -682,6 +832,36 @@ class FormsPlugin extends UserPluginBase
         $request->session()->forget('forms');
 
         return;
+    }
+
+    /**
+     * カラム選択肢削除
+     */
+    public function deleteColumnsSelects($columns_id)
+    {
+        if (!empty($columns_id)) {
+            DB::table('forms_columns_selects')->where('forms_columns_id', $columns_id)->delete();
+        }
+    }
+
+    /**
+     * カラム選択肢追加
+     */
+    public function insertColumnsSelects($columns_id, $column)
+    {
+        if (!empty($columns_id)) {
+            if (!empty($column['select'])) {
+
+                foreach($column['select'] as $select) {
+
+                    // forms_columns_selects の登録
+                    $bucket_id = DB::table('forms_columns_selects')->insertGetId([
+                          'forms_columns_id' => $columns_id,
+                          'value' => $select['value'],
+                    ]);
+                }
+            }
+        }
     }
 
     /**
@@ -703,9 +883,12 @@ class FormsPlugin extends UserPluginBase
 
             // フォームの登録
             $forms_id = DB::table('forms')->insertGetId(
-                ['bucket_id' => $bucket_id, 'form_name' => '無題']
+                ['bucket_id' => $bucket_id, 'forms_name' => '無題']
             );
         }
+
+        // Session データ
+        $forms_session = session('forms');
 
         /* Session の構造
 
@@ -721,13 +904,12 @@ class FormsPlugin extends UserPluginBase
         $columns_db = DB::table('forms_columns')
             ->where('forms_columns.forms_id', '=', $forms_id)
             ->get();
-/*
-$forms_session = session('forms');
-Log::debug("--- forms_session");
-Log::debug($forms_session);
-Log::debug("--- request->forms");
-Log::debug($request->forms);
-*/
+
+//Log::debug($request->forms);
+
+// セッションからカラムデータを登録し、カラムID を取ったら、セッション配列に戻す。
+// 選択肢データの保存はカラムID を使用
+
         // forms_columnsテーブルの保存
         foreach($request->forms[$frame_id] as $row_no => $row) {
 
@@ -745,6 +927,8 @@ Log::debug($request->forms);
             // 削除
             if ($row['delete_flag'] == '1') {
                 $id = DB::table('forms_columns')->where('id', $row['columns_id'])->delete();
+                // 選択肢の削除
+                $this->deleteColumnsSelects($row['columns_id']);
             }
             // 更新
             else if ($row['columns_id']) {
@@ -756,10 +940,13 @@ Log::debug($request->forms);
                     'frame_col' => $frame_col,
                     'display_sequence' => $row_no
                 ]);
+                // 選択肢の削除・追加
+                $this->deleteColumnsSelects($row['columns_id']);
+                $this->insertColumnsSelects($row['columns_id'], $forms_session[$frame_id][$forms_id][$row_no]);
             }
             // 追加
             else {
-                $id = DB::table('forms_columns')->insert([
+                $id = DB::table('forms_columns')->insertGetId([
                     'forms_id' => $forms_id,
                     'column_type' => $row['column_type'],
                     'column_name' => $row['column_name'],
@@ -767,12 +954,16 @@ Log::debug($request->forms);
                     'frame_col' => $frame_col,
                     'display_sequence' => $row_no
                 ]);
+                // 選択肢の追加
+                $this->insertColumnsSelects($id, $forms_session[$frame_id][$forms_id][$row_no]);
             }
         }
 
         // Session データ
-        $forms_session = session('forms');
+//        $forms_session = session('forms');
 
+//Log::debug($forms_session);
+/*
         // forms_columns_selects テーブルの保存
         foreach($forms_session[$frame_id][$forms_id] as $column) {
 
@@ -791,6 +982,7 @@ Log::debug($request->forms);
                 }
             }
         }
+*/
 
         // 新規登録時
         if ($request->forms_id == 0) {
@@ -805,6 +997,19 @@ Log::debug($request->forms);
         $request->session()->forget('forms');
 
         // 編集画面へ戻る。
-        return $this->edit($request, $page_id, $frame_id, $id);
+        return $this->editColumn($request, $page_id, $frame_id, $id);
+    }
+
+   /**
+    * データ紐づけ変更関数
+    */
+    public function change($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // FrameのバケツIDの更新
+        Frame::where('id', $frame_id)
+               ->update(['bucket_id' => $request->select_bucket]);
+
+        // 表示ブログ選択画面を呼ぶ
+        return $this->datalist($request, $page_id, $frame_id, $id);
     }
 }

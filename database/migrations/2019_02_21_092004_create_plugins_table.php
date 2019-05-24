@@ -16,6 +16,7 @@ class CreatePluginsTable extends Migration
         Schema::create('plugins', function (Blueprint $table) {
             $table->increments('id');
             $table->string('plugin_name');
+            $table->string('plugin_name_full');
             $table->timestamps();
         });
     }

@@ -211,6 +211,11 @@ class DefaultController extends ConnectController
 //            return redirect($base_url . $page->permanent_link . "?action=" . $return_frame_action . "&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
         }
 
+        // redirect_path があれば遷移
+        if ( $request->redirect_path ) {
+            return redirect($request->redirect_path);
+        }
+
         // Page データがあれば、そのページに遷移
         if ( !empty($page_id) ) {
             $page = Page::where('id', $page_id)->first();
@@ -246,8 +251,9 @@ class DefaultController extends ConnectController
         // フレーム一覧取得（メインエリアのみ）
         $frames = DB::table('pages')
                     ->select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
-                            'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id')
+                            'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'plugins.plugin_name_full')
                     ->join('frames', 'frames.page_id', '=', 'pages.id')
+                    ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
                     ->where('pages.id', $pages_id)
                     ->where('frames.area_id', 2)
                     ->orderBy('frames.display_sequence')->get();
