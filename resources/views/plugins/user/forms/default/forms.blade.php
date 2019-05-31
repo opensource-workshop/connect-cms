@@ -30,140 +30,58 @@
                 <div class="col-sm-10" style="padding-left: 0px; padding-right: 0px;">
                 <div class="container-fluid" style="padding: 0;">
                 @foreach($form_column->group as $group_row)
-                    <div class="col-sm-{{$col_count}}">
-                        @if ($group_row->required)<label class="label label-danger">必須</label> @endif
-                        <label class="control-label" style="vertical-align: top;">{{$group_row->column_name}}</label>
 
-                        @include('plugins.user.forms.default.forms_input_text',['form_obj' => $group_row])
-{{--
-                        <input name="forms_columns_value[{{$group_row->id}}]" class="form-control" type="{{$group_row->column_type}}" value="{{old('forms_columns_value.'.$group_row->id, $request->forms_columns_value[$group_row->id])}}" />
-                        @if ($errors && $errors->has("forms_columns_value.$group_row->id"))
-                            <div class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$group_row->id")}}</div>
-                        @endif
---}}
+                    @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
+                        <div class="col-sm-{{$col_count}}" style="padding-left: 0px;">
+                    @else
+                        <div class="col-sm-{{$col_count}}">
+                    @endif
+
+                        @if ($group_row->required)<label class="label label-danger">必須</label> @endif
+                            @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
+                                <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
+                            @else
+                                <label class="control-label" style="vertical-align: top; padding-top: 8px;">{{$group_row->column_name}}</label>
+                            @endif
+
+                            @switch($group_row->column_type)
+                            @case("text")
+                                @include('plugins.user.forms.default.forms_input_text',['form_obj' => $group_row])
+                                @break
+                            @case("textarea")
+                                @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $group_row])
+                                @break
+                            @case("radio")
+                                @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $group_row])
+                                @break
+                            @case("checkbox")
+                                @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $group_row])
+                                @break
+                            @endswitch
+                        </div>
+                    @endforeach
                     </div>
-                @endforeach
-                </div>
                 </div>
                 @break
             @case("text")
                 <div class="col-sm-10">
-
                     @include('plugins.user.forms.default.forms_input_text',['form_obj' => $form_column])
-{{--
-                    <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="{{$form_column->column_type}}" value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_column->id, $request->forms_columns_value[$form_column->id])}}@endif">
-                    @if ($errors && $errors->has("forms_columns_value.$form_column->id"))
-                        <div class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$form_column->id")}}</div>
-                    @endif
---}}
                 </div>
                 @break
             @case("textarea")
                 <div class="col-sm-10">
-                    <textarea name="forms_columns_value[{{$form_column->id}}]" class="form-control">{{old('forms_columns_value.'.$form_column->id, $request->forms_columns_value[$form_column->id])}}</textarea>
-                    @if ($errors && $errors->has("forms_columns_value.$form_column->id"))
-                        <div class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$form_column->id")}}</div>
-                    @endif
+                    @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $form_column])
                 </div>
                 @break
             @case("radio")
-                @if (array_key_exists($form_column->id, $forms_columns_id_select))
-                    @php
-                        // グループカラムの幅の計算
-                        $col_count = floor(12/count($forms_columns_id_select[$form_column->id]));
-                        if ($col_count < 3) {
-                            $col_count = 3;
-                        }
-                    @endphp
-                    <div class="col-sm-10" style="padding-left: 0; padding-right: 0;">
-                    <div class="container-fluid" style="padding: 0;">
-                        @foreach($forms_columns_id_select[$form_column->id] as $select)
-
-                        <div class="col-sm-{{$col_count}}">
-                            <label class="cc_label_input_group">
-                                <div class="input-group">
-                                    <span class="input-group-addon">
-                                        @if (old('forms_columns_value.'.$form_column->id) == $select['value'] ||
-                                                 (isset($request->forms_columns_value) &&
-                                                  array_key_exists($form_column->id, $request->forms_columns_value) &&
-                                                  $request->forms_columns_value[$form_column->id] == $select['value'])
-                                            )
-                                            <input name="forms_columns_value[{{$form_column->id}}]" value="{{$select['value']}}" type="{{$form_column->column_type}}" checked>
-                                        @else
-                                            <input name="forms_columns_value[{{$form_column->id}}]" value="{{$select['value']}}" type="{{$form_column->column_type}}">
-                                        @endif
-                                    </span>
-                                    <span class="form-control" style="height: auto;"> {{$select['value']}}</span>
-                                </div>
-                            </label>
-                        </div>
-                        @endforeach
-                        @if ($errors && $errors->has("forms_columns_value.$form_column->id"))
-                            <div class="text-danger" style="padding-left: 15px;">
-                                <span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$form_column->id")}}
-                            </div>
-                        @endif
-                    </div>
+                <div class="col-sm-10" style="padding-left: 0; padding-right: 0;">
+                    @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $form_column])
                 </div>
-                @endif
                 @break
             @case("checkbox")
-                @if (array_key_exists($form_column->id, $forms_columns_id_select))
-                    @php
-                        // グループカラムの幅の計算
-                        $col_count = floor(12/count($forms_columns_id_select[$form_column->id]));
-                        if ($col_count < 3) {
-                            $col_count = 3;
-                        }
-                    @endphp
-                    <div class="col-sm-10" style="padding-left: 0; padding-right: 0;">
-                    <div class="container-fluid" style="padding: 0;">
-                        @foreach($forms_columns_id_select[$form_column->id] as $select)
-                        <div class="col-sm-{{$col_count}}">
-                            <label class="cc_label_input_group">
-                                <div class="input-group">
-                                    <span class="input-group-addon">
-
-                                        @php
-                                        // チェック用変数
-                                        $column_checkbox_checked = "";
-
-                                        // old でチェックされていたもの
-                                        if (!empty(old('forms_columns_value.'.$form_column->id))) {
-                                            foreach(old('forms_columns_value.'.$form_column->id) as $old_value) {
-                                                if ( $old_value == $select['value'] ) {
-                                                    $column_checkbox_checked = " checked";
-                                                }
-                                            }
-                                        }
-
-                                        // 画面が戻ってきたもの
-                                        if (isset($request->forms_columns_value) &&
-                                            array_key_exists($form_column->id, $request->forms_columns_value)) {
-
-                                            foreach($request->forms_columns_value[$form_column->id] as $request_value) {
-                                                if ( $request_value == $select['value'] ) {
-                                                    $column_checkbox_checked = " checked";
-                                                }
-                                            }
-                                        }
-                                        @endphp
-
-                                        <input name="forms_columns_value[{{$form_column->id}}][]" value="{{$select['value']}}" type="{{$form_column->column_type}}"{{$column_checkbox_checked}}>
-                                    </span>
-                                    <span class="form-control" style="height: auto;"> {{$select['value']}}</span>
-                                </div>
-                            </label>
-                        </div>
-                        @endforeach
-                        @if ($errors && $errors->has("forms_columns_value.$form_column->id"))
-                            <div class="text-danger" style="padding-left: 15px;">
-                                <span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$form_column->id")}}
-                            </div>
-                        @endif
-                    </div>
+                <div class="col-sm-10" style="padding-left: 0; padding-right: 0;">
+                    @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $form_column])
                 </div>
-                @endif
                 @break
             @endswitch
         </div>{{-- /form-group --}}
