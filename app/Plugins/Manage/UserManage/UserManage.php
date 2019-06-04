@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Plugins\Manage\SiteManage;
+namespace App\Plugins\Manage\UserManage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,14 +13,14 @@ use App\Page;
 use App\Plugins\Manage\ManagePluginBase;
 
 /**
- * サイト管理クラス
+ * ユーザ管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  * @package Contoroller
  */
-class SiteManage extends ManagePluginBase
+class UserManage extends ManagePluginBase
 {
     /**
      *  ページ初期表示
@@ -40,8 +40,8 @@ class SiteManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.site.site',[
-            "plugin_name" => "site",
+        return view('plugins.manage.user.list',[
+            "plugin_name" => "user",
             "errors"      => $errors,
             "configs"     => $configs_array,
         ]);

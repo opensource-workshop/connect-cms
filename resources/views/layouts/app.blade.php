@@ -208,8 +208,21 @@
 --}}
                                     <li><a href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a></li>
                                     <li role="separator" class="divider" style="margin: 4px 0 10px 0;"></li>
-                                    <li><a href="{{ url('/manage/page') }}">ページ管理</a></li>
-                                    <li><a href="{{ url('/manage/site') }}">サイト管理</a></li>
+                                    @if (isset($plugin_name) && $plugin_name == 'page')
+                                        <li><a href="{{ url('/manage/page') }}" class="list-group-item active" style="border-radius: 0;">ページ管理</a></li>
+                                    @else
+                                        <li><a href="{{ url('/manage/page') }}">ページ管理</a></li>
+                                    @endif
+                                    @if (isset($plugin_name) && $plugin_name == 'site')
+                                        <li><a href="{{ url('/manage/site') }}" class="list-group-item active" style="border-radius: 0;">サイト管理</a></li>
+                                    @else
+                                        <li><a href="{{ url('/manage/site') }}">サイト管理</a></li>
+                                    @endif
+                                    @if (isset($plugin_name) && $plugin_name == 'user')
+                                        <li><a href="{{ url('/manage/user') }}" class="list-group-item active" style="border-radius: 0;">ユーザ管理</a></li>
+                                    @else
+                                        <li><a href="{{ url('/manage/user') }}">ユーザ管理</a></li>
+                                    @endif
                                 </ul>
                             </li>
                             <li class="dropdown">

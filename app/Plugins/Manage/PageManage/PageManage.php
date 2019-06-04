@@ -37,6 +37,7 @@ class PageManage extends ManagePluginBase
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.page.page',[
+            "plugin_name"  => "page",
             "page"         => new Page(),
             "pages"        => $pages,
             "pages_select" => $pages_select,
@@ -60,8 +61,9 @@ class PageManage extends ManagePluginBase
 
         // 画面呼び出し
         return view('plugins.manage.page.page_edit',[
-            "page"  => $page,
-            "pages" => $pages,
+            "plugin_name" => "page",
+            "page"        => $page,
+            "pages"       => $pages,
         ]);
     }
 
