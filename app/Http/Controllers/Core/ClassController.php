@@ -3,9 +3,18 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;    // 依存注入のための指定
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Core\ConnectController;
+use App\Http\Requests;
+
+use App\User;
+
+//use App\User;
+//use App\Repositories\UserRepository;
 
 /**
  * クラスを呼び出す振り分けコントローラ
@@ -17,6 +26,7 @@ use App\Http\Controllers\Core\ConnectController;
  */
 class ClassController extends ConnectController
 {
+
     /**
      *  管理プラグインのインスタンス生成
      *
@@ -41,15 +51,9 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public function invokeGetManage(Request $request, $plugin_name, $action = 'index', $page_id = null)
+    public function invokeGetManage(Request $request, $plugin_name, $action = 'index', $id = null)
     {
-        // インスタンス生成
-        $plugin_instance = self::createManageInstance($plugin_name);
-
-        // 指定されたアクションを呼ぶ。
-        // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
-        // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
-        return $plugin_instance->$action($request, $page_id);
+        return $this->invokeManage($request, $plugin_name, $action, $id);
     }
 
     /**
@@ -58,15 +62,50 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public function invokePostManage(Request $request, $plugin_name, $action = 'index', $page_id = null)
+    public function invokePostManage(Request $request, $plugin_name, $action = 'index', $id = null)
     {
+        return $this->invokeManage($request, $plugin_name, $action, $id);
+    }
+
+    /**
+     *  管理プラグインの呼び出し
+     *
+     * @param String $plugin_name
+     * @return プラグインからの戻り値(HTMLなど)
+     */
+    public function invokeManage($request, $plugin_name, $action = 'index', $id = null)
+    {
+        // ログインしているユーザー情報を取得
+        $user = Auth::user();
+
+        // 権限エラー
+        if (empty($user)) {
+            abort(403, 'ログインが必要です。');
+        }
+
         // インスタンス生成
         $plugin_instance = self::createManageInstance($plugin_name);
+
+        // 権限定義メソッドの有無確認
+        if (!method_exists($plugin_instance, 'declareRole')) {
+            abort(403, '権限定義メソッド(declareRole)がありません。');
+        }
+
+        // 権限エラー
+        $role_ckeck_table = $plugin_instance->declareRole();
+        if (array_key_exists($action, $role_ckeck_table)) {
+            if (!array_key_exists($user->role, $role_ckeck_table[$action])) {
+                abort(403, 'ユーザーにメソッドに対する権限がありません。');
+            }
+        }
+        else {
+            abort(403, 'メソッドに権限がありません。');
+        }
 
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
         // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
-        return $plugin_instance->$action($request, $page_id);
+        return $plugin_instance->$action($request, $id);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Plugins\User\Contents;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 use DB;
 

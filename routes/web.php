@@ -17,7 +17,24 @@ use App\Http\Controllers\Core\DefaultController;
 */
 
 // 認証系アクション
-Auth::routes();
+// Auth::routes();
+Route::get('login', 'Auth\LoginController@showLoginForm')->name('login');
+Route::post('login', 'Auth\LoginController@login');
+Route::post('logout', 'Auth\LoginController@logout')->name('logout');
+ 
+Route::get('/password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
+Route::post('/password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
+Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
+Route::post('/password/reset', 'Auth\ResetPasswordController@reset');
+
+//ユーザー登録
+Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('register');
+
+// システム管理者 or ユーザ管理者の場合、OK
+//Route::group(['middleware' => ['auth', 'can:system_user-admin']], function () {
+    Route::post('register', 'Auth\RegisterController@register');
+//});
+
 
 // テスト用アクション
 Route::get('/test/{id?}', 'Core\TestController@invokeGet');
@@ -30,7 +47,7 @@ Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassCon
 Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\ClassController@invokePostCore');
 
 // 管理画面getアクション：管理画面用のクラスをURL をもとに、ClassController で呼び出す。
-Route::get('/manage/{plugin_name}/{action?}/{page_id?}', 'Core\ClassController@invokeGetManage');
+Route::get('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokeGetManage');
 
 // 管理画面postアクション
 Route::post('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokePostManage');

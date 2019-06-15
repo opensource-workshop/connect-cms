@@ -10,6 +10,7 @@ use DB;
 
 use App\Configs;
 use App\Page;
+use App\User;
 use App\Plugins\Manage\ManagePluginBase;
 
 /**
@@ -23,104 +24,122 @@ use App\Plugins\Manage\ManagePluginBase;
 class UserManage extends ManagePluginBase
 {
     /**
+     *  権限チェック
+     */
+    public function declareRole()
+    {
+        // 権限チェックテーブル
+        $role_ckeck_table = array();
+        $role_ckeck_table["index"]  = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
+        $role_ckeck_table["regist"] = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
+        $role_ckeck_table["edit"]   = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
+        $role_ckeck_table["update"] = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
+
+        return $role_ckeck_table;
+    }
+
+    /**
+     *  データ取得
+     */
+    public function getUsers()
+    {
+        // ユーザデータ取得
+        $users = DB::table('users')
+                 ->orderBy('id', 'asc')
+                 ->paginate(10);
+
+        return $users;
+    }
+
+    /**
      *  ページ初期表示
      *
      * @return view
      */
-    public function index($request, $page_id = null, $errors = array())
+    public function index($request, $id, $errors = array())
     {
-        // Config データの取得
-        $configs = Configs::get();
+        // User データの取得
+        $users = $this->getUsers();
 
-        // Config データの変換
-        $configs_array = array();
-        foreach ( $configs as $config ) {
-            $configs_array[$config->name] = $config->value;
-        }
-
-        // 管理画面プラグインの戻り値の返し方
-        // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.user.list',[
             "plugin_name" => "user",
-            "errors"      => $errors,
-            "configs"     => $configs_array,
+            "function" => __FUNCTION__,
+            "users"       => $users,
+        ]);
+    }
+
+    /**
+     *  ユーザ登録画面表示
+     */
+    public function regist($request, $id, $errors = array())
+    {
+        // ユーザデータの空枠
+        $user = new User();
+
+        return view('plugins.manage.user.regist',[
+            "function" => __FUNCTION__,
+            "user"     => $user,
+        ]);
+    }
+
+    /**
+     *  ユーザ変更画面表示
+     */
+    public function edit($request, $id, $errors = array())
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // ユーザデータ取得
+        $user = User::where('id', $id)->first();
+
+        return view('plugins.manage.user.regist',[
+            "function" => __FUNCTION__,
+            "id"       => $id,
+            "user"     => $user,
+            "errors"   => $errors,
         ]);
     }
 
     /**
      *  更新
      */
-    public function update($request, $page_id = null, $errors = array())
+    public function update($request, $id = null, $errors = array())
     {
-        // サイト名
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_site_name'],
-            ['category' => 'general',
-             'value'    => $request->base_site_name]
-        );
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'name'     => 'required|string|max:255',
+            'email'    => 'nullable|email|max:255|unique:users',
+            'password' => 'string|min:6|confirmed',
+        ]);
+        $validator->setAttributeNames([
+            'name'     => 'ユーザ名',
+            'email'    => 'eメール',
+            'password' => 'パスワード',
+        ]);
 
-        // 画面の基本の背景色
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_background_color'],
-            ['category' => 'general',
-             'value'    => $request->base_background_color]
-        );
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return ( $this->edit($request, $id, $validator->errors()) );
+        }
 
-        // 画面の基本のヘッダー背景色
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_color'],
-            ['category' => 'general',
-             'value'    => $request->base_header_color]
-        );
+        // 更新内容の配列
+        $update_array = array();
+        $update_array = [
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'userid'   => $request->userid,
+        ];
 
-        // 基本のヘッダー固定設定
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_fix_xs'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_header_fix_xs) ? $request->base_header_fix_xs : 0)]
-        );
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_fix_sm'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_header_fix_sm) ? $request->base_header_fix_sm : 0)]
-        );
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_fix_md'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_header_fix_md) ? $request->base_header_fix_md : 0)]
-        );
+        // パスワードの入力があれば、更新
+        if (!empty($request->password)) {
+            $update_array['password'] = bcrypt($request->password);
+        }
 
-        // ログインリンクの表示
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_login_link'],
-            ['category' => 'general',
-             'value'    => $request->base_header_login_link]
-        );
+        // ページデータの更新
+        User::where('id', $id)
+            ->update($update_array);
 
-        // 自動ユーザ登録の使用
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'user_register_enable'],
-            ['category' => 'user_register',
-             'value'    => $request->user_register_enable]
-        );
-
-        // 画像の保存機能の無効化
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_mousedown_off'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_mousedown_off) ? $request->base_mousedown_off : 0)]
-        );
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_contextmenu_off'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_contextmenu_off) ? $request->base_contextmenu_off : 0)]
-        );
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_touch_callout'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_touch_callout) ? $request->base_touch_callout : 0)]
-        );
-
-        return $this->index($request, $page_id, $errors);
+        return $this->index($request, $id, $errors);
     }
 }
