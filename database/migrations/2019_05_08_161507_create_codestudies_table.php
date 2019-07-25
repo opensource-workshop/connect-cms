@@ -17,6 +17,7 @@ class CreateCodestudiesTable extends Migration
             $table->increments('id');
             $table->integer('user_id');
             $table->string('study_lang');
+            $table->text('title')->nullable();
             $table->text('code_text')->nullable();
             $table->timestamps();
         });

@@ -17,7 +17,7 @@
 
         @foreach($forms_columns as $form_column)
         <div class="form-group">
-            <label class="col-sm-2 control-label">@if ($form_column->required)<label class="label label-danger">必須</label> @endif{{$form_column->column_name}}</label>
+            <label class="col-sm-2 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="label label-danger">必須</label> @endif</label>
             @switch($form_column->column_type)
             @case("group")
                 @php
@@ -37,12 +37,12 @@
                         <div class="col-sm-{{$col_count}}">
                     @endif
 
-                        @if ($group_row->required)<label class="label label-danger">必須</label> @endif
                             @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
                                 <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
                             @else
                                 <label class="control-label" style="vertical-align: top; padding-top: 8px;">{{$group_row->column_name}}</label>
                             @endif
+                            @if ($group_row->required)<label class="label label-danger">必須</label> @endif
 
                             @switch($group_row->column_type)
                             @case("text")

@@ -11,7 +11,10 @@
 
 {{-- パネルヘッダーはフレームタイトルが空、認証していない場合はパネルヘッダーを使用しない --}}
 @if (!Auth::check() && empty($frame->frame_title))
+@elseif (Auth::check() && empty($frame->frame_title) && !( Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))))
 @else
+
+{{-- Auth::user()->role --}}
 
     {{-- 認証していてフレームタイトルが空の場合は、パネルヘッダーの中央にアイコンを配置したいので、高さ指定する。 --}}
     @if (Auth::check() && empty($frame->frame_title))
@@ -23,7 +26,8 @@
     {{-- フレームタイトル --}}
     {{$frame->frame_title}}
 
-    @auth
+    {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}
+    @if (Auth::check() && ( Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))))
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
         @if ($frame->page_id == $page->id)
@@ -59,6 +63,6 @@
         </div>
         @endif
 
-    @endauth
+    @endif
 </div>
 @endif

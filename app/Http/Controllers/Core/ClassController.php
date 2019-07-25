@@ -94,7 +94,7 @@ class ClassController extends ConnectController
         // 権限エラー
         $role_ckeck_table = $plugin_instance->declareRole();
         if (array_key_exists($action, $role_ckeck_table)) {
-            if (!array_key_exists($user->role, $role_ckeck_table[$action])) {
+            if (!in_array($user->role, $role_ckeck_table[$action])) {
                 abort(403, 'ユーザーにメソッドに対する権限がありません。');
             }
         }

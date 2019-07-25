@@ -24,16 +24,17 @@ use App\Plugins\Manage\ManagePluginBase;
 class UserManage extends ManagePluginBase
 {
     /**
-     *  権限チェック
+     *  権限定義
      */
     public function declareRole()
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["index"]  = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
-        $role_ckeck_table["regist"] = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
-        $role_ckeck_table["edit"]   = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
-        $role_ckeck_table["update"] = array(config('const.ROLE_SYSTEM_MANAGER'), config('const.ROLE_USER_MANAGER'));
+        $role_ckeck_table["index"]   = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
+        $role_ckeck_table["regist"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
+        $role_ckeck_table["edit"]    = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
+        $role_ckeck_table["update"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
+        $role_ckeck_table["destroy"] = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
 
         return $role_ckeck_table;
     }
@@ -56,7 +57,7 @@ class UserManage extends ManagePluginBase
      *
      * @return view
      */
-    public function index($request, $id, $errors = array())
+    public function index($request, $id)
     {
         // User データの取得
         $users = $this->getUsers();
@@ -71,7 +72,7 @@ class UserManage extends ManagePluginBase
     /**
      *  ユーザ登録画面表示
      */
-    public function regist($request, $id, $errors = array())
+    public function regist($request, $id)
     {
         // ユーザデータの空枠
         $user = new User();
@@ -85,7 +86,7 @@ class UserManage extends ManagePluginBase
     /**
      *  ユーザ変更画面表示
      */
-    public function edit($request, $id, $errors = array())
+    public function edit($request, $id)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -97,20 +98,19 @@ class UserManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "id"       => $id,
             "user"     => $user,
-            "errors"   => $errors,
         ]);
     }
 
     /**
      *  更新
      */
-    public function update($request, $id = null, $errors = array())
+    public function update($request, $id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
             'email'    => 'nullable|email|max:255|unique:users',
-            'password' => 'string|min:6|confirmed',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
         $validator->setAttributeNames([
             'name'     => 'ユーザ名',
@@ -120,7 +120,10 @@ class UserManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->edit($request, $id, $validator->errors()) );
+            return redirect('manage/user/edit/' . $id)
+                       ->withErrors($validator)
+                       ->withInput();
+
         }
 
         // 更新内容の配列
@@ -136,10 +139,25 @@ class UserManage extends ManagePluginBase
             $update_array['password'] = bcrypt($request->password);
         }
 
-        // ページデータの更新
+        // ユーザデータの更新
         User::where('id', $id)
             ->update($update_array);
 
-        return $this->index($request, $id, $errors);
+        return $this->index($request, $id);
+    }
+
+    /**
+     *  削除処理
+     */
+    public function destroy($request, $id = null)
+    {
+        // id がある場合、データを削除
+        if ( $id ) {
+
+            // データを削除する。
+            User::destroy($id);
+        }
+        // 削除後はユーザ一覧を呼ぶ。
+        return redirect('manage/user');
     }
 }

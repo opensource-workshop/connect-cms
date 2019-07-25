@@ -9,7 +9,7 @@
  --}}
 @if ($contents)
 {!! $contents->content_text !!}
-    @auth
+    @if (Auth::check() && ( Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))))
 
     <p class="text-right">
         {{-- 変更画面へのリンク --}}
@@ -19,14 +19,14 @@
         </a>
         @endif
     </p>
-    @endauth
+    @endif
 @else
-    @auth
+    @if (Auth::check() && ( Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))))
     <p class="text-right">
         {{-- 追加画面へのリンク --}}
         <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}#{{$frame_id}}">
             <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
         </a>
     </p>
-    @endauth
+    @endif
 @endif

@@ -13,8 +13,8 @@
 <div class="form-group">
     <div class="row">
         <div class="col-sm-6">
-    <div class="input-group date" data-provide="datepicker">
-                <input type="text" name="return_date" value="" class="form-control datepicker" placeholder="キーワード検索">
+    <div class="input-group date">
+                <input type="text" name="keyword" value="" class="form-control" placeholder="キーワード検索">
 
 	<span class="input-group-btn">
 		<button type="button" class="btn btn-primary"><span class="glyphicon glyphicon-search"></span></button>

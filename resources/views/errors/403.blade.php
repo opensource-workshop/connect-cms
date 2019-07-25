@@ -12,7 +12,7 @@
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         <span class="sr-only">Error:</span>
         403 Forbidden.<br />
-        <p>　 {{$exception->getMessage()}}</p>
+        <p>　 {!!$exception->getMessage()!!}</p>
     </div>
 </div>
 @endsection

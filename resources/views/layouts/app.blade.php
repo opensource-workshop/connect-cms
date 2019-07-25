@@ -192,22 +192,30 @@
                                 <li><a href="{{ route('register') }}">ユーザ登録</a></li>
                             @endif
                         @else
-                            {{-- <li><a href="{{ url('/manage/page/') }}">管理ページ</a></li> --}}
+
+                            {{-- システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
+                            @if (Auth::check() && 
+                                (
+                                    Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) ||
+                                    Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER')) ||
+                                    Auth::user()->can(Config::get('cc_role.ROLE_USER_MANAGER')) ||
+                                    Auth::user()->can(Config::get('cc_role.ROLE_PAGE_MANAGER')) ||
+                                    Auth::user()->can(Config::get('cc_role.ROLE_OPERATION_MANAGER'))
+                                )
+                            )
+
                             <li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
                                     管理機能 <span class="caret"></span>
                                 </a>
 
                                 <ul class="dropdown-menu">
-{{--
-                                    @if (isset($page_obj))
-                                        <li><a href="{{ url('/manage/pluginadd') }}/index/{{$page_obj->id}}">プラグイン追加</a></li>
-                                    @else
-                                        <li><a href="{{ url('/manage/pluginadd') }}">プラグイン追加</a></li>
+                                    {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
+                                    @if (isset($page_list))
+                                        <li><a href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a></li>
+                                        <li role="separator" class="divider" style="margin: 4px 0 10px 0;"></li>
                                     @endif
---}}
-                                    <li><a href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a></li>
-                                    <li role="separator" class="divider" style="margin: 4px 0 10px 0;"></li>
+                                    {{-- 管理プラグインのメニュー --}}
                                     @if (isset($plugin_name) && $plugin_name == 'page')
                                         <li><a href="{{ url('/manage/page') }}" class="list-group-item active" style="border-radius: 0;">ページ管理</a></li>
                                     @else
@@ -225,6 +233,10 @@
                                     @endif
                                 </ul>
                             </li>
+
+                            {{-- /システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
+                            @endif
+
                             <li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
                                     {{ Auth::user()->name }} <span class="caret"></span>

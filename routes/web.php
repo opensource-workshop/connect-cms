@@ -32,6 +32,7 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
 
 // システム管理者 or ユーザ管理者の場合、OK
 //Route::group(['middleware' => ['auth', 'can:system_user-admin']], function () {
+    //Route::post('register', 'Auth\RegisterController@register');
     Route::post('register', 'Auth\RegisterController@register');
 //});
 
@@ -45,6 +46,9 @@ Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassCon
 
 // コアのpost処理(Frame関係)
 Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\ClassController@invokePostCore');
+
+// コアのAPI処理
+Route::get('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi');
 
 // 管理画面getアクション：管理画面用のクラスをURL をもとに、ClassController で呼び出す。
 Route::get('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokeGetManage');
