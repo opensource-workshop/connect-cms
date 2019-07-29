@@ -221,7 +221,13 @@ class CodestudiesPlugin extends UserPluginBase
     {
         $tmp_code = trim($codestudy->code_text, "\n");
         $tmp_code = trim($tmp_code, "\r");
-        return trim(substr($tmp_code, strpos($tmp_code, 'class') + 5, strpos($tmp_code, '{') - strpos($tmp_code, 'class') - 5));
+
+        $tmp_code = substr($tmp_code, strpos($tmp_code, 'class') + 5, strpos($tmp_code, '{') - strpos($tmp_code, 'class') - 5);
+
+        $tmp_code = trim(mb_convert_kana($tmp_code, 'as', 'UTF-8'));
+        $tmp_code = preg_replace('/[^0-9a-zA-Z]/', '', $tmp_code);
+
+        return $tmp_code;
     }
 
     /**

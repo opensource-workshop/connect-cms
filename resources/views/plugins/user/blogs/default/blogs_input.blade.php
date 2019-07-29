@@ -41,6 +41,12 @@
     <div class="form-group">
         <label class="control-label">投稿日時 <span class="label label-danger">必須</span></label>
         <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control">
+{{--
+        <div class="input-group date" data-provide="datepicker">
+            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datepicker">
+            <span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>
+        </div>
+--}}
         @if ($errors && $errors->has('posted_at')) <div class="text-danger">{{$errors->first('posted_at')}}</div> @endif
     </div>
 

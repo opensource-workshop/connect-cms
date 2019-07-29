@@ -104,6 +104,11 @@ class PageManage extends ManagePluginBase
             return ( $this->index($request, null, $validator->errors()) );
         }
 
+        // 固定リンクの先頭に / がない場合、追加する。
+        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+            $request->permanent_link = '/' . $request->permanent_link;
+        }
+
         // ページデータの登録
         $page = new Page;
         $page->page_name         = $request->page_name;
@@ -123,6 +128,12 @@ class PageManage extends ManagePluginBase
      */
     public function update($request, $page_id)
     {
+
+        // 固定リンクの先頭に / がない場合、追加する。
+        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+            $request->permanent_link = '/' . $request->permanent_link;
+        }
+
         // ページデータの更新
         Page::where('id', $page_id)
             ->update([

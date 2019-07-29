@@ -239,6 +239,9 @@ class ConnectController extends Controller
         $base_url = url('/');
         $current_permanent_link = str_replace( $base_url, '', $current_url);
 
+        // URLデコード
+        $current_permanent_link = urldecode($current_permanent_link);
+
         // トップページの判定
         if (empty($current_permanent_link)) {
             $current_permanent_link = "/";
