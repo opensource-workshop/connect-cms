@@ -24,7 +24,8 @@ class CreateFramesTable extends Migration
             $table->string('template')->nullable();
             $table->string('plug_name')->nullable();
             $table->integer('bucket_id')->nullable();
-            $table->integer('display_sequence')->nullable();
+            // 2019_02_23_150233_add_display_sequence_to_frames_table.php で項目追加されるため、ここでは追加しない
+            //$table->integer('display_sequence')->nullable();
             $table->timestamps();
         });
     }
