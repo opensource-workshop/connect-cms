@@ -24,6 +24,7 @@
         <option value="forms">フォーム</option>
         <option value="sampleforms">サンプルフォーム</option>
         <option value="opacs">OPAC</option>
+        <option value="knowledges">ナレッジ</option>
         <option value="codestudies">コードスタディ</option>
     </select>
 </form>

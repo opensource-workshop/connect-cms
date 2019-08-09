@@ -22,7 +22,6 @@ body { font-family: inherit; }
 ------------------------------------- */
 
 /* チェックボックス、ラジオボタンの選択用グループラベル */
-
 .cc_label_input_group {
     font-weight: normal;
     width: 100%;
@@ -31,16 +30,55 @@ body { font-family: inherit; }
     cursor: pointer;
 }
 
+/* チェックボックス、ラジオボタンの選択用グループラベル */
+.cc_label_panel_list {
+    font-weight: normal;
+    width: 100%;
+    display: inherit;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+.cc_label_panel_list .input-group-addon {
+    border: none;
+    border-right: 1px solid #ccd0d2;
+    border-top: 1px solid #ccd0d2;
+    border-radius: 0;
+}
+.cc_label_panel_list .form-control {
+    border: none;
+    border-radius: 0;
+}
+
+/* border 関係
+------------------------------------- */
+.cc_label_panel_list .cc_border_top_none {
+    border-top: none;
+}
+
+/* margin 関係
+------------------------------------- */
+.cc_margin_top_4 {
+    margin-top: 4px;
+}
+
+/* ul 関係
+------------------------------------- */
+.cc_ul_padding_top_10 {
+    padding-top: 10px;
+}
+
+.cc_ul_line_height li {
+    line-height: 28px;
+}
+
 /* p 関係
 ------------------------------------- */
-
 .cc_margin_bottom_0 {
     margin-bottom: 0;
 }
 
 /* 記事関係
 ------------------------------------- */
-
 .cc_article {
     border-bottom: 1px solid #c0c0c0;
 }
