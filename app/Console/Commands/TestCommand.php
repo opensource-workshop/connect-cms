@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Category;
+use App\Models\Test\Category;
 
 class TestCommand extends Command
 {
@@ -22,7 +22,7 @@ class TestCommand extends Command
     protected $description = 'Command description';
 
     /**
-     * App\Models\Category
+     * App\Models\Test\Category
      *
      * @var string
      */

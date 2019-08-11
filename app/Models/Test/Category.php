@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Test;
 
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Nestedset\NodeTrait;
