@@ -179,4 +179,45 @@ EOD;
         }
         exit;
     }
+
+    /**
+     *  ファイル受け取り
+     *
+     */
+    public function postFile(Request $request)
+    {
+
+        // POST された$_FILES 情報をもとに、DB への登録、ファイルの保存を行う。
+        // mimetype とextension は$_FILES では、詐称しやすいとのことで、情報は使用せず、finfo_file 関数を使用します。
+
+        // アップロードされたファイルのループ
+        foreach( $_FILES as $file_name => $file_properties ) {
+
+            // アップロードされたファイルか確認して処理
+            if(is_uploaded_file($_FILES[$file_name]['tmp_name'])) {
+
+                // uploads テーブルに情報追加、ファイルのid を取得する
+                $client_original_name = "";
+                $mimetype =  "";
+                $extension =  "";
+                $size =  "";
+
+                if(move_uploaded_file($_FILES[$file_name]['tmp_name'], "./log/".$_FILES[$file_name]['name'])){
+                }
+            }
+        }
+
+
+        // id のファイルを読んでhttp request に返す。
+        $uploads = Uploads::where('id', $id)->first();
+
+        // データベースがない場合は空で返す
+        if (empty($uploads)) {
+            return response()->download( storage_path(config('connect.no_image_path')));
+        }
+
+        // ファイルを返す
+        return response()->download( storage_path('app/uploads/') . $id . '.' . $uploads->extension);
+    }
+
 }

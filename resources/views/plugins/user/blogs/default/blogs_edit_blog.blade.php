@@ -96,7 +96,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/blogs/blogsDestroy/{{$page->id}}/{{$frame_id}}/{{$blog_frame->blogs_id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/blogs/blogsDestroy/{{$page->id}}/{{$frame_id}}/{{$blog->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
                 </form>

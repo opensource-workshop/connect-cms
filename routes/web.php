@@ -68,6 +68,9 @@ Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?
 // CSS の取得アクション
 Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss');
 
+// アップロードファイルの保存アクション
+Route::get('/upload/', 'Core\UploadController@postFile');
+
 // アップロードファイルの取得アクション
 Route::get('/file/{id?}', 'Core\UploadController@getFile');
 

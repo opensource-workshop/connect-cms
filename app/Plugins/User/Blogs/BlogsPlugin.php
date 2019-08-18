@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 
 use App\Buckets;
-use App\Blogs;
-use App\BlogsPosts;
+use App\Models\User\Blogs\Blogs;
+use App\Models\User\Blogs\BlogsPosts;
 
 use App\Frame;
 use App\Page;
@@ -213,6 +213,9 @@ class BlogsPlugin extends UserPluginBase
 
             // ブログ設定を削除する。
             Blogs::destroy($blogs_id);
+
+// Frame に紐づくBlog を削除した場合のみ、Frame の更新。（Frame に紐づかないBlog の削除もあるので、その場合はFrame は更新しない。）
+// 実装は後で。
 
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();
