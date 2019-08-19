@@ -13,7 +13,7 @@
         // plugins  : 'file media image jbimages link autolink preview textcolor code table lists',
         // toolbar  : 'plugin insert media image bold italic underline strikethrough subscript superscript | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link jbimages | preview | code ',
         plugins  : 'file image link autolink preview textcolor code table lists',
-        toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link jbimages | image file |  preview | code ',
+        toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file |  preview | code ',
         block_formats: "スタイル=p;見出し1=h1;見出し2=h2;見出し3=h3;見出し4=h4;見出し5=h5;見出し6=h6",
         menubar  : '',
         relative_urls : false,
