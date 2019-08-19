@@ -7,21 +7,7 @@
  --}}
 
 {{-- WYSIWYG 呼び出し --}}
-<script type="text/javascript" src="/js/tinymce/tinymce.min.js"></script>
-<script type="text/javascript">
-    tinymce.init({
-        selector : 'textarea',
-        plugins  : 'jbimages link autolink preview textcolor code',
-        toolbar  : 'bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link jbimages | preview | code',
-        menubar  : false,
-        relative_urls : false,
-        height: 200,
-        branding: false,
-        protect: [
-            /\<\/?(script)\>/g
-        ],
-    });
-</script>
+@include('plugins.common.wysiwyg')
 
 {{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))

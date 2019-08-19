@@ -16,41 +16,7 @@
 </ul>
 
 {{-- WYSIWYG 呼び出し --}}
-<script type="text/javascript" src="/js/tinymce/tinymce.min.js"></script>
-<script type="text/javascript">
-    tinymce.init({
-        selector : 'textarea',
-        plugins  : 'jbimages link autolink preview textcolor code table',
-        toolbar  : 'bold italic underline strikethrough subscript superscript | forecolor backcolor | table | blockquote | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link jbimages | preview | code',
-        menubar  : '',
-        relative_urls : false,
-        height: 200,
-        branding: false,
-        protect: [
-            /\<\/?(script)\>/g
-        ],
-images_upload_url: '/debug/postAcceptor.php',
-file_picker_types: 'file image media',
-automatic_uploads: false,
-  file_picker_callback: function(callback, value, meta) {
-    // Provide file and text for the link dialog
-    if (meta.filetype == 'file') {
-      callback('mypage.html', {text: 'My text'});
-    }
-
-    // Provide image and alt text for the image dialog
-    if (meta.filetype == 'image') {
-      callback('myimage.jpg', {alt: 'My alt text'});
-    }
-
-    // Provide alternative source and posted for the media dialog
-    if (meta.filetype == 'media') {
-      callback('movie.mp4', {source2: 'alt.ogg', poster: 'image.jpg'});
-    }
-  },
-
-    });
-</script>
+@include('plugins.common.wysiwyg')
 
 {{-- 新規登録用フォーム --}}
 <div class="text-center">

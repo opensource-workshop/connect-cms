@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use DB;
 
@@ -25,6 +26,9 @@ use App\Uploads;
 class UploadController extends ConnectController
 {
 
+    var $directory_base = "uploads/";
+    var $directory_file_limit = 1000;
+
     /**
      *  ファイル送出
      *
@@ -44,8 +48,19 @@ class UploadController extends ConnectController
             return response()->download( storage_path(config('connect.no_image_path')));
         }
 
-        // ファイルを返す
-        return response()->download( storage_path('app/uploads/') . $id . '.' . $uploads->extension);
+        // ファイルを返す(PDFの場合はinline)
+        //$content = '';
+        $content_disposition = '';
+        if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
+            return response()
+                     ->file( storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension);
+        } else {
+            return response()
+                     ->download( storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                                 $uploads['client_original_name']
+                       );
+        }
+
     }
 
     /**
@@ -181,43 +196,113 @@ EOD;
     }
 
     /**
+     *  ファイルのMIME Type 取得
+     *
+     */
+    public function getMimetype($file_path)
+    {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimetype = finfo_file($finfo, $file_path);
+        finfo_close($finfo);
+        return $mimetype;
+    }
+
+    /**
+     *  対象ディレクトリの取得
+     *
+     */
+    public function getDirectory($file_id)
+    {
+        // ファイルID がなければ0ディレクトリを返す。
+        if (empty($file_id)) {
+            return $this->directory_base . '0';
+        }
+        // 1000で割った余りがディレクトリ名
+        $quotient = floor($file_id / $this->directory_file_limit);
+        $remainder = $file_id % $this->directory_file_limit;
+        $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
+        $directory = $this->directory_base . $sub_directory;
+
+        return $directory;
+    }
+
+    /**
+     *  対象ディレクトリの取得、なければ作成も。
+     *
+     */
+    public function makeDirectory($file_id)
+    {
+        $directory = $this->getDirectory($file_id);
+        Storage::makeDirectory($directory);
+        return $directory;
+    }
+
+    /**
      *  ファイル受け取り
      *
      */
     public function postFile(Request $request)
     {
 
-        // POST された$_FILES 情報をもとに、DB への登録、ファイルの保存を行う。
-        // mimetype とextension は$_FILES では、詐称しやすいとのことで、情報は使用せず、finfo_file 関数を使用します。
-
-        // アップロードされたファイルのループ
-        foreach( $_FILES as $file_name => $file_properties ) {
-
-            // アップロードされたファイルか確認して処理
-            if(is_uploaded_file($_FILES[$file_name]['tmp_name'])) {
+        // 画像アップロードの場合（TinyMCE標準プラグイン）
+        if ($request->hasFile('file')) {
+            if ($request->file('file')->isValid()) {
 
                 // uploads テーブルに情報追加、ファイルのid を取得する
-                $client_original_name = "";
-                $mimetype =  "";
-                $extension =  "";
-                $size =  "";
+                $id = DB::table('uploads')->insertGetId([
+                   'client_original_name' => $request->file('file')->getClientOriginalName(),
+                   'mimetype'             => $request->file('file')->getClientMimeType(),
+                   'extension'            => $request->file('file')->getClientOriginalExtension(),
+                   'size'                 => $request->file('file')->getClientSize(),
+                ]);
 
-                if(move_uploaded_file($_FILES[$file_name]['tmp_name'], "./log/".$_FILES[$file_name]['name'])){
+                $directory = $this->getDirectory($id);
+                $upload_path = $request->file('file')->storeAs($directory, $id . '.' . $request->file('file')->getClientOriginalExtension());
+                echo json_encode(array('location' => url('/') . '/file/' . $id));
+            }
+            return;
+        }
+
+
+        // アップロードしたパスの配列
+        //$upload_paths = array();
+
+        // クライアント（WYSIWYGのAjax通信）へ返すための配列（返す直前にjsonへ変換）
+        $msg_array = array();
+
+        // アップロード画面に合わせて、5回のループ
+        for ($i = 1; $i <= 5; $i++) {
+            $input_name = 'file' . $i;
+
+            // Laravel のアップロード流儀に合わせて、hasFile() とisValid()でチェック
+            if ($request->hasFile($input_name)) {
+                if ($request->file($input_name)->isValid()) {
+
+                    // uploads テーブルに情報追加、ファイルのid を取得する
+                    $id = DB::table('uploads')->insertGetId([
+                       'client_original_name' => $request->file($input_name)->getClientOriginalName(),
+                       'mimetype'             => $request->file($input_name)->getClientMimeType(),
+                       'extension'            => $request->file($input_name)->getClientOriginalExtension(),
+                       'size'                 => $request->file($input_name)->getClientSize(),
+                    ]);
+
+                    $directory = $this->getDirectory($id);
+                    //$upload_paths[$id] = $request->file($input_name)->storeAs($directory, $id . '.' . $request->file($input_name)->getClientOriginalExtension());
+                    $upload_path = $request->file($input_name)->storeAs($directory, $id . '.' . $request->file($input_name)->getClientOriginalExtension());
+
+                    // PDFの場合は、別ウィンドウで表示
+                    $target = '';
+                    if (strtolower($request->file($input_name)->getClientOriginalExtension()) == 'pdf') {
+                        $target = ' target="_blank"';
+                    }
+                    $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
                 }
             }
         }
 
-
-        // id のファイルを読んでhttp request に返す。
-        $uploads = Uploads::where('id', $id)->first();
-
-        // データベースがない場合は空で返す
-        if (empty($uploads)) {
-            return response()->download( storage_path(config('connect.no_image_path')));
-        }
-
-        // ファイルを返す
-        return response()->download( storage_path('app/uploads/') . $id . '.' . $uploads->extension);
+        // アップロードファイルのパスをHTMLにして、さらにjsonに変換してechoでクライアント（WYSIWYGのAjax通信）へ返す。
+        $msg_json = json_encode($msg_array);
+        echo $msg_json;
     }
 
 }
