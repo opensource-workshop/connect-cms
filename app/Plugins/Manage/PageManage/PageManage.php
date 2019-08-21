@@ -115,6 +115,7 @@ class PageManage extends ManagePluginBase
         $page->permanent_link    = $request->permanent_link;
         $page->background_color  = $request->background_color;
         $page->header_color      = $request->header_color;
+        $page->theme             = $request->theme;
         $page->layout            = $request->layout;
         $page->base_display_flag = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
         $page->save();
@@ -141,6 +142,7 @@ class PageManage extends ManagePluginBase
                 'permanent_link'    => $request->permanent_link,
                 'background_color'  => $request->background_color,
                 'header_color'      => $request->header_color,
+                'theme'             => $request->theme,
                 'layout'            => $request->layout,
                 'base_display_flag' => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
         ]);

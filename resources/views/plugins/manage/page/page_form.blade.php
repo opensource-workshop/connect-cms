@@ -52,12 +52,19 @@
                 </div>
             </div>
             <div class="form-group">
+                <label for="permanent_link" class="col-md-3 control-label">テーマ</label>
+                <div class="col-md-9">
+                    <input type="text" name="theme" id="theme" value="{{$page->theme}}" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
                 <label for="permanent_link" class="col-md-3 control-label">レイアウト</label>
                 <div class="col-md-9">
                     <select name="layout" class="form-control">
                         <option value=""@if($page->layout == "") selected @endif>設定なし</option>
                         <option value="1|1|0|1"@if($page->layout == "1|1|0|1") selected @endif>ヘッダー＆フッター＆レフト</option>
                         <option value="1|1|1|1"@if($page->layout == "1|1|1|1") selected @endif>ヘッダー＆フッター＆レフト＆ライト</option>
+                        <option value="1|0|0|0"@if($page->layout == "1|0|0|1") selected @endif>ヘッダー＆フッター</option>
                         <option value="1|0|0|0"@if($page->layout == "1|1|1|1") selected @endif>ヘッダーのみ</option>
                         <option value="0|0|0|0"@if($page->layout == "0|0|0|0") selected @endif>メインのみ</option>
                     </select>
