@@ -49,15 +49,15 @@
     <!-- Styles -->
     <link href="{{asset('css/app.css')}}" rel="stylesheet">
 
-    <!-- Themes Styles -->
-    @if (isset($themes))
-        <link href="/themes/{{$themes}}/themes.css" rel="stylesheet">
-    @endif
-
     <!-- Styles -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
     @if (isset($page))
         <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
+    @endif
+
+    <!-- Themes Styles -->
+    @if (isset($themes))
+        <link href="/themes/{{$themes}}/themes.css" rel="stylesheet">
     @endif
 
     <!-- jQuery -->
