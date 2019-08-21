@@ -23,7 +23,7 @@
         </div>
     </div>
 </p>
-<form action="/redirect/plugin/contents/destroy/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="form-horizontal">
+<form action="/redirect/plugin/contents/delete/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="form-horizontal">
     {{ csrf_field() }}
     <span class="text-danger">
     <p>

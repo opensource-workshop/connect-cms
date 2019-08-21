@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Contents;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
 
@@ -41,17 +42,41 @@ class ContentsPlugin extends UserPluginBase
      */
     public function getContents($frame_id)
     {
-        // フレームID が渡されるので、そのフレームに応じたデータを返す。
-        // 表示するデータ、バケツ、フレームをJOIN して取得
-        $contents = DB::table('contents')
-                    ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
-                    ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
-                    ->join('frames', function ($join) {
-                        $join->on('frames.bucket_id', '=', 'buckets.id');
-                    })
-                    ->where('frames.id', $frame_id)
-                    ->first();
 
+        // 認証されているユーザの取得
+        $user = Auth::user();
+
+        // 管理者権限の場合は、一時保存も対象
+        if (!empty($user) && $user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
+
+            // フレームID が渡されるので、そのフレームに応じたデータを返す。
+            // 表示するデータ、バケツ、フレームをJOIN して取得
+            $contents = DB::table('contents')
+                        ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
+                        ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
+                        ->join('frames', function ($join) {
+                            $join->on('frames.bucket_id', '=', 'buckets.id');
+                        })
+                        ->where('frames.id', $frame_id)
+                        // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+                        ->where(function($query){ $query->where('contents.status', 0)->orWhere('contents.status', 1)->orWhere('contents.status', 2); })
+                        ->orderBy('id', 'desc')
+                        ->first();
+        }
+        else {
+
+            // フレームID が渡されるので、そのフレームに応じたデータを返す。
+            // 表示するデータ、バケツ、フレームをJOIN して取得
+            $contents = DB::table('contents')
+                        ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
+                        ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
+                        ->join('frames', function ($join) {
+                            $join->on('frames.bucket_id', '=', 'buckets.id');
+                        })
+                        ->where('frames.id', $frame_id)
+                        ->where('contents.status', 0)
+                        ->first();
+        }
         return $contents;
     }
 
@@ -73,7 +98,7 @@ class ContentsPlugin extends UserPluginBase
 
     /**
      *  データ詳細表示関数
-     *  コアがページ表示の際に呼び出す関数
+     *  コアがデータ削除の確認用に呼び出す関数
      */
     public function edit_show($request, $page_id, $frame_id, $id = null)
     {
@@ -98,8 +123,8 @@ class ContentsPlugin extends UserPluginBase
     }
 
     /**
-     * データ初期表示関数
-     * コアがページ表示の際に呼び出す関数
+     * データ編集用表示関数
+     * コアが編集画面表示の際に呼び出す関数
      */
     public function edit($request, $page_id, $frame_id, $id = null)
     {
@@ -163,9 +188,13 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // データリストの場合の追加処理
+        // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
         $buckets = DB::table('buckets')
                     ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
-                    ->leftJoin('contents', 'buckets.id', '=', 'contents.bucket_id')
+                    ->leftJoin('contents', function ($join) {
+                        $join->on('contents.bucket_id', '=', 'buckets.id');
+                        $join->where('contents.status', '=', 0);
+                    })
                     ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
                     ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
                     ->where('buckets.plugin_name', 'contents')
@@ -204,12 +233,37 @@ class ContentsPlugin extends UserPluginBase
     }
 
    /**
-    * データ保存関数
+    * データ更新（確定）関数
     */
     public function update($request, $page_id = null, $frame_id = null, $id = null)
     {
-        Contents::where('id', $id)
-                  ->update(['content_text' => $request->contents]);
+        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
+        $oldrow = Contents::find($id);
+
+        // 旧レコードのstatus 更新(同じbackets のものは、最新を除いてstatus:9 に更新)
+        Contents::where('bucket_id', $oldrow->bucket_id)->update(['status' => 9]);
+
+        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
+        $newrow = $oldrow->replicate();
+        $newrow->content_text = $request->contents;
+        $newrow->status       = 0;
+        $newrow->save();
+
+        return;
+    }
+
+   /**
+    * データ一時保存関数
+    */
+    public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
+        $oldrow = Contents::find($id);
+        $newrow = $oldrow->replicate();
+        $newrow->content_text = $request->contents;
+        $newrow->status = 1; //（一時保存）
+        $newrow->save();
+
         return;
     }
 
@@ -227,7 +281,7 @@ class ContentsPlugin extends UserPluginBase
    /**
     * データ削除関数
     */
-    public function destroy($request, $page_id = null, $frame_id = null, $id = null)
+    public function delete($request, $page_id = null, $frame_id = null, $id = null)
     {
         // id がある場合、コンテンツを削除
         if ( $id ) {
@@ -240,10 +294,32 @@ class ContentsPlugin extends UserPluginBase
                 Frame::destroy($frame_id);
             }
 
-            // コンテンツデータとバケツデータを削除する。
-            Contents::destroy($id);
-            Buckets::destroy($content->bucket_id);
+            // 論理削除のため、コンテンツデータを status:9 に変更する。バケツデータは削除しない。
+            Contents::where('id', $id)->update(['status' => 9]);
         }
         return;
     }
+
+//   /**
+//    * データ削除関数
+//    */
+//    public function destroy($request, $page_id = null, $frame_id = null, $id = null)
+//    {
+//        // id がある場合、コンテンツを削除
+//        if ( $id ) {
+//
+//            // Contents データ
+//            $content = Contents::where('id', $id)->first();
+//
+//            // フレームも同時に削除するがチェックされていたらフレームを削除する。
+//            if ( $request->frame_delete_flag == "1" ) {
+//                Frame::destroy($frame_id);
+//            }
+//
+//            // コンテンツデータとバケツデータを削除する。
+//            Contents::destroy($id);
+//            Buckets::destroy($content->bucket_id);
+//        }
+//        return;
+//    }
 }
