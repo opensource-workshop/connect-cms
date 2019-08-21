@@ -27,6 +27,13 @@
             <div class="help-block">サイト名（各ページで上書き可能 ※予定）</div>
         </div>
 
+        {{-- テーマ --}}
+        <div class="form-group">
+            <label class="control-label">テーマ</label>
+            <input type="text" name="base_theme" value="{{$configs["base_theme"]}}" class="form-control">
+            <div class="help-block">画面の基本のテーマ（各ページで上書き可能）</div>
+        </div>
+
         {{-- 背景色 --}}
         <div class="form-group">
             <label class="control-label">背景色</label>
