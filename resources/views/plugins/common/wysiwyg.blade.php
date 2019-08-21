@@ -17,7 +17,7 @@
         block_formats: "スタイル=p;見出し1=h1;見出し2=h2;見出し3=h3;見出し4=h4;見出し5=h5;見出し6=h6",
         menubar  : '',
         relative_urls : false,
-        height: 200,
+        height: 300,
         branding: false,
         protect: [
             /\<\/?(script)\>/g
