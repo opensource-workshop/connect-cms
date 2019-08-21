@@ -16,14 +16,14 @@ class DefaultConfigsTableSeeder extends Seeder
                 [
                     [
                         'name'=>'base_background_color',
-                        'value'=>'#ffffff',
+                        'value'=>null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
                     [
                         'name'=>'base_header_color',
-                        'value'=>'#ffffff',
+                        'value'=>null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -87,6 +87,13 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'user_register_enable',
                         'value'=>'0',
+                        'category'=>'user_register',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name'=>'base_theme',
+                        'value'=>null,
                         'category'=>'user_register',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
