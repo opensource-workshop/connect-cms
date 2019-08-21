@@ -72,6 +72,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_site_name]
         );
 
+        // 画面の基本のテーマ
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_theme'],
+            ['category' => 'general',
+             'value'    => $request->base_theme]
+        );
+
         // 画面の基本の背景色
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_background_color'],

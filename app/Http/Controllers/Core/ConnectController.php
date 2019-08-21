@@ -230,6 +230,35 @@ class ConnectController extends Controller
     }
 
     /**
+     *  テーマ取得
+     */
+    public function getThemes()
+    {
+        $theme = $this->getPagesColum('theme');
+        if ($theme) {
+            return $theme;
+        }
+        // テーマが設定されていない場合は一般設定の取得
+        $configs = Configs::where('name', 'base_theme')->first();
+        return $configs->value;
+    }
+
+    /**
+     *  ページのカラム取得
+     */
+    public function getPagesColum($col_name)
+    {
+        // 自分のページから親を遡って取得
+        $page_tree = Page::reversed()->ancestorsAndSelf($this->page->id);
+        foreach($page_tree as $page){
+            if(isset($page[$col_name])) {
+                return $page[$col_name];
+            }
+        }
+        return null;
+    }
+
+    /**
      *  表示しているページのオブジェクトを取得
      */
     public function getCurrentPage()

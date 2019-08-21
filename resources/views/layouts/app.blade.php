@@ -55,6 +55,11 @@
         <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
     @endif
 
+    <!-- Themes Styles -->
+    @if (isset($themes))
+        <link href="/themes/{{$themes}}/themes.css" rel="stylesheet">
+    @endif
+
     <!-- jQuery -->
     <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
 

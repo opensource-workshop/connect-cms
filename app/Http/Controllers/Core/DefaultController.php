@@ -42,6 +42,9 @@ class DefaultController extends ConnectController
         // レイアウト取得
         $layouts_info = $this->getLayoutsInfo();
 
+        // テーマ取得
+        $themes = $this->getThemes();
+
         // プラグインのインスタンス生成（メインエリア以外の共通エリア）
         $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);
 
@@ -65,6 +68,7 @@ class DefaultController extends ConnectController
             'pages'             => $pages,
             'plugin_instances'  => $plugin_instances,
             'layouts_info'      => $layouts_info,
+            'themes'           => $themes,
             'action_core_frame' => $action_core_frame,
         ]);
     }
@@ -143,6 +147,9 @@ class DefaultController extends ConnectController
         // レイアウト取得
         $layouts_info = $this->getLayoutsInfo();
 
+        // テーマ取得
+        $themes = $this->getThemes();
+
         // プラグインのインスタンス生成（メインエリア以外の共通エリア）
         $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);
 
@@ -168,7 +175,8 @@ class DefaultController extends ConnectController
             'frames'           => $frames,
             'pages'            => $pages,
             'plugin_instances' => $plugin_instances,
-            'layouts_info'     => $this->getLayoutsInfo(),
+            'layouts_info'     => $layouts_info,
+            'themes'           => $themes,
             'action_core_frame' => $action_core_frame,
         ]);
 
