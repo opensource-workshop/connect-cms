@@ -49,6 +49,11 @@
     <!-- Styles -->
     <link href="{{asset('css/app.css')}}" rel="stylesheet">
 
+    <!-- Themes Styles -->
+    @if ($themes)
+        <link href="/themes/{{$themes}}/themes.css" rel="stylesheet">
+    @endif
+
     <!-- Styles -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
     @if (isset($page))

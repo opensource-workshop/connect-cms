@@ -230,6 +230,28 @@ class ConnectController extends Controller
     }
 
     /**
+     *  テーマ取得
+     */
+    public function getThemes()
+    {
+        return $this->getPagesColum('theme');
+    }
+
+    /**
+     *  ページのカラム取得
+     */
+    public function getPagesColum($col_name)
+    {
+        $page_tree = $this->getPageTree($this->page->id);
+        foreach($page_tree as $page){
+            if(isset($page[$col_name])) {
+                return $page[$col_name];
+            }
+        }
+        return null;
+    }
+
+    /**
      *  表示しているページのオブジェクトを取得
      */
     public function getCurrentPage()
