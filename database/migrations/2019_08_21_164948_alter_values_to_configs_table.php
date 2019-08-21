@@ -15,7 +15,7 @@ class AlterValuesToConfigsTable extends Migration
     {
         Schema::table('configs', function (Blueprint $table) {
             //
-            $table->text('value')->nullable()->change();
+              DB::statement('ALTER TABLE `configs` MODIFY COLUMN value varchar(255)');
         });
     }
 
@@ -28,7 +28,7 @@ class AlterValuesToConfigsTable extends Migration
     {
         Schema::table('configs', function (Blueprint $table) {
             //
-            $table->text('value')->nullable(false)->change();
+              DB::statement('ALTER TABLE `configs` MODIFY COLUMN value varchar(255) NOT NULL');
 
         });
     }
