@@ -18,6 +18,7 @@
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
+{{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
     function save_action() {
         form_update.action = "/redirect/plugin/contents/temporarysave/{{$page->id}}/{{$frame_id}}/{{$contents->id}}";

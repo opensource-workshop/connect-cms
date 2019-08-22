@@ -212,7 +212,7 @@ class ContentsPlugin extends UserPluginBase
    /**
     * データ新規登録関数
     */
-    public function store($request, $page_id = null, $frame_id = null, $id = null)
+    public function store($request, $page_id = null, $frame_id = null, $id = null, $status = 0)
     {
         // バケツの登録
         $bucket_id = DB::table('buckets')->insertGetId([
@@ -221,9 +221,11 @@ class ContentsPlugin extends UserPluginBase
         ]);
 
         // コンテンツデータの登録
-        $id = DB::table('contents')->insertGetId(
-            ['bucket_id' => $bucket_id, 'content_text' => $request->contents]
-        );
+        $id = DB::table('contents')->insertGetId([
+            'bucket_id'    => $bucket_id,
+            'content_text' => $request->contents,
+            'status'       => $status
+        ]);
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
@@ -257,13 +259,20 @@ class ContentsPlugin extends UserPluginBase
     */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     {
-        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
-        $oldrow = Contents::find($id);
-        $newrow = $oldrow->replicate();
-        $newrow->content_text = $request->contents;
-        $newrow->status = 1; //（一時保存）
-        $newrow->save();
 
+        // 新規で一時保存しようとしたときは id、レコードがまだない。
+        if (empty($id)) {
+            $status = 1;
+            $this->store($request, $page_id, $frame_id, $id, $status);
+        }
+        else {
+            // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
+            $oldrow = Contents::find($id);
+            $newrow = $oldrow->replicate();
+            $newrow->content_text = $request->contents;
+            $newrow->status = 1; //（一時保存）
+            $newrow->save();
+        }
         return;
     }
 
