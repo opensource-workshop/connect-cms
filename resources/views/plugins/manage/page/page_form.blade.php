@@ -64,7 +64,7 @@
                         <option value=""@if($page->layout == "") selected @endif>設定なし</option>
                         <option value="1|1|0|1"@if($page->layout == "1|1|0|1") selected @endif>ヘッダー＆フッター＆レフト</option>
                         <option value="1|1|1|1"@if($page->layout == "1|1|1|1") selected @endif>ヘッダー＆フッター＆レフト＆ライト</option>
-                        <option value="1|0|0|0"@if($page->layout == "1|0|0|1") selected @endif>ヘッダー＆フッター</option>
+                        <option value="1|0|0|1"@if($page->layout == "1|0|0|1") selected @endif>ヘッダー＆フッター</option>
                         <option value="1|0|0|0"@if($page->layout == "1|1|1|1") selected @endif>ヘッダーのみ</option>
                         <option value="0|0|0|0"@if($page->layout == "0|0|0|0") selected @endif>メインのみ</option>
                     </select>
