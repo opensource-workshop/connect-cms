@@ -48,7 +48,8 @@ class PageManage extends ManagePluginBase
 	public function index($request, $page_id = null, $errors = array())
 	{
         // ページデータの取得(laravel-nestedset 使用)
-        $pages = Page::defaultOrderWithDepth();
+        $return_obj = 'flat';
+        $pages = Page::defaultOrderWithDepth($return_obj);
 
         // 移動先用にコピー
         $pages_select = $pages;

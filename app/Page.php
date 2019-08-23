@@ -2,6 +2,9 @@
 
 namespace App;
 
+use RecursiveIteratorIterator;
+use RecursiveArrayIterator;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
@@ -22,7 +25,7 @@ class Page extends Model
      * @param int $frame_id
      * @return view
      */
-    public static function defaultOrderWithDepth()
+    public static function defaultOrderWithDepth($return_obj = null)
     {
         // ページデータを全て取得
         // 表示順は入れ子集合モデルの順番
@@ -43,17 +46,12 @@ class Page extends Model
                 $traverse($page->children, $prefix.'-', $depth, $page->display_flag);
             }
         };
-/*
-        $traverse = function ($pages, $prefix = '-', $depth = -1) use (&$traverse) {
-            $depth = $depth+1;
-            foreach ($pages as $page) {
-                $page->depth = $depth;
-                $page->page_name = $page->page_name;
-                $traverse($page->children, $prefix.'-', $depth);
-            }
-        };
-*/
         $traverse($tree);
-        return $pages;
+
+        if ( $return_obj == 'flat' ) {
+            return $pages;
+        }
+
+        return $tree;
     }
 }
