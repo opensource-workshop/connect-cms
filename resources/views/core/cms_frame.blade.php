@@ -8,15 +8,15 @@
  * @category コア
 --}}
 @if($frame->frame_col==0)
-<div class="col-sm-12" id="{{ $frame->frame_id }}">
+<div class="col-sm-12 @if ($frame->area_id==2 && !$loop->last) pr-0 @endif" id="{{ $frame->frame_id }}">
 @else
-<div class="col-sm-{{$frame->frame_col}}" id="{{ $frame->frame_id }}">
+<div class="col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) pr-0 @endif" id="{{ $frame->frame_id }}">
 @endif
 
     @if ($frame->frame_design == 'none')
-    <div class="panel panel-{{$frame->frame_design}}" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;">
+    <div class="card mb-3" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;">
     @else
-    <div class="panel panel-{{$frame->frame_design}}">
+    <div class="card mb-3">
     @endif
 
         {{-- フレームヘッダー(表示) --}}
@@ -51,9 +51,9 @@
 
             {{-- フレームボディ --}}
             @if ($frame->frame_design == 'none')
-            <div class="panel-body" style="padding: 0; clear: both;">
+            <div class="card-body" style="padding: 0; clear: both;">
             @else
-            <div class="panel-body">
+            <div class="card-body">
             @endif
 
                 {{-- プラグが設定されていれば、プラグ優先 --}}

@@ -16,13 +16,11 @@
 
 {{-- Auth::user()->role --}}
 
-    <div class="card border-0">
-
     {{-- 認証していてフレームタイトルが空の場合は、パネルヘッダーの中央にアイコンを配置したいので、高さ指定する。 --}}
     @if (Auth::check() && empty($frame->frame_title))
-        <h5 class="card-header bg-white border-0" style="padding-top: 0px;padding-bottom: 0px;height: 24px;">
+        <h5 class="card-header bg-{{$frame->frame_design}} border-0" style="padding-top: 0px;padding-bottom: 0px;height: 24px;">
     @else
-        <h5 class="card-header bg-white border-0">
+        <h5 class="card-header bg-{{$frame->frame_design}}">
     @endif
 
     {{-- フレームタイトル --}}
@@ -33,7 +31,7 @@
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
         @if ($frame->page_id == $page->id)
-        <div class="form-group float-right">
+        <div class="float-right">
 
             {{-- 上移動。POSTのためのフォーム --}}
             <form action="/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
@@ -59,14 +57,12 @@
             {{-- 削除。POSTのためのフォーム --}}
         </div>
         @else
-        <div class="pull-right">
-            <i class="fas fa-angle-up bg-{{$frame->frame_design}}"></i>
-            <i class="fas fa-angle-down bg-{{$frame->frame_design}}"></i>
-            <i class="far fa-edit bg-{{$frame->frame_design}}"></i>
+        <div class="float-right">
+            <i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom text-secondary"></i>
+            <i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom text-secondary"></i>
+            <i class="far fa-edit bg-{{$frame->frame_design}} small text-secondary"></i>
         </div>
         @endif
-
-    </h5>
     @endif
-</div>
+    </h5>
 @endif

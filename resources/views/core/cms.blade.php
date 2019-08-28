@@ -53,7 +53,7 @@ $(function () {
     <div class="row">
         {{-- メインエリア --}}
 {{--        <div class="{{$layouts_info[2]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
-        <div class="order-2 px-0 {{$layouts_info[2]['col']}}">
+        <div class="order-2 row px-0 {{$layouts_info[2]['col']}}">
             {{-- ページ内のフレームのループ --}}
             @foreach($frames as $frame)
                 @if ($frame->area_id == 2)
