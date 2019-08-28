@@ -50,7 +50,7 @@ class DefaultController extends ConnectController
 
         // Page データ
         $pages = Page::defaultOrder()->get();
-
+        //Log::debug(json_decode($pages));
 
         // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
         $action_core_frame = $this->getActionCoreFrame($request);

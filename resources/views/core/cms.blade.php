@@ -38,8 +38,6 @@ $(function () {
 
 {{-- *********************************************************** --}}
 
-
-
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
     <div class="row">
@@ -54,7 +52,8 @@ $(function () {
 
     <div class="row">
         {{-- メインエリア --}}
-        <div class="{{$layouts_info[2]['col']}}" style="padding-left: 0; padding-right: 0;">
+{{--        <div class="{{$layouts_info[2]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
+        <div class="order-2 px-0 {{$layouts_info[2]['col']}}">
             {{-- ページ内のフレームのループ --}}
             @foreach($frames as $frame)
                 @if ($frame->area_id == 2)
@@ -65,7 +64,8 @@ $(function () {
 
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
-        <div class="{{$layouts_info[1]['col']}}" style="padding-left: 0; padding-right: 0;">
+{{--        <div class="{{$layouts_info[1]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
+        <div class="order-1 px-0 {{$layouts_info[1]['col']}}">
             {{-- サービス取得 --}}
             {{-- Todo：実際には、ページ内で使用されているプラグインを動的に定義する必要がある --}}
             @isset($layouts_info[1]['frames'])
@@ -78,7 +78,8 @@ $(function () {
 
         {{-- 右エリア --}}
         @if ($layouts_info[3]['exists'])
-        <div class="{{$layouts_info[3]['col']}}" style="padding-left: 0; padding-right: 0;">
+{{--        <div class="{{$layouts_info[3]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
+        <div class="order-3 px-0 {{$layouts_info[3]['col']}}">
             {{-- ページ内のフレームのループ --}}
             @isset($layouts_info[3]['frames'])
                 @foreach($layouts_info[3]['frames'] as $frame)

@@ -47,7 +47,11 @@
     @endif
 
     <!-- Styles -->
+{{-- bootstrap3
     <link href="{{asset('css/app.css')}}" rel="stylesheet">
+--}}
+{{-- bootstrap4 --}}
+    <link href="{{asset('bootstrap4/css/bootstrap.min.css')}}" rel="stylesheet">
 
     <!-- Styles -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
@@ -62,6 +66,9 @@
 
     <!-- jQuery -->
     <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
+
+{{-- bootstrap4 --}}
+    <script src="{{asset('bootstrap4/js/bootstrap.bundle.min.js')}}"></script>
 
     <!-- bootstrap-datepicker -->
     <link href="{{asset('js/bootstrap-datepicker/css/bootstrap-datepicker.min.css')}}" rel="stylesheet">
@@ -85,250 +92,208 @@
     <script src="{{ asset('js/bootstrap-treeview.js') }}"></script>
 --}}
 
-{{--
     <!-- Fonts -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" rel='stylesheet' type='text/css'>
+{{--
+    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel='stylesheet' type='text/css'>
+--}}
+    <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
+{{--
     <!-- Styles -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
 --}}
 
 </head>
 <body>
-    <div id="app">
-        <nav class="navbar navbar-default navbar-static-top">
-            <div class="container">
-                <div class="navbar-header">
 
-                    <!-- Collapsed Hamburger -->
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#app-navbar-collapse" aria-expanded="false">
-                        <span class="sr-only">Toggle Navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
+<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <!-- Branding Image -->
+    <a class="navbar-brand" href="{{ url('/') }}">
+        @if(isset($configs))
+            {{$configs['base_site_name']}}
+        @else
+            {{ config('app.name', 'Connect-CMS') }}
+        @endif
+    </a>
 
-                    <!-- Branding Image -->
-                    <a class="navbar-brand" href="{{ url('/') }}">
-                        @if(isset($configs))
-                            {{$configs['base_site_name']}}
+    <!-- SmartPhone Button -->
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+
+            @if(isset($page_list))
+            <div class="d-block d-md-none">
+                @foreach($page_list as $page_obj)
+
+                    {{-- 非表示のページは対象外 --}}
+                    @if ($page_obj->display_flag == 1)
+
+                        <li class="nav-item">
+                        {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
+                        @if (isset($page_obj) && $page_obj->id == $page->id)
+                            <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
                         @else
-                            {{ config('app.name', 'Connect-CMS') }}
+                            <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
                         @endif
-                    </a>
-                </div>
 
-                <div class="collapse navbar-collapse" id="app-navbar-collapse">
-
-                    <!-- Left Side Of Navbar -->
-                    <ul class="nav navbar-nav">
-                        &nbsp;
-                    </ul>
-
-                    @if(isset($page_list))
-                    <div class="list-group visible-xs">
-                    @foreach($page_list as $page_obj)
-
-                        {{-- 非表示のページは対象外 --}}
-                        @if ($page_obj->display_flag == 1)
-
-                            {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                            @if (isset($page_obj) && $page_obj->id == $page->id)
-                            <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item active">
-                            @else
-                            <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item">
-                            @endif
-
-                            {{-- 各ページの深さをもとにインデントの表現 --}}
-                            @for ($i = 0; $i < $page_obj->depth; $i++)
-                                <span @if ($i+1==$page_obj->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
-                            @endfor
+                        {{-- 各ページの深さをもとにインデントの表現 --}}
+                        @for ($i = 0; $i < $page_obj->depth; $i++)
+                            <span @if ($i+1==$page_obj->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
+                        @endfor
                             {{$page_obj->page_name}}
                             </a>
-                        @endif
-
-                    @endforeach
-                    </div>
+                        </li>
                     @endif
 
-                    {{-- スマートフォン用メニュー --}}
-                    <div class="list-group visible-xs">
-
-                        @guest
-                            @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
-                                <a class="list-group-item" href="{{ route('login') }}">ログイン</a>
-                            @endif
-                            @if (isset($configs) && ($configs['user_register_enable'] == '1'))
-                                <a class="list-group-item" href="{{ route('register') }}">ユーザ登録</a>
-                            @endif
-                        @else
-                            <li class="dropdown list-unstyled">
-                                <a href="#" class="dropdown-toggle list-group-item" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
-                                    {{ Auth::user()->name }} <span class="caret"></span>
-                                </a>
-
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a href="{{ route('logout') }}"
-                                            onclick="event.preventDefault();
-                                            document.getElementById('logout-form').submit();">
-                                            ログアウト
-                                        </a>
-
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                            {{ csrf_field() }}
-                                        </form>
-                                    </li>
-                                </ul>
-                            </li>
-                            <a href="{{ url('/manage/page/') }}" class="list-group-item">管理ページ</a>
-                        @endguest
-                    </div>
-
-
-                    <!-- Right Side Of Navbar -->
-                    <ul class="nav navbar-nav navbar-right hidden-xs">
-                        <!-- Authentication Links -->
-                        @guest
-                            @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
-                                <li><a href="{{ route('login') }}">ログイン</a></li>
-                            @endif
-                            @if (isset($configs) && ($configs['user_register_enable'] == '1'))
-                                <li><a href="{{ route('register') }}">ユーザ登録</a></li>
-                            @endif
-                        @else
-
-                            {{-- システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
-                            @if (Auth::check() && 
-                                (
-                                    Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) ||
-                                    Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER')) ||
-                                    Auth::user()->can(Config::get('cc_role.ROLE_USER_MANAGER')) ||
-                                    Auth::user()->can(Config::get('cc_role.ROLE_PAGE_MANAGER')) ||
-                                    Auth::user()->can(Config::get('cc_role.ROLE_OPERATION_MANAGER'))
-                                )
-                            )
-
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
-                                    管理機能 <span class="caret"></span>
-                                </a>
-
-                                <ul class="dropdown-menu">
-                                    {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
-                                    @if (isset($page_list))
-                                        <li><a href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a></li>
-                                        <li role="separator" class="divider" style="margin: 4px 0 10px 0;"></li>
-                                    @endif
-                                    {{-- 管理プラグインのメニュー --}}
-                                    @if (isset($plugin_name) && $plugin_name == 'page')
-                                        <li><a href="{{ url('/manage/page') }}" class="list-group-item active" style="border-radius: 0;">ページ管理</a></li>
-                                    @else
-                                        <li><a href="{{ url('/manage/page') }}">ページ管理</a></li>
-                                    @endif
-                                    @if (isset($plugin_name) && $plugin_name == 'site')
-                                        <li><a href="{{ url('/manage/site') }}" class="list-group-item active" style="border-radius: 0;">サイト管理</a></li>
-                                    @else
-                                        <li><a href="{{ url('/manage/site') }}">サイト管理</a></li>
-                                    @endif
-                                    @if (isset($plugin_name) && $plugin_name == 'user')
-                                        <li><a href="{{ url('/manage/user') }}" class="list-group-item active" style="border-radius: 0;">ユーザ管理</a></li>
-                                    @else
-                                        <li><a href="{{ url('/manage/user') }}">ユーザ管理</a></li>
-                                    @endif
-                                </ul>
-                            </li>
-
-                            {{-- /システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
-                            @endif
-
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" v-pre>
-                                    {{ Auth::user()->name }} <span class="caret"></span>
-                                </a>
-
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a href="{{ route('logout') }}"
-                                            onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                            ログアウト
-                                        </a>
-
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                            {{ csrf_field() }}
-                                        </form>
-                                    </li>
-                                </ul>
-                            </li>
-                        @endguest
-                    </ul>
-                </div>
+                @endforeach
+                <div class="dropdown-divider"></div>
             </div>
-        </nav>
+            @endif
 
-        @yield('content')
+{{--
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+                <div class="dropdown-menu" aria-labelledby="dropdown01">
+                    <a class="dropdown-item" href="#">Action</a>
+                    <a class="dropdown-item" href="#">Another action</a>
+                    <a class="dropdown-item" href="#">Something else here</a>
+                </div>
+            </li>
+--}}
+        </ul>
+{{--
+        <form class="form-inline my-2 my-lg-0">
+            <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+--}}
+
+        <ul class="navbar-nav">
+
+            {{-- システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
+            @if (Auth::check() && 
+                (
+                    Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) ||
+                    Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER')) ||
+                    Auth::user()->can(Config::get('cc_role.ROLE_USER_MANAGER')) ||
+                    Auth::user()->can(Config::get('cc_role.ROLE_PAGE_MANAGER')) ||
+                    Auth::user()->can(Config::get('cc_role.ROLE_OPERATION_MANAGER'))
+                )
+            )
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">管理機能</a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_manage">
+
+                        {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
+                        @if (isset($page_list))
+                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a>
+                            <div class="dropdown-divider"></div>
+
+                        @endif
+                        {{-- 管理プラグインのメニュー --}}
+                        @if (isset($plugin_name) && $plugin_name == 'page')
+                            <a href="{{ url('/manage/page') }}" class="dropdown-item active" style="border-radius: 0;">ページ管理</a>
+                        @else
+                            <a href="{{ url('/manage/page') }}" class="dropdown-item">ページ管理</a>
+                        @endif
+                        @if (isset($plugin_name) && $plugin_name == 'site')
+                            <a href="{{ url('/manage/site') }}" class="dropdown-item active" style="border-radius: 0;">サイト管理</a>
+                        @else
+                            <a href="{{ url('/manage/site') }}" class="dropdown-item">サイト管理</a>
+                        @endif
+                        @if (isset($plugin_name) && $plugin_name == 'user')
+                            <a href="{{ url('/manage/user') }}" class="dropdown-item active" style="border-radius: 0;">ユーザ管理</a>
+                        @else
+                            <a href="{{ url('/manage/user') }}" class="dropdown-item">ユーザ管理</a>
+                        @endif
+
+                    </div>
+                </li>
+            {{-- /システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
+            @endif
+
+            @guest
+                @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
+                    <a class="nav-link" href="{{ route('login') }}">ログイン</a>
+                @endif
+                @if (isset($configs) && ($configs['user_register_enable'] == '1'))
+                    <a class="nav-link" href="{{ route('register') }}">ユーザ登録</a>
+                @endif
+            @else
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown_auth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{Auth::user()->name}}</a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_auth">
+                        <a class="dropdown-item" href="{{route('logout')}}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">ログアウト</a>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                            {{ csrf_field() }}
+                        </form>
+                    </div>
+                </li>
+            @endguest
+        </ul>
+
     </div>
+</nav>
+
+<main role="main">
+    @yield('content')
+</main>
+
+{{-- -------------------------------------------- --}}
 
     {{-- プラグイン追加・ダイアログ --}}
     @auth
     @if (isset($page) && isset($layouts_info))
     <div class="modal fade" id="pluginAddModal" tabindex="-1" data-backdrop="static">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
+                    <h5 class="modal-title">プラグイン追加</h5>
                     <button type="button" class="close" data-dismiss="modal"><span>×</span></button>
-                    <h4 class="modal-title">プラグイン追加</h4>
                 </div>
                 <div class="modal-body">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <div class="row">
-                                <div class="col-xs-4 col-md-offset-4">
-                                    @if ($layouts_info[0]['exists'] == 1)
-                                        @include('layouts.add_plugin',['area_name' => 'ヘッダー', 'area_id' => 0])
-                                    @else
-                                        <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
-                                    @endif
-                                </div>
-                            </div>
+
+                    <div class="d-sm-flex justify-content-around">
+                        @if ($layouts_info[0]['exists'] == 1)
+                            @include('layouts.add_plugin',['area_name' => 'ヘッダー', 'area_id' => 0])
+                        @else
+                            <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                        @endif
+                    </div>
+
+                    <div class="d-sm-flex justify-content-around">
+                        <div class="m-3">
+                            @if ($layouts_info[1]['exists'] == 1)
+                                @include('layouts.add_plugin',['area_name' => '左', 'area_id' => 1])
+                            @else
+                                <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                            @endif
                         </div>
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-xs-4">
-                                    @if ($layouts_info[1]['exists'] == 1)
-                                        @include('layouts.add_plugin',['area_name' => '左', 'area_id' => 1])
-                                    @else
-                                        <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
-                                    @endif
-                                </div>
-                                <div class="col-xs-4">
-                                    @include('layouts.add_plugin',['area_name' => '主', 'area_id' => 2])
-                                </div>
-                                <div class="col-xs-4">
-                                    @if ($layouts_info[3]['exists'] == 1)
-                                        @include('layouts.add_plugin',['area_name' => '右', 'area_id' => 3])
-                                    @else
-                                        <span class="form-control" style="background-color: #f0f0f0;">右カラムなし</span>
-                                    @endif
-                                </div>
-                            </div>
+                        <div class="m-3">
+                            @include('layouts.add_plugin',['area_name' => 'メイン', 'area_id' => 2])
                         </div>
-                        <div class="panel-footer" style="background-color: #ffffff;">
-                            <div class="row">
-                                <div class="col-xs-4 col-md-offset-4">
-                                    @if ($layouts_info[4]['exists'] == 1)
-                                        @include('layouts.add_plugin',['area_name' => 'フッター', 'area_id' => 4])
-                                    @else
-                                        <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
-                                    @endif
-                                </div>
-                            </div>
+                        <div class="m-3">
+                            @if ($layouts_info[3]['exists'] == 1)
+                                @include('layouts.add_plugin',['area_name' => '右', 'area_id' => 3])
+                            @else
+                                @include('layouts.add_plugin',['area_name' => '右', 'area_id' => 3, 'disabled' => true])
+                            @endif
                         </div>
+                    </div>
+
+                    <div class="d-sm-flex justify-content-around">
+                        @if ($layouts_info[4]['exists'] == 1)
+                            @include('layouts.add_plugin',['area_name' => 'フッター', 'area_id' => 4])
+                        @else
+                            <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                        @endif
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
                 </div>
             </div>
         </div>

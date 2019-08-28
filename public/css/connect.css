@@ -2,7 +2,18 @@
 /*  Connect-CMS add CSS
 ------------------------------------- */
 
-body { font-family: inherit; }
+.nav-tabs .nav-link.active {
+    background-color: #f0f0f0;
+}
+
+
+
+/*  Connect-CMS add CSS Bootstrap3
+------------------------------------- */
+
+/*
+    body { font-family: inherit; }
+*/
 
 /* table のレスポンシブ対応
 ------------------------------------- */

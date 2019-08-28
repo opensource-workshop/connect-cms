@@ -16,7 +16,11 @@
     {{ csrf_field() }}
     <input type="hidden" name="action" value="plugin_add">
     <input type="hidden" name="area_id" value="{{$area_id}}">
-    <select name="add_plugin" class="form-control" onchange="submit_form_add_plugin{{$area_id}}();">
+    @if (isset($disabled) && ($disabled))
+        <select name="add_plugin" class="form-control" onchange="submit_form_add_plugin{{$area_id}}();" disabled>
+    @else
+        <select name="add_plugin" class="form-control" onchange="submit_form_add_plugin{{$area_id}}();">
+    @endif
         <option value="">{{$area_name}}に追加</option>
         <option value="contents">固定記事</option>
         <option value="blogs">ブログ</option>

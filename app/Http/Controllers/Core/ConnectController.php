@@ -290,7 +290,7 @@ class ConnectController extends Controller
     public function getPageList()
     {
         // ページ一覧の取得
-        return Page::defaultOrderWithDepth();
+        return Page::defaultOrderWithDepth('flat');
     }
 
     /**
