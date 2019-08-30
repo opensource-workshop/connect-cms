@@ -8,13 +8,13 @@
  * @category コア
 --}}
 @if($frame->frame_col==0)
-<div class="col-sm-12 @if ($frame->area_id==2 && !$loop->last) pr-0 @endif" id="{{ $frame->frame_id }}">
+<div class="col-sm-12 @if ($frame->area_id==2 && !$loop->last) @endif" id="{{ $frame->frame_id }}">
 @else
-<div class="col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) pr-0 @endif" id="{{ $frame->frame_id }}">
+<div class="col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif" id="{{ $frame->frame_id }}">
 @endif
 
     @if ($frame->frame_design == 'none')
-    <div class="card mb-3" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;">
+    <div class="card mb-3 border-0" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;">
     @else
     <div class="card mb-3">
     @endif

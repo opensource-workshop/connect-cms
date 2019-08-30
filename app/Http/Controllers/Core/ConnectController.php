@@ -113,35 +113,30 @@ class ConnectController extends Controller
         // 現ページの表示エリアの有無と幅の設定
         $layouts_info = array();
         $layouts_info[0]['exists'] = $layout_array[0];
-        $layouts_info[0]['col'] = 'col-sm-12';
+        $layouts_info[0]['col'] = 'col-lg-12';
 
         $layouts_info[1]['exists'] = $layout_array[1];
-        if ($layout_array[2]) {
-            $layouts_info[1]['col'] = ($layout_array[1] == '1' ? 'col-sm-3 col-sm-pull-6' : '' );
-        }
-        else {
-            $layouts_info[1]['col'] = ($layout_array[1] == '1' ? 'col-sm-3 col-sm-pull-9' : '' );
-        }
+        $layouts_info[1]['col'] = ($layout_array[1] == '1' ? 'col-lg-3' : '' );
 
         $layouts_info[2]['exists'] = '1';
         if (!$layout_array[1] && !$layout_array[2]) {
-            $layouts_info[2]['col'] = 'col-sm-12';
+            $layouts_info[2]['col'] = 'col-lg-12';
         }
         else if ($layout_array[1] && !$layout_array[2]) {
-            $layouts_info[2]['col'] = 'col-sm-9 col-sm-push-3';
+            $layouts_info[2]['col'] = 'col-lg-9';
         }
         else if (!$layout_array[1] && $layout_array[2]) {
-            $layouts_info[2]['col'] = 'col-sm-9';
+            $layouts_info[2]['col'] = 'col-lg-9';
         }
         else if ($layout_array[1] && $layout_array[2]) {
-            $layouts_info[2]['col'] = 'col-sm-6 col-sm-push-3';
+            $layouts_info[2]['col'] = 'col-lg-6';
         }
 
         $layouts_info[3]['exists'] = $layout_array[2];
-        $layouts_info[3]['col'] = ($layout_array[2] == '1' ? 'col-sm-3' : '' );
+        $layouts_info[3]['col'] = ($layout_array[2] == '1' ? 'col-lg-3' : '' );
 
         $layouts_info[4]['exists'] = $layout_array[3];
-        $layouts_info[4]['col'] = 'col-sm-12';
+        $layouts_info[4]['col'] = 'col-lg-12';
 
         // 共通エリアのフレーム取得
 

@@ -10,20 +10,17 @@
 {{-- コア側のフレームメニュー --}}
 
 {{-- フレーム編集 --}}
+<li class="nav-item">
 @if (app('request')->input('action') == 'frame_setting')
-    <li role="presentation" class="active">
+    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link active">フレーム編集</a></li>
 @else
-    <li role="presentation">
+    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link">フレーム編集</a></li>
 @endif
-{{-- <a href="{{URL::to($page->permanent_link)}}/?action=frame_setting&frame_id={{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li> --}}
-{{-- <a href="{{URL::to('/')}}/plugin/blogs/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li> --}}
-<a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li>
 
 {{-- フレーム削除 --}}
+<li class="nav-item">
 @if (app('request')->input('action') == 'frame_delete')
-    <li role="presentation" class="active">
+    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link active">フレーム削除</a></li>
 @else
-    <li role="presentation">
+    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link">フレーム削除</a></li>
 @endif
-{{-- <a href="{{URL::to($page->permanent_link)}}/?action=frame_delete&frame_id={{ $frame->id }}#{{ $frame->id }}">フレーム削除</a></li> --}}
-<a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム削除</a></li>

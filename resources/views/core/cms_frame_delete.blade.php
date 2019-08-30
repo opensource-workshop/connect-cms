@@ -15,12 +15,8 @@
             {{$action_core_frame->includeFrameTab($page, $frame, $action)}}
 
             {{-- コア側のフレームメニュー --}}
-            <li role="presentation"><a href="{{URL::to('/')}}/plugin/blogs/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム編集</a></li>
-            <li role="presentation" class="active"><a href="{{URL::to('/')}}/plugin/blogs/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}">フレーム削除</a></li>
-{{--
-            <li role="presentation"><a href="{{URL::to($page->permanent_link)}}/?action=frame_setting&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム編集</a></li>
-            <li role="presentation" class="active"><a href="{{URL::to($page->permanent_link)}}/?action=frame_delete&frame_id={{ $frame->frame_id }}#{{ $frame->frame_id }}">フレーム削除</a></li>
---}}
+            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/blogs/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link">フレーム編集</a></li>
+            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/blogs/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link active">フレーム削除</a></li>
         </ul>
     </div>
 
