@@ -52,4 +52,7 @@ $app->singleton(
 |
 */
 
+// Bootstrap4 support insert by nagahara@opensource-workshop.jp 2019-08-31
+Illuminate\Pagination\AbstractPaginator::defaultView("pagination::bootstrap-4");
+
 return $app;

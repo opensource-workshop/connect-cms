@@ -37,9 +37,9 @@
         <div class="form-group">
             <input type="hidden" name="bucket_id" value="{{$contents->bucket_id}}">
             <br />
-            <button type="button" class="btn btn-info" onclick="javascript:save_action();"><span class="glyphicon glyphicon-ok"></span> 一時保存</button>
-            <button type="submit" class="btn btn-primary" style="margin-left: 10px;"><span class="glyphicon glyphicon-ok"></span> 変更確定</button>
-            <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+            <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i> 一時保存</button>
+            <button type="submit" class="btn btn-primary mr-2"><i class="fas fa-check"></i> 変更確定</button>
+            <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
         </div>
     </form>
 </div>

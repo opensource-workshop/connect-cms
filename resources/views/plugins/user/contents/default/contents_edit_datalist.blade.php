@@ -22,11 +22,47 @@
         <tr>
             <th></th>
             {{-- <th>選択</th> --}}
-            <th><a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}">更新日</a> <span class="@if ($request_order_str == "contents_updated_at|asc")glyphicon glyphicon-sort-by-order @elseif ($request_order_str == "contents_updated_at|desc") glyphicon glyphicon-sort-by-order-alt @endif"></th>
-            <th><a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=page_name|{{$order_link["page_name"][0]}}">使用ページ</a> <span class="@if ($request_order_str == "page_name|asc")glyphicon glyphicon glyphicon-sort-by-alphabet @elseif ($request_order_str == "page_name|desc") glyphicon glyphicon-sort-by-alphabet-alt @endif"></th>
-            <th><a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=bucket_name|{{$order_link["bucket_name"][0]}}">データ名</a> <span class="@if ($request_order_str == "bucket_name|asc")glyphicon glyphicon glyphicon-sort-by-alphabet @elseif ($request_order_str == "bucket_name|desc") glyphicon glyphicon-sort-by-alphabet-alt @endif"></th>
-            <th><a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=frame_title|{{$order_link["frame_title"][0]}}">フレームタイトル</a> <span class="@if ($request_order_str == "frame_title|asc")glyphicon glyphicon glyphicon-sort-by-alphabet @elseif ($request_order_str == "frame_title|desc") glyphicon glyphicon-sort-by-alphabet-alt @endif"></th>
-            <th><a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=content_text|{{$order_link["content_text"][0]}}">内容</a> <span class="@if ($request_order_str == "content_text|asc")glyphicon glyphicon glyphicon-sort-by-alphabet @elseif ($request_order_str == "content_text|desc") glyphicon glyphicon-sort-by-alphabet-alt @endif"></th>        </tr>
+            <th>
+                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}">更新日</a>
+                @if ($request_order_str == "contents_updated_at|asc")
+                    <i class="fas fa-sort-numeric-down"></i>
+                @elseif ($request_order_str == "contents_updated_at|desc")
+                    <i class="fas fa-sort-numeric-down-alt"></i>
+                @endif
+            </th>
+            <th>
+                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=page_name|{{$order_link["page_name"][0]}}">使用ページ</a>
+                @if ($request_order_str == "page_name|asc")
+                    <i class="fas fa-sort-alpha-down"></i>
+                @elseif ($request_order_str == "page_name|desc")
+                    <i class="fas fa-sort-alpha-down-alt"></i>
+                @endif
+            </th>
+            <th>
+                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=bucket_name|{{$order_link["bucket_name"][0]}}">データ名</a>
+                @if ($request_order_str == "bucket_name|asc")
+                    <i class="fas fa-sort-alpha-down"></i>
+                @elseif ($request_order_str == "bucket_name|desc")
+                    <i class="fas fa-sort-alpha-down-alt"></i>
+                @endif
+            </th>
+            <th>
+                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=frame_title|{{$order_link["frame_title"][0]}}">フレームタイトル</a>
+                @if ($request_order_str == "frame_title|asc")
+                    <i class="fas fa-sort-alpha-down"></i>
+                @elseif ($request_order_str == "frame_title|desc")
+                    <i class="fas fa-sort-alpha-down-alt"></i>
+                @endif
+            </th>
+            <th>
+                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=content_text|{{$order_link["content_text"][0]}}">内容</a>
+                @if ($request_order_str == "content_text|asc")
+                    <i class="fas fa-sort-alpha-down"></i>
+                @elseif ($request_order_str == "content_text|desc")
+                    <i class="fas fa-sort-alpha-down-alt"></i>
+                @endif
+            </th>
+        </tr>
     </thead>
     <tbody>
     @foreach($buckets as $bucket)
@@ -42,12 +78,12 @@
     </tbody>
     </table>
 
-    <div class="text-center">
-            {{ $buckets->appends(['sort' => $request_order_str])->fragment($frame_id)->links() }}
+    <div class="m-2">
+        {{ $buckets->appends(['sort' => $request_order_str])->fragment($frame_id)->links() }}
     </div>
 
     <div class="text-center">
-        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 変更確定</button>
-        <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+        <button type="submit" class="btn btn-primary mr-2"><i class="fas fa-check"></i> 変更確定</button>
+        <button type="button" class="btn btn-secondary" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
     </div>
 </form>

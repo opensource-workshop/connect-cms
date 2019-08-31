@@ -33,12 +33,12 @@
 
 @if (isset($result) && $result)
 @if ($error_flag == 1)
-<div class="panel panel-danger">
+<div class="card border-danger">
 @else
-<div class="panel panel-primary">
+<div class="card border-primary">
 @endif
-    <div class="panel-heading">実行結果</div>
-    <div class="panel-body">
+    <div class="card-header">実行結果</div>
+    <div class="card-body">
         @foreach ($result as $result_row)
             @if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
                 {!!mb_convert_encoding($result_row, 'UTF-8', 'SJIS-win')!!}<br />
@@ -71,8 +71,8 @@
 
     <div class="form-group">
         <label class="control-label">言語 <span class="label label-danger">必須</span></label><br />
-        <div class="panel panel-default" style="margin-bottom: 0;">
-            <div class="panel-body" style="padding:9px 0px 9px 15px;">
+        <div class="card">
+            <div class="card-body">
                 @if ($codestudy->study_lang == 'java' || old('study_lang') == 'java')
                     <label><input name="study_lang" type="radio" value="java" checked> Java</input></label>
                 @else
@@ -90,18 +90,18 @@
 
     <div class="form-group">
         <div class="row">
-            <div class="col-sm-3"></div>
-            <div class="col-sm-6">
+            <div class="col-sm-2"></div>
+            <div class="col-sm-8 mx-auto">
                 <div class="text-center">
-                    <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-ok"></span> 保存のみ</button>
-                    <button type="button" class="btn btn-primary" style="margin-left: 10px;" onclick="javascript:submit_codestudies_run();"><span class="glyphicon glyphicon-ok"></span> 保存と実行</button>
-                    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+                    <button type="submit" class="btn btn-success mr-3"><i class="far fa-save"></i> 保存のみ</button>
+                    <button type="button" class="btn btn-primary mr-3" onclick="javascript:submit_codestudies_run();"><i class="fas fa-check"></i> 保存と実行</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>
             </div>
-            <div class="col-sm-3 pull-right text-right">
+            <div class="col-sm-2">
                 @if (!empty($codestudy->id))
                     <a data-toggle="collapse" href="#collapse{{$codestudy->id}}">
-                        <span class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-xs">削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
                     </a>
                 @endif
             </div>
@@ -110,24 +110,24 @@
 </form>
 
 <div id="collapse{{$codestudy->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="panel panel-danger">
-        <div class="panel-body">
+    <div class="card border-danger mb-3">
+        <div class="card-body">
             <span class="text-danger">プログラムを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
                 <form action="{{url('/')}}/plugin/codestudies/destroy/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}" method="POST">
                     {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('プログラムを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('プログラムを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<div class="panel panel-info">
-    <div class="panel-heading">保存済みプログラム</div>
-    <div class="panel-body">
+<div class="card border-info">
+    <div class="card-header">保存済みプログラム</div>
+    <div class="card-body">
         <ol>
         @foreach($codestudies as $codestudy)
             @if($codestudy->title)

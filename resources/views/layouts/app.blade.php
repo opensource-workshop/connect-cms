@@ -141,7 +141,7 @@
 
                         {{-- 各ページの深さをもとにインデントの表現 --}}
                         @for ($i = 0; $i < $page_obj->depth; $i++)
-                            <span @if ($i+1==$page_obj->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
+                            @if ($i+1==$page_obj->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
                         @endfor
                             {{$page_obj->page_name}}
                             </a>

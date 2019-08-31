@@ -32,7 +32,7 @@
             <tr @if ($blog_frame->blogs_id == $blog->id) class="active"@endif>
                 <td><input type="radio" value="{{$blog->bucket_id}}" name="select_bucket"@if ($blog_frame->bucket_id == $blog->bucket_id) checked @endif></input></td>
                 <td>{{$blog->blog_name}}</td>
-                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/blogs/editBlog/{{$page->id}}/{{$frame_id}}/{{$blog->id}}'"><span class="glyphicon glyphicon-edit"></span> ブログ設定変更</button></th>
+                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/blogs/editBlog/{{$page->id}}/{{$frame_id}}/{{$blog->id}}'"><i class="far fa-edit"></i> ブログ設定変更</button></th>
                 <td>{{$blog->created_at}}</td>
             </tr>
         @endforeach
@@ -45,7 +45,7 @@
     </div>
 
     <div class="form-group text-center">
-        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 表示ブログ変更</button>
-        <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 表示ブログ変更</button>
+        <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
     </div>
 </form>

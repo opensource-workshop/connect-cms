@@ -16,12 +16,12 @@
 
 @if (!$blog->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用するブログを選択するか、作成してください。
     </div>
 @else
     <div class="alert alert-info" style="margin-top: 10px;">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <i class="fas fa-exclamation-circle"></i>
 
         @if ($message)
             {{$message}}
@@ -64,15 +64,15 @@
         <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-6">
-                <button type="submit" class="btn btn-primary form-horizontal"><span class="glyphicon glyphicon-ok"></span> 
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
                 @if (empty($blog) || $create_flag)
                     登録確定
                 @else
                     変更確定
                 @endif
                 </button>
-                <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                    <span class="glyphicon glyphicon-remove"></span> キャンセル
+                <button type="button" class="btn btn-secondary" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <i class="fas fa-times"></i> キャンセル
                 </button>
             </div>
 
@@ -81,7 +81,7 @@
             @else
             <div class="col-sm-3 pull-right text-right">
                 <a data-toggle="collapse" href="#collapse{{$blog_frame->id}}">
-                    <span class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-xs">削除</span></span>
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
                 </a>
             </div>
             @endif
@@ -98,7 +98,7 @@
                 {{-- 削除ボタン --}}
                 <form action="{{url('/')}}/redirect/plugin/blogs/blogsDestroy/{{$page->id}}/{{$frame_id}}/{{$blog->id}}" method="POST">
                     {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
 

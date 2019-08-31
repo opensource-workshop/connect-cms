@@ -31,6 +31,11 @@
     color: white;
 }
 
+/* ページネーションをセンタリングする。
+------------------------------------- */
+.pagination {
+    justify-content: center;
+}
 
 
 /*  Connect-CMS add CSS Bootstrap3

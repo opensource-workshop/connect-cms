@@ -17,8 +17,8 @@
 
 {{-- データ --}}
 <p>
-    <div class="panel panel-default">
-        <div class="panel-body">
+    <div class="card">
+        <div class="card-body">
             {!! $contents->content_text !!}
         </div>
     </div>
@@ -33,10 +33,10 @@
     </span>
 
     <div class="row">
-        <div class="col-md-6 col-md-push-3">
-            <div class="panel panel-danger ">
-                <div class="panel-body text-center checkbox">
-                    <label>
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center p-2">
+                    <label class="mb-0">
                         <input type="checkbox" name="frame_delete_flag" value="1">フレームも同時に削除します。
                     </label>
                 </div>
@@ -45,12 +45,12 @@
     </div>
 
     <div class="row">
-        <div class="form-group container-fluid row">
-            <div class="text-center">
-                <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')">
-                    <span class="glyphicon glyphicon-ok"></span> データ削除
+        <div class="row form-group mx-auto mt-3">
+            <div>
+                <button type="submit" class="btn btn-danger mr-2" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')">
+                    <i class="fas fa-check"></i> データ削除
                 </button>
-                <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}/'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+                <button type="button" class="btn btn-default btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}/'"><i class="fas fa-times"></i> キャンセル</button>
             </div>
         </div>
     </div>

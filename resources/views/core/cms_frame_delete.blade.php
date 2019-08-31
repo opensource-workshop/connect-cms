@@ -9,7 +9,7 @@
 --}}
 {{-- フレーム(削除) --}}
 {{-- <table class="table"><tr><td> --}}
-    <div class="panel-body">
+    <div class="card-body">
         <ul class="nav nav-tabs">
             {{-- プラグイン側のフレームメニュー --}}
             {{$action_core_frame->includeFrameTab($page, $frame, $action)}}
@@ -22,8 +22,8 @@
 
     {{-- 削除画面(入力フォーム) --}}
     <div class="container-fluid">
-        <div class="panel panel-danger">
-            <div class="panel-body">
+        <div class="card border-danger mt-3">
+            <div class="card-body">
 
                 <form action="{{url('/core/frame/destroy')}}/{{$page->id}}/{{$frame->frame_id}}" method="POST" class="form-horizontal">
                     {{ csrf_field() }}
@@ -32,12 +32,12 @@
                     フレームを元に戻すことはできないため、よく確認して実行してください。<br />
                     ただし、コンテンツのデータそのものは削除されません。<br />
                     </span>
-                    <div class="form-group container-fluid">
-                        <div class="pull-right">
-                            <button type="button" class="btn btn-default form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
-                            <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('フレームを削除します。\nよろしいですか？')">
-                                <span class="glyphicon glyphicon-ok"></span> フレーム削除
+                    <div class="container-fluid">
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-danger form-horizontal mr-2" onclick="javascript:return confirm('フレームを削除します。\nよろしいですか？')">
+                                <i class="fas fa-check"></i> フレーム削除
                             </button>
+                            <button type="button" class="btn btn-secondary form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                         </div>
                     </div>
                 </form>

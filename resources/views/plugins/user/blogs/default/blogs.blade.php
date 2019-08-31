@@ -14,8 +14,8 @@
             <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}'"><span class="glyphicon glyphicon-plus"></span> 新規登録</button>
         </p>
     @else
-        <div class="panel panel-default">
-            <div class="panel-body bg-danger">
+        <div class="card border-danger">
+            <div class="card-body">
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するブログを選択するか、作成してください。</p>
             </div>
         </div>
