@@ -93,9 +93,9 @@
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if(isset($configs["base_header_login_link"]) && $configs["base_header_login_link"] == "1")
-                            <input type="radio" id="base_header_login_link_on" name="customRadioInline" class="custom-control-input" checked="checked">
+                            <input type="radio" value="1" id="base_header_login_link_on" name="base_header_login_link" class="custom-control-input" checked="checked">
                         @else
-                            <input type="radio" id="base_header_login_link_on" name="customRadioInline" class="custom-control-input">
+                            <input type="radio" value="1" id="base_header_login_link_on" name="base_header_login_link" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="base_header_login_link_on">表示する</label>
                     </div>
@@ -103,9 +103,9 @@
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if(isset($configs["base_header_login_link"]) && $configs["base_header_login_link"] == "0")
-                            <input type="radio" id="base_header_login_link_off" name="customRadioInline" class="custom-control-input" checked="checked">
+                            <input type="radio" value="0" id="base_header_login_link_off" name="customRadioInline" class="custom-control-input" checked="checked">
                         @else
-                            <input type="radio" id="base_header_login_link_off" name="customRadioInline" class="custom-control-input">
+                            <input type="radio" value="0" id="base_header_login_link_off" name="customRadioInline" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="base_header_login_link_off">表示しない</label>
                     </div>
@@ -121,9 +121,9 @@
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if(isset($configs["user_register_enable"]) && $configs["user_register_enable"] == "1")
-                            <input type="radio" id="user_register_enable_on" name="user_register_enable" class="custom-control-input" checked="checked">
+                            <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input" checked="checked">
                         @else
-                            <input type="radio" id="user_register_enable_on" name="user_register_enable" class="custom-control-input">
+                            <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="user_register_enable_on">許可する</label>
                     </div>
@@ -131,11 +131,11 @@
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if(isset($configs["user_register_enable"]) && $configs["user_register_enable"] == "0")
-                            <input type="radio" id="user_register_enable_off" name="user_register_enable" class="custom-control-input" checked="checked">
+                            <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input" checked="checked">
                         @else
-                            <input type="radio" id="user_register_enable_off" name="user_register_enable" class="custom-control-input">
+                            <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="user_register_enable_off">許可する</label>
+                        <label class="custom-control-label" for="user_register_enable_off">許可しない</label>
                     </div>
                 </div>
             </div>
