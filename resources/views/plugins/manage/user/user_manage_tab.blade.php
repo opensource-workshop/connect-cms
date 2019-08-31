@@ -7,19 +7,19 @@
  --}}
 <ul class="nav nav-tabs">
 @if ($function == "index")
-    <li class="active"><a href="{{url('/manage/user')}}" style="background-color: #ffffff;">ユーザ一覧</a></li>
+    <li class="nav-item"><a href="{{url('/manage/user')}}" class="nav-link active">ユーザ一覧</a></li>
 @else
-    <li><a href="{{url('/manage/user')}}">ユーザ一覧</a></li>
+    <li class="nav-item"><a href="{{url('/manage/user')}}" class="nav-link">ユーザ一覧</a></li>
 @endif
 
 @if ($function == "regist")
-    <li class="active"><a href="{{url('/manage/user/regist')}}" style="background-color: #ffffff;">ユーザ登録</a></li>
+    <li class="nav-item"><a href="{{url('/manage/user/regist')}}" class="nav-link active">ユーザ登録</a></li>
 @else
-    <li><a href="{{url('/manage/user/regist')}}">ユーザ登録</a></li>
+    <li class="nav-item"><a href="{{url('/manage/user/regist')}}" class="nav-link">ユーザ登録</a></li>
 @endif
 
 @if ($function == "edit")
-    <li class="active"><a style="background-color: #ffffff;">ユーザ変更</a></li>
+    <li class="nav-item"><a class="nav-link active">ユーザ変更</a></li>
 @endif
 
 </ul>

@@ -14,8 +14,8 @@
 {{-- 機能選択タブ --}}
 @include('plugins.manage.user.user_manage_tab')
 
-<div class="panel panel-default">
-<div class="panel-body">
+<div class="card">
+<div class="card-body">
 
     {{-- フォームをincude --}}
     @include('auth.registe_form')

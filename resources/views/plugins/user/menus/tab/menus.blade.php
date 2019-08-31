@@ -8,15 +8,15 @@
 --}}
 @if ($pages)
 
-<ul class="nav nav-tabs nav-justified hidden-xs" style="">
+<ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
 @foreach($pages as $page)
 
     {{-- 非表示のページは対象外 --}}
     @if ($page->display_flag == 1)
         @if ($page->id == $page_id)
-            <li role="presentation" class="active"><a href="{{ url("$page->permanent_link") }}" style="background-color: #3097d1; color: #ffffff;">{{$page->page_name}}</a></li>
+            <li role="presentation" class="nav-item"><a href="{{ url("$page->permanent_link") }}" class="nav-link active">{{$page->page_name}}</a></li>
         @else
-            <li role="presentation"><a href="{{ url("$page->permanent_link") }}">{{$page->page_name}}</a></li>
+            <li role="presentation" class="nav-item"><a href="{{ url("$page->permanent_link") }}" class="nav-link">{{$page->page_name}}</a></li>
         @endif
     @endif
 @endforeach

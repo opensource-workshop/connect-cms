@@ -14,19 +14,19 @@
 {{-- 機能選択タブ --}}
 @include('plugins.manage.user.user_manage_tab')
 
-<div class="panel panel-default">
-<div class="panel-body">
+<div class="card">
+<div class="card-body">
 
     <div class="form-group">
-        <table class="table table-hover" style="margin-bottom: 0;">
+        <table class="table table-hover cc-font-90">
         <thead>
             <tr>
-                <th>ユーザID</th>
-                <th>ユーザー名</th>
-                <th>eメール</th>
-                <th>権限</th>
-                <th>作成日</th>
-                <th>更新日</th>
+                <th nowrap>ユーザID</th>
+                <th nowrap>ユーザー名</th>
+                <th nowrap>eメール</th>
+                <th nowrap>権限</th>
+                <th nowrap>作成日</th>
+                <th nowrap>更新日</th>
             </tr>
         </thead>
         <tbody>
@@ -34,7 +34,7 @@
             <tr>
                 <td>
                     <a href="{{url('/')}}/manage/user/edit/{{$user->id}}">
-                        <span class="glyphicon glyphicon-edit"></span>
+                        <i class="far fa-edit"></i>
                     </a>
                     {{$user->userid}}
                 </td>

@@ -37,6 +37,16 @@
     justify-content: center;
 }
 
+/* フォントサイズ
+------------------------------------- */
+.cc-font-90 {
+    font-size: 90%;
+}
+
+
+
+
+
 
 /*  Connect-CMS add CSS Bootstrap3
 ------------------------------------- */

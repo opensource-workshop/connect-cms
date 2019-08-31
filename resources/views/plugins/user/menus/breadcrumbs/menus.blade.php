@@ -8,7 +8,15 @@
 --}}
 @if ($ancestors)
 
-    @foreach($ancestors as $ancestor)
-        {{$ancestor->page_name}}@if (!$loop->last) <span class="glyphicon glyphicon-chevron-right" style="color: rgb(192, 192, 192);"></span>@endif
-    @endforeach
+    <nav>
+        <ol class="breadcrumb">
+            @foreach($ancestors as $ancestor)
+                @if ($loop->last)
+                    <li class="breadcrumb-item">{{$ancestor->page_name}}</li>
+                @else
+                    <li class="breadcrumb-item"><a href="{{$ancestor->permanent_link}}">{{$ancestor->page_name}}</a></li>
+                @endif
+            @endforeach
+        </ol>
+    </nav>
 @endif

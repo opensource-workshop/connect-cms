@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 @if ($pages)
-    <ul class="nav nav-tabs nav-justified hidden-xs" style="">
+    <ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
     @foreach($pages as $page_obj)
 
         {{-- 非表示のページは対象外 --}}

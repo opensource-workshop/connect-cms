@@ -16,8 +16,8 @@
 
 <!-- Pages list -->
 @if (count($pages) > 0)
-    <div class="panel panel-default">
-        <div class="panel-heading">ページ一覧</div>
+    <div class="card mt-3">
+        <div class="card-header">ページ一覧</div>
 
         <script type="text/javascript">
             {{-- ページの上移動用フォームのsubmit JavaScript --}}
@@ -67,8 +67,8 @@
             <input type="hidden" name="destination_id" value="">
         </form>
 
-        <div class="panel-body table-responsive">
-            <table class="table table-striped">
+        <div class="card table-responsive">
+            <table class="table table-striped cc-font-90">
             <thead>
                 <th></th>
                 <th nowrap>移動先</th>
@@ -83,20 +83,20 @@
                 @foreach($pages as $page)
                 <tr>
                     <!-- Task Name -->
-                    <td class="table-text col-md-2" nowrap>
-                        <a href="{{url('/manage/page/edit')}}/{{$page->id}}" class="btn btn-primary btn-xs"><span class="glyphicon glyphicon-edit"></span> <span>編集</span></a>
+                    <td class="table-text col-md-2 p-1" nowrap>
+                        <a href="{{url('/manage/page/edit')}}/{{$page->id}}" class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
 
                         {{-- 上移動 --}}
-                        <button type="button" class="btn btn-default btn-xs" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$page->id}})">
-                            <span class="glyphicon glyphicon-arrow-up"></span>
+                        <button type="button" class="btn p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$page->id}})">
+                            <i class="fas fa-arrow-up"></i>
                         </button>
 
                         {{-- 下移動 --}}
-                        <button type="button" class="btn btn-default btn-xs" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$page->id}})">
-                            <span class="glyphicon glyphicon-arrow-down"></span>
+                        <button type="button" class="btn p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$page->id}})">
+                            <i class="fas fa-arrow-down"></i>
                         </button>
                     </td>
-                    <td class="table-text col-md-2">
+                    <td class="table-text col-md-2 p-1">
                         {{-- 指定場所移動 --}}
                         <form name="form_select_page{{$page->id}}" id="form_select_page{{$page->id}}" class="form-horizontal">
                             <select name="select_page" onChange="submit_move_page({{$page->id}});">
@@ -114,30 +114,30 @@
                             </select>
                         </form>
                     </td>
-                    <td class="table-text" nowrap>
+                    <td class="table-text p-1" nowrap>
                         {{-- 各ページの深さをもとにインデントの表現 --}}
                         @for ($i = 0; $i < $page->depth; $i++)
-                            <span @if ($i+1==$page->depth) class="glyphicon glyphicon-chevron-right" style="color: #c0c0c0;"@else style="padding-left:15px;"@endif></span>
+                            @if ($i+1==$page->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
                         @endfor
                         {{$page->page_name}}{{-- ページ名 --}}
                     </td>
-                    <td class="table-text">
+                    <td class="table-text p-1">
                         @if ($page->base_display_flag == 1)
-                            <div><span class="glyphicon glyphicon-ok"></div>
+                            <div><i class="fas fa-check"></i></div>
                         @else
-                            <div><span class="glyphicon glyphicon-remove"></div>
+                            <div><i class="fas fa-times"></i></div>
                         @endif
                     </td>
-                    <td class="table-text">
+                    <td class="table-text p-1">
                         <div>{{ $page->permanent_link }}</div>
                     </td>
-                    <td class="table-text">
+                    <td class="table-text p-1">
                         <div>{{ $page->background_color }}</div>
                     </td>
-                    <td class="table-text">
+                    <td class="table-text p-1">
                         <div>{{ $page->header_color }}</div>
                     </td>
-                    <td class="table-text">
+                    <td class="table-text p-1">
                         <div>{{ $page->layout }}</div>
                     </td>
                 </tr>

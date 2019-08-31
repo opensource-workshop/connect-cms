@@ -6,7 +6,7 @@
  * @category コンテンツプラグイン
  --}}
 <ul class="nav nav-tabs">
-    <li class="active"><a href="" style="background-color: #ffffff;">サイト基本設定</a></li>
-    <li><a href="">その他設定1</a></li>
-    <li><a href="">その他設定2</a></li>
+    <li class="nav-item"><a href="" class="nav-link active">サイト基本設定</a></li>
+    <li class="nav-item"><a href="" class="nav-link">その他設定1</a></li>
+    <li class="nav-item"><a href="" class="nav-link">その他設定2</a></li>
 </ul>

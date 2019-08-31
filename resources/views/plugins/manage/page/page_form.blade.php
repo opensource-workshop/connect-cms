@@ -7,11 +7,11 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  --}}
-<div class="panel panel-default">
-    <div class="panel-heading">
+<div class="card">
+    <div class="card-header">
         @if ($page->id)ページ更新 @else ページ追加 @endif
     </div>
-    <div class="panel-body">
+    <div class="card-body">
 
         <!-- Display Validation Errors -->
 {{--
@@ -26,39 +26,39 @@
             {{ csrf_field() }}
 
             <!-- Page form  -->
-            <div class="form-group @if ($errors && $errors->has('page_name')) has-error @endif">
-                <label for="page_name" class="col-md-3 control-label">ページ名</label>
+            <div class="form-group row @if ($errors && $errors->has('page_name')) has-error @endif">
+                <label for="page_name" class="col-md-3 col-form-label text-md-right">ページ名</label>
                 <div class="col-md-9">
                     <input type="text" name="page_name" id="page_name" value="{{$page->page_name}}" class="form-control">
                     @if ($errors && $errors->has('page_name')) <div class="text-danger">{{$errors->first('page_name')}}</div> @endif
                 </div>
             </div>
-            <div class="form-group">
-                <label for="permanent_link" class="col-md-3 control-label">固定リンク</label>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">固定リンク</label>
                 <div class="col-md-9">
                     <input type="text" name="permanent_link" id="permanent_link" value="{{$page->permanent_link}}" class="form-control">
                 </div>
             </div>
-            <div class="form-group">
-                <label for="permanent_link" class="col-md-3 control-label">背景色</label>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">背景色</label>
                 <div class="col-md-9">
                     <input type="text" name="background_color" id="background_color" value="{{$page->background_color}}" class="form-control">
                 </div>
             </div>
-            <div class="form-group">
-                <label for="permanent_link" class="col-md-3 control-label">ヘッダーの背景色</label>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーの背景色</label>
                 <div class="col-md-9">
                     <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control">
                 </div>
             </div>
-            <div class="form-group">
-                <label for="permanent_link" class="col-md-3 control-label">テーマ</label>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">テーマ</label>
                 <div class="col-md-9">
                     <input type="text" name="theme" id="theme" value="{{$page->theme}}" class="form-control">
                 </div>
             </div>
-            <div class="form-group">
-                <label for="permanent_link" class="col-md-3 control-label">レイアウト</label>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">レイアウト</label>
                 <div class="col-md-9">
                     <select name="layout" class="form-control">
                         <option value=""@if($page->layout == "") selected @endif>設定なし</option>
@@ -70,36 +70,31 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="permanent_link" class="col-md-3 control-label">メニュー表示</label>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">メニュー表示</label>
                 <div class="col-md-9">
 
-                    <label class="cc_label_input_group">
-                        <div class="input-group">
-                            <span class="input-group-addon">
-                                @if(isset($page->base_display_flag) && $page->base_display_flag == 1)
-                                    <input name="base_display_flag" value="1" type="checkbox" checked="checked">
-                                @else
-                                    <input name="base_display_flag" value="1" type="checkbox">
-                                @endif
-                            </span>
-                            <span class="form-control" style="height: auto;">表示する</span>
-                        </div>
-                    </label>
-
+                    <div class="custom-control custom-checkbox mt-2">
+                        @if(isset($page->base_display_flag) && $page->base_display_flag == 1)
+                            <input name="base_display_flag" value="1" type="checkbox" class="custom-control-input" id="base_display_flag" checked="checked">
+                        @else
+                            <input name="base_display_flag" value="1" type="checkbox" class="custom-control-input" id="base_display_flag">
+                        @endif
+                        <label class="custom-control-label" for="base_display_flag">表示する</label>
+                    </div>
                 </div>
             </div>
 
             <!-- Add or Update Page Button -->
             <div class="form-group">
-                <div class="col-sm-offset-3 col-sm-6">
-                    <button type="submit" class="btn btn-primary form-horizontal">
-                        @if ($page->id)ページ更新 @else ページ追加 @endif
+                <div class="offset-sm-3 col-sm-6">
+                    <button type="submit" class="btn btn-primary form-horizontal mr-3">
+                        <i class="fas fa-check"></i> @if ($page->id)ページ更新 @else ページ追加 @endif
                     </button>
                     @if ($page->id)
-                        <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{url('/manage/page')}}'">Cancel</button>
+                        <button type="button" class="btn btn-secondary" onclick="location.href='{{url('/manage/page')}}'"><i class="fas fa-times"></i> キャンセル</button>
                     @else
-                        <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{url('/')}}'">Cancel</button>
+                        <button type="button" class="btn btn-secondary" onclick="location.href='{{url('/')}}'"><i class="fas fa-times"></i> キャンセル</button>
                     @endif
                 </div>
             </div>
