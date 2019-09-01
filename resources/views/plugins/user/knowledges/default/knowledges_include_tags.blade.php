@@ -6,26 +6,34 @@
  * @category ナレッジ・プラグイン
  --}}
 
-<div class="panel panel-default">
+<div class="card mt-3">
     <!-- Default panel contents -->
-    <div class="panel-heading">タグによる絞り込み</div>
+    <div class="card-header">タグで絞り込む</div>
 
-    <label class="cc_label_panel_list">
-        <div class="input-group">
-            <span class="input-group-addon cc_border_top_none"><input name="forms_columns_value[43][]" value="1" type="checkbox"></span>
-            <span class="form-control" style="height: auto;">ログイン</span>
-        </div>
-    </label>
-    <label class="cc_label_panel_list">
-        <div class="input-group">
-            <span class="input-group-addon"><input name="forms_columns_value[43][]" value="1" type="checkbox"></span>
-            <span class="form-control" style="height: auto;">画像サイズ</span>
-        </div>
-    </label>
-    <label class="cc_label_panel_list">
-        <div class="input-group">
-            <span class="input-group-addon"><input name="forms_columns_value[43][]" value="1" type="checkbox"></span>
-            <span class="form-control" style="height: auto;">ブログ</span>
-        </div>
-    </label>
+    <div class="card-body pt-2">
+        <label class="cc_label_panel_list">
+            <div class="input-group">
+                <div class="custom-control custom-checkbox mt-2">
+                    <input name="search_tag1" value="1" type="checkbox" class="custom-control-input" id="search_tag1">
+                    <label class="custom-control-label" for="search_tag1">ログイン</label>
+                </div>
+            </div>
+        </label>
+        <label class="cc_label_panel_list">
+            <div class="input-group">
+                <div class="custom-control custom-checkbox mt-2">
+                    <input name="search_tag2" value="1" type="checkbox" class="custom-control-input" id="search_tag2">
+                    <label class="custom-control-label" for="search_tag2">画像サイズ</label>
+                </div>
+            </div>
+        </label>
+        <label class="cc_label_panel_list">
+            <div class="input-group">
+                <div class="custom-control custom-checkbox mt-2">
+                    <input name="search_tag3" value="1" type="checkbox" class="custom-control-input" id="search_tag3">
+                    <label class="custom-control-label" for="search_tag3">ブログ</label>
+                </div>
+            </div>
+        </label>
+    </div>
 </div>

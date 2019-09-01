@@ -34,8 +34,8 @@
 
             <div class="form-group">
                 <div class="row">
-                    <div class="text-center">
-                        <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick=""><span class="glyphicon glyphicon-remove"></span> 一覧へ</button>
+                    <div class="mx-auto">
+                        <button type="button" class="btn btn-info" onclick="location.href='{{url('/')}}{{$page->permanent_link}}'"><i class="fas fa-list-ul"></i> 一覧へ</button>
                     </div>
                 </div>
             </div>

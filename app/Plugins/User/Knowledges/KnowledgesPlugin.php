@@ -31,10 +31,12 @@ class KnowledgesPlugin extends UserPluginBase
      *
      *  スーパークラスをオーバーライド
      */
+/*
     public function getFirstFrameEditAction()
     {
         return "edit";
     }
+*/
 
     /**
      *  データ取得
