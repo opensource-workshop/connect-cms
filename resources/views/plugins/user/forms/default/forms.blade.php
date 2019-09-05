@@ -16,8 +16,8 @@
 --}}
 
         @foreach($forms_columns as $form_column)
-        <div class="form-group">
-            <label class="col-sm-2 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="label label-danger">必須</label> @endif</label>
+        <div class="form-group row">
+            <label class="col-sm-2 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="badge badge-danger">必須</label> @endif</label>
             @switch($form_column->column_type)
             @case("group")
                 @php
@@ -27,22 +27,22 @@
                         $col_count = 3;
                     }
                 @endphp
-                <div class="col-sm-10" style="padding-left: 0px; padding-right: 0px;">
-                <div class="container-fluid" style="padding: 0;">
+                <div class="col-sm-10 pr-0">
+                <div class="container-fluid row" style="padding: 0;">
                 @foreach($form_column->group as $group_row)
 
                     @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
                         <div class="col-sm-{{$col_count}}" style="padding-left: 0px;">
                     @else
-                        <div class="col-sm-{{$col_count}}">
+                        <div class="col-sm-{{$col_count}} pr-0">
                     @endif
 
                             @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
                                 <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
                             @else
-                                <label class="control-label" style="vertical-align: top; padding-top: 8px;">{{$group_row->column_name}}</label>
+                                <label class="control-label">{{$group_row->column_name}}</label>
                             @endif
-                            @if ($group_row->required)<label class="label label-danger">必須</label> @endif
+                            @if ($group_row->required)<label class="badge badge-danger">必須</label> @endif
 
                             @switch($group_row->column_type)
                             @case("text")
@@ -74,12 +74,12 @@
                 </div>
                 @break
             @case("radio")
-                <div class="col-sm-10" style="padding-left: 0; padding-right: 0;">
+                <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $form_column])
                 </div>
                 @break
             @case("checkbox")
-                <div class="col-sm-10" style="padding-left: 0; padding-right: 0;">
+                <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $form_column])
                 </div>
                 @break
@@ -87,7 +87,7 @@
         </div>{{-- /form-group --}}
         @endforeach
         <div class="form-group text-center">
-            <button class="btn btn-primary"><span class="glyphicon glyphicon-pencil"></span> 確認画面へ</button>
+            <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> 確認画面へ</button>
         </div>
     </form>
 

@@ -11,7 +11,7 @@
     @if (isset($frame) && $frame->bucket_id)
         <p class="text-right">
             {{-- 新規登録ボタン --}}
-            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}'"><span class="glyphicon glyphicon-plus"></span> 新規登録</button>
+            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
         </p>
     @else
         <div class="card border-danger">
@@ -40,7 +40,7 @@
             @auth
                 <p class="text-right">
                     <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
-                        <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
+                        <span class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                     </a>
                 </p>
             @endauth

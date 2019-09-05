@@ -13,8 +13,23 @@
             $col_count = 3;
         }
     @endphp
-    <div class="container-fluid" style="padding: 0;">
+    <div class="container-fluid row">
         @foreach($forms_columns_id_select[$form_obj->id] as $select)
+
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('forms_columns_value.'.$form_obj->id) == $select['value'] ||
+                     (isset($request->forms_columns_value) &&
+                      array_key_exists($form_obj->id, $request->forms_columns_value) &&
+                      $request->forms_columns_value[$form_obj->id] == $select['value'])
+                )
+                <input type="radio" id="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}" name="forms_columns_value[{{$form_obj->id}}]" value="{{$select['value']}}" class="custom-control-input" checked>
+            @else
+                <input type="radio" id="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}" name="forms_columns_value[{{$form_obj->id}}]" value="{{$select['value']}}" class="custom-control-input">
+            @endif
+                <label class="custom-control-label" for="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}">{{$select['value']}}</label>
+            </div>
+
+{{--
         <div class="col-sm-{{$col_count}}">
             <label class="cc_label_input_group">
                 <div class="input-group">
@@ -33,6 +48,7 @@
                 </div>
             </label>
         </div>
+--}}
         @endforeach
         @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
             <div class="text-danger" style="padding-left: 15px;">

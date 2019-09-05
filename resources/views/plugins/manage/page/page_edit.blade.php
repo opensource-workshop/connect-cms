@@ -15,11 +15,11 @@
 @include('plugins.manage.page.page_form')
 
 {{-- 削除画面(入力フォーム) --}}
-<div class="panel panel-danger">
-    <div class="panel-heading">
+<div class="card border-danger mt-3">
+    <div class="card-header">
         ページ削除
     </div>
-    <div class="panel-body">
+    <div class="card-body">
 
         @if ($pages[0]->id == $page->id)
             <p>トップページは削除できません。</p>
@@ -28,9 +28,9 @@
                 {{ csrf_field() }}
                 ページを削除します。<br />
                 元に戻すことはできないため、よく確認して実行してください。<br />
-                <div class="form-group pull-right col-md-2">
+                <div class="form-group mx-auto col-md-3 mt-2 mb-0">
                     <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('ページを削除します。\nよろしいですか？')">
-                        ページ削除
+                        <i class="fas fa-check"></i> ページ削除
                     </button>
                 </div>
             </form>

@@ -49,17 +49,17 @@
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
-                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 登録確定</button>
+                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 登録確定</button>
                     @else
-                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 変更確定</button>
+                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 変更確定</button>
                     @endif
-                    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>
             </div>
             <div class="col-sm-3 pull-right text-right">
                 @if (!empty($blogs_posts->id))
                     <a data-toggle="collapse" href="#collapse{{$blogs_posts->id}}">
-                        <span class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-xs">削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
                     </a>
                 @endif
             </div>
@@ -76,7 +76,7 @@
                 {{-- 削除ボタン --}}
                 <form action="{{url('/')}}/plugin/blogs/destroy/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST">
                     {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
 
