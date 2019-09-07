@@ -67,8 +67,5 @@
     <div class="form-group text-center">
         <button type="submit" class="btn btn-primary mr-3" onclick="javascript:submit_forms_store();"><i class="fas fa-check"></i> 送信</button>
         <button type="button" class="btn btn-secondary" onclick="javascript:submit_forms_cancel();"><i class="fas fa-times"></i> キャンセル</button>
-{{--
-        <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#{{$frame_id}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
---}}
     </div>
 </form>

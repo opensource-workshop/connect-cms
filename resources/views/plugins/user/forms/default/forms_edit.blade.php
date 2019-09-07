@@ -17,8 +17,8 @@
 
 @auth
 @if (empty($forms_id))
-    <div class="alert alert-warning" style="margin-top: 10px;">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <div class="alert alert-warning mt-2">
+        <i class="fas fa-exclamation-circle"></i>
         フォーム選択画面から選択するか、フォーム新規作成で作成してください。
     </div>
 @else
@@ -124,16 +124,16 @@
         <input type="hidden" name="destroy_no" value="">
         <input type="hidden" name="return_frame_action" value="edit">
 
-        <div class="panel panel-info table-responsive">
+        <div class="table-responsive">
 
             {{-- カラムの一覧 --}}
-            <table class="table table-hover" style="margin-bottom: 0;">
+            <table class="table table-hover">
             <thead>
                 <tr>
                     <th>操作</th>
                     <th>項目名</th>
                     <th>型</th>
-                    <th>必須</th>
+                    <th class="text-nowrap">必須</th>
                     <th>まとめ数</th>
                     <th>削除</th>
                     <th></th>
@@ -152,10 +152,10 @@
             </table>
         </div>
         <div class="text-center">
-            <button type="submit" class="btn btn-primary form-horizontal">
-                <span class="glyphicon glyphicon-ok"></span> フォーム保存
+            <button type="submit" class="btn btn-primary mr-3">
+                <i class="fas fa-check"></i> フォーム保存
             </button>
-            <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="javascript:forms_cancel.submit();"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+            <button type="button" class="btn btn-secondary" onclick="javascript:forms_cancel.submit();"><i class="fas fa-times"></i> キャンセル</button>
         </div>
     </form>
 </div>

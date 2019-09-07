@@ -50,10 +50,10 @@
         </div>
 --}}
         @endforeach
-        @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
-            <div class="text-danger" style="padding-left: 15px;">
-                <span class="glyphicon glyphicon-exclamation-sign"></span> {{$errors->first("forms_columns_value.$form_obj->id")}}
-            </div>
-        @endif
     </div>
+    @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
+        <div class="d-block text-danger">
+            <i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}
+        </div>
+    @endif
 @endif

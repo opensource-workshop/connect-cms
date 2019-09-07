@@ -9,18 +9,18 @@
     <td style="vertical-align: middle;" nowrap>
         {{-- 上移動 --}}
 {{--
-        <button type="button" class="btn btn-default btn-xs" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row['columns_id']}})">
+        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row['columns_id']}})">
 --}}
-        <button type="button" class="btn btn-default btn-xs" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row_no}})">
-            <span class="glyphicon glyphicon-arrow-up"></span>
+        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row_no}})">
+            <i class="fas fa-arrow-up"></i>
         </button>
 
         {{-- 下移動 --}}
 {{--
-        <button type="button" class="btn btn-default btn-xs" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$row['columns_id']}})">
+        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$row['columns_id']}})">
 --}}
-        <button type="button" class="btn btn-default btn-xs" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$row_no}})">
-            <span class="glyphicon glyphicon-arrow-down"></span>
+        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$row_no}})">
+            <i class="fas fa-arrow-down"></i>
         </button>
     </td>
     <td>
@@ -63,28 +63,27 @@
             </select>
         @else
             @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox')
-                <button class="btn btn-primary form-horizontal" onclick="javascript:return false;" data-toggle="modal" data-target="#formsDetailModal{{$row_no}}"><span class="glyphicon glyphicon-new-window"></span> <span class="hidden-sm hidden-xs">詳細</span></button>
+                <button class="btn btn-primary btn-xs cc-font-90 text-nowrap" onclick="javascript:return false;" data-toggle="modal" data-target="#formsDetailModal{{$row_no}}"><i class="far fa-window-restore"></i> <span class="hidden-sm hidden-xs">詳細</span></button>
             @endif
         @endif
     </td>
     <td style="vertical-align: middle;">
-        <button class="btn btn-danger form-horizontal" onclick="javascript:submit_destroy_column({{$row_no}});"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-sm hidden-xs">削除</span></button>
-        {{-- <span class="glyphicon glyphicon-trash"> --}}
+        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:submit_destroy_column({{$row_no}});"><i class="fas fa-trash-alt"></i> <span class="hidden-sm hidden-xs">削除</span></button>
     </td>
 </tr>
 @if ($delete_flag == '0')
     @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox')
     <tr>
-        <td style="border-top: none; padding-top: 0;"></td>
-        <td style="border-top: none; padding-top: 0;" colspan="2">
+        <td class="pt-0 border border-0"></td>
+        <td class="pt-0 border border-0" colspan="2">
         @if (isset($row['select']))
-            <span class="glyphicon glyphicon-list-alt"></span> 
+            <i class="far fa-list-alt"></i> 
             @foreach ($row['select'] as $select)
                 {{$select['value']}}
                 @if (!$loop->last),@endif
             @endforeach
         @else
-            <div class="text-danger"><span class="glyphicon glyphicon-info-sign"></span> 選択肢がありません。設定してください。</div>
+            <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> 選択肢がありません。設定してください。</div>
         @endif
         </td>
         <td style="border-top: none; padding-top: 0;" colspan="3"></td>
