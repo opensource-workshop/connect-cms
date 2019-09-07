@@ -33,14 +33,14 @@
 
     <form action="/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST" class="mt-3">
         {{ csrf_field() }}
-        <div class="form-group row">
+        <div class="form-group row mx-0">
             <label for="page-name" class="{{$class_label}}">フレームタイトル</label>
             <div class="{{$class_input}}">
                 <input type="text" name="frame_title" id="frame_title" class="form-control" value="{{$frame->frame_title}}">
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group row mx-0">
             <label for="page-name" class="{{$class_label}}">フレームデザイン</label>
             <div class="{{$class_input}}">
                 <select class="form-control" name="frame_design" id="frame_design">
@@ -56,7 +56,7 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group row mx-0">
             <label for="page-name" class="{{$class_label}}">フレーム幅</label>
             <div class="{{$class_input}}">
                 <select class="form-control" name="frame_col" id="frame_col">
@@ -78,7 +78,7 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group row mx-0">
             <label class="{{$class_label}}">テンプレート</label>
             <div class="{{$class_input}}">
                 <select class="form-control" name="template" id="template">
@@ -90,7 +90,7 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group row mx-0">
             <label for="page-name" class="{{$class_label}}">プラグ</label>
             <div class="{{$class_input}}">
                 <select class="form-control" name="plug_name" id="plug_name">
@@ -101,7 +101,7 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group row mx-0">
             <div class="offset-md-3 {{$class_input}}">
                 <button type="submit" class="btn btn-primary form-horizontal mr-3"><i class="fas fa-check"></i> 更新</button>
                 <button type="button" class="btn btn-secondary form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
