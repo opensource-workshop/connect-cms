@@ -103,9 +103,9 @@
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if(isset($configs["base_header_login_link"]) && $configs["base_header_login_link"] == "0")
-                            <input type="radio" value="0" id="base_header_login_link_off" name="customRadioInline" class="custom-control-input" checked="checked">
+                            <input type="radio" value="0" id="base_header_login_link_off" name="base_header_login_link" class="custom-control-input" checked="checked">
                         @else
-                            <input type="radio" value="0" id="base_header_login_link_off" name="customRadioInline" class="custom-control-input">
+                            <input type="radio" value="0" id="base_header_login_link_off" name="base_header_login_link" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="base_header_login_link_off">表示しない</label>
                     </div>
@@ -177,7 +177,7 @@
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">ヘッダーを固定にするサイズをチェック</small>
+            <small class="form-text text-muted">画像の保存機能を無効化するものを選択</small>
         </div>
 
         {{-- Submitボタン --}}
