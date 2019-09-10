@@ -47,13 +47,8 @@
     @endif
 
     <!-- Styles -->
-{{-- bootstrap3
-    <link href="{{asset('css/app.css')}}" rel="stylesheet">
---}}
-{{-- bootstrap4 --}}
-    <link href="{{asset('bootstrap4/css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
-    <!-- Styles -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
     @if (isset($page))
         <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
@@ -63,18 +58,6 @@
     @if (isset($themes))
         <link href="/themes/{{$themes}}/themes.css" rel="stylesheet">
     @endif
-
-    <!-- jQuery -->
-    <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
-
-{{-- bootstrap4 --}}
-    <script src="{{asset('bootstrap4/js/bootstrap.bundle.min.js')}}"></script>
-
-    <!-- bootstrap-datepicker -->
-    <link href="{{asset('js/bootstrap-datepicker/css/bootstrap-datepicker.min.css')}}" rel="stylesheet">
-{{--    <script src="{{ asset('js/bootstrap-datepicker/js/bootstrap-datepicker.min.js') }}"></script> --}}
-    <script src="{{ asset('js/bootstrap-datepicker/js/bootstrap-datepicker.js') }}"></script>
-    <script src="{{ asset('js/bootstrap-datepicker/locales/bootstrap-datepicker.ja.min.js') }}"></script>
 
     <!-- Context -->
     <script>
@@ -86,22 +69,11 @@
     @endif
     </script>
 
-{{--
-    <!-- bootstrap-treeview -->
-    <link href="{{ asset('css/bootstrap-treeview.css') }}" rel="stylesheet">
-    <script src="{{ asset('js/bootstrap-treeview.js') }}"></script>
---}}
-
     <!-- Fonts -->
-{{--
-    <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel='stylesheet' type='text/css'>
---}}
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
-{{--
-    <!-- Styles -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
---}}
+    <!-- Scripts -->
+    <script src="{{ asset('js/app.js') }}"></script>
 
 </head>
 <body>
@@ -301,7 +273,5 @@
     @endif
     @endauth
 
-    <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}"></script>
 </body>
 </html>
