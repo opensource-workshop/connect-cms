@@ -8,9 +8,9 @@
  * @category コア
 --}}
 @if($frame->frame_col==0)
-<div class="col-sm-12 @if ($frame->area_id==2 && !$loop->last) @endif" id="{{ $frame->frame_id }}">
+<div class="col-sm-12 @if ($frame->area_id==2 && !$loop->last) @endif" id="frame-{{ $frame->frame_id }}">
 @else
-<div class="col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif" id="{{ $frame->frame_id }}">
+<div class="col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif" id="frame-{{ $frame->frame_id }}">
 @endif
 
     @if ($frame->frame_design == 'none')
