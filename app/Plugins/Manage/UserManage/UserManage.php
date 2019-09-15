@@ -11,6 +11,7 @@ use DB;
 use App\Configs;
 use App\Page;
 use App\User;
+use App\Models\Core\UsersRoles;
 use App\Plugins\Manage\ManagePluginBase;
 
 /**
@@ -50,6 +51,17 @@ class UserManage extends ManagePluginBase
                  ->paginate(10);
 
         return $users;
+    }
+
+    /**
+     *  役割取得
+     */
+    public function getRoles($id)
+    {
+        // ユーザデータ取得
+        $roles = UsersRoles::getUsersRoles($id);
+
+        return $roles;
     }
 
     /**
@@ -94,10 +106,14 @@ class UserManage extends ManagePluginBase
         // ユーザデータ取得
         $user = User::where('id', $id)->first();
 
+        // ユーザ権限取得
+        $users_roles = $this->getRoles($id);
+
         return view('plugins.manage.user.regist',[
-            "function" => __FUNCTION__,
-            "id"       => $id,
-            "user"     => $user,
+            "function"    => __FUNCTION__,
+            "id"          => $id,
+            "user"        => $user,
+            "users_roles" => $users_roles,
         ]);
     }
 
@@ -123,7 +139,6 @@ class UserManage extends ManagePluginBase
             return redirect('manage/user/edit/' . $id)
                        ->withErrors($validator)
                        ->withInput();
-
         }
 
         // 更新内容の配列
@@ -143,7 +158,34 @@ class UserManage extends ManagePluginBase
         User::where('id', $id)
             ->update($update_array);
 
-        return $this->index($request, $id);
+        // ユーザ権限の更新（権限データの delete & insert）
+        DB::table('users_roles')->where('users_id', '=', $id)->delete();
+
+        // ユーザ権限の登録
+        if (!empty($request->base)) {
+            foreach($request->base as $role_name => $value) {
+                UsersRoles::create([
+                    'users_id'   => $id,
+                    'target'     => 'base',
+                    'role_name'  => $role_name,
+                    'role_value' => 1
+                ]);
+            }
+        }
+
+        // 管理権限の登録
+        if (!empty($request->manage)) {
+            foreach($request->manage as $role_name => $value) {
+                UsersRoles::create([
+                    'users_id'   => $id,
+                    'target'     => 'manage',
+                    'role_name'  => $role_name,
+                    'role_value' => 1
+                ]);
+            }
+        }
+
+        return $this->edit($request, $id);
     }
 
     /**
