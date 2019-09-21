@@ -7,7 +7,9 @@
  --}}
 
 {{-- 新規登録 --}}
-@auth
+{{-- @if (Auth::check() && (Auth::user()->can('posts.create'))) --}}
+
+@can('posts.create','blogs')
     @if (isset($frame) && $frame->bucket_id)
         <p class="text-right">
             {{-- 新規登録ボタン --}}
@@ -20,7 +22,7 @@
             </div>
         </div>
     @endif
-@endauth
+@endcan
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))

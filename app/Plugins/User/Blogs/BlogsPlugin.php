@@ -126,6 +126,7 @@ class BlogsPlugin extends UserPluginBase
      */
     public function saveBlogs($request, $page_id, $frame_id, $blogs_id = null)
     {
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'blog_name'  => ['required'],

@@ -16,7 +16,7 @@
 
 @if (isset($search_error_message) && $search_error_message)
     <div class="alert alert-danger" style="margin-top: 10px;">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <i class="fas fa-exclamation-circle"></i>
         {{$search_error_message}}
     </div>
 @endif
@@ -41,7 +41,7 @@
                 @if ($errors && $errors->has('isbn')) <div class="text-danger">{{$errors->first('isbn')}}</div> @endif
             </div>
             <div class="col-sm-3">
-                <button type="buton" class="btn btn-success" onclick="javascript:submit_book_search();return false;"><span class="glyphicon glyphicon-search"></span> 書誌データ取得</button>
+                <button type="buton" class="btn btn-success" onclick="javascript:submit_book_search();return false;"><i class="fas fa-search"></i> 書誌データ取得</button>
             </div>
         </div>
     </div>
@@ -90,11 +90,11 @@
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($opacs_books->id))
-                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 登録確定</button>
+                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 登録確定</button>
                     @else
-                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 変更確定</button>
+                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 変更確定</button>
                     @endif
-                    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><span class="glyphicon glyphicon-remove"></span> キャンセル</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>
             </div>
             <div class="col-sm-3 pull-right text-right">

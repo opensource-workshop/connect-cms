@@ -21,4 +21,25 @@ return [
     'ROLE_MODERATOR'         => 12, // モデレータ
     'ROLE_GENERAL'           => 13, // 一般
     'ROLE_GUEST'             => 0,  // ゲスト
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authority
+    |--------------------------------------------------------------------------
+    |
+    | Connect-CMS authority const
+    |
+    */
+
+    'CC_AUTHORITY' => [
+        // バケツ
+        'buckets.create'   => ['role_arrangement', 'role_article_admin', 'admin_system'],
+
+        // 記事
+        'posts.create'   => ['role_reporter', 'role_article', 'admin_system'],
+        'posts.update'   => ['role_reporter', 'role_article', 'admin_system'],
+        'posts.delete'   => ['role_reporter', 'role_article', 'admin_system'],
+        'posts.approval' => ['role_approval', 'admin_system'],
+    ],
+
 ];

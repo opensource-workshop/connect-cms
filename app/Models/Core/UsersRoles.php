@@ -13,6 +13,11 @@ class UsersRoles extends Model
     protected $fillable = ['users_id', 'target', 'role_name', 'role_value'];
 
     /**
+     * 権限
+     */
+    var $user_rolses = null;
+
+    /**
      *  ユーザー権限の取得
      *
      * @param int $users_id

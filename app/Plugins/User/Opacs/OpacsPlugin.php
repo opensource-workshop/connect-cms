@@ -43,6 +43,9 @@ class OpacsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
         if (empty($opac_frame)) {
@@ -53,12 +56,37 @@ class OpacsPlugin extends UserPluginBase
         $page = Page::where('id', $page_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        $opacs_books = DB::table('opacs_books')
-                      ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
-                      ->leftJoin('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
-                      ->where('opacs_id', $opac_frame->opacs_id)
-                      ->orderBy('created_at', 'desc')
-                      ->paginate($opac_frame->view_count);
+        if (empty($request->keyword)) {
+
+            $opacs_books = DB::table('opacs_books')
+                          ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
+                          ->leftJoin('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                          ->where('opacs_id', $opac_frame->opacs_id)
+                          ->orderBy('created_at', 'desc')
+                          ->paginate($opac_frame->view_count);
+        }
+        else {
+            $keyword = $request->keyword;
+            $opacs_books = DB::table('opacs_books')
+                          ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
+                          ->leftJoin('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                          ->where('opacs_id', $opac_frame->opacs_id)
+                          ->where(function($query) use ($keyword) {
+                              $query->Where('isbn',      'like', '%' . $keyword . '%')
+                                  ->orWhere('title',     'like', '%' . $keyword . '%')
+                                  ->orWhere('ndc',       'like', '%' . $keyword . '%')
+                                  ->orWhere('creator',   'like', '%' . $keyword . '%')
+                                  ->orWhere('publisher', 'like', '%' . $keyword . '%');
+                          })
+                          ->orderBy('created_at', 'desc')
+                          ->paginate($opac_frame->view_count);
+        }
+/*
+                      ->where([
+['opacs_id', $opac_frame->opacs_id],
+['title', 'like', '%高校%'],
+])
+*/
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -523,4 +551,14 @@ class OpacsPlugin extends UserPluginBase
         return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, $validator->errors());
     }
 
+    /**
+     *  検索
+     */
+    public function search($request, $page_id, $frame_id)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        return $this->index($request, $page_id, $frame_id);
+    }
 }

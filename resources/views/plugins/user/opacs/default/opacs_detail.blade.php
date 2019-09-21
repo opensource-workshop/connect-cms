@@ -37,13 +37,13 @@
     <th>状況</th>
     @if ($opacs_books->lent_flag == 1)
         <td>
-            <span style="color: red;"><span class="glyphicon glyphicon-user"></span> 
+            <span style="color: red;"><i class="fas fa-user"></i></span> 
             貸し出し中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
             </span>
         </td>
     @elseif ($opacs_books->lent_flag == 2)
         <td>
-            <span style="color: red;"><span class="glyphicon glyphicon-user"></span> 
+            <span style="color: red;"><i class="fas fa-user"></i></span> 
             貸し出しリクエスト中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
             </span>
         </td>
@@ -53,18 +53,18 @@
 
 @auth
 
-    <h4><span class="label label-primary">郵送貸し出しリクエスト</span></h4>
+    <h4><span class="badge badge-primary">郵送貸し出しリクエスト</span></h4>
 
     <div class="form-group">
 
         @if ($opacs_books->lent_flag == 1) 
             <div class="alert alert-warning" style="margin-top: 10px;">
-                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <i class="fas fa-exclamation-circle"></i>
                 この書籍は現在、貸し出し中のため、郵送貸し出しリクエストはできません。
             </div>
         @elseif ($opacs_books->lent_flag == 2) 
             <div class="alert alert-warning" style="margin-top: 10px;">
-                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <i class="fas fa-exclamation-circle"></i>
                 この書籍は現在、貸し出しリクエスト中のため、郵送貸し出しリクエストはできません。＜管理者メニュー＞
             </div>
         @else
@@ -72,22 +72,36 @@
                 {{ csrf_field() }}
                 <div class="row">
                     <div class="col-sm-4" style="margin-top: 8px;">
-                        <label class="control-label">学籍番号 <span class="label label-danger">必須</span></label>
+                        <label class="control-label">学籍番号</label><label class="badge badge-danger">必須</label>
                         <input type="text" name="student_no" value="{{old('student_no')}}" class="form-control">
                         @if ($errors && $errors->has('student_no')) <div class="text-danger">{{$errors->first('student_no')}}</div> @endif
                     </div>
+
+
                     <div class="col-sm-4" style="margin-top: 8px;">
-                        <label class="control-label">返却予定日 <span class="label label-danger">必須</span></label>
-                        <div class="input-group date" data-provide="datepicker">
-                            <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datepicker">
-                            <span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>
+                        <label class="control-label">返却予定日</label><label class="badge badge-danger">必須</label>
+
+                        <div class="input-group date" id="return_scheduled_req" data-target-input="nearest">
+                            <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datetimepicker-input" data-target="#return_scheduled_req"/>
+                            <div class="input-group-append" data-target="#return_scheduled_req" data-toggle="datetimepicker">
+                                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                            </div>
                         </div>
                         @if ($errors && $errors->has('return_scheduled')) <div class="text-danger">{{$errors->first('return_scheduled')}}</div> @endif
+                        <script type="text/javascript">
+                            $(function () {
+                                $('#return_scheduled_req').datetimepicker({
+                                    locale: 'ja',
+                                    dayViewHeaderFormat: 'YYYY年 M月',
+                                    format: 'YYYY/MM/DD'
+                                });
+                            });
+                        </script>
                     </div>
 
                     {{--
                         <div class="input-group date" data-provide="datepicker">
-                            <input type="text" class="form-control datepicker" id='date_sample'><span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>
+                            <input type="text" class="form-control datepicker" id='date_sample'><span class="input-group-addon"><i class="fas fa-th"></i></span>
                         </div>
                         <script type="text/javascript">
                             $('.datepicker').datepicker({
@@ -109,23 +123,23 @@
                     </div>
                     <div class="col-sm-3">
                         <label class="control-label" style="margin-top: 8px;">返却</label>
-                        <button type="button" class="btn btn-primary form-control" onclick="javascript:form_requestLent.submit();"><span class="glyphicon glyphicon-ok"></span> リクエストします。</button>
+                        <button type="button" class="btn btn-primary form-control" onclick="javascript:form_requestLent.submit();"><i class="fas fa-check"></i> リクエストする。</button>
                     </div>
                 </div>
             @endif
         </div>
     </form>
 
-<h4><span class="label label-primary">貸し出し</span></h4>
+<h4><span class="badge badge-primary">貸し出し</span></h4>
 
     @if ($opacs_books->lent_flag == 1) 
         <div class="alert alert-warning" style="margin-top: 10px;">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <i class="fas fa-exclamation-circle"></i>
             この書籍は現在、貸し出し中のため、貸し出しはできません。
         </div>
     @elseif ($opacs_books->lent_flag == 2) 
         <div class="alert alert-warning" style="margin-top: 10px;">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <i class="fas fa-exclamation-circle"></i>
             この書籍は現在、貸し出しリクエスト中のため、貸し出しはできません。
         </div>
     @else
@@ -138,13 +152,28 @@
         </div>
         <div class="col-sm-4">
             <label class="control-label">返却予定日</label>
-    <div class="input-group date" data-provide="datepicker">
-                <input type="text" name="return_scheduled" value="" class="form-control datepicker"><span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>
-    </div>
+
+            <div class="input-group date" id="return_scheduled" data-target-input="nearest">
+                <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datetimepicker-input" data-target="#return_scheduled"/>
+                <div class="input-group-append" data-target="#return_scheduled" data-toggle="datetimepicker">
+                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                </div>
+            </div>
+            @if ($errors && $errors->has('return_scheduled')) <div class="text-danger">{{$errors->first('return_scheduled')}}</div> @endif
+            <script type="text/javascript">
+                $(function () {
+                    $('#return_scheduled').datetimepicker({
+                        locale: 'ja',
+                        dayViewHeaderFormat: 'YYYY年 M月',
+                        format: 'YYYY/MM/DD'
+                    });
+                });
+            </script>
+
         </div>
         <div class="col-sm-3">
             <label class="control-label">借りる</label>
-            <button type="submit" class="btn btn-primary form-control"><span class="glyphicon glyphicon-ok"></span> 借りました。</button>
+            <button type="submit" class="btn btn-primary form-control"><i class="fas fa-check"></i> 借りました。</button>
         </div>
     </div>
 </div>
@@ -163,12 +192,12 @@
         <div class="col-sm-4">
             <label class="control-label">返却日</label>
     <div class="input-group date" data-provide="datepicker">
-                <input type="text" name="return_date" value="" class="form-control datepicker"><span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>
+                <input type="text" name="return_date" value="" class="form-control datepicker"><span class="input-group-addon"><i class="fas fa-th"></i></span>
     </div>
         </div>
         <div class="col-sm-3">
             <label class="control-label">返却</label>
-            <button type="submit" class="btn btn-primary form-control"><span class="glyphicon glyphicon-ok"></span> 返しました。</button>
+            <button type="submit" class="btn btn-primary form-control"><i class="fas fa-check"></i> 返しました。</button>
         </div>
     </div>
 </div>
@@ -177,7 +206,7 @@
 
 @else
     <div class="alert alert-warning" style="margin-top: 10px;">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <i class="fas fa-exclamation-circle"></i>
         貸し出し操作、返却、貸し出しリクエストはログインすると行えます。
     </div>
 @endauth
