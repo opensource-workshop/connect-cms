@@ -31,7 +31,7 @@ class OpacsPlugin extends UserPluginBase
 {
 
    /**
-    * lent_flag        = 0:貸し出し可能、1:貸し出し中、2:貸し出しリクエスト受付中
+    * lent_flag        = 9:貸出終了(貸し出し可能)、1:貸し出し中、2:貸し出しリクエスト受付中
     * scheduled_return = 返却予定日(日付)
     * lent_at          = 貸し出し日時(日時)
     */
@@ -55,21 +55,29 @@ class OpacsPlugin extends UserPluginBase
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
+        // 検索キーワード
+        $keyword = $request->session()->get('search_keyword');
+
         // データ取得（1ページの表示件数指定）
-        if (empty($request->keyword)) {
+        if (empty($keyword)) {
 
             $opacs_books = DB::table('opacs_books')
                           ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
-                          ->leftJoin('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                          ->leftJoin('opacs_books_lents', function ($join) {
+                              $join->on('opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                                  ->wherein('opacs_books_lents.lent_flag', [1, 2]);
+                          })
                           ->where('opacs_id', $opac_frame->opacs_id)
                           ->orderBy('created_at', 'desc')
                           ->paginate($opac_frame->view_count);
         }
         else {
-            $keyword = $request->keyword;
             $opacs_books = DB::table('opacs_books')
                           ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
-                          ->leftJoin('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                          ->leftJoin('opacs_books_lents', function ($join) {
+                              $join->on('opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                                  ->wherein('opacs_books_lents.lent_flag', [1, 2]);
+                          })
                           ->where('opacs_id', $opac_frame->opacs_id)
                           ->where(function($query) use ($keyword) {
                               $query->Where('isbn',      'like', '%' . $keyword . '%')
@@ -434,7 +442,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      * 書誌データ詳細画面
      */
-    public function detail($request, $page_id, $frame_id, $opacs_books_id, $message = null, $errors = null)
+    public function detail($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -445,7 +453,10 @@ class OpacsPlugin extends UserPluginBase
         // 書誌データ取得
         $opacs_book = DB::table('opacs_books')
                       ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
-                      ->leftJoin('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                      ->leftJoin('opacs_books_lents', function ($join) {
+                          $join->on('opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                              ->wherein('opacs_books_lents.lent_flag', [1, 2]);
+                      })
                       ->where('opacs_books.id', $opacs_books_id)->first();
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
@@ -455,6 +466,7 @@ class OpacsPlugin extends UserPluginBase
             'opacs_books'    => $opacs_book,
             'opacs_books_id' => $opacs_books_id,
             'message'        => $message,
+            'message_class'  => $message_class,
             'errors'         => $errors,
         ]);
     }
@@ -521,10 +533,28 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  郵送貸し出しリクエスト
+     *  貸し出しチェック
      */
-    public function requestLent($request, $page_id, $frame_id, $opacs_books_id)
+    public function lentCheck($opacs_books_id)
     {
+        // 貸出中でないかのチェック
+        $books_lents = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)->whereIn('lent_flag', [1, 2])->get();
+        if (count($books_lents) == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  貸し出し登録
+     */
+    public function lent($request, $page_id, $frame_id, $opacs_books_id)
+    {
+        // 貸出中でないかのチェック
+        if ( !$this->lentCheck($opacs_books_id) ) {
+            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
+        }
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'student_no'       => ['required'],
@@ -534,6 +564,12 @@ class OpacsPlugin extends UserPluginBase
             'student_no'       => '学籍番号',
             'return_scheduled' => '返却予定日',
         ]);
+
+        // エラーがあった場合は詳細画面に戻る。
+        $message = null;
+        if ($validator->fails()) {
+            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+        }
 
         // 書籍貸し出しデータ新規オブジェクト
         $opacs_books_lents                   = new OpacsBooksLents();
@@ -545,10 +581,107 @@ class OpacsPlugin extends UserPluginBase
         // データ保存
         $opacs_books_lents->save();
 
+        $message = '貸し出し登録しました。';
+
+        // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
+        return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+    }
+
+    /**
+     *  郵送貸し出しリクエスト
+     */
+    public function requestLent($request, $page_id, $frame_id, $opacs_books_id)
+    {
+        // 貸出中でないかのチェック
+        if ( !$this->lentCheck($opacs_books_id) ) {
+            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'req_student_no'       => ['required'],
+            'req_return_scheduled' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'req_student_no'       => '学籍番号',
+            'req_return_scheduled' => '返却予定日',
+        ]);
+
+        // エラーがあった場合は詳細画面に戻る。
+        $message = null;
+        if ($validator->fails()) {
+            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+        }
+
+        // 書籍貸し出しデータ新規オブジェクト
+        $opacs_books_lents                   = new OpacsBooksLents();
+        $opacs_books_lents->opacs_books_id   = $opacs_books_id;
+        $opacs_books_lents->lent_flag        = 2;
+        $opacs_books_lents->student_no       = $request->req_student_no;
+        $opacs_books_lents->return_scheduled = date('Y-m-d 00:00:00', strtotime($request->req_return_scheduled));
+        $opacs_books_lents->phone_no         = $request->req_phone_no;
+        $opacs_books_lents->email            = $request->req_email;
+
+        // データ保存
+        $opacs_books_lents->save();
+
         $message = '郵送貸し出しリクエストを受け付けました。';
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
-        return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, $validator->errors());
+        return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+    }
+
+    /**
+     *  貸し出し返却
+     */
+    public function returnLent($request, $page_id, $frame_id, $opacs_books_id)
+    {
+
+        // 貸出中でないかのチェック
+        if ( $this->lentCheck($opacs_books_id) ) {
+            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中ではありません。', 'danger');
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'return_student_no'  => ['required'],
+            'return_date'        => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'return_student_no'  => '学籍番号',
+            'return_date'        => '返却日',
+        ]);
+
+        // エラーがあった場合は詳細画面に戻る。
+        $message = null;
+        if ($validator->fails()) {
+            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+        }
+
+        // 学籍番号チェック
+        $books_lents = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)->whereIn('lent_flag', [1, 2])->first();
+        if ($books_lents->student_no != $request->return_student_no) {
+            $message = '学籍番号が一致しません。';
+            $message_class = 'danger';
+            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, $message_class, $validator->errors());
+        }
+
+        // 書籍貸し出しデータ
+        $books_lents = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)->whereIn('lent_flag', [1, 2])->first();
+
+        $books_lents->lent_flag   = 9;
+        $books_lents->student_no  = null;
+        $books_lents->return_date = date('Y-m-d 00:00:00', strtotime($request->return_date));
+        $books_lents->phone_no    = null;
+        $books_lents->email       = null;
+
+        // データ保存
+        $books_lents->save();
+
+        $message = '返却しました。';
+
+        // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
+        return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
     }
 
     /**
@@ -558,6 +691,9 @@ class OpacsPlugin extends UserPluginBase
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
+
+        // キーワードをセッションに保存しておく。
+        $request->session()->put('search_keyword', $request->keyword);
 
         return $this->index($request, $page_id, $frame_id);
     }

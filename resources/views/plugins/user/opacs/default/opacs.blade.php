@@ -15,11 +15,32 @@
         <div class="row">
             <div class="col-sm-6">
                 <div class="input-group date">
-                    <input type="text" name="keyword" value="{{old('keyword', '')}}" class="form-control" placeholder="キーワード検索">
+                    <input type="text" name="keyword" value="{{Session::get('search_keyword')}}" class="form-control" placeholder="キーワード検索">
                     <span class="input-group-btn">
                         <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
                     </span>
                 </div>
+            </div>
+            <div class="col-sm-6">
+
+            {{-- 新規登録 --}}
+            @can("role_article")
+                @if (isset($frame) && $frame->bucket_id)
+                    <p class="text-right">
+                        {{-- 新規登録ボタン --}}
+                        <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}'">
+                            <i class="fas fa-plus"></i> 新規登録
+                        </button>
+                    </p>
+                @else
+                    <div class="panel panel-default">
+                        <div class="panel-body bg-danger">
+                            <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するOPACを選択するか、作成してください。</p>
+                        </div>
+                    </div>
+                @endif
+            @endcan
+
             </div>
         </div>
     </div>
@@ -46,7 +67,7 @@
                     <span class="label label-primary">詳細</span>
                 </a>
             </td>
-            <td>@if ($book->lent_flag != 0) <span style="color: red;"><i class="fas fa-user"></i></span> @endif</td>
+            <td>@if ($book->lent_flag == 1 || $book->lent_flag == 2) <span style="color: red;"><i class="fas fa-user"></i></span> @endif</td>
             <td nowrap>
                 @can("role_article")
                 <a href="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$book->id}}">
@@ -64,7 +85,11 @@
     </tbody>
     </table>
     </div>
-    <div class="card m-3 bg-light"><div class="card-body p-2 mx-auto">貸出、返却、リクエストは各書籍の詳細画面から操作できます。</div></div>
+
+    <div class="alert alert-warning text-center">
+        <i class="fas fa-exclamation-circle"></i>
+        貸出、返却、リクエストはログイン後、各書籍の詳細画面から操作できます。
+    </div>
 
     {{-- ページング処理 --}}
     <div class="text-center">
@@ -73,10 +98,13 @@
 @endif
 
 {{-- 新規登録 --}}
+{{--
 @can("role_article")
     @if (isset($frame) && $frame->bucket_id)
         <p class="text-center" style="margin-top: 16px;">
+--}}
             {{-- 新規登録ボタン --}}
+{{--
             <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}'"><i class="fas fa-plus"></i> 新規登録</button>
         </p>
     @else
@@ -87,4 +115,4 @@
         </div>
     @endif
 @endcan
-
+--}}
