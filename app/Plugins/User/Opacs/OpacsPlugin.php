@@ -60,7 +60,6 @@ class OpacsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         if (empty($keyword)) {
-
             $opacs_books = DB::table('opacs_books')
                           ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
                           ->leftJoin('opacs_books_lents', function ($join) {
@@ -68,7 +67,7 @@ class OpacsPlugin extends UserPluginBase
                                   ->wherein('opacs_books_lents.lent_flag', [1, 2]);
                           })
                           ->where('opacs_id', $opac_frame->opacs_id)
-                          ->orderBy('created_at', 'desc')
+                          ->orderBy('accept_date', 'desc')
                           ->paginate($opac_frame->view_count);
         }
         else {
@@ -84,9 +83,10 @@ class OpacsPlugin extends UserPluginBase
                                   ->orWhere('title',     'like', '%' . $keyword . '%')
                                   ->orWhere('ndc',       'like', '%' . $keyword . '%')
                                   ->orWhere('creator',   'like', '%' . $keyword . '%')
-                                  ->orWhere('publisher', 'like', '%' . $keyword . '%');
+                                  ->orWhere('publisher', 'like', '%' . $keyword . '%')
+                                  ->orWhere('barcode',   'like', '%' . $keyword . '%');
                           })
-                          ->orderBy('created_at', 'desc')
+                          ->orderBy('accept_date', 'desc')
                           ->paginate($opac_frame->view_count);
         }
 /*
@@ -401,7 +401,13 @@ class OpacsPlugin extends UserPluginBase
         // 書誌データ取得の場合
         $search_error_message = '';
         if ($request->book_search == '1') {
-            list($opacs_books, $search_error_message) = $this->getBook($request, $opacs_books);
+            list($tmp_opacs_books, $search_error_message) = $this->getBook($request, $opacs_books);
+            if (empty($tmp_opacs_books)) {
+                $search_error_message = '書誌データが検索できませんでした。';
+            }
+            else {
+                $opacs_books = $tmp_opacs_books;
+            }
             //echo $opacs_books->title;
         }
 
@@ -503,12 +509,34 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 書誌データ設定
-        $opacs_book->opacs_id  = $request->opacs_id;
-        $opacs_book->isbn      = $request->isbn;
-        $opacs_book->title     = $request->title;
-        $opacs_book->ndc       = $request->ndc;
-        $opacs_book->creator   = $request->creator;
-        $opacs_book->publisher = $request->publisher;
+        $opacs_book->opacs_id          = $request->opacs_id;
+        $opacs_book->isbn              = $request->isbn;
+        $opacs_book->title             = $request->title;
+        $opacs_book->ndc               = $request->ndc;
+        $opacs_book->creator           = $request->creator;
+        $opacs_book->publisher         = $request->publisher;
+        $opacs_book->barcode           = $request->barcode;
+        $opacs_book->title_read        = $request->title_read;
+        $opacs_book->subtitle          = $request->subtitle;
+        $opacs_book->series            = $request->series;
+        $opacs_book->publication_year  = $request->publication_year;
+        $opacs_book->class             = $request->class;
+        $opacs_book->size              = $request->size;
+        $opacs_book->page_number       = $request->page_number;
+        $opacs_book->marc              = $request->marc;
+        $opacs_book->type              = $request->type;
+        $opacs_book->shelf             = $request->shelf;
+        $opacs_book->lend_flag         = $request->lend_flag;
+        $opacs_book->accept_flag       = $request->accept_flag;
+        $opacs_book->accept_date       = date('Y-m-d', strtotime($request->accept_date));
+        $opacs_book->accept_price      = $request->accept_price;
+        $opacs_book->storage_life      = date('Y-m-d', strtotime($request->storage_life));
+        $opacs_book->remove_flag       = $request->remove_flag;
+        $opacs_book->remove_date       = date('Y-m-d', strtotime($request->remove_date));
+        $opacs_book->possession        = $request->possession;
+        $opacs_book->library           = $request->library;
+        $opacs_book->last_lending_date = date('Y-m-d', strtotime($request->last_lending_date));
+        $opacs_book->total_lends       = $request->total_lends;
 
         // データ保存
         $opacs_book->save();

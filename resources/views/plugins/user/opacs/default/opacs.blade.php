@@ -46,40 +46,61 @@
     </div>
     </form>
 
-    <div class="table-responsive">
+    {{-- ページング処理 --}}
+    <div class="text-center">
+        {{ $opacs_books->fragment('frame-'.$frame_id)->links() }}
+    </div>
+
+    <style type="text/css">
+    <!--
+    .book-list .table th, .book-list .table td { padding: 0.5em; }
+    -->
+    </style>
+
+    <div class="book-list table-responsive">
     <table class="table">
     <thead>
         <tr>
-            <th nowrap>詳細</th>
+{{--            <th nowrap>詳細</th> --}}
             <th nowrap>貸</th>
-            <th nowrap>ISBN等</th>
+{{--            <th nowrap>ISBN等</th> --}}
             <th nowrap>タイトル</th>
-            <th nowrap>請求記号</th>
+{{--            <th nowrap>請求記号</th> --}}
             <th nowrap>著者</th>
             <th nowrap>出版者</th>
+            <th nowrap>受入日付</th>
         </tr>
     </thead>
     <tbody>
     @foreach($opacs_books as $book)
         <tr>
+{{--
             <td>
                 <a href="{{url('/')}}/plugin/opacs/detail/{{$page->id}}/{{$frame_id}}/{{$book->id}}">
                     <span class="label label-primary">詳細</span>
                 </a>
             </td>
+--}}
             <td>@if ($book->lent_flag == 1 || $book->lent_flag == 2) <span style="color: red;"><i class="fas fa-user"></i></span> @endif</td>
+{{--
             <td nowrap>
+                {{$book->isbn}}
+            </td>
+--}}
+            <td>
                 @can("role_article")
                 <a href="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$book->id}}">
                     <i class="far fa-edit"></i>
                 </a>
                 @endcan
-                {{$book->isbn}}
+                <a href="{{url('/')}}/plugin/opacs/detail/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}</a>
             </td>
-            <td>{{$book->title}}</td>
+{{--
             <td>{{$book->ndc}}</td>
+--}}
             <td>{{$book->creator}}</td>
             <td>{{$book->publisher}}</td>
+            <td>{{$book->accept_date}}</td>
         </tr>
     @endforeach
     </tbody>
@@ -93,7 +114,7 @@
 
     {{-- ページング処理 --}}
     <div class="text-center">
-        {{ $opacs_books->links() }}
+        {{ $opacs_books->fragment('frame-'.$frame_id)->links() }}
     </div>
 @endif
 

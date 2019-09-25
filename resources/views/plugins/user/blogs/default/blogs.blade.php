@@ -39,13 +39,15 @@
             @endif
             {{-- 記事本文 --}}
             {!! $post->post_text !!}
-            @auth
+
+            {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
+            @can('posts.update',[[$post, 'blogs']])
                 <p class="text-right">
                     <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
                         <span class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                     </a>
                 </p>
-            @endauth
+            @endcan
         </article>
     @endforeach
 

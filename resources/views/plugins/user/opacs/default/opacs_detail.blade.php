@@ -39,8 +39,12 @@
     <td>{{$opacs_books->title}}</td>
 </tr>
 <tr>
-    <th nowrap>請求記号</th>
-    <td>{{$opacs_books->ndc}}</td>
+    <th nowrap>サブタイトル</th>
+    <td>{{$opacs_books->subtitle}}</td>
+</tr>
+<tr>
+    <th nowrap>シリーズ</th>
+    <td>{{$opacs_books->series}}</td>
 </tr>
 <tr>
     <th nowrap>著者</th>
@@ -49,6 +53,18 @@
 <tr>
     <th nowrap>出版者</th>
     <td>{{$opacs_books->publisher}}</td>
+</tr>
+<tr>
+    <th nowrap>出版年</th>
+    <td>{{$opacs_books->publication_year}}</td>
+</tr>
+<tr>
+    <th nowrap>頁数</th>
+    <td>{{$opacs_books->page_number}}</td>
+</tr>
+<tr>
+    <th nowrap>請求記号</th>
+    <td>{{$opacs_books->ndc}}</td>
 </tr>
 <tr>
     <th>状況</th>
@@ -71,7 +87,12 @@
 @auth
     <h4><span class="badge badge-primary">貸し出し</span></h4>
 
-    @if ($opacs_books->lent_flag == 1) 
+    @if ($opacs_books->lend_flag == '9:禁帯出') 
+        <div class="alert alert-warning" style="margin-top: 10px;">
+            <i class="fas fa-exclamation-circle"></i>
+            この書籍は「禁帯出」のため、貸し出しはできません。
+        </div>
+    @elseif ($opacs_books->lent_flag == 1) 
         <div class="alert alert-warning" style="margin-top: 10px;">
             <i class="fas fa-exclamation-circle"></i>
             この書籍は現在、貸し出し中のため、貸し出しはできません。
@@ -110,7 +131,6 @@
                                 });
                             });
                         </script>
-
                     </div>
                     <div class="col-sm-3">
                         <label class="control-label">借りる</label>
@@ -125,7 +145,12 @@
 
     <div class="form-group">
 
-        @if ($opacs_books->lent_flag == 1) 
+        @if ($opacs_books->lend_flag == '9:禁帯出') 
+            <div class="alert alert-warning" style="margin-top: 10px;">
+                <i class="fas fa-exclamation-circle"></i>
+                この書籍は「禁帯出」のため、貸し出しはできません。
+            </div>
+        @elseif ($opacs_books->lent_flag == 1) 
             <div class="alert alert-warning" style="margin-top: 10px;">
                 <i class="fas fa-exclamation-circle"></i>
                 この書籍は現在、貸し出し中のため、郵送貸し出しリクエストはできません。

@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Blogs;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -235,6 +236,11 @@ class BlogsPlugin extends UserPluginBase
      */
     public function create($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
     {
+        // 権限チェック
+        if (!Auth::check() || !Auth::user()->can('posts.create')) {
+            return $this->view_error(403);
+        }
+
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -267,6 +273,11 @@ class BlogsPlugin extends UserPluginBase
 
         // 記事取得
         $blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
+
+        // 記事を編集モードで表示できるかの権限チェック
+        if (!Auth::user()->can('posts.update', [[$blogs_post, 'blogs']])) {
+            return $this->view_error(403);
+        }
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -301,10 +312,24 @@ class BlogsPlugin extends UserPluginBase
 
         // id があれば更新、なければ登録
         if (empty($blogs_posts_id)) {
+
+            // 権限チェック
+            if (!Auth::check() || !Auth::user()->can('posts.create')) {
+                return $this->view_error(403);
+            }
+
+            // 新規オブジェクト生成
             $blogs_post = new BlogsPosts();
         }
         else {
+
+            // 記事データ取得
             $blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
+
+            // 権限チェック
+            if (!Auth::user()->can('posts.update', [[$blogs_post, 'blogs']])) {
+                return $this->view_error(403);
+            }
         }
 
         // ブログ記事設定

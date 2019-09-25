@@ -180,4 +180,15 @@ class UserPluginBase extends PluginBase
             'plugins'      => $plugins,
         ]);
     }
+
+    /**
+     * エラー画面の表示
+     *
+     */
+    public function view_error($error_code)
+    {
+        // 表示テンプレートを呼び出す。
+        return view('errors.' . $error_code);
+    }
+
 }

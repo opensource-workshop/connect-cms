@@ -19,13 +19,13 @@
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
 
     <div class="form-group">
-        <label class="control-label">タイトル <span class="label label-danger">必須</span></label>
+        <label class="control-label">タイトル <label class="badge badge-danger">必須</label></label>
         <input type="text" name="post_title" value="{{old('post_title', $blogs_posts->post_title)}}" class="form-control">
         @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
     </div>
 
     <div class="form-group">
-        <label class="control-label">投稿日時 <span class="label label-danger">必須</span></label>
+        <label class="control-label">投稿日時 <label class="badge badge-danger">必須</label></label>
         <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control">
 {{--
         <div class="input-group date" data-provide="datepicker">
@@ -37,7 +37,7 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">本文 <span class="label label-danger">必須</span></label>
+        <label class="control-label">本文 <label class="badge badge-danger">必須</label></label>
         <textarea name="post_text">{!!old('post_text', $blogs_posts->post_text)!!}</textarea>
         @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
     </div>
