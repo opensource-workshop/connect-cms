@@ -24,7 +24,7 @@ class AddColumnToOpacsBooks extends Migration
             $table->string('size', 255)->nullable()->after('class');
             $table->string('page_number', 255)->nullable()->after('size');
             $table->string('marc', 255)->nullable()->after('isbn');
-            $table->string('type', 255)->nullable()->after('page');
+            $table->string('type', 255)->nullable()->after('page_number');
             $table->string('shelf', 255)->nullable()->after('type');
             $table->string('lend_flag', 255)->nullable()->after('shelf');
             $table->string('accept_flag', 255)->nullable()->after('lend_flag');
