@@ -15,7 +15,7 @@
     @include('core.cms_frame_edit_tab')
 </ul>
 
-<form action="/redirect/plugin/contents/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="/redirect/plugin/contents/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
     <table class="table table-hover" style="margin-bottom: 0;">
     <thead>
@@ -23,7 +23,7 @@
             <th></th>
             {{-- <th>選択</th> --}}
             <th>
-                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}">更新日</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}">更新日</a>
                 @if ($request_order_str == "contents_updated_at|asc")
                     <i class="fas fa-sort-numeric-down"></i>
                 @elseif ($request_order_str == "contents_updated_at|desc")
@@ -31,7 +31,7 @@
                 @endif
             </th>
             <th>
-                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=page_name|{{$order_link["page_name"][0]}}">使用ページ</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=page_name|{{$order_link["page_name"][0]}}">使用ページ</a>
                 @if ($request_order_str == "page_name|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "page_name|desc")
@@ -39,7 +39,7 @@
                 @endif
             </th>
             <th>
-                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=bucket_name|{{$order_link["bucket_name"][0]}}">データ名</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=bucket_name|{{$order_link["bucket_name"][0]}}">データ名</a>
                 @if ($request_order_str == "bucket_name|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "bucket_name|desc")
@@ -47,7 +47,7 @@
                 @endif
             </th>
             <th>
-                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=frame_title|{{$order_link["frame_title"][0]}}">フレームタイトル</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=frame_title|{{$order_link["frame_title"][0]}}">フレームタイトル</a>
                 @if ($request_order_str == "frame_title|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "frame_title|desc")
@@ -55,7 +55,7 @@
                 @endif
             </th>
             <th>
-                <a href="{{url('/')}}/plugin/contents/datalist/{{$page->id}}/{{$frame_id}}?sort=content_text|{{$order_link["content_text"][0]}}">内容</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=content_text|{{$order_link["content_text"][0]}}">内容</a>
                 @if ($request_order_str == "content_text|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "content_text|desc")

@@ -31,13 +31,25 @@
 {{--            @if (app('request')->input('frame_action') == 'frame_setting') --}}
 {{--            @if (app('request')->input('action') == 'frame_setting') --}}
             @if ($action == 'frame_setting')
-                @include('core.cms_frame_edit')
+                @can("frames.edit")
+                    @include('core.cms_frame_edit')
+                @else
+                    <div class="card-body">
+                        @include('errors.403')
+                    </div>
+                @endcan
 
             {{-- フレーム(コア・削除) --}}
 {{--            @elseif (app('request')->input('frame_action') == 'frame_delete') --}}
 {{--            @elseif (app('request')->input('action') == 'frame_delete') --}}
             @elseif ($action == 'frame_delete')
-                @include('core.cms_frame_delete')
+                @can("frames.delete")
+                    @include('core.cms_frame_delete')
+                @else
+                    <div class="card-body">
+                        @include('errors.403')
+                    </div>
+                @endcan
 
             {{-- フレーム(プラグイン) --}}
             @else

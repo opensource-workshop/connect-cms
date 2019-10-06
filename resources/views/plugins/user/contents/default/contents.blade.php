@@ -8,9 +8,8 @@
  * @category コンテンツプラグイン
  --}}
 @if ($contents)
-{!! $contents->content_text !!}
-    @if (Auth::check() && ( Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))))
-
+    {!! $contents->content_text !!}
+    @can('posts.update',[[$contents, 'contents']])
     <p class="text-right">
         {{-- 変更画面へのリンク --}}
         @if ($frame->page_id == $page->id)
@@ -19,14 +18,14 @@
         </a>
         @endif
     </p>
-    @endif
+    @endcan
 @else
-    @if (Auth::check() && ( Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))))
+    @can('posts.update',[[$contents, 'contents']])
     <p class="text-right">
         {{-- 追加画面へのリンク --}}
         <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}#{{$frame_id}}">
             <span class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit"></span> <span class="hidden-xs">編集</span></span>
         </a>
     </p>
-    @endif
+    @endcan
 @endif

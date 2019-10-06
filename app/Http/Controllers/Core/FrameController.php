@@ -12,6 +12,8 @@ use App\Frame;
 use App\Page;
 use App\Http\Controllers\Core\ConnectController;
 
+use App\Traits\ConnectCommonTrait;
+
 /**
  * Frame の基本処理
  *
@@ -25,6 +27,7 @@ use App\Http\Controllers\Core\ConnectController;
 class FrameController extends ConnectController
 {
 
+    use ConnectCommonTrait;
 
     /**
      *  コンストラクタ
@@ -42,6 +45,11 @@ class FrameController extends ConnectController
      */
     public function addPlugin($request, $page_id = null, $frame_id = null)
     {
+        // 権限チェック
+        if ($this->can("frames.create") ) {
+            abort(403, '権限がありません。');
+        }
+
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
@@ -74,6 +82,11 @@ class FrameController extends ConnectController
      */
     public function destroy($request, $page_id, $frame_id)
     {
+        // 権限チェック
+        if ($this->can("frames.delete") ) {
+            abort(403, '権限がありません。');
+        }
+
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
@@ -92,6 +105,16 @@ class FrameController extends ConnectController
      */
     public function update($request, $page_id, $frame_id)
     {
+        // 権限チェック
+        if ($this->can("frames.edit") ) {
+            abort(403, '権限がありません。');
+        }
+
+        // 権限チェック
+        if ($this->can("frames.edit")) {
+            abort(403, '権限がありません。');
+        }
+
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
@@ -114,6 +137,11 @@ class FrameController extends ConnectController
      */
     public function sequenceDown($request, $page_id, $frame_id, $area_id)
     {
+        // 権限チェック
+        if ($this->can("frames.edit") ) {
+            abort(403, '権限がありません。');
+        }
+
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
@@ -167,6 +195,11 @@ class FrameController extends ConnectController
      */
     public function sequenceUp($request, $page_id, $frame_id)
     {
+        // 権限チェック
+        if ($this->can("frames.edit") ) {
+            abort(403, '権限がありません。');
+        }
+
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
@@ -217,6 +250,11 @@ class FrameController extends ConnectController
      */
     public function edit($request, $page_id, $frame_id)
     {
+        // 権限チェック
+        if ($this->can("frames.edit") ) {
+            abort(403, '権限がありません。');
+        }
+
         // Page データ
         $page = Page::where('id', $page_id)->first();
 

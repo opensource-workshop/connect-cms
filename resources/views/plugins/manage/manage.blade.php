@@ -38,11 +38,11 @@
 </div>{{-- /container --}}
 
 <div class="container">
-    <div class="card border-0">
+    <div class="card border-0 mt-2">
         <div class="card-body">
-            <p class="text-center">
+            <div class="text-center">
                 <a href="https://connect-cms.jp" target="_blank">Powered by Connect-CMS</a>
-            </p>
+            </div>
         </div>
     </div>
 </div>

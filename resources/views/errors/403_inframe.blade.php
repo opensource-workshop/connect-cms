@@ -5,13 +5,17 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
  --}}
+{{--
 @extends('layouts.app')
 @section('content')
+--}}
 <div class="container">
-    <div class="alert alert-danger mt-3" role="alert">
+    <div class="alert alert-danger" role="alert">
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
         403 Forbidden. （権限がありません）<br />
     </div>
 </div>
+{{--
 @endsection
+--}}

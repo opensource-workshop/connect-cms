@@ -14,7 +14,7 @@
     @include('core.cms_frame_edit_tab')
 </ul>
 
-<form action="/plugin/blogs/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="/plugin/blogs/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group">
@@ -32,7 +32,7 @@
             <tr @if ($blog_frame->blogs_id == $blog->id) class="active"@endif>
                 <td><input type="radio" value="{{$blog->bucket_id}}" name="select_bucket"@if ($blog_frame->bucket_id == $blog->bucket_id) checked @endif></input></td>
                 <td>{{$blog->blog_name}}</td>
-                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/blogs/editBlog/{{$page->id}}/{{$frame_id}}/{{$blog->id}}'"><i class="far fa-edit"></i> ブログ設定変更</button></th>
+                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/blogs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$blog->id}}'"><i class="far fa-edit"></i> ブログ設定変更</button></th>
                 <td>{{$blog->created_at}}</td>
             </tr>
         @endforeach

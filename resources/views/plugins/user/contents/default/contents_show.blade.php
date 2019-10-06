@@ -23,6 +23,7 @@
         </div>
     </div>
 </p>
+@can('posts.delete',[[$contents, 'contents']])
 <form action="/redirect/plugin/contents/delete/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="form-horizontal">
     {{ csrf_field() }}
     <span class="text-danger">
@@ -55,3 +56,4 @@
         </div>
     </div>
 </form>
+@endcan

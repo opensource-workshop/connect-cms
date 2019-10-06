@@ -2,12 +2,15 @@
 
 namespace App\Plugins\User;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use DB;
 
 use App\Plugins\PluginBase;
 use App\Frame;
+
+use App\Traits\ConnectCommonTrait;
 
 /**
  * ユーザープラグイン
@@ -21,6 +24,8 @@ use App\Frame;
  */
 class UserPluginBase extends PluginBase
 {
+
+    use ConnectCommonTrait;
 
     /**
      *  ページオブジェクト
@@ -59,6 +64,38 @@ class UserPluginBase extends PluginBase
     {
         // アクションを保持しておく
         $this->action = $action;
+
+        // チェック用POST
+        $post = null;
+
+        // POST チェックに使用する getPost() 関数の有無をチェック
+        if ( $id && method_exists($obj, 'getPost') ) { 
+            $post = $obj->getPost($id);
+        }
+
+        // 定数 CC_METHOD_AUTHORITY に設定があること。
+        if (array_key_exists($this->action, config('cc_role.CC_METHOD_AUTHORITY'))) {
+
+            // 記載されているメソッドすべての権限を有すること。
+            foreach (config('cc_role.CC_METHOD_AUTHORITY')[$this->action] as $function_authority) {
+
+                // 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
+                $ret = null;
+
+                // POST があれば、POST の登録者チェックを行う
+                if (empty($post)) {
+                    $ret = $this->can($function_authority);
+                }
+                else {
+                    $ret = $this->can($function_authority, $post);
+                }
+
+                // 権限チェック結果。値があれば、エラーメッセージ用HTML
+                if (!empty($ret)) {
+                    return $ret;
+                }
+            }
+        }
 
         // 画面(コアの cms_frame)で指定されたクラスのアクションのメソッドを呼び出す。
         // 戻り値は各アクションでのメソッドでview 関数などで生成したHTML なので、そのままreturn して元の画面に戻す。
@@ -182,13 +219,38 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     * 権限チェック
+     * roll_or_auth : 権限 or 役割
+     */
+/*
+
+Trait へ移動（App\Http\Controllers\Core\ConnectController）
+
+    public function can($roll_or_auth, $post = null, $plugin_name = null)
+    {
+        $args = null;
+        if ( $post != null || $plugin_name != null ) {
+            $args = [[$post, $plugin_name]];
+        }
+
+        if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
+            return $this->view_error(403);
+        }
+    }
+*/
+    /**
      * エラー画面の表示
      *
      */
+/*
+
+Trait へ移動（App\Http\Controllers\Core\ConnectController）
+
     public function view_error($error_code)
     {
         // 表示テンプレートを呼び出す。
         return view('errors.' . $error_code);
     }
+*/
 
 }

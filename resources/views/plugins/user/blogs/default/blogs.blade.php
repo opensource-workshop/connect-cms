@@ -7,9 +7,7 @@
  --}}
 
 {{-- 新規登録 --}}
-{{-- @if (Auth::check() && (Auth::user()->can('posts.create'))) --}}
-
-@can('posts.create','blogs')
+@can('posts.create',[[null, 'blogs']])
     @if (isset($frame) && $frame->bucket_id)
         <p class="text-right">
             {{-- 新規登録ボタン --}}

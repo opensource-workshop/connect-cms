@@ -28,13 +28,18 @@ class BlogsPlugin extends UserPluginBase
 {
 
     /**
+     * 変更時のPOSTデータ
+     */
+    public $post = null;
+
+    /**
      *  編集画面の最初のタブ
      *
      *  スーパークラスをオーバーライド
      */
     public function getFirstFrameEditAction()
     {
-        return "editBlog";
+        return "editBuckets";
     }
 
     /**
@@ -49,6 +54,21 @@ class BlogsPlugin extends UserPluginBase
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
+    }
+
+    /**
+     *  POST取得関数
+     *  コアがPOSTチェックの際に呼び出す関数
+     */
+    public function getPost($id) {
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        $this->post = BlogsPosts::where('id', $id)->first();
+        return $this->post;
     }
 
     /**
@@ -81,7 +101,7 @@ class BlogsPlugin extends UserPluginBase
     /**
      * ブログ設定変更画面の表示
      */
-    public function editBlog($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -115,19 +135,18 @@ class BlogsPlugin extends UserPluginBase
     /**
      * ブログ新規作成画面
      */
-    public function createBlog($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
     {
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = true;
-        return $this->editBlog($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $errors);
     }
 
     /**
      *  ブログ登録処理
      */
-    public function saveBlogs($request, $page_id, $frame_id, $blogs_id = null)
+    public function saveBuckets($request, $page_id, $frame_id, $blogs_id = null)
     {
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'blog_name'  => ['required'],
@@ -144,11 +163,11 @@ class BlogsPlugin extends UserPluginBase
 
             if (empty($blogs_id)) {
                 $create_flag = true;
-                return $this->createBlog($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
+                return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
             }
             else  {
                 $create_flag = false;
-                return $this->editBlog($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
+                return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
             }
         }
 
@@ -199,13 +218,13 @@ class BlogsPlugin extends UserPluginBase
 
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = false;
-        return $this->editBlog($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
     }
 
     /**
      *  削除処理
      */
-    public function blogsDestroy($request, $page_id, $frame_id, $blogs_id)
+    public function destroyBuckets($request, $page_id, $frame_id, $blogs_id)
     {
         // blogs_id がある場合、データを削除
         if ( $blogs_id ) {
@@ -236,11 +255,6 @@ class BlogsPlugin extends UserPluginBase
      */
     public function create($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
     {
-        // 権限チェック
-        if (!Auth::check() || !Auth::user()->can('posts.create')) {
-            return $this->view_error(403);
-        }
-
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -272,12 +286,8 @@ class BlogsPlugin extends UserPluginBase
         $blog_frame = $this->getBlogFrame($frame_id);
 
         // 記事取得
-        $blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
-
-        // 記事を編集モードで表示できるかの権限チェック
-        if (!Auth::user()->can('posts.update', [[$blogs_post, 'blogs']])) {
-            return $this->view_error(403);
-        }
+        //$blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
+        $blogs_post = $this->getPost($blogs_posts_id);
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -313,11 +323,6 @@ class BlogsPlugin extends UserPluginBase
         // id があれば更新、なければ登録
         if (empty($blogs_posts_id)) {
 
-            // 権限チェック
-            if (!Auth::check() || !Auth::user()->can('posts.create')) {
-                return $this->view_error(403);
-            }
-
             // 新規オブジェクト生成
             $blogs_post = new BlogsPosts();
         }
@@ -325,11 +330,6 @@ class BlogsPlugin extends UserPluginBase
 
             // 記事データ取得
             $blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
-
-            // 権限チェック
-            if (!Auth::user()->can('posts.update', [[$blogs_post, 'blogs']])) {
-                return $this->view_error(403);
-            }
         }
 
         // ブログ記事設定
@@ -363,7 +363,7 @@ class BlogsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      */
-    public function datalist($request, $page_id, $frame_id, $id = null)
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // Frame データ
         $blog_frame = DB::table('frames')
@@ -377,7 +377,7 @@ class BlogsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'blogs_edit_datalist', [
+            'blogs_list_buckets', [
             'blog_frame' => $blog_frame,
             'blogs'      => $blogs,
         ]);
@@ -386,13 +386,13 @@ class BlogsPlugin extends UserPluginBase
    /**
     * データ紐づけ変更関数
     */
-    public function change($request, $page_id = null, $frame_id = null, $id = null)
+    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
 
         // 表示ブログ選択画面を呼ぶ
-        return $this->datalist($request, $page_id, $frame_id, $id);
+        return $this->listBuckets($request, $page_id, $frame_id, $id);
     }
 }

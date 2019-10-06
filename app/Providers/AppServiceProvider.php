@@ -13,25 +13,51 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 class AppServiceProvider extends AuthServiceProvider
 {
     /**
-     * ƒ†[ƒU[‚ªŽw’è‚³‚ê‚½Œ ŒÀ‚ð•ÛŽ‚µ‚Ä‚¢‚é‚©ƒ`ƒFƒbƒN‚·‚éB
+     * ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒæŒ‡å®šã•ã‚ŒãŸæ¨©é™ã‚’ä¿æŒã—ã¦ã„ã‚‹ã‹ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã€‚
      *
      * @return boolean
      */
-    public function check_authority($user, $authority)
+    public function check_authority($user, $authority, $args = null)
     {
-        // ƒƒOƒCƒ“‚µ‚Ä‚¢‚È‚¢ê‡‚ÍŒ ŒÀ‚È‚µ
+        // å¼•æ•°ã‚’ãƒãƒ©ã‚·ã¦POST ã‚’å–å¾—
+        list($post, $plugin_name) = $this->check_args_obj($args);
+
+        // ãƒ­ã‚°ã‚¤ãƒ³ã—ã¦ã„ãªã„å ´åˆã¯æ¨©é™ãªã—
         if (empty($user)) {
             return false;
         }
 
-        // Žw’è‚³‚ê‚½Œ ŒÀ‚ðŠÜ‚Þƒ[ƒ‹‚ðƒ‹[ƒv‚·‚éB
+        // æŒ‡å®šã•ã‚ŒãŸæ¨©é™ã‚’å«ã‚€ãƒ­ãƒ¼ãƒ«ã‚’ãƒ«ãƒ¼ãƒ—ã™ã‚‹ã€‚
         foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
-            // ƒ†[ƒU‚Ì•ÛŽ‚µ‚Ä‚¢‚éƒ[ƒ‹‚ðƒ‹[ƒv
+            // ãƒ¦ãƒ¼ã‚¶ã®ä¿æŒã—ã¦ã„ã‚‹ãƒ­ãƒ¼ãƒ«ã‚’ãƒ«ãƒ¼ãƒ—
             foreach ($user['user_rolses'] as $target) {
-                // ƒ^[ƒQƒbƒgˆ—‚ðƒ‹[ƒv
+
+                // ã‚¿ãƒ¼ã‚²ãƒƒãƒˆå‡¦ç†ã‚’ãƒ«ãƒ¼ãƒ—
                 foreach ($target as $user_role => $user_role_value) {
-                    // •K—v‚Èƒ[ƒ‹‚ð•ÛŽ‚µ‚Ä‚¢‚éê‡‚ÍAŒ ŒÀ‚ ‚è‚Æ‚µ‚Ä true ‚ð•Ô‚·B
+
+                    // å¿…è¦ãªãƒ­ãƒ¼ãƒ«ã‚’ä¿æŒã—ã¦ã„ã‚‹
                     if ($role == $user_role && $user_role_value) {
+
+                        // ä»–è€…ã®è¨˜äº‹ã‚’æ›´æ–°ã§ãã‚‹æ¨©é™ã®å ´åˆã¯ã€è¨˜äº‹ä½œæˆè€…ã®ãƒã‚§ãƒƒã‚¯ã¯ä¸è¦
+                        if ($user_role == 'role_article_admin') {
+                            return true;
+                        }
+
+                        // è‡ªåˆ†ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãƒã‚§ãƒƒã‚¯ãŒå¿…è¦ãªã‚‰ãƒã‚§ãƒƒã‚¯ã™ã‚‹
+                        if (empty($post)) {
+                            return true;
+                        }
+                        else {
+                            if ((($authority == 'buckets.delete') ||
+                                 ($authority == 'posts.update') ||
+                                 ($authority == 'posts.delete')) &&
+                                ($user->id == $post->created_id)) {
+                                return true;
+                            }
+                            else {
+                                return false;
+                            }
+                        }
                         return true;
                     }
                 }
@@ -41,131 +67,169 @@ class AppServiceProvider extends AuthServiceProvider
     }
 
     /**
-     * ƒ†[ƒU[‚ªŽw’è‚³‚ê‚½–ðŠ„‚ð•ÛŽ‚µ‚Ä‚¢‚é‚©ƒ`ƒFƒbƒN‚·‚éB
+     * ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒæŒ‡å®šã•ã‚ŒãŸå½¹å‰²ã‚’ä¿æŒã—ã¦ã„ã‚‹ã‹ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã€‚
      *
      * @return boolean
      */
     public function check_role($user, $role)
     {
-        // ƒƒOƒCƒ“‚µ‚Ä‚¢‚È‚¢ê‡‚ÍŒ ŒÀ‚È‚µ
+        // ãƒ­ã‚°ã‚¤ãƒ³ã—ã¦ã„ãªã„å ´åˆã¯æ¨©é™ãªã—
         if (empty($user)) {
             return false;
         }
 
-        // ƒ†[ƒU‚Ì•ÛŽ‚µ‚Ä‚¢‚éƒ[ƒ‹‚ðƒ‹[ƒv
+        // ãƒ¦ãƒ¼ã‚¶ã®ä¿æŒã—ã¦ã„ã‚‹ãƒ­ãƒ¼ãƒ«ã‚’ãƒ«ãƒ¼ãƒ—
         foreach ($user['user_rolses'] as $target) {
-            // ƒ^[ƒQƒbƒgˆ—‚ðƒ‹[ƒv
+            // ã‚¿ãƒ¼ã‚²ãƒƒãƒˆå‡¦ç†ã‚’ãƒ«ãƒ¼ãƒ—
             foreach ($target as $user_role => $user_role_value) {
-                // •K—v‚Èƒ[ƒ‹‚ð•ÛŽ‚µ‚Ä‚¢‚éê‡‚ÍAŒ ŒÀ‚ ‚è‚Æ‚µ‚Ä true ‚ð•Ô‚·B
+                // å¿…è¦ãªãƒ­ãƒ¼ãƒ«ã‚’ä¿æŒã—ã¦ã„ã‚‹å ´åˆã¯ã€æ¨©é™ã‚ã‚Šã¨ã—ã¦ true ã‚’è¿”ã™ã€‚
                 if ($role == $user_role && $user_role_value) {
                     return true;
                 }
             }
         }
+
         return false;
     }
 
     /**
+     * POSTã€ãƒ—ãƒ©ã‚°ã‚¤ãƒ³åã®å¼•æ•°ã‚’ãƒã‚§ãƒƒã‚¯ã—ã€å¤‰æ•°ã«ã—ã¦è¿”å´
+     *
+     * @return boolean
+     */
+    public function check_args_obj($args)
+    {
+        $post = ($args != null) ? $args[0] : null;
+        $plugin_name = ($args != null && is_array($args) && count($args) > 1) ? $args[1] : null;
+        return [$post, $plugin_name];
+    }
+
+    /**
      * Bootstrap any application services.
+     * Larvel ã®ä»•æ§˜ã§å¼•æ•°ã¯userã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆï¼‹1ã¤ã—ã‹å—ã‘ä»˜ã‘ãªã„ãŸã‚ã€
+     * ($user, $args = null) ã§å—ä»˜ã€‚
+     * $args ã¯ [$post, $plugin_name] ã®é…åˆ—ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
      *
      * @return void
      */
     public function boot()
     {
-        // ”F‰ÂƒT[ƒrƒX(Gate)—˜—p‚Ì€”õ
+        // èªå¯ã‚µãƒ¼ãƒ“ã‚¹(Gate)åˆ©ç”¨ã®æº–å‚™
         $this->registerPolicies();
 
-        // *** ƒ[ƒ‹‚©‚çŠm”Fiˆê”Êj
+        // *** ãƒ­ãƒ¼ãƒ«ã‹ã‚‰ç¢ºèªï¼ˆä¸€èˆ¬ï¼‰
 
-        // ‹LŽ–’Ç‰Á
-        Gate::define('role_reporter', function ($user, $plugin_name = null, $post = null) {
+        // è¨˜äº‹è¿½åŠ 
+        Gate::define('role_reporter', function ($user, $args = null) {
             return $this->check_role($user, 'role_reporter');
         });
 
-        // ƒvƒ‰ƒOƒCƒ“”z’u
-        Gate::define('role_arrangement', function ($user, $plugin_name = null, $post = null) {
+        // ãƒ—ãƒ©ã‚°ã‚¤ãƒ³é…ç½®
+        Gate::define('role_arrangement', function ($user, $args = null) {
             return $this->check_role($user, 'role_arrangement');
         });
 
-        // ³”F
-        Gate::define('role_approval', function ($user, $plugin_name = null, $post = null) {
+        // æ‰¿èª
+        Gate::define('role_approval', function ($user, $args = null) {
             return $this->check_role($user, 'role_approval');
         });
 
-        // ‹LŽ–C³iƒ‚ƒfƒŒ[ƒ^j
-        Gate::define('role_article', function ($user, $plugin_name = null, $post = null) {
+        // è¨˜äº‹ä¿®æ­£ï¼ˆãƒ¢ãƒ‡ãƒ¬ãƒ¼ã‚¿ï¼‰
+        Gate::define('role_article', function ($user, $args = null) {
             return $this->check_role($user, 'role_article');
         });
 
-        // ‹LŽ–ŠÇ—ŽÒ
-        Gate::define('role_article_admin', function ($user, $plugin_name = null, $post = null) {
+        // è¨˜äº‹ç®¡ç†è€…
+        Gate::define('role_article_admin', function ($user, $args = null) {
             return $this->check_role($user, 'role_article_admin');
         });
 
-        // *** ƒ[ƒ‹‚©‚çŠm”FiŠÇ—j
+        // *** ãƒ­ãƒ¼ãƒ«ã‹ã‚‰ç¢ºèªï¼ˆç®¡ç†ï¼‰
 
-        // ƒy[ƒWŠÇ—
-        Gate::define('admin_page', function ($user, $plugin_name = null, $post = null) {
+        // ãƒšãƒ¼ã‚¸ç®¡ç†
+        Gate::define('admin_page', function ($user, $args = null) {
             return $this->check_role($user, 'admin_page');
         });
 
-        // ƒTƒCƒgŠÇ—
-        Gate::define('admin_site', function ($user, $plugin_name = null, $post = null) {
+        // ã‚µã‚¤ãƒˆç®¡ç†
+        Gate::define('admin_site', function ($user, $args = null) {
             return $this->check_role($user, 'admin_site');
         });
 
-        // ƒ†[ƒU[ŠÇ—
-        Gate::define('admin_user', function ($user, $plugin_name = null, $post = null) {
+        // ãƒ¦ãƒ¼ã‚¶ãƒ¼ç®¡ç†
+        Gate::define('admin_user', function ($user, $args = null) {
             return $this->check_role($user, 'admin_user');
         });
 
-        // ƒVƒXƒeƒ€ŠÇ—
-        Gate::define('admin_system', function ($user, $plugin_name = null, $post = null) {
+        // ã‚·ã‚¹ãƒ†ãƒ ç®¡ç†
+        Gate::define('admin_system', function ($user, $args = null) {
             return $this->check_role($user, 'admin_system');
         });
 
+        // *** ãƒ•ãƒ¬ãƒ¼ãƒ ã®æ¨©é™ã‹ã‚‰ç¢ºèª
 
-        // *** ‹LŽ–‚ÌŒ ŒÀ‚©‚çŠm”F
-
-        // ‹LŽ–’Ç‰Á
-        Gate::define('posts.create', function ($user, $plugin_name = null, $post = null) {
-            return $this->check_authority($user, 'posts.create');
+        // ãƒ•ãƒ¬ãƒ¼ãƒ è¿½åŠ 
+        Gate::define('frames.create', function ($user, $args = null) {
+            return $this->check_authority($user, 'frames.create', $args);
         });
 
-        // ‹LŽ–•ÏX
-//        Gate::define('posts.update', function ($user, $plugin_name = null, $post = null) {
+        // ãƒ•ãƒ¬ãƒ¼ãƒ ç§»å‹•
+        Gate::define('frames.move', function ($user, $args = null) {
+            return $this->check_authority($user, 'frames.move', $args);
+        });
+
+        // ãƒ•ãƒ¬ãƒ¼ãƒ ç·¨é›†
+        Gate::define('frames.edit', function ($user, $args = null) {
+            return $this->check_authority($user, 'frames.edit', $args);
+        });
+
+        // ãƒ•ãƒ¬ãƒ¼ãƒ é¸æŠž
+        Gate::define('frames.change', function ($user, $args = null) {
+            return $this->check_authority($user, 'frames.change', $args);
+        });
+
+        // ãƒ•ãƒ¬ãƒ¼ãƒ å‰Šé™¤
+        Gate::define('frames.delete', function ($user, $args = null) {
+            return $this->check_authority($user, 'frames.delete', $args);
+        });
+
+        // *** ãƒã‚±ãƒ„ã®æ¨©é™ã‹ã‚‰ç¢ºèª
+
+        // ãƒã‚±ãƒ„ä½œæˆ
+        Gate::define('buckets.create', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.create', $args);
+        });
+
+        // ãƒã‚±ãƒ„å‰Šé™¤
+        Gate::define('buckets.delete', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.delete', $args);
+        });
+
+        // *** è¨˜äº‹ã®æ¨©é™ã‹ã‚‰ç¢ºèª
+
+        // è¨˜äº‹è¿½åŠ 
+        Gate::define('posts.create', function ($user, $args = null) {
+            return $this->check_authority($user, 'posts.create', $args);
+        });
+
+        // è¨˜äº‹å¤‰æ›´
         Gate::define('posts.update', function ($user, $args = null) {
-
-            $post = ($args != null) ? $args[0] : null;
-            $plugin_name = ($args != null && is_array($args) && count($args) > 1) ? $args[1] : null;
-
-            if ( !$this->check_authority($user, 'posts.update') ) {
-                return false;
-            }
-            if ( empty($post) ) {
-                return true;
-            }
-            else {
-                if ( $user->id == $post->created_id ) {
-                    return true;
-                }
-            }
-            return false;
+            return $this->check_authority($user, 'posts.update', $args);
         });
 
-        // ‹LŽ–íœ
-        Gate::define('posts.delete', function ($user, $plugin_name = null, $post = null) {
-            return $this->check_authority($user, 'posts.delete');
+        // è¨˜äº‹å‰Šé™¤
+        Gate::define('posts.delete', function ($user, $args = null) {
+            return $this->check_authority($user, 'posts.delete', $args);
         });
 
-        // ‹LŽ–³”F
-        Gate::define('posts.approval', function ($user, $plugin_name = null, $post = null) {
-            return $this->check_authority($user, 'posts.approval');
+        // è¨˜äº‹æ‰¿èª
+        Gate::define('posts.approval', function ($user, $args = null) {
+            return $this->check_authority($user, 'posts.approval', $args);
         });
 
-        // *** ƒVƒXƒeƒ€Œ ŒÀ‚©‚çŠm”F
+        // *** ã‚·ã‚¹ãƒ†ãƒ æ¨©é™ã‹ã‚‰ç¢ºèª
 
-        // ƒVƒXƒeƒ€ŠÇ—ŽÒŒ ŒÀ‚Ì—L–³Šm”F
+        // ã‚·ã‚¹ãƒ†ãƒ ç®¡ç†è€…æ¨©é™ã®æœ‰ç„¡ç¢ºèª
         Gate::define(config('cc_role.ROLE_SYSTEM_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
                 return true;
@@ -173,7 +237,7 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         });
 
-        // ƒTƒCƒgŠÇ—ŽÒŒ ŒÀ‚Ì—L–³Šm”F
+        // ã‚µã‚¤ãƒˆç®¡ç†è€…æ¨©é™ã®æœ‰ç„¡ç¢ºèª
         Gate::define(config('cc_role.ROLE_SITE_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_SITE_MANAGER')) {
                 return true;
@@ -181,7 +245,7 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         });
 
-        // ƒ†[ƒUŠÇ—ŽÒŒ ŒÀ‚Ì—L–³Šm”F
+        // ãƒ¦ãƒ¼ã‚¶ç®¡ç†è€…æ¨©é™ã®æœ‰ç„¡ç¢ºèª
         Gate::define(config('cc_role.ROLE_USER_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_USER_MANAGER')) {
                 return true;
@@ -189,7 +253,7 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         });
 
-        // ƒy[ƒWŠÇ—ŽÒŒ ŒÀ‚Ì—L–³Šm”F
+        // ãƒšãƒ¼ã‚¸ç®¡ç†è€…æ¨©é™ã®æœ‰ç„¡ç¢ºèª
         Gate::define(config('cc_role.ROLE_PAGE_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_PAGE_MANAGER')) {
                 return true;
@@ -197,7 +261,7 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         });
 
-        // ‰^—pŠÇ—ŽÒŒ ŒÀ‚Ì—L–³Šm”F
+        // é‹ç”¨ç®¡ç†è€…æ¨©é™ã®æœ‰ç„¡ç¢ºèª
         Gate::define(config('cc_role.ROLE_OPERATION_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_OPERATION_MANAGER')) {
                 return true;

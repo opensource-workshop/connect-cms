@@ -28,6 +28,11 @@ class ContentsPlugin extends UserPluginBase
 {
 
     /**
+     * POSTデータ
+     */
+    public $post = null;
+
+    /**
      *  編集画面の最初のタブ
      *
      *  スーパークラスをオーバーライド
@@ -40,8 +45,13 @@ class ContentsPlugin extends UserPluginBase
     /**
      *  データ取得
      */
-    public function getContents($frame_id)
+    public function getPost($frame_id)
     {
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
 
         // 認証されているユーザの取得
         $user = Auth::user();
@@ -87,7 +97,7 @@ class ContentsPlugin extends UserPluginBase
     public function index($request, $page_id, $frame_id)
     {
         // データ取得
-        $contents = $this->getContents($frame_id);
+        $contents = $this->getPost($frame_id);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -100,10 +110,16 @@ class ContentsPlugin extends UserPluginBase
      *  データ詳細表示関数
      *  コアがデータ削除の確認用に呼び出す関数
      */
-    public function edit_show($request, $page_id, $frame_id, $id = null)
+    public function show($request, $page_id, $frame_id, $id = null)
     {
+        // 権限チェック
+        // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
+        if ($this->can('frames.delete')) {
+            return $this->view_error(403);
+        }
+
         // データ取得
-        $contents = $this->getContents($frame_id);
+        $contents = $this->getPost($frame_id);
 
         // データの存在確認をして、画面を切り替える
         if (empty($contents)) {
@@ -117,7 +133,7 @@ class ContentsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'contents_edit_show', [
+            'contents_show', [
             'contents' => $contents,
         ]);
     }
@@ -129,7 +145,7 @@ class ContentsPlugin extends UserPluginBase
     public function edit($request, $page_id, $frame_id, $id = null)
     {
         // データ取得
-        $contents = $this->getContents($frame_id);
+        $contents = $this->getPost($frame_id);
 
         // データがない場合は、新規登録用画面
         if (empty($contents)) {
@@ -151,7 +167,7 @@ class ContentsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      */
-    public function datalist($request, $page_id, $frame_id, $id = null)
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // ソート設定に初期設定値をセット
         $sort_inits = [
@@ -202,7 +218,7 @@ class ContentsPlugin extends UserPluginBase
                     ->paginate(10);
 
         return $this->view(
-            'contents_edit_datalist', [
+            'contents_list_buckets', [
             'buckets'           => $buckets,
             'order_link'        => $order_link,
             'request_order_str' => implode( '|', $request_order_by )
@@ -259,7 +275,6 @@ class ContentsPlugin extends UserPluginBase
     */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     {
-
         // 新規で一時保存しようとしたときは id、レコードがまだない。
         if (empty($id)) {
             $status = 1;
@@ -279,7 +294,7 @@ class ContentsPlugin extends UserPluginBase
    /**
     * データ紐づけ変更関数
     */
-    public function change($request, $page_id = null, $frame_id = null, $id = null)
+    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
