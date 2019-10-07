@@ -29,6 +29,7 @@ class AppServiceProvider extends AuthServiceProvider
 
         // 指定された権限を含むロールをループする。
         foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
+
             // ユーザの保持しているロールをループ
             foreach ($user['user_rolses'] as $target) {
 
@@ -55,10 +56,12 @@ class AppServiceProvider extends AuthServiceProvider
                                 return true;
                             }
                             else {
-                                return false;
+                                // 複数ロールをチェックするため、ここではreturn しない。
+                                // return false;
                             }
                         }
-                        return true;
+                        // 複数ロールをチェックするため、ここではreturn しない。
+                        // return true;
                     }
                 }
             }

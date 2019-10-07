@@ -76,7 +76,7 @@
         <tr>
 {{--
             <td>
-                <a href="{{url('/')}}/plugin/opacs/detail/{{$page->id}}/{{$frame_id}}/{{$book->id}}">
+                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">
                     <span class="label label-primary">詳細</span>
                 </a>
             </td>
@@ -93,7 +93,7 @@
                     <i class="far fa-edit"></i>
                 </a>
                 @endcan
-                <a href="{{url('/')}}/plugin/opacs/detail/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}</a>
+                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}</a>
             </td>
 {{--
             <td>{{$book->ndc}}</td>

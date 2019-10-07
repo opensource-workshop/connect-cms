@@ -111,7 +111,7 @@ class OpacsPlugin extends UserPluginBase
      */
     public function getFirstFrameEditAction()
     {
-        return "editOpac";
+        return "editBuckets";
     }
 
     /**
@@ -131,7 +131,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      * OPAC設定変更画面の表示
      */
-    public function editOpac($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -165,17 +165,17 @@ class OpacsPlugin extends UserPluginBase
     /**
      * OPAC新規作成画面
      */
-    public function createOpac($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
     {
         // 新規作成フラグを付けてOPAC設定変更画面を呼ぶ
         $create_flag = true;
-        return $this->editOpac($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $errors);
     }
 
     /**
      *  OPAC登録処理
      */
-    public function saveOpacs($request, $page_id, $frame_id, $opacs_id = null)
+    public function saveBuckets($request, $page_id, $frame_id, $opacs_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -193,11 +193,11 @@ class OpacsPlugin extends UserPluginBase
 
             if (empty($opacs_id)) {
                 $create_flag = true;
-                return $this->createOpac($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $validator->errors());
+                return $this->createBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $validator->errors());
             }
             else  {
                 $create_flag = false;
-                return $this->editOpac($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $validator->errors());
+                return $this->editBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $validator->errors());
             }
         }
 
@@ -248,13 +248,13 @@ class OpacsPlugin extends UserPluginBase
 
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = false;
-        return $this->editOpac($request, $page_id, $frame_id, $opacs_id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message);
     }
 
     /**
      *  削除処理
      */
-    public function opacsDestroy($request, $page_id, $frame_id, $opacs_id)
+    public function destroyBuckets($request, $page_id, $frame_id, $opacs_id)
     {
         // opacs_id がある場合、データを削除
         if ( $opacs_id ) {
@@ -280,7 +280,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      */
-    public function datalist($request, $page_id, $frame_id, $id = null)
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // Frame データ
         $opac_frame = DB::table('frames')
@@ -294,7 +294,7 @@ class OpacsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'opacs_edit_datalist', [
+            'opacs_list_buckets', [
             'opac_frame' => $opac_frame,
             'opacs'      => $opacs,
         ]);
@@ -303,14 +303,14 @@ class OpacsPlugin extends UserPluginBase
    /**
     * データ紐づけ変更関数
     */
-    public function change($request, $page_id = null, $frame_id = null, $id = null)
+    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
 
         // 表示ブログ選択画面を呼ぶ
-        return $this->datalist($request, $page_id, $frame_id, $id);
+        return $this->listBuckets($request, $page_id, $frame_id, $id);
     }
 
     /**
@@ -389,6 +389,12 @@ class OpacsPlugin extends UserPluginBase
      */
     public function create($request, $page_id, $frame_id, $opacs_books_id = null, $errors = null)
     {
+        // 権限チェック
+        // 特別処理。role_article（記事修正）でチェック。
+        if ($this->can('role_article')) {
+            return $this->view_error(403);
+        }
+
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -427,6 +433,12 @@ class OpacsPlugin extends UserPluginBase
      */
     public function edit($request, $page_id, $frame_id, $opacs_books_id = null, $errors = null)
     {
+        // 権限チェック
+        // 特別処理。role_article（記事修正）でチェック。
+        if ($this->can('role_article')) {
+            return $this->view_error(403);
+        }
+
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -448,7 +460,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      * 書誌データ詳細画面
      */
-    public function detail($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
+    public function show($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -467,7 +479,7 @@ class OpacsPlugin extends UserPluginBase
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
-            'opacs_detail', [
+            'opacs_show', [
             'opac_frame'     => $opac_frame,
             'opacs_books'    => $opacs_book,
             'opacs_books_id' => $opacs_books_id,
@@ -482,6 +494,12 @@ class OpacsPlugin extends UserPluginBase
      */
     public function save($request, $page_id, $frame_id, $opacs_books_id = null)
     {
+        // 権限チェック
+        // 特別処理。role_article（記事修正）でチェック。
+        if ($this->can('role_article')) {
+            return $this->view_error(403);
+        }
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'title' => ['required'],
@@ -550,6 +568,12 @@ class OpacsPlugin extends UserPluginBase
      */
     public function destroy($request, $page_id, $frame_id, $opacs_books_id)
     {
+        // 権限チェック
+        // 特別処理。role_article（記事修正）でチェック。
+        if ($this->can('role_article')) {
+            return $this->view_error(403);
+        }
+
         // id がある場合、データを削除
         if ( $opacs_books_id ) {
 
@@ -578,9 +602,15 @@ class OpacsPlugin extends UserPluginBase
      */
     public function lent($request, $page_id, $frame_id, $opacs_books_id)
     {
+        // 権限チェック
+        // 特別処理。role_article（記事修正）でチェック。
+//        if ($this->can('role_article')) {
+//            return $this->view_error(403);
+//        }
+
         // 貸出中でないかのチェック
         if ( !$this->lentCheck($opacs_books_id) ) {
-            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
+            return $this->show($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
         }
 
         // 項目のエラーチェック
@@ -596,7 +626,7 @@ class OpacsPlugin extends UserPluginBase
         // エラーがあった場合は詳細画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+            return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
         }
 
         // 書籍貸し出しデータ新規オブジェクト
@@ -612,7 +642,7 @@ class OpacsPlugin extends UserPluginBase
         $message = '貸し出し登録しました。';
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
-        return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+        return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
     }
 
     /**
@@ -622,7 +652,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 貸出中でないかのチェック
         if ( !$this->lentCheck($opacs_books_id) ) {
-            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
+            return $this->show($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
         }
 
         // 項目のエラーチェック
@@ -638,7 +668,7 @@ class OpacsPlugin extends UserPluginBase
         // エラーがあった場合は詳細画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+            return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
         }
 
         // 書籍貸し出しデータ新規オブジェクト
@@ -656,7 +686,7 @@ class OpacsPlugin extends UserPluginBase
         $message = '郵送貸し出しリクエストを受け付けました。';
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
-        return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+        return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
     }
 
     /**
@@ -667,7 +697,7 @@ class OpacsPlugin extends UserPluginBase
 
         // 貸出中でないかのチェック
         if ( $this->lentCheck($opacs_books_id) ) {
-            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中ではありません。', 'danger');
+            return $this->show($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中ではありません。', 'danger');
         }
 
         // 項目のエラーチェック
@@ -683,7 +713,7 @@ class OpacsPlugin extends UserPluginBase
         // エラーがあった場合は詳細画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+            return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
         }
 
         // 学籍番号チェック
@@ -691,7 +721,7 @@ class OpacsPlugin extends UserPluginBase
         if ($books_lents->student_no != $request->return_student_no) {
             $message = '学籍番号が一致しません。';
             $message_class = 'danger';
-            return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, $message_class, $validator->errors());
+            return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, $message_class, $validator->errors());
         }
 
         // 書籍貸し出しデータ
@@ -709,7 +739,7 @@ class OpacsPlugin extends UserPluginBase
         $message = '返却しました。';
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
-        return $this->detail($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+        return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
     }
 
     /**

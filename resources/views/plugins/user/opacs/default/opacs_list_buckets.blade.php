@@ -14,7 +14,7 @@
     @include('core.cms_frame_edit_tab')
 </ul>
 
-<form action="/plugin/opacs/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="/plugin/opacs/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group">
@@ -32,7 +32,7 @@
             <tr @if ($opac_frame->opacs_id == $opac->id) class="active"@endif>
                 <td><input type="radio" value="{{$opac->bucket_id}}" name="select_bucket"@if ($opac_frame->bucket_id == $opac->bucket_id) checked @endif></input></td>
                 <td>{{$opac->opac_name}}</td>
-                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/opacs/editOpac/{{$page->id}}/{{$frame_id}}/{{$opac->id}}'"><i class="far fa-edit"></i> OPAC設定変更</button></th>
+                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}'"><i class="far fa-edit"></i> OPAC設定変更</button></th>
                 <td>{{$opac->created_at}}</td>
             </tr>
         @endforeach
