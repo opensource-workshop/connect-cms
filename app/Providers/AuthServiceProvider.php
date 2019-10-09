@@ -5,6 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
+use App\Providers\ConnectEloquentUserProvider;
+use Auth;
+
 class AuthServiceProvider extends ServiceProvider
 {
     /**
@@ -25,34 +28,39 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // ƒVƒXƒeƒ€ŠÇ—Ò‚Ì‚İ‹–‰Â
+        // ã‚·ã‚¹ãƒ†ãƒ ç®¡ç†è€…ã®ã¿è¨±å¯
         Gate::define('system', function ($user) {
             return ($user->role == 1);
         });
-        // ƒTƒCƒgŠÇ—Ò‚Ì‚İ‹–‰Â
+        // ã‚µã‚¤ãƒˆç®¡ç†è€…ã®ã¿è¨±å¯
         Gate::define('site-admin', function ($user) {
             return ($user->role == 2);
         });
-        // ƒ†[ƒUŠÇ—Ò‚Ì‚İ‹–‰Â
+        // ãƒ¦ãƒ¼ã‚¶ç®¡ç†è€…ã®ã¿è¨±å¯
         Gate::define('user-admin', function ($user) {
             return ($user->role == 3);
         });
-        // ‰^—pŠÇ—Ò‚Ì‚İ‹–‰Â
+        // é‹ç”¨ç®¡ç†è€…ã®ã¿è¨±å¯
         Gate::define('manager', function ($user) {
             return ($user->role == 10);
         });
-        // ³”FÒ‚Ì‚İ‹–‰Â
+        // æ‰¿èªè€…ã®ã¿è¨±å¯
         Gate::define('approver', function ($user) {
             return ($user->role == 11);
         });
-        // •ÒWÒ‚Ì‚İ‹–‰Â
+        // ç·¨é›†è€…ã®ã¿è¨±å¯
         Gate::define('editor', function ($user) {
             return ($user->role == 12);
         });
 
-        // ƒVƒXƒeƒ€ŠÇ—Ò•ƒ†[ƒUŠÇ—Ò‚Ì‚İ‹–‰Â
+        // ã‚·ã‚¹ãƒ†ãƒ ç®¡ç†è€…ï¼†ãƒ¦ãƒ¼ã‚¶ç®¡ç†è€…ã®ã¿è¨±å¯
         Gate::define('system_user-admin', function ($user) {
             return ($user->role == 1 || $user->role == 3);
+        });
+
+        // ãƒ¦ãƒ¼ã‚¶ãƒ¼èªè¨¼ã¯ã‚«ã‚¹ã‚¿ãƒã‚¤ã‚ºã—ãŸã‚‚ã®ã§è¡Œã†ã€‚
+        Auth::provider('connect_eloquent', function($app, array $config) {
+            return new ConnectEloquentUserProvider($app['hash'], $config['model']);
         });
     }
 }

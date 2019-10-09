@@ -66,7 +66,8 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'eloquent',
+            // 'driver' => 'eloquent',
+            'driver' => 'connect_eloquent',  // ユーザー認証はカスタマイズしたもので行う。
             'model' => App\User::class,
         ],
 
