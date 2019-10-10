@@ -9,7 +9,7 @@
  --}}
 @if ($contents)
     {!! $contents->content_text !!}
-    @can('posts.update',[[$contents, 'contents']])
+    @can('posts.update',[[$contents, 'contents', 'preview_off']])
     <p class="text-right">
         {{-- 変更画面へのリンク --}}
         @if ($frame->page_id == $page->id)
@@ -20,7 +20,7 @@
     </p>
     @endcan
 @else
-    @can('posts.update',[[$contents, 'contents']])
+    @can('posts.update',[[$contents, 'contents', 'preview_off']])
     <p class="text-right">
         {{-- 追加画面へのリンク --}}
         <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}#{{$frame_id}}">

@@ -187,7 +187,14 @@
                         @else
                             <a href="{{ url('/manage/user') }}" class="dropdown-item">ユーザ管理</a>
                         @endif
-
+                        @if (isset($page_list))
+                            <div class="dropdown-divider"></div>
+                            @if (app('request')->input('mode') == 'preview')
+                                <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                            @else
+                                <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                            @endif
+                        @endif
                     </div>
                 </li>
             {{-- /システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}

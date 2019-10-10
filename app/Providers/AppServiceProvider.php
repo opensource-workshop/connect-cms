@@ -19,8 +19,17 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function check_authority($user, $authority, $args = null)
     {
+
+        // preview モードのチェック付きの場合はpreview モードなら権限ナシで返す。
+        $request = app(\Illuminate\Http\Request::class);
+
         // 引数をバラシてPOST を取得
-        list($post, $plugin_name) = $this->check_args_obj($args);
+        list($post, $plugin_name, $mode_switch) = $this->check_args_obj($args);
+
+        // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
+        if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
+            return false;
+        }
 
         // ログインしていない場合は権限なし
         if (empty($user)) {
@@ -104,7 +113,8 @@ class AppServiceProvider extends AuthServiceProvider
     {
         $post = ($args != null) ? $args[0] : null;
         $plugin_name = ($args != null && is_array($args) && count($args) > 1) ? $args[1] : null;
-        return [$post, $plugin_name];
+        $mode_switch = ($args != null && is_array($args) && count($args) > 2) ? $args[2] : null;
+        return [$post, $plugin_name, $mode_switch];
     }
 
     /**

@@ -7,7 +7,7 @@
  --}}
 
 {{-- 新規登録 --}}
-@can('posts.create',[[null, 'blogs']])
+@can('posts.create',[[null, 'blogs', 'preview_off']])
     @if (isset($frame) && $frame->bucket_id)
         <p class="text-right">
             {{-- 新規登録ボタン --}}
@@ -39,7 +39,7 @@
             {!! $post->post_text !!}
 
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-            @can('posts.update',[[$post, 'blogs']])
+            @can('posts.update',[[$post, 'blogs', 'preview_off']])
                 <p class="text-right">
                     <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
                         <span class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
