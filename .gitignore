@@ -14,3 +14,4 @@ yarn-error.log
 .env
 !.gitkeep
 /connect-cms.code-workspace
+.vscode/launch.json
