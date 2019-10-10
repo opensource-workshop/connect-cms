@@ -5,7 +5,7 @@ namespace App\Plugins\Manage\UserManage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Validation\Rule;
 use DB;
 
 use App\Configs;
@@ -125,7 +125,7 @@ class UserManage extends ManagePluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
-            'email'    => 'nullable|email|max:255|unique:users',
+            'email'    => ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'password' => 'nullable|string|min:6|confirmed',
         ]);
         $validator->setAttributeNames([
