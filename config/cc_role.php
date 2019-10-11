@@ -70,6 +70,7 @@ return [
         'temporarysave'  => ['posts.create', 'posts.update'],
         'delete'         => ['posts.delete'],
         'destroy'        => ['posts.delete'],
+        'approval'       => ['posts.approval'],
         'listBuckets'    => ['frames.change'],
         'createBuckets'  => ['frames.create'],
         'editBuckets'    => ['frames.edit'],

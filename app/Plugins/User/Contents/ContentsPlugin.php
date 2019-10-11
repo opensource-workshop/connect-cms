@@ -68,6 +68,7 @@ class ContentsPlugin extends UserPluginBase
                             $join->on('frames.bucket_id', '=', 'buckets.id');
                         })
                         ->where('frames.id', $frame_id)
+                        ->where('contents.deleted_at', null)
                         // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
                         ->where(function($query){ $query->where('contents.status', 0)->orWhere('contents.status', 1)->orWhere('contents.status', 2); })
                         ->orderBy('id', 'desc')
@@ -84,7 +85,9 @@ class ContentsPlugin extends UserPluginBase
                             $join->on('frames.bucket_id', '=', 'buckets.id');
                         })
                         ->where('frames.id', $frame_id)
+                        ->where('contents.deleted_at', null)
                         ->where('contents.status', 0)
+                        ->orderBy('id', 'desc')
                         ->first();
         }
         return $contents;
@@ -237,11 +240,11 @@ class ContentsPlugin extends UserPluginBase
         ]);
 
         // コンテンツデータの登録
-        $id = DB::table('contents')->insertGetId([
-            'bucket_id'    => $bucket_id,
-            'content_text' => $request->contents,
-            'status'       => $status
-        ]);
+        $contents = new Contents;
+        $contents->bucket_id    = $bucket_id;
+        $contents->content_text = $request->contents;
+        $contents->status       = $status;
+        $contents->save();
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
@@ -258,8 +261,9 @@ class ContentsPlugin extends UserPluginBase
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $oldrow = Contents::find($id);
 
-        // 旧レコードのstatus 更新(同じbackets のものは、最新を除いてstatus:9 に更新)
-        Contents::where('bucket_id', $oldrow->bucket_id)->update(['status' => 9]);
+        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
+        Contents::where('bucket_id', $oldrow->bucket_id)->where('status', 0)->update(['status' => 9]);
+        //Contents::where('id', $oldrow->id)->update(['status' => 9]);
 
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $newrow = $oldrow->replicate();
@@ -281,8 +285,17 @@ class ContentsPlugin extends UserPluginBase
             $this->store($request, $page_id, $frame_id, $id, $status);
         }
         else {
-            // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
+
+            // 旧データ取得
             $oldrow = Contents::find($id);
+
+            // 旧レコードが表示でなければ、履歴に更新（表示を履歴に更新すると、画面に表示されなくなる）
+// 過去のステータスも残す方式にする。
+//            if ($oldrow->status != 0) {
+//                Contents::where('id', $id)->update(['status' => 9]);
+//            }
+
+            // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
             $newrow = $oldrow->replicate();
             $newrow->content_text = $request->contents;
             $newrow->status = 1; //（一時保存）
@@ -319,7 +332,15 @@ class ContentsPlugin extends UserPluginBase
             }
 
             // 論理削除のため、コンテンツデータを status:9 に変更する。バケツデータは削除しない。
-            Contents::where('id', $id)->update(['status' => 9]);
+// 過去のステータスも残す方式にする。
+//            Contents::where('id', $id)->update(['status' => 9]);
+
+            // 削除ユーザの更新
+            Contents::where('bucket_id', $content->bucket_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
+
+            // 同じbucket_id のものを削除
+            Contents::where('bucket_id', $content->bucket_id)->delete();
+
         }
         return;
     }

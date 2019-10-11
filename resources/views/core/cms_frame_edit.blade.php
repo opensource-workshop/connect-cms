@@ -103,8 +103,8 @@
 
         <div class="form-group row mx-0">
             <div class="offset-md-3 {{$class_input}}">
-                <button type="submit" class="btn btn-primary form-horizontal mr-3"><i class="fas fa-check"></i> 更新</button>
-                <button type="button" class="btn btn-secondary form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+                <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
             </div>
         </div>
     </form>

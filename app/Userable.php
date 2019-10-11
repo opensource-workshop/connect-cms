@@ -24,7 +24,8 @@ trait Userable
          *  オブジェクトcreate 時のイベントハンドラ
          */
         static::creating(function (Model $model) {
-            $model->created_id   = Auth::user()->id;
+            // created_idはデータ更新権限のチェックのため、最初に記事を書いたユーザのものを引き継ぐ必要があるので、自動登録はしない。
+            // $model->created_id   = Auth::user()->id;
             $model->created_name = Auth::user()->name;
         });
 
@@ -34,7 +35,14 @@ trait Userable
         static::updating(function (Model $model) {
             $model->updated_id   = Auth::user()->id;
             $model->updated_name = Auth::user()->name;
+        });
 
+        /**
+         *  オブジェクトdelete 時のイベントハンドラ
+         */
+        static::deleting(function (Model $model) {
+            $model->deleted_id   = Auth::user()->id;
+            $model->deleted_name = Auth::user()->name;
         });
     }
 }

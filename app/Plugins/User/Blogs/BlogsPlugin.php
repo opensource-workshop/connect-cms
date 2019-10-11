@@ -86,10 +86,78 @@ class BlogsPlugin extends UserPluginBase
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
-        // データ取得（1ページの表示件数指定）
-        $blogs_posts = BlogsPosts::orderBy('created_at', 'desc')
-                       ->where('blogs_id', $blog_frame->blogs_id)
-                       ->paginate($blog_frame->view_count);
+        // 認証されているユーザの取得
+        $user = Auth::user();
+
+        $blogs_posts = null;
+
+        // 記事修正権限、記事管理者の場合、全記事の取得
+        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+
+            // 削除されていないデータでグルーピングして、最新のIDで全件
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->groupBy('contents_id');
+            })->orderBy('posted_at', 'desc')
+              ->paginate($blog_frame->view_count);
+        }
+        // 承認権限の場合、Active ＋ 承認待ちの取得
+        elseif ($this->isCan('role_approval')) {
+
+            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと承認待ち。
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->groupBy('contents_id');
+                })->where(function($query2){
+                    $query2->Where('status', '=', 0)
+                           ->orWhere('status', '=', 2);
+                })->orderBy('posted_at', 'desc')
+                  ->paginate($blog_frame->view_count);
+        }
+        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
+        elseif ($this->isCan('role_reporter')) {
+
+            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと自分のデータ。
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->groupBy('contents_id');
+            })->where(function($query2){
+                $query2->Where('status', '=', 0)
+                       ->orWhere('created_id', '=', Auth::user()->id);
+            })->orderBy('posted_at', 'desc')
+              ->paginate($blog_frame->view_count);
+        }
+        // その他（ゲスト）
+        else {
+
+            // データ取得
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->where('status', 0)
+                        ->groupBy('contents_id');
+            })->orderBy('posted_at', 'desc')
+              ->paginate($blog_frame->view_count);
+        }
+
+//        if (!empty($user) && $user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
+
+            // データ取得（1ページの表示件数指定）
+//            $blogs_posts = BlogsPosts::orderBy('created_at', 'desc')
+//                           ->where('blogs_id', $blog_frame->blogs_id)
+//                           ->paginate($blog_frame->view_count);
+//        }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -300,9 +368,9 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
-     *  ブログ記事登録処理
+     *  ブログ記事チェック設定
      */
-    public function save($request, $page_id, $frame_id, $blogs_posts_id = null)
+    public function makeValidator($request)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -315,23 +383,47 @@ class BlogsPlugin extends UserPluginBase
             'posted_at'  => '投稿日時',
             'post_text'  => '本文',
         ]);
+        return $validator;
+    }
+
+    /**
+     *  要承認の判断
+     */
+    public function isApproval($frame_id)
+    {
+        // 承認の要否確認とステータス処理
+        $blog_frame = $this->getBlogFrame($frame_id);
+        if ($blog_frame->approval_flag == 1) {
+
+            // 記事修正、記事管理者権限がない場合は要承認
+            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     *  ブログ記事登録処理
+     */
+    public function save($request, $page_id, $frame_id, $blogs_posts_id = null)
+    {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
         }
 
-        // id があれば更新、なければ登録
-        if (empty($blogs_posts_id)) {
-
-            // 新規オブジェクト生成
-            $blogs_post = new BlogsPosts();
+        // id があれば旧データを取得
+        $old_blogs_post = null;
+        if (!empty($blogs_posts_id)) {
+            $old_blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
         }
-        else {
 
-            // 記事データ取得
-            $blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
-        }
+        // 新規オブジェクト生成
+        $blogs_post = new BlogsPosts();
 
         // ブログ記事設定
         $blogs_post->blogs_id   = $request->blogs_id;
@@ -339,7 +431,93 @@ class BlogsPlugin extends UserPluginBase
         $blogs_post->posted_at  = $request->posted_at;
         $blogs_post->post_text  = $request->post_text;
 
-        // データ保存
+        // 承認の要否確認とステータス処理
+        if ($this->isApproval($frame_id)) {
+            $blogs_post->status = 2;
+        }
+
+        // 新規
+        if (empty($blogs_posts_id)) {
+
+            // 登録ユーザ
+            $blogs_post->created_id  = Auth::user()->id;
+
+            // データ保存
+            $blogs_post->save();
+
+            // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
+            BlogsPosts::where('id', $blogs_post->id)->update(['contents_id' => $blogs_post->id]);
+        }
+        // 更新
+        else {
+
+            // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
+            $blogs_post->contents_id = $old_blogs_post->contents_id;
+
+            // 登録ユーザ
+            $blogs_post->created_id  = $old_blogs_post->created_id;
+
+            // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
+            if ($blogs_post->status != 2) {
+                BlogsPosts::where('contents_id', $old_blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
+            }
+
+            // データ保存
+            $blogs_post->save();
+
+        }
+
+        // 登録後は表示用の初期処理を呼ぶ。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+   /**
+    * データ一時保存関数
+    */
+    public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
+        }
+
+        // 新規オブジェクト生成
+        if (empty($id)) {
+            $blogs_post = new BlogsPosts();
+        }
+        else {
+            $blogs_post = BlogsPosts::find($id)->replicate();
+        }
+
+        // ブログ記事設定
+        $blogs_post->status = 1;
+        $blogs_post->blogs_id   = $request->blogs_id;
+        $blogs_post->post_title = $request->post_title;
+        $blogs_post->posted_at  = $request->posted_at;
+        $blogs_post->post_text  = $request->post_text;
+
+        $blogs_post->save();
+
+        // 登録後は表示用の初期処理を呼ぶ。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+   /**
+    * 承認
+    */
+    public function approval($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 新規オブジェクト生成
+        $blogs_post = BlogsPosts::find($id)->replicate();
+
+        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
+        BlogsPosts::where('contents_id', $blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
+
+        // ブログ記事設定
+        $blogs_post->status = 0;
         $blogs_post->save();
 
         // 登録後は表示用の初期処理を呼ぶ。

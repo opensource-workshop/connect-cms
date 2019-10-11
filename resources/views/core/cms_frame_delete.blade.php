@@ -34,10 +34,12 @@
                     </span>
                     <div class="container-fluid">
                         <div class="text-center mt-3">
-                            <button type="submit" class="btn btn-danger form-horizontal mr-2" onclick="javascript:return confirm('フレームを削除します。\nよろしいですか？')">
+                            <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                                <i class="fas fa-times"></i> キャンセル
+                            </button>
+                            <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('フレームを削除します。\nよろしいですか？')">
                                 <i class="fas fa-check"></i> フレーム削除
                             </button>
-                            <button type="button" class="btn btn-secondary form-horizontal" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                         </div>
                     </div>
                 </form>

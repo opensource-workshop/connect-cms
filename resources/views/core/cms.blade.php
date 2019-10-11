@@ -50,7 +50,7 @@ $(function () {
     </div>
     @endif
 
-    <div class="row">
+    <div class="row d-flex align-items-start">
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
 {{--        <div class="{{$layouts_info[1]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}

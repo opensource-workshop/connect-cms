@@ -85,15 +85,15 @@
         <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-6">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
                 @if (empty($blog) || $create_flag)
                     登録確定
                 @else
                     変更確定
                 @endif
-                </button>
-                <button type="button" class="btn btn-secondary" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                    <i class="fas fa-times"></i> キャンセル
                 </button>
             </div>
 

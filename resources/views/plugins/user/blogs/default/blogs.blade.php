@@ -39,13 +39,28 @@
             {!! $post->post_text !!}
 
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-            @can('posts.update',[[$post, 'blogs', 'preview_off']])
-                <p class="text-right">
+            <div class="row">
+                <div class="col-12 text-right mb-1">
+                @if ($post->status == 2)
+                    @can('preview',[[null, 'blogs', 'preview_off']])
+                        <span class="badge badge-warning align-bottom">承認待ち</span>
+                    @endcan
+                    @can('posts.approval',[[$post, 'blogs', 'preview_off']])
+                        <form action="{{url('/')}}/plugin/blogs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="post" name="form_approval" class="d-inline">
+                            {{ csrf_field() }}
+                            <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
+                                <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                            </button>
+                        </form>
+                    @endcan
+                @endif
+                @can('posts.update',[[$post, 'blogs', 'preview_off']])
                     <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
-                        <span class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
+                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                     </a>
-                </p>
-            @endcan
+                @endcan
+                </div>
+            </div>
         </article>
     @endforeach
 

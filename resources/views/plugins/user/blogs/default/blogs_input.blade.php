@@ -9,11 +9,23 @@
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
+{{-- 一時保存ボタンのアクション --}}
+<script type="text/javascript">
+    function save_action() {
+        @if (empty($blogs_posts->id))
+            form_blogs_posts.action = "/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}";
+        @else
+            form_blogs_posts.action = "/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}";
+        @endif
+        form_blogs_posts.submit();
+    }
+</script>
+
 {{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))
-    <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_blogs_posts">
 @else
-    <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="">
+    <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="" name="form_blogs_posts">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
@@ -47,21 +59,26 @@
             <div class="col-sm-3"></div>
             <div class="col-sm-6">
                 <div class="text-center">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i> 一時保存</button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
-                        @if (empty($blog_frame->approval_flag == 1))
-                            <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 登録確定</button>
+                        @if ($blog_frame->approval_flag == 0 ||
+                             Auth::user()->can('role_article',[[null, 'blogs']]) ||
+                             Auth::user()->can('role_article_admin',[[null, 'blogs']]))
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                         @else
-                            <button type="submit" class="btn btn-success mr-3"><i class="far fa-edit"></i> 登録申請</button>
+                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
                         @endif
                     @else
-                        @if (empty($blog_frame->approval_flag == 1))
-                            <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 変更確定</button>
+                        @if ($blog_frame->approval_flag == 0 ||
+                             Auth::user()->can('role_article',[[null, 'blogs']]) ||
+                             Auth::user()->can('role_article_admin',[[null, 'blogs']]))
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
                         @else
-                            <button type="submit" class="btn btn-success mr-3"><i class="far fa-edit"></i> 変更申請</button>
+                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
                         @endif
                     @endif
-                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>
             </div>
             <div class="col-sm-3 pull-right text-right">

@@ -31,6 +31,11 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         }
 
+        // プレビュー判断はココまで
+        if ($authority == 'preview') {
+            return true;
+        }
+
         // ログインしていない場合は権限なし
         if (empty($user)) {
             return false;
@@ -59,6 +64,7 @@ class AppServiceProvider extends AuthServiceProvider
                         }
                         else {
                             if ((($authority == 'buckets.delete') ||
+                                 ($authority == 'posts.create') ||
                                  ($authority == 'posts.update') ||
                                  ($authority == 'posts.delete')) &&
                                 ($user->id == $post->created_id)) {
@@ -280,6 +286,13 @@ class AppServiceProvider extends AuthServiceProvider
                 return true;
             }
             return false;
+        });
+
+        // *** プレビューのための判定
+
+        // フレーム削除
+        Gate::define('preview', function ($user, $args = null) {
+            return $this->check_authority($user, 'preview', $args);
         });
 
         return false;
