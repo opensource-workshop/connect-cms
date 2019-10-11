@@ -59,16 +59,6 @@
         <link href="/themes/{{$themes}}/themes.css" rel="stylesheet">
     @endif
 
-    <!-- Context -->
-    <script>
-    @if (isset($configs) && ($configs['base_mousedown_off'] == '1'))
-        $(document).on('mousedown', 'img', function (e) { e.preventDefault(); });
-    @endif
-    @if (isset($configs) && ($configs['base_contextmenu_off'] == '1'))
-        $(document).on('contextmenu', 'img', function () { return false; });
-    @endif
-    </script>
-
     <!-- Fonts -->
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
@@ -81,10 +71,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/locale/ja.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js"></script>
 
+    <!-- Context -->
+    <script>
+    @if (isset($configs) && ($configs['base_mousedown_off'] == '1'))
+        $(document).on('mousedown', 'img', function (e) { e.preventDefault(); });
+    @endif
+    @if (isset($configs) && ($configs['base_contextmenu_off'] == '1'))
+        $(document).on('contextmenu', 'img', function () { return false; });
+    @endif
+    </script>
+
 </head>
 <body>
 
-<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+<nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
         @if(isset($configs))

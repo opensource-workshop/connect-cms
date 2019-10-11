@@ -65,6 +65,11 @@ class SiteManage extends ManagePluginBase
      */
     public function update($request, $page_id = null, $errors = array())
     {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
         // サイト名
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_site_name'],
@@ -95,19 +100,9 @@ class SiteManage extends ManagePluginBase
 
         // 基本のヘッダー固定設定
         $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_fix_xs'],
+            ['name'     => 'base_header_fix'],
             ['category' => 'general',
-             'value'    => (isset($request->base_header_fix_xs) ? $request->base_header_fix_xs : 0)]
-        );
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_fix_sm'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_header_fix_sm) ? $request->base_header_fix_sm : 0)]
-        );
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'base_header_fix_md'],
-            ['category' => 'general',
-             'value'    => (isset($request->base_header_fix_md) ? $request->base_header_fix_md : 0)]
+             'value'    => (isset($request->base_header_fix) ? $request->base_header_fix : 0)]
         );
 
         // ログインリンクの表示

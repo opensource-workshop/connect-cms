@@ -59,6 +59,27 @@
         @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
     </div>
 
+    {{-- 承認機能の選択 --}}
+    <div class="form-group">
+        <label class="col-form-label">承認の有無</label><br />
+        <div class="custom-control custom-radio custom-control-inline">
+            @if($blog->approval_flag == 0)
+                <input type="radio" value="0" id="approval_flag_0" name="approval_flag" class="custom-control-input" checked="checked">
+            @else
+                <input type="radio" value="0" id="approval_flag_0" name="approval_flag" class="custom-control-input">
+            @endif
+            <label class="custom-control-label" for="approval_flag_0">承認しない</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            @if($blog->approval_flag == 1)
+                <input type="radio" value="1" id="approval_flag_1" name="approval_flag" class="custom-control-input" checked="checked">
+            @else
+                <input type="radio" value="1" id="approval_flag_1" name="approval_flag" class="custom-control-input">
+            @endif
+            <label class="custom-control-label" for="approval_flag_1">承認する</label>
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">

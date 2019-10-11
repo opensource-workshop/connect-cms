@@ -49,7 +49,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count')
+                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count', 'blogs.approval_flag')
                  ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -210,8 +210,9 @@ class BlogsPlugin extends UserPluginBase
         }
 
         // ブログ設定
-        $blogs->blog_name  = $request->blog_name;
-        $blogs->view_count = $request->view_count;
+        $blogs->blog_name     = $request->blog_name;
+        $blogs->view_count    = $request->view_count;
+        $blogs->approval_flag = $request->approval_flag;
 
         // データ保存
         $blogs->save();

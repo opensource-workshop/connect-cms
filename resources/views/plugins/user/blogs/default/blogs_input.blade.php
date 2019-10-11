@@ -49,9 +49,17 @@
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
-                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 登録確定</button>
+                        @if (empty($blog_frame->approval_flag == 1))
+                            <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 登録確定</button>
+                        @else
+                            <button type="submit" class="btn btn-success mr-3"><i class="far fa-edit"></i> 登録申請</button>
+                        @endif
                     @else
-                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 変更確定</button>
+                        @if (empty($blog_frame->approval_flag == 1))
+                            <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 変更確定</button>
+                        @else
+                            <button type="submit" class="btn btn-success mr-3"><i class="far fa-edit"></i> 変更申請</button>
+                        @endif
                     @endif
                     <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>

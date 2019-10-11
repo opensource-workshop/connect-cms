@@ -36,21 +36,7 @@ class DefaultConfigsTableSeeder extends Seeder
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
                     [
-                        'name'=>'base_header_fix_xs',
-                        'value'=>'0',
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_header_fix_sm',
-                        'value'=>'0',
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_header_fix_md',
+                        'name'=>'base_header_fix',
                         'value'=>'0',
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),

@@ -53,37 +53,27 @@
             <label class="col-form-label">ヘッダーの固定</label>
             <div class="row">
                 <div class="col-md-3">
-                    <div class="custom-control custom-checkbox">
-                        @if(isset($configs["base_header_fix_xs"]) && $configs["base_header_fix_xs"] == "1")
-                            <input name="base_header_fix_xs" value="1" type="checkbox" class="custom-control-input" id="base_header_fix_xs" checked="checked">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["base_header_fix"]) && $configs["base_header_fix"] == "0")
+                            <input type="radio" value="0" id="base_header_fix_off" name="base_header_fix" class="custom-control-input" checked="checked">
                         @else
-                            <input name="base_header_fix_xs" value="1" type="checkbox" class="custom-control-input" id="base_header_fix_xs">
+                            <input type="radio" value="0" id="base_header_fix_off" name="base_header_fix" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="base_header_fix_xs">スマートフォン</label>
+                        <label class="custom-control-label" for="base_header_fix_off">固定しない</label>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="custom-control custom-checkbox">
-                        @if(isset($configs["base_header_fix_sm"]) && $configs["base_header_fix_sm"] == "1")
-                            <input name="base_header_fix_sm" value="1" type="checkbox" class="custom-control-input" id="base_header_fix_sm" checked="checked">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["base_header_fix"]) && $configs["base_header_fix"] == "1")
+                            <input type="radio" value="1" id="base_header_fix_on" name="base_header_fix" class="custom-control-input" checked="checked">
                         @else
-                            <input name="base_header_fix_sm" value="1" type="checkbox" class="custom-control-input" id="base_header_fix_sm">
+                            <input type="radio" value="1" id="base_header_fix_on" name="base_header_fix" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="base_header_fix_sm">タブレット</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="custom-control custom-checkbox">
-                        @if(isset($configs["base_header_fix_md"]) && $configs["base_header_fix_md"] == "1")
-                            <input name="base_header_fix_md" value="1" type="checkbox" class="custom-control-input" id="base_header_fix_md" checked="checked">
-                        @else
-                            <input name="base_header_fix_md" value="1" type="checkbox" class="custom-control-input" id="base_header_fix_md">
-                        @endif
-                        <label class="custom-control-label" for="base_header_fix_md">PC</label>
+                        <label class="custom-control-label" for="base_header_fix_on">固定する</label>
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">ヘッダーを固定にするサイズをチェック</small>
+            <small class="form-text text-muted">ログインリンクを表示するかどうかを選択</small>
         </div>
 
         {{-- ログインリンクの表示 --}}
@@ -158,7 +148,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="custom-control custom-checkbox">
-                        @if(isset($configs["base_mousedown_off"]) && $configs["base_mousedown_off"] == "1")
+                        @if(isset($configs["base_contextmenu_off"]) && $configs["base_contextmenu_off"] == "1")
                             <input name="base_contextmenu_off" value="1" type="checkbox" class="custom-control-input" id="base_contextmenu_off" checked="checked">
                         @else
                             <input name="base_contextmenu_off" value="1" type="checkbox" class="custom-control-input" id="base_contextmenu_off">
@@ -168,7 +158,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="custom-control custom-checkbox">
-                        @if(isset($configs["base_mousedown_off"]) && $configs["base_mousedown_off"] == "1")
+                        @if(isset($configs["base_touch_callout"]) && $configs["base_touch_callout"] == "1")
                             <input name="base_touch_callout" value="1" type="checkbox" class="custom-control-input" id="base_touch_callout" checked="checked">
                         @else
                             <input name="base_touch_callout" value="1" type="checkbox" class="custom-control-input" id="base_touch_callout">

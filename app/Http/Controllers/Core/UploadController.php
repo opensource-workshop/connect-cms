@@ -130,59 +130,6 @@ class UploadController extends ConnectController
         // ヘッダーの背景色
         echo ".navbar-default { background-color: " . $header_color . "; }\n";
 
-        // bootstrap の@screen-xs-max 指定が効かないので、数値指定
-
-        // ヘッダー固定設定(スマートフォン)
-        if ($config_generals['base_header_fix_xs']['value'] == '1') {
-            echo <<<EOD
-@media (max-width: 767px) {
-    .navbar-static-top {
-        position: fixed;
-        top: 0;
-        width: 100%;
-    }
-    body {
-        padding-top: 72px;
-    }
-}
-
-EOD;
-        }
-
-        // ヘッダー固定設定(タブレット)
-        if ($config_generals['base_header_fix_sm']['value'] == '1') {
-            echo <<<EOD
-@media (min-width:768px) and (max-width:991px) {
-    .navbar-static-top {
-        position: fixed;
-        top: 0;
-        width: 100%;
-    }
-    body {
-        padding-top: 72px;
-    }
-}
-
-EOD;
-        }
-
-        // ヘッダー固定設定(PC)
-        if ($config_generals['base_header_fix_md']['value'] == '1') {
-            echo <<<EOD
-@media (min-width:992px) {
-    .navbar-static-top {
-        position: fixed;
-        top: 0;
-        width: 100%;
-    }
-    body {
-        padding-top: 72px;
-    }
-}
-
-EOD;
-        }
-
         // 画像の保存機能の無効化(スマホ長押し禁止)
         if ($config_generals['base_touch_callout']['value'] == '1') {
             echo <<<EOD
