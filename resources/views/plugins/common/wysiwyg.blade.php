@@ -19,9 +19,8 @@
         relative_urls : false,
         height: 300,
         branding: false,
-        protect: [
-            /\<\/?(script)\>/g
-        ],
+        valid_children : "+body[style]",
+        extended_valid_elements : "script[type|charset]",
         // file_picker_types: 'file image media',
         // media_live_embeds: true,
         image_caption: true,
