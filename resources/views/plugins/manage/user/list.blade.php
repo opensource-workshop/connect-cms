@@ -24,7 +24,7 @@
                 <th nowrap>ユーザID</th>
                 <th nowrap>ユーザー名</th>
                 <th nowrap>eメール</th>
-                <th nowrap>権限</th>
+{{--                <th nowrap>権限</th> --}}
                 <th nowrap>作成日</th>
                 <th nowrap>更新日</th>
             </tr>
@@ -40,6 +40,7 @@
                 </td>
                 <td>{{$user->name}}</td>
                 <td>{{$user->email}}</td>
+{{--
                 @if ($user->role == 1)
                     <td>システム管理者</td>
                 @elseif ($user->role == 2)
@@ -57,6 +58,7 @@
                 @else
                     <td>{{$user->role}}</td>
                 @endif
+--}}
                 <td>{{$user->created_at}}</td>
                 <td>{{$user->updated_at}}</td>
             </tr>

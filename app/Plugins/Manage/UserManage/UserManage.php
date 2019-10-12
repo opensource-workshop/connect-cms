@@ -31,12 +31,19 @@ class UserManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
+        $role_ckeck_table["index"]   = array('admin_user');
+        $role_ckeck_table["regist"]  = array('admin_user');
+        $role_ckeck_table["edit"]    = array('admin_user');
+        $role_ckeck_table["update"]  = array('admin_user');
+        $role_ckeck_table["destroy"] = array('admin_user');
+/*
+        $role_ckeck_table = array();
         $role_ckeck_table["index"]   = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
         $role_ckeck_table["regist"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
         $role_ckeck_table["edit"]    = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
         $role_ckeck_table["update"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
         $role_ckeck_table["destroy"] = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
-
+*/
         return $role_ckeck_table;
     }
 
@@ -59,7 +66,9 @@ class UserManage extends ManagePluginBase
     public function getRoles($id)
     {
         // ユーザデータ取得
-        $roles = UsersRoles::getUsersRoles($id);
+        //$roles = UsersRoles::getUsersRoles($id);
+        $users_roles = new UsersRoles();
+        $roles = $users_roles->getUsersRoles($id);
 
         return $roles;
     }

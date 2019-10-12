@@ -28,6 +28,16 @@ class PageManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
+        $role_ckeck_table["index"]         = array('admin_page');
+        $role_ckeck_table["edit"]          = array('admin_page');
+        $role_ckeck_table["store"]         = array('admin_page');
+        $role_ckeck_table["update"]        = array('admin_page');
+        $role_ckeck_table["destroy"]       = array('admin_page');
+        $role_ckeck_table["sequence_up"]   = array('admin_page');
+        $role_ckeck_table["sequence_down"] = array('admin_page');
+        $role_ckeck_table["move_page"]     = array('admin_page');
+/*
+        $role_ckeck_table = array();
         $role_ckeck_table["index"]         = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
         $role_ckeck_table["edit"]          = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
         $role_ckeck_table["store"]         = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
@@ -36,7 +46,7 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["sequence_up"]   = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
         $role_ckeck_table["sequence_down"] = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
         $role_ckeck_table["move_page"]     = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-
+*/
         return $role_ckeck_table;
     }
 

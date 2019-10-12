@@ -152,6 +152,7 @@
         <ul class="navbar-nav">
 
             {{-- システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
+{{--
             @if (Auth::check() && 
                 (
                     Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) ||
@@ -161,34 +162,46 @@
                     Auth::user()->can(Config::get('cc_role.ROLE_OPERATION_MANAGER'))
                 )
             )
+--}}
+            {{-- 管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）--}}
+            @if (Auth::check() && Auth::user()->can('role_manage_or_post'))
+
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">管理機能</a>
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_manage">
 
                         {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
-                        @if (isset($page_list))
+                        @if (isset($page_list) && Auth::user()->can('frames.create'))
                             <a class="dropdown-item" href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a>
                             <div class="dropdown-divider"></div>
 
                         @endif
                         {{-- 管理プラグインのメニュー --}}
-                        @if (isset($plugin_name) && $plugin_name == 'page')
-                            <a href="{{ url('/manage/page') }}" class="dropdown-item active" style="border-radius: 0;">ページ管理</a>
-                        @else
-                            <a href="{{ url('/manage/page') }}" class="dropdown-item">ページ管理</a>
+                        @if (Auth::user()->can('admin_page'))
+                            @if (isset($plugin_name) && $plugin_name == 'page')
+                                <a href="{{ url('/manage/page') }}" class="dropdown-item active" style="border-radius: 0;">ページ管理</a>
+                            @else
+                                <a href="{{ url('/manage/page') }}" class="dropdown-item">ページ管理</a>
+                            @endif
                         @endif
-                        @if (isset($plugin_name) && $plugin_name == 'site')
-                            <a href="{{ url('/manage/site') }}" class="dropdown-item active" style="border-radius: 0;">サイト管理</a>
-                        @else
-                            <a href="{{ url('/manage/site') }}" class="dropdown-item">サイト管理</a>
+                        @if (Auth::user()->can('admin_site'))
+                            @if (isset($plugin_name) && $plugin_name == 'site')
+                                <a href="{{ url('/manage/site') }}" class="dropdown-item active" style="border-radius: 0;">サイト管理</a>
+                            @else
+                                <a href="{{ url('/manage/site') }}" class="dropdown-item">サイト管理</a>
+                            @endif
                         @endif
-                        @if (isset($plugin_name) && $plugin_name == 'user')
-                            <a href="{{ url('/manage/user') }}" class="dropdown-item active" style="border-radius: 0;">ユーザ管理</a>
-                        @else
-                            <a href="{{ url('/manage/user') }}" class="dropdown-item">ユーザ管理</a>
+                        @if (Auth::user()->can('admin_user'))
+                            @if (isset($plugin_name) && $plugin_name == 'user')
+                                <a href="{{ url('/manage/user') }}" class="dropdown-item active" style="border-radius: 0;">ユーザ管理</a>
+                            @else
+                                <a href="{{ url('/manage/user') }}" class="dropdown-item">ユーザ管理</a>
+                            @endif
+                        @endif
+                        @if (Auth::user()->can('role_manage_on'))
+                            <div class="dropdown-divider"></div>
                         @endif
                         @if (isset($page_list))
-                            <div class="dropdown-divider"></div>
                             @if (app('request')->input('mode') == 'preview')
                                 <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
                             @else
@@ -197,7 +210,7 @@
                         @endif
                     </div>
                 </li>
-            {{-- /システム管理者, サイト管理者, ユーザ管理者, ページ管理者, 運用管理者 の場合に、管理メニューを表示 --}}
+            {{-- /管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）--}}
             @endif
 
             @guest

@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
+use App\Models\Core\UsersRoles;
 use App\User;
 use App\Plugins\Api\ApiPluginBase;
+use App\Traits\ConnectCommonTrait;
 
 /**
  * NC2からのSSO管理クラス
@@ -22,6 +24,9 @@ use App\Plugins\Api\ApiPluginBase;
  */
 class Nc2Sso extends ApiPluginBase
 {
+
+    use ConnectCommonTrait;
+
     /**
      *  ページ初期表示
      *
@@ -50,14 +55,26 @@ class Nc2Sso extends ApiPluginBase
         $check_result = json_decode($return_json, true);
         //Log::debug(print_r($check_result, true));
 
+        // 権限エラー
+        if (!$check_result["check"]) {
+            abort(403, "認証エラー。");
+        }
+
         // SSO するユーザの存在を確認
         $user = User::where('userid', $login_id)->first();
 
         // ユーザが存在する
         if (!empty($user)) {
 
+            // ユーザ権限データ取得
+            //$roles = UsersRoles::getUsersRoles($user->id);
+            $users_roles = new UsersRoles();
+
             // 権限が一般 or ゲストの場合は、自動ログイン
-            if ($user->role == config('cc_role.ROLE_PAGE_MANAGER') || $user->role == config('cc_role.ROLE_GUEST')) {
+            // if ($user->role == config('cc_role.ROLE_PAGE_MANAGER') || $user->role == config('cc_role.ROLE_GUEST')) {
+
+            // ユーザはあり、書き込み系の権限がない場合は、自動ログイン
+            if ($users_roles->notRole('role_reporter', $user->id)) {
 
                 // ログイン
                 Auth::login($user, true);
@@ -67,7 +84,8 @@ class Nc2Sso extends ApiPluginBase
             }
 
             // 管理者権限の場合は、NC2 側でも管理者の場合、自動ログイン
-            if ($user->role == config('cc_role.ROLE_SYSTEM_MANAGER') && $check_result['role_authority_id'] == 1) {
+            //if ($user->role == config('cc_role.ROLE_SYSTEM_MANAGER') && $check_result['role_authority_id'] == 1) {
+            if ($users_roles->haveRole('admin_system', $user->id) && $check_result['role_authority_id'] == 1) {
 
                 // ログイン
                 Auth::login($user, true);
@@ -81,12 +99,11 @@ class Nc2Sso extends ApiPluginBase
         }
         else {
             // ユーザが存在しない場合、一般権限でユーザを作成して、自動ログイン
-
             $user           = new User;
             $user->name     = $check_result['handle'];
             $user->userid   = $login_id;
             $user->password = 'password';
-            $user->role     = 0;
+            //$user->role     = 0;
             $user->save();
 
             // ログイン

@@ -11,11 +11,8 @@
 
 {{-- パネルヘッダーはフレームタイトルが空、認証していない場合はパネルヘッダーを使用しない --}}
 @if (!Auth::check() && empty($frame->frame_title))
-@elseif (Auth::check() && empty($frame->frame_title) && !( Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))))
+@elseif (Auth::check() && empty($frame->frame_title) && !( Auth::user()->can('frames.move')))
 @else
-
-{{-- Auth::user()->role --}}
-
     @php
         $class_border = "";
         // 
@@ -38,7 +35,7 @@
 
     {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}
     @if (Auth::check() &&
-        (Auth::user()->can(Config::get('cc_role.ROLE_SYSTEM_MANAGER')) || Auth::user()->can(Config::get('cc_role.ROLE_SITE_MANAGER'))) &&
+        (Auth::user()->can('role_arrangement')) &&
          app('request')->input('mode') != 'preview')
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}

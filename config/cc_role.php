@@ -10,7 +10,7 @@ return [
     | Connect-CMS role const
     |
     */
-
+/*
     'ROLE_SYSTEM_MANAGER'    => 1,  // システム管理者
     'ROLE_SITE_MANAGER'      => 2,  // サイト管理者
     'ROLE_USER_MANAGER'      => 3,  // ユーザ管理者
@@ -21,7 +21,7 @@ return [
     'ROLE_MODERATOR'         => 12, // モデレータ
     'ROLE_GENERAL'           => 13, // 一般
     'ROLE_GUEST'             => 0,  // ゲスト
-
+*/
     /*
     |--------------------------------------------------------------------------
     | Authority
@@ -48,6 +48,29 @@ return [
         'posts.update'   => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.delete'   => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.approval' => ['role_approval', 'role_article_admin'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Role Hierarchy
+    |--------------------------------------------------------------------------
+    |
+    | Connect-CMS Role Hierarchy const
+    |
+    */
+
+    'CC_ROLE_HIERARCHY' => [
+
+        'role_reporter'     => ['role_reporter', 'role_article_admin'],
+        'role_arrangement'  => ['role_arrangement', 'role_article_admin'],
+        'role_approval'     => ['role_approval', 'role_article_admin'],
+        'role_article'      => ['role_article', 'role_article_admin'],
+        'role_article_admin'=> ['role_article_admin'],
+
+        'admin_system'      => ['admin_system'],
+        'admin_page'        => ['admin_page', 'admin_system'],
+        'admin_site'        => ['admin_site', 'admin_system'],
+        'admin_user'        => ['admin_user', 'admin_system'],
     ],
 
     /*

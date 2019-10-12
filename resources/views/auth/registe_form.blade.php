@@ -174,15 +174,15 @@
     <div class="form-group row text-center">
         <div class="col-sm-3"></div>
         <div class="col-sm-6">
-            <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user')}}'">
+                <i class="fas fa-times"></i> キャンセル
+            </button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
                 @if (isset($function) && $function == 'edit')
                     ユーザ変更
                 @else
                     ユーザ登録
                 @endif
-            </button>
-            <button type="button" class="btn btn-secondary" onclick="location.href='{{url('/manage/user')}}'">
-                <i class="fas fa-times"></i> キャンセル
             </button>
         </div>
         {{-- 既存ユーザの場合は削除処理のボタンも表示 --}}

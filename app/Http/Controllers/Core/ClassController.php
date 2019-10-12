@@ -13,6 +13,8 @@ use App\Http\Requests;
 
 use App\User;
 
+use App\Traits\ConnectCommonTrait;
+
 //use App\User;
 //use App\Repositories\UserRepository;
 
@@ -26,6 +28,8 @@ use App\User;
  */
 class ClassController extends ConnectController
 {
+
+    use ConnectCommonTrait;
 
     /**
      *  管理プラグインのインスタンス生成
@@ -91,11 +95,14 @@ class ClassController extends ConnectController
             abort(403, '権限定義メソッド(declareRole)がありません。');
         }
 
-        // 権限エラー
-        $role_ckeck_table = $plugin_instance->declareRole();
-        if (array_key_exists($action, $role_ckeck_table)) {
-            if (!in_array($user->role, $role_ckeck_table[$action])) {
-                abort(403, 'ユーザーにメソッドに対する権限がありません。');
+        // 権限チェック（管理系各プラグインの関数＆権限チェックデータ取得）
+        $role_ckeck_tables = $plugin_instance->declareRole();
+        if (array_key_exists($action, $role_ckeck_tables)) {
+            foreach($role_ckeck_tables[$action] as $role) {
+                // プラグインで定義された権限が自分にあるかチェック
+                if (!$this->isCan($role)) {
+                    abort(403, 'ユーザーにメソッドに対する権限がありません。');
+                }
             }
         }
         else {

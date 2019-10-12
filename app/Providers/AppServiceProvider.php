@@ -19,7 +19,6 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function check_authority($user, $authority, $args = null)
     {
-
         // preview モードのチェック付きの場合はpreview モードなら権限ナシで返す。
         $request = app(\Illuminate\Http\Request::class);
 
@@ -96,13 +95,20 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         }
 
-        // ユーザの保持しているロールをループ
-        foreach ($user['user_rolses'] as $target) {
-            // ターゲット処理をループ
-            foreach ($target as $user_role => $user_role_value) {
-                // 必要なロールを保持している場合は、権限ありとして true を返す。
-                if ($role == $user_role && $user_role_value) {
-                    return true;
+        // 指定された権限を含むロールをループする。
+        // 記事追加は記事管理者でもOKのような処理のため。
+        foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
+
+            // ユーザの保持しているロールをループ
+            foreach ($user['user_rolses'] as $target) {
+
+                // ターゲット処理をループ
+                foreach ($target as $user_role => $user_role_value) {
+
+                    // 必要なロールを保持している場合は、権限ありとして true を返す。
+                    if ($checck_role == $user_role && $user_role_value) {
+                        return true;
+                    }
                 }
             }
         }
@@ -249,50 +255,113 @@ class AppServiceProvider extends AuthServiceProvider
         // *** システム権限から確認
 
         // システム管理者権限の有無確認
+/*
         Gate::define(config('cc_role.ROLE_SYSTEM_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
                 return true;
             }
             return false;
         });
-
+*/
         // サイト管理者権限の有無確認
+/*
         Gate::define(config('cc_role.ROLE_SITE_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_SITE_MANAGER')) {
                 return true;
             }
             return false;
         });
-
+*/
         // ユーザ管理者権限の有無確認
+/*
         Gate::define(config('cc_role.ROLE_USER_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_USER_MANAGER')) {
                 return true;
             }
             return false;
         });
-
+*/
         // ページ管理者権限の有無確認
+/*
         Gate::define(config('cc_role.ROLE_PAGE_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_PAGE_MANAGER')) {
                 return true;
             }
             return false;
         });
-
+*/
         // 運用管理者権限の有無確認
+/*
         Gate::define(config('cc_role.ROLE_OPERATION_MANAGER'), function ($user) {
             if ($user->role == config('cc_role.ROLE_OPERATION_MANAGER')) {
                 return true;
             }
             return false;
         });
+*/
+        // *** その他判定用
 
-        // *** プレビューのための判定
-
-        // フレーム削除
+        // プレビューのための判定
         Gate::define('preview', function ($user, $args = null) {
             return $this->check_authority($user, 'preview', $args);
+        });
+
+        // 管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）
+        Gate::define('role_manage_or_post', function ($user, $args = null) {
+            // ページ管理
+            if ($this->check_role($user, 'admin_page')) {
+                return true;
+            }
+            // サイト管理
+            if ($this->check_role($user, 'admin_site')) {
+                return true;
+            }
+            // ユーザー管理
+            if ($this->check_role($user, 'admin_user')) {
+                return true;
+            }
+            // システム管理
+            if ($this->check_role($user, 'admin_system')) {
+                return true;
+            }
+            // 配置
+            if ($this->check_role($user, 'role_arrangement')) {
+                return true;
+            }
+            // 記事追加
+            if ($this->check_role($user, 'role_reporter')) {
+                return true;
+            }
+            // 記事追加
+            if ($this->check_role($user, 'role_article')) {
+                return true;
+            }
+            // 記事管理者
+            if ($this->check_role($user, 'role_article_admin')) {
+                return true;
+            }
+            return false;
+        });
+
+        // 管理メニュー表示判定（管理機能のどこかに付与がある場合）
+        Gate::define('role_manage_on', function ($user, $args = null) {
+            // ページ管理
+            if ($this->check_role($user, 'admin_page')) {
+                return true;
+            }
+            // サイト管理
+            if ($this->check_role($user, 'admin_site')) {
+                return true;
+            }
+            // ユーザー管理
+            if ($this->check_role($user, 'admin_user')) {
+                return true;
+            }
+            // システム管理
+            if ($this->check_role($user, 'admin_system')) {
+                return true;
+            }
+            return false;
         });
 
         return false;

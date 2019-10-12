@@ -29,9 +29,13 @@ class SiteManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
+        $role_ckeck_table["index"]  = array('admin_site');
+        $role_ckeck_table["update"] = array('admin_site');
+/*
+        $role_ckeck_table = array();
         $role_ckeck_table["index"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_SITE_MANAGER'));
         $role_ckeck_table["update"] = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_SITE_MANAGER'));
-
+*/
         return $role_ckeck_table;
     }
 
@@ -136,6 +140,7 @@ class SiteManage extends ManagePluginBase
              'value'    => (isset($request->base_touch_callout) ? $request->base_touch_callout : 0)]
         );
 
-        return $this->index($request, $page_id, $errors);
+        // ページ管理画面に戻る
+        return redirect("/manage/site");
     }
 }

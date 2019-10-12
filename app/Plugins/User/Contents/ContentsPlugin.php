@@ -57,7 +57,8 @@ class ContentsPlugin extends UserPluginBase
         $user = Auth::user();
 
         // 管理者権限の場合は、一時保存も対象
-        if (!empty($user) && $user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
+        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
+        if (!empty($user) && $this->isCan('admin_system')) {
 
             // フレームID が渡されるので、そのフレームに応じたデータを返す。
             // 表示するデータ、バケツ、フレームをJOIN して取得

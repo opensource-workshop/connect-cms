@@ -88,14 +88,14 @@
             <!-- Add or Update Page Button -->
             <div class="form-group">
                 <div class="offset-sm-3 col-sm-6">
-                    <button type="submit" class="btn btn-primary form-horizontal mr-3">
+                    @if ($page->id)
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/page')}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    @else
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    @endif
+                    <button type="submit" class="btn btn-primary form-horizontal">
                         <i class="fas fa-check"></i> @if ($page->id)ページ更新 @else ページ追加 @endif
                     </button>
-                    @if ($page->id)
-                        <button type="button" class="btn btn-secondary" onclick="location.href='{{url('/manage/page')}}'"><i class="fas fa-times"></i> キャンセル</button>
-                    @else
-                        <button type="button" class="btn btn-secondary" onclick="location.href='{{url('/')}}'"><i class="fas fa-times"></i> キャンセル</button>
-                    @endif
                 </div>
             </div>
         </form>

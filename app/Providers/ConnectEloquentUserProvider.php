@@ -32,8 +32,8 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
             ->first();
 
         // user roles を追加
-        $users_roles = UsersRoles::getUsersRoles($identifier);
-        $ret->user_rolses = $users_roles;
+        $users_roles = new UsersRoles();
+        $ret->user_rolses = $users_roles->getUsersRoles($identifier);
 
         return $ret;
 
