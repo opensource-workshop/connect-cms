@@ -14,7 +14,8 @@
     @include('core.cms_frame_edit_tab')
 </ul>
 
-@if (!$opac->id)
+{{-- opac オブジェクトがない or idがない --}}
+@if (!$opac || !$opac->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用するOPACを選択するか、作成してください。
@@ -35,7 +36,8 @@
     </div>
 @endif
 
-@if (!$opac->id && !$create_flag)
+{{-- opac オブジェクトがない or (idがない ＆ 新規作成でもない) --}}
+@if (!$opac || (!$opac->id && !$create_flag))
 @else
 <form action="/plugin/opacs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
@@ -48,13 +50,13 @@
     @endif
 
     <div class="form-group">
-        <label class="control-label">OPAC名 <span class="label label-danger">必須</span></label>
+        <label class="control-label">OPAC名 <label class="badge badge-danger">必須</span></label>
         <input type="text" name="opac_name" value="{{old('opac_name', $opac->opac_name)}}" class="form-control">
         @if ($errors && $errors->has('opac_name')) <div class="text-danger">{{$errors->first('opac_name')}}</div> @endif
     </div>
 
     <div class="form-group">
-        <label class="control-label">表示件数 <span class="label label-danger">必須</span></label>
+        <label class="control-label">表示件数 <label class="badge badge-danger">必須</span></label>
         <input type="text" name="view_count" value="{{old('view_count', $opac->view_count)}}" class="form-control">
         @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
     </div>

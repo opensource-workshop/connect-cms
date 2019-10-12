@@ -48,13 +48,13 @@
     @endif
 
     <div class="form-group">
-        <label class="control-label">ブログ名 <span class="label label-danger">必須</span></label>
+        <label class="control-label">ブログ名 <label class="badge badge-danger">必須</span></label>
         <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control">
         @if ($errors && $errors->has('blog_name')) <div class="text-danger">{{$errors->first('blog_name')}}</div> @endif
     </div>
 
     <div class="form-group">
-        <label class="control-label">表示件数 <span class="label label-danger">必須</span></label>
+        <label class="control-label">表示件数 <label class="badge badge-danger">必須</span></label>
         <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control">
         @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
     </div>

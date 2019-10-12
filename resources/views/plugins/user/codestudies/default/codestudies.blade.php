@@ -64,13 +64,13 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">コード <span class="label label-danger">必須</span></label><br />
+        <label class="control-label">コード <label class="badge badge-danger">必須</span></label><br />
         <textarea class="form-control" rows="10" name="code_text" style="font-family:'ＭＳ ゴシック', 'MS Gothic', 'Osaka－等幅', Osaka-mono, monospace;">{!!old('code_text', $codestudy->code_text)!!}</textarea>
         @if ($errors && $errors->has('code_text')) <div class="text-danger">{{$errors->first('code_text')}}</div> @endif
     </div>
 
     <div class="form-group">
-        <label class="control-label">言語 <span class="label label-danger">必須</span></label><br />
+        <label class="control-label">言語 <label class="badge badge-danger">必須</span></label><br />
         <div class="card">
             <div class="card-body">
                 @if ($codestudy->study_lang == 'java' || old('study_lang') == 'java')

@@ -48,7 +48,7 @@
     @endif
 
     <div class="form-group">
-        <label class="control-label">フォーム名 <span class="label label-danger">必須</span></label>
+        <label class="control-label">フォーム名 <label class="badge badge-danger">必須</span></label>
         <input type="text" name="forms_name" value="{{old('forms_name', $form->forms_name)}}" class="form-control">
         @if ($errors && $errors->has('forms_name')) <div class="text-danger">{{$errors->first('forms_name')}}</div> @endif
     </div>

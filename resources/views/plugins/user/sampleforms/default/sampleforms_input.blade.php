@@ -18,7 +18,7 @@
 
 {{-- テキスト --}}
 <div class="form-group @if ($errors && $errors->has('column_text')) has-error @endif">
-    <label class="control-label">テキスト <span class="label label-danger">必須</span></label>
+    <label class="control-label">テキスト <label class="badge badge-danger">必須</span></label>
     <input type="text" name="column_text" value="{{old('column_text', $sampleform->column_text)}}" class="form-control">
     @if ($errors && $errors->has('column_text')) <div class="text-danger">{{$errors->first('column_text')}}</div> @endif
 </div>

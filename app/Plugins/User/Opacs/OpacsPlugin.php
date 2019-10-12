@@ -59,7 +59,10 @@ class OpacsPlugin extends UserPluginBase
         $keyword = $request->session()->get('search_keyword');
 
         // データ取得（1ページの表示件数指定）
-        if (empty($keyword)) {
+        if (empty($opac_frame->opacs_id)) {
+            $opacs_books = null;
+        }
+        elseif (empty($keyword)) {
             $opacs_books = DB::table('opacs_books')
                           ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
                           ->leftJoin('opacs_books_lents', function ($join) {
