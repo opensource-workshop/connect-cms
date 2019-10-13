@@ -45,9 +45,9 @@
                            <td>
                                 <input type="text" name="select_value" value="" class="form-control select_value">
                            </td>
-                           <td>
+                           <td nowrap>
                                <button class="btn btn-danger form-horizontal" onclick="">
-                                   <i class="fas fa-trash-alt"></i> <span class="hidden-sm hidden-xs">削除</span>
+                                   <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
                                </button>
                            </td>
                        </tr>
@@ -67,9 +67,9 @@
                            <td>
                                 <input type="text" name="forms[{{$frame_id}}][{{$row_no}}][select][{{$select_no}}][value]" value="{{$row['select'][$select_no]['value']}}" class="form-control select_value">
                            </td>
-                           <td>
+                           <td nowrap>
                                <button class="btn btn-danger form-horizontal" onclick="javascript:remove_select_row('{{$row_no}}','{{$select_no}}');return false;">
-                                   <i class="fas fa-trash-alt"></i> <span class="hidden-sm hidden-xs">削除</span>
+                                   <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
                                </button>
                            </td>
                         </tr>
@@ -88,9 +88,9 @@
                             <td>
                                  <input type="text" name="forms[{{$frame_id}}][{{$row_no}}][select][1][value]" value="" class="form-control select_value">
                             </td>
-                            <td>
+                            <td nowrap>
                                 <button class="btn btn-danger" onclick="javascript:remove_select_row('{{$row_no}}','1');return false;">
-                                    <i class="fas fa-trash-alt"></i> <span class="hidden-sm hidden-xs">削除</span>
+                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
                                 </button>
                             </td>
                         </tr>
@@ -101,7 +101,7 @@
                            <td style="vertical-align: middle;" nowrap></td>
                            <td class="text-center">
                                <button class="btn btn-primary" onclick="javascript:add_select_row('{{$row_no}}');return false;">
-                                   <i class="fas fa-plus"></i> <span class="hidden-sm hidden-xs">選択肢追加</span>
+                                   <i class="fas fa-plus"></i> <span class="d-sm-none">選択肢追加</span>
                                </button>
                            </td>
                            <td>
@@ -111,11 +111,11 @@
                     </table>
 
                     <div class="text-center mt-1">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> キャンセル
+                        </button>
                         <button type="button" class="btn btn-primary mr-3" onclick="javascript:submit_reload_column('{{$row_no}}');">
                             <i class="far fa-edit"></i> 変更
-                        </button>
-                        <button type="button" class="btn btn-secondary"" data-dismiss="modal">
-                            <i class="fas fa-times"></i> キャンセル
                         </button>
                     </div>
                 </div>

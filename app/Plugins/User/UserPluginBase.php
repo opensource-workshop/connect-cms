@@ -194,7 +194,7 @@ class UserPluginBase extends PluginBase
     /**
      * フォーム選択表示関数
      */
-    public function datalist($request, $page_id, $frame_id, $id = null)
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // 対象のプラグイン
         $plugin_name = $this->frame->plugin_name;

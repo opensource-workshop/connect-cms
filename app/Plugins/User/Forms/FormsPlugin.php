@@ -10,9 +10,16 @@ use DB;
 use App\Buckets;
 use App\Forms;
 use App\FormsColumns;
+use App\FormsInputs;
+use App\FormsInputCols;
 use App\Frame;
 use App\Page;
 use App\Plugins\User\UserPluginBase;
+
+
+use App\Uploads;
+
+
 
 /**
  * フォーム・プラグイン
@@ -36,7 +43,7 @@ class FormsPlugin extends UserPluginBase
         // フォームの設定がまだの場合は、フォームの新規作成に遷移する。
         $form = $this->getForms($this->frame->id);
         if (empty($form)) {
-            return "createPlugin";
+            return "createBuckets";
         }
 
         // カラムの設定画面
@@ -46,7 +53,7 @@ class FormsPlugin extends UserPluginBase
     /**
      *  データ取得
      */
-    public function getForms($frame_id)
+    private function getForms($frame_id)
     {
         // Forms、Frame データ
         $form = DB::table('forms')
@@ -61,7 +68,7 @@ class FormsPlugin extends UserPluginBase
     /**
      *  カラムデータ取得
      */
-    public function getFormsColumns($form)
+    private function getFormsColumns($form)
     {
         // フォームのカラムデータ
         $form_columns = [];
@@ -100,7 +107,7 @@ class FormsPlugin extends UserPluginBase
     /**
      *  カラムの選択肢用データ取得
      */
-    public function getFormsColumnsSelects($forms_id)
+    private function getFormsColumnsSelects($forms_id)
     {
         // カラムの選択肢用データ
         $forms_columns_selects = DB::table('forms_columns_selects')
@@ -267,7 +274,7 @@ class FormsPlugin extends UserPluginBase
     /**
      *  紐づくフォームID とフレームデータの取得
      */
-    public function getFormFrame($frame_id)
+    private function getFormFrame($frame_id)
     {
         // Frame データ
         $frame = DB::table('frames')
@@ -281,7 +288,7 @@ class FormsPlugin extends UserPluginBase
     /**
      * フォーム設定変更画面の表示
      */
-    public function editPlugin($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -315,17 +322,17 @@ class FormsPlugin extends UserPluginBase
     /**
      * フォーム新規作成画面
      */
-    public function createPlugin($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
     {
         // 新規作成フラグを付けてフォーム設定変更画面を呼ぶ
         $create_flag = true;
-        return $this->editPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $errors);
     }
 
     /**
      *  フォーム登録処理
      */
-    public function savePlugin($request, $page_id, $frame_id, $forms_id = null)
+    public function saveBuckets($request, $page_id, $frame_id, $forms_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -341,11 +348,11 @@ class FormsPlugin extends UserPluginBase
 
             if (empty($forms_id)) {
                 $create_flag = true;
-                return $this->createPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
+                return $this->createBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
             }
             else  {
                 $create_flag = false;
-                return $this->editPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
+                return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
             }
         }
 
@@ -396,13 +403,13 @@ class FormsPlugin extends UserPluginBase
         // 新規作成フラグを付けてフォーム設定変更画面を呼ぶ
         $create_flag = false;
 
-        return $this->editPlugin($request, $page_id, $frame_id, $forms_id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message);
     }
 
     /**
      *  フォーム削除処理
      */
-    public function destroyPlugin($request, $page_id, $frame_id, $forms_id)
+    public function destroyBuckets($request, $page_id, $frame_id, $forms_id)
     {
         // forms_id がある場合、データを削除
         if ( $forms_id ) {
@@ -564,10 +571,7 @@ class FormsPlugin extends UserPluginBase
         }
 
         // Session に保持している詳細画面情報も付与する。
-//Log::debug($request);
-//Log::debug($forms);
         $forms = $this->formSessionMarge($request, $forms);
-//Log::debug($forms);
 
         session(['forms' => $forms]);
 
@@ -578,7 +582,7 @@ class FormsPlugin extends UserPluginBase
     /**
      * カラム追加関数
      */
-    public function settingColumn($request, $page_id, $frame_id, $id = null)
+    public function addColumn($request, $page_id, $frame_id, $id = null)
     {
         // フレームに紐づくフォームID を探して取得
         $form_db = $this->getForms($frame_id);
@@ -606,7 +610,7 @@ class FormsPlugin extends UserPluginBase
     /**
      * カラム削除関数
      */
-    public function destroyColumn($request, $page_id, $frame_id, $id = null)
+    public function deleteColumn($request, $page_id, $frame_id, $id = null)
     {
         // フレームに紐づくフォームID を探して取得
         $form_db = $this->getForms($frame_id);
@@ -643,7 +647,7 @@ class FormsPlugin extends UserPluginBase
     /**
      *  メインの画面内容に詳細画面の内容をSessionから追加する。
      */
-    public function formSessionMarge($request, $forms, $from_row_no = null, $to_row_no = null)
+    private function formSessionMarge($request, $forms, $from_row_no = null, $to_row_no = null)
     {
         // 位置移動用変数
         $tmp_frame_id = 0;
@@ -716,7 +720,7 @@ class FormsPlugin extends UserPluginBase
      *  カラム上移動
      */
 //    public function sequenceUp($request, $page_id, $frame_id, $columns_id)
-    public function sequenceUp($request, $page_id, $frame_id, $target_row_no)
+    public function upColumnSequence($request, $page_id, $frame_id, $target_row_no)
     {
         // フレームに紐づくフォームID を探して取得
         $form_db = $this->getForms($frame_id);
@@ -768,7 +772,7 @@ class FormsPlugin extends UserPluginBase
      *  カラム下移動
      */
 //    public function sequenceDown($request, $page_id, $frame_id, $columns_id)
-    public function sequenceDown($request, $page_id, $frame_id, $target_row_no)
+    public function downColumnSequence($request, $page_id, $frame_id, $target_row_no)
     {
         // フレームに紐づくフォームID を探して取得
         $form_db = $this->getForms($frame_id);
@@ -837,7 +841,7 @@ class FormsPlugin extends UserPluginBase
     /**
      * カラム選択肢削除
      */
-    public function deleteColumnsSelects($columns_id)
+    private function deleteColumnsSelects($columns_id)
     {
         if (!empty($columns_id)) {
             DB::table('forms_columns_selects')->where('forms_columns_id', $columns_id)->delete();
@@ -847,7 +851,7 @@ class FormsPlugin extends UserPluginBase
     /**
      * カラム選択肢追加
      */
-    public function insertColumnsSelects($columns_id, $column)
+    private function insertColumnsSelects($columns_id, $column)
     {
         if (!empty($columns_id)) {
             if (!empty($column['select'])) {
@@ -867,7 +871,7 @@ class FormsPlugin extends UserPluginBase
     /**
      * カラム保存関数
      */
-    public function save($request, $page_id, $frame_id, $id = null)
+    public function saveColumn($request, $page_id, $frame_id, $id = null)
     {
         // 対象のフォームID
         $forms_id = $request->forms_id;
@@ -1003,13 +1007,131 @@ class FormsPlugin extends UserPluginBase
    /**
     * データ紐づけ変更関数
     */
-    public function change($request, $page_id = null, $frame_id = null, $id = null)
+    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
 
         // 表示ブログ選択画面を呼ぶ
-        return $this->datalist($request, $page_id, $frame_id, $id);
+        return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * フォーム選択表示関数
+     */
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
+    {
+        // 対象のプラグイン
+        $plugin_name = $this->frame->plugin_name;
+
+        // Frame データ
+        $plugin_frame = DB::table('frames')
+                            ->select('frames.*')
+                            ->where('frames.id', $frame_id)->first();
+
+        // データ取得（1ページの表示件数指定）
+        $plugins = DB::table($plugin_name)
+                       ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
+                       ->orderBy('created_at', 'desc')
+                       ->paginate(10);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'forms_datalist', [
+            'plugin_frame' => $plugin_frame,
+            'plugins'      => $plugins,
+        ]);
+    }
+
+    /**
+     * フォームデータダウンロード
+     */
+    public function downloadCsv($request, $page_id, $frame_id, $id)
+    {
+
+        // id で対象のデータの取得
+
+        // フォームの取得
+        $form = Forms::where('id', $id)->first();
+
+        // カラムの取得
+        $columns = FormsColumns::where('forms_id', $id)->orderBy('display_sequence', 'asc')->get();
+
+        // 登録データの取得
+        $input_cols = FormsInputCols::whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id))
+                                      ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+                                      ->get();
+
+/*
+ダウンロード前の配列イメージ。
+0行目をFormsColumns から生成して、1行目以降は0行目の キーのみのコピーを作成し、データを入れ込んでいく。
+1行目以降の行番号は forms_inputs_id の値を使用
+
+0 [
+    37 => 姓
+    40 => 名
+    45 => テキスト
+]
+1 [
+    37 => 永原
+    40 => 篤
+    45 => テストです。
+]
+2 [
+    37 => 田中
+    40 => 
+    45 => 
+]
+
+-- FormsInputCols のSQL
+SELECT *
+FROM forms_input_cols
+WHERE forms_inputs_id IN (
+    SELECT id FROM forms_inputs WHERE forms_id = 17
+)
+ORDER BY forms_inputs_id, forms_columns_id
+
+*/
+        // 返却用配列
+        $csv_array = array();
+
+        // データ行用の空配列
+        $copy_base = array();
+
+        // 見出し行
+        foreach($columns as $column) {
+            $csv_array[0][$column->id] = $column->column_name;
+            $copy_base[$column->id] = '';
+        }
+
+        // データ
+        foreach($input_cols as $input_col) {
+            if (!array_key_exists($input_col->forms_inputs_id, $csv_array)) {
+                $csv_array[$input_col->forms_inputs_id] = $copy_base;
+            }
+            $csv_array[$input_col->forms_inputs_id][$input_col->forms_columns_id] = $input_col->value;
+        }
+
+        // レスポンス版
+        $filename = $form->forms_name . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+ 
+        // データ
+        $csv_data = '';
+        foreach($csv_array as $csv_line) {
+            foreach($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            $csv_data .= "\n";
+        }
+
+        // 文字コード変換
+        $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
+
+        return response()->make($csv_data, 200, $headers);
     }
 }

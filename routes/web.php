@@ -65,6 +65,9 @@ Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core
 // 一般プラグインの更新系アクション（リダイレクトする場合）
 Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect');
 
+// 一般プラグインのダウンロード系アクション
+Route::post('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload');
+
 // CSS の取得アクション
 Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss');
 

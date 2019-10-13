@@ -203,7 +203,9 @@ class DefaultController extends ConnectController
         // 引数のアクションと同じメソッドを呼び出す。
         $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
         $contentsPlugin = new $class_name($this->page, $action_frame);
-        $contentsPlugin->$action($request, $page_id, $frame_id, $id);
+
+        // invokeを通して呼び出すことで権限チェックを実施
+        $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
 
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";
@@ -231,6 +233,31 @@ class DefaultController extends ConnectController
         }
 
         return redirect("/" . ($page_no_link ? "?" . $page_no_link : ""));
+    }
+
+    /**
+     *  ダウンロード処理用にフレーム呼び出し
+     *
+     * @param String $plugin_name
+     * @return view
+     */
+    public function invokePostDownload(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
+    {
+        // プラグイン毎に動的にnew する。
+        // Todo：プラグインを動的にインスタンス生成すること。
+
+        // フレームのインスタンス生成、プラグインクラスに渡すこと
+        $action_frame = null;
+        if (!empty($frame_id)) {
+            $action_frame = Frame::where('id', $frame_id)->first();
+        }
+
+        // 引数のアクションと同じメソッドを呼び出す。
+        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        $contentsPlugin = new $class_name($this->page, $action_frame);
+
+        // invokeを通して呼び出すことで権限チェックを実施
+        return $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
     }
 
     /**

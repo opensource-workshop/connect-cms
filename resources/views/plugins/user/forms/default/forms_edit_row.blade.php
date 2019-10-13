@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
-<tr @if ($delete_flag == '1') class="hidden" @endif>
+<tr @if ($delete_flag == '1') class="d-none" @endif>
     <td style="vertical-align: middle;" nowrap>
         {{-- 上移動 --}}
 {{--
@@ -63,12 +63,12 @@
             </select>
         @else
             @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox')
-                <button class="btn btn-primary btn-xs cc-font-90 text-nowrap" onclick="javascript:return false;" data-toggle="modal" data-target="#formsDetailModal{{$row_no}}"><i class="far fa-window-restore"></i> <span class="hidden-sm hidden-xs">詳細</span></button>
+                <button class="btn btn-primary btn-xs cc-font-90 text-nowrap" onclick="javascript:return false;" data-toggle="modal" data-target="#formsDetailModal{{$row_no}}"><i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span></button>
             @endif
         @endif
     </td>
     <td style="vertical-align: middle;">
-        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:submit_destroy_column({{$row_no}});"><i class="fas fa-trash-alt"></i> <span class="hidden-sm hidden-xs">削除</span></button>
+        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:submit_destroy_column({{$row_no}});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
     </td>
 </tr>
 @if ($delete_flag == '0')

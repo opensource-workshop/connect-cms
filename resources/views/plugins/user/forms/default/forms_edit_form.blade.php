@@ -37,7 +37,7 @@
 
 @if (!$form->id && !$create_flag)
 @else
-<form action="/plugin/forms/savePlugin/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにforms_id を空にする --}}
@@ -58,15 +58,15 @@
         <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-6">
-                <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i></span> 
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i></span> 
                 @if (empty($form) || $create_flag)
                     登録確定
                 @else
                     変更確定
                 @endif
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                    <i class="fas fa-times"></i> キャンセル
                 </button>
             </div>
 
@@ -75,7 +75,7 @@
             @else
             <div class="col-sm-3 pull-right text-right">
                 <a data-toggle="collapse" href="#collapse{{$form_frame->id}}">
-                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none">削除</span></span>
                 </a>
             </div>
             @endif
@@ -90,7 +90,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/forms/destroyPlugin/{{$page->id}}/{{$frame_id}}/{{$form_frame->forms_id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/forms/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$form_frame->forms_id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

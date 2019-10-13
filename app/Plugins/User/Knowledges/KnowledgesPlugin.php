@@ -157,7 +157,7 @@ class KnowledgesPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      */
-    public function datalist($request, $page_id, $frame_id, $id = null)
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // ソート設定に初期設定値をセット
         $sort_inits = [

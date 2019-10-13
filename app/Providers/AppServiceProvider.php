@@ -230,6 +230,46 @@ class AppServiceProvider extends AuthServiceProvider
             return $this->check_authority($user, 'buckets.delete', $args);
         });
 
+        // カラム追加
+        Gate::define('buckets.addColumn', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.addColumn', $args);
+        });
+
+        // カラム編集
+        Gate::define('buckets.editColumn', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.editColumn', $args);
+        });
+
+        // カラム削除
+        Gate::define('buckets.deleteColumn', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.deleteColumn', $args);
+        });
+
+        // カラム再設定
+        Gate::define('buckets.reloadColumn', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.reloadColumn', $args);
+        });
+
+        // カラム上移動
+        Gate::define('buckets.upColumnSequence', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.upColumnSequence', $args);
+        });
+
+        // カラム下移動
+        Gate::define('buckets.downColumnSequence', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.downColumnSequence', $args);
+        });
+
+        // カラム保存
+        Gate::define('buckets.saveColumn', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.saveColumn', $args);
+        });
+
+        // CSVダウンロード
+        Gate::define('buckets.downloadCsv', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.downloadCsv', $args);
+        });
+
         // *** 記事の権限から確認
 
         // 記事追加

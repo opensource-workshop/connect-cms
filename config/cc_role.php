@@ -34,20 +34,29 @@ return [
     'CC_AUTHORITY' => [
 
         // フレーム
-        'frames.create'   => ['role_arrangement', 'role_article_admin'],
-        'frames.move'     => ['role_arrangement', 'role_article_admin'],
-        'frames.edit'     => ['role_arrangement', 'role_article_admin'],
-        'frames.delete'   => ['role_arrangement', 'role_article_admin'],
-        'frames.change'   => ['role_arrangement', 'role_article_admin'],
+        'frames.create'              => ['role_arrangement', 'role_article_admin'],
+        'frames.move'                => ['role_arrangement', 'role_article_admin'],
+        'frames.edit'                => ['role_arrangement', 'role_article_admin'],
+        'frames.delete'              => ['role_arrangement', 'role_article_admin'],
+        'frames.change'              => ['role_arrangement', 'role_article_admin'],
 
         // バケツ
-        'buckets.create'  => ['role_arrangement', 'role_article_admin'],
+        'buckets.create'             => ['role_arrangement', 'role_article_admin'],
+        'buckets.delete'             => ['role_arrangement', 'role_article_admin'],
+        'buckets.addColumn'          => ['role_arrangement', 'role_article_admin'],
+        'buckets.editColumn'         => ['role_arrangement', 'role_article_admin'],
+        'buckets.deleteColumn'       => ['role_arrangement', 'role_article_admin'],
+        'buckets.reloadColumn'       => ['role_arrangement', 'role_article_admin'],
+        'buckets.upColumnSequence'   => ['role_arrangement', 'role_article_admin'],
+        'buckets.downColumnSequence' => ['role_arrangement', 'role_article_admin'],
+        'buckets.saveColumn'         => ['role_arrangement', 'role_article_admin'],
+        'buckets.downloadCsv'        => ['role_arrangement', 'role_article_admin'],
 
         // 記事
-        'posts.create'   => ['role_reporter', 'role_article', 'role_article_admin'],
-        'posts.update'   => ['role_reporter', 'role_article', 'role_article_admin'],
-        'posts.delete'   => ['role_reporter', 'role_article', 'role_article_admin'],
-        'posts.approval' => ['role_approval', 'role_article_admin'],
+        'posts.create'               => ['role_reporter', 'role_article', 'role_article_admin'],
+        'posts.update'               => ['role_reporter', 'role_article', 'role_article_admin'],
+        'posts.delete'               => ['role_reporter', 'role_article', 'role_article_admin'],
+        'posts.approval'             => ['role_approval', 'role_article_admin'],
     ],
 
     /*
@@ -85,21 +94,31 @@ return [
     'CC_METHOD_AUTHORITY' => [
 
         // 記事（複数権限が指定されている場合は、アンド条件）
-        'create'         => ['posts.create'],
-        'edit'           => ['posts.update'],
-        'store'          => ['posts.create'],
-        'update'         => ['posts.update'],
-        'save'           => ['posts.create', 'posts.update'],
-        'temporarysave'  => ['posts.create', 'posts.update'],
-        'delete'         => ['posts.delete'],
-        'destroy'        => ['posts.delete'],
-        'approval'       => ['posts.approval'],
-        'listBuckets'    => ['frames.change'],
-        'createBuckets'  => ['frames.create'],
-        'editBuckets'    => ['frames.edit'],
-        'saveBuckets'    => ['frames.create'],
-        'destroyBuckets' => ['frames.delete'],
-        'changeBuckets'  => ['frames.change'],
+        'listBuckets'         => ['frames.change'],
+        'createBuckets'       => ['frames.create'],
+        'editBuckets'         => ['frames.edit'],
+        'saveBuckets'         => ['frames.create'],
+        'destroyBuckets'      => ['frames.delete'],
+        'changeBuckets'       => ['frames.change'],
+
+        'addColumn'           => ['buckets.addColumn'],
+        'editColumn'          => ['buckets.editColumn'],
+        'deleteColumn'        => ['buckets.deleteColumn'],
+        'reloadColumn'        => ['buckets.reloadColumn'],
+        'upColumnSequence'    => ['buckets.upColumnSequence'],
+        'downColumnSequence'  => ['buckets.downColumnSequence'],
+        'saveColumn'          => ['buckets.saveColumn'],
+        'downloadCsv'         => ['buckets.downloadCsv'],
+
+        'create'              => ['posts.create'],
+        'edit'                => ['posts.update'],
+        'store'               => ['posts.create'],
+        'update'              => ['posts.update'],
+        'save'                => ['posts.create', 'posts.update'],
+        'temporarysave'       => ['posts.create', 'posts.update'],
+        'delete'              => ['posts.delete'],
+        'destroy'             => ['posts.delete'],
+        'approval'            => ['posts.approval'],
     ],
 
 ];

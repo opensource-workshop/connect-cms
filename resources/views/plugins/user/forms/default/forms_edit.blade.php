@@ -47,26 +47,26 @@
 <script type="text/javascript">
     {{-- 項目追加のsubmit JavaScript --}}
     function submit_setting_column() {
-        form_columns.action = "/plugin/forms/settingColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/addColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
         form_columns.submit();
     }
 
     {{-- 項目削除のsubmit JavaScript --}}
     function submit_destroy_column(row_no) {
-        form_columns.action = "/plugin/forms/destroyColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/deleteColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
         form_columns.destroy_no.value = row_no;
         form_columns.submit();
     }
 
     {{-- ページの上移動用フォームのsubmit JavaScript --}}
     function submit_sequence_up( id ) {
-        form_columns.action = "/plugin/forms/sequenceUp/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/upColumnSequence/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
         form_columns.submit();
     }
 
     {{-- ページの下移動用フォームのsubmit JavaScript --}}
     function submit_sequence_down( id ) {
-        form_columns.action = "/plugin/forms/sequenceDown/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/downColumnSequence/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
         form_columns.submit();
     }
 
@@ -118,7 +118,7 @@
 
 <!-- Add or Update Form Button -->
 <div class="form-group">
-    <form action="/plugin/forms/save/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
+    <form action="/plugin/forms/saveColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="forms_id" value="{{$forms_id}}">
         <input type="hidden" name="destroy_no" value="">
@@ -130,13 +130,13 @@
             <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>操作</th>
-                    <th>項目名</th>
-                    <th>型</th>
-                    <th class="text-nowrap">必須</th>
-                    <th>まとめ数</th>
-                    <th>削除</th>
-                    <th></th>
+                    <th nowrap>操作</th>
+                    <th nowrap>項目名</th>
+                    <th nowrap>型</th>
+                    <th nowrap>必須</th>
+                    <th nowrap>まとめ数</th>
+                    <th nowrap>削除</th>
+                    <th nowrap></th>
                 </tr>
             </thead>
             <tbody>
@@ -152,10 +152,10 @@
             </table>
         </div>
         <div class="text-center">
-            <button type="submit" class="btn btn-primary mr-3">
+            <button type="button" class="btn btn-secondary mr-2" onclick="javascript:forms_cancel.submit();"><i class="fas fa-times"></i> キャンセル</button>
+            <button type="submit" class="btn btn-primary">
                 <i class="fas fa-check"></i> フォーム保存
             </button>
-            <button type="button" class="btn btn-secondary" onclick="javascript:forms_cancel.submit();"><i class="fas fa-times"></i> キャンセル</button>
         </div>
     </form>
 </div>

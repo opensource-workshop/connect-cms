@@ -36,6 +36,6 @@
         <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][frame_col]" value="0">
     </td>
     <td style="vertical-align: middle;">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_setting_column();"><i class="fas fa-plus"></i> <span class="hidden-sm hidden-xs">追加</span></button>
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_setting_column();"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>
 </tr>
