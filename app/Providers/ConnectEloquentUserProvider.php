@@ -33,7 +33,7 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
 
         // user roles を追加
         $users_roles = new UsersRoles();
-        $ret->user_rolses = $users_roles->getUsersRoles($identifier);
+        $ret->user_roles = $users_roles->getUsersRoles($identifier);
 
         return $ret;
 
@@ -54,7 +54,7 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
 
         $user->timestamps = false;
 
-        // ログアウト時にuser_rolses をセットしに行ってエラーになるため、update 処理に変更 by nagahara@opensource-workshop.jp
+        // ログアウト時にuser_roles をセットしに行ってエラーになるため、update 処理に変更 by nagahara@opensource-workshop.jp
         // $user->save();
           \App\User::where('id', $user->id)->update(['remember_token' => $token]);
 

@@ -16,7 +16,7 @@ class UsersRoles extends Model
     /**
      * 権限
      */
-    var $user_rolses = null;
+    var $user_roles = null;
 
     /**
      *  ユーザー権限の取得
@@ -29,8 +29,8 @@ class UsersRoles extends Model
     {
 
         // すでに内容を保持している場合はh時している内容を返却
-        if (!empty($this->user_rolses)) {
-            return $this->user_rolses;
+        if (!empty($this->user_roles)) {
+            return $this->user_roles;
         }
 
         // 指定されたユーザの権限を取得する。
@@ -38,13 +38,13 @@ class UsersRoles extends Model
         $users_roles = self::where('users_id', $users_id)->get();
 
         // 配列の形式は[target][role_name] = value{1|0}
-        $this->user_rolses = array();
+        $this->user_roles = array();
         foreach($users_roles as $users_role) {
-            $this->user_rolses[$users_role->target][$users_role->role_name] = $users_role->role_value;
+            $this->user_roles[$users_role->target][$users_role->role_name] = $users_role->role_value;
 
         }
 
-        return $this->user_rolses;
+        return $this->user_roles;
     }
 
     /**
