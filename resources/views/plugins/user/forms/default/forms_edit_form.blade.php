@@ -53,6 +53,52 @@
         @if ($errors && $errors->has('forms_name')) <div class="text-danger">{{$errors->first('forms_name')}}</div> @endif
     </div>
 
+    <div class="form-group">
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" name="mail_send_flag" value="1" class="custom-control-input" id="mail_send_flag" @if(old('mail_send_flag', $form->mail_send_flag)) checked=checked @endif>
+            <label class="custom-control-label" for="mail_send_flag">以下のアドレスにメール送信する</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
+        <input type="text" name="mail_send_address" value="{{old('mail_send_address', $form->mail_send_address)}}" class="form-control">
+    </div>
+
+    <div class="form-group">
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" name="user_mail_send_flag" value="1" class="custom-control-input" id="user_mail_send_flag" @if(old('user_mail_send_flag', $form->user_mail_send_flag)) checked=checked @endif>
+            <label class="custom-control-label" for="user_mail_send_flag">登録者にメール送信する</label>
+        </div>
+    </div>
+{{--
+    <div class="form-group">
+        <label class="control-label">From メール送信者名</label>
+        <input type="text" name="from_mail_name" value="{{old('from_mail_name', $form->from_mail_name)}}" class="form-control">
+    </div>
+--}}
+    <div class="form-group">
+        <label class="control-label">メール件名</label>
+        <input type="text" name="mail_subject" value="{{old('mail_subject', $form->mail_subject)}}" class="form-control">
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">メールフォーマット　[[body]]　の部分に登録内容が入ります。</label>
+        <textarea name="mail_format" class="form-control" rows=5>{{old('mail_format', $form->mail_format)}}</textarea>
+    </div>
+
+    <div class="form-group">
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', $form->data_save_flag)) checked=checked @endif>
+            <label class="custom-control-label" for="data_save_flag">データを保存する（チェックを外すと、サイト上にデータを保持しません）</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">登録後のメッセージ</label>
+        <textarea name="after_message" class="form-control">{{old('after_message', $form->after_message)}}</textarea>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">

@@ -16,6 +16,7 @@ use App\Frame;
 use App\Page;
 
 use App\Plugins\User\UserPluginBase;
+
 /**
  * ブログプラグイン
  *
@@ -27,13 +28,30 @@ use App\Plugins\User\UserPluginBase;
 class BlogsPlugin extends UserPluginBase
 {
 
+    /* オブジェクト変数 */
+
     /**
      * 変更時のPOSTデータ
      */
     public $post = null;
 
+    /* コアから呼び出す関数 */
+
     /**
-     *  編集画面の最初のタブ
+     *  関数定義（コアから呼び出す）
+     */
+    public function getPublicFunctions()
+    {
+        // 画面などから呼ばれる関数の定義（これ以外はエラーとする）
+        // index は例外で定義なし
+        $functions = array();
+        $functions['get']  = ['create', 'edit', 'createBuckets', 'editBuckets', 'listBuckets'];
+        $functions['post'] = ['save', 'temporarysave', 'approval', 'delete', 'saveBuckets','destroyBuckets', 'changeBuckets'];
+        return $functions;
+    }
+
+    /**
+     *  編集画面の最初のタブ（コアから呼び出す）
      *
      *  スーパークラスをオーバーライド
      */
@@ -43,21 +61,7 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
-     *  紐づくブログID とフレームデータの取得
-     */
-    public function getBlogFrame($frame_id)
-    {
-        // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count', 'blogs.approval_flag')
-                 ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
-        return $frame;
-    }
-
-    /**
-     *  POST取得関数
+     *  POST取得関数（コアから呼び出す）
      *  コアがPOSTチェックの際に呼び出す関数
      */
     public function getPost($id) {
@@ -70,6 +74,60 @@ class BlogsPlugin extends UserPluginBase
         $this->post = BlogsPosts::where('id', $id)->first();
         return $this->post;
     }
+
+    /* private関数 */
+
+    /**
+     *  紐づくブログID とフレームデータの取得
+     */
+    private function getBlogFrame($frame_id)
+    {
+        // Frame データ
+        $frame = DB::table('frames')
+                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count', 'blogs.approval_flag')
+                 ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
+                 ->where('frames.id', $frame_id)
+                 ->first();
+        return $frame;
+    }
+
+    /**
+     *  ブログ記事チェック設定
+     */
+    private function makeValidator($request)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'post_title' => ['required'],
+            'posted_at'  => ['required', 'date_format:Y-m-d H:i:s'],
+            'post_text'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'post_title' => 'タイトル',
+            'posted_at'  => '投稿日時',
+            'post_text'  => '本文',
+        ]);
+        return $validator;
+    }
+
+    /**
+     *  要承認の判断
+     */
+    private function isApproval($frame_id)
+    {
+        // 承認の要否確認とステータス処理
+        $blog_frame = $this->getBlogFrame($frame_id);
+        if ($blog_frame->approval_flag == 1) {
+
+            // 記事修正、記事管理者権限がない場合は要承認
+            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* 画面アクション関数 */
 
     /**
      *  データ初期表示関数
@@ -167,6 +225,235 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
+     *  新規記事画面
+     */
+    public function create($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // ブログ＆フレームデータ
+        $blog_frame = $this->getBlogFrame($frame_id);
+
+        // 空のデータ(画面で初期値設定で使用するため)
+        $blogs_posts = new BlogsPosts();
+        $blogs_posts->posted_at = date('Y-m-d H:i:s');
+
+        // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
+        return $this->view(
+            'blogs_input', [
+            'blog_frame'  => $blog_frame,
+            'blogs_posts' => $blogs_posts,
+            'errors'      => $errors,
+        ])->withInput($request->all);
+    }
+
+    /**
+     * 記事編集画面
+     */
+    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // Frame データ
+        $blog_frame = $this->getBlogFrame($frame_id);
+
+        // 記事取得
+        //$blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
+        $blogs_post = $this->getPost($blogs_posts_id);
+
+        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
+        return $this->view(
+            'blogs_input', [
+            'blog_frame'  => $blog_frame,
+            'blogs_posts' => $blogs_post,
+            'errors'      => $errors,
+        ])->withInput($request->all);
+    }
+
+    /**
+     *  ブログ記事登録処理
+     */
+    public function save($request, $page_id, $frame_id, $blogs_posts_id = null)
+    {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
+        }
+
+        // id があれば旧データを取得
+        $old_blogs_post = null;
+        if (!empty($blogs_posts_id)) {
+            $old_blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
+        }
+
+        // 新規オブジェクト生成
+        $blogs_post = new BlogsPosts();
+
+        // ブログ記事設定
+        $blogs_post->blogs_id   = $request->blogs_id;
+        $blogs_post->post_title = $request->post_title;
+        $blogs_post->posted_at  = $request->posted_at;
+        $blogs_post->post_text  = $request->post_text;
+
+        // 承認の要否確認とステータス処理
+        if ($this->isApproval($frame_id)) {
+            $blogs_post->status = 2;
+        }
+
+        // 新規
+        if (empty($blogs_posts_id)) {
+
+            // 登録ユーザ
+            $blogs_post->created_id  = Auth::user()->id;
+
+            // データ保存
+            $blogs_post->save();
+
+            // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
+            BlogsPosts::where('id', $blogs_post->id)->update(['contents_id' => $blogs_post->id]);
+        }
+        // 更新
+        else {
+
+            // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
+            $blogs_post->contents_id = $old_blogs_post->contents_id;
+
+            // 登録ユーザ
+            $blogs_post->created_id  = $old_blogs_post->created_id;
+
+            // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
+            if ($blogs_post->status != 2) {
+                BlogsPosts::where('contents_id', $old_blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
+            }
+
+            // データ保存
+            $blogs_post->save();
+
+        }
+
+        // 登録後は表示用の初期処理を呼ぶ。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+   /**
+    * データ一時保存関数
+    */
+    public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
+        }
+
+        // 新規オブジェクト生成
+        if (empty($id)) {
+            $blogs_post = new BlogsPosts();
+
+            // 登録ユーザ
+            $blogs_post->created_id  = Auth::user()->id;
+        }
+        else {
+            $blogs_post = BlogsPosts::find($id)->replicate();
+        }
+
+        // ブログ記事設定
+        $blogs_post->status = 1;
+        $blogs_post->blogs_id   = $request->blogs_id;
+        $blogs_post->post_title = $request->post_title;
+        $blogs_post->posted_at  = $request->posted_at;
+        $blogs_post->post_text  = $request->post_text;
+
+        $blogs_post->save();
+
+        if (empty($id)) {
+
+            // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
+            BlogsPosts::where('id', $blogs_post->id)->update(['contents_id' => $blogs_post->id]);
+        }
+
+        // 登録後は表示用の初期処理を呼ぶ。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     *  削除処理
+     */
+    public function delete($request, $page_id, $frame_id, $blogs_posts_id)
+    {
+        // id がある場合、データを削除
+        if ( $blogs_posts_id ) {
+
+            // 同じcontents_id のデータを削除するため、一旦、対象データを取得
+            $post = BlogsPosts::where('id', $blogs_posts_id)->first();
+
+            // データを削除する。
+            BlogsPosts::where('contents_id', $post->contents_id)->delete();
+        }
+        // 削除後は表示用の初期処理を呼ぶ。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+   /**
+    * 承認
+    */
+    public function approval($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 新規オブジェクト生成
+        $blogs_post = BlogsPosts::find($id)->replicate();
+
+        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
+        BlogsPosts::where('contents_id', $blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
+
+        // ブログ記事設定
+        $blogs_post->status = 0;
+        $blogs_post->save();
+
+        // 登録後は表示用の初期処理を呼ぶ。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * データ選択表示関数
+     */
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
+    {
+        // Frame データ
+        $blog_frame = DB::table('frames')
+                      ->select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count')
+                      ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
+                      ->where('frames.id', $frame_id)->first();
+
+        // データ取得（1ページの表示件数指定）
+        $blogs = Blogs::orderBy('created_at', 'desc')
+                       ->paginate(10);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'blogs_list_buckets', [
+            'blog_frame' => $blog_frame,
+            'blogs'      => $blogs,
+        ]);
+    }
+
+    /**
+     * ブログ新規作成画面
+     */
+    public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
+    {
+        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
+        $create_flag = true;
+        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $errors);
+    }
+
+    /**
      * ブログ設定変更画面の表示
      */
     public function editBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
@@ -198,16 +485,6 @@ class BlogsPlugin extends UserPluginBase
             'message'     => $message,
             'errors'      => $errors,
         ])->withInput($request->all);
-    }
-
-    /**
-     * ブログ新規作成画面
-     */
-    public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
-    {
-        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
-        $create_flag = true;
-        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $errors);
     }
 
     /**
@@ -317,249 +594,6 @@ class BlogsPlugin extends UserPluginBase
             Buckets::where('id', $frame->bucket_id)->delete();
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
-    }
-
-    /**
-     *  新規記事画面
-     */
-    public function create($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
-    {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
-        // ブログ＆フレームデータ
-        $blog_frame = $this->getBlogFrame($frame_id);
-
-        // 空のデータ(画面で初期値設定で使用するため)
-        $blogs_posts = new BlogsPosts();
-        $blogs_posts->posted_at = date('Y-m-d H:i:s');
-
-        // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'blogs_input', [
-            'blog_frame'  => $blog_frame,
-            'blogs_posts' => $blogs_posts,
-            'errors'      => $errors,
-        ])->withInput($request->all);
-    }
-
-    /**
-     * 記事編集画面
-     */
-    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
-    {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
-        // Frame データ
-        $blog_frame = $this->getBlogFrame($frame_id);
-
-        // 記事取得
-        //$blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
-        $blogs_post = $this->getPost($blogs_posts_id);
-
-        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'blogs_input', [
-            'blog_frame'  => $blog_frame,
-            'blogs_posts' => $blogs_post,
-            'errors'      => $errors,
-        ])->withInput($request->all);
-    }
-
-    /**
-     *  ブログ記事チェック設定
-     */
-    public function makeValidator($request)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'post_title' => ['required'],
-            'posted_at'  => ['required', 'date_format:Y-m-d H:i:s'],
-            'post_text'  => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'post_title' => 'タイトル',
-            'posted_at'  => '投稿日時',
-            'post_text'  => '本文',
-        ]);
-        return $validator;
-    }
-
-    /**
-     *  要承認の判断
-     */
-    public function isApproval($frame_id)
-    {
-        // 承認の要否確認とステータス処理
-        $blog_frame = $this->getBlogFrame($frame_id);
-        if ($blog_frame->approval_flag == 1) {
-
-            // 記事修正、記事管理者権限がない場合は要承認
-            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     *  ブログ記事登録処理
-     */
-    public function save($request, $page_id, $frame_id, $blogs_posts_id = null)
-    {
-        // 項目のエラーチェック
-        $validator = $this->makeValidator($request);
-
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
-        }
-
-        // id があれば旧データを取得
-        $old_blogs_post = null;
-        if (!empty($blogs_posts_id)) {
-            $old_blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
-        }
-
-        // 新規オブジェクト生成
-        $blogs_post = new BlogsPosts();
-
-        // ブログ記事設定
-        $blogs_post->blogs_id   = $request->blogs_id;
-        $blogs_post->post_title = $request->post_title;
-        $blogs_post->posted_at  = $request->posted_at;
-        $blogs_post->post_text  = $request->post_text;
-
-        // 承認の要否確認とステータス処理
-        if ($this->isApproval($frame_id)) {
-            $blogs_post->status = 2;
-        }
-
-        // 新規
-        if (empty($blogs_posts_id)) {
-
-            // 登録ユーザ
-            $blogs_post->created_id  = Auth::user()->id;
-
-            // データ保存
-            $blogs_post->save();
-
-            // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
-            BlogsPosts::where('id', $blogs_post->id)->update(['contents_id' => $blogs_post->id]);
-        }
-        // 更新
-        else {
-
-            // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
-            $blogs_post->contents_id = $old_blogs_post->contents_id;
-
-            // 登録ユーザ
-            $blogs_post->created_id  = $old_blogs_post->created_id;
-
-            // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
-            if ($blogs_post->status != 2) {
-                BlogsPosts::where('contents_id', $old_blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
-            }
-
-            // データ保存
-            $blogs_post->save();
-
-        }
-
-        // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
-    }
-
-   /**
-    * データ一時保存関数
-    */
-    public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // 項目のエラーチェック
-        $validator = $this->makeValidator($request);
-
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
-        }
-
-        // 新規オブジェクト生成
-        if (empty($id)) {
-            $blogs_post = new BlogsPosts();
-        }
-        else {
-            $blogs_post = BlogsPosts::find($id)->replicate();
-        }
-
-        // ブログ記事設定
-        $blogs_post->status = 1;
-        $blogs_post->blogs_id   = $request->blogs_id;
-        $blogs_post->post_title = $request->post_title;
-        $blogs_post->posted_at  = $request->posted_at;
-        $blogs_post->post_text  = $request->post_text;
-
-        $blogs_post->save();
-
-        // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
-    }
-
-   /**
-    * 承認
-    */
-    public function approval($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // 新規オブジェクト生成
-        $blogs_post = BlogsPosts::find($id)->replicate();
-
-        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
-        BlogsPosts::where('contents_id', $blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
-
-        // ブログ記事設定
-        $blogs_post->status = 0;
-        $blogs_post->save();
-
-        // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
-    }
-
-    /**
-     *  削除処理
-     */
-    public function destroy($request, $page_id, $frame_id, $blogs_posts_id)
-    {
-        // id がある場合、データを削除
-        if ( $blogs_posts_id ) {
-
-            // データを削除する。
-            BlogsPosts::destroy($blogs_posts_id);
-        }
-        // 削除後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
-    }
-
-    /**
-     * データ選択表示関数
-     */
-    public function listBuckets($request, $page_id, $frame_id, $id = null)
-    {
-        // Frame データ
-        $blog_frame = DB::table('frames')
-                      ->select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count')
-                      ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
-                      ->where('frames.id', $frame_id)->first();
-
-        // データ取得（1ページの表示件数指定）
-        $blogs = Blogs::orderBy('created_at', 'desc')
-                       ->paginate(10);
-
-        // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs_list_buckets', [
-            'blog_frame' => $blog_frame,
-            'blogs'      => $blogs,
-        ]);
     }
 
    /**

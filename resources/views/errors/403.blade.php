@@ -12,6 +12,9 @@
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
         403 Forbidden. （権限がありません）<br />
+{{--
+        {{$exception->getMessage()}}
+--}}
     </div>
 </div>
 @endsection

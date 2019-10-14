@@ -34,9 +34,10 @@
             <option value="text">・1行文字列型</option>
             <option value="textarea">・複数行文字列型</option>
             <option value="radio">・単一選択型</option>
+            <option value="select">・リストボックス型</option>
             <option value="checkbox">・複数選択型</option>
+            <option value="mail">・メールアドレス型</option>
             <option value="birthday" disabled style="background-color: #f0f0f0;">・生年月日型</option>
-            <option value="select" disabled style="background-color: #f0f0f0;">・リストボックス型</option>
             <option value="datetime" disabled style="background-color: #f0f0f0;">・日付＆時間型</option>
             <option value="file" disabled style="background-color: #f0f0f0;">・ファイル型</option>
         </select>

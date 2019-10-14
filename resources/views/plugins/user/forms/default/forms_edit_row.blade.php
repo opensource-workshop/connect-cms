@@ -39,8 +39,9 @@
             <option value="textarea" @if ($row['column_type'] == 'textarea') selected @endif>複数行文字列型</option>
             <option value="radio"    @if ($row['column_type'] == 'radio')    selected @endif>単一選択型</option>
             <option value="checkbox" @if ($row['column_type'] == 'checkbox') selected @endif>複数選択型</option>
+            <option value="select"   @if ($row['column_type'] == 'select')   selected @endif>リストボックス型</option>
+            <option value="mail"     @if ($row['column_type'] == 'mail')     selected @endif>メールアドレス型</option>
             <option value="birthday" @if ($row['column_type'] == 'birthday') selected @endif disabled style="background-color: #f0f0f0;">生年月日型</option>
-            <option value="select"   @if ($row['column_type'] == 'select')   selected @endif disabled style="background-color: #f0f0f0;">リストボックス型</option>
             <option value="datetime" @if ($row['column_type'] == 'datetime') selected @endif disabled style="background-color: #f0f0f0;">日付＆時間型</option>
             <option value="file"     @if ($row['column_type'] == 'file')     selected @endif disabled style="background-color: #f0f0f0;">ファイル型</option>
             <option value="group"    @if ($row['column_type'] == 'group')    selected @endif >まとめ行</option>
@@ -62,7 +63,7 @@
                 @endfor
             </select>
         @else
-            @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox')
+            @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox' || $row['column_type'] == 'select')
                 <button class="btn btn-primary btn-xs cc-font-90 text-nowrap" onclick="javascript:return false;" data-toggle="modal" data-target="#formsDetailModal{{$row_no}}"><i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span></button>
             @endif
         @endif
@@ -72,7 +73,7 @@
     </td>
 </tr>
 @if ($delete_flag == '0')
-    @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox')
+    @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox' || $row['column_type'] == 'select')
     <tr>
         <td class="pt-0 border border-0"></td>
         <td class="pt-0 border border-0" colspan="2">

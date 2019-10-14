@@ -43,7 +43,7 @@ class ClassController extends ConnectController
         $file_path = base_path() . "/app/Plugins/Manage/" . ucfirst($plugin_name) . "Manage/" . ucfirst($plugin_name) . "Manage.php";
         require $file_path;
 
-        /// 引数のアクションと同じメソッドを呼び出す。
+        /// インスタンスを生成して返す。
         $class_name = "app\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
         $plugin_instance = new $class_name;
         return new $plugin_instance;

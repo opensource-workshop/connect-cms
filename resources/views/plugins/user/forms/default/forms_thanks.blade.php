@@ -5,5 +5,5 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
-登録ありがとうございました。
+{!!$after_message!!}
 

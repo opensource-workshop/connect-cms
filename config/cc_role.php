@@ -94,6 +94,17 @@ return [
     'CC_METHOD_AUTHORITY' => [
 
         // 記事（複数権限が指定されている場合は、アンド条件）
+        'create'              => ['posts.create'],
+        'edit'                => ['posts.update'],
+        'store'               => ['posts.create'],
+        'update'              => ['posts.update'],
+        'save'                => ['posts.create', 'posts.update'],
+        'temporarysave'       => ['posts.create', 'posts.update'],
+        'delete'              => ['posts.delete'],
+        'destroy'             => ['posts.delete'],
+        'approval'            => ['posts.approval'],
+
+        // バケツ＆フレーム
         'listBuckets'         => ['frames.change'],
         'createBuckets'       => ['frames.create'],
         'editBuckets'         => ['frames.edit'],
@@ -109,16 +120,43 @@ return [
         'downColumnSequence'  => ['buckets.downColumnSequence'],
         'saveColumn'          => ['buckets.saveColumn'],
         'downloadCsv'         => ['buckets.downloadCsv'],
+    ],
 
-        'create'              => ['posts.create'],
-        'edit'                => ['posts.update'],
-        'store'               => ['posts.create'],
-        'update'              => ['posts.update'],
-        'save'                => ['posts.create', 'posts.update'],
-        'temporarysave'       => ['posts.create', 'posts.update'],
-        'delete'              => ['posts.delete'],
-        'destroy'             => ['posts.delete'],
-        'approval'            => ['posts.approval'],
+    'CC_METHOD_REQUEST_METHOD' => [
+
+        // 記事（複数権限が指定されている場合は、アンド条件）
+        'create'              => ['get'],
+        'edit'                => ['get'],
+        'show'                => ['get'],
+        'store'               => ['post'],
+        'update'              => ['post'],
+        'save'                => ['post'],
+        'temporarysave'       => ['post'],
+        'delete'              => ['post'],
+        'destroy'             => ['post'],
+        'approval'            => ['post'],
+
+        // ゲストでも実行されるメソッド
+        'index'               => ['post'],
+        'publicConfirm'       => ['post'],
+        'publicStore'         => ['post'],
+
+        // バケツ＆フレーム
+        'listBuckets'         => ['get'],
+        'createBuckets'       => ['get'],
+        'editBuckets'         => ['get'],
+        'saveBuckets'         => ['post'],
+        'destroyBuckets'      => ['post'],
+        'changeBuckets'       => ['post'],
+
+        'addColumn'           => ['post'],
+        'editColumn'          => ['get'],
+        'deleteColumn'        => ['post'],
+        'reloadColumn'        => ['post'],
+        'upColumnSequence'    => ['post'],
+        'downColumnSequence'  => ['post'],
+        'saveColumn'          => ['post'],
+        'downloadCsv'         => ['post'],
     ],
 
 ];

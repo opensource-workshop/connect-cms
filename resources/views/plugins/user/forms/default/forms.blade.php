@@ -7,7 +7,7 @@
  --}}
 @if ($form && $forms_columns)
 
-    <form action="{{URL::to('/')}}/plugin/forms/confirm/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
+    <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
         {{ csrf_field() }}
 
 {{--
@@ -57,6 +57,12 @@
                             @case("checkbox")
                                 @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $group_row])
                                 @break
+                            @case("select")
+                                @include('plugins.user.forms.default.forms_input_select',['form_obj' => $group_row])
+                                @break
+                            @case("mail")
+                                @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $group_row])
+                                @break
                             @endswitch
                         </div>
                     @endforeach
@@ -81,6 +87,16 @@
             @case("checkbox")
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $form_column])
+                </div>
+                @break
+            @case("select")
+                <div class="col-sm-10">
+                    @include('plugins.user.forms.default.forms_input_select',['form_obj' => $form_column])
+                </div>
+                @break
+            @case("mail")
+                <div class="col-sm-10">
+                    @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $form_column])
                 </div>
                 @break
             @endswitch

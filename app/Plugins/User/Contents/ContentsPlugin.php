@@ -27,10 +27,27 @@ use App\Plugins\User\UserPluginBase;
 class ContentsPlugin extends UserPluginBase
 {
 
+    /* オブジェクト変数 */
+
     /**
      * POSTデータ
      */
     public $post = null;
+
+    /* コアから呼び出す関数 */
+
+    /**
+     *  関数定義（コアから呼び出す）
+     */
+    public function getPublicFunctions()
+    {
+        // 画面などから呼ばれる関数の定義（これ以外はエラーとする）
+        // index は例外で定義なし
+        $functions = array();
+        $functions['get']  = ['edit', 'show', 'createBuckets', 'listBuckets'];
+        $functions['post'] = ['store', 'update', 'temporarysave', 'delete', 'changeBuckets'];
+        return $functions;
+    }
 
     /**
      *  編集画面の最初のタブ
@@ -94,6 +111,8 @@ class ContentsPlugin extends UserPluginBase
         return $contents;
     }
 
+    /* 画面アクション関数 */
+
     /**
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
@@ -106,38 +125,6 @@ class ContentsPlugin extends UserPluginBase
         // 表示テンプレートを呼び出す。
         return $this->view(
             'contents', [
-            'contents' => $contents,
-        ]);
-    }
-
-    /**
-     *  データ詳細表示関数
-     *  コアがデータ削除の確認用に呼び出す関数
-     */
-    public function show($request, $page_id, $frame_id, $id = null)
-    {
-        // 権限チェック
-        // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
-        if ($this->can('frames.delete')) {
-            return $this->view_error(403);
-        }
-
-        // データ取得
-        $contents = $this->getPost($frame_id);
-
-        // データの存在確認をして、画面を切り替える
-        if (empty($contents)) {
-
-            // データなしの表示テンプレートを呼び出す。
-            return $this->view(
-                'contents_edit_nodata', [
-                'contents' => null,
-            ]);
-        }
-
-        // 表示テンプレートを呼び出す。
-        return $this->view(
-            'contents_show', [
             'contents' => $contents,
         ]);
     }
@@ -169,63 +156,34 @@ class ContentsPlugin extends UserPluginBase
     }
 
     /**
-     * データ選択表示関数
+     *  データ詳細表示関数
+     *  コアがデータ削除の確認用に呼び出す関数
      */
-    public function listBuckets($request, $page_id, $frame_id, $id = null)
+    public function show($request, $page_id, $frame_id, $id = null)
     {
-        // ソート設定に初期設定値をセット
-        $sort_inits = [
-            "contents_updated_at" => ["desc", "asc"],
-            "page_name" => ["desc", "asc"],
-            "bucket_name" => ["asc", "desc"],
-            "frame_title" => ["asc", "desc"],
-            "content_text" => ["asc", "desc"],
-        ];
-
-        // 要求するソート指示。初期値として更新日の降順を設定
-        $request_order_by = ["contents_updated_at", "desc"];
-
-        // 画面からのソート指定があれば使用(ソート指定があった項目は、ソート設定の内容を入れ替える)
-        if ( !empty( $request->sort ) ) {
-            $request_order_by = explode('|', $request->sort);
-            if ($request_order_by[1] == "asc") {
-                $sort_inits[$request_order_by[0]]=["asc", "desc"];
-            }
-            else {
-                $sort_inits[$request_order_by[0]]=["desc", "asc"];
-            }
+        // 権限チェック
+        // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
+        if ($this->can('frames.delete')) {
+            return $this->view_error(403);
         }
 
-        // 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの)
-        $order_link = array();
-        foreach ( $sort_inits as $order_by_key => $order_by ) {
-            if ( $request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
-                $order_link[$order_by_key] = array_reverse($order_by);
-            }
-            else {
-                $order_link[$order_by_key] = $order_by;
-            }
+        // データ取得
+        $contents = $this->getPost($frame_id);
+
+        // データの存在確認をして、画面を切り替える
+        if (empty($contents)) {
+
+            // データなしの表示テンプレートを呼び出す。
+            return $this->view(
+                'contents_edit_nodata', [
+                'contents' => null,
+            ]);
         }
 
-        // データリストの場合の追加処理
-        // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
-        $buckets = DB::table('buckets')
-                    ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
-                    ->leftJoin('contents', function ($join) {
-                        $join->on('contents.bucket_id', '=', 'buckets.id');
-                        $join->where('contents.status', '=', 0);
-                    })
-                    ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
-                    ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
-                    ->where('buckets.plugin_name', 'contents')
-                    ->orderBy($request_order_by[0],        $request_order_by[1])
-                    ->paginate(10);
-
+        // 表示テンプレートを呼び出す。
         return $this->view(
-            'contents_list_buckets', [
-            'buckets'           => $buckets,
-            'order_link'        => $order_link,
-            'request_order_str' => implode( '|', $request_order_by )
+            'contents_show', [
+            'contents' => $contents,
         ]);
     }
 
@@ -306,17 +264,6 @@ class ContentsPlugin extends UserPluginBase
     }
 
    /**
-    * データ紐づけ変更関数
-    */
-    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
-        return;
-    }
-
-   /**
     * データ削除関数
     */
     public function delete($request, $page_id = null, $frame_id = null, $id = null)
@@ -346,26 +293,75 @@ class ContentsPlugin extends UserPluginBase
         return;
     }
 
-//   /**
-//    * データ削除関数
-//    */
-//    public function destroy($request, $page_id = null, $frame_id = null, $id = null)
-//    {
-//        // id がある場合、コンテンツを削除
-//        if ( $id ) {
-//
-//            // Contents データ
-//            $content = Contents::where('id', $id)->first();
-//
-//            // フレームも同時に削除するがチェックされていたらフレームを削除する。
-//            if ( $request->frame_delete_flag == "1" ) {
-//                Frame::destroy($frame_id);
-//            }
-//
-//            // コンテンツデータとバケツデータを削除する。
-//            Contents::destroy($id);
-//            Buckets::destroy($content->bucket_id);
-//        }
-//        return;
-//    }
+    /**
+     * データ選択表示関数
+     */
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
+    {
+        // ソート設定に初期設定値をセット
+        $sort_inits = [
+            "contents_updated_at" => ["desc", "asc"],
+            "page_name" => ["desc", "asc"],
+            "bucket_name" => ["asc", "desc"],
+            "frame_title" => ["asc", "desc"],
+            "content_text" => ["asc", "desc"],
+        ];
+
+        // 要求するソート指示。初期値として更新日の降順を設定
+        $request_order_by = ["contents_updated_at", "desc"];
+
+        // 画面からのソート指定があれば使用(ソート指定があった項目は、ソート設定の内容を入れ替える)
+        if ( !empty( $request->sort ) ) {
+            $request_order_by = explode('|', $request->sort);
+            if ($request_order_by[1] == "asc") {
+                $sort_inits[$request_order_by[0]]=["asc", "desc"];
+            }
+            else {
+                $sort_inits[$request_order_by[0]]=["desc", "asc"];
+            }
+        }
+
+        // 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの)
+        $order_link = array();
+        foreach ( $sort_inits as $order_by_key => $order_by ) {
+            if ( $request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
+                $order_link[$order_by_key] = array_reverse($order_by);
+            }
+            else {
+                $order_link[$order_by_key] = $order_by;
+            }
+        }
+
+        // データリストの場合の追加処理
+        // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
+        $buckets = DB::table('buckets')
+                    ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
+                    ->leftJoin('contents', function ($join) {
+                        $join->on('contents.bucket_id', '=', 'buckets.id');
+                        $join->where('contents.status', '=', 0);
+                    })
+                    ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
+                    ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
+                    ->where('buckets.plugin_name', 'contents')
+                    ->orderBy($request_order_by[0],        $request_order_by[1])
+                    ->paginate(10);
+
+        return $this->view(
+            'contents_list_buckets', [
+            'buckets'           => $buckets,
+            'order_link'        => $order_link,
+            'request_order_str' => implode( '|', $request_order_by )
+        ]);
+    }
+
+   /**
+    * データ紐づけ変更関数
+    */
+    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // FrameのバケツIDの更新
+        Frame::where('id', $frame_id)
+               ->update(['bucket_id' => $request->select_bucket]);
+        return;
+    }
 }

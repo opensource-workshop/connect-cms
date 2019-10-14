@@ -55,6 +55,49 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  HTTPリクエストメソッドチェック
+     *
+     * @param String $plugin_name
+     * @return view
+     */
+    private function checkHttpRequestMethod($request, $action)
+    {
+        // メソッドのhttp動詞チェック(定数 CC_METHOD_REQUEST_METHOD に設定があること。)
+        if (array_key_exists($this->action, config('cc_role.CC_METHOD_REQUEST_METHOD'))) {
+            foreach (config('cc_role.CC_METHOD_REQUEST_METHOD')[$this->action] as $method_request_method) {
+                if ($request->isMethod($method_request_method)) {
+                    return true;
+                }
+            }
+        }
+        // 定数にメソッドの設定がない or 指定されたメソッド以外で呼ばれたときはエラー。
+        return false;
+    }
+
+    /**
+     *  関数定義チェック
+     *
+     * @param String $plugin_name
+     * @return view
+     */
+    private function checkPublicFunctions($obj, $request, $action)
+    {
+        // 関数定義メソッドの有無確認
+        if (method_exists($obj, 'getPublicFunctions')) {
+
+            // 関数リスト取得
+            $public_functions = $obj->getPublicFunctions();
+
+            if (array_key_exists(mb_strtolower($request->method()), $public_functions)) {
+                if (in_array($action, $public_functions[mb_strtolower($request->method())])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      *  画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
@@ -64,6 +107,22 @@ class UserPluginBase extends PluginBase
     {
         // アクションを保持しておく
         $this->action = $action;
+
+        // メソッドの可視性チェック
+        $objReflectionMethod = new \ReflectionMethod(get_class($obj), $action);
+        if (!$objReflectionMethod->isPublic()) {
+            return $this->view_error("403_inframe");
+        }
+
+        // HTTPリクエストメソッドチェック
+        if (!$this->checkHttpRequestMethod($request, $action)) {
+            return $this->view_error("403_inframe");
+        }
+
+        // 関数定義チェック
+        if (!$this->checkPublicFunctions($obj, $request, $action)) {
+            return $this->view_error("403_inframe");
+        }
 
         // チェック用POST
         $post = null;
