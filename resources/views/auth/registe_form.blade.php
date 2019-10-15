@@ -95,7 +95,7 @@
                 @else
                     <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin">
                 @endif
-                <label class="custom-control-label" for="role_article_admin">記事管理者</label>
+                <label class="custom-control-label" for="role_article_admin">{{ PermitForArticle::getDescription(PermitForArticle::management) }}</label>
             </div>
             <div class="custom-control custom-checkbox">
                 @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_arrangement"]) && $users_roles["base"]["role_arrangement"] == 1)
