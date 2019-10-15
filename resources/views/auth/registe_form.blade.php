@@ -90,11 +90,9 @@
         <label for="password-confirm" class="col-md-4 text-md-right">記事関連の権限</label>
         <div class="col-md-6">
             <div class="custom-control custom-checkbox">
-                @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_article_admin"]) && $users_roles["base"]["role_article_admin"] == 1)
-                    <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin" checked="checked">
-                @else
-                    <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin">
-                @endif
+                <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin" 
+                    {{ isset($users_roles["base"]) && isset($users_roles["base"]["role_article_admin"]) && $users_roles["base"]["role_article_admin"] == 1 ? 'checked="checked"' : '' }}
+                >
                 <label class="custom-control-label" for="role_article_admin">{{ PermitForArticle::getDescription(PermitForArticle::management) }}</label>
             </div>
             <div class="custom-control custom-checkbox">
