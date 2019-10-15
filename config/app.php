@@ -228,6 +228,9 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'Input' => Illuminate\Support\Facades\Input::class,
 
+        // enums
+        'PermitForArticle' => \App\Enums\PermitForArticle::class,
+        'PermitForManage' => \App\Enums\PermitForManage::class,
     ],
 
 ];
