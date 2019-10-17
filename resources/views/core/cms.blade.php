@@ -40,7 +40,7 @@ $(function () {
 
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
-    <div class="row">
+    <div id="ccHeaderArea" class="row">
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[0]['frames'])
             @foreach($layouts_info[0]['frames'] as $frame)
@@ -50,7 +50,7 @@ $(function () {
     </div>
     @endif
 
-    <div class="row d-flex align-items-start">
+    <div id="ccLeftArea" class="row d-flex align-items-start">
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
 {{--        <div class="{{$layouts_info[1]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
@@ -68,7 +68,7 @@ $(function () {
         {{-- メインエリア --}}
 {{--        <div class="{{$layouts_info[2]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
 {{--        <div class="row px-lg-0 {{$layouts_info[2]['col']}} order-1 order-lg-2"> --}}
-        <div class="row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
+        <div id="ccMainArea" class="row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
             {{-- ページ内のフレームのループ --}}
             @foreach($frames as $frame)
                 @if ($frame->area_id == 2)
@@ -80,7 +80,7 @@ $(function () {
         {{-- 右エリア --}}
         @if ($layouts_info[3]['exists'])
 {{--        <div class="{{$layouts_info[3]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
-        <div class="p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
+        <div id="ccRightArea" class="p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
             {{-- ページ内のフレームのループ --}}
             @isset($layouts_info[3]['frames'])
                 @foreach($layouts_info[3]['frames'] as $frame)
@@ -94,7 +94,7 @@ $(function () {
 
     {{-- フッターエリア --}}
     @if ($layouts_info[4]['exists'])
-    <div class="row">
+    <div id="ccFooterArea" class="row">
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[4]['frames'])
             @foreach($layouts_info[4]['frames'] as $frame)
