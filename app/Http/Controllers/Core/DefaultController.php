@@ -89,6 +89,12 @@ class DefaultController extends ConnectController
  
             // Frame データ
             $action_core_frame = Frame::where('id', $request->frame_id)->first();
+
+            // Frame が存在しない場合はnullを返す。
+            if (empty($action_core_frame)) {
+                return null;
+            }
+
             $finder = View::getFinder();
             $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name;
 

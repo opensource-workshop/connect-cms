@@ -129,7 +129,6 @@ class UserPluginBase extends PluginBase
             return $this->view_error("403_inframe");
         }
 
-
         // チェック用POST
         $post = null;
 
@@ -138,7 +137,7 @@ class UserPluginBase extends PluginBase
             $post = $obj->getPost($id);
         }
 
-        // 定数 CC_METHOD_AUTHORITY に設定があること。
+        // 定数 CC_METHOD_AUTHORITY に設定があるものはここでチェックする。
         if (array_key_exists($this->action, config('cc_role.CC_METHOD_AUTHORITY'))) {
 
             // 記載されているメソッドすべての権限を有すること。

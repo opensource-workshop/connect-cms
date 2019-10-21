@@ -41,11 +41,10 @@ class ContentsPlugin extends UserPluginBase
      */
     public function getPublicFunctions()
     {
-        // 画面などから呼ばれる関数の定義（これ以外はエラーとする）
-        // index は例外で定義なし
+        // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['edit', 'show', 'createBuckets', 'listBuckets'];
-        $functions['post'] = ['store', 'update', 'temporarysave', 'delete', 'changeBuckets'];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
