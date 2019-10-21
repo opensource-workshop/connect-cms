@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 
 use App\Buckets;
-use App\Codestudies;
+use App\Models\User\Codestudies\Codestudies;
 
 use App\Frame;
 use App\Page;
@@ -28,11 +28,51 @@ use App\Plugins\User\UserPluginBase;
 class CodestudiesPlugin extends UserPluginBase
 {
 
+    /* オブジェクト変数 */
+
+    /**
+     * 変更時のPOSTデータ
+     */
+    public $post = null;
+
     /**
      *  実行関数チェック
      */
     var $run_check_msgs = null;
 
+    /* コアから呼び出す関数 */
+
+    /**
+     *  関数定義（コアから呼び出す）
+     */
+    public function getPublicFunctions()
+    {
+        // 画面などから呼ばれる関数の定義（これ以外はエラーとする）
+        // index は例外で定義なし
+        $functions = array();
+        $functions['get']  = ['edit', 'edit'];
+        $functions['post'] = ['save', 'run', 'delete'];
+        return $functions;
+    }
+
+    /**
+     *  POST取得関数（コアから呼び出す）
+     *  コアがPOSTチェックの際に呼び出す関数
+     */
+    public function getPost($id) {
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        // コード取得
+        $this->post = Codestudies::where('id', $id)->first();
+
+        return $this->post;
+    }
+
+    /* 画面アクション関数 */
 
     /**
      *  データ初期表示関数
@@ -56,7 +96,7 @@ class CodestudiesPlugin extends UserPluginBase
         }
 
         // 自分の保存したプログラムを取得
-        $codestudies = Codestudies::where('user_id', $user->id)->get();
+        $codestudies = Codestudies::where('created_id', $user->id)->get();
 
         // 画面で空を表示させるために、空のオブジェクトを生成
         $codestudy = new Codestudies();
@@ -90,11 +130,11 @@ class CodestudiesPlugin extends UserPluginBase
             ]);
         }
 
-        // ブログ＆フレームデータ
-        $codestudies = Codestudies::where('user_id', $user->id)->get();
+        // 自分のコード全て
+        $codestudies = Codestudies::where('created_id', $user->id)->get();
 
         // コード取得
-        $codestudy = Codestudies::where('id', $codestudy_id)->first();
+        $codestudy = $this->getPost($codestudy_id);
 
         // if (empty($codestudy)) {
         //     $codestudy = new Codestudies();
@@ -116,7 +156,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  保存処理
      */
-    public function save_impl($request, $page_id, $frame_id, $codestudy_id)
+    private function save_impl($request, $page_id, $frame_id, $codestudy_id)
     {
         // id があれば更新、なければ登録
         if (empty($codestudy_id)) {
@@ -127,7 +167,6 @@ class CodestudiesPlugin extends UserPluginBase
         }
 
         // コード設定
-        $codestudies->user_id    = Auth::id();
         $codestudies->title      = $request->title;
         $codestudies->study_lang = $request->study_lang;
         $codestudies->code_text  = $request->code_text;
@@ -175,7 +214,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  実行可否の判定
      */
-    public function run_check($codestudy)
+    private function run_check($codestudy)
     {
         // 禁止関数
         $deny_method = array();
@@ -217,7 +256,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  Java クラス名抜き出し
      */
-    public function getClassName($codestudy)
+    private function getClassName($codestudy)
     {
         $tmp_code = trim($codestudy->code_text, "\n");
         $tmp_code = trim($tmp_code, "\r");
@@ -235,6 +274,10 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function run($request, $page_id, $frame_id, $codestudy_id)
     {
+        // 権限チェック（run 関数は標準チェックにないので、独自チェック）
+        if ($this->can('posts.update', $this->getPost($codestudy_id))) {
+            return $this->view_error(403);
+        }
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -265,17 +308,17 @@ class CodestudiesPlugin extends UserPluginBase
 
         // ファイルに出力
         //Storage::put('codestudy/' . $codestudy_id . '.php', $codestudy->code_text);
-        Storage::makeDirectory('codestudy/' . $codestudy->user_id . '/' . $codestudy_id);
+        Storage::makeDirectory('codestudy/' . $codestudy->created_id . '/' . $codestudy_id);
 
         $class_name = "";
 
         // 言語判定
         if ($codestudy->study_lang == 'php') {
-            Storage::put('codestudy/' . $codestudy->user_id . '/' . $codestudy_id . '/' . $codestudy_id . '.php', $codestudy->code_text);
+            Storage::put('codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $codestudy_id . '.php', $codestudy->code_text);
         }
         else if ($codestudy->study_lang == 'java') {
             $class_name = $this->getClassName($codestudy);
-            Storage::put('codestudy/' . $codestudy->user_id . '/' . $codestudy_id . '/' . $class_name . '.java', $codestudy->code_text);
+            Storage::put('codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $class_name . '.java', $codestudy->code_text);
         }
 
         // 実行可否の判定
@@ -296,7 +339,7 @@ class CodestudiesPlugin extends UserPluginBase
 
             if ($codestudy->study_lang == 'php') {
                 // PHP 実行
-                $cmd = 'php ' . storage_path('app/codestudy/' . $codestudy->user_id . '/' . $codestudy_id . '/' . $codestudy_id . '.php');
+                $cmd = 'php ' . storage_path('app/codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $codestudy_id . '.php');
                 //$cmd = 'php -l ' . storage_path('app/codestudy/' . $codestudy_id . '.php');
 
                 if (!empty($cmd)) {
@@ -306,7 +349,7 @@ class CodestudiesPlugin extends UserPluginBase
             else if ($codestudy->study_lang == 'java') {
 
                 // コンパイル
-                $cmd = 'javac -encoding UTF-8 ' . storage_path('app/codestudy/' . $codestudy->user_id . '/' . $codestudy_id . '/' . $class_name . '.java');
+                $cmd = 'javac -encoding UTF-8 ' . storage_path('app/codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $class_name . '.java');
                 if (!empty($cmd)) {
                     exec("$cmd 2>&1", $result);
                     //Log::debug($cmd);
@@ -316,7 +359,7 @@ class CodestudiesPlugin extends UserPluginBase
                 // コンパイルがうまくいった場合($result が空)
                 if (empty($result)) {
                     // 実行
-                    $cmd  = 'java -classpath ' . storage_path('app/codestudy/' . $codestudy->user_id . '/' . $codestudy_id);
+                    $cmd  = 'java -classpath ' . storage_path('app/codestudy/' . $codestudy->created_id . '/' . $codestudy_id);
                     $cmd .= ' ' . $class_name;
                     exec("$cmd 2>&1", $result);
                     //Log::debug($cmd);
@@ -326,7 +369,7 @@ class CodestudiesPlugin extends UserPluginBase
         }
 
         // $result 内のプログラム・ファイルパスを編集する。
-        $rep_str = storage_path('app\\codestudy\\' . $codestudy->user_id . '\\' . $codestudy_id . '\\');
+        $rep_str = storage_path('app\\codestudy\\' . $codestudy->created_id . '\\' . $codestudy_id . '\\');
         foreach ($result as &$result_item) {
             $result_item = str_replace($rep_str, '', $result_item);
         }
@@ -338,13 +381,13 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  削除処理
      */
-    public function destroy($request, $page_id, $frame_id, $codestudy_id)
+    public function delete($request, $page_id, $frame_id, $codestudy_id)
     {
         // id がある場合、データを削除
         if ( $codestudy_id ) {
 
             // データを削除する。
-            Codestudies::destroy($codestudy_id);
+            Codestudies::delete($codestudy_id);
         }
         // 削除後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);

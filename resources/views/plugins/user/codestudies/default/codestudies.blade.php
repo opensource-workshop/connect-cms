@@ -64,7 +64,7 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">コード <label class="badge badge-danger">必須</span></label><br />
+        <label class="control-label">コード <label class="badge badge-danger">必須</label></label><br />
         <textarea class="form-control" rows="10" name="code_text" style="font-family:'ＭＳ ゴシック', 'MS Gothic', 'Osaka－等幅', Osaka-mono, monospace;">{!!old('code_text', $codestudy->code_text)!!}</textarea>
         @if ($errors && $errors->has('code_text')) <div class="text-danger">{{$errors->first('code_text')}}</div> @endif
     </div>
@@ -72,16 +72,16 @@
     <div class="form-group">
         <label class="control-label">言語 <label class="badge badge-danger">必須</span></label><br />
         <div class="card">
-            <div class="card-body">
+            <div class="card-body p-2">
                 @if ($codestudy->study_lang == 'java' || old('study_lang') == 'java')
-                    <label><input name="study_lang" type="radio" value="java" checked> Java</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="java" checked> Java</input></label>
                 @else
-                    <label><input name="study_lang" type="radio" value="java"> Java</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="java"> Java</input></label>
                 @endif
                 @if ($codestudy->study_lang == 'php' || old('study_lang') == 'php')
-                    <label><input name="study_lang" type="radio" value="php" checked> PHP</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="php" checked> PHP</input></label>
                 @else
-                    <label><input name="study_lang" type="radio" value="php"> PHP</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="php"> PHP</input></label>
                 @endif
             </div>
         </div>
@@ -116,7 +116,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/codestudies/destroy/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}" method="POST">
+                <form action="{{url('/')}}/plugin/codestudies/delete/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('プログラムを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

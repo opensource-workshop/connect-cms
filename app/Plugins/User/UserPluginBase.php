@@ -114,15 +114,21 @@ class UserPluginBase extends PluginBase
             return $this->view_error("403_inframe");
         }
 
-        // HTTPリクエストメソッドチェック
-        if (!$this->checkHttpRequestMethod($request, $action)) {
+        // コアで定義しているHTTPリクエストメソッドチェック
+        //if (!$this->checkHttpRequestMethod($request, $action)) {
+        //    return $this->view_error("403_inframe");
+        //}
+
+        // プラグイン側の関数定義チェック
+        //if (!$this->checkPublicFunctions($obj, $request, $action)) {
+        //    return $this->view_error("403_inframe");
+        //}
+
+        // コアで定義しているHTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック の両方がエラーの場合、権限エラー
+        if (!$this->checkHttpRequestMethod($request, $action) && !$this->checkPublicFunctions($obj, $request, $action)) {
             return $this->view_error("403_inframe");
         }
 
-        // 関数定義チェック
-        if (!$this->checkPublicFunctions($obj, $request, $action)) {
-            return $this->view_error("403_inframe");
-        }
 
         // チェック用POST
         $post = null;

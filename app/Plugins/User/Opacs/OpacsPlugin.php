@@ -4,6 +4,7 @@ namespace App\Plugins\User\Opacs;
 
 use SimpleXMLElement;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -29,6 +30,122 @@ use App\Plugins\User\UserPluginBase;
  */
 class OpacsPlugin extends UserPluginBase
 {
+
+    /* オブジェクト変数 */
+
+    /* コアから呼び出す関数 */
+
+    /**
+     *  関数定義（コアから呼び出す）
+     */
+    public function getPublicFunctions()
+    {
+        // 画面などから呼ばれる関数の定義（これ以外はエラーとする）
+        // index は例外で定義なし
+        $functions = array();
+        $functions['get']  = [];
+        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search'];
+        return $functions;
+    }
+
+    /**
+     *  編集画面の最初のタブ
+     *
+     *  スーパークラスをオーバーライド
+     */
+    public function getFirstFrameEditAction()
+    {
+        return "editBuckets";
+    }
+
+    /* private 関数 */
+
+    /**
+     *  紐づくOPAC ID とフレームデータの取得
+     */
+    private function getOpacFrame($frame_id)
+    {
+        // Frame データ
+        $frame = DB::table('frames')
+                 ->select('frames.*', 'opacs.id as opacs_id', 'opacs.opac_name', 'opacs.view_count')
+                 ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
+                 ->where('frames.id', $frame_id)
+                 ->first();
+        return $frame;
+    }
+
+    /**
+     *  書誌データ取得
+     */
+    private function getBook($request, $opacs_books)
+    {
+        if (empty($request->isbn)) {
+            return;
+        }
+
+        // 国会図書館API
+        $request_url = 'http://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
+
+        // $context = stream_context_create(array(
+        //     'http' => array('ignore_errors' => true, 'timeout' => 10)
+        // ));
+
+        // NDL OpenSearch 呼び出しと結果のXML 取得
+        $xml = null;
+        try {
+//              $xml_string = file_get_contents($request_url, false, $context);
+//              $xml = simplexml_load_string($xml_string, 'SimpleXMLElement', LIBXML_NOERROR|LIBXML_ERR_NONE|LIBXML_ERR_FATAL);
+//            $xml = simplexml_load_file($request_url);
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $request_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $xml_string = curl_exec($ch);
+            $xml = simplexml_load_string($xml_string, 'SimpleXMLElement', LIBXML_NOERROR|LIBXML_ERR_NONE|LIBXML_ERR_FATAL);
+            //var_dump($xml);
+
+        } catch (Exception $e) {
+            // Log::debug($e);
+            return array($opacs_books, "書誌データ取得でエラーが発生しました。");
+        }
+
+
+
+        // http://iss.ndl.go.jp/api/opensearch?isbn=9784063655407
+        // echo $xml->channel->item[1]->children('dc', true)->publisher;
+        // echo $xml->channel->item->count();
+        // var_dump($xml->channel->item[1]);
+        // print_r($xml);
+
+        // 結果が取得できた場合
+        //var_dump($xml);
+        $totalResults = $xml->channel->children('openSearch', true)->totalResults;
+        if ($totalResults == 0) {
+            return array($opacs_books, "書誌データが見つかりませんでした。");
+        }
+        if (!$xml) {
+            return array($opacs_books, "取得した書誌データでエラーが発生しました。");
+        }
+        else {
+            $target_item = null;
+            $channel = get_object_vars($xml->channel);
+
+            if (is_array($channel["item"])) {
+                $target_item = end($channel["item"]);
+            }
+            else {
+                $target_item = $channel["item"];
+            }
+
+            $opacs_books->title   = $target_item->title;
+            $opacs_books->creator = $target_item->author;
+            $opacs_books->publisher = $target_item->children('dc', true)->publisher;
+        }
+
+        return array($opacs_books, "");
+    }
+
+    /* 画面アクション関数 */
 
    /**
     * lent_flag        = 9:貸出終了(貸し出し可能)、1:貸し出し中、2:貸し出しリクエスト受付中
@@ -108,27 +225,36 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
+     * データ選択表示関数
      */
-    public function getFirstFrameEditAction()
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
-        return "editBuckets";
+        // Frame データ
+        $opac_frame = DB::table('frames')
+                      ->select('frames.*', 'opacs.id as opacs_id', 'opacs.view_count')
+                      ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
+                      ->where('frames.id', $frame_id)->first();
+
+        // データ取得（1ページの表示件数指定）
+        $opacs = Opacs::orderBy('created_at', 'desc')
+                       ->paginate(10);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'opacs_list_buckets', [
+            'opac_frame' => $opac_frame,
+            'opacs'      => $opacs,
+        ]);
     }
 
     /**
-     *  紐づくOPAC ID とフレームデータの取得
+     * OPAC新規作成画面
      */
-    public function getOpacFrame($frame_id)
+    public function createBuckets($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
     {
-        // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'opacs.id as opacs_id', 'opacs.opac_name', 'opacs.view_count')
-                 ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
-        return $frame;
+        // 新規作成フラグを付けてOPAC設定変更画面を呼ぶ
+        $create_flag = true;
+        return $this->editBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $errors);
     }
 
     /**
@@ -163,16 +289,6 @@ class OpacsPlugin extends UserPluginBase
             'message'     => $message,
             'errors'      => $errors,
         ])->withInput($request->all);
-    }
-
-    /**
-     * OPAC新規作成画面
-     */
-    public function createBuckets($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
-    {
-        // 新規作成フラグを付けてOPAC設定変更画面を呼ぶ
-        $create_flag = true;
-        return $this->editBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $errors);
     }
 
     /**
@@ -280,29 +396,6 @@ class OpacsPlugin extends UserPluginBase
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-    /**
-     * データ選択表示関数
-     */
-    public function listBuckets($request, $page_id, $frame_id, $id = null)
-    {
-        // Frame データ
-        $opac_frame = DB::table('frames')
-                      ->select('frames.*', 'opacs.id as opacs_id', 'opacs.view_count')
-                      ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
-                      ->where('frames.id', $frame_id)->first();
-
-        // データ取得（1ページの表示件数指定）
-        $opacs = Opacs::orderBy('created_at', 'desc')
-                       ->paginate(10);
-
-        // 表示テンプレートを呼び出す。
-        return $this->view(
-            'opacs_list_buckets', [
-            'opac_frame' => $opac_frame,
-            'opacs'      => $opacs,
-        ]);
-    }
-
    /**
     * データ紐づけ変更関数
     */
@@ -314,77 +407,6 @@ class OpacsPlugin extends UserPluginBase
 
         // 表示ブログ選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
-    }
-
-    /**
-     *  書誌データ取得
-     */
-    public function getBook($request, $opacs_books)
-    {
-        if (empty($request->isbn)) {
-            return;
-        }
-
-        // 国会図書館API
-        $request_url = 'http://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
-
-        // $context = stream_context_create(array(
-        //     'http' => array('ignore_errors' => true, 'timeout' => 10)
-        // ));
-
-        // NDL OpenSearch 呼び出しと結果のXML 取得
-        $xml = null;
-        try {
-//              $xml_string = file_get_contents($request_url, false, $context);
-//              $xml = simplexml_load_string($xml_string, 'SimpleXMLElement', LIBXML_NOERROR|LIBXML_ERR_NONE|LIBXML_ERR_FATAL);
-//            $xml = simplexml_load_file($request_url);
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $request_url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $xml_string = curl_exec($ch);
-            $xml = simplexml_load_string($xml_string, 'SimpleXMLElement', LIBXML_NOERROR|LIBXML_ERR_NONE|LIBXML_ERR_FATAL);
-            //var_dump($xml);
-
-        } catch (Exception $e) {
-            // Log::debug($e);
-            return array($opacs_books, "書誌データ取得でエラーが発生しました。");
-        }
-
-
-
-        // http://iss.ndl.go.jp/api/opensearch?isbn=9784063655407
-        // echo $xml->channel->item[1]->children('dc', true)->publisher;
-        // echo $xml->channel->item->count();
-        // var_dump($xml->channel->item[1]);
-        // print_r($xml);
-
-        // 結果が取得できた場合
-        //var_dump($xml);
-        $totalResults = $xml->channel->children('openSearch', true)->totalResults;
-        if ($totalResults == 0) {
-            return array($opacs_books, "書誌データが見つかりませんでした。");
-        }
-        if (!$xml) {
-            return array($opacs_books, "取得した書誌データでエラーが発生しました。");
-        }
-        else {
-            $target_item = null;
-            $channel = get_object_vars($xml->channel);
-
-            if (is_array($channel["item"])) {
-                $target_item = end($channel["item"]);
-            }
-            else {
-                $target_item = $channel["item"];
-            }
-
-            $opacs_books->title   = $target_item->title;
-            $opacs_books->creator = $target_item->author;
-            $opacs_books->publisher = $target_item->children('dc', true)->publisher;
-        }
-
-        return array($opacs_books, "");
     }
 
     /**
@@ -590,7 +612,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      *  貸し出しチェック
      */
-    public function lentCheck($opacs_books_id)
+    private function lentCheck($opacs_books_id)
     {
         // 貸出中でないかのチェック
         $books_lents = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)->whereIn('lent_flag', [1, 2])->get();
@@ -605,11 +627,10 @@ class OpacsPlugin extends UserPluginBase
      */
     public function lent($request, $page_id, $frame_id, $opacs_books_id)
     {
-        // 権限チェック
-        // 特別処理。role_article（記事修正）でチェック。
-//        if ($this->can('role_article')) {
-//            return $this->view_error(403);
-//        }
+        // 認証されているか確認
+        if (!Auth::check()) {
+            return $this->view_error(403);
+        }
 
         // 貸出中でないかのチェック
         if ( !$this->lentCheck($opacs_books_id) ) {
@@ -653,6 +674,11 @@ class OpacsPlugin extends UserPluginBase
      */
     public function requestLent($request, $page_id, $frame_id, $opacs_books_id)
     {
+        // 認証されているか確認
+        if (!Auth::check()) {
+            return $this->view_error(403);
+        }
+
         // 貸出中でないかのチェック
         if ( !$this->lentCheck($opacs_books_id) ) {
             return $this->show($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
@@ -697,6 +723,10 @@ class OpacsPlugin extends UserPluginBase
      */
     public function returnLent($request, $page_id, $frame_id, $opacs_books_id)
     {
+        // 認証されているか確認
+        if (!Auth::check()) {
+            return $this->view_error(403);
+        }
 
         // 貸出中でないかのチェック
         if ( $this->lentCheck($opacs_books_id) ) {
