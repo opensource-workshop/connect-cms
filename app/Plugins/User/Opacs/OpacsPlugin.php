@@ -10,13 +10,12 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
-use App\Buckets;
-use App\Opacs;
-use App\OpacsBooks;
-use App\OpacsBooksLents;
-
-use App\Frame;
-use App\Page;
+use App\Models\Common\Buckets;
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
+use App\Models\User\Opacs\Opacs;
+use App\Models\User\Opacs\OpacsBooks;
+use App\Models\User\Opacs\OpacsBooksLents;
 
 use App\Plugins\User\UserPluginBase;
 

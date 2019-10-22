@@ -15,9 +15,6 @@ use App\User;
 
 use App\Traits\ConnectCommonTrait;
 
-//use App\User;
-//use App\Repositories\UserRepository;
-
 /**
  * クラスを呼び出す振り分けコントローラ
  *

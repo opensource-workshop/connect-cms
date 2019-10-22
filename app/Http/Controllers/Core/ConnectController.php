@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
 use App\Http\Controllers\Controller;
-use App\Configs;
-use App\Frame;
-use App\Page;
 
+use App\Models\Core\Configs;
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
 
 /**
  * コア用の基底クラス

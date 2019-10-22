@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Models\Common;
 
 use RecursiveIteratorIterator;
 use RecursiveArrayIterator;

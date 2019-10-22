@@ -4,6 +4,7 @@ namespace App\Models\User\Contents;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Userable;
 
 class Contents extends Model

@@ -13,9 +13,6 @@ use App\Http\Requests;
 
 use App\User;
 
-//use App\User;
-//use App\Repositories\UserRepository;
-
 /**
  * APIクラスを呼び出す振り分けコントローラ
  *

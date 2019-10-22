@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\View;
 use DB;
 
 use App\Http\Controllers\Core\ConnectController;
-use App\Frame;
-use App\Page;
+
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
 
 /**
  * テスト用コントローラ

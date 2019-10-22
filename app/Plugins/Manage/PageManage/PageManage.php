@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
-use App\Page;
+use App\Models\Common\Page;
+
 use App\Plugins\Manage\ManagePluginBase;
 
 /**

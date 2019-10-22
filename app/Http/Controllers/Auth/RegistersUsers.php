@@ -9,7 +9,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RedirectsUsers;
 
 // Connect-CMS 用設定データ
-use App\Configs;
+use App\Models\Core\Configs;
 use App\Traits\ConnectCommonTrait;
 
 trait RegistersUsers

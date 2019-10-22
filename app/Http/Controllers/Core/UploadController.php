@@ -9,9 +9,10 @@ use Illuminate\Support\Facades\Storage;
 use DB;
 
 use App\Http\Controllers\Core\ConnectController;
-use App\Configs;
-use App\Page;
-use App\Uploads;
+
+use App\Models\Core\Configs;
+use App\Models\Common\Page;
+use App\Models\Common\Uploads;
 
 use App\Traits\ConnectCommonTrait;
 

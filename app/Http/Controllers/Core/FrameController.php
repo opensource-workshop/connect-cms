@@ -8,9 +8,10 @@ use Illuminate\Http\Request;
 use DB;
 use View;
 
-use App\Frame;
-use App\Page;
 use App\Http\Controllers\Core\ConnectController;
+
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
 
 use App\Traits\ConnectCommonTrait;
 

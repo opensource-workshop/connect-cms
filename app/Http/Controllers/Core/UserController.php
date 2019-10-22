@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Core;
 
 use App\User;
+
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Core\ConnectController;
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Models\User\Opacs;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Sampleforms extends Model
+class Opacs extends Model
 {
     //
 }

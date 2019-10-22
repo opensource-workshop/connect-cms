@@ -7,6 +7,8 @@ use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 
 // add by nagahara@opensource-workshop.jp
 use Illuminate\Support\Facades\Log;
+
+use App\User;
 use App\Models\Core\UsersRoles;
 
 class ConnectEloquentUserProvider extends EloquentUserProvider
@@ -56,7 +58,7 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
 
         // ログアウト時にuser_roles をセットしに行ってエラーになるため、update 処理に変更 by nagahara@opensource-workshop.jp
         // $user->save();
-          \App\User::where('id', $user->id)->update(['remember_token' => $token]);
+        User::where('id', $user->id)->update(['remember_token' => $token]);
 
         $user->timestamps = $timestamps;
     }

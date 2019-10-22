@@ -9,11 +9,10 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
-use App\Buckets;
+use App\Models\Common\Buckets;
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
 use App\Models\User\Codestudies\Codestudies;
-
-use App\Frame;
-use App\Page;
 
 use App\Plugins\User\UserPluginBase;
 

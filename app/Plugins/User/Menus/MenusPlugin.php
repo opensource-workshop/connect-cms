@@ -4,7 +4,8 @@ namespace App\Plugins\User\Menus;
 
 use Illuminate\Support\Facades\Log;
 
-use App\Page;
+use App\Models\Common\Page;
+
 use App\Plugins\User\UserPluginBase;
 
 /**

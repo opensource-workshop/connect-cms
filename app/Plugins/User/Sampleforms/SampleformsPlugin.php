@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 use File;
 
-use App\Frame;
-use App\Page;
-use App\Sampleforms;
-use App\Uploads;
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
+use App\Models\Common\Uploads;
+use App\Models\User\Sampleforms\Sampleforms;
 
 use App\Plugins\User\UserPluginBase;
 /**

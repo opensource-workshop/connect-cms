@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use DB;
 
-use App\Configs;
-use App\Page;
-use App\User;
+use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\Common\Page;
+use App\User;
+
 use App\Plugins\Manage\ManagePluginBase;
 
 /**

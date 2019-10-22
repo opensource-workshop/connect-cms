@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Gate;
 
 use DB;
 
-use App\Buckets;
+use App\Models\Common\Buckets;
+use App\Models\Common\Frame;
 use App\Models\User\Contents\Contents;
-use App\Frame;
 
 use App\Plugins\User\UserPluginBase;
 

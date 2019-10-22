@@ -4,6 +4,7 @@ namespace App\Models\User\Blogs;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Userable;
 
 class BlogsPosts extends Model

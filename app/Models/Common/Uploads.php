@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
 
-class FormsColumns extends Model
+class Uploads extends Model
 {
     //
 }

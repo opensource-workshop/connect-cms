@@ -8,17 +8,17 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
-use App\Buckets;
-use App\Forms;
-use App\FormsColumns;
-use App\FormsInputs;
-use App\FormsInputCols;
-use App\Frame;
-use App\Page;
-use App\Plugins\User\UserPluginBase;
+use App\Models\Common\Buckets;
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
+use App\Models\Common\Uploads;
+use App\Models\User\Forms\Forms;
+use App\Models\User\Forms\FormsColumns;
+use App\Models\User\Forms\FormsInputs;
+use App\Models\User\Forms\FormsInputCols;
 
 use App\Mail\ConnectMail;
-use App\Uploads;
+use App\Plugins\User\UserPluginBase;
 
 /**
  * フォーム・プラグイン

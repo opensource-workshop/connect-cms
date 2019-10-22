@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Log;
 
 use DB;
 
+use App\Models\Common\Frame;
 use App\Plugins\PluginBase;
-use App\Frame;
 
 use App\Traits\ConnectCommonTrait;
 
