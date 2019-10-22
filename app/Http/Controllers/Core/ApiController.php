@@ -33,7 +33,7 @@ class ApiController extends ConnectController
      * @param String $plugin_name
      * @return obj 生成したインスタンス
      */
-    public static function createApiInstance($plugin_name)
+    private static function createApiInstance($plugin_name)
     {
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
         $file_path = base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php";

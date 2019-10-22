@@ -37,7 +37,7 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return obj 生成したインスタンス
      */
-    public static function createManageInstance($plugin_name)
+    private static function createManageInstance($plugin_name)
     {
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
         $file_path = base_path() . "/app/Plugins/Manage/" . ucfirst($plugin_name) . "Manage/" . ucfirst($plugin_name) . "Manage.php";
@@ -77,7 +77,7 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public function invokeManage($request, $plugin_name, $action = 'index', $id = null)
+    private function invokeManage($request, $plugin_name, $action = 'index', $id = null)
     {
         // ログインしているユーザー情報を取得
         $user = Auth::user();
@@ -121,7 +121,7 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public static function createCoreInstance($plugin_name, $page_id, $frame_id)
+    private static function createCoreInstance($plugin_name, $page_id, $frame_id)
     {
         // Todo：コアの場合、ホワイトリストを作成して、呼び出せるクラストアクションを指定する。
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。

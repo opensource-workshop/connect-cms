@@ -278,7 +278,11 @@ class FrameController extends ConnectController
      */
     public function frame_setting($request, $page_id, $frame_id)
     {
-        //
+        // 権限チェック
+        if ($this->can("role_arrangement") ) {
+            abort(403, '権限がありません。');
+        }
+
         echo "frame_setting";
         exit;
     }

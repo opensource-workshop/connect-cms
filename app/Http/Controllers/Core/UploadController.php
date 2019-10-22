@@ -13,6 +13,8 @@ use App\Configs;
 use App\Page;
 use App\Uploads;
 
+use App\Traits\ConnectCommonTrait;
+
 /**
  * アップロードファイルの送出処理
  *
@@ -25,6 +27,8 @@ use App\Uploads;
  */
 class UploadController extends ConnectController
 {
+
+    use ConnectCommonTrait;
 
     var $directory_base = "uploads/";
     var $directory_file_limit = 1000;
@@ -69,7 +73,6 @@ class UploadController extends ConnectController
      */
     public function getCss(Request $request, $page_id = null)
     {
-
         // config のgeneral カテゴリーを読み込んでおく。
         // id のファイルを読んでhttp request に返す。
         $config_generals = array();
@@ -146,7 +149,7 @@ EOD;
      *  ファイルのMIME Type 取得
      *
      */
-    public function getMimetype($file_path)
+    private function getMimetype($file_path)
     {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimetype = finfo_file($finfo, $file_path);
@@ -158,7 +161,7 @@ EOD;
      *  対象ディレクトリの取得
      *
      */
-    public function getDirectory($file_id)
+    private function getDirectory($file_id)
     {
         // ファイルID がなければ0ディレクトリを返す。
         if (empty($file_id)) {
@@ -177,7 +180,7 @@ EOD;
      *  対象ディレクトリの取得、なければ作成も。
      *
      */
-    public function makeDirectory($file_id)
+    private function makeDirectory($file_id)
     {
         $directory = $this->getDirectory($file_id);
         Storage::makeDirectory($directory);
@@ -190,6 +193,12 @@ EOD;
      */
     public function postFile(Request $request)
     {
+
+        // ファイルアップロードには、記事の追加、変更の権限が必要
+        if ( !$this->isCan('posts.create') || !$this->isCan('posts.update') ) {
+            echo json_encode(array('location' => 'error'));
+            return;
+        }
 
         // 画像アップロードの場合（TinyMCE標準プラグイン）
         if ($request->hasFile('file')) {

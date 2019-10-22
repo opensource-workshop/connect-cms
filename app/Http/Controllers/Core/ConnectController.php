@@ -93,7 +93,7 @@ class ConnectController extends Controller
     /**
      *  ページのレイアウト情報
      */
-    public function getLayoutsInfo()
+    protected function getLayoutsInfo()
     {
         if (empty($this->page)) {
             //return null;
@@ -180,7 +180,7 @@ class ConnectController extends Controller
     /**
      *  ページの系統取得
      */
-    public function getPageTree($page_id)
+    private function getPageTree($page_id)
     {
         // トップページを取得
         $top_page = Page::orderBy('_lft', 'asc')->first();
@@ -198,7 +198,7 @@ class ConnectController extends Controller
     /**
      *  ページのレイアウト取得
      */
-    public function getLayout($page_tree)
+    private function getLayout($page_tree)
     {
         // レイアウトの初期値
         $layout_defalt = '1|1|0|1';
@@ -227,7 +227,7 @@ class ConnectController extends Controller
     /**
      *  テーマ取得
      */
-    public function getThemes()
+    protected function getThemes()
     {
         $theme = $this->getPagesColum('theme');
         if ($theme) {
@@ -241,7 +241,7 @@ class ConnectController extends Controller
     /**
      *  ページのカラム取得
      */
-    public function getPagesColum($col_name)
+    private function getPagesColum($col_name)
     {
         // 自分のページから親を遡って取得
         $page_tree = Page::reversed()->ancestorsAndSelf($this->page->id);
@@ -256,7 +256,7 @@ class ConnectController extends Controller
     /**
      *  表示しているページのオブジェクトを取得
      */
-    public function getCurrentPage()
+    private function getCurrentPage()
     {
         // ページデータ取得のため、URL から現在のURL パスを判定する。
         $current_url = url()->current();
@@ -282,7 +282,7 @@ class ConnectController extends Controller
     /**
      *  ページに関する情報取得
      */
-    public function getPageList()
+    private function getPageList()
     {
         // ページ一覧の取得
         return Page::defaultOrderWithDepth('flat');
@@ -291,7 +291,7 @@ class ConnectController extends Controller
     /**
      *  表示しているページに関する情報取得
      */
-    public function getPageConfig($page_id)
+    private function getPageConfig($page_id)
     {
     }
 
@@ -299,7 +299,7 @@ class ConnectController extends Controller
      *  画面表示
      *  ページ共通で必要な値をココで取得、viewに渡す。
      */
-    public function view($blade_path, $args)
+    protected function view($blade_path, $args)
     {
         // 一般設定の取得
         $configs = Configs::where('category', 'general')->orWhere('category', 'user_register')->get();

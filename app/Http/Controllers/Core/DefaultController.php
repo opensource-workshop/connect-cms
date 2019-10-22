@@ -78,7 +78,7 @@ class DefaultController extends ConnectController
      *  フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
      *
      */
-    public function getActionCoreFrame($request)
+    private function getActionCoreFrame($request)
     {
         // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
         // とりあえずココで処理。後でcore 系のアクションを見直してリファクタリングすること。
@@ -270,7 +270,7 @@ class DefaultController extends ConnectController
      * メインエリアのインスタンス生成
      *
      */
-    public function createInstanceMain($frames)
+    private function createInstanceMain($frames)
     {
         // プラグインのインスタンス生成（メインエリア）
         $plugin_instances = array();
@@ -287,7 +287,7 @@ class DefaultController extends ConnectController
      * メインエリアのフレーム取得
      *
      */
-    public function getFramesMain($pages_id)
+    private function getFramesMain($pages_id)
     {
         // フレーム一覧取得（メインエリアのみ）
         $frames = DB::table('pages')
@@ -306,7 +306,7 @@ class DefaultController extends ConnectController
      * 共通エリアのプラグインのインスタンス生成
      *
      */
-    public function createInstanceCommonArea($layouts_info, $plugin_instances)
+    private function createInstanceCommonArea($layouts_info, $plugin_instances)
     {
         // 共通エリアのプラグインのインスタンス生成
         foreach ($layouts_info as $area) {

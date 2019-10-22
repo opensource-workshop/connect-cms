@@ -38,8 +38,8 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
 
 
 // テスト用アクション
-Route::get('/test/{id?}', 'Core\TestController@invokeGet');
-Route::post('/test/{id?}', 'Core\TestController@invokePost');
+//Route::get('/test/{id?}', 'Core\TestController@invokeGet');
+//Route::post('/test/{id?}', 'Core\TestController@invokePost');
 
 // コアのget処理(Frame関係)
 Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore');

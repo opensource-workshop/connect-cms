@@ -29,6 +29,10 @@ trait ConnectCommonTrait
      */
     public function isCan($roll_or_auth, $post = null, $plugin_name = null)
     {
+Log::debug("--- isCan");
+Log::debug($roll_or_auth);
+Log::debug($post);
+Log::debug($plugin_name);
         $args = null;
         if ( $post != null || $plugin_name != null ) {
             $args = [[$post, $plugin_name]];
