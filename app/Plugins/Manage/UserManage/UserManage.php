@@ -50,7 +50,7 @@ class UserManage extends ManagePluginBase
     /**
      *  データ取得
      */
-    public function getUsers()
+    private function getUsers()
     {
         // ユーザデータ取得
         $users = DB::table('users')
@@ -63,7 +63,7 @@ class UserManage extends ManagePluginBase
     /**
      *  役割取得
      */
-    public function getRoles($id)
+    private function getRoles($id)
     {
         // ユーザデータ取得
         //$roles = UsersRoles::getUsersRoles($id);

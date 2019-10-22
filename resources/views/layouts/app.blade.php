@@ -198,7 +198,7 @@
                                 <a href="{{ url('/manage/user') }}" class="dropdown-item">ユーザ管理</a>
                             @endif
                         @endif
-                        @if (Auth::user()->can('role_manage_on'))
+                        @if (Auth::user()->can('role_manage_on') && isset($page_list))
                             <div class="dropdown-divider"></div>
                         @endif
                         @if (isset($page_list))

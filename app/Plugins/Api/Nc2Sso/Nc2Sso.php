@@ -37,6 +37,17 @@ class Nc2Sso extends ApiPluginBase
         // 本来はDB管理
         $sites = config('cc_api_config.CC_API_CONFIGS');
 
+        // パラメータ、設定チェック
+        if (empty($sites)) {
+            // トップページへ
+            return redirect("/");
+        }
+
+        if (empty($site_key) || !array_key_exists($site_key, $sites) || !array_key_exists('salt', $sites[$site_key]) || !array_key_exists('url', $sites[$site_key])) {
+            // トップページへ
+            return redirect("/");
+        }
+
 // NC2 側のワーニングを修正すること。
 // webapp\config\define.inc.php の最初。HTTP_USER_AGENT のチェック
 

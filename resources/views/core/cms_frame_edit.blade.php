@@ -91,17 +91,6 @@
         </div>
 
         <div class="form-group row mx-0">
-            <label for="page-name" class="{{$class_label}}">プラグ</label>
-            <div class="{{$class_input}}">
-                <select class="form-control" name="plug_name" id="plug_name">
-                    <option value="">プラグは使わない。</option>
-                    <option value="OswsRss" @if($frame->plug_name=="OswsRss") selected @endif>株式会社オープンソース・ワークショップの新着情報</option>
-                    <option value="TestDb"  @if($frame->plug_name=="TestDb")  selected @endif>テストのデータベース読み込み</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group row mx-0">
             <div class="offset-md-3 {{$class_input}}">
                 <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>

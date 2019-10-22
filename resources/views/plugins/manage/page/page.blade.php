@@ -80,31 +80,31 @@
                 <th nowrap>レイアウト</th>
             </thead>
             <tbody>
-                @foreach($pages as $page)
+                @foreach($pages as $page_item)
                 <tr>
                     <!-- Task Name -->
                     <td class="table-text col-md-2 p-1" nowrap>
-                        <a href="{{url('/manage/page/edit')}}/{{$page->id}}" class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
+                        <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
 
                         {{-- 上移動 --}}
-                        <button type="button" class="btn p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$page->id}})">
+                        <button type="button" class="btn p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$page_item->id}})">
                             <i class="fas fa-arrow-up"></i>
                         </button>
 
                         {{-- 下移動 --}}
-                        <button type="button" class="btn p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$page->id}})">
+                        <button type="button" class="btn p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$page_item->id}})">
                             <i class="fas fa-arrow-down"></i>
                         </button>
                     </td>
                     <td class="table-text col-md-2 p-1">
                         {{-- 指定場所移動 --}}
-                        <form name="form_select_page{{$page->id}}" id="form_select_page{{$page->id}}" class="form-horizontal">
-                            <select name="select_page" onChange="submit_move_page({{$page->id}});">
+                        <form name="form_select_page{{$page_item->id}}" id="form_select_page{{$page_item->id}}" class="form-horizontal">
+                            <select name="select_page" onChange="submit_move_page({{$page_item->id}});">
                                 <option value="">...</option>
                                 <option value="0">最上位の階層へ</option>
                                 @foreach($pages_select as $page_select)
                                     {{-- 自分自身 or 子孫のノードは選択不可にする --}}
-                                    <option value="{{$page_select->id}}"@if ($page->id == $page_select->id or $page_select->isDescendantOf($page)) disabled style="background-color: #f0f0f0;"@endif>
+                                    <option value="{{$page_select->id}}"@if ($page_item->id == $page_select->id or $page_select->isDescendantOf($page)) disabled style="background-color: #f0f0f0;"@endif>
                                         @for ($i = 0; $i < $page_select->depth; $i++)
                                         -
                                         @endfor
@@ -116,29 +116,29 @@
                     </td>
                     <td class="table-text p-1" nowrap>
                         {{-- 各ページの深さをもとにインデントの表現 --}}
-                        @for ($i = 0; $i < $page->depth; $i++)
-                            @if ($i+1==$page->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
+                        @for ($i = 0; $i < $page_item->depth; $i++)
+                            @if ($i+1==$page_item->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
                         @endfor
-                        {{$page->page_name}}{{-- ページ名 --}}
+                        {{$page_item->page_name}}{{-- ページ名 --}}
                     </td>
                     <td class="table-text p-1">
-                        @if ($page->base_display_flag == 1)
+                        @if ($page_item->base_display_flag == 1)
                             <div><i class="fas fa-check"></i></div>
                         @else
                             <div><i class="fas fa-times"></i></div>
                         @endif
                     </td>
                     <td class="table-text p-1">
-                        <div>{{ $page->permanent_link }}</div>
+                        <div>{{ $page_item->permanent_link }}</div>
                     </td>
                     <td class="table-text p-1">
-                        <div>{{ $page->background_color }}</div>
+                        <div>{{ $page_item->background_color }}</div>
                     </td>
                     <td class="table-text p-1">
-                        <div>{{ $page->header_color }}</div>
+                        <div>{{ $page_item->header_color }}</div>
                     </td>
                     <td class="table-text p-1">
-                        <div>{{ $page->layout }}</div>
+                        <div>{{ $page_item->layout }}</div>
                     </td>
                 </tr>
                 @endforeach

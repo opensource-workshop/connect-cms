@@ -171,7 +171,7 @@ class UserPluginBase extends PluginBase
      *
      * @return view
      */
-    public function getViewPath($blade_name)
+    protected function getViewPath($blade_name)
     {
         return 'plugins.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
     }
@@ -181,7 +181,7 @@ class UserPluginBase extends PluginBase
      *
      * @return view
      */
-    public function getCommonViewPath($blade_name)
+    protected function getCommonViewPath($blade_name)
     {
         return 'plugins.common' . '.' . $blade_name;
     }
@@ -210,7 +210,7 @@ class UserPluginBase extends PluginBase
      * view 関数のラッパー
      * 共通的な要素を追加する。
      */
-    public function addArg($arg)
+    private function addArg($arg)
     {
         // アクションをview に渡す
         $arg['action'] = $this->action;
