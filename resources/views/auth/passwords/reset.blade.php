@@ -2,21 +2,21 @@
 
 @section('content')
 <div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">Reset Password</div>
+    <div class="row mt-3">
+        <div class="col-8 mx-auto">
+            <div class="card">
+                <div class="card-header">{{-- Reset Password --}}リセット パスワード</div>
 
-                <div class="panel-body">
+                <div class="card-body">
                     <form class="form-horizontal" method="POST" action="{{ route('password.request') }}">
                         {{ csrf_field() }}
 
                         <input type="hidden" name="token" value="{{ $token }}">
 
-                        <div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-                            <label for="email" class="col-md-4 control-label">E-Mail Address</label>
+                        <div class="row form-group{{ $errors->has('email') ? ' has-error' : '' }}">
+                            <label for="email" class="col-md-3 col-form-label text-md-right">{{-- E-Mail Address --}}eメール</label>
 
-                            <div class="col-md-6">
+                            <div class="col-md-7">
                                 <input id="email" type="email" class="form-control" name="email" value="{{ $email or old('email') }}" required autofocus>
 
                                 @if ($errors->has('email'))
@@ -27,10 +27,10 @@
                             </div>
                         </div>
 
-                        <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
-                            <label for="password" class="col-md-4 control-label">Password</label>
+                        <div class="row form-group{{ $errors->has('password') ? ' has-error' : '' }}">
+                            <label for="password" class="col-md-3 col-form-label text-md-right">{{-- Password --}}パスワード</label>
 
-                            <div class="col-md-6">
+                            <div class="col-md-7">
                                 <input id="password" type="password" class="form-control" name="password" required>
 
                                 @if ($errors->has('password'))
@@ -41,9 +41,9 @@
                             </div>
                         </div>
 
-                        <div class="form-group{{ $errors->has('password_confirmation') ? ' has-error' : '' }}">
-                            <label for="password-confirm" class="col-md-4 control-label">Confirm Password</label>
-                            <div class="col-md-6">
+                        <div class="row form-group{{ $errors->has('password_confirmation') ? ' has-error' : '' }}">
+                            <label for="password-confirm" class="col-md-3 col-form-label text-md-right">{{-- Confirm Password --}}確認用パスワード</label>
+                            <div class="col-md-7">
                                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required>
 
                                 @if ($errors->has('password_confirmation'))
@@ -54,10 +54,10 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <div class="col-md-6 col-md-offset-4">
+                        <div class="row form-group">
+                            <div class="col-md-7 offset-md-3">
                                 <button type="submit" class="btn btn-primary">
-                                    Reset Password
+                                    <i class="fas fa-check"></i> {{-- Reset Password --}}パスワードリセット
                                 </button>
                             </div>
                         </div>

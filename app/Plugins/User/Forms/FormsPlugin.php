@@ -325,13 +325,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // メール送信（管理者側）
             $mail_addresses = explode(',', $form->mail_send_address);
             foreach($mail_addresses as $mail_address) {
-                Mail::to($mail_address)->send(new ConnectMail($form->mail_subject, $mail_text));
+                Mail::to($mail_address)->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
             }
 
             // メール送信（ユーザー側）
             foreach($user_mailaddresses as $user_mailaddress) {
                 if (!empty($user_mailaddress)) {
-                    Mail::to($user_mailaddress)->send(new ConnectMail($form->mail_subject, $mail_text));
+                    Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                 }
             }
         }

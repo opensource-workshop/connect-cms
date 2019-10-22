@@ -2,12 +2,12 @@
 
 @section('content')
 <div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">Reset Password</div>
+    <div class="row mt-3">
+        <div class="col-8 mx-auto">
+            <div class="card">
+                <div class="card-header">{{-- Reset Password --}}パスワード リセット</div>
 
-                <div class="panel-body">
+                <div class="card-body">
                     @if (session('status'))
                         <div class="alert alert-success">
                             {{ session('status') }}
@@ -17,12 +17,10 @@
                     <form class="form-horizontal" method="POST" action="{{ route('password.email') }}">
                         {{ csrf_field() }}
 
-                        <div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-                            <label for="email" class="col-md-4 control-label">E-Mail Address</label>
-
-                            <div class="col-md-6">
+                         <div class="form-group row">
+                            <label for="userid" class="col-md-3 col-form-label text-md-right">eメール</label>
+                            <div class="col-md-7">
                                 <input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}" required>
-
                                 @if ($errors->has('email'))
                                     <span class="help-block">
                                         <strong>{{ $errors->first('email') }}</strong>
@@ -31,10 +29,10 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <div class="col-md-6 col-md-offset-4">
+                        <div class="form-group row">
+                            <div class="col-md-8 offset-md-3">
                                 <button type="submit" class="btn btn-primary">
-                                    Send Password Reset Link
+                                    <i class="fas fa-check"></i> パスワードのリセットリンクを送信する。
                                 </button>
                             </div>
                         </div>
