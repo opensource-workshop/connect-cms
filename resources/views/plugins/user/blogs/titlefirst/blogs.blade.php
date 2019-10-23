@@ -29,12 +29,9 @@
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日')}}</b>
         {{-- タイトル --}}
-        <h2>{{$post->post_title}}</h2>
-            @if ($loop->last)
-                <article>
-            @else
-                <article class="cc_article">
-            @endif
+        <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
+        <article class="cc_article">
+
             {{-- 記事本文 --}}
             {!! $post->post_text !!}
 

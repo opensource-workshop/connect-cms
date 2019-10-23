@@ -109,42 +109,10 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
-     *  要承認の判断
+     *  ブログ記事一覧取得
      */
-    private function isApproval($frame_id)
+    private function getPosts($blog_frame)
     {
-        // 承認の要否確認とステータス処理
-        $blog_frame = $this->getBlogFrame($frame_id);
-        if ($blog_frame->approval_flag == 1) {
-
-            // 記事修正、記事管理者権限がない場合は要承認
-            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /* 画面アクション関数 */
-
-    /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
-     */
-    public function index($request, $page_id, $frame_id)
-    {
-        // ブログ＆フレームデータ
-        $blog_frame = $this->getBlogFrame($frame_id);
-        if (empty($blog_frame)) {
-            return;
-        }
-
-        // Page データ
-        $page = Page::where('id', $page_id)->first();
-
-        // 認証されているユーザの取得
-        $user = Auth::user();
-
         $blogs_posts = null;
 
         // 記事修正権限、記事管理者の場合、全記事の取得
@@ -207,13 +175,118 @@ class BlogsPlugin extends UserPluginBase
               ->paginate($blog_frame->view_count);
         }
 
-//        if (!empty($user) && $user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
+        return $blogs_posts;
+    }
 
-            // データ取得（1ページの表示件数指定）
-//            $blogs_posts = BlogsPosts::orderBy('created_at', 'desc')
-//                           ->where('blogs_id', $blog_frame->blogs_id)
-//                           ->paginate($blog_frame->view_count);
-//        }
+    /**
+     *  ブログ記事一覧取得(全件)
+     */
+    private function getPostsAll($blog_frame)
+    {
+        $blogs_posts = null;
+
+        // 記事修正権限、記事管理者の場合、全記事の取得
+        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+
+            // 削除されていないデータでグルーピングして、最新のIDで全件
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->groupBy('contents_id');
+            })->orderBy('posted_at', 'desc')
+              ->get();
+        }
+        // 承認権限の場合、Active ＋ 承認待ちの取得
+        elseif ($this->isCan('role_approval')) {
+
+            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと承認待ち。
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->groupBy('contents_id');
+                })->where(function($query2){
+                    $query2->Where('status', '=', 0)
+                           ->orWhere('status', '=', 2);
+                })->orderBy('posted_at', 'desc')
+                  ->get();
+        }
+        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
+        elseif ($this->isCan('role_reporter')) {
+
+            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと自分のデータ。
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->groupBy('contents_id');
+            })->where(function($query2){
+                $query2->Where('status', '=', 0)
+                       ->orWhere('created_id', '=', Auth::user()->id);
+            })->orderBy('posted_at', 'desc')
+              ->get();
+        }
+        // その他（ゲスト）
+        else {
+
+            // データ取得
+            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blog_frame->blogs_id)
+                        ->where('deleted_at', null)
+                        ->where('status', 0)
+                        ->groupBy('contents_id');
+            })->orderBy('posted_at', 'desc')
+              ->get();
+        }
+
+        return $blogs_posts;
+    }
+
+    /**
+     *  要承認の判断
+     */
+    private function isApproval($frame_id)
+    {
+        // 承認の要否確認とステータス処理
+        $blog_frame = $this->getBlogFrame($frame_id);
+        if ($blog_frame->approval_flag == 1) {
+
+            // 記事修正、記事管理者権限がない場合は要承認
+            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* 画面アクション関数 */
+
+    /**
+     *  データ初期表示関数
+     *  コアがページ表示の際に呼び出す関数
+     */
+    public function index($request, $page_id, $frame_id)
+    {
+        // ブログ＆フレームデータ
+        $blog_frame = $this->getBlogFrame($frame_id);
+        if (empty($blog_frame)) {
+            return;
+        }
+
+        // Page データ
+        $page = Page::where('id', $page_id)->first();
+
+        // 認証されているユーザの取得
+        $user = Auth::user();
+
+        // ブログデータ一覧の取得
+        $blogs_posts = $this->getPosts($blog_frame);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -244,6 +317,53 @@ class BlogsPlugin extends UserPluginBase
             'blogs_posts' => $blogs_posts,
             'errors'      => $errors,
         ])->withInput($request->all);
+    }
+
+    /**
+     *  詳細表示関数
+     */
+    public function show($request, $page_id, $frame_id, $blogs_posts_id = null)
+    {
+        // Frame データ
+        $blog_frame = $this->getBlogFrame($frame_id);
+
+        // 記事取得
+        $blogs_post = $this->getPost($blogs_posts_id);
+
+        // ひとつ前、ひとつ後の記事
+        //$before_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)->where('posted_at', '<', $blogs_post->posted_at)->orderBy('posted_at', 'desc')->first();
+        //$after_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)->where('posted_at', '>', $blogs_post->posted_at)->orderBy('posted_at', 'asc')->first();
+
+        // ブログデータ一覧の取得
+        $blogs_posts = $this->getPostsAll($blog_frame);
+
+        $before_post = null;
+        $after_post = null;
+
+        // ひとつ後
+        foreach($blogs_posts as $blogs_item) {
+            if ($blogs_post->posted_at < $blogs_item->posted_at) {
+                $after_post = $blogs_item;
+                //break;
+            }
+        }
+
+        // ひとつ前
+        foreach($blogs_posts as $blogs_item) {
+            if ($blogs_post->posted_at > $blogs_item->posted_at) {
+                $before_post = $blogs_item;
+                break;
+            }
+        }
+
+        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
+        return $this->view(
+            'blogs_show', [
+            'blog_frame'  => $blog_frame,
+            'post'        => $blogs_post,
+            'before_post' => $before_post,
+            'after_post'  => $after_post,
+        ]);
     }
 
     /**

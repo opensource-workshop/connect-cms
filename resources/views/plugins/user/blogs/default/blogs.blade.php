@@ -27,7 +27,7 @@
     @foreach($blogs_posts as $post)
 
         {{-- タイトル --}}
-        <h2>{{$post->post_title}}</h2>
+        <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
             @if ($loop->last)
