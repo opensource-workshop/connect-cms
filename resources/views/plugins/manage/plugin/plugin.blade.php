@@ -25,9 +25,9 @@
         <tbody>
             @foreach($plugins as $plugin)
             <tr>
-                <td class="table-text col-1 p-1">
+                <td class="table-text col-2 p-1">
                     <input name="plugins[{{$loop->iteration}}][id]" value="{{$plugin->id}}" type="hidden">
-                    <div class="form-group mb-0">
+                    <div class="form-group col-2 mb-0">
                         <input type="text" name="plugins[{{$loop->iteration}}][display_sequence]" value="{{$plugin->display_sequence}}" class="form-control">
                     </div>
                 </td>
