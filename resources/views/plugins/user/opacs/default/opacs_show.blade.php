@@ -260,5 +260,5 @@
 
 {{-- 一覧へ戻る --}}
 <p class="text-center" style="margin-top: 16px;">
-    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/{{$page->id}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
+    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
 </p>

@@ -54,4 +54,13 @@ class Page extends Model
 
         return $tree;
     }
+
+    /**
+     *  リンク用URL取得
+     *
+     */
+    public function getLinkUrl()
+    {
+        return $this->permanent_link;
+    }
 }
