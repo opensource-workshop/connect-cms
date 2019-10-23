@@ -63,13 +63,20 @@
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
     <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}"></script>
+    <script src="{{asset('js/app.js')}}"></script>
 
     <!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/locale/ja.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js"></script>
+    {{--
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/locale/ja.js"></script>
+    --}}
+    <script src="{{asset('js/moment.js/moment.min.js')}}"></script>
+    <script src="{{asset('js/moment.js/locale/ja.js')}}"></script>
+    {{--
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js"></script>
+    --}}
+    <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
 
     <!-- Context -->
     <script>

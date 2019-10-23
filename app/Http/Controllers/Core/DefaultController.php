@@ -12,6 +12,9 @@ use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Core\Plugins;
+
+use App\Traits\ConnectCommonTrait;
 
 /**
  * 画面の基本処理
@@ -25,6 +28,8 @@ use App\Models\Common\Page;
  */
 class DefaultController extends ConnectController
 {
+
+    use ConnectCommonTrait;
 
     /**
      *  画面表示用にページやフレームなど呼び出し
@@ -56,6 +61,9 @@ class DefaultController extends ConnectController
         // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
         $action_core_frame = $this->getActionCoreFrame($request);
 
+        // プラグイン一覧の取得
+        $plugins = $this->getPlugins();
+
         // view の場所を変更するテスト
         //$plugin_instances = ['contents' => new $class_name("User", "contents")];
 
@@ -69,8 +77,9 @@ class DefaultController extends ConnectController
             'pages'             => $pages,
             'plugin_instances'  => $plugin_instances,
             'layouts_info'      => $layouts_info,
-            'themes'           => $themes,
+            'themes'            => $themes,
             'action_core_frame' => $action_core_frame,
+            'plugins'           => $plugins,
         ]);
     }
 
@@ -114,6 +123,26 @@ class DefaultController extends ConnectController
     }
 
     /**
+     *  フレームIDが指定されている場合、plugin_name と合致しているか。
+     *
+     */
+    private function checkFrame2Plugin($plugin_name, $frame_id = null, $frames = null)
+    {
+        if ($frame_id == null || $frames == null) {
+            return true;
+        }
+
+        foreach ($frames as $frame) {
+            if ($frame->frame_id == $frame_id) {
+                if ($frame->plugin_name != $plugin_name) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      *  画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
@@ -148,6 +177,11 @@ class DefaultController extends ConnectController
         // フレーム一覧取得
         $frames = $this->getFramesMain($this->page->id);
 
+        // フレームとプラグインの一致をチェック
+        if (!$this->checkFrame2Plugin($plugin_name, $frame_id, $frames)) {
+            return $this->view_error("403");
+        }
+
         // インスタンス取得（メインエリアのみ）
         $plugin_instances = $this->createInstanceMain($frames);
 
@@ -159,6 +193,15 @@ class DefaultController extends ConnectController
 
         // プラグインのインスタンス生成（メインエリア以外の共通エリア）
         $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);
+
+        // フレームとプラグインの一致をチェック
+        foreach ($layouts_info as $area) {
+            if (array_key_exists('frames', $area)) {
+                if (!$this->checkFrame2Plugin($plugin_name, $frame_id, $area['frames'])) {
+                    return $this->view_error("403");
+                }
+            }
+        }
 
         // Page データ
         $pages = Page::defaultOrder()->get();

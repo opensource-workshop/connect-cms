@@ -5,6 +5,8 @@ namespace App\Traits;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+use App\Models\Core\Plugins;
+
 trait ConnectCommonTrait
 {
     /**
@@ -29,10 +31,6 @@ trait ConnectCommonTrait
      */
     public function isCan($roll_or_auth, $post = null, $plugin_name = null)
     {
-Log::debug("--- isCan");
-Log::debug($roll_or_auth);
-Log::debug($post);
-Log::debug($plugin_name);
         $args = null;
         if ( $post != null || $plugin_name != null ) {
             $args = [[$post, $plugin_name]];
@@ -52,6 +50,27 @@ Log::debug($plugin_name);
     {
         // 表示テンプレートを呼び出す。
         return view('errors.' . $error_code);
+    }
+
+    /**
+     * プラグイン一覧の取得
+     *
+     */
+    public function getPlugins($arg_display_flag = true, $force_get = false)
+    {
+        // プラグイン一覧の取得
+        $display_flag = ($arg_display_flag) ? 1 : 0;
+        $plugins = Plugins::where('display_flag', $display_flag)->orderBy('display_sequence')->get();
+
+        // 強制的に非表示にするプラグインを除外
+        if ( !$force_get ) {
+            foreach($plugins as $plugin_loop_key => $plugin) {
+                if ( in_array(mb_strtolower($plugin->plugin_name), config('connect.PLUGIN_FORCE_HIDDEN'))) {
+                    $plugins->forget($plugin_loop_key);
+                }
+            }
+        }
+        return $plugins;
     }
 }
 

@@ -22,7 +22,7 @@
         <tr>
             <th></th>
             {{-- <th>選択</th> --}}
-            <th>
+            <th nowrap>
                 <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}">更新日</a>
                 @if ($request_order_str == "contents_updated_at|asc")
                     <i class="fas fa-sort-numeric-down"></i>
@@ -30,7 +30,7 @@
                     <i class="fas fa-sort-numeric-down-alt"></i>
                 @endif
             </th>
-            <th>
+            <th nowrap>
                 <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=page_name|{{$order_link["page_name"][0]}}">使用ページ</a>
                 @if ($request_order_str == "page_name|asc")
                     <i class="fas fa-sort-alpha-down"></i>
@@ -38,7 +38,7 @@
                     <i class="fas fa-sort-alpha-down-alt"></i>
                 @endif
             </th>
-            <th>
+            <th nowrap>
                 <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=bucket_name|{{$order_link["bucket_name"][0]}}">データ名</a>
                 @if ($request_order_str == "bucket_name|asc")
                     <i class="fas fa-sort-alpha-down"></i>
@@ -46,7 +46,7 @@
                     <i class="fas fa-sort-alpha-down-alt"></i>
                 @endif
             </th>
-            <th>
+            <th nowrap>
                 <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=frame_title|{{$order_link["frame_title"][0]}}">フレームタイトル</a>
                 @if ($request_order_str == "frame_title|asc")
                     <i class="fas fa-sort-alpha-down"></i>
@@ -54,7 +54,7 @@
                     <i class="fas fa-sort-alpha-down-alt"></i>
                 @endif
             </th>
-            <th>
+            <th nowrap>
                 <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=content_text|{{$order_link["content_text"][0]}}">内容</a>
                 @if ($request_order_str == "content_text|asc")
                     <i class="fas fa-sort-alpha-down"></i>
