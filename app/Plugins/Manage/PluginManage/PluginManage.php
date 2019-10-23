@@ -49,15 +49,15 @@ class PluginManage extends ManagePluginBase
         $plugins = Plugins::orderBy('display_sequence', 'asc')->get();
 
         // プラグインのディレクトリの取得
-        $directories = File::directories(app_path().'\Plugins\User');
+        $directories = File::directories(app_path().'/Plugins/User');
 
         // プラグインのini ファイルの取得
         foreach($directories as $dirkey => $directorie) {
 
             // ini ファイルがあれば、プラグインの日本語名を取得、プラグインの一覧に設定
             $is_plugin_record = false; // DB に登録されているかのフラグ
-            if (File::exists($directorie."\plugin.ini")) {
-                $plugin_inis = parse_ini_file($directorie."\plugin.ini");
+            if (File::exists($directorie."/plugin.ini")) {
+                $plugin_inis = parse_ini_file($directorie."/plugin.ini");
                 foreach($plugins as $plugin) {
                     if (mb_strtolower($plugin->plugin_name) == mb_strtolower(basename($directorie))) {
                         //echo $plugin->plugin_name_full . "<br />";
