@@ -212,6 +212,9 @@ class DefaultController extends ConnectController
         // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
         $action_core_frame = $this->getActionCoreFrame($request);
 
+        // プラグイン一覧の取得
+        $plugins = $this->getPlugins();
+
         // メインページを呼び出し
         // 各フレーム内容の表示はメインページから行う。
 //Log::debug($action);
@@ -228,6 +231,7 @@ class DefaultController extends ConnectController
             'layouts_info'     => $layouts_info,
             'themes'           => $themes,
             'action_core_frame' => $action_core_frame,
+            'plugins'           => $plugins,
         ]);
 
         return;

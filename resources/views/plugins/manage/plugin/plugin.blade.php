@@ -25,13 +25,13 @@
         <tbody>
             @foreach($plugins as $plugin)
             <tr>
-                <td class="table-text col-2 p-1">
+                <td class="table-text col-1 p-1 w-auto">
                     <input name="plugins[{{$loop->iteration}}][id]" value="{{$plugin->id}}" type="hidden">
-                    <div class="form-group col-2 mb-0">
+                    <div class="form-group mb-0">
                         <input type="text" name="plugins[{{$loop->iteration}}][display_sequence]" value="{{$plugin->display_sequence}}" class="form-control">
                     </div>
                 </td>
-                <td class="table-text p-1" nowrap>
+                <td class="table-text p-1 w-auto" nowrap>
                     <div class="custom-control custom-checkbox ml-3 mt-1">
                         @if(isset($plugin->display_flag) && $plugin->display_flag == 1)
                             <input name="plugins[{{$loop->iteration}}][display_flag]" value="1" type="checkbox" class="custom-control-input" id="display_flag{{$loop->iteration}}" checked="checked">
@@ -41,15 +41,15 @@
                         <label class="custom-control-label" for="display_flag{{$loop->iteration}}"></label>
                     </div>
                 </td>
-                <td class="table-text p-1 pt-2">
+                <td class="table-text p-1 pt-2 w-25">
                     {{$plugin->plugin_name_full}}
                     <input type="hidden" name="plugins[{{$loop->iteration}}][plugin_name_full]" value="{{$plugin->plugin_name_full}}">
                 </td>
-                <td class="table-text p-1 pt-2">
+                <td class="table-text p-1 pt-2 w-25">
                     {{$plugin->plugin_name}}
                     <input type="hidden" name="plugins[{{$loop->iteration}}][plugin_name]" value="{{$plugin->plugin_name}}">
                 </td>
-                <td class="table-text p-1 pt-2">
+                <td class="table-text p-1 pt-2 w-25">
                     @empty ($plugin->id)
                         データベースに登録します。
                     @endempty

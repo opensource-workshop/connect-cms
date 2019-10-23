@@ -22,18 +22,8 @@
         <select name="add_plugin" class="form-control" onchange="submit_form_add_plugin{{$area_id}}();">
     @endif
         <option value="">{{$area_name}}に追加</option>
-{{--
         @foreach($plugins as $plugin)
             <option value="{{strtolower($plugin->plugin_name)}}">{{$plugin->plugin_name_full}}</option>
         @endforeach
---}}
-        <option value="contents">固定記事</option>
-        <option value="blogs">ブログ</option>
-        <option value="menus">メニュー</option>
-        <option value="forms">フォーム</option>
-        <option value="sampleforms">サンプルフォーム</option>
-        <option value="opacs">OPAC</option>
-        <option value="knowledges">ナレッジ</option>
-        <option value="codestudies">コードスタディ</option>
     </select>
 </form>
