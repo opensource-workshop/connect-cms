@@ -2,10 +2,10 @@
 
 return [
 
-    // ‰æ‘œ‚ª‚È‚©‚Á‚½ê‡‚Ìuno imagev
+    // ç”»åƒãŒãªã‹ã£ãŸå ´åˆã®ã€Œno imageã€
     'no_image_path' => 'app/uploads/default/no_image.png',
 
-    // ƒvƒ‰ƒOƒCƒ“ŠÇ—‚É‚à•\Ž¦‚µ‚È‚¢ƒvƒ‰ƒOƒCƒ“(¬•¶Žš‚ÅŽw’è)
-    //'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies', 'opacs'],
-    'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies'],
+    // ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ç®¡ç†ã«ã‚‚è¡¨ç¤ºã—ãªã„ãƒ—ãƒ©ã‚°ã‚¤ãƒ³(å°æ–‡å­—ã§æŒ‡å®š)
+    'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies', 'opacs'],
+    //'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies'],
 ];
