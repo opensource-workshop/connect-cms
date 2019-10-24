@@ -11,6 +11,10 @@
 @if (isset($blogs_posts))
     <div class="sidetitleindex">
     @foreach($blogs_posts as $post)
+        @if ($loop->index == 3)
+          @break
+        @endif
+
         <div>
         {{-- 投稿日時 --}}
         <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
