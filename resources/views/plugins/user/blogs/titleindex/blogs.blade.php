@@ -24,12 +24,13 @@
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
+    <div class="titleindex">
     @foreach($blogs_posts as $post)
 
         {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
         {{-- タイトル --}}
-        <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
+        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
             @if ($loop->last)
                 <article>
             @else
@@ -71,6 +72,7 @@
     {{-- ページング処理 --}}
     <div class="text-center">
         {{ $blogs_posts->links() }}
+    </div>
     </div>
 @endif
 
