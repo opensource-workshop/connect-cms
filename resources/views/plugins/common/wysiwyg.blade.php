@@ -19,7 +19,7 @@
         relative_urls : false,
         height: 300,
         branding: false,
-        valid_children : "+body[style]",
+        valid_children : "+body[style],+a[div|p]",
         extended_valid_elements : "script[type|charset]",
         // file_picker_types: 'file image media',
         // media_live_embeds: true,
