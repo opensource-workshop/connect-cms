@@ -10,10 +10,12 @@
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
     @foreach($blogs_posts as $post)
+        <div class="sidetittleindexrow">
         {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日')}}</b>
+        <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
         {{-- タイトル --}}
-        <div><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></div>
+        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="tittle">{{$post->post_title}}</span></a>
+        </div>
     @endforeach
 
     {{-- ページング処理 --}}
