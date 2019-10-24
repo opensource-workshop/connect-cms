@@ -933,6 +933,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function cancel($request, $page_id, $frame_id, $id = null)
     {
+        // 権限チェック(カラムの編集ができる権限が必要)
+        if ($this->can('buckets.editColumn')) {
+            return $this->view_error(403);
+        }
+
         // 関連するセッションクリア
         $request->session()->forget('forms');
 
