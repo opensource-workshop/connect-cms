@@ -16,6 +16,13 @@
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
 
+    {{-- タグ --}}
+    @isset($post_tags)
+        @foreach($post_tags as $tags)
+            <span class="badge badge-secondary">{{$tags->tags}}</span>
+        @endforeach
+    @endisset
+
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
     <div class="row">
         <div class="col-12 text-right mb-1">
@@ -54,7 +61,7 @@
             <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="hidden-xs">前へ</span></span>
         </a>
         @endif
-        <a href="{{url('/')}}/{{$page->getLinkUrl()}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}">
             <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">一覧へ</span></span>
         </a>
         @if (isset($after_post))

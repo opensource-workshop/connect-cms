@@ -55,13 +55,6 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">タグ</label>
-        <input type="text" name="tags" value="{{old('tags', $blogs_posts_tags)}}" class="form-control">
-        @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif
-        <small class="form-text text-muted">カンマ区切りで複数指定可能</small>
-    </div>
-
-    <div class="form-group">
         <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-6">

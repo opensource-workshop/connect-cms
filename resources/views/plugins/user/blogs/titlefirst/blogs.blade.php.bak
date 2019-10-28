@@ -35,13 +35,6 @@
             {{-- 記事本文 --}}
             {!! $post->post_text !!}
 
-            {{-- タグ --}}
-            @isset($post->tags)
-                @foreach($post->tags as $tag)
-                    <span class="badge badge-secondary">{{$tag}}</span>
-                @endforeach
-            @endisset
-
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
             <div class="row">
                 <div class="col-12 text-right mb-1">

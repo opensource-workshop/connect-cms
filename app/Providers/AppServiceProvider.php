@@ -53,7 +53,8 @@ class AppServiceProvider extends AuthServiceProvider
                     if ($role == $user_role && $user_role_value) {
 
                         // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                        if ($user_role == 'role_article_admin') {
+                        if (($user_role == 'role_article_admin') ||
+                            ($user_role == 'role_approval')) {
                             return true;
                         }
 

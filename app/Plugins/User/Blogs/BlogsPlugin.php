@@ -13,6 +13,7 @@ use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
+use App\Models\User\Blogs\BlogsPostsTags;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -109,71 +110,52 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
+     *  記事の取得権限に対する条件追加
+     */
+    private function appendAuthWhere($query)
+    {
+        // 記事修正権限、記事管理者の場合、全記事の取得
+        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+            // 全件取得のため、追加条件なしで戻る。
+        }
+        // 承認権限の場合、Active ＋ 承認待ちの取得
+        elseif ($this->isCan('role_approval')) {
+            $query->Where('status',   '=', 0)
+                  ->orWhere('status', '=', 2);
+        }
+        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
+        elseif ($this->isCan('role_reporter')) {
+            $query->Where('status', '=', 0)
+                  ->orWhere('created_id', '=', Auth::user()->id);
+        }
+        // その他（ゲスト）
+        else {
+            $query->where('status', 0);
+        }
+
+        return $query;
+    }
+
+    /**
      *  ブログ記事一覧取得
      */
     private function getPosts($blog_frame)
     {
         $blogs_posts = null;
 
-        // 記事修正権限、記事管理者の場合、全記事の取得
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-
-            // 削除されていないデータでグルーピングして、最新のIDで全件
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->groupBy('contents_id');
-            })->orderBy('posted_at', 'desc')
-              ->paginate($blog_frame->view_count);
-        }
-        // 承認権限の場合、Active ＋ 承認待ちの取得
-        elseif ($this->isCan('role_approval')) {
-
-            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと承認待ち。
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->groupBy('contents_id');
-                })->where(function($query2){
-                    $query2->Where('status', '=', 0)
-                           ->orWhere('status', '=', 2);
-                })->orderBy('posted_at', 'desc')
-                  ->paginate($blog_frame->view_count);
-        }
-        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->isCan('role_reporter')) {
-
-            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと自分のデータ。
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->groupBy('contents_id');
-            })->where(function($query2){
-                $query2->Where('status', '=', 0)
-                       ->orWhere('created_id', '=', Auth::user()->id);
-            })->orderBy('posted_at', 'desc')
-              ->paginate($blog_frame->view_count);
-        }
-        // その他（ゲスト）
-        else {
-
-            // データ取得
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->where('status', 0)
-                        ->groupBy('contents_id');
-            })->orderBy('posted_at', 'desc')
-              ->paginate($blog_frame->view_count);
-        }
+        // 削除されていないデータでグルーピングして、最新のIDで全件
+        $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
+            $query->select(DB::raw('MAX(id) As id'))
+                    ->from('blogs_posts')
+                    ->where('blogs_id', $blog_frame->blogs_id)
+                    ->where('deleted_at', null)
+                    // 権限を見てWhere を付与する。
+                    ->where(function($query2){
+                        $query2 = $this->appendAuthWhere($query2);
+                    })
+                    ->groupBy('contents_id');
+        })->orderBy('posted_at', 'desc')
+          ->paginate($blog_frame->view_count);
 
         return $blogs_posts;
     }
@@ -288,6 +270,28 @@ class BlogsPlugin extends UserPluginBase
         // ブログデータ一覧の取得
         $blogs_posts = $this->getPosts($blog_frame);
 
+        // タグ：画面表示するデータのblogs_posts_id を集める
+        $posts_ids = array();
+        foreach($blogs_posts as $blogs_post) {
+            $posts_ids[] = $blogs_post->id;
+        }
+
+        // タグ：タグデータ取得
+        $blogs_posts_tags_row = BlogsPostsTags::whereIn('blogs_posts_id', $posts_ids)->get();
+
+        // タグ：タグデータ詰めなおし（ブログデータの一覧にあてるための外配列）
+        $blogs_posts_tags = array();
+        foreach($blogs_posts_tags_row as $record) {
+            $blogs_posts_tags[$record->blogs_posts_id][] = $record->tags;
+        }
+
+        // タグ：タグデータをポストデータに紐づけ
+        foreach($blogs_posts as &$blogs_post) {
+            if (array_key_exists($blogs_post->id, $blogs_posts_tags)) {
+                $blogs_post['tags'] = $blogs_posts_tags[$blogs_post->id];
+            }
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'blogs', [
@@ -310,12 +314,16 @@ class BlogsPlugin extends UserPluginBase
         $blogs_posts = new BlogsPosts();
         $blogs_posts->posted_at = date('Y-m-d H:i:s');
 
+        // タグ
+        $blogs_posts_tags = "";
+
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'blogs_input', [
-            'blog_frame'  => $blog_frame,
-            'blogs_posts' => $blogs_posts,
-            'errors'      => $errors,
+            'blog_frame'       => $blog_frame,
+            'blogs_posts'      => $blogs_posts,
+            'blogs_posts_tags' => $blogs_posts_tags,
+            'errors'           => $errors,
         ])->withInput($request->all);
     }
 
@@ -329,6 +337,10 @@ class BlogsPlugin extends UserPluginBase
 
         // 記事取得
         $blogs_post = $this->getPost($blogs_posts_id);
+
+        // タグ取得
+        // タグ：タグデータ取得
+        $blogs_post_tags = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
 
         // ひとつ前、ひとつ後の記事
         //$before_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)->where('posted_at', '<', $blogs_post->posted_at)->orderBy('posted_at', 'desc')->first();
@@ -361,6 +373,7 @@ class BlogsPlugin extends UserPluginBase
             'blogs_show', [
             'blog_frame'  => $blog_frame,
             'post'        => $blogs_post,
+            'post_tags'   => $blogs_post_tags,
             'before_post' => $before_post,
             'after_post'  => $after_post,
         ]);
@@ -381,12 +394,21 @@ class BlogsPlugin extends UserPluginBase
         //$blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
         $blogs_post = $this->getPost($blogs_posts_id);
 
+        // タグ取得
+        $blogs_posts_tags_array = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
+        $blogs_posts_tags = "";
+        foreach($blogs_posts_tags_array as $blogs_posts_tags_item) {
+            $blogs_posts_tags .= ',' . $blogs_posts_tags_item->tags;
+        }
+        $blogs_posts_tags = trim($blogs_posts_tags, ',');
+
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'blogs_input', [
-            'blog_frame'  => $blog_frame,
-            'blogs_posts' => $blogs_post,
-            'errors'      => $errors,
+            'blog_frame'       => $blog_frame,
+            'blogs_posts'      => $blogs_post,
+            'blogs_posts_tags' => $blogs_posts_tags,
+            'errors'           => $errors,
         ])->withInput($request->all);
     }
 
@@ -454,6 +476,22 @@ class BlogsPlugin extends UserPluginBase
 
         }
 
+        // タグの保存
+        if ($request->tags) {
+            $tags = explode(',', $request->tags);
+            foreach($tags as $tag) {
+
+                // 新規オブジェクト生成
+                $blogs_posts_tags = new BlogsPostsTags();
+
+                // タグ登録
+                $blogs_posts_tags->blogs_posts_id = $blogs_post->id;
+                $blogs_posts_tags->tags           = $tag;
+                $blogs_posts_tags->save();
+            }
+
+        }
+
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
     }
@@ -511,6 +549,9 @@ class BlogsPlugin extends UserPluginBase
 
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = BlogsPosts::where('id', $blogs_posts_id)->first();
+
+            // 削除ユーザ、削除日を設定する。（複数レコード更新のため、自動的には入らない）
+            BlogsPosts::where('contents_id', $post->contents_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
 
             // データを削除する。
             BlogsPosts::where('contents_id', $post->contents_id)->delete();
