@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use DB;
+use File;
 
 use App\Models\Common\Frame;
 use App\Plugins\PluginBase;
@@ -173,7 +174,17 @@ class UserPluginBase extends PluginBase
      */
     protected function getViewPath($blade_name)
     {
-        return 'plugins.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
+        // 指定したテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins/user/' . $this->frame->plugin_name . "/" . $this->frame->template . "/" . $blade_name . ".blade.php")) {
+            return 'plugins.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
+        }
+
+        // デフォルトテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins/user/' . $this->frame->plugin_name . "/default/" . $blade_name . ".blade.php")) {
+            return 'plugins.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
+        }
+
+        return 'errors/template_notfound';
     }
 
     /**
