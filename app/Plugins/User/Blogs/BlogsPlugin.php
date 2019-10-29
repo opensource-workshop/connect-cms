@@ -70,7 +70,16 @@ class BlogsPlugin extends UserPluginBase
             return $this->post;
         }
 
-        $this->post = BlogsPosts::where('id', $id)->first();
+        // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
+        $arg_post = BlogsPosts::where('id', $id)->first();
+
+        // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
+        $this->post = BlogsPosts::where('contents_id', $arg_post->contents_id)
+                                  ->where(function($query){
+                                      $query = $this->appendAuthWhere($query);
+                                  })
+                                  ->orderBy('id', 'desc')
+                                  ->first();
         return $this->post;
     }
 
@@ -161,76 +170,6 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
-     *  ブログ記事一覧取得(全件)
-     */
-    private function getPostsAll($blog_frame)
-    {
-        $blogs_posts = null;
-
-        // 記事修正権限、記事管理者の場合、全記事の取得
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-
-            // 削除されていないデータでグルーピングして、最新のIDで全件
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->groupBy('contents_id');
-            })->orderBy('posted_at', 'desc')
-              ->get();
-        }
-        // 承認権限の場合、Active ＋ 承認待ちの取得
-        elseif ($this->isCan('role_approval')) {
-
-            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと承認待ち。
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->groupBy('contents_id');
-                })->where(function($query2){
-                    $query2->Where('status', '=', 0)
-                           ->orWhere('status', '=', 2);
-                })->orderBy('posted_at', 'desc')
-                  ->get();
-        }
-        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->isCan('role_reporter')) {
-
-            // 削除されていないデータでグルーピングして、最新のIDを取ったのち、アクティブと自分のデータ。
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->groupBy('contents_id');
-            })->where(function($query2){
-                $query2->Where('status', '=', 0)
-                       ->orWhere('created_id', '=', Auth::user()->id);
-            })->orderBy('posted_at', 'desc')
-              ->get();
-        }
-        // その他（ゲスト）
-        else {
-
-            // データ取得
-            $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-                $query->select(DB::raw('MAX(id) As id'))
-                        ->from('blogs_posts')
-                        ->where('blogs_id', $blog_frame->blogs_id)
-                        ->where('deleted_at', null)
-                        ->where('status', 0)
-                        ->groupBy('contents_id');
-            })->orderBy('posted_at', 'desc')
-              ->get();
-        }
-
-        return $blogs_posts;
-    }
-
-    /**
      *  要承認の判断
      */
     private function isApproval($frame_id)
@@ -245,6 +184,45 @@ class BlogsPlugin extends UserPluginBase
             }
         }
         return false;
+    }
+
+    /**
+     *  タグの保存
+     */
+    private function saveTag($request, $blogs_post)
+    {
+        // タグの保存
+        if ($request->tags) {
+            $tags = explode(',', $request->tags);
+            foreach($tags as $tag) {
+
+                // 新規オブジェクト生成
+                $blogs_posts_tags = new BlogsPostsTags();
+
+                // タグ登録
+                $blogs_posts_tags->created_id     = $blogs_post->created_id;
+                $blogs_posts_tags->blogs_posts_id = $blogs_post->id;
+                $blogs_posts_tags->tags           = $tag;
+                $blogs_posts_tags->save();
+            }
+        }
+        return;
+    }
+
+    /**
+     *  タグのコピー
+     */
+    private function copyTag($from_post, $to_post)
+    {
+        // タグの保存
+        $blogs_posts_tags = BlogsPostsTags::where('blogs_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
+        foreach($blogs_posts_tags as $blogs_posts_tag) {
+            $new_tag = $blogs_posts_tag->replicate();
+            $new_tag->blogs_posts_id = $to_post->id;
+            $new_tag->save();
+        }
+
+        return;
     }
 
     /* 画面アクション関数 */
@@ -335,37 +313,37 @@ class BlogsPlugin extends UserPluginBase
         // Frame データ
         $blog_frame = $this->getBlogFrame($frame_id);
 
-        // 記事取得
+        // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
+        if (empty($blogs_post)) {
+            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+        }
 
         // タグ取得
         // タグ：タグデータ取得
-        $blogs_post_tags = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
-
-        // ひとつ前、ひとつ後の記事
-        //$before_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)->where('posted_at', '<', $blogs_post->posted_at)->orderBy('posted_at', 'desc')->first();
-        //$after_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)->where('posted_at', '>', $blogs_post->posted_at)->orderBy('posted_at', 'asc')->first();
-
-        // ブログデータ一覧の取得
-        $blogs_posts = $this->getPostsAll($blog_frame);
-
-        $before_post = null;
-        $after_post = null;
-
-        // ひとつ後
-        foreach($blogs_posts as $blogs_item) {
-            if ($blogs_post->posted_at < $blogs_item->posted_at) {
-                $after_post = $blogs_item;
-                //break;
-            }
+        $blogs_post_tags = new BlogsPostsTags();
+        if ($blogs_post) {
+            $blogs_post_tags = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
         }
 
-        // ひとつ前
-        foreach($blogs_posts as $blogs_item) {
-            if ($blogs_post->posted_at > $blogs_item->posted_at) {
-                $before_post = $blogs_item;
-                break;
-            }
+        // ひとつ前、ひとつ後の記事
+        $before_post = null;
+        $after_post = null;
+        if ($blogs_post) {
+            $before_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)
+                                     ->where('posted_at', '<', $blogs_post->posted_at)
+                                     ->where(function($query){
+                                         $query = $this->appendAuthWhere($query);
+                                     })
+                                     ->orderBy('posted_at', 'desc')
+                                     ->first();
+            $after_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)
+                                     ->where('posted_at', '>', $blogs_post->posted_at)
+                                     ->where(function($query){
+                                         $query = $this->appendAuthWhere($query);
+                                     })
+                                     ->orderBy('posted_at', 'asc')
+                                     ->first();
         }
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
@@ -390,9 +368,11 @@ class BlogsPlugin extends UserPluginBase
         // Frame データ
         $blog_frame = $this->getBlogFrame($frame_id);
 
-        // 記事取得
-        //$blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
+        // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
+        if (empty($blogs_post)) {
+            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+        }
 
         // タグ取得
         $blogs_posts_tags_array = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
@@ -425,10 +405,20 @@ class BlogsPlugin extends UserPluginBase
             return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
         }
 
-        // id があれば旧データを取得
+        // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
         $old_blogs_post = null;
         if (!empty($blogs_posts_id)) {
+
+            // 指定されたID のデータ
             $old_blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
+
+            // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+            $check_blogs_post = $this->getPost($blogs_posts_id);
+
+            // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
+            if (empty($check_blogs_post) || $check_blogs_post->id != $old_blogs_post->id) {
+                return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+            }
         }
 
         // 新規オブジェクト生成
@@ -477,20 +467,7 @@ class BlogsPlugin extends UserPluginBase
         }
 
         // タグの保存
-        if ($request->tags) {
-            $tags = explode(',', $request->tags);
-            foreach($tags as $tag) {
-
-                // 新規オブジェクト生成
-                $blogs_posts_tags = new BlogsPostsTags();
-
-                // タグ登録
-                $blogs_posts_tags->blogs_posts_id = $blogs_post->id;
-                $blogs_posts_tags->tags           = $tag;
-                $blogs_posts_tags->save();
-            }
-
-        }
+        $this->saveTag($request, $blogs_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -518,7 +495,15 @@ class BlogsPlugin extends UserPluginBase
         }
         else {
             $blogs_post = BlogsPosts::find($id)->replicate();
-        }
+ 
+            // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+            $check_blogs_post = $this->getPost($id);
+
+            // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
+            if (empty($check_blogs_post) || $check_blogs_post->id != $id) {
+                return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
+            }
+       }
 
         // ブログ記事設定
         $blogs_post->status = 1;
@@ -534,6 +519,9 @@ class BlogsPlugin extends UserPluginBase
             // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
             BlogsPosts::where('id', $blogs_post->id)->update(['contents_id' => $blogs_post->id]);
         }
+
+        // タグの保存
+        $this->saveTag($request, $blogs_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -568,12 +556,23 @@ class BlogsPlugin extends UserPluginBase
         // 新規オブジェクト生成
         $blogs_post = BlogsPosts::find($id)->replicate();
 
+        // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+        $check_blogs_post = $this->getPost($id);
+
+        // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
+        if (empty($check_blogs_post) || $check_blogs_post->id != $id) {
+            return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
+        }
+
         // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
         BlogsPosts::where('contents_id', $blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
 
         // ブログ記事設定
         $blogs_post->status = 0;
         $blogs_post->save();
+
+        // タグもコピー
+        $this->copyTag($check_blogs_post, $blogs_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);

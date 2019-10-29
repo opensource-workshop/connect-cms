@@ -10,8 +10,8 @@ use App\Models\Core\Plugins;
 trait ConnectCommonTrait
 {
     /**
-     * Œ ŒÀƒ`ƒFƒbƒN
-     * roll_or_auth : Œ ŒÀ or –ðŠ„
+     * æ¨©é™ãƒã‚§ãƒƒã‚¯
+     * roll_or_auth : æ¨©é™ or å½¹å‰²
      */
     public function can($roll_or_auth, $post = null, $plugin_name = null)
     {
@@ -26,8 +26,8 @@ trait ConnectCommonTrait
     }
 
     /**
-     * Œ ŒÀƒ`ƒFƒbƒN
-     * roll_or_auth : Œ ŒÀ or –ðŠ„
+     * æ¨©é™ãƒã‚§ãƒƒã‚¯
+     * roll_or_auth : æ¨©é™ or å½¹å‰²
      */
     public function isCan($roll_or_auth, $post = null, $plugin_name = null)
     {
@@ -43,26 +43,26 @@ trait ConnectCommonTrait
     }
 
     /**
-     * ƒGƒ‰[‰æ–Ê‚Ì•\Ž¦
+     * ã‚¨ãƒ©ãƒ¼ç”»é¢ã®è¡¨ç¤º
      *
      */
-    public function view_error($error_code)
+    public function view_error($error_code, $message = null, $debug_message = null)
     {
-        // •\Ž¦ƒeƒ“ƒvƒŒ[ƒg‚ðŒÄ‚Ño‚·B
-        return view('errors.' . $error_code);
+        // è¡¨ç¤ºãƒ†ãƒ³ãƒ—ãƒ¬ãƒ¼ãƒˆã‚’å‘¼ã³å‡ºã™ã€‚
+        return view('errors.' . $error_code, ['message' => $message, 'debug_message' => $debug_message]);
     }
 
     /**
-     * ƒvƒ‰ƒOƒCƒ“ˆê——‚ÌŽæ“¾
+     * ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ä¸€è¦§ã®å–å¾—
      *
      */
     public function getPlugins($arg_display_flag = true, $force_get = false)
     {
-        // ƒvƒ‰ƒOƒCƒ“ˆê——‚ÌŽæ“¾
+        // ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ä¸€è¦§ã®å–å¾—
         $display_flag = ($arg_display_flag) ? 1 : 0;
         $plugins = Plugins::where('display_flag', $display_flag)->orderBy('display_sequence')->get();
 
-        // ‹­§“I‚É”ñ•\Ž¦‚É‚·‚éƒvƒ‰ƒOƒCƒ“‚ðœŠO
+        // å¼·åˆ¶çš„ã«éžè¡¨ç¤ºã«ã™ã‚‹ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ã‚’é™¤å¤–
         if ( !$force_get ) {
             foreach($plugins as $plugin_loop_key => $plugin) {
                 if ( in_array(mb_strtolower($plugin->plugin_name), config('connect.PLUGIN_FORCE_HIDDEN'))) {
