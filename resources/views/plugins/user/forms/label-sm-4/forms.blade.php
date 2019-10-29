@@ -70,32 +70,32 @@
                 </div>
                 @break
             @case("text")
-                <div class="col-sm-10">
+                <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_text',['form_obj' => $form_column])
                 </div>
                 @break
             @case("textarea")
-                <div class="col-sm-10">
+                <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $form_column])
                 </div>
                 @break
             @case("radio")
-                <div class="col-sm-10">
+                <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $form_column])
                 </div>
                 @break
             @case("checkbox")
-                <div class="col-sm-10">
+                <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $form_column])
                 </div>
                 @break
             @case("select")
-                <div class="col-sm-10">
+                <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_select',['form_obj' => $form_column])
                 </div>
                 @break
             @case("mail")
-                <div class="col-sm-10">
+                <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $form_column])
                 </div>
                 @break
