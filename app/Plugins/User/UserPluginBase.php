@@ -134,7 +134,7 @@ class UserPluginBase extends PluginBase
         $post = null;
 
         // POST チェックに使用する getPost() 関数の有無をチェック
-        if ( $id && method_exists($obj, 'getPost') ) { 
+        if ( $id && method_exists($obj, 'getPost') ) {
             $post = $obj->getPost($id);
         }
 

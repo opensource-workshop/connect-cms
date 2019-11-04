@@ -61,7 +61,7 @@ class ContentsPlugin extends UserPluginBase
     /**
      *  データ取得
      */
-    public function getPost($frame_id)
+    public function getFrameContents($frame_id)
     {
 
         // 一度読んでいれば、そのPOSTを再利用する。
@@ -119,7 +119,7 @@ class ContentsPlugin extends UserPluginBase
     public function index($request, $page_id, $frame_id)
     {
         // データ取得
-        $contents = $this->getPost($frame_id);
+        $contents = $this->getFrameContents($frame_id);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -135,7 +135,7 @@ class ContentsPlugin extends UserPluginBase
     public function edit($request, $page_id, $frame_id, $id = null)
     {
         // データ取得
-        $contents = $this->getPost($frame_id);
+        $contents = $this->getFrameContents($frame_id);
 
         // データがない場合は、新規登録用画面
         if (empty($contents)) {
@@ -167,7 +167,7 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // データ取得
-        $contents = $this->getPost($frame_id);
+        $contents = $this->getFrameContents($frame_id);
 
         // データの存在確認をして、画面を切り替える
         if (empty($contents)) {

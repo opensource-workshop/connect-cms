@@ -72,5 +72,36 @@ trait ConnectCommonTrait
         }
         return $plugins;
     }
+
+    /**
+     *  曜日取得
+     *
+     */
+    public function getWeekJp($date)
+    {
+        switch (date('N', strtotime($date))) {
+        case 1:
+            return "月";
+            break;
+        case 2:
+            return "火";
+            break;
+        case 3:
+            return "水";
+            break;
+        case 4:
+            return "木";
+            break;
+        case 5:
+            return "金";
+            break;
+        case 6:
+            return "土";
+            break;
+        case 7:
+            return "日";
+            break;
+        }
+    }
 }
 

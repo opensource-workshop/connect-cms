@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddUserPrefixBlogsPostsTags extends Migration
+class AddUserPrefixOpeningcalendarsDays extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,9 @@ class AddUserPrefixBlogsPostsTags extends Migration
      */
     public function up()
     {
-        Schema::table('blogs_posts_tags', function (Blueprint $table) {
+        Schema::table('openingcalendars_days', function (Blueprint $table) {
             //
-            $table->integer('created_id')->nullable()->after('tags');
+            $table->integer('created_id')->nullable()->after('openingcalendars_patterns_id');
             $table->string('created_name', 255)->nullable()->after('created_id');
             $table->integer('updated_id')->nullable()->after('created_at');
             $table->string('updated_name', 255)->nullable()->after('updated_id');
@@ -31,7 +31,7 @@ class AddUserPrefixBlogsPostsTags extends Migration
      */
     public function down()
     {
-        Schema::table('blogs_posts_tags', function (Blueprint $table) {
+        Schema::table('openingcalendars_days', function (Blueprint $table) {
             //
             $table->dropColumn('created_id');
             $table->dropColumn('created_name');
