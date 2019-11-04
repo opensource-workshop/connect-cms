@@ -67,6 +67,10 @@
         </table>
     </div>
 
+    {{-- ページング処理 --}}
+    <div class="text-center">
+        {{ $users->links() }}
+    </div>
 </div>
 </div>
 

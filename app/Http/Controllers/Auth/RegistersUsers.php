@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\RedirectsUsers;
 
 // Connect-CMS 用設定データ
 use App\Models\Core\Configs;
+use App\Models\Core\UsersRoles;
 use App\Traits\ConnectCommonTrait;
 
 trait RegistersUsers
@@ -82,6 +83,30 @@ trait RegistersUsers
 
         // ユーザーデータ登録
         event(new Registered($user = $this->create($request->all())));
+
+        // ユーザ権限の登録
+        if (!empty($request->base)) {
+            foreach($request->base as $role_name => $value) {
+                UsersRoles::create([
+                    'users_id'   => $user->id,
+                    'target'     => 'base',
+                    'role_name'  => $role_name,
+                    'role_value' => 1
+                ]);
+            }
+        }
+
+        // 管理権限の登録
+        if (!empty($request->manage)) {
+            foreach($request->manage as $role_name => $value) {
+                UsersRoles::create([
+                    'users_id'   => $user->id,
+                    'target'     => 'manage',
+                    'role_name'  => $role_name,
+                    'role_value' => 1
+                ]);
+            }
+        }
 
         // 作成したユーザでのログイン処理は行わない。mod by nagahara@opensource-workshop.jp
         // $this->guard()->login($user);
