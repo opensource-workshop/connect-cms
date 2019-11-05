@@ -38,7 +38,7 @@
     </div>
 @endif
 
-{{-- 一時保存ボタンのアクション --}}
+{{-- 削除ボタンのアクション --}}
 <script type="text/javascript">
     function form_delete(id) {
         if (confirm('時間設定を削除します。\nよろしいですか？')) {
