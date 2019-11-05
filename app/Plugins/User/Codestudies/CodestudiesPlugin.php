@@ -168,6 +168,7 @@ class CodestudiesPlugin extends UserPluginBase
         $codestudies->title      = $request->title;
         $codestudies->study_lang = $request->study_lang;
         $codestudies->code_text  = $request->code_text;
+        $codestudies->created_id = Auth::user()->id;
 
         // データ保存
         $codestudies->save();
