@@ -12,6 +12,17 @@
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
         403 Forbidden. （権限がありません）<br />
+
+        @if (isset($exception) && $exception->getMessage())
+        <div class="card mt-3">
+            <div class="card-header">
+                Message detail.
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{$exception->getMessage()}}</p>
+            </div>
+        </div>
+        @endif
 {{--
         {{$exception->getMessage()}}
 --}}
