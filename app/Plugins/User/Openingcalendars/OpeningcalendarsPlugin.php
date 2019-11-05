@@ -137,6 +137,19 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // Frame データ
         $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
 
+        // パターン取得(画面で2列に分けて表示したいので、配列にして2列に分割、画面へ渡す)
+        $openingcalendars_patterns = OpeningcalendarsPatterns::where('openingcalendars_id', '=', $openingcalendar_frame->openingcalendars_id)
+                                                             ->orderBy("display_sequence", "asc")
+                                                             ->get();
+        $patterns_array = array();
+        $patterns = array();
+        foreach($openingcalendars_patterns as $openingcalendars_pattern) {
+            $patterns_array[$openingcalendars_pattern->id] = $openingcalendars_pattern;
+            $patterns[$openingcalendars_pattern->id] = $openingcalendars_pattern->color;
+        }
+        $patterns_chunks = array_chunk($patterns_array, 2);
+        //print_r($patterns);
+
         // 過去・未来の表示年月
         $view_before_ym = date("Y-m", strtotime(" - " . $openingcalendar_frame->view_before_month . " month"));
         $view_after_ym = date("Y-m", strtotime(" + " . $openingcalendar_frame->view_after_month . " month"));
@@ -176,12 +189,22 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // 配列に詰めなおし[年-月][日][プラン] ＆ 月の配列も生成[年-月]
         $view_days = array();
         $view_months = array();
+        $view_months_patterns = array();
         foreach($opening_date_ym_rec as $opening_date_ym) {
             $view_days[substr($opening_date_ym->opening_date, 0, 7)][substr($opening_date_ym->opening_date, 8, 2)] = $opening_date_ym->openingcalendars_patterns_id;
             $view_months[substr($opening_date_ym->opening_date, 0, 7)] = array("data-prev" => null, "data-next" => null);
+            $view_months_patterns[substr($opening_date_ym->opening_date, 0, 7)][$opening_date_ym->openingcalendars_patterns_id] = $patterns_array[$opening_date_ym->openingcalendars_patterns_id];
         }
+
+        // 月ごとのパターンをソート
+        foreach($view_months_patterns as &$view_months_pattern) {
+            ksort($view_months_pattern);
+            $view_months_pattern = array_chunk($view_months_pattern, 2);
+        }
+
         //print_r($view_days);
         //print_r($view_months);
+        //print_r($view_months_patterns);
 
         // 前、次の制御。それぞれ最後の一つ前にフラグon
         $count = count($view_months);
@@ -227,32 +250,20 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $dates = $this->getCalendarDates($view_ym);
         //print_r($dates);
 
-        // パターン取得(画面で2列に分けて表示したいので、配列にして2列に分割、画面へ渡す)
-        $openingcalendars_patterns = OpeningcalendarsPatterns::where('openingcalendars_id', '=', $openingcalendar_frame->openingcalendars_id)
-                                                             ->orderBy("display_sequence", "asc")
-                                                             ->get();
-        $patterns_array = array();
-        $patterns = array();
-        foreach($openingcalendars_patterns as $openingcalendars_pattern) {
-            $patterns_array[] = $openingcalendars_pattern;
-            $patterns[$openingcalendars_pattern->id] = $openingcalendars_pattern->color;
-        }
-        $patterns_chunks = array_chunk($patterns_array, 2);
-        //print_r($patterns);
-
         // 表示テンプレートを呼び出す。
         return $this->view(
             'openingcalendars', [
             'openingcalendar_frame' => $openingcalendar_frame,
-            'dates'            => $dates,
-            'view_ym'          => $view_ym,
-            'view_ym_str'      => $view_ym_str,
-            'view_days'        => $view_days,
-            'calendars'        => $calendars,
-            'patterns'         => $patterns,
-            'patterns_chunks'  => $patterns_chunks,
-            'view_months'      => $view_months2,
-            'default_disabled' => $default_disabled,
+            'dates'                => $dates,
+            'view_ym'              => $view_ym,
+            'view_ym_str'          => $view_ym_str,
+            'view_days'            => $view_days,
+            'calendars'            => $calendars,
+            'patterns'             => $patterns,
+            'patterns_chunks'      => $patterns_chunks,
+            'view_months'          => $view_months2,
+            'view_months_patterns' => $view_months_patterns,
+            'default_disabled'     => $default_disabled,
         ]);
     }
 
