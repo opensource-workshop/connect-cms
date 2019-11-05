@@ -85,7 +85,10 @@ class Nc2Sso extends ApiPluginBase
             // if ($user->role == config('cc_role.ROLE_PAGE_MANAGER') || $user->role == config('cc_role.ROLE_GUEST')) {
 
             // ユーザはあり、書き込み系の権限がない場合は、自動ログイン
-            if ($users_roles->notRole('role_reporter', $user->id)) {
+            //if ($users_roles->notRole('role_reporter', $user->id)) {
+
+            // ユーザはあり、記事書き込み権限のみの場合は、自動ログイン
+            if ($users_roles->isOnlyRole('role_reporter', $user->id)) {
 
                 // ログイン
                 Auth::login($user, true);
@@ -96,7 +99,7 @@ class Nc2Sso extends ApiPluginBase
 
             // 管理者権限の場合は、NC2 側でも管理者の場合、自動ログイン
             //if ($user->role == config('cc_role.ROLE_SYSTEM_MANAGER') && $check_result['role_authority_id'] == 1) {
-            if ($users_roles->haveRole('admin_system', $user->id) && $check_result['role_authority_id'] == 1) {
+            if ($users_roles->haveAdmin($user->id) && $check_result['role_authority_id'] == 1) {
 
                 // ログイン
                 Auth::login($user, true);
@@ -116,6 +119,14 @@ class Nc2Sso extends ApiPluginBase
             $user->password = 'password';
             //$user->role     = 0;
             $user->save();
+
+            // ユーザ権限の登録
+            UsersRoles::create([
+                'users_id'   => $user->id,
+                'target'     => 'base',
+                'role_name'  => 'role_reporter',
+                'role_value' => 1
+            ]);
 
             // ログイン
             Auth::login($user, true);

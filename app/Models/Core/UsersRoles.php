@@ -28,7 +28,7 @@ class UsersRoles extends Model
     public function getUsersRoles($users_id)
     {
 
-        // すでに内容を保持している場合はh時している内容を返却
+        // すでに内容を保持している場合は保持している内容を返却
         if (!empty($this->user_roles)) {
             return $this->user_roles;
         }
@@ -64,6 +64,22 @@ class UsersRoles extends Model
     }
 
     /**
+     *  管理系権限を保持しているかの判断
+     */
+    public function haveAdmin($users_id)
+    {
+        $targets = $this->getUsersRoles($users_id);
+        foreach ($targets as $roles) {
+            foreach ($roles as $role => $value) {
+                if ($role == 'admin_system' || $role == 'admin_page' || $role == 'admin_site' || $role == 'admin_user') {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      *  権限を保持していないかの判断
      */
     public function notRole($target_role, $users_id)
@@ -77,5 +93,25 @@ class UsersRoles extends Model
             }
         }
         return true;
+    }
+
+    /**
+     *  指定された権限しか保有していないかの判断
+     */
+    public function isOnlyRole($target_role, $users_id)
+    {
+        $target_check = false;
+        $targets = $this->getUsersRoles($users_id);
+        foreach ($targets as $roles) {
+            foreach ($roles as $role => $value) {
+                if ($role == $target_role) {
+                    $target_check = true;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+        return $target_check;
     }
 }
