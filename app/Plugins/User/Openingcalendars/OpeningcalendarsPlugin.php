@@ -573,7 +573,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
-        // 権限チェック（run 関数は標準チェックにないので、独自チェック）
+        // 権限チェック（listPatterns 関数は標準チェックにないので、独自チェック）
         if ($this->can('role_arrangement')) {
             return $this->view_error("403_inframe", null, '関数実行権限がありません。');
         }
@@ -611,7 +611,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
      */
     public function savePatterns($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（run 関数は標準チェックにないので、独自チェック）
+        // 権限チェック（savePatterns 関数は標準チェックにないので、独自チェック）
         if ($this->can('role_arrangement')) {
             return $this->view_error("403_inframe", null, '関数実行権限がありません。');
         }
@@ -698,6 +698,11 @@ class OpeningcalendarsPlugin extends UserPluginBase
      */
     public function deletePatterns($request, $page_id, $frame_id, $id = null)
     {
+        // 権限チェック（deletePatterns 関数は標準チェックにないので、独自チェック）
+        if ($this->can('role_arrangement')) {
+            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
+        }
+
         // 削除
         OpeningcalendarsPatterns::where('id', $id)->delete();
 
