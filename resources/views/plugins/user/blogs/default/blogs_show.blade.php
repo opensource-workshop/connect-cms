@@ -6,11 +6,15 @@
  * @category ブログプラグイン
  --}}
 
-{{-- 投稿日時 --}}
-<b>{{$post->posted_at->format('Y年n月j日')}}</b>
-
 {{-- タイトル --}}
 <h2>{{$post->post_title}}</h2>
+
+{{-- 投稿日時 --}}
+<b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+{{-- カテゴリ --}}
+@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+
 <article>
 
     {{-- 記事本文 --}}

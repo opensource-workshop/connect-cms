@@ -55,6 +55,17 @@
     </div>
 
     <div class="form-group">
+        <label class="control-label">カテゴリ</label>
+        <select class="form-control" name="categories_id" class="form-control">
+            <option value=""></option>
+            @foreach($blogs_categories as $category)
+            <option value="{{$category->id}}" @if(Input::old('category', $blogs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+            @endforeach
+        </select>
+        @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
+    </div>
+
+    <div class="form-group">
         <label class="control-label">タグ</label>
         <input type="text" name="tags" value="{{old('tags', $blogs_posts_tags)}}" class="form-control">
         @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif

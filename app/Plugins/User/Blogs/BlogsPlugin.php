@@ -12,6 +12,7 @@ use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
+use App\Models\User\Blogs\BlogsCategories;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Blogs\BlogsPostsTags;
 
@@ -44,8 +45,8 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
-        $functions['post'] = [];
+        $functions['get']  = ['listCategories'];
+        $functions['post'] = ['saveCategories', 'deleteCategories'];
         return $functions;
     }
 
@@ -74,12 +75,17 @@ class BlogsPlugin extends UserPluginBase
         $arg_post = BlogsPosts::where('id', $id)->first();
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = BlogsPosts::where('contents_id', $arg_post->contents_id)
-                                  ->where(function($query){
+        $this->post = BlogsPosts::select('blogs_posts.*',
+                                          'blogs_categories.color as category_color',
+                                          'blogs_categories.background_color as category_background_color',
+                                          'blogs_categories.category as category')
+                                ->leftJoin('blogs_categories', 'blogs_categories.id', '=', 'blogs_posts.categories_id')
+                                ->where('contents_id', $arg_post->contents_id)
+                                ->where(function($query){
                                       $query = $this->appendAuthWhere($query);
-                                  })
-                                  ->orderBy('id', 'desc')
-                                  ->first();
+                                })
+                                ->orderBy('id', 'desc')
+                                ->first();
         return $this->post;
     }
 
@@ -97,6 +103,17 @@ class BlogsPlugin extends UserPluginBase
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
+    }
+
+    /**
+     *  カテゴリデータの取得
+     */
+    private function getBlogsCategories($blogs_id)
+    {
+        $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id)
+                                           ->orderBy('display_sequence', 'asc')
+                                           ->get();
+        return $blogs_categories;
     }
 
     /**
@@ -151,8 +168,27 @@ class BlogsPlugin extends UserPluginBase
     private function getPosts($blog_frame)
     {
         $blogs_posts = null;
-
+//DB::enableQueryLog();
         // 削除されていないデータでグルーピングして、最新のIDで全件
+        $blogs_posts = BlogsPosts::select('blogs_posts.*',
+                                          'blogs_categories.color as category_color',
+                                          'blogs_categories.background_color as category_background_color',
+                                          'blogs_categories.category as category')
+                                 ->leftJoin('blogs_categories', 'blogs_categories.id', '=', 'blogs_posts.categories_id')
+                                 ->whereIn('blogs_posts.id', function($query) use($blog_frame) {
+                                     $query->select(DB::raw('MAX(id) As id'))
+                                           ->from('blogs_posts')
+                                           ->where('blogs_id', $blog_frame->blogs_id)
+                                           ->where('deleted_at', null)
+                                           // 権限を見てWhere を付与する。
+                                           ->where(function($query2){
+                                               $query2 = $this->appendAuthWhere($query2);
+                                           })
+                                           ->groupBy('contents_id');
+                                     })->orderBy('posted_at', 'desc')
+                                 ->paginate($blog_frame->view_count);
+
+/*
         $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
             $query->select(DB::raw('MAX(id) As id'))
                     ->from('blogs_posts')
@@ -165,7 +201,7 @@ class BlogsPlugin extends UserPluginBase
                     ->groupBy('contents_id');
         })->orderBy('posted_at', 'desc')
           ->paginate($blog_frame->view_count);
-
+*/
         return $blogs_posts;
     }
 
@@ -266,7 +302,7 @@ class BlogsPlugin extends UserPluginBase
         // タグ：タグデータをポストデータに紐づけ
         foreach($blogs_posts as &$blogs_post) {
             if (array_key_exists($blogs_post->id, $blogs_posts_tags)) {
-                $blogs_post['tags'] = $blogs_posts_tags[$blogs_post->id];
+                $blogs_post->tags = $blogs_posts_tags[$blogs_post->id];
             }
         }
 
@@ -292,6 +328,9 @@ class BlogsPlugin extends UserPluginBase
         $blogs_posts = new BlogsPosts();
         $blogs_posts->posted_at = date('Y-m-d H:i:s');
 
+        // カテゴリ
+        $blogs_categories = $this->getBlogsCategories($blog_frame->blogs_id);
+
         // タグ
         $blogs_posts_tags = "";
 
@@ -300,6 +339,7 @@ class BlogsPlugin extends UserPluginBase
             'blogs_input', [
             'blog_frame'       => $blog_frame,
             'blogs_posts'      => $blogs_posts,
+            'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
             'errors'           => $errors,
         ])->withInput($request->all);
@@ -374,6 +414,9 @@ class BlogsPlugin extends UserPluginBase
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
+        // カテゴリ
+        $blogs_categories = $this->getBlogsCategories($blog_frame->blogs_id);
+
         // タグ取得
         $blogs_posts_tags_array = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
         $blogs_posts_tags = "";
@@ -387,6 +430,7 @@ class BlogsPlugin extends UserPluginBase
             'blogs_input', [
             'blog_frame'       => $blog_frame,
             'blogs_posts'      => $blogs_post,
+            'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
             'errors'           => $errors,
         ])->withInput($request->all);
@@ -425,10 +469,11 @@ class BlogsPlugin extends UserPluginBase
         $blogs_post = new BlogsPosts();
 
         // ブログ記事設定
-        $blogs_post->blogs_id   = $request->blogs_id;
-        $blogs_post->post_title = $request->post_title;
-        $blogs_post->posted_at  = $request->posted_at;
-        $blogs_post->post_text  = $request->post_text;
+        $blogs_post->blogs_id      = $request->blogs_id;
+        $blogs_post->post_title    = $request->post_title;
+        $blogs_post->categories_id = $request->categories_id;
+        $blogs_post->posted_at     = $request->posted_at;
+        $blogs_post->post_text     = $request->post_text;
 
         // 承認の要否確認とステータス処理
         if ($this->isApproval($frame_id)) {
@@ -765,5 +810,143 @@ class BlogsPlugin extends UserPluginBase
 
         // 表示ブログ選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * カテゴリ表示関数
+     */
+    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
+        if ($this->can('role_arrangement')) {
+            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
+        }
+
+        // ブログ
+        $blog_frame = $this->getBlogFrame($frame_id);
+
+        // カテゴリ
+        $blogs_categories = BlogsCategories::where('blogs_id', $blog_frame->blogs_id)
+                                           ->orderBy('display_sequence', 'asc')
+                                           ->get();
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'blogs_list_categories', [
+            'blogs_categories' => $blogs_categories,
+            'blog_frame'       => $blog_frame,
+            'errors'           => $errors,
+            'create_flag'      => $create_flag,
+        ])->withInput($request->all);
+    }
+
+    /**
+     *  カテゴリ登録処理
+     */
+    public function saveCategories($request, $page_id, $frame_id, $id = null)
+    {
+        // 権限チェック（saveCategories 関数は標準チェックにないので、独自チェック）
+        if ($this->can('role_arrangement')) {
+            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
+        }
+
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
+
+            // 項目のエラーチェック
+            $validator = Validator::make($request->all(), [
+                'add_display_sequence' => ['required'],
+                'add_category'         => ['required'],
+                'add_color'            => ['required'],
+                'add_background_color' => ['required'],
+            ]);
+            $validator->setAttributeNames([
+                'add_display_sequence' => '追加行の表示順',
+                'add_category'         => '追加行のカテゴリ',
+                'add_color'            => '追加行の文字色',
+                'add_background_color' => '追加行の背景色',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            }
+        }
+
+        // 既存項目のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->blogs_categories_id)) {
+            foreach($request->blogs_categories_id as $category_id) {
+
+                // 項目のエラーチェック
+                $validator = Validator::make($request->all(), [
+                    'display_sequence.'.$category_id => ['required'],
+                    'category.'.$category_id         => ['required'],
+                    'color.'.$category_id            => ['required'],
+                    'background_color.'.$category_id => ['required'],
+                ]);
+                $validator->setAttributeNames([
+                    'display_sequence.'.$category_id => '表示順',
+                    'category.'.$category_id         => 'カテゴリ',
+                    'color.'.$category_id            => '文字色',
+                    'background_color.'.$category_id => '背景色',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+                }
+            }
+        }
+
+        // ブログ
+        $blog_frame = $this->getBlogFrame($frame_id);
+
+        // 追加項目アリ
+        if (!empty($request->add_display_sequence)) {
+            BlogsCategories::create(['blogs_id' => $blog_frame->blogs_id,
+                                 'display_sequence' => intval($request->add_display_sequence),
+                                 'category'         => $request->add_category,
+                                 'color'            => $request->add_color,
+                                 'background_color' => $request->add_background_color
+                             ]);
+        }
+
+        // 既存項目アリ
+        if (!empty($request->blogs_categories_id)) {
+
+            foreach($request->blogs_categories_id as $blogs_categories_id) {
+
+                // モデルオブジェクト取得
+                $category_obj = BlogsCategories::where('id', $blogs_categories_id)->first();
+
+                // データのセット
+                $category_obj->color            = $request->color[$blogs_categories_id];
+                $category_obj->background_color = $request->background_color[$blogs_categories_id];
+                $category_obj->category         = $request->category[$blogs_categories_id];
+                $category_obj->display_sequence = $request->display_sequence[$blogs_categories_id];
+
+                // 保存
+                $category_obj->save();
+            }
+        }
+
+        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+    }
+
+    /**
+     *  カテゴリ削除処理
+     */
+    public function deleteCategories($request, $page_id, $frame_id, $id = null)
+    {
+        // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
+        if ($this->can('role_arrangement')) {
+            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
+        }
+
+        // 削除
+        BlogsCategories::where('id', $id)->delete();
+
+        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
     }
 }

@@ -11,6 +11,9 @@
 
 {{-- タイトル --}}
 <h2>{{$post->post_title}}</h2>
+
+{{-- カテゴリ --}}
+@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
 <article>
 
     {{-- 記事本文 --}}

@@ -30,6 +30,8 @@
         <b>{{$post->posted_at->format('Y年n月j日')}}</b>
         {{-- タイトル --}}
         <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
+        {{-- カテゴリ --}}
+        @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
         <article class="cc_article">
 
             {{-- 記事本文 --}}
