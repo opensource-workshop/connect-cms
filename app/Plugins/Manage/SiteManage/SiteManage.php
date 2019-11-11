@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 
 use App\Models\Core\Configs;
+use App\Models\Common\Categories;
 use App\Models\Common\Page;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -30,13 +31,11 @@ class SiteManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["index"]  = array('admin_site');
-        $role_ckeck_table["update"] = array('admin_site');
-/*
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_SITE_MANAGER'));
-        $role_ckeck_table["update"] = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_SITE_MANAGER'));
-*/
+        $role_ckeck_table["index"]          = array('admin_site');
+        $role_ckeck_table["update"]         = array('admin_site');
+        $role_ckeck_table["categories"]     = array('admin_site');
+        $role_ckeck_table["saveCategories"] = array('admin_site');
+
         return $role_ckeck_table;
     }
 
@@ -59,6 +58,7 @@ class SiteManage extends ManagePluginBase
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.site.site',[
+            "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "errors"      => $errors,
             "configs"     => $configs_array,
@@ -143,5 +143,120 @@ class SiteManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/site");
+    }
+
+    /**
+     *  カテゴリ表示画面
+     */
+    public function categories($request, $id, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // カテゴリデータの取得
+        $categories = Categories::orderBy('target', 'asc')
+                                ->orderBy('plugin_id', 'asc')
+                                ->orderBy('display_sequence', 'asc')
+                                ->get();
+
+        return view('plugins.manage.site.categories',[
+            "function"    => __FUNCTION__,
+            "id"          => $id,
+            "categories"  => $categories,
+            "create_flag" => true,
+            "errors"      => $errors,
+        ]);
+    }
+
+    /**
+     *  カテゴリ保存処理
+     */
+    public function saveCategories($request, $id)
+    {
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color) || !empty($request->add_background_color)) {
+
+            // 項目のエラーチェック
+            $validator = Validator::make($request->all(), [
+                'add_display_sequence' => ['required'],
+                'add_classname'        => ['required'],
+                'add_category'         => ['required'],
+                'add_color'            => ['required'],
+                'add_background_color' => ['required'],
+            ]);
+            $validator->setAttributeNames([
+                'add_display_sequence' => '追加行の表示順',
+                'add_classname'        => '追加行のクラス名',
+                'add_category'         => '追加行のカテゴリ',
+                'add_color'            => '追加行の文字色',
+                'add_background_color' => '追加行の背景色',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->categories($request, $id, $validator->errors());
+            }
+        }
+
+        // 既存項目のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->categories_id)) {
+            foreach($request->categories_id as $category_id) {
+
+                // 項目のエラーチェック
+                $validator = Validator::make($request->all(), [
+                    'display_sequence.'.$category_id => ['required'],
+                    'classname.'.$category_id        => ['required'],
+                    'category.'.$category_id         => ['required'],
+                    'color.'.$category_id            => ['required'],
+                    'background_color.'.$category_id => ['required'],
+                ]);
+                $validator->setAttributeNames([
+                    'display_sequence.'.$category_id => '表示順',
+                    'classname.'.$category_id        => 'クラス名',
+                    'category.'.$category_id         => 'カテゴリ',
+                    'color.'.$category_id            => '文字色',
+                    'background_color.'.$category_id => '背景色',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->categories($request, $id, $validator->errors());
+                }
+            }
+        }
+
+        // 追加項目アリ
+        if (!empty($request->add_display_sequence)) {
+            Categories::create([
+                            'display_sequence' => intval($request->add_display_sequence),
+                            'classname'        => $request->add_classname,
+                            'category'         => $request->add_category,
+                            'color'            => $request->add_color,
+                            'background_color' => $request->add_background_color
+                        ]);
+        }
+
+        // 既存項目アリ
+        if (!empty($request->categories_id)) {
+
+            foreach($request->categories_id as $category_id) {
+
+                // モデルオブジェクト取得
+                $categories = Categories::where('id', $category_id)->first();
+
+                // データのセット
+                $categories->classname        = $request->classname[$category_id];
+                $categories->color            = $request->color[$category_id];
+                $categories->background_color = $request->background_color[$category_id];
+                $categories->category         = $request->category[$category_id];
+                $categories->display_sequence = $request->display_sequence[$category_id];
+
+                // 保存
+                $categories->save();
+            }
+        }
+
+        return $this->categories($request, $id, null);
+
+        // ページ管理画面に戻る
+        return redirect("/manage/site/categories");
     }
 }

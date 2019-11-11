@@ -24,7 +24,7 @@
                 @endforeach
             </span>
             <span class="text-secondary">
-                @if ($errors->has('add_display_sequence') || $errors->has('add_category') || $errors->has('color') || $errors->has('background_color'))
+                @if ($errors->has('add_display_sequence') || $errors->has('add_classname') || $errors->has('add_category') || $errors->has('color') || $errors->has('background_color'))
                 <i class="fas fa-exclamation-circle"></i> 追加行を入力する場合は、すべての項目を入力してください。
                 @endif
             </span>
@@ -42,10 +42,6 @@
     }
 </script>
 
-<form action="" method="POST" name="form_delete_category" class="">
-    {{ csrf_field() }}
-</form>
-
 <form action="/plugin/blogs/saveCategories/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
@@ -53,28 +49,73 @@
         <table class="table table-hover" style="margin-bottom: 0;">
         <thead>
             <tr>
+                <th nowrap>表示</th>
                 <th nowrap>表示順</th>
+                <th nowrap>クラス名</th>
+                <th nowrap>カテゴリ</th>
+                <th nowrap>文字色</th>
+                <th nowrap>背景色</th>
+                <th nowrap></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach($general_categories as $category)
+            <tr>
+                <td nowrap>
+                    <input type="hidden" value="{{$category->id}}" name="general_categories_id[{{$category->id}}]"></input>
+                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="general_blogs_categories_id[{{$category->id}}]"></input>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" value="1" name="general_view_flag[{{$category->id}}]" class="custom-control-input" id="general_view_flag[{{$category->id}}]"@if ($category->blogs_categories_id) checked="checked"@endif>
+                        <label class="custom-control-label" for="general_view_flag[{{$category->id}}]"></label>
+                    </div>
+                </td>
+                <td nowrap>
+                    <input type="text" value="{{old('display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control"></input>
+                </td>
+                <td nowrap>{{$category->classname}}</td>
+                <td nowrap>{{$category->category}}</td>
+                <td nowrap>{{$category->color}}</td>
+                <td nowrap>{{$category->background_color}}</td>
+                <td nowrap></td>
+            </tr>
+        @endforeach
+
+            <tr>
+                <th nowrap>表示</th>
+                <th nowrap>表示順</th>
+                <th nowrap>クラス名</th>
                 <th nowrap>カテゴリ</th>
                 <th nowrap>文字色</th>
                 <th nowrap>背景色</th>
                 <th nowrap><i class="fas fa-trash-alt"></i></th>
             </tr>
-        </thead>
-        <tbody>
-        @foreach($blogs_categories as $category)
+
+        @foreach($plugin_categories as $category)
             <tr>
                 <td nowrap>
-                    <input type="hidden" value="{{$category->id}}" name="blogs_categories_id[{{$category->id}}]"></input>
-                    <input type="text" value="{{old('display_sequence.'.$category->id, $category->display_sequence)}}" name="display_sequence[{{$category->id}}]" class="form-control"></input>
+                    <input type="hidden" value="{{$category->id}}" name="plugin_categories_id[{{$category->id}}]"></input>
+                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="plugin_blogs_categories_id[{{$category->blogs_categories_id}}]"></input>
+
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" value="1" name="plugin_view_flag[{{$category->id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->id}}]"@if ($category->blogs_categories_id) checked="checked"@endif>
+                        <label class="custom-control-label" for="plugin_view_flag[{{$category->id}}]"></label>
+                    </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('category.'.$category->id, $category->category)}}" name="category[{{$category->id}}]" class="form-control"></input>
+                    <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control"></input>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('color.'.$category->id, $category->color)}}" name="color[{{$category->id}}]" class="form-control"></input>
+                    <input type="text" value="{{old('plugin_display_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control"></input>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('background_color.'.$category->id, $category->background_color)}}" name="background_color[{{$category->id}}]" class="form-control"></input>
+                    <input type="text" value="{{old('plugin_category.'.$category->id, $category->category)}}" name="plugin_category[{{$category->id}}]" class="form-control"></input>
+                </td>
+                <td nowrap>
+                    <input type="text" value="{{old('plugin_color.'.$category->id, $category->color)}}" name="plugin_color[{{$category->id}}]" class="form-control"></input>
+                </td>
+                <td nowrap>
+                    <input type="text" value="{{old('plugin_background_color.'.$category->id, $category->background_color)}}" name="plugin_background_color[{{$category->id}}]" class="form-control"></input>
                 </td>
                 <td nowrap>
                     <a href="javascript:form_delete('{{$category->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
@@ -83,6 +124,15 @@
         @endforeach
         @if ($create_flag)
             <tr>
+                <td nowrap>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
+                        <label class="custom-control-label" for="add_view_flag"></label>
+                    </div>
+                </td>
+                <td nowrap>
+                    <input type="text" value="" name="add_classname" class="form-control"></input>
+                </td>
                 <td nowrap>
                     <input type="text" value="" name="add_display_sequence" class="form-control"></input>
                 </td>
@@ -101,7 +151,16 @@
         @else
             <tr>
                 <td nowrap>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
+                        <label class="custom-control-label" for="add_view_flag"></label>
+                    </div>
+                </td>
+                <td nowrap>
                     <input type="text" value="{{old('add_display_sequence', '')}}" name="add_display_sequence" class="form-control"></input>
+                </td>
+                <td nowrap>
+                    <input type="text" value="{{old('add_classname', '')}}" name="add_classname" class="form-control"></input>
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('add_category', '')}}" name="add_category" class="form-control"></input>
@@ -118,6 +177,10 @@
         @endif
         </tbody>
         </table>
+
+        <div class="card card-body bg-light p-2 m-2">
+            クラス名は cc_category_xxxx で使用できます。
+        </div>
     </div>
 
     <div class="form-group text-center">
@@ -125,3 +188,8 @@
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i><span class="d-none d-md-inline"> 変更</span></button>
     </div>
 </form>
+
+<form action="" method="POST" name="form_delete_category" class="">
+    {{ csrf_field() }}
+</form>
+

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
@@ -76,10 +77,10 @@ class BlogsPlugin extends UserPluginBase
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
         $this->post = BlogsPosts::select('blogs_posts.*',
-                                          'blogs_categories.color as category_color',
-                                          'blogs_categories.background_color as category_background_color',
-                                          'blogs_categories.category as category')
-                                ->leftJoin('blogs_categories', 'blogs_categories.id', '=', 'blogs_posts.categories_id')
+                                          'categories.color as category_color',
+                                          'categories.background_color as category_background_color',
+                                          'categories.category as category')
+                                ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                                 ->where('contents_id', $arg_post->contents_id)
                                 ->where(function($query){
                                       $query = $this->appendAuthWhere($query);
@@ -110,9 +111,10 @@ class BlogsPlugin extends UserPluginBase
      */
     private function getBlogsCategories($blogs_id)
     {
-        $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id)
-                                           ->orderBy('display_sequence', 'asc')
-                                           ->get();
+        $blogs_categories = Categories::whereNull('plugin_id')
+                                      ->orWhere('plugin_id', $blogs_id)
+                                      ->orderBy('display_sequence', 'asc')
+                                      ->get();
         return $blogs_categories;
     }
 
@@ -171,10 +173,10 @@ class BlogsPlugin extends UserPluginBase
 //DB::enableQueryLog();
         // 削除されていないデータでグルーピングして、最新のIDで全件
         $blogs_posts = BlogsPosts::select('blogs_posts.*',
-                                          'blogs_categories.color as category_color',
-                                          'blogs_categories.background_color as category_background_color',
-                                          'blogs_categories.category as category')
-                                 ->leftJoin('blogs_categories', 'blogs_categories.id', '=', 'blogs_posts.categories_id')
+                                          'categories.color as category_color',
+                                          'categories.background_color as category_background_color',
+                                          'categories.category as category')
+                                 ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                                  ->whereIn('blogs_posts.id', function($query) use($blog_frame) {
                                      $query->select(DB::raw('MAX(id) As id'))
                                            ->from('blogs_posts')
@@ -259,6 +261,38 @@ class BlogsPlugin extends UserPluginBase
         }
 
         return;
+    }
+
+    /* スタティック関数 */
+
+    /**
+     *  新着情報用メソッド
+     */
+    public static function getWhatsnewArgs()
+    {
+
+        // 戻り値('sql_method'、'link_pattern'、'link_base')
+
+        $return[] = DB::table('blogs_posts')
+                      ->select('frames.page_id              as page_id',
+                               'frames.id                   as frame_id',
+                               'blogs_posts.id              as post_id',
+                               'blogs_posts.post_title      as post_title',
+                               'blogs_posts.posted_at       as posted_at',
+                               'categories.classname        as classname',
+                               'categories.category         as category',
+                               DB::raw('"blogs" as plugin_name')
+                              )
+                      ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
+                      ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
+                      ->where('status', 0)
+                      ->whereNull('deleted_at');
+
+        $return[] = 'show_page_frame_post';
+        $return[] = '/plugin/blogs/show';
+
+        return $return;
     }
 
     /* 画面アクション関数 */
@@ -828,18 +862,27 @@ class BlogsPlugin extends UserPluginBase
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
 
-        // カテゴリ
-        $blogs_categories = BlogsCategories::where('blogs_id', $blog_frame->blogs_id)
-                                           ->orderBy('display_sequence', 'asc')
-                                           ->get();
+        // カテゴリ（全体）
+        $general_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
+                                        ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                                        ->where('target', null)
+                                        ->orderBy('display_sequence', 'asc')
+                                        ->get();
+        // カテゴリ（このブログ）
+        $plugin_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
+                                       ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                                       ->where('plugin_id', $blog_frame->blogs_id)
+                                       ->orderBy('display_sequence', 'asc')
+                                       ->get();
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'blogs_list_categories', [
-            'blogs_categories' => $blogs_categories,
-            'blog_frame'       => $blog_frame,
-            'errors'           => $errors,
-            'create_flag'      => $create_flag,
+            'general_categories' => $general_categories,
+            'plugin_categories'  => $plugin_categories,
+            'blog_frame'         => $blog_frame,
+            'errors'             => $errors,
+            'create_flag'        => $create_flag,
         ])->withInput($request->all);
     }
 
@@ -881,16 +924,16 @@ class BlogsPlugin extends UserPluginBase
 
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
-                    'display_sequence.'.$category_id => ['required'],
-                    'category.'.$category_id         => ['required'],
-                    'color.'.$category_id            => ['required'],
-                    'background_color.'.$category_id => ['required'],
+                    'plugin_display_sequence.'.$category_id => ['required'],
+                    'plugin_category.'.$category_id         => ['required'],
+                    'plugin_color.'.$category_id            => ['required'],
+                    'plugin_background_color.'.$category_id => ['required'],
                 ]);
                 $validator->setAttributeNames([
-                    'display_sequence.'.$category_id => '表示順',
-                    'category.'.$category_id         => 'カテゴリ',
-                    'color.'.$category_id            => '文字色',
-                    'background_color.'.$category_id => '背景色',
+                    'plugin_display_sequence.'.$category_id => '表示順',
+                    'plugin_category.'.$category_id         => 'カテゴリ',
+                    'plugin_color.'.$category_id            => '文字色',
+                    'plugin_background_color.'.$category_id => '背景色',
                 ]);
 
                 if ($validator->fails()) {
@@ -904,30 +947,33 @@ class BlogsPlugin extends UserPluginBase
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
-            BlogsCategories::create(['blogs_id' => $blog_frame->blogs_id,
-                                 'display_sequence' => intval($request->add_display_sequence),
-                                 'category'         => $request->add_category,
-                                 'color'            => $request->add_color,
-                                 'background_color' => $request->add_background_color
+            Categories::create(['category'         => $request->add_category,
+                                'color'            => $request->add_color,
+                                'background_color' => $request->add_background_color,
+                                'target'           => 'blogs',
+                                'plugin_id'        => $blog_frame->blogs_id,
+                                'display_sequence' => intval($request->add_display_sequence),
                              ]);
         }
 
         // 既存項目アリ
-        if (!empty($request->blogs_categories_id)) {
+        if (!empty($request->plugin_categories_id)) {
 
-            foreach($request->blogs_categories_id as $blogs_categories_id) {
+            foreach($request->plugin_categories_id as $plugin_categories_id) {
 
                 // モデルオブジェクト取得
-                $category_obj = BlogsCategories::where('id', $blogs_categories_id)->first();
+                $category = Categories::where('id', $plugin_categories_id)->first();
 
                 // データのセット
-                $category_obj->color            = $request->color[$blogs_categories_id];
-                $category_obj->background_color = $request->background_color[$blogs_categories_id];
-                $category_obj->category         = $request->category[$blogs_categories_id];
-                $category_obj->display_sequence = $request->display_sequence[$blogs_categories_id];
+                $category->category         = $request->plugin_category[$plugin_categories_id];
+                $category->color            = $request->plugin_color[$plugin_categories_id];
+                $category->background_color = $request->plugin_background_color[$plugin_categories_id];
+                $category->target           = 'blogs';
+                $category->plugin_id        = $blog_frame->blogs_id;
+                $category->display_sequence = $request->plugin_display_sequence[$plugin_categories_id];
 
                 // 保存
-                $category_obj->save();
+                $category->save();
             }
         }
 

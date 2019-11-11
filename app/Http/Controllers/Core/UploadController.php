@@ -10,9 +10,10 @@ use DB;
 
 use App\Http\Controllers\Core\ConnectController;
 
-use App\Models\Core\Configs;
+use App\Models\Common\Categories;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
+use App\Models\Core\Configs;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -142,6 +143,15 @@ img {
 }
 
 EOD;
+        }
+
+        // カテゴリーCSS
+        $categories = Categories::orderBy('target', 'asc')->orderBy('display_sequence', 'asc')->get();
+        foreach($categories as $category) {
+            echo ".cc_category_" . $category->classname . " {\n";
+            echo "    background-color: " . $category->background_color . ";\n";
+            echo "    color: "            . $category->color . ";\n";
+            echo "}\n";
         }
         exit;
     }
