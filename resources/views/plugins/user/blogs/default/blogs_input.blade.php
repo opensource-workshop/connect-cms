@@ -111,8 +111,8 @@
 </form>
 
 <div id="collapse{{$blogs_posts->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="panel panel-danger">
-        <div class="panel-body">
+    <div class="card border-danger">
+        <div class="card-body">
             <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">

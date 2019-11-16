@@ -335,9 +335,10 @@ class ContentsPlugin extends UserPluginBase
         // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
         $buckets = DB::table('buckets')
                     ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
-                    ->leftJoin('contents', function ($join) {
+                    ->join('contents', function ($join) {
                         $join->on('contents.bucket_id', '=', 'buckets.id');
                         $join->where('contents.status', '=', 0);
+                        $join->whereNull('contents.deleted_at');
                     })
                     ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
                     ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')

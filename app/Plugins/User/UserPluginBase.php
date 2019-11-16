@@ -139,8 +139,11 @@ class UserPluginBase extends PluginBase
         $post = null;
 
         // POST チェックに使用する getPost() 関数の有無をチェック
-        if ( $id && method_exists($obj, 'getPost') ) {
-            $post = $obj->getPost($id);
+        // POST に関連しないメソッドは除外
+        if (!$action == "destroyBuckets") {
+            if ( $id && method_exists($obj, 'getPost') ) {
+                $post = $obj->getPost($id);
+            }
         }
 
         // 定数 CC_METHOD_AUTHORITY に設定があるものはここでチェックする。
