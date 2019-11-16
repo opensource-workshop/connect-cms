@@ -9,10 +9,15 @@
 {{-- 新規登録 --}}
 @can('posts.create',[[null, 'blogs', 'preview_off']])
     @if (isset($frame) && $frame->bucket_id)
-        <p class="text-right">
-            {{-- 新規登録ボタン --}}
-            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
-        </p>
+        <div class="row">
+            <p class="text-left col-6">
+                <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
+            </p>
+            <p class="text-right col-6">
+                {{-- 新規登録ボタン --}}
+                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
+            </p>
+        </div>
     @else
         <div class="card border-danger">
             <div class="card-body">

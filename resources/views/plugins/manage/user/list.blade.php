@@ -17,7 +17,7 @@
 <div class="card">
 <div class="card-body">
 
-    <div class="form-group">
+    <div class="form-group table-responsive">
         <table class="table table-hover cc-font-90">
         <thead>
             <tr>

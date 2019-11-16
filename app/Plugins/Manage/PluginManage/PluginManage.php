@@ -14,11 +14,11 @@ use App\Models\Core\Plugins;
 use App\Plugins\Manage\ManagePluginBase;
 
 /**
- * ページ管理クラス
+ * プラグイン管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category ページ管理
+ * @category プラグイン管理
  * @package Contoroller
  */
 class PluginManage extends ManagePluginBase
@@ -40,8 +40,8 @@ class PluginManage extends ManagePluginBase
      *
      * @return view
      */
-	public function index($request, $page_id = null, $errors = array())
-	{
+    public function index($request, $page_id = null, $errors = array())
+    {
         // プラグインのini ファイル
         $plugin_inis = array();
 
@@ -88,6 +88,7 @@ class PluginManage extends ManagePluginBase
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.plugin.plugin',[
+            "function"    => __FUNCTION__,
             "plugin_name" => "plugin",
             "plugins"     => $plugins,
         ]);

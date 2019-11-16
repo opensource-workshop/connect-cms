@@ -39,6 +39,11 @@ class DefaultController extends ConnectController
      */
     public function __invoke(Request $request)
     {
+        // 特別なPath が指定された場合は処理を行い、return する。
+        if ($this->isSpecialPath($request->path())) {
+            return $this->callSpecialPath($request->path(), $request);
+        }
+
         // フレーム一覧取得（メインエリアのみ）
         $frames = $this->getFramesMain($this->page->id);
 

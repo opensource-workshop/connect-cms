@@ -11,6 +11,9 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+{{-- 機能選択タブ --}}
+@include('plugins.manage.plugin.plugin_tab')
+
 <form name="form_plugins" id="form_plugins" class="form-horizontal" method="post" action="/manage/plugin/update">
     {{ csrf_field() }}
     <div class="card table-responsive">

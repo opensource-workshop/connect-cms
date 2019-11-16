@@ -29,24 +29,6 @@ class ClassController extends ConnectController
     use ConnectCommonTrait;
 
     /**
-     *  管理プラグインのインスタンス生成
-     *
-     * @param String $plugin_name
-     * @return obj 生成したインスタンス
-     */
-    private static function createManageInstance($plugin_name)
-    {
-        // プラグイン毎に動的にnew するので、use せずにここでrequire する。
-        $file_path = base_path() . "/app/Plugins/Manage/" . ucfirst($plugin_name) . "Manage/" . ucfirst($plugin_name) . "Manage.php";
-        require $file_path;
-
-        /// インスタンスを生成して返す。
-        $class_name = "app\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
-        $plugin_instance = new $class_name;
-        return new $plugin_instance;
-    }
-
-    /**
      *  管理プラグインの呼び出し
      *
      * @param String $plugin_name
@@ -74,7 +56,7 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    private function invokeManage($request, $plugin_name, $action = 'index', $id = null)
+    private function invokeManage_____($request, $plugin_name, $action = 'index', $id = null)
     {
         // ログインしているユーザー情報を取得
         $user = Auth::user();
@@ -93,17 +75,22 @@ class ClassController extends ConnectController
         }
 
         // 権限チェック（管理系各プラグインの関数＆権限チェックデータ取得）
+        $role_check = false;
         $role_ckeck_tables = $plugin_instance->declareRole();
         if (array_key_exists($action, $role_ckeck_tables)) {
             foreach($role_ckeck_tables[$action] as $role) {
                 // プラグインで定義された権限が自分にあるかチェック
-                if (!$this->isCan($role)) {
-                    abort(403, 'ユーザーにメソッドに対する権限がありません。');
+                if ($this->isCan($role)) {
+                    $role_check = true;
                 }
             }
         }
         else {
-            abort(403, 'メソッドに権限がありません。');
+            abort(403, 'メソッドに権限が設定されていません。');
+        }
+
+        if (!$role_check) {
+            abort(403, 'ユーザーにメソッドに対する権限がありません。');
         }
 
         // 指定されたアクションを呼ぶ。

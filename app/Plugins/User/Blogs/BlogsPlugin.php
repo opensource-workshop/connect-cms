@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
+use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -46,7 +47,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories'];
+        $functions['get']  = ['listCategories', 'rss'];
         $functions['post'] = ['saveCategories', 'deleteCategories'];
         return $functions;
     }
@@ -99,7 +100,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count', 'blogs.approval_flag')
+                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.approval_flag')
                  ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -994,5 +995,72 @@ class BlogsPlugin extends UserPluginBase
         BlogsCategories::where('id', $id)->delete();
 
         return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+    }
+
+    /**
+     *  RSS配信
+     */
+    public function rss($request, $page_id, $frame_id, $id = null)
+    {
+        // ブログ＆フレームデータ
+        $blog_frame = $this->getBlogFrame($frame_id);
+        if (empty($blog_frame)) {
+            return;
+        }
+
+        // サイト名
+        $base_site_name = Configs::where('name', 'base_site_name')->first();
+
+        // URL
+        $url = url("/redirect/plugin/blogs/rss/" . $page_id . "/" . $frame_id);
+
+        // HTTPヘッダー出力
+        header('Content-Type: text/xml; charset=UTF-8');
+
+echo <<<EOD
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+<channel>
+<title>[{$base_site_name->value}]{$blog_frame->blog_name}</title>
+<description></description>
+<link>
+{$url}
+</link>
+EOD;
+
+        $blogs_posts = $this->getPosts($blog_frame);
+        foreach ($blogs_posts as $blogs_post) {
+
+            $title = $blogs_post->post_title;
+            $link = url("/plugin/blogs/show/" . $page_id . "/" . $frame_id . "/" . $blogs_post->id);
+            $description = strip_tags(mb_substr($blogs_post->post_text, 0, 20));
+            $pub_date = date(DATE_RSS, strtotime($blogs_post->posted_at));
+            $content = strip_tags(html_entity_decode($blogs_post->post_text));
+echo <<<EOD
+
+<item>
+<title>{$title}</title>
+<link>{$link}</link>
+<description>{$description}</description>
+<pubDate>{$pub_date}</pubDate>
+<content:encoded>{$content}</content:encoded>
+</item>
+EOD;
+        }
+
+/*
+<title>{$title}</title>
+<link>{$link}</link>
+<description>{$description}</description>
+<pubDate>{$pub_date}</pubDate>
+<content:encoded>{$content}</content:encoded>
+*/
+//echo $rss_text;
+
+echo <<<EOD
+</channel>
+</rss>
+EOD;
+
+exit;
     }
 }

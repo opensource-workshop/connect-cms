@@ -19,7 +19,7 @@ use App\Plugins\Manage\ManagePluginBase;
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category ページ管理
+ * @category サイト管理
  * @package Contoroller
  */
 class SiteManage extends ManagePluginBase
@@ -31,10 +31,12 @@ class SiteManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["index"]          = array('admin_site');
-        $role_ckeck_table["update"]         = array('admin_site');
-        $role_ckeck_table["categories"]     = array('admin_site');
-        $role_ckeck_table["saveCategories"] = array('admin_site');
+        $role_ckeck_table["index"]           = array('admin_site');
+        $role_ckeck_table["update"]          = array('admin_site');
+        $role_ckeck_table["categories"]      = array('admin_site');
+        $role_ckeck_table["saveCategories"]  = array('admin_site');
+        $role_ckeck_table["loginPermit"]     = array('admin_site');
+        $role_ckeck_table["saveLoginPermit"] = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -255,8 +257,5 @@ class SiteManage extends ManagePluginBase
         }
 
         return $this->categories($request, $id, null);
-
-        // ページ管理画面に戻る
-        return redirect("/manage/site/categories");
     }
 }

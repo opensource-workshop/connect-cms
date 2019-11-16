@@ -9,113 +9,13 @@ use Gate;
 //use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 
+use App\Traits\ConnectCommonTrait;
+
 //class AppServiceProvider extends ServiceProvider
 class AppServiceProvider extends AuthServiceProvider
 {
-    /**
-     * ユーザーが指定された権限を保持しているかチェックする。
-     *
-     * @return boolean
-     */
-    public function check_authority($user, $authority, $args = null)
-    {
-        // preview モードのチェック付きの場合はpreview モードなら権限ナシで返す。
-        $request = app(\Illuminate\Http\Request::class);
 
-        // 引数をバラシてPOST を取得
-        list($post, $plugin_name, $mode_switch) = $this->check_args_obj($args);
-
-        // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
-        if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
-            return false;
-        }
-
-        // プレビュー判断はココまで
-        if ($authority == 'preview') {
-            return true;
-        }
-
-        // ログインしていない場合は権限なし
-        if (empty($user)) {
-            return false;
-        }
-
-        // 指定された権限を含むロールをループする。
-        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
-
-            // ユーザの保持しているロールをループ
-            foreach ($user['user_roles'] as $target) {
-
-                // ターゲット処理をループ
-                foreach ($target as $user_role => $user_role_value) {
-
-                    // 必要なロールを保持している
-                    if ($role == $user_role && $user_role_value) {
-
-                        // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                        if (($user_role == 'role_article_admin') ||
-                            ($user_role == 'role_approval')) {
-                            return true;
-                        }
-
-                        // 自分のオブジェクトチェックが必要ならチェックする
-                        if (empty($post)) {
-                            return true;
-                        }
-                        else {
-                            if ((($authority == 'buckets.delete') ||
-                                 ($authority == 'posts.create') ||
-                                 ($authority == 'posts.update') ||
-                                 ($authority == 'posts.delete')) &&
-                                ($user->id == $post->created_id)) {
-                                return true;
-                            }
-                            else {
-                                // 複数ロールをチェックするため、ここではreturn しない。
-                                // return false;
-                            }
-                        }
-                        // 複数ロールをチェックするため、ここではreturn しない。
-                        // return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * ユーザーが指定された役割を保持しているかチェックする。
-     *
-     * @return boolean
-     */
-    public function check_role($user, $role)
-    {
-        // ログインしていない場合は権限なし
-        if (empty($user)) {
-            return false;
-        }
-
-        // 指定された権限を含むロールをループする。
-        // 記事追加は記事管理者でもOKのような処理のため。
-        foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
-
-            // ユーザの保持しているロールをループ
-            foreach ($user['user_roles'] as $target) {
-
-                // ターゲット処理をループ
-                foreach ($target as $user_role => $user_role_value) {
-
-                    // 必要なロールを保持している場合は、権限ありとして true を返す。
-                    if ($checck_role == $user_role && $user_role_value) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
+    use ConnectCommonTrait;
 
     /**
      * POST、プラグイン名の引数をチェックし、変数にして返却

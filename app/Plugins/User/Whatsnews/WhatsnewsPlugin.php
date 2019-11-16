@@ -12,7 +12,7 @@ use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\user\Whatsnews\Whatsnews;
+use App\Models\User\Whatsnews\Whatsnews;
 
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
@@ -249,22 +249,18 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 新着情報＆フレームデータ
         $whatsnew_frame = $this->getWhatsnewsFrame($frame_id);
-Log::debug($frame_id);
 
         // 新着情報設定データ
         $whatsnew = new Whatsnews();
 
         // id が渡ってくればid が対象
         if (!empty($id)) {
-Log::debug("A1");
             $whatsnew = Whatsnews::where('id', $id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から新着情報設定データ取得、なければ、新規作成か選択へ誘導
         else if (!empty($whatsnew_frame->bucket_id) && $create_flag == false) {
-Log::debug("A2");
             $whatsnew = Whatsnews::where('bucket_id', $whatsnew_frame->bucket_id)->first();
         }
-Log::debug($whatsnew);
 
         // 表示テンプレートを呼び出す。
         return $this->view(

@@ -104,10 +104,15 @@ class UserPluginBase extends PluginBase
      * @param String $plugin_name
      * @return view
      */
-    public function invoke($obj, $request, $action, $page_id, $frame_id, $id)
+    public function invoke($obj, $request, $action, $page_id, $frame_id, $id = null)
     {
         // アクションを保持しておく
         $this->action = $action;
+
+        // 関数定義メソッドの有無確認
+        if (!method_exists($obj, $action)) {
+            return $this->view_error("403_inframe", null, "存在しないメソッド");
+        }
 
         // メソッドの可視性チェック
         $objReflectionMethod = new \ReflectionMethod(get_class($obj), $action);

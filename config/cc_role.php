@@ -11,16 +11,16 @@ return [
     |
     */
 /*
-    'ROLE_SYSTEM_MANAGER'    => 1,  // ƒVƒXƒeƒ€ŠÇ—Ò
-    'ROLE_SITE_MANAGER'      => 2,  // ƒTƒCƒgŠÇ—Ò
-    'ROLE_USER_MANAGER'      => 3,  // ƒ†[ƒUŠÇ—Ò
-    'ROLE_PAGE_MANAGER'      => 4,  // ƒy[ƒWŠÇ—Ò
-    'ROLE_OPERATION_MANAGER' => 5,  // ‰^—pŠÇ—Ò
-    'ROLE_APPROVER'          => 10, // ³”FÒ
-    'ROLE_EDITOR'            => 11, // •ÒWÒ
-    'ROLE_MODERATOR'         => 12, // ƒ‚ƒfƒŒ[ƒ^
-    'ROLE_GENERAL'           => 13, // ˆê”Ê
-    'ROLE_GUEST'             => 0,  // ƒQƒXƒg
+    'ROLE_SYSTEM_MANAGER'    => 1,  // ã‚·ã‚¹ãƒ†ãƒ ç®¡ç†è€…
+    'ROLE_SITE_MANAGER'      => 2,  // ã‚µã‚¤ãƒˆç®¡ç†è€…
+    'ROLE_USER_MANAGER'      => 3,  // ãƒ¦ãƒ¼ã‚¶ç®¡ç†è€…
+    'ROLE_PAGE_MANAGER'      => 4,  // ãƒšãƒ¼ã‚¸ç®¡ç†è€…
+    'ROLE_OPERATION_MANAGER' => 5,  // é‹ç”¨ç®¡ç†è€…
+    'ROLE_APPROVER'          => 10, // æ‰¿èªè€…
+    'ROLE_EDITOR'            => 11, // ç·¨é›†è€…
+    'ROLE_MODERATOR'         => 12, // ãƒ¢ãƒ‡ãƒ¬ãƒ¼ã‚¿
+    'ROLE_GENERAL'           => 13, // ä¸€èˆ¬
+    'ROLE_GUEST'             => 0,  // ã‚²ã‚¹ãƒˆ
 */
     /*
     |--------------------------------------------------------------------------
@@ -33,14 +33,14 @@ return [
 
     'CC_AUTHORITY' => [
 
-        // ƒtƒŒ[ƒ€
+        // ãƒ•ãƒ¬ãƒ¼ãƒ 
         'frames.create'              => ['role_arrangement', 'role_article_admin'],
         'frames.move'                => ['role_arrangement', 'role_article_admin'],
         'frames.edit'                => ['role_arrangement', 'role_article_admin'],
         'frames.delete'              => ['role_arrangement', 'role_article_admin'],
         'frames.change'              => ['role_arrangement', 'role_article_admin'],
 
-        // ƒoƒPƒc
+        // ãƒã‚±ãƒ„
         'buckets.create'             => ['role_arrangement', 'role_article_admin'],
         'buckets.delete'             => ['role_arrangement', 'role_article_admin'],
         'buckets.addColumn'          => ['role_arrangement', 'role_article_admin'],
@@ -52,11 +52,34 @@ return [
         'buckets.saveColumn'         => ['role_arrangement', 'role_article_admin'],
         'buckets.downloadCsv'        => ['role_arrangement', 'role_article_admin'],
 
-        // ‹L–
+        // è¨˜äº‹
         'posts.create'               => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.update'               => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.delete'               => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.approval'             => ['role_approval', 'role_article_admin'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Role List
+    |--------------------------------------------------------------------------
+    |
+    | Connect-CMS Role List const
+    |
+    */
+
+    'CC_ROLE_LIST' => [
+
+        'role_article_admin' => 'è¨˜äº‹ç®¡ç†è€…',
+        'role_arrangement'   => 'ãƒ—ãƒ©ã‚°ã‚¤ãƒ³é…ç½®',
+        'role_reporter'      => 'è¨˜äº‹è¿½åŠ ',
+        'role_approval'      => 'è¨˜äº‹æ‰¿èª',
+        'role_article'       => 'ãƒ¢ãƒ‡ãƒ¬ãƒ¼ã‚¿',
+
+        'admin_system'       => 'ã‚·ã‚¹ãƒ†ãƒ ç®¡ç†è€…',
+        'admin_page'         => 'ãƒšãƒ¼ã‚¸ç®¡ç†è€…',
+        'admin_site'         => 'ã‚µã‚¤ãƒˆç®¡ç†è€…',
+        'admin_user'         => 'ãƒ¦ãƒ¼ã‚¶ç®¡ç†è€…',
     ],
 
     /*
@@ -70,16 +93,16 @@ return [
 
     'CC_ROLE_HIERARCHY' => [
 
-        'role_reporter'     => ['role_reporter', 'role_article_admin'],
-        'role_arrangement'  => ['role_arrangement', 'role_article_admin'],
-        'role_approval'     => ['role_approval', 'role_article_admin'],
-        'role_article'      => ['role_article', 'role_article_admin'],
-        'role_article_admin'=> ['role_article_admin'],
+        'role_article_admin' => ['role_article_admin'],
+        'role_arrangement'   => ['role_arrangement', 'role_article_admin'],
+        'role_reporter'      => ['role_reporter', 'role_article_admin'],
+        'role_approval'      => ['role_approval', 'role_article_admin'],
+        'role_article'       => ['role_article', 'role_article_admin'],
 
-        'admin_system'      => ['admin_system'],
-        'admin_page'        => ['admin_page', 'admin_system'],
-        'admin_site'        => ['admin_site', 'admin_system'],
-        'admin_user'        => ['admin_user', 'admin_system'],
+        'admin_system'       => ['admin_system'],
+        'admin_page'         => ['admin_page', 'admin_system'],
+        'admin_site'         => ['admin_site', 'admin_system'],
+        'admin_user'         => ['admin_user', 'admin_system'],
     ],
 
     /*
@@ -93,7 +116,7 @@ return [
 
     'CC_METHOD_AUTHORITY' => [
 
-        // ‹L–i•¡”Œ ŒÀ‚ªw’è‚³‚ê‚Ä‚¢‚éê‡‚ÍAƒAƒ“ƒhğŒj
+        // è¨˜äº‹ï¼ˆè¤‡æ•°æ¨©é™ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã¯ã€ã‚¢ãƒ³ãƒ‰æ¡ä»¶ï¼‰
         'create'              => ['posts.create'],
         'edit'                => ['posts.update'],
         'store'               => ['posts.create'],
@@ -104,7 +127,7 @@ return [
         'destroy'             => ['posts.delete'],
         'approval'            => ['posts.approval'],
 
-        // ƒoƒPƒc•ƒtƒŒ[ƒ€
+        // ãƒã‚±ãƒ„ï¼†ãƒ•ãƒ¬ãƒ¼ãƒ 
         'listBuckets'         => ['frames.change'],
         'createBuckets'       => ['frames.create'],
         'editBuckets'         => ['frames.edit'],
@@ -124,7 +147,7 @@ return [
 
     'CC_METHOD_REQUEST_METHOD' => [
 
-        // ‹L–i•¡”Œ ŒÀ‚ªw’è‚³‚ê‚Ä‚¢‚éê‡‚ÍAƒAƒ“ƒhğŒj
+        // è¨˜äº‹ï¼ˆè¤‡æ•°æ¨©é™ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã¯ã€ã‚¢ãƒ³ãƒ‰æ¡ä»¶ï¼‰
         'create'              => ['get'],
         'edit'                => ['get'],
         'show'                => ['get'],
@@ -136,12 +159,12 @@ return [
         'destroy'             => ['post'],
         'approval'            => ['post'],
 
-        // ƒQƒXƒg‚Å‚àÀs‚³‚ê‚éƒƒ\ƒbƒh
+        // ã‚²ã‚¹ãƒˆã§ã‚‚å®Ÿè¡Œã•ã‚Œã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
         'index'               => ['post'],
         'publicConfirm'       => ['post'],
         'publicStore'         => ['post'],
 
-        // ƒoƒPƒc•ƒtƒŒ[ƒ€
+        // ãƒã‚±ãƒ„ï¼†ãƒ•ãƒ¬ãƒ¼ãƒ 
         'listBuckets'         => ['get'],
         'createBuckets'       => ['get'],
         'editBuckets'         => ['get'],

@@ -4,15 +4,50 @@ namespace App\Providers;
 
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
+//use Illuminate\Http\Request;
 
 // add by nagahara@opensource-workshop.jp
 use Illuminate\Support\Facades\Log;
 
+use App\Traits\ConnectCommonTrait;
+
 use App\User;
 use App\Models\Core\UsersRoles;
 
+/**
+  Laravel標準のEloquentUserProviderを継承して、Connect-CMS用にカスタマイズしたログイン処理です。
+ */
 class ConnectEloquentUserProvider extends EloquentUserProvider
 {
+
+    use ConnectCommonTrait;
+
+    /**
+     * Validate a user against the given credentials.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  array  $credentials
+     * @return bool
+     */
+    public function validateCredentials(UserContract $user, array $credentials)
+    {
+
+        // ログイン前だけれど、$user にはユーザーオブジェクトが入っている。
+        $judgment_login = $this->judgmentLogin($user);
+
+        if (!$judgment_login) {
+            abort(403, 'ログイン制限によるログイン拒否');
+        }
+
+
+
+        //Log::debug($user);
+        //Log::debug($credentials);
+
+//abort(403);
+
+        return parent::validateCredentials($user, $credentials);
+    }
 
     /**
      * Retrieve a user by their unique identifier.

@@ -16,7 +16,4 @@
 @else
     <li class="nav-item"><a href="{{url('/manage/site/categories')}}" class="nav-link">カテゴリ設定</a></li>
 @endif
-{{--
-    <li class="nav-item"><a href="" class="nav-link">その他設定2</a></li>
---}}
 </ul>
