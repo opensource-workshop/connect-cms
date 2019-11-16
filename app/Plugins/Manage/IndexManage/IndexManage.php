@@ -49,9 +49,22 @@ class IndexManage extends ManagePluginBase
         $ret_xml = curl_exec($ch);
         curl_close($ch);
 
+        // 取得するXML とエラー用配列
         $rss_xml = null;
-        if (!empty($ret_xml)) {
-            $rss_xml = new \SimpleXMLElement($ret_xml);
+        $errors = array();
+
+        // XML チェック
+        if (empty($ret_xml)) {
+            $errors[] = "Connect-CMS 更新情報が空で返ってきました。";
+        }
+        else {
+            // libxmlエラーを無効にし、エラーを制御します。
+            libxml_use_internal_errors(true);
+            // XML ロード
+            $rss_xml = simplexml_load_string($ret_xml);
+            if ($rss_xml === false) {
+                $errors[] = "Connect-CMS 更新情報が解析できませんでした。";
+            }
         }
 
         // 管理画面プラグインの戻り値の返し方
@@ -59,6 +72,7 @@ class IndexManage extends ManagePluginBase
         return view('plugins.manage.index.index',[
             "plugin_name"  => "index",
             "rss_xml"      => $rss_xml,
+            "errors"       => $errors,
         ]);
     }
 }

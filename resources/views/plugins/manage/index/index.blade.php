@@ -35,7 +35,9 @@
     <div class="list-group">
         <div class="list-group-item list-group-item-action">
             <div class="d-flex w-100 justify-content-between">
-                Connect-CMS 更新情報が取得できませんでした。
+                @foreach($errors as $error)
+                {{$error}}
+                @endforeach
             </div>
         </div>
     </div>
