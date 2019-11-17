@@ -9,9 +9,9 @@ use App\Userable;
 
 class Codestudies extends Model
 {
-    // 論理削除
+    // 隲也炊蜑企勁
     use SoftDeletes;
 
-    // 保存時のユーザー関連データの保持
+    // 菫晏ｭ俶凾縺ｮ繝ｦ繝ｼ繧ｶ繝ｼ髢｢騾｣繝�繝ｼ繧ｿ縺ｮ菫晄戟
     use Userable;
 }

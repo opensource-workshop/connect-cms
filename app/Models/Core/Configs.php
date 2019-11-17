@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Configs extends Model
 {
     /**
-     * create()‚âupdate()‚Å“ü—Í‚ğó‚¯•t‚¯‚é ƒzƒƒCƒgƒŠƒXƒg
+     * create()ã‚„update()ã§å…¥åŠ›ã‚’å—ã‘ä»˜ã‘ã‚‹ ãƒ›ãƒ¯ã‚¤ãƒˆãƒªã‚¹ãƒˆ
      */
     protected $fillable = ['name', 'value', 'category'];
 

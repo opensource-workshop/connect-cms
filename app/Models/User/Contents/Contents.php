@@ -9,12 +9,12 @@ use App\Userable;
 
 class Contents extends Model
 {
-    // ˜_—íœ
+    // è«–ç†å‰Šé™¤
     use SoftDeletes;
 
-    // •Û‘¶‚Ìƒ†[ƒU[ŠÖ˜Aƒf[ƒ^‚Ì•Û
+    // ä¿å­˜æ™‚ã®ãƒ¦ãƒ¼ã‚¶ãƒ¼é–¢é€£ãƒ‡ãƒ¼ã‚¿ã®ä¿æŒ
     use Userable;
 
-    // “ú•tŒ^‚Ìê‡A$dates ‚ÉƒJƒ‰ƒ€‚ğw’è‚µ‚Ä‚¨‚­B
+    // æ—¥ä»˜å‹ã®å ´åˆã€$dates ã«ã‚«ãƒ©ãƒ ã‚’æŒ‡å®šã—ã¦ãŠãã€‚
     protected $dates = ['deleted_at'];
 }
