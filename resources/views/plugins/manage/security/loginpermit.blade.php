@@ -38,7 +38,7 @@
             <div class="card-body">
                 基本設定：ログインをどこからでも　　
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if ($configs_login_reject->value == null || $configs_login_reject->value == '0')
+                    @if (empty($configs_login_reject) || $configs_login_reject->value == null || $configs_login_reject->value == '0')
                         <input type="radio" value="0" id="reject_off" name="login_reject" class="custom-control-input" checked="checked">
                     @else
                         <input type="radio" value="0" id="reject_off" name="login_reject" class="custom-control-input">
@@ -46,7 +46,7 @@
                     <label class="custom-control-label" for="reject_off">許可する</label>
                 </div>
                 <div class="custom-control custom-radio custom-control-inline pl-3">
-                    @if ($configs_login_reject->value == '1')
+                    @if (!empty($configs_login_reject) && $configs_login_reject->value == '1')
                         <input type="radio" value="1" id="reject_on" name="login_reject" class="custom-control-input" checked="checked">
                     @else
                         <input type="radio" value="1" id="reject_on" name="login_reject" class="custom-control-input">
