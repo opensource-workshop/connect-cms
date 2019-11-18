@@ -21,6 +21,6 @@ return [
 
     // 特別なPath定義(一般画面)
     'CC_SPECIAL_PATH' => array_merge(
-        json_decode(getenv('CC_SPECIAL_PATH'), true),
+        json_decode(env('CC_SPECIAL_PATH', '{}'), true),
     ),
 ];
