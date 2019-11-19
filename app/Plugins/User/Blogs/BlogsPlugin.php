@@ -155,7 +155,7 @@ class BlogsPlugin extends UserPluginBase
         // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
         elseif ($this->isCan('role_reporter')) {
             $query->Where('status', '=', 0)
-                  ->orWhere('created_id', '=', Auth::user()->id);
+                  ->orWhere('blogs_posts.created_id', '=', Auth::user()->id);
         }
         // その他（ゲスト）
         else {
