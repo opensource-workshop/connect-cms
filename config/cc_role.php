@@ -52,11 +52,17 @@ return [
         'buckets.saveColumn'         => ['role_arrangement', 'role_article_admin'],
         'buckets.downloadCsv'        => ['role_arrangement', 'role_article_admin'],
 
-        // 記事
+        // 記事(記入の初期値は管理者のみ)
+        'posts.create'               => ['role_article_admin'],
+        'posts.update'               => ['role_article_admin'],
+        'posts.delete'               => ['role_article_admin'],
+        'posts.approval'             => ['role_approval', 'role_article_admin'],
+/*
         'posts.create'               => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.update'               => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.delete'               => ['role_reporter', 'role_article', 'role_article_admin'],
         'posts.approval'             => ['role_approval', 'role_article_admin'],
+*/
     ],
 
     /*

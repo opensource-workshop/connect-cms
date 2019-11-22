@@ -65,7 +65,7 @@
         </tr>
     </thead>
     <tbody>
-    @foreach($buckets as $bucket)
+    @foreach($buckets_list as $bucket)
         <tr @if ($bucket->frames_id == $frame_id) class="active"@endif>
             <td><input type="radio" value="{{$bucket->id}}" name="select_bucket"@if ($bucket->frames_id == $frame_id) checked @endif></input></td>
             <td>{{$bucket->contents_updated_at}}</td>
@@ -79,11 +79,11 @@
     </table>
 
     <div class="m-2">
-        {{ $buckets->appends(['sort' => $request_order_str])->fragment($frame_id)->links() }}
+        {{ $buckets_list->appends(['sort' => $request_order_str])->fragment($frame_id)->links() }}
     </div>
 
     <div class="text-center">
-        <button type="submit" class="btn btn-primary mr-2"><i class="fas fa-check"></i> 変更確定</button>
-        <button type="button" class="btn btn-secondary" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+        <button type="button" class="btn btn-secondary mr-2" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
     </div>
 </form>

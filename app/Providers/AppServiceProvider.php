@@ -24,10 +24,12 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function check_args_obj($args)
     {
-        $post = ($args != null) ? $args[0] : null;
+        $post        = ($args != null) ? $args[0] : null;
         $plugin_name = ($args != null && is_array($args) && count($args) > 1) ? $args[1] : null;
-        $mode_switch = ($args != null && is_array($args) && count($args) > 2) ? $args[2] : null;
-        return [$post, $plugin_name, $mode_switch];
+//        $mode_switch = ($args != null && is_array($args) && count($args) > 2) ? $args[2] : null;
+        $buckets     = ($args != null && is_array($args) && count($args) > 2) ? $args[2] : null;
+//        return [$post, $plugin_name, $mode_switch, $buckets];
+        return [$post, $plugin_name, $buckets];
     }
 
     /**
@@ -180,6 +182,7 @@ class AppServiceProvider extends AuthServiceProvider
 
         // 記事変更
         Gate::define('posts.update', function ($user, $args = null) {
+//print_r($args);
             return $this->check_authority($user, 'posts.update', $args);
         });
 
@@ -247,8 +250,23 @@ class AppServiceProvider extends AuthServiceProvider
             return $this->check_authority($user, 'preview', $args);
         });
 
+        // 変更 or 承認 判定
+        Gate::define('role_update_or_approval', function ($user, $args = null) {
+
+            // 記事変更
+            if ($this->check_authority($user, 'posts.update', $args)) {
+                return true;
+            }
+            // 記事承認
+            if ($this->check_authority($user, 'posts.approval', $args)) {
+                return true;
+            }
+            return false;
+        });
+
         // 管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）
         Gate::define('role_manage_or_post', function ($user, $args = null) {
+
             // ページ管理
             if ($this->check_role($user, 'admin_page')) {
                 return true;

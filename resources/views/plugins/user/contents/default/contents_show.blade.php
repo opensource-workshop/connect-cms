@@ -48,10 +48,10 @@
     <div class="row">
         <div class="row form-group mx-auto mt-3">
             <div>
-                <button type="submit" class="btn btn-danger mr-2" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')">
+                <button type="button" class="btn btn-default btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}/'"><i class="fas fa-times"></i> キャンセル</button>
+                <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')">
                     <i class="fas fa-check"></i> データ削除
                 </button>
-                <button type="button" class="btn btn-default btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}/'"><i class="fas fa-times"></i> キャンセル</button>
             </div>
         </div>
     </div>

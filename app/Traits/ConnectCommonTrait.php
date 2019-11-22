@@ -14,6 +14,44 @@ use App\Models\Core\UsersRoles;
 trait ConnectCommonTrait
 {
     /**
+     * Buckets のrole を配列で返却
+     *
+     * @return boolean
+     */
+    private function getBucketsRoles($buckets)
+    {
+        // Buckets オブジェクトがない場合はfalse を返す。
+        if (empty($buckets)) {
+            return false;
+        }
+
+        // Buckets オブジェクトでない場合もfalse
+        if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
+            return false;
+        }
+
+        return $buckets->getBucketsRoles();
+
+//        // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。
+//        if (empty($buckets)) {
+//            return false;
+//        }
+//        // Buckets オブジェクトでない場合もfalse
+//        if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
+//            return false;
+//        }
+//        // role を配列にして返却
+//        $roles = null;
+//        if ($buckets->post_role) {
+//            $roles = explode(',', $buckets->post_role);
+//        }
+//        if (empty($roles)) {
+//            return false;
+//        }
+//        return $roles;
+    }
+
+    /**
      * ユーザーが指定された権限を保持しているかチェックする。
      *
      * @return boolean
@@ -24,10 +62,15 @@ trait ConnectCommonTrait
         $request = app(\Illuminate\Http\Request::class);
 
         // 引数をバラシてPOST を取得
-        list($post, $plugin_name, $mode_switch) = $this->check_args_obj($args);
+//        list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->check_args_obj($args);
+        list($post, $plugin_name, $buckets_obj) = $this->check_args_obj($args);
+//print_r( $buckets_obj );
 
         // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
-        if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
+//        if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
+
+        // モードスイッチがプレビューなら、無条件に権限ナシで返す。
+        if ($request->mode == 'preview') {
             return false;
         }
 
@@ -41,8 +84,25 @@ trait ConnectCommonTrait
             return false;
         }
 
+        // チェックする権限を決定
+        // Backets にrole が指定されていれば、それを使用。
+        // Backets にrole が指定されていなければ、標準のrole を使用
+        $check_roles = config('cc_role.CC_AUTHORITY')[$authority];
+        if (!empty($this->getBucketsRoles($buckets_obj))) {
+            $check_roles = array();
+            $buckets_roles = $this->getBucketsRoles($buckets_obj);
+//Log::debug($buckets_roles);
+            // Buckets に設定されたrole から、関連role を取得してチェック。
+            foreach($buckets_roles as $buckets_role) {
+                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$buckets_role]);
+            }
+            // 配列は添字型になるので、array_merge で結合してから重複を取り除く
+            $check_roles = array_unique($check_roles);
+        }
+
         // 指定された権限を含むロールをループする。
-        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
+//        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
+        foreach ($check_roles as $role) {
 
             // ユーザの保持しているロールをループ
             foreach ($user['user_roles'] as $target) {
@@ -50,11 +110,17 @@ trait ConnectCommonTrait
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
 
+                    // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
+                    if ($authority == 'posts.approval' && $user_role == 'role_approval') {
+                        return true;
+                    }
+
                     // 必要なロールを保持している
                     if ($role == $user_role && $user_role_value) {
 
                         // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
                         if (($user_role == 'role_article_admin') ||
+                            ($user_role == 'role_article') ||
                             ($user_role == 'role_approval')) {
                             return true;
                         }
@@ -114,7 +180,6 @@ trait ConnectCommonTrait
                 }
             }
         }
-
         return false;
     }
 
@@ -122,15 +187,15 @@ trait ConnectCommonTrait
      * 権限チェック
      * roll_or_auth : 権限 or 役割
      */
-    public function can($roll_or_auth, $post = null, $plugin_name = null)
+    public function can($roll_or_auth, $post = null, $plugin_name = null, $buckets = null)
     {
         $args = null;
-        if ( $post != null || $plugin_name != null ) {
-            $args = [[$post, $plugin_name]];
+        if ( $post != null || $plugin_name != null || $buckets != null ) {
+            $args = [[$post, $plugin_name, $buckets]];
         }
 
         if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
-            return $this->view_error("403_inframe");
+            return $this->view_error("403_inframe", null, "canメソッドチェック");
         }
     }
 

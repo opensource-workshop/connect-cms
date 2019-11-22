@@ -60,6 +60,7 @@
     </div>
 
     {{-- 承認機能の選択 --}}
+{{--
     <div class="form-group">
         <label class="col-form-label">承認の有無</label><br />
         <div class="custom-control custom-radio custom-control-inline">
@@ -79,6 +80,7 @@
             <label class="custom-control-label" for="approval_flag_1">承認する</label>
         </div>
     </div>
+--}}
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">

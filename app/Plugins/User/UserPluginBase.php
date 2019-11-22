@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\Log;
 use DB;
 use File;
 
+use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
+
 use App\Plugins\PluginBase;
 
 use App\Traits\ConnectCommonTrait;
@@ -39,6 +42,11 @@ class UserPluginBase extends PluginBase
     public $frame = null;
 
     /**
+     *  Buckets オブジェクト
+     */
+    public $buckets = null;
+
+    /**
      *  アクション
      */
     public $action = null;
@@ -53,6 +61,14 @@ class UserPluginBase extends PluginBase
 
         // フレームの保持
         $this->frame = $frame;
+
+        // Buckets の保持
+        $this->buckets = Buckets::select('buckets.*')
+                                ->join('frames', function ($join) use ($frame) {
+                                    $join->on('frames.bucket_id', '=', 'buckets.id')
+                                         ->where('frames.id', '=', $frame->id);
+                                })
+                                ->first();
     }
 
     /**
@@ -117,7 +133,7 @@ class UserPluginBase extends PluginBase
         // メソッドの可視性チェック
         $objReflectionMethod = new \ReflectionMethod(get_class($obj), $action);
         if (!$objReflectionMethod->isPublic()) {
-            return $this->view_error("403_inframe");
+            return $this->view_error("403_inframe", null, "メソッドの可視性チェック");
         }
 
         // コアで定義しているHTTPリクエストメソッドチェック
@@ -132,7 +148,7 @@ class UserPluginBase extends PluginBase
 
         // コアで定義しているHTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック の両方がエラーの場合、権限エラー
         if (!$this->checkHttpRequestMethod($request, $action) && !$this->checkPublicFunctions($obj, $request, $action)) {
-            return $this->view_error("403_inframe");
+            return $this->view_error("403_inframe", null, "HTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック");
         }
 
         // チェック用POST
@@ -140,7 +156,7 @@ class UserPluginBase extends PluginBase
 
         // POST チェックに使用する getPost() 関数の有無をチェック
         // POST に関連しないメソッドは除外
-        if (!$action == "destroyBuckets") {
+        if ($action != "destroyBuckets") {
             if ( $id && method_exists($obj, 'getPost') ) {
                 $post = $obj->getPost($id);
             }
@@ -155,12 +171,14 @@ class UserPluginBase extends PluginBase
                 // 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
                 $ret = null;
 
+//print_r($this->buckets);
                 // POST があれば、POST の登録者チェックを行う
                 if (empty($post)) {
-                    $ret = $this->can($function_authority);
+                    $ret = $this->can($function_authority, null, null, $this->buckets);
                 }
                 else {
-                    $ret = $this->can($function_authority, $post);
+//print_r($post);
+                    $ret = $this->can($function_authority, $post, null, $this->buckets);
                 }
 
                 // 権限チェック結果。値があれば、エラーメッセージ用HTML
@@ -246,6 +264,9 @@ class UserPluginBase extends PluginBase
         // 表示しているフレームID
         $arg['frame_id'] = $this->frame->id;
 
+        // 表示しているBuckets
+        $arg['buckets'] = empty($this->buckets) ? null : $this->buckets;
+
         return $arg;
     }
     /**
@@ -298,6 +319,112 @@ class UserPluginBase extends PluginBase
             'edit_datalist', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
+        ]);
+    }
+
+    /**
+     *  フレームとBuckets 取得
+     */
+    protected function getBuckets($frame_id)
+    {
+        $backets = Buckets::select('buckets.*', 'frames.id as frames_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'buckets.id')
+                      ->where('frames.id', $frame_id)
+                      ->first();
+        return $backets;
+    }
+
+    /**
+     * 設定変更画面
+     */
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null)
+    {
+        // Buckets の取得
+        $buckets = $this->getBuckets($frame_id);
+
+        return $this->commonView(
+            'frame_edit_buckets', [
+            'buckets'     => $buckets,
+            'plugin_name' => $this->frame->plugin_name,
+        ]);
+    }
+
+    /**
+     * チェックボックス値取得
+     */
+    private function isRequestRole($request_role, $check_role)
+    {
+        if (array_key_exists($check_role, $request_role)) {
+            if ($request_role[$check_role] == '1') {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Buckets権限の更新
+     */
+    private function saveRequestRole($request, $buckets, $role_name)
+    {
+        // 権限毎にBuckets権限を読み、更新。レコードがなければ追加。
+        // 画面から該当の権限の項目が渡ってこなければ、権限をはく奪したものとしてレコード削除
+        $buckets_role = BucketsRoles::where('buckets_id', $buckets->id)
+                                    ->where('role', $role_name)
+                                    ->first();
+        if ($request->has($role_name)) {
+            if (empty($buckets_role)) {
+                $buckets_role = new BucketsRoles;
+                $buckets_role->buckets_id  = $buckets->id;
+                $buckets_role->role  = $role_name;
+            }
+            $buckets_role->post_flag     = $this->isRequestRole($request->$role_name, 'post');
+            $buckets_role->approval_flag = $this->isRequestRole($request->$role_name, 'approval');
+            $buckets_role->save();
+        }
+        else {
+            if ($buckets_role) {
+                $buckets_role->delete();
+            }
+        }
+        return;
+    }
+
+    /**
+     * 設定保存処理
+     */
+    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null)
+    {
+        // Buckets の取得
+        $buckets = $this->getBuckets($frame_id);
+
+        // buckets がまだない場合
+        $frame_update = false;
+        if (empty($buckets)) {
+            $frame_update = true;
+            $buckets = new Buckets;
+            $buckets->bucket_name = '無題';
+            $buckets->plugin_name = 'contents';
+        }
+
+        // Buckets の更新
+        $buckets->save();
+
+        // BucketsRoles の更新
+        $this->saveRequestRole($request, $buckets, 'role_reporter');
+        $this->saveRequestRole($request, $buckets, 'role_article');
+
+        // Frame にbuckets_id を登録
+        if ($frame_update) {
+            Frame::where('id', $frame_id)
+                 ->update(['bucket_id' => $buckets->id]);
+        }
+
+        // 画面の呼び出し
+        return $this->commonView(
+            'frame_edit_buckets', [
+            'buckets'     => $buckets,
+            'plugin_name' => $this->frame->plugin_name,
         ]);
     }
 

@@ -7,7 +7,7 @@
  --}}
 
 {{-- 新規登録 --}}
-@can('posts.create',[[null, 'blogs', 'preview_off']])
+@can('posts.create',[[null, 'blogs', $buckets]])
     @if (isset($frame) && $frame->bucket_id)
         <div class="row">
             <p class="text-left col-6">
@@ -57,10 +57,10 @@
             <div class="row">
                 <div class="col-12 text-right mb-1">
                 @if ($post->status == 2)
-                    @can('preview',[[null, 'blogs', 'preview_off']])
+                    @can('role_update_or_approval',[[$post, 'blogs', $buckets]])
                         <span class="badge badge-warning align-bottom">承認待ち</span>
                     @endcan
-                    @can('posts.approval',[[$post, 'blogs', 'preview_off']])
+                    @can('posts.approval',[[$post, 'blogs', $buckets]])
                         <form action="{{url('/')}}/plugin/blogs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="post" name="form_approval" class="d-inline">
                             {{ csrf_field() }}
                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
@@ -69,11 +69,9 @@
                         </form>
                     @endcan
                 @endif
-                @can('posts.update',[[$post, 'blogs', 'preview_off']])
+                @can('posts.update',[[$post, 'blogs', $buckets]])
                     @if ($post->status == 1)
-                        @can('preview',[[$post, 'blogs', 'preview_off']])
-                            <span class="badge badge-warning align-bottom">一時保存</span>
-                        @endcan
+                        <span class="badge badge-warning align-bottom">一時保存</span>
                     @endif
                     <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
                         <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>

@@ -43,8 +43,8 @@ class ContentsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
-        $functions['post'] = [];
+        $functions['get']  = ['editBucketsRoles'];
+        $functions['post'] = ['saveBucketsRoles'];
         return $functions;
     }
 
@@ -55,13 +55,26 @@ class ContentsPlugin extends UserPluginBase
      */
     public function getFirstFrameEditAction()
     {
-        return "edit";
+        return "editBucketsRoles";
     }
 
     /**
+     *  フレームとBuckets 取得
+     */
+/*
+    private function getBuckets_____________($frame_id)
+    {
+        $backets = Buckets::select('buckets.*', 'frames.id as frames_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'buckets.id')
+                      ->where('frames.id', $frame_id)
+                      ->first();
+        return $backets;
+    }
+*/
+    /**
      *  データ取得
      */
-    public function getFrameContents($frame_id)
+    private function getFrameContents($frame_id)
     {
 
         // 一度読んでいれば、そのPOSTを再利用する。
@@ -72,42 +85,101 @@ class ContentsPlugin extends UserPluginBase
         // 認証されているユーザの取得
         $user = Auth::user();
 
-        // 管理者権限の場合は、一時保存も対象
-        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
-        if (!empty($user) && $this->isCan('admin_system')) {
-
-            // フレームID が渡されるので、そのフレームに応じたデータを返す。
-            // 表示するデータ、バケツ、フレームをJOIN して取得
-            $contents = DB::table('contents')
-                        ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
-                        ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
-                        ->join('frames', function ($join) {
-                            $join->on('frames.bucket_id', '=', 'buckets.id');
-                        })
-                        ->where('frames.id', $frame_id)
-                        ->where('contents.deleted_at', null)
-                        // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
-                        ->where(function($query){ $query->where('contents.status', 0)->orWhere('contents.status', 1)->orWhere('contents.status', 2); })
-                        ->orderBy('id', 'desc')
-                        ->first();
+        // buckets_id
+        $buckets_id = null;
+        if (!empty($this->buckets)) {
+            $buckets_id = $this->buckets->id;
         }
-        else {
 
-            // フレームID が渡されるので、そのフレームに応じたデータを返す。
-            // 表示するデータ、バケツ、フレームをJOIN して取得
-            $contents = DB::table('contents')
-                        ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
-                        ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
-                        ->join('frames', function ($join) {
-                            $join->on('frames.bucket_id', '=', 'buckets.id');
-                        })
-                        ->where('frames.id', $frame_id)
-                        ->where('contents.deleted_at', null)
-                        ->where('contents.status', 0)
-                        ->orderBy('id', 'desc')
-                        ->first();
-        }
+        // Bucketsに応じたデータを返す。
+        $contents = DB::table('contents')
+                    ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
+                    ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
+                    ->join('frames', function ($join) {
+                        $join->on('frames.bucket_id', '=', 'buckets.id');
+                    })
+                    ->where('buckets.id', $buckets_id)
+                    ->where('contents.deleted_at', null)
+                    // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+                    ->where(function($query){
+                          $query = $this->appendAuthWhere($query);
+                    })
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+
+
+//        // 管理者権限の場合は、一時保存も対象
+//        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
+//        if (!empty($user) && $this->isCan('admin_system')) {
+//
+//            // フレームID が渡されるので、そのフレームに応じたデータを返す。
+//            // 表示するデータ、バケツ、フレームをJOIN して取得
+//            $contents = DB::table('contents')
+//                        ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
+//                        ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
+//                        ->join('frames', function ($join) {
+//                            $join->on('frames.bucket_id', '=', 'buckets.id');
+//                        })
+//                        ->where('frames.id', $frame_id)
+//                        ->where('contents.deleted_at', null)
+//                        // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+//                        ->where(function($query){ $query->where('contents.status', 0)->orWhere('contents.status', 1)->orWhere('contents.status', 2); })
+//                        ->orderBy('id', 'desc')
+//                        ->first();
+//        }
+//        else {
+//
+//            // フレームID が渡されるので、そのフレームに応じたデータを返す。
+//            // 表示するデータ、バケツ、フレームをJOIN して取得
+//            $contents = DB::table('contents')
+//                        ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
+//                        ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
+//                        ->join('frames', function ($join) {
+//                            $join->on('frames.bucket_id', '=', 'buckets.id');
+//                        })
+//                        ->where('frames.id', $frame_id)
+//                        ->where('contents.deleted_at', null)
+//                        ->where('contents.status', 0)
+//                        ->orderBy('id', 'desc')
+//                        ->first();
+//        }
         return $contents;
+    }
+
+    /**
+     *  記事の取得権限に対する条件追加
+     */
+    private function appendAuthWhere($query)
+    {
+        // 記事修正権限、記事管理者の場合、全記事の取得
+        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+            // 全件取得のため、追加条件なしで戻る。
+        }
+        // 承認権限の場合、Active ＋ 承認待ちの取得
+        elseif ($this->isCan('role_approval')) {
+            $query->Where('status',   '=', 0)
+                  ->orWhere('status', '=', 2);
+        }
+        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
+        elseif ($this->buckets->canPostUser(Auth::user())) {
+            $query->Where('status', '=', 0)
+                  ->orWhere('contents.created_id', '=', Auth::user()->id);
+        }
+        // その他（ゲスト）
+        else {
+            $query->where('status', 0);
+        }
+
+        return $query;
+    }
+
+    /**
+     *  要承認の判断
+     */
+    private function isApproval($frame_id)
+    {
+        return $this->buckets->needApprovalUser(Auth::user());
     }
 
     /* 画面アクション関数 */
@@ -191,17 +263,35 @@ class ContentsPlugin extends UserPluginBase
     */
     public function store($request, $page_id = null, $frame_id = null, $id = null, $status = 0)
     {
-        // バケツの登録
-        $bucket_id = DB::table('buckets')->insertGetId([
-              'bucket_name' => '無題',
-              'plugin_name' => 'contents'
-        ]);
+        // バケツがまだ登録されていなかったら登録する。
+        if (empty($this->buckets)) {
+            $bucket_id = DB::table('buckets')->insertGetId([
+                  'bucket_name' => '無題',
+                  'plugin_name' => 'contents'
+            ]);
+        }
+        else {
+            $bucket_id = $this->buckets['id'];
+        }
 
         // コンテンツデータの登録
         $contents = new Contents;
+        $contents->created_id   = Auth::user()->id;
         $contents->bucket_id    = $bucket_id;
         $contents->content_text = $request->contents;
-        $contents->status       = $status;
+
+        // 一時保存(status が 1 になる。)
+        if ($status == 1) {
+            $contents->status = 1;
+        }
+        // 承認フラグ(要承認の場合はstatus が 2 になる。)
+        else if ($this->isApproval($frame_id)) {
+            $contents->status = 2;
+        }
+        else {
+            $contents->status = 0;
+        }
+
         $contents->save();
 
         // FrameのバケツIDの更新
@@ -219,14 +309,25 @@ class ContentsPlugin extends UserPluginBase
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $oldrow = Contents::find($id);
 
-        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
-        Contents::where('bucket_id', $oldrow->bucket_id)->where('status', 0)->update(['status' => 9]);
-        //Contents::where('id', $oldrow->id)->update(['status' => 9]);
-
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $newrow = $oldrow->replicate();
         $newrow->content_text = $request->contents;
-        $newrow->status       = 0;
+
+        // 承認フラグ(要承認の場合はstatus が2 になる。)
+        if ($this->isApproval($frame_id)) {
+            $newrow->status = 2;
+        }
+        else {
+            $newrow->status = 0;
+        }
+
+        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
+        if ($newrow->status != 2) {
+            Contents::where('bucket_id', $oldrow->bucket_id)->where('status', 0)->update(['status' => 9]);
+        }
+        //Contents::where('id', $oldrow->id)->update(['status' => 9]);
+
+        // 変更のデータ保存
         $newrow->save();
 
         return;
@@ -259,6 +360,25 @@ class ContentsPlugin extends UserPluginBase
             $newrow->status = 1; //（一時保存）
             $newrow->save();
         }
+        return;
+    }
+
+   /**
+    * 承認
+    */
+    public function approval($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
+        $oldrow = Contents::find($id);
+
+        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
+        Contents::where('bucket_id', $oldrow->bucket_id)->where('status', 0)->update(['status' => 9]);
+
+        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
+        $newrow = $oldrow->replicate();
+        $newrow->status = 0;
+        $newrow->save();
+
         return;
     }
 
@@ -333,22 +453,22 @@ class ContentsPlugin extends UserPluginBase
 
         // データリストの場合の追加処理
         // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
-        $buckets = DB::table('buckets')
-                    ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
-                    ->join('contents', function ($join) {
-                        $join->on('contents.bucket_id', '=', 'buckets.id');
-                        $join->where('contents.status', '=', 0);
-                        $join->whereNull('contents.deleted_at');
-                    })
-                    ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
-                    ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
-                    ->where('buckets.plugin_name', 'contents')
-                    ->orderBy($request_order_by[0],        $request_order_by[1])
-                    ->paginate(10);
+        $buckets_list = DB::table('buckets')
+                          ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
+                          ->join('contents', function ($join) {
+                              $join->on('contents.bucket_id', '=', 'buckets.id');
+                              $join->where('contents.status', '=', 0);
+                              $join->whereNull('contents.deleted_at');
+                          })
+                          ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
+                          ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
+                          ->where('buckets.plugin_name', 'contents')
+                          ->orderBy($request_order_by[0],        $request_order_by[1])
+                          ->paginate(10);
 
         return $this->view(
             'contents_list_buckets', [
-            'buckets'           => $buckets,
+            'buckets_list'      => $buckets_list,
             'order_link'        => $order_link,
             'request_order_str' => implode( '|', $request_order_by )
         ]);

@@ -8,12 +8,18 @@
 --}}
 {{-- ページ名 --}}
 <?php
-/*
     // URL から現在のURL パスを判定する。
     $current_url = url()->current();
     $base_url = url('/');
     $current_permanent_link = str_replace( $base_url, '', $current_url);
+    $current_permanent_links = explode('/', $current_permanent_link);
+    // print_r($current_permanent_links);
+    $is_manage_page = false;
+    if (!empty($current_permanent_links) && count($current_permanent_links) > 1 && $current_permanent_links[1] == 'manage') {
+        $is_manage_page = true;
+    }
 
+/*
     // トップページの判定
     if (empty($current_permanent_link)) {
         $current_permanent_link = "/";
@@ -142,15 +148,14 @@
         <ul class="navbar-nav">
             {{-- 管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）--}}
             @if (Auth::check() && Auth::user()->can('role_manage_or_post'))
-
                 <li class="nav-item dropdown">
                     {{-- ページリストがある場合は、コンテンツ画面 --}}
-                    @if (isset($page_list) && Auth::user()->can('frames.create'))
+                    @if (isset($page_list) && !$is_manage_page)
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">管理機能</a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_manage">
 
                             {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
-                            @if (isset($page_list) && Auth::user()->can('frames.create'))
+                            @if (isset($page_list) && !$is_manage_page)
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a>
                                 <div class="dropdown-divider"></div>
 
