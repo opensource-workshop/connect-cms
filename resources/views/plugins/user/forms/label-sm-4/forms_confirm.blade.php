@@ -22,8 +22,8 @@
     {{ csrf_field() }}
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">
-        <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
-        <div class="col-sm-10">
+        <label class="col-sm-4 control-label">{{$form_column->column_name}}</label>
+        <div class="col-sm-8">
 
         @switch($form_column->column_type)
 
