@@ -11,7 +11,7 @@
 
 
 <script type="text/javascript">
-    function prev() {
+    function prev{{$frame_id}}() {
         if ($("#calendar{{$frame_id}} .active").attr('data-prev') == "off") {
             $("#calendar_prev_link{{$frame_id}}").addClass("disabled");
         }
@@ -22,7 +22,7 @@
         $("#calendar{{$frame_id}}").carousel('prev');
         $("#view_ym_str{{$frame_id}}").text($("#calendar{{$frame_id}} .active").attr('data-prevmonth'));
     }
-    function next() {
+    function next{{$frame_id}}() {
         if ($("#calendar{{$frame_id}} .active").attr('data-next') == "off") {
             $("#calendar_next_link{{$frame_id}}").addClass("disabled");
         }
@@ -35,16 +35,16 @@
     }
 
 </script>
-<a href="javascript:prev();" class="btn btn-primary @if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
+<a href="javascript:prev{{$frame_id}}();" class="btn btn-primary @if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
   <i class="fas fa-chevron-circle-left"></i>
 </a>
 <span id="view_ym_str{{$frame_id}}">{{$view_ym_str}}</span>
-<a href="javascript:next();" class="btn btn-primary @if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
+<a href="javascript:next{{$frame_id}}();" class="btn btn-primary @if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
   <i class="fas fa-chevron-circle-right"></i>
 </a>
 
 {{-- カレンダー --}}
-<div id="calendar{{$frame_id}}" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
+<div id="calendar{{$frame_id}}" class="carousel" data-ride="carousel" data-interval=false data-wrap=false>
     <div class="carousel-inner">
         @foreach ($calendars as $calendar_ym => $dates)
         <div class="carousel-item @if($calendar_ym == $view_ym) active @endif" data-prev="{{$view_months[$calendar_ym]["data-prev"]}}" data-next="{{$view_months[$calendar_ym]["data-next"]}}" data-prevmonth="{{$view_months[$calendar_ym]["data-prevmonth"]}}" data-nextmonth="{{$view_months[$calendar_ym]["data-nextmonth"]}}">
