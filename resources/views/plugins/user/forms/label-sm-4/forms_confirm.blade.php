@@ -8,12 +8,12 @@
 <script type="text/javascript">
     {{-- 保存のsubmit JavaScript --}}
     function submit_forms_store() {
-        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/publicStore/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         forms_store{{$frame_id}}.submit();
     }
     {{-- 保存のキャンセル JavaScript --}}
     function submit_forms_cancel() {
-        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         forms_store{{$frame_id}}.submit();
     }
 </script>

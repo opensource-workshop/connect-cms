@@ -9,7 +9,7 @@
 {{-- OPAC表示 --}}
 @if (isset($opacs_books))
 
-    <form action="/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
+    <form action="/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
     {{ csrf_field() }}
     <div class="form-group">
         <div class="row">

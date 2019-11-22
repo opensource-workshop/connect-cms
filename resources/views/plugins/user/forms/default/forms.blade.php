@@ -7,7 +7,7 @@
  --}}
 @if ($form && $forms_columns)
 
-    <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
+    <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
         {{ csrf_field() }}
 
 {{--

@@ -30,7 +30,7 @@
                 @endif
 
                 @can('posts.update',[[$contents, 'contents', $buckets]])
-                    <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#{{$frame_id}}">
+                    <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#frame-{{$frame_id}}">
                         <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                     </a>
                 @endcan
@@ -42,7 +42,7 @@
     @can('posts.update',[[$contents, 'contents', $buckets]])
     <p class="text-right">
         {{-- 追加画面へのリンク --}}
-        <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}#{{$frame_id}}">
+        <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
             <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
         </a>
     </p>
