@@ -8,7 +8,7 @@
 
 <style type="text/css">
 <!--
-    #frame-card-{{ $frame->frame_id }} { width: 60vw; }
+    #frame-card-{{ $frame->frame_id }} { width: 60vw; z-index: 999; }
 -->
 </style>
 

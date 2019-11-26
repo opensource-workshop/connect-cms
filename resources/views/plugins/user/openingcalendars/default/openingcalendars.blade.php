@@ -6,6 +6,8 @@
  * @category 開館カレンダープラグイン
  --}}
 
+<div class="text-right"><a href="#">年間カレンダー</a></div>
+
 {{$openingcalendar_frame->openingcalendar_name}}<br />
 {{$openingcalendar_frame->openingcalendar_sub_name}}<br />
 
@@ -35,16 +37,19 @@
     }
 
 </script>
-<a href="javascript:prev{{$frame_id}}();" class="btn btn-primary @if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
+
+{{-- <a href="javascript:prev();" class="btn btn-primary @if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}"> --}}
+<a href="javascript:prev{{$frame_id}}();" class="@if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
   <i class="fas fa-chevron-circle-left"></i>
 </a>
 <span id="view_ym_str{{$frame_id}}">{{$view_ym_str}}</span>
-<a href="javascript:next{{$frame_id}}();" class="btn btn-primary @if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
+{{-- <a href="javascript:next();" class="btn btn-primary @if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}"> --}}
+<a href="javascript:next{{$frame_id}}();" class="@if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
   <i class="fas fa-chevron-circle-right"></i>
 </a>
 
 {{-- カレンダー --}}
-<div id="calendar{{$frame_id}}" class="carousel" data-ride="carousel" data-interval=false data-wrap=false>
+<div id="calendar{{$frame_id}}" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
     <div class="carousel-inner">
         @foreach ($calendars as $calendar_ym => $dates)
         <div class="carousel-item @if($calendar_ym == $view_ym) active @endif" data-prev="{{$view_months[$calendar_ym]["data-prev"]}}" data-next="{{$view_months[$calendar_ym]["data-next"]}}" data-prevmonth="{{$view_months[$calendar_ym]["data-prevmonth"]}}" data-nextmonth="{{$view_months[$calendar_ym]["data-nextmonth"]}}">
@@ -52,7 +57,7 @@
             <thead>
                 <tr>
                     @foreach (['日', '月', '火', '水', '木', '金', '土'] as $dayOfWeek)
-                    <th>{{ $dayOfWeek }}</th>
+                    <th class="p-0">{{ $dayOfWeek }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -63,10 +68,10 @@
                 @endif
                     <td
                     @if ($date->format("Y-m") != $calendar_ym)
-                        class="bg-secondary"
+                        class="bg-secondary p-0"
                     @else
                         @if($view_days[$date->format("Y-m")][$date->format("d")])
-                            style="background-color:{{$patterns[$view_days[$date->format("Y-m")][$date->format("d")]]}}"
+                           class="p-0" style="background-color:{{$patterns[$view_days[$date->format("Y-m")][$date->format("d")]]}}"
                         @endif
                     @endif
                     >
@@ -85,11 +90,11 @@
                     <dl class="d-none d-md-table-row" style="font-size:90%;">
                         <dl class="d-md-table-cell"><span style="color:{{$view_pattern[0]->color}}">■</span></dl>
                         <dl class="d-md-table-cell">{{$view_pattern[0]->pattern}}</dl>
-                        <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl>
+{{--                        <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
                         @if (count($view_pattern) > 1)
                             <dl class="d-md-table-cell ml-2"><span style="color:{{$view_pattern[1]->color}}">■</span></dl>
                             <dl class="d-md-table-cell">{{$view_pattern[1]->pattern}}</dl>
-                            <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl>
+{{--                            <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
                         @endif
                     </dl>
                 @endforeach
