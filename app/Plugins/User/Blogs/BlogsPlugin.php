@@ -425,7 +425,7 @@ class BlogsPlugin extends UserPluginBase
                                      ->first();
         }
 
-        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
+        // 詳細画面を呼び出す。
         return $this->view(
             'blogs_show', [
             'blog_frame'  => $blog_frame,
