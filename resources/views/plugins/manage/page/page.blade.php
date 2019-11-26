@@ -73,7 +73,7 @@
                 <th></th>
                 <th nowrap>移動先</th>
                 <th nowrap>ページ名</th>
-                <th nowrap>On</th>
+                <th nowrap class="pl-1"><i class="far fa-eye"></i></th>
                 <th nowrap>固定リンク</th>
                 <th nowrap>背景色</th>
                 <th nowrap>ヘッダー</th>
@@ -123,13 +123,13 @@
                     </td>
                     <td class="table-text p-1">
                         @if ($page_item->base_display_flag == 1)
-                            <div><i class="fas fa-check"></i></div>
+                            <div><i class="far fa-eye"></i></div>
                         @else
-                            <div><i class="fas fa-times"></i></div>
+                            <div><i class="far fa-eye-slash"></i></div>
                         @endif
                     </td>
                     <td class="table-text p-1">
-                        <div>{{ $page_item->permanent_link }}</div>
+                        <div><a href="{{url($page_item->permanent_link)}}">{{ $page_item->permanent_link }}</a></div>
                     </td>
                     <td class="table-text p-1">
                         <div>{{ $page_item->background_color }}</div>

@@ -11,6 +11,7 @@ use File;
 use App\Models\Common\Buckets;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
+use App\Models\Core\Configs;
 
 use App\Plugins\PluginBase;
 
@@ -47,6 +48,11 @@ class UserPluginBase extends PluginBase
     public $buckets = null;
 
     /**
+     *  Configs オブジェクト
+     */
+    public $configs = null;
+
+    /**
      *  アクション
      */
     public $action = null;
@@ -69,6 +75,9 @@ class UserPluginBase extends PluginBase
                                          ->where('frames.id', '=', $frame->id);
                                 })
                                 ->first();
+
+        // Configs の保持
+        $this->configs = Configs::get();
     }
 
     /**

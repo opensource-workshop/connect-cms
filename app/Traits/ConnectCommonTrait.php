@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
@@ -490,5 +491,90 @@ trait ConnectCommonTrait
             return $this->invokeManage($request, $cc_special_path[$path]['method']);
         }
         return;
+    }
+
+    /**
+     *  文字列変換
+     */
+    public function replaceConnectTagAll($contents, $page, $configs)
+    {
+        // Connect-CMSタグを値に変換する。
+        if (empty($contents)) {
+            return $contents;
+        }
+
+        $patterns = array();
+        $replacements = array();
+
+        // 固定リンク(多言語切り替えで使用)
+        $config_language_multi_on = null;
+        foreach($configs as $config) {
+            if ($config->name == 'language_multi_on') {
+                $config_language_multi_on = $config->value;
+            }
+        }
+
+        // 言語設定の取得
+        $languages = array();
+        foreach($configs as $config) {
+            if ($config->name == 'language') {
+                $languages[$config->additional1] = $config;
+            }
+        }
+        $page_language = $this->getPageLanguage($page, $languages);
+
+        // 確実に言語設定部分を取り除くために、permanent_link を / で分解して、1番目(/ の次)の内容を取得する。
+        $permanent_link_array = explode('/', $page->permanent_link);
+
+        // 多言語on＆現在のページがデフォルト以外の言語の場合、言語指定を取り除く
+        if ($config_language_multi_on &&
+            $page_language &&
+            $permanent_link_array &&
+            array_key_exists(1, $permanent_link_array) &&
+            $permanent_link_array[1] == $page_language)
+        {
+            $patterns[0] = '/{{cc:permanent_link}}/';
+            $replacements[0] = trim(mb_substr($page->permanent_link, mb_strlen('/'.$page_language)), '/');
+        }
+        else {
+            $patterns[0] = '/{{cc:permanent_link}}/';
+            $replacements[0] = trim($page->permanent_link, '/');
+        }
+
+        // 変換と値の返却
+        $contents->content_text = preg_replace($patterns, $replacements, $contents->content_text);
+        return $contents;
+    }
+
+    /**
+     *  ページの言語の取得
+     */
+    public function getPageLanguage($page, $languages)
+    {
+        // ページの言語
+        $page_language = null;
+
+        // 今、表示しているページの言語を判定
+        $page_paths = explode('/', $page['permanent_link']);
+        if ($page_paths && is_array($page_paths) && array_key_exists(1, $page_paths)) {
+            foreach($languages as $language) {
+                if (trim($language->additional1, '/') == $page_paths[1]) {
+                    $page_language = $page_paths[1];
+                    break;
+                }
+            }
+        }
+        return $page_language;
+    }
+
+    /**
+     *  現在の言語設定のトップページ
+     */
+    public function getTopPage($page, $languages = null)
+    {
+        $page_language = $this->getPageLanguage($page, $languages);
+
+        // 言語トップのページ確認
+        return Page::where('permanent_link', '/'.$page_language)->first();
     }
 }

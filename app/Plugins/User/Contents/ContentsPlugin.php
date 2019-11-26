@@ -107,8 +107,6 @@ class ContentsPlugin extends UserPluginBase
                     ->orderBy('id', 'desc')
                     ->first();
 
-
-
 //        // 管理者権限の場合は、一時保存も対象
 //        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
 //        if (!empty($user) && $this->isCan('admin_system')) {
@@ -179,6 +177,9 @@ class ContentsPlugin extends UserPluginBase
      */
     private function isApproval($frame_id)
     {
+        if (empty($this->buckets)) {
+            return false;
+        }
         return $this->buckets->needApprovalUser(Auth::user());
     }
 
@@ -192,6 +193,9 @@ class ContentsPlugin extends UserPluginBase
     {
         // データ取得
         $contents = $this->getFrameContents($frame_id);
+
+        // Connect-CMSタグ変換
+        $contents = $this->replaceConnectTagAll($contents, $this->page, $this->configs);
 
         // 表示テンプレートを呼び出す。
         return $this->view(

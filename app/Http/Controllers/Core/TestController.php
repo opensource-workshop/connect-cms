@@ -32,8 +32,13 @@ class TestController extends ConnectController
      * @param String $plugin_name
      * @return view
      */
-    public function invokeGet(Request $request, $id = null)
+    public function invokeGet(Request $request, $language = null, $id = null)
     {
+        print_r($language);
+        echo "<br />";
+        print_r($id);
+        exit;
+
         return $this->view('test.ajaxtest', [
             'id'     => $id,
         ]);

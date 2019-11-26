@@ -35,7 +35,11 @@ class MenusPlugin extends UserPluginBase
     {
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
-        $pages = Page::defaultOrderWithDepth();
+        $format = null;
+        $pages = Page::defaultOrderWithDepth($format, $this->page);
+
+        //Log::debug(json_encode( $multi_language_root_page, JSON_UNESCAPED_UNICODE));
+        //Log::debug(json_encode( $pages, JSON_UNESCAPED_UNICODE));
 
         // パンくずリスト用に自分と上位階層のページを取得
         $ancestors = Page::ancestorsAndSelf($page_id);

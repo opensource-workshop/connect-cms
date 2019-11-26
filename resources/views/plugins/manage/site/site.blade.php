@@ -48,6 +48,34 @@
             <small class="form-text text-muted">画面の基本のヘッダー背景色（各ページで上書き可能）</small>
         </div>
 
+        {{-- ヘッダーの表示指定 --}}
+        <div class="form-group">
+            <label class="col-form-label">ヘッダーの表示</label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["base_header_hidden"]) && $configs["base_header_hidden"] == "0")
+                            <input type="radio" value="0" id="base_header_hidden_off" name="base_header_hidden" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="base_header_hidden_off" name="base_header_hidden" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_header_hidden_off">表示する</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["base_header_hidden"]) && $configs["base_header_hidden"] == "1")
+                            <input type="radio" value="1" id="base_header_hidden_on" name="base_header_hidden" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="base_header_hidden_on" name="base_header_hidden" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_header_hidden_on">表示しない</label>
+                    </div>
+                </div>
+            </div>
+            <small class="form-text text-muted">未ログイン時にヘッダーを表示するかどうかを選択</small>
+        </div>
+
         {{-- ヘッダーの固定指定 --}}
         <div class="form-group">
             <label class="col-form-label">ヘッダーの固定</label>
@@ -73,7 +101,7 @@
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">ログインリンクを表示するかどうかを選択</small>
+            <small class="form-text text-muted">ヘッダーを画面上部に固定するかどうかを選択</small>
         </div>
 
         {{-- ログインリンクの表示 --}}

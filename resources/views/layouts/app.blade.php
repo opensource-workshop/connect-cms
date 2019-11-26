@@ -97,6 +97,7 @@
 </head>
 <body>
 
+@if (Auth::check() || (isset($configs) && ($configs['base_header_hidden'] != '1')))
 <nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
@@ -209,6 +210,7 @@
 
     </div>
 </nav>
+@endif
 
 <main role="main">
     @yield('content')

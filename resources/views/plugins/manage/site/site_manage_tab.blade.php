@@ -16,4 +16,9 @@
 @else
     <li class="nav-item"><a href="{{url('/manage/site/categories')}}" class="nav-link">カテゴリ設定</a></li>
 @endif
+@if ($function == "languages")
+    <li class="nav-item"><a href="{{url('/manage/site/languages')}}" class="nav-link active">多言語設定</a></li>
+@else
+    <li class="nav-item"><a href="{{url('/manage/site/languages')}}" class="nav-link">多言語設定</a></li>
+@endif
 </ul>

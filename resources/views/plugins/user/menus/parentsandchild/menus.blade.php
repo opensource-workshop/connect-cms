@@ -11,6 +11,7 @@
     <div class="list-group" style="margin-bottom: 0;">
         @foreach($pages as $key => $page)
             @php
+                $index = 0;
                 if (isset($index)) {
                     break;
                 }
