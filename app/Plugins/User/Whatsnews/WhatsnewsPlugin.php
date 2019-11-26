@@ -126,8 +126,23 @@ class WhatsnewsPlugin extends UserPluginBase
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
         foreach($target_plugins as $target_plugin) {
+
+            // クラスファイルの存在チェック。
+            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
+
+            // ファイルの存在確認
+            if (!file_exists($file_path)) {
+                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+            $this->view_error(500);
+return;
+                echo "System error<br />";
+                echo $file_path;
+                exit;
+            }
+
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
             $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
+
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }
 
