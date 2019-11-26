@@ -110,6 +110,16 @@ class WhatsnewsPlugin extends UserPluginBase
         // フレームから、新着の設定取得
         $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
 
+        // 新着情報がまだできていない場合
+        if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
+            return $this->view(
+                'whatsnews', [
+                'whatsnews'   => null,
+                'link_pattern' => null,
+                'link_base' => null,
+            ]);
+        }
+
         // ターゲットプラグインをループ
         $target_plugins = explode(',', $whatsnews_frame->target_plugin);
 
@@ -343,8 +353,8 @@ class WhatsnewsPlugin extends UserPluginBase
         // 新着情報設定
         $whatsnews->whatsnew_name     = $request->whatsnew_name;
         $whatsnews->view_pattern      = $request->view_pattern;
-        $whatsnews->count             = $request->count;
-        $whatsnews->days              = $request->days;
+        $whatsnews->count             = intval($request->count);
+        $whatsnews->days              = intval($request->days);
         $whatsnews->rss               = $request->rss;
         $whatsnews->view_created_name = $request->view_created_name;
         $whatsnews->view_created_at   = $request->view_created_at;
