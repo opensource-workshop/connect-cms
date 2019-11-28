@@ -8,12 +8,12 @@
 <script type="text/javascript">
     {{-- 保存のsubmit JavaScript --}}
     function submit_forms_store() {
-        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/publicStore/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         forms_store{{$frame_id}}.submit();
     }
     {{-- 保存のキャンセル JavaScript --}}
     function submit_forms_cancel() {
-        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         forms_store{{$frame_id}}.submit();
     }
 </script>
@@ -22,8 +22,8 @@
     {{ csrf_field() }}
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">
-        <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
-        <div class="col-sm-10">
+        <label class="col-sm-4 control-label">{{$form_column->column_name}}</label>
+        <div class="col-sm-8">
 
         @switch($form_column->column_type)
 

@@ -12,6 +12,7 @@ use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Core\Configs;
 use App\Models\Core\Plugins;
 
 use App\Traits\ConnectCommonTrait;
@@ -88,6 +89,80 @@ class DefaultController extends ConnectController
         ]);
     }
 
+    /**
+     *  多言語の切り替え機能
+     *
+     */
+    public function changeLanguage(Request $request, $language_or_1stdir, $link_or_after2nd = null)
+    {
+        // 言語設定にあるパターンの場合はその言語にリダイレクト。なければ、デフォルト言語とみなす。
+        /*
+            パターン
+            日本語から英語へ(top)  ： href="/language/en"
+            日本語から英語へ(blog) ： href="/language/en/blog"
+            日本語から英語へ(blog2)： href="/language/en/blog/2"
+            英語から日本語へ(top)  ： href="/language"
+            英語から日本語へ(blog) ： href="/language/blog"
+            英語から日本語へ(blog2)： href="/language/blog/2"
+        */
+
+        // 設定されている多言語のリスト取得
+        $languages = Configs::where('category', 'language')->orderBy('additional1')->get();
+
+        // 次に表示する言語(null はデフォルト)
+        $next_language = null;
+
+        // 次に表示するページの言語を判定
+        foreach($languages as $language) {
+            if (trim($language->additional1, '/') == $language_or_1stdir) {
+                $next_language = trim($language->additional1, '/');
+                break;
+            }
+        }
+        //echo $next_language;
+
+       // permanent_link の編集
+       // 言語がデフォルト(next_language がnull)＆2nd以降がある場合は、language_or_1stdir はpermanent_link の一部なので、結合する。
+       if (empty($next_language) && $link_or_after2nd) {
+           $permanent_link = $language_or_1stdir . '/' . $link_or_after2nd;
+       }
+       // 言語がデフォルト(next_language がnull)＆2nd以降がない場合は、language_or_1stdir がディレクトリ。
+       else if (empty($next_language)) {
+           $permanent_link = $language_or_1stdir;
+       }
+       else {
+           $permanent_link = $link_or_after2nd;
+       }
+
+       // 遷移するページ
+       $next_page = null;
+
+       // 指定されたページがあれば、リダイレクト。
+       $next_path = '/';
+       if ($next_language) {
+           $next_path .= $next_language;
+       }
+       if ($permanent_link) {
+           if (mb_substr($next_path, -1) != '/') {
+               $next_path .= '/';
+           }
+           $next_path .= $permanent_link;
+       }
+       $next_page = Page::where('permanent_link', $next_path)->first();
+
+       if (!empty($next_page)) {
+           return redirect($next_page->permanent_link);
+       }
+
+       // 指定された言語のルートあれば、リダイレクト。
+       $next_page = Page::where('permanent_link', '/'.$next_language)->first();
+       if (!empty($next_page)) {
+           return redirect($next_page->permanent_link);
+       }
+
+       // トップに戻る
+       return redirect('/');
+    }
 
     /**
      *  フレームで使用するテンプレート・リスト、プラグインのフレームメニュー

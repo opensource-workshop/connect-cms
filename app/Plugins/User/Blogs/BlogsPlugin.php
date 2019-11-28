@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Blogs;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -25,7 +26,7 @@ use App\Plugins\User\UserPluginBase;
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コンテンツプラグイン
+ * @category 施設予約プラグイン
  * @package Contoroller
  */
 class BlogsPlugin extends UserPluginBase
@@ -47,8 +48,8 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss'];
-        $functions['post'] = ['saveCategories', 'deleteCategories'];
+        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles'];
+        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles'];
         return $functions;
     }
 
@@ -100,7 +101,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.approval_flag')
+                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count')
                  ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -155,11 +156,12 @@ class BlogsPlugin extends UserPluginBase
         // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
         elseif ($this->isCan('role_reporter')) {
             $query->Where('status', '=', 0)
-                  ->orWhere('created_id', '=', Auth::user()->id);
+                  ->orWhere('blogs_posts.created_id', '=', Auth::user()->id);
         }
         // その他（ゲスト）
         else {
             $query->where('status', 0);
+            $query->where('blogs_posts.posted_at', '<=', Carbon::now());
         }
 
         return $query;
@@ -213,16 +215,18 @@ class BlogsPlugin extends UserPluginBase
      */
     private function isApproval($frame_id)
     {
-        // 承認の要否確認とステータス処理
-        $blog_frame = $this->getBlogFrame($frame_id);
-        if ($blog_frame->approval_flag == 1) {
+        return $this->buckets->needApprovalUser(Auth::user());
 
-            // 記事修正、記事管理者権限がない場合は要承認
-            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-                return true;
-            }
-        }
-        return false;
+//        // 承認の要否確認とステータス処理
+//        $blog_frame = $this->getBlogFrame($frame_id);
+//        if ($blog_frame->approval_flag == 1) {
+//
+//            // 記事修正、記事管理者権限がない場合は要承認
+//            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
+//                return true;
+//            }
+//        }
+//        return false;
     }
 
     /**
@@ -421,7 +425,7 @@ class BlogsPlugin extends UserPluginBase
                                      ->first();
         }
 
-        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
+        // 詳細画面を呼び出す。
         return $this->view(
             'blogs_show', [
             'blog_frame'  => $blog_frame,
@@ -795,7 +799,7 @@ class BlogsPlugin extends UserPluginBase
         // ブログ設定
         $blogs->blog_name     = $request->blog_name;
         $blogs->view_count    = $request->view_count;
-        $blogs->approval_flag = $request->approval_flag;
+        //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
         $blogs->save();

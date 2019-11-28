@@ -104,7 +104,7 @@
         </div>
     @else
         <div class="form-group">
-            <form action="/plugin/opacs/lent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
+            <form action="/plugin/opacs/lent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
                 {{ csrf_field() }}
                 <div class="row">
                     <div class="col-sm-4">
@@ -161,7 +161,7 @@
                 この書籍は現在、貸し出しリクエスト中のため、郵送貸し出しリクエストはできません。
             </div>
         @else
-            <form action="/plugin/opacs/requestLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
+            <form action="/plugin/opacs/requestLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
                 {{ csrf_field() }}
                 <div class="row">
                     <div class="col-sm-4" style="margin-top: 8px;">
@@ -211,7 +211,7 @@
     </div>
 
     @if ($opacs_books->lent_flag == 1 || $opacs_books->lent_flag == 2) 
-        <form action="/plugin/opacs/returnLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#{{$frame_id}}" id="form_returnLent" name="form_returnLent" method="POST">
+        <form action="/plugin/opacs/returnLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_returnLent" name="form_returnLent" method="POST">
             {{ csrf_field() }}
             <h4><span class="badge badge-primary">返却</span></h4>
 

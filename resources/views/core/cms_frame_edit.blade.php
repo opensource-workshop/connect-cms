@@ -26,8 +26,8 @@
             {{$action_core_frame->includeFrameTab($page, $frame, $action)}}
 
             {{-- コア側のフレームメニュー --}}
-            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link active">フレーム編集</a></li>
-            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{ $frame->id }}#{{ $frame->id }}" class="nav-link">フレーム削除</a></li>
+            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">フレーム編集</a></li>
+            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">フレーム削除</a></li>
         </ul>
     </div>
 

@@ -12,6 +12,8 @@ use App\Models\Core\Configs;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 
+use App\Traits\ConnectCommonTrait;
+
 /**
  * コア用の基底クラス
  *
@@ -22,6 +24,8 @@ use App\Models\Common\Page;
  */
 class ConnectController extends Controller
 {
+
+    use ConnectCommonTrait;
 
     /**
      *  ページID
@@ -42,6 +46,11 @@ class ConnectController extends Controller
      *  カレントページ
      */
     public $page = null;
+
+    /**
+     *  config 設定
+     */
+    public $configs = null;
 
     /**
      *  コンストラクタ
@@ -178,15 +187,71 @@ class ConnectController extends Controller
     }
 
     /**
+     *  Configの取得
+     */
+    private function getConfigs()
+    {
+        if ($this->configs) {
+            return $this->configs;
+        }
+        // Configの取得
+        $this->configs = Configs::orderBy('name', 'asc')->orderBy('additional1', 'asc')->get();
+        return $this->configs;
+    }
+
+    /**
+     *  言語の取得
+     */
+    private function getLanguages()
+    {
+        $configs = $this->getConfigs();
+        if (empty($configs)) {
+            return null;
+        }
+
+        $languages = array();
+        foreach($configs as $config) {
+            if ($config->name == 'language') {
+                $languages[$config->additional1] = $config;
+            }
+        }
+        return $languages;
+    }
+
+    /**
+     *  多言語設定がonか
+     */
+    private function isLanguageMultiOn()
+    {
+        foreach($this->getConfigs() as $config) {
+            if ($config->name == 'language_multi_on') {
+                if ($config->value == '1') {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      *  ページの系統取得
      */
     private function getPageTree($page_id)
     {
+        // 自分のページから親を遡って取得
+        $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+
         // トップページを取得
         $top_page = Page::orderBy('_lft', 'asc')->first();
 
-        // 自分のページから親を遡って取得
-        $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+        // 多言語設定の場合、多言語のトップページをツリーのrootに入れる。
+        if ($this->isLanguageMultiOn()) {
+            $global_top_page = $this->getTopPage($this->page, $this->getLanguages());
+            $page_tree->push($global_top_page);
+        }
 
         // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
         if ($page_tree[count($page_tree)-1]->id != $top_page->id) {

@@ -8,18 +8,18 @@
 @extends('plugins.common.frame_edit_tab')
 @section('content_frame_edit_tab')
 @if ($action == 'editColumn' || $action == '')
-    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame->id}}#{{$frame->id}}" class="nav-link active">項目設定</a></li>
+    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">項目設定</a></li>
 @else
-    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame->id}}#{{$frame->id}}" class="nav-link">項目設定</a></li>
+    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">項目設定</a></li>
 @endif
 @if ($action == 'editBuckets' || $action == '')
-    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame->id}}#{{$frame->id}}" class="nav-link active">{{$frame->plugin_name_full}}設定</a></li>
+    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">{{$frame->plugin_name_full}}設定</a></li>
 @else
-    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame->id}}#{{$frame->id}}" class="nav-link">{{$frame->plugin_name_full}}設定</a></li>
+    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">{{$frame->plugin_name_full}}設定</a></li>
 @endif
 @if ($action == 'createBuckets')
-    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/createBuckets/{{$page->id}}/{{$frame->id}}#{{$frame->id}}" class="nav-link active">{{$frame->plugin_name_full}}作成</a></li>
+    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">{{$frame->plugin_name_full}}作成</a></li>
 @else
-    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/createBuckets/{{$page->id}}/{{$frame->id}}#{{$frame->id}}" class="nav-link">{{$frame->plugin_name_full}}作成</a></li>
+    <li role="presentation" class="nav-item"><a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">{{$frame->plugin_name_full}}作成</a></li>
 @endif
 @endsection

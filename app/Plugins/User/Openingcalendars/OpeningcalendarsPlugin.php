@@ -295,7 +295,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $opening_date_y_rec = OpeningcalendarsDays::select(DB::raw('substr(opening_date, 1, 4) as opening_date_y'))
                                                     ->where('openingcalendars_id', '=', $openingcalendar_frame->openingcalendars_id)
                                                     ->groupBy(DB::raw('substr(opening_date, 1, 4)'))
-                                                    ->orderBy('opening_date', 'asc')
+                                                    ->orderBy('opening_date_y', 'asc')
                                                     ->first();
         if (empty($opening_date_y_rec)) {
             $from_y = date('Y');
@@ -316,7 +316,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $opening_date_yms = OpeningcalendarsDays::select(DB::raw('substr(opening_date, 1, 7) as opening_date_ym'))
                                                   ->where('openingcalendars_id', '=', $openingcalendar_frame->openingcalendars_id)
                                                   ->groupBy(DB::raw('substr(opening_date, 1, 7)'))
-                                                  ->orderBy('opening_date', 'asc')
+                                                  ->orderBy('opening_date_ym', 'asc')
                                                   ->get();
         foreach($opening_date_yms as $opening_date_ym) {
             $select_ym[$opening_date_ym->opening_date_ym] = true;
@@ -445,6 +445,11 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // Frame のbucket_id があれば、bucket_id から開館カレンダーデータ取得、なければ、新規作成か選択へ誘導
         else if (!empty($openingcalendar_frame->bucket_id) && $create_flag == false) {
             $openingcalendar = Openingcalendars::where('bucket_id', $openingcalendar_frame->bucket_id)->first();
+
+            // 開館カレンダーデータ
+            if (empty($openingcalendar)) {
+                $openingcalendar = new Openingcalendars();
+            }
         }
 
         // 表示テンプレートを呼び出す。
@@ -580,6 +585,9 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 開館カレンダー
         $openingcalendar = $this->getOpeningcalendars($frame_id);
+        if (empty($openingcalendar)) {
+            $openingcalendar = new Openingcalendars;
+        }
 
         // パターンデータ
         $openingcalendars_patterns = DB::table('frames')

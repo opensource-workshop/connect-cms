@@ -48,26 +48,26 @@
 <script type="text/javascript">
     {{-- 項目追加のsubmit JavaScript --}}
     function submit_setting_column() {
-        form_columns.action = "/plugin/forms/addColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.submit();
     }
 
     {{-- 項目削除のsubmit JavaScript --}}
     function submit_destroy_column(row_no) {
-        form_columns.action = "/plugin/forms/deleteColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.destroy_no.value = row_no;
         form_columns.submit();
     }
 
     {{-- ページの上移動用フォームのsubmit JavaScript --}}
     function submit_sequence_up( id ) {
-        form_columns.action = "/plugin/forms/upColumnSequence/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/upColumnSequence/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame_id}}";
         form_columns.submit();
     }
 
     {{-- ページの下移動用フォームのsubmit JavaScript --}}
     function submit_sequence_down( id ) {
-        form_columns.action = "/plugin/forms/downColumnSequence/{{$page->id}}/{{$frame_id}}/" + id + "#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/downColumnSequence/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame_id}}";
         form_columns.submit();
     }
 
@@ -83,7 +83,7 @@
         });
         //console.log($('#form_columns'));
 
-        form_columns.action = "/plugin/forms/reloadColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}";
+        form_columns.action = "/plugin/forms/reloadColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.submit();
     }
 
@@ -113,13 +113,13 @@
 </script>
 
 {{-- キャンセル用のフォーム。キャンセル時はセッションをクリアするため、トークン付きでPOST でsubmit したい。 --}}
-<form action="/redirect/plugin/forms/cancel/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" name="forms_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
+<form action="/redirect/plugin/forms/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="forms_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
     {{ csrf_field() }}
 </form>
 
 <!-- Add or Update Form Button -->
 <div class="form-group">
-    <form action="/plugin/forms/saveColumn/{{$page->id}}/{{$frame_id}}#{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
+    <form action="/plugin/forms/saveColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="forms_id" value="{{$forms_id}}">
         <input type="hidden" name="destroy_no" value="">

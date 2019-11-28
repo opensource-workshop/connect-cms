@@ -99,6 +99,7 @@ class WhatsnewsPlugin extends UserPluginBase
 */
     }
 
+
     /* 画面アクション関数 */
 
     /**
@@ -110,14 +111,34 @@ class WhatsnewsPlugin extends UserPluginBase
         // フレームから、新着の設定取得
         $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
 
+        // 新着情報がまだできていない場合
+        if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
+            return $this->view(
+                'whatsnews', [
+                'whatsnews'   => null,
+                'link_pattern' => null,
+                'link_base' => null,
+            ]);
+        }
+
         // ターゲットプラグインをループ
         $target_plugins = explode(',', $whatsnews_frame->target_plugin);
 
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
         foreach($target_plugins as $target_plugin) {
+
+            // クラスファイルの存在チェック。
+            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
+
+            // ファイルの存在確認
+            if (!file_exists($file_path)) {
+                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+            }
+
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
             $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
+
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }
 
@@ -343,8 +364,8 @@ class WhatsnewsPlugin extends UserPluginBase
         // 新着情報設定
         $whatsnews->whatsnew_name     = $request->whatsnew_name;
         $whatsnews->view_pattern      = $request->view_pattern;
-        $whatsnews->count             = $request->count;
-        $whatsnews->days              = $request->days;
+        $whatsnews->count             = intval($request->count);
+        $whatsnews->days              = intval($request->days);
         $whatsnews->rss               = $request->rss;
         $whatsnews->view_created_name = $request->view_created_name;
         $whatsnews->view_created_at   = $request->view_created_at;

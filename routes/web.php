@@ -38,7 +38,7 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
 
 
 // テスト用アクション
-//Route::get('/test/{id?}', 'Core\TestController@invokeGet');
+//Route::get('/test/{language}/{any}', 'Core\TestController@invokeGet')->where('any', '.*');
 //Route::post('/test/{id?}', 'Core\TestController@invokePost');
 
 // コアのget処理(Frame関係)
@@ -77,6 +77,9 @@ Route::post('/upload', 'Core\UploadController@postFile');
 
 // アップロードファイルの取得アクション
 Route::get('/file/{id?}', 'Core\UploadController@getFile');
+
+// 言語切り替えアクション
+Route::get('/language/{language_or_1stdir?}/{link_or_after2nd?}', 'Core\DefaultController@changeLanguage')->where('link_or_after2nd', '.*');
 
 // 基本のアクション
 // コアの画面処理や各プラグインの処理はここから呼び出す。

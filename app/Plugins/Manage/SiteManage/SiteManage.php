@@ -37,6 +37,8 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveCategories"]  = array('admin_site');
         $role_ckeck_table["loginPermit"]     = array('admin_site');
         $role_ckeck_table["saveLoginPermit"] = array('admin_site');
+        $role_ckeck_table["languages"]       = array('admin_site');
+        $role_ckeck_table["saveLanguages"]   = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -110,6 +112,13 @@ class SiteManage extends ManagePluginBase
             ['name'     => 'base_header_fix'],
             ['category' => 'general',
              'value'    => (isset($request->base_header_fix) ? $request->base_header_fix : 0)]
+        );
+
+        // ヘッダーの表示
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_hidden'],
+            ['category' => 'general',
+             'value'    => $request->base_header_hidden]
         );
 
         // ログインリンクの表示
@@ -258,4 +267,115 @@ class SiteManage extends ManagePluginBase
 
         return $this->categories($request, $id, null);
     }
+
+    /**
+     *  多言語設定　表示画面
+     */
+    public function languages($request, $id, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 多言語の使用有無取得
+        $language_multi_on_record = Configs::where('name', 'language_multi_on')->first();
+        $language_multi_on = ($language_multi_on_record) ? $language_multi_on_record->value : null;
+
+        // 設定されている多言語のリスト取得
+        $languages = Configs::where('category', 'language')->orderBy('additional1')->get();
+
+        return view('plugins.manage.site.languages',[
+            "function"          => __FUNCTION__,
+            "id"                => $id,
+            "language_multi_on" => $language_multi_on,
+            "languages"         => $languages,
+            "create_flag"       => true,
+            "errors"            => $errors,
+        ]);
+    }
+
+    /**
+     *  言語設定の保存処理
+     */
+    public function saveLanguages($request, $id)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // サイト名
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'language_multi_on'],
+            ['category' => 'general',
+             'value'    => $request->language_multi_on]
+        );
+
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_language) || !empty($request->add_url)) {
+
+            // 項目のエラーチェック
+            $validator = Validator::make($request->all(), [
+                'add_language' => ['required'],
+                'add_url'      => ['required'],
+            ]);
+            $validator->setAttributeNames([
+                'add_language' => '言語',
+                'add_url'      => 'URL',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->languages($request, $id, $validator->errors());
+            }
+        }
+
+        // 既存項目のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->languages_id)) {
+            foreach($request->languages_id as $language_id) {
+
+                // 項目のエラーチェック
+                $validator = Validator::make($request->all(), [
+                    'language.'.$language_id => ['required'],
+                    'url.'.$language_id      => ['required'],
+                ]);
+                $validator->setAttributeNames([
+                    'language.'.$language_id => '言語',
+                    'url.'.$language_id      => 'URL',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->languages($request, $id, $validator->errors());
+                }
+            }
+        }
+
+        // 追加項目アリ
+        if (!empty($request->add_language)) {
+            Configs::create([
+                         'name'        => 'language',
+                         'category'    => 'language',
+                         'value'       => $request->add_language,
+                         'additional1' => $request->add_url,
+                     ]);
+        }
+
+        // 既存項目アリ
+        if (!empty($request->languages_id)) {
+
+            foreach($request->languages_id as $language_id) {
+
+                // モデルオブジェクト取得
+                $configs = Configs::where('id', $language_id)->first();
+
+                // データのセット
+                $configs->value        = $request->language[$language_id];
+                $configs->additional1  = $request->url[$language_id];
+
+                // 保存
+                $configs->save();
+            }
+        }
+
+        return $this->languages($request, $id, null);
+    }
+
 }

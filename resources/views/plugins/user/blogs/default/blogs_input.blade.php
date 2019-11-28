@@ -81,6 +81,20 @@
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i> 一時保存</button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
+                        @if ($buckets->needApprovalUser(Auth::user()))
+                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
+                        @else
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+                        @endif
+                    @else
+                        @if ($buckets->needApprovalUser(Auth::user()))
+                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
+                        @else
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
+                        @endif
+                    @endif
+{{--
+                    @if (empty($blogs_posts->id))
                         @if ($blog_frame->approval_flag == 0 ||
                              Auth::user()->can('role_article',[[null, 'blogs']]) ||
                              Auth::user()->can('role_article_admin',[[null, 'blogs']]))
@@ -97,6 +111,7 @@
                             <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
                         @endif
                     @endif
+--}}
                 </div>
             </div>
             <div class="col-sm-3 pull-right text-right">

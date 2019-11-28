@@ -8,7 +8,7 @@
 
 <style type="text/css">
 <!--
-    #frame-card-{{ $frame->frame_id }} { width: 50vw; }
+    #frame-card-{{ $frame->frame_id }} { width: 50vw; z-index: 999; }
 -->
 </style>
 
@@ -19,6 +19,13 @@
     {{-- コア側のフレームメニュー --}}
     @include('core.cms_frame_edit_tab')
 </ul>
+
+@if (!$openingcalendar->id)
+    <div class="alert alert-warning" style="margin-top: 10px;">
+        <i class="fas fa-exclamation-circle"></i>
+        設定画面から、使用する開館カレンダーを選択するか、作成してください。
+    </div>
+@else
 
 {{-- エラーメッセージ --}}
 @if ($errors)
@@ -131,3 +138,5 @@
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i><span class="d-none d-md-inline"> 変更</span></button>
     </div>
 </form>
+
+@endif
