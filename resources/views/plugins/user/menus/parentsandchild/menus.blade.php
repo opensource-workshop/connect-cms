@@ -2,49 +2,44 @@
  * メニュー表示画面
  *
  * @param obj $pages ページデータの配列
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 堀口 <horiguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
-@if ($ancestors)
 
-    <div class="list-group" style="margin-bottom: 0;">
-        @foreach($pages as $key => $page)
-            @php
-                $index = 0;
-                if (isset($index)) {
-                    break;
-                }
-                if ($ancestors[0]->id == $page->id) {
-                    $index = $key;
-                }
-            @endphp
-        @endforeach
+@if ($pages)
+<div class="list-group" style="margin-bottom: 0;">
+    @foreach($pages as $key => $page)
+        @php
+            if (isset($index)) {
+                break;
+            }
+            if ($ancestors[0]->id == $page->id) {
+                $index = $key;
+            }
+        @endphp
+    @endforeach
 
-        {{-- 子供のページがある場合 --}}
-        @if (count($pages[$index]->children) > 0)
-            @php
-                $page = $pages[$index];
-            @endphp
-
-            {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-            @if ($page->id == $page_id)
-            <a href="{{ url("$page->permanent_link") }}" class="list-group-item active">
-            @else
-            <a href="{{ url("$page->permanent_link") }}" class="list-group-item">
+    {{-- 子供のページがある場合 --}}
+    @if (count($pages[$index]->children) > 0)
+        @php
+            $tmp_page[] = $pages[$index];
+            $pages=$tmp_page;
+        @endphp
+        @foreach($pages as $page_obj)
+            @if($page_obj->parent_id == null)
+                {{-- 非表示のページは対象外 --}}
+                @if ($page_obj->display_flag == 1)
+                        <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item">{{$page_obj->page_name}}</a>
+                        @if (isset($page_obj->children))
+                            {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
+                            @include('plugins.user.menus.parentsandchild.menu_children',['children' => $page_obj->children])
+                        @endif
+                @endif
             @endif
-                {{-- 各ページの深さをもとにインデントの表現 --}}
-                @for ($i = 0; $i < $page->depth; $i++)
-                    @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
-                @endfor
-                {{$page->page_name}}
-            </a>
+        @endforeach
+    @endif
 
-            {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
-            @foreach($page->children as $children)
-                @include('plugins.user.menus.parentsandchild.menu_children',['children' => $children, 'page_id' => $page_id])
-            @endforeach
-        @endif
 
-    </div>
+</div>
 @endif
