@@ -2,7 +2,7 @@
  * 編集画面(データ選択)テンプレート
  *
  * @author 
- * @copyright OpenSourceWorkShop Co.,Ltd. All Rights Reserved
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
 
