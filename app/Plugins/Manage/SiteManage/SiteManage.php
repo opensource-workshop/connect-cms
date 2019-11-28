@@ -31,14 +31,16 @@ class SiteManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["index"]           = array('admin_site');
-        $role_ckeck_table["update"]          = array('admin_site');
-        $role_ckeck_table["categories"]      = array('admin_site');
-        $role_ckeck_table["saveCategories"]  = array('admin_site');
-        $role_ckeck_table["loginPermit"]     = array('admin_site');
-        $role_ckeck_table["saveLoginPermit"] = array('admin_site');
-        $role_ckeck_table["languages"]       = array('admin_site');
-        $role_ckeck_table["saveLanguages"]   = array('admin_site');
+        $role_ckeck_table["index"]            = array('admin_site');
+        $role_ckeck_table["update"]           = array('admin_site');
+        $role_ckeck_table["layout"]           = array('admin_site');
+        $role_ckeck_table["saveLayout"]       = array('admin_site');
+        $role_ckeck_table["categories"]       = array('admin_site');
+        $role_ckeck_table["saveCategories"]   = array('admin_site');
+        $role_ckeck_table["loginPermit"]      = array('admin_site');
+        $role_ckeck_table["saveLoginPermit"]  = array('admin_site');
+        $role_ckeck_table["languages"]        = array('admin_site');
+        $role_ckeck_table["saveLanguages"]    = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -350,12 +352,16 @@ class SiteManage extends ManagePluginBase
 
         // 追加項目アリ
         if (!empty($request->add_language)) {
-            Configs::create([
+            $new_configs = Configs::create([
                          'name'        => 'language',
                          'category'    => 'language',
                          'value'       => $request->add_language,
                          'additional1' => $request->add_url,
                      ]);
+
+            // name をユニークにするために更新(languageのname は特に使用していない)
+            $new_configs->name = $new_configs->name . '_' . $new_configs->id;
+            $new_configs->save();
         }
 
         // 既存項目アリ
@@ -378,4 +384,56 @@ class SiteManage extends ManagePluginBase
         return $this->languages($request, $id, null);
     }
 
+    /**
+     *  レイアウト設定　表示画面
+     */
+    public function layout($request, $id, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 設定されている多言語のリスト取得
+        $browser_widths = $this->getConfigs(null, 'browser_width');
+
+        return view('plugins.manage.site.browserwidths',[
+            "function"       => __FUNCTION__,
+            "id"             => $id,
+            "browser_widths" => $browser_widths,
+        ]);
+    }
+
+    /**
+     *  レイアウト設定　更新
+     */
+    public function saveLayout($request, $page_id = null, $errors = array())
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // ブラウザ幅(ヘッダーエリア)
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'browser_width_header'],
+            ['category' => 'browser_width',
+             'value'    => $request->browser_width_header]
+        );
+
+        // ブラウザ幅(センターエリア)
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'browser_width_center'],
+            ['category' => 'browser_width',
+             'value'    => $request->browser_width_center]
+        );
+
+        // ブラウザ幅(フッターエリア)
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'browser_width_footer'],
+            ['category' => 'browser_width',
+             'value'    => $request->browser_width_footer]
+        );
+
+        // ページ管理画面に戻る
+        return redirect("/manage/site/layout");
+    }
 }

@@ -44,7 +44,7 @@ class Page extends Model
         }
 
         // 使用する言語リストの取得
-        $languages = Configs::where('name', 'language')->orderBy('additional1', 'asc')->get();
+        $languages = Configs::where('category', 'language')->orderBy('additional1', 'asc')->get();
 
         // 現在の言語
         $current_language = null;

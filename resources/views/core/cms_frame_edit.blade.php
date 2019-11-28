@@ -79,6 +79,20 @@
         </div>
 
         <div class="form-group row mx-0">
+            <label for="page-name" class="{{$class_label}}">ブラウザ幅</label>
+            <div class="{{$class_input}} d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    @if($frame->browser_width == "100%")
+                        <input name="browser_width" value="100%" type="checkbox" class="custom-control-input" id="browser_width" checked="checked">
+                    @else
+                        <input name="browser_width" value="100%" type="checkbox" class="custom-control-input" id="browser_width">
+                    @endif
+                    <label class="custom-control-label" for="browser_width">フレームをブラウザ幅100％にする。</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row mx-0">
             <label class="{{$class_label}}">テンプレート</label>
             <div class="{{$class_input}}">
                 <select class="form-control" name="template" id="template">

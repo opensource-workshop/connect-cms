@@ -70,6 +70,9 @@ class DefaultController extends ConnectController
         // プラグイン一覧の取得
         $plugins = $this->getPlugins();
 
+        // Config
+        $configs_array = $this->getConfigs('array');
+
         // view の場所を変更するテスト
         //$plugin_instances = ['contents' => new $class_name("User", "contents")];
 
@@ -86,6 +89,7 @@ class DefaultController extends ConnectController
             'themes'            => $themes,
             'action_core_frame' => $action_core_frame,
             'plugins'           => $plugins,
+            'configs_array'     => $configs_array,
         ]);
     }
 
@@ -295,23 +299,26 @@ class DefaultController extends ConnectController
         // プラグイン一覧の取得
         $plugins = $this->getPlugins();
 
+        // Config
+        $configs_array = $this->getConfigs('array');
+
         // メインページを呼び出し
         // 各フレーム内容の表示はメインページから行う。
 //Log::debug($action);
 //Log::debug($frame_id);
         return $this->view('core.cms', [
-            'action'           => $action,
-            'frame_id'         => $frame_id,
-            'id'               => $id,
-
-            'page'             => $this->page,
-            'frames'           => $frames,
-            'pages'            => $pages,
-            'plugin_instances' => $plugin_instances,
-            'layouts_info'     => $layouts_info,
-            'themes'           => $themes,
+            'action'            => $action,
+            'frame_id'          => $frame_id,
+            'id'                => $id,
+            'page'              => $this->page,
+            'frames'            => $frames,
+            'pages'             => $pages,
+            'plugin_instances'  => $plugin_instances,
+            'layouts_info'      => $layouts_info,
+            'themes'            => $themes,
             'action_core_frame' => $action_core_frame,
             'plugins'           => $plugins,
+            'configs_array'     => $configs_array,
         ]);
 
         return;
@@ -420,7 +427,7 @@ class DefaultController extends ConnectController
         // フレーム一覧取得（メインエリアのみ）
         $frames = DB::table('pages')
                     ->select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
-                            'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'plugins.plugin_name_full')
+                            'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'frames.browser_width', 'plugins.plugin_name_full')
                     ->join('frames', 'frames.page_id', '=', 'pages.id')
                     ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
                     ->where('pages.id', $pages_id)

@@ -187,15 +187,37 @@ class ConnectController extends Controller
     }
 
     /**
+     *  Configのarray変換
+     */
+    protected function changeConfigsArray()
+    {
+        $return_array = array();
+
+        foreach( $this->configs as $config) {
+            $return_array[$config->name] = $config;
+        }
+        return $return_array;
+    }
+
+    /**
      *  Configの取得
      */
-    private function getConfigs()
+    protected function getConfigs($format = null)
     {
         if ($this->configs) {
+            if ($format == 'array') {
+                return $this->changeConfigsArray();
+            }
             return $this->configs;
         }
         // Configの取得
         $this->configs = Configs::orderBy('name', 'asc')->orderBy('additional1', 'asc')->get();
+
+        // format
+        if ($format == 'array') {
+            return $this->changeConfigsArray();
+        }
+
         return $this->configs;
     }
 
@@ -234,6 +256,25 @@ class ConnectController extends Controller
             }
         }
         return false;
+    }
+
+    /**
+     *  Config の配列形式での取得
+     */
+    private function getConfigsCategories($category)
+    {
+        $configs = $this->getConfigs();
+        if (empty($configs)) {
+            return null;
+        }
+
+        $config_array = array();
+        foreach($configs as $config) {
+            if ($config->category == $category) {
+                $config_array[$config->name] = $config->value;
+            }
+        }
+        return $config_array;
     }
 
     /**

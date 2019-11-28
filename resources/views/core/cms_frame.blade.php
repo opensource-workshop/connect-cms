@@ -13,7 +13,11 @@
 <div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif" id="frame-{{ $frame->frame_id }}">
 @endif
 
+@if ($frame->browser_width == '100%')
+<div class="">
+@else
 <div class="container">
+@endif
 
     @if ($frame->frame_design == 'none')
     <div class="card mb-3 border-0" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;" id="frame-card-{{ $frame->frame_id }}">

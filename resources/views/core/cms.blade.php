@@ -10,7 +10,7 @@
 {{-- 大元のレイアウトの継承とページコンテンツは大元のレイアウトに埋め込むために @section で定義する --}}
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid p-0">
 
 
 {{-- *********************************************************** --}}
@@ -40,7 +40,11 @@ $(function () {
 
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
-    <div id="ccHeaderArea" class="row">
+        @if ($configs_array['browser_width_header']->value == '100%')
+    <div id="ccHeaderArea" class="row p-0 mx-auto">
+        @else
+    <div id="ccHeaderArea" class="row container p-0 mx-auto">
+        @endif
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[0]['frames'])
             @foreach($layouts_info[0]['frames'] as $frame)
@@ -50,11 +54,16 @@ $(function () {
     </div>
     @endif
 
-    <div id="ccLeftArea" class="row d-flex align-items-start">
+    {{-- 中央エリア --}}
+        @if ($configs_array['browser_width_center']->value == '100%')
+    <div id="ccCenterArea" class="row mx-auto p-0 d-flex align-items-start">
+        @else
+    <div id="ccCenterArea" class="row container mx-auto p-0 d-flex align-items-start">
+        @endif
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
 {{--        <div class="{{$layouts_info[1]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
-        <div class="p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
+        <div id="ccLeftArea" class="p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
             {{-- サービス取得 --}}
             {{-- Todo：実際には、ページ内で使用されているプラグインを動的に定義する必要がある --}}
             @isset($layouts_info[1]['frames'])
@@ -94,7 +103,11 @@ $(function () {
 
     {{-- フッターエリア --}}
     @if ($layouts_info[4]['exists'])
-    <div id="ccFooterArea" class="row">
+        @if ($configs_array['browser_width_footer']->value == '100%')
+    <div id="ccFooterArea" class="row p-0 mx-auto">
+        @else
+    <div id="ccFooterArea" class="row container p-0 mx-auto">
+        @endif
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[4]['frames'])
             @foreach($layouts_info[4]['frames'] as $frame)
