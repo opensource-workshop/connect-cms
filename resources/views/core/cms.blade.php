@@ -40,7 +40,7 @@ $(function () {
 
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
-        @if ($configs_array['browser_width_header']->value == '100%')
+        @if (isset($configs_array['browser_width_header']) && $configs_array['browser_width_header']->value == '100%')
     <div id="ccHeaderArea" class="row p-0 mx-auto">
         @else
     <div id="ccHeaderArea" class="row container p-0 mx-auto">
@@ -55,7 +55,7 @@ $(function () {
     @endif
 
     {{-- 中央エリア --}}
-        @if ($configs_array['browser_width_center']->value == '100%')
+        @if (isset($configs_array['browser_width_center']) && $configs_array['browser_width_center']->value == '100%')
     <div id="ccCenterArea" class="row mx-auto p-0 d-flex align-items-start">
         @else
     <div id="ccCenterArea" class="row container mx-auto p-0 d-flex align-items-start">
@@ -103,7 +103,7 @@ $(function () {
 
     {{-- フッターエリア --}}
     @if ($layouts_info[4]['exists'])
-        @if ($configs_array['browser_width_footer']->value == '100%')
+        @if (isset($configs_array['browser_width_footer']) && $configs_array['browser_width_footer']->value == '100%')
     <div id="ccFooterArea" class="row p-0 mx-auto">
         @else
     <div id="ccFooterArea" class="row container p-0 mx-auto">
