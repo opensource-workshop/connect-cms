@@ -23,7 +23,7 @@
             {{$page_obj->page_name}}</a>
 
             @if (isset($page_obj->children))
-                @include('plugins.user.menus.parentsandchild2.menu_children',['children' => $page_obj->children])
+                @include('plugins.user.menus.parentsandchild.menu_children',['children' => $page_obj->children])
             @endif
 
         @endif
