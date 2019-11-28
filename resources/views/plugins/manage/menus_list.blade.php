@@ -45,4 +45,11 @@
             <a href="/manage/plugin" class="list-group-item">プラグイン管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'system')
+            <a href="/manage/system" class="list-group-item active">システム管理</a>
+        @else
+            <a href="/manage/system" class="list-group-item">システム管理</a>
+        @endif
+    @endif
 </div>

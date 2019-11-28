@@ -18,6 +18,24 @@ use Illuminate\View\FileViewFinder;
 class PluginBase
 {
 
+    /*
+        コンストラクタ
+     */
+    function __construct() {
+
+        // PHP エラー捕捉のためのエラーハンドラを設定する。
+        set_error_handler(array($this, 'cc_error_handler'));
+    }
+
+    /*
+        エラーハンドラ
+     */
+    protected function cc_error_handler ( $errno, $errstr, $errfile, $errline, $errcontext ) {
+
+        // 例外を投げる。
+        throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
+    }
+
     // プラグインの対象者（User or Manager）：view ファイルの呼び出しでディレクトリ判定に使用するため。
 //    var $plugin_target = null;
 

@@ -36,6 +36,9 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
 
+            // Connect-CMS 初期処理
+            \App\Http\Middleware\ConnectInit::class,
+
             // SQL ログのテスト
             // \App\Http\Middleware\QueryDebugMiddleware::class,
         ],
