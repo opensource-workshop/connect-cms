@@ -160,7 +160,7 @@ class ContentsPlugin extends UserPluginBase
                   ->orWhere('status', '=', 2);
         }
         // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
+        elseif ($this->buckets->canPostUser(Auth::user())) {
             $query->Where('status', '=', 0)
                   ->orWhere('contents.created_id', '=', Auth::user()->id);
         }
