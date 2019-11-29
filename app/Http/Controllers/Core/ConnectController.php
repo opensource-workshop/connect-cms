@@ -12,6 +12,9 @@ use App\Models\Core\Configs;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 
+use File;
+use Storage;
+
 use App\Traits\ConnectCommonTrait;
 
 /**
@@ -331,17 +334,45 @@ class ConnectController extends Controller
     }
 
     /**
+     *  指定されたテーマにCSS、JS があるか確認
+     */
+    private function checkAsset($theme, $theme_setting_array)
+    {
+        // CSS 存在チェック
+        if (File::exists(public_path().'/themes/'.$theme.'/themes.css')) {
+            $theme_setting_array['css'] = $theme;
+        }
+
+        // JS 存在チェック
+        if (File::exists(public_path().'/themes/'.$theme.'/themes.js')) {
+            $theme_setting_array['js'] = $theme;
+        }
+
+        return $theme_setting_array;
+    }
+
+    /**
      *  テーマ取得
+     *  配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
+     *  値がなければキーのみで値は空
      */
     protected function getThemes()
     {
+        // 戻り値
+        $return_array = array('css' => '', 'js' => '');
+
+        // ページ固有の設定がある場合
         $theme = $this->getPagesColum('theme');
         if ($theme) {
-            return $theme;
+
+            // CSS、JS をチェックして配列にして返却
+            return  $this->checkAsset($theme, $return_array);
         }
         // テーマが設定されていない場合は一般設定の取得
         $configs = Configs::where('name', 'base_theme')->first();
-        return $configs->value;
+
+        // CSS、JS をチェックして配列にして返却
+        return  $this->checkAsset($configs->value, $return_array);
     }
 
     /**

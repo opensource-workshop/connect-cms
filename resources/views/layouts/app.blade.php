@@ -60,9 +60,12 @@
         <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
     @endif
 
-    <!-- Themes Styles -->
-    @if (isset($themes))
-        <link href="/themes/{{$themes}}/themes.css" rel="stylesheet">
+    <!-- Themes Styles & JS -->
+    @if (isset($themes['css']) && $themes['css'] != '')
+        <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
+    @endif
+    @if (isset($themes['js']) && $themes['js'] != '')
+        <link href="/themes/{{$themes['js']}}/themes.js" rel='stylesheet' type='text/css'>
     @endif
 
     <!-- Fonts -->
