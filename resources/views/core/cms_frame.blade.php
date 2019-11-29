@@ -75,6 +75,15 @@
 
                 {{-- ルーティングする新しい呼び方 --}}
 {{--                @elseif (isset( $action ) && $action != '' && $frame_id == $frame->frame_id) --}}
+
+                @if (Config::get('app.debug'))
+                    @if (isset( $action ) && $action != '' && $frame_id == $frame->frame_id)
+                        {!!$plugin_instances[$frame->frame_id]->invoke($plugin_instances[$frame->frame_id], app('request'), $action, $page->id, $frame->frame_id, $id)!!}
+                    @else
+                        {!!$plugin_instances[$frame->frame_id]->index(app('request'), $page->id, $frame->frame_id)!!}
+                    @endif
+                @else
+
                 @if (isset( $action ) && $action != '' && $frame_id == $frame->frame_id)
                     {{-- アクションが指定されていてフレームID の指定があれば、プラグインのアクションを呼ぶ --}}
                     @php
@@ -100,6 +109,8 @@
                     @php
                         }
                     @endphp
+                @endif
+
                 @endif
             </div>
         @endif
