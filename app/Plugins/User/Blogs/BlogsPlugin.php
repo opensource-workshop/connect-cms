@@ -101,7 +101,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count')
+                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.rss', 'blogs.rss_count', 'blogs.scope', 'blogs.scope_value')
                  ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -128,7 +128,7 @@ class BlogsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'post_title' => ['required'],
-            'posted_at'  => ['required', 'date_format:Y-m-d H:i:s'],
+            'posted_at'  => ['required', 'date_format:Y-m-d H:i'],
             'post_text'  => ['required'],
         ]);
         $validator->setAttributeNames([
@@ -168,12 +168,42 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
+     *  表示条件に対する条件追加
+     */
+    private function appendSettingWhere($query, $blog_frame)
+    {
+        // 全件表示
+        if (empty($blog_frame->scope)) {
+            // 全件取得のため、追加条件なしで戻る。
+        }
+        // 年
+        elseif ($blog_frame->scope == 'year') {
+            $query->Where('posted_at',   '>=', $blog_frame->scope_value . '-01-01')
+                  ->Where('posted_at',   '<=', $blog_frame->scope_value . '-12-31 23:59:59');
+        }
+        // 年度
+        elseif ($blog_frame->scope == 'fiscal') {
+            $fiscal_next = intval($blog_frame->scope_value) + 1;
+            $query->Where('posted_at',   '>=', $blog_frame->scope_value . '-04-01')
+                  ->Where('posted_at',   '<=', $fiscal_next . '-03-31 23:59:59');
+        }
+
+        return $query;
+    }
+
+    /**
      *  ブログ記事一覧取得
      */
-    private function getPosts($blog_frame)
+    private function getPosts($blog_frame, $option_count = null)
     {
-        $blogs_posts = null;
-//DB::enableQueryLog();
+        //$blogs_posts = null;
+
+        // 件数
+        $count = $blog_frame->view_count;
+        if ($option_count != null) {
+            $count = $option_count;
+        }
+
         // 削除されていないデータでグルーピングして、最新のIDで全件
         $blogs_posts = BlogsPosts::select('blogs_posts.*',
                                           'categories.color as category_color',
@@ -184,29 +214,20 @@ class BlogsPlugin extends UserPluginBase
                                      $query->select(DB::raw('MAX(id) As id'))
                                            ->from('blogs_posts')
                                            ->where('blogs_id', $blog_frame->blogs_id)
+
+                                           // 設定を見てWhere を付与する。
+                                           ->where(function($query_setting) use($blog_frame) {
+                                               $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                                           })
+
                                            ->where('deleted_at', null)
                                            // 権限を見てWhere を付与する。
-                                           ->where(function($query2){
-                                               $query2 = $this->appendAuthWhere($query2);
+                                           ->where(function($query_auth){
+                                               $query_auth = $this->appendAuthWhere($query_auth);
                                            })
                                            ->groupBy('contents_id');
                                      })->orderBy('posted_at', 'desc')
-                                 ->paginate($blog_frame->view_count);
-
-/*
-        $blogs_posts = BlogsPosts::whereIn('id', function($query) use($blog_frame) {
-            $query->select(DB::raw('MAX(id) As id'))
-                    ->from('blogs_posts')
-                    ->where('blogs_id', $blog_frame->blogs_id)
-                    ->where('deleted_at', null)
-                    // 権限を見てWhere を付与する。
-                    ->where(function($query2){
-                        $query2 = $this->appendAuthWhere($query2);
-                    })
-                    ->groupBy('contents_id');
-        })->orderBy('posted_at', 'desc')
-          ->paginate($blog_frame->view_count);
-*/
+                                 ->paginate($count);
         return $blogs_posts;
     }
 
@@ -349,6 +370,7 @@ class BlogsPlugin extends UserPluginBase
         return $this->view(
             'blogs', [
             'blogs_posts' => $blogs_posts,
+            'blog_frame'  => $blog_frame,
         ]);
     }
 
@@ -365,7 +387,7 @@ class BlogsPlugin extends UserPluginBase
 
         // 空のデータ(画面で初期値設定で使用するため)
         $blogs_posts = new BlogsPosts();
-        $blogs_posts->posted_at = date('Y-m-d H:i:s');
+        $blogs_posts->posted_at = date('Y-m-d H:i:00');
 
         // カテゴリ
         $blogs_categories = $this->getBlogsCategories($blog_frame->blogs_id);
@@ -511,7 +533,8 @@ class BlogsPlugin extends UserPluginBase
         $blogs_post->blogs_id      = $request->blogs_id;
         $blogs_post->post_title    = $request->post_title;
         $blogs_post->categories_id = $request->categories_id;
-        $blogs_post->posted_at     = $request->posted_at;
+        $blogs_post->important     = $request->important;
+        $blogs_post->posted_at     = $request->posted_at . ':00';
         $blogs_post->post_text     = $request->post_text;
 
         // 承認の要否確認とステータス処理
@@ -593,7 +616,8 @@ class BlogsPlugin extends UserPluginBase
         $blogs_post->status = 1;
         $blogs_post->blogs_id   = $request->blogs_id;
         $blogs_post->post_title = $request->post_title;
-        $blogs_post->posted_at  = $request->posted_at;
+        $blogs_post->important  = $request->important;
+        $blogs_post->posted_at  = $request->posted_at . ':00';
         $blogs_post->post_text  = $request->post_text;
 
         $blogs_post->save();
@@ -736,12 +760,17 @@ class BlogsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'blog_name'  => ['required'],
-            'view_count' => ['required'],
+            'blog_name'   => ['required'],
+            'view_count'  => ['required'],
+            'view_count'  => ['numeric'],
+            'rss_count'   => ['numeric'],
+            'scope_value' => ['numeric'],
         ]);
         $validator->setAttributeNames([
-            'blog_name'  => 'ブログ名',
-            'view_count' => '表示件数',
+            'blog_name'   => 'ブログ名',
+            'view_count'  => '表示件数',
+            'rss_count'   => 'RSS件数',
+            'scope_value' => '指定年',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -799,6 +828,10 @@ class BlogsPlugin extends UserPluginBase
         // ブログ設定
         $blogs->blog_name     = $request->blog_name;
         $blogs->view_count    = $request->view_count;
+        $blogs->rss           = $request->rss;
+        $blogs->rss_count     = $request->rss_count;
+        $blogs->scope         = $request->scope;
+        $blogs->scope_value   = $request->scope_value;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
@@ -1031,7 +1064,7 @@ echo <<<EOD
 </link>
 EOD;
 
-        $blogs_posts = $this->getPosts($blog_frame);
+        $blogs_posts = $this->getPosts($blog_frame, $blog_frame->rss_count);
         foreach ($blogs_posts as $blogs_post) {
 
             $title = $blogs_post->post_title;

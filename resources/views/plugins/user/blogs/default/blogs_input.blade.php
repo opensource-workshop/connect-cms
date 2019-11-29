@@ -38,14 +38,32 @@
 
     <div class="form-group">
         <label class="control-label">投稿日時 <label class="badge badge-danger">必須</label></label>
-        <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control">
-{{--
-        <div class="input-group date" data-provide="datepicker">
-            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datepicker">
-            <span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>
+
+        <div class="input-group date" id="posted_at" data-target-input="nearest">
+            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datetimepicker-input  col-md-3" data-target="#posted_at">
+            <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
+                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+            </div>
         </div>
---}}
         @if ($errors && $errors->has('posted_at')) <div class="text-danger">{{$errors->first('posted_at')}}</div> @endif
+    </div>
+    <script type="text/javascript">
+        $(function () {
+            $('#posted_at').datetimepicker({
+                locale: 'ja',
+                sideBySide: true,
+                dayViewHeaderFormat: 'YYYY年 M月',
+                format: 'YYYY-MM-DD HH:mm'
+            });
+        });
+    </script>
+
+    <div class="form-group">
+        <label class="control-label">重要記事</label>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" name="important" value="1" class="custom-control-input" id="important" @if(old('important', $blogs_posts->important)) checked=checked @endif>
+            <label class="custom-control-label" for="important">チェックすると、新着に表示し続けることができます。</label>
+        </div>
     </div>
 
     <div class="form-group">

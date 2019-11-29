@@ -11,7 +11,9 @@
     @if (isset($frame) && $frame->bucket_id)
         <div class="row">
             <p class="text-left col-6">
+                @if (isset($blog_frame->rss) && $blog_frame->rss == 1)
                 <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
+                @endif
             </p>
             <p class="text-right col-6">
                 {{-- 新規登録ボタン --}}
@@ -33,16 +35,24 @@
 
         {{-- タイトル --}}
         <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
+
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+        {{-- 重要記事 --}}
+        @if($post->important == 1)
+            <span class="badge badge-danger">重要</span>
+        @endif
+
         {{-- カテゴリ --}}
         @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
 
-            @if ($loop->last)
-                <article>
-            @else
-                <article class="cc_article">
-            @endif
+        @if ($loop->last)
+        <article>
+        @else
+        <article class="cc_article">
+        @endif
+
             {{-- 記事本文 --}}
             {!! $post->post_text !!}
 
