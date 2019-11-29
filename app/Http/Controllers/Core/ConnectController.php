@@ -236,7 +236,7 @@ class ConnectController extends Controller
 
         $languages = array();
         foreach($configs as $config) {
-            if ($config->name == 'language') {
+            if ($config->category == 'language') {
                 $languages[$config->additional1] = $config;
             }
         }
