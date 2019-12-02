@@ -16,11 +16,11 @@ return [
             'method' => 'index',
             'page_id' => null,
             'flame_id' => null,
-        ]],
+        ]]
     ),
 
     // 特別なPath定義(一般画面)
     'CC_SPECIAL_PATH' => array_merge(
-        json_decode(env('CC_SPECIAL_PATH', '{}'), true),
+        json_decode(env('CC_SPECIAL_PATH', '{}'), true)
     ),
 ];
