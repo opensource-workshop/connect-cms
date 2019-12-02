@@ -12,6 +12,7 @@ use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Core\Configs;
 use App\Models\User\Whatsnews\Whatsnews;
 
 use App\Plugins\User\UserPluginBase;
@@ -42,7 +43,7 @@ class WhatsnewsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
+        $functions['get']  = ['rss'];
         $functions['post'] = [];
         return $functions;
     }
@@ -73,9 +74,13 @@ class WhatsnewsPlugin extends UserPluginBase
                           'whatsnews.count',
                           'whatsnews.days',
                           'whatsnews.rss',
-                          'whatsnews.view_created_name',
-                          'whatsnews.view_created_at',
-                          'whatsnews.target_plugin'
+                          'whatsnews.rss_count',
+                          'whatsnews.view_posted_name',
+                          'whatsnews.view_posted_at',
+                          'whatsnews.important',
+                          'whatsnews.target_plugins',
+                          'whatsnews.frame_select',
+                          'whatsnews.target_frame_ids'
                          )
                  ->leftJoin('whatsnews', 'whatsnews.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
@@ -84,33 +89,26 @@ class WhatsnewsPlugin extends UserPluginBase
     }
 
     /**
-     * 新着記事の取得
+     *  新着対象のプラグインがあるフレームデータの取得
      */
-    private function getWhatsnews($frame_id)
+    private function getTargetPluginsFrames()
     {
-        // 新着記事
-/*
-        return $openingcalendar = DB::table('frames')
-                 ->select('openingcalendars.*')
-                 ->join('buckets', 'buckets.id', '=', 'frames.bucket_id')
-                 ->join('openingcalendars', 'openingcalendars.bucket_id', '=', 'buckets.id')
-                 ->where('frames.id', $frame_id)
-                 ->first();]
-*/
+        // Frame データ
+        $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
+                       ->whereIn('frames.plugin_name', array('blogs'))
+                       ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+                       ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+                       ->where('disable_whatsnews', 0)
+                       ->orderBy('pages._lft', 'asc')
+                       ->get();
+        return $frames;
     }
 
-
-    /* 画面アクション関数 */
-
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * 新着記事の取得
      */
-    public function index($request, $page_id, $frame_id)
+    private function getWhatsnews($whatsnews_frame, $method = null)
     {
-        // フレームから、新着の設定取得
-        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
-
         // 新着情報がまだできていない場合
         if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
             return $this->view(
@@ -122,7 +120,7 @@ class WhatsnewsPlugin extends UserPluginBase
         }
 
         // ターゲットプラグインをループ
-        $target_plugins = explode(',', $whatsnews_frame->target_plugin);
+        $target_plugins = explode(',', $whatsnews_frame->target_plugins);
 
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
@@ -184,7 +182,9 @@ class WhatsnewsPlugin extends UserPluginBase
                           'frame_id',
                           'post_id',
                           'post_title',
+                          DB::raw("null as important"),
                           'posted_at',
+                          DB::raw("null as posted_name"),
                           'categories.classname        as classname',
                           'categories.category         as category',
                           DB::raw("null as plugin_name")
@@ -197,7 +197,28 @@ class WhatsnewsPlugin extends UserPluginBase
             $where_date = date("Y-m-d",strtotime("-" . $whatsnews_frame->days ." day"));
         }
 
-        // 各プラグインのSQL をUNION
+        // 各プラグインのSQL に追加条件を加えてUNION
+        foreach($union_sqls as $union_sql) {
+            if ($where_date) {
+                $union_sql->where('posted_at', '>=', $where_date);
+            }
+            // 重要なもののみ
+            if ($whatsnews_frame->important == 'important_only') {
+                $union_sql->where('important', 1);
+            }
+            // 重要なものを除外
+            if ($whatsnews_frame->important == 'not_important') {
+                $union_sql->whereNull('important');
+            }
+            // フレームの選択が行われる場合
+            if ($whatsnews_frame->frame_select == 1) {
+                $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
+            }
+
+            $whatsnews_sql->unionAll($union_sql);
+        }
+
+/*
         foreach($union_sqls as $union_sql) {
             if ($where_date) {
                 $whatsnews_sql->unionAll($union_sql->where('posted_at', '>=', $where_date));
@@ -206,27 +227,52 @@ class WhatsnewsPlugin extends UserPluginBase
                 $whatsnews_sql->unionAll($union_sql);
             }
         }
-
+*/
         // UNION 後をソート
+        if ($whatsnews_frame->important == 'top') {
+            $whatsnews_sql->orderBy('important', 'desc');
+        }
         $whatsnews_sql->orderBy('posted_at', 'desc');
 
         // 件数制限
-        if ($whatsnews_frame->view_pattern == 0) {
+        if ($method == 'rss') {
+            $whatsnews_sql->limit($whatsnews_frame->rss_count);
+        }
+        else if ($whatsnews_frame->view_pattern == 0) {
             $whatsnews_sql->limit($whatsnews_frame->count);
         }
         else {
-            $whatsnews_sql->where('posted_at', '>=', '2019-10-29 00:00:00');
+            $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
         }
 
         // 取得
         $whatsnews = $whatsnews_sql->get();
 
+        return array($whatsnews, $link_pattern, $link_base);
+    }
+
+
+    /* 画面アクション関数 */
+
+    /**
+     *  データ初期表示関数
+     *  コアがページ表示の際に呼び出す関数
+     */
+    public function index($request, $page_id, $frame_id)
+    {
+        // フレームから、新着の設定取得
+        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
+
+        // 新着の一覧取得
+        list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'whatsnews', [
-            'whatsnews'   => $whatsnews,
-            'link_pattern' => $link_pattern,
-            'link_base' => $link_base,
+            'whatsnews'       => $whatsnews,
+            'whatsnews_frame' => $whatsnews_frame,
+            'link_pattern'    => $link_pattern,
+            'link_base'       => $link_base,
         ]);
     }
 
@@ -283,14 +329,18 @@ class WhatsnewsPlugin extends UserPluginBase
             $whatsnew = Whatsnews::where('bucket_id', $whatsnew_frame->bucket_id)->first();
         }
 
+        // 選択できるフレームの一覧
+        $target_plugins_frames = $this->getTargetPluginsFrames();
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'whatsnews_edit_whatsnew', [
-            'whatsnew_frame' => $whatsnew_frame,
-            'whatsnew'       => $whatsnew,
-            'create_flag'    => $create_flag,
-            'message'        => $message,
-            'errors'         => $errors,
+            'whatsnew_frame'        => $whatsnew_frame,
+            'whatsnew'              => $whatsnew,
+            'target_plugins_frames' => $target_plugins_frames,
+            'create_flag'           => $create_flag,
+            'message'               => $message,
+            'errors'                => $errors,
         ])->withInput($request->all);
     }
 
@@ -367,9 +417,14 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->count             = intval($request->count);
         $whatsnews->days              = intval($request->days);
         $whatsnews->rss               = $request->rss;
-        $whatsnews->view_created_name = $request->view_created_name;
-        $whatsnews->view_created_at   = $request->view_created_at;
-        $whatsnews->target_plugin     = $request->target_plugin;
+        $whatsnews->rss_count         = $request->rss_count;
+        $whatsnews->view_posted_name  = $request->view_posted_name;
+        $whatsnews->view_posted_at    = $request->view_posted_at;
+        $whatsnews->important         = $request->important;
+        $whatsnews->target_plugins    = implode(',', $request->target_plugin);
+        $whatsnews->frame_select      = intval($request->frame_select);
+//Log::debug($request->target_frame_ids);
+        $whatsnews->target_frame_ids  = implode(',', $request->target_frame_ids);
 
         // データ保存
         $whatsnews->save();
@@ -382,8 +437,25 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      *  削除処理
      */
-    public function destroyBuckets($request, $page_id, $frame_id, $blogs_id)
+    public function destroyBuckets($request, $page_id, $frame_id, $id)
     {
+        // id がある場合、データを削除
+        if ( $id ) {
+
+            // フレームから、新着の設定取得
+            $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
+
+            // 新着設定を削除する。
+            Whatsnews::where('id', $id)->delete();
+
+            // backetsの削除
+            Buckets::where('id', $whatsnews_frame->bucket_id)->delete();
+
+            // FrameのバケツIDの更新
+            Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+
+        }
+        // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
    /**
@@ -397,5 +469,64 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 新着情報設定選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     *  RSS配信
+     */
+    public function rss($request, $page_id, $frame_id, $id = null)
+    {
+        // フレームから、新着の設定取得
+        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
+        if (empty($whatsnews_frame)) {
+            return;
+        }
+
+        // サイト名
+        $base_site_name = Configs::where('name', 'base_site_name')->first();
+
+        // URL
+        $url = url("/redirect/plugin/wahtsnews/rss/" . $page_id . "/" . $frame_id);
+
+        // HTTPヘッダー出力
+        header('Content-Type: text/xml; charset=UTF-8');
+
+echo <<<EOD
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+<channel>
+<title>[{$base_site_name->value}]{$whatsnews_frame->whatsnew_name}</title>
+<description></description>
+<link>
+{$url}
+</link>
+EOD;
+
+        // 新着の一覧取得
+        list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame, 'rss');
+
+        foreach ($whatsnews as $whatsnew) {
+
+            $title = $whatsnew->post_title;
+            $link = url($link_base[$whatsnew->plugin_name] . '/' . $whatsnew->page_id . '/' . $whatsnew->frame_id . '/' . $whatsnew->post_id);
+//            $description = strip_tags(mb_substr($blogs_post->post_text, 0, 20));
+            $pub_date = date(DATE_RSS, strtotime($whatsnew->posted_at));
+            $content = strip_tags(html_entity_decode($whatsnew->post_title));
+echo <<<EOD
+
+<item>
+<title>{$title}</title>
+<link>{$link}</link>
+<pubDate>{$pub_date}</pubDate>
+<content:encoded>{$content}</content:encoded>
+</item>
+EOD;
+        }
+
+echo <<<EOD
+</channel>
+</rss>
+EOD;
+
+exit;
     }
 }

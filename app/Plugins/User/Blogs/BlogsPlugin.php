@@ -315,7 +315,9 @@ class BlogsPlugin extends UserPluginBase
                                'frames.id                   as frame_id',
                                'blogs_posts.id              as post_id',
                                'blogs_posts.post_title      as post_title',
+                               'blogs_posts.important       as important',
                                'blogs_posts.posted_at       as posted_at',
+                               'blogs_posts.created_name    as posted_name',
                                'categories.classname        as classname',
                                'categories.category         as category',
                                DB::raw('"blogs" as plugin_name')

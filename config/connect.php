@@ -23,4 +23,9 @@ return [
     'CC_SPECIAL_PATH' => array_merge(
         json_decode(env('CC_SPECIAL_PATH', '{}'), true)
     ),
+
+    // 新着の表示制限(新着に表示しない。)の対象プラグイン
+    'CC_DISABLE_WHATSNEWS_PLUGIN' => array(
+        'blogs' => true,
+    ),
 ];

@@ -427,7 +427,8 @@ class DefaultController extends ConnectController
         // フレーム一覧取得（メインエリアのみ）
         $frames = DB::table('pages')
                     ->select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
-                            'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'frames.browser_width', 'plugins.plugin_name_full')
+                            'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'frames.browser_width', 'frames.disable_whatsnews',
+                            'plugins.plugin_name_full')
                     ->join('frames', 'frames.page_id', '=', 'pages.id')
                     ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
                     ->where('pages.id', $pages_id)

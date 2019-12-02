@@ -121,12 +121,13 @@ class FrameController extends ConnectController
 
         // Frame データの更新
         Frame::where('id', $frame_id)
-            ->update(['frame_title'   => $request->frame_title,
-                      'frame_design'  => $request->frame_design,
-                      'frame_col'     => $request->frame_col,
-                      'template'      => $request->template,
-                      'browser_width' => $request->browser_width,
-                      'plug_name'     => $request->plug_name
+            ->update(['frame_title'       => $request->frame_title,
+                      'frame_design'      => $request->frame_design,
+                      'frame_col'         => $request->frame_col,
+                      'template'          => $request->template,
+                      'browser_width'     => $request->browser_width,
+                      'disable_whatsnews' => ($request->disable_whatsnews == '') ? 0 : $request->disable_whatsnews,
+                      'plug_name'         => $request->plug_name
         ]);
 
         return redirect($page->permanent_link."#".$frame_id);

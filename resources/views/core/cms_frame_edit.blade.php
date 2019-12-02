@@ -104,6 +104,23 @@
             </div>
         </div>
 
+        {{-- 新着の表示制限を行うプラグインをConfig ファイルで設定 --}}
+        @if (Config::get("connect.CC_DISABLE_WHATSNEWS_PLUGIN.$frame->plugin_name"))
+        <div class="form-group row mx-0">
+            <label for="page-name" class="{{$class_label}}">新着の表示制限</label>
+            <div class="{{$class_input}} d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    @if($frame->disable_whatsnews)
+                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews" checked="checked">
+                    @else
+                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews">
+                    @endif
+                    <label class="custom-control-label" for="disable_whatsnews">新着に表示しない。</label>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="form-group row mx-0">
             <div class="offset-md-3 {{$class_input}}">
                 <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
