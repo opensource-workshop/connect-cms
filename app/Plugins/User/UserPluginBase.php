@@ -167,7 +167,7 @@ class UserPluginBase extends PluginBase
         // POST に関連しないメソッドは除外
         if ($action != "destroyBuckets") {
             if ( $id && method_exists($obj, 'getPost') ) {
-                $post = $obj->getPost($id);
+                $post = $obj->getPost($id, $action);
             }
         }
 

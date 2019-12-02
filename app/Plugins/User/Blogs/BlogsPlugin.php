@@ -67,7 +67,12 @@ class BlogsPlugin extends UserPluginBase
      *  POST取得関数（コアから呼び出す）
      *  コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id) {
+    public function getPost($id, $action = null) {
+
+        // deleteCategories の場合は、Blogs_posts のオブジェクトではないので、nullで返す。
+        if ($action == 'deleteCategories') {
+            return null;
+        }
 
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
@@ -113,10 +118,16 @@ class BlogsPlugin extends UserPluginBase
      */
     private function getBlogsCategories($blogs_id)
     {
-        $blogs_categories = Categories::whereNull('plugin_id')
-                                      ->orWhere('plugin_id', $blogs_id)
-                                      ->orderBy('display_sequence', 'asc')
-                                      ->get();
+        $blogs_categories = Categories::select('categories.*')
+                          ->join('blogs_categories', function ($join) {
+                              $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                                   ->where('blogs_categories.view_flag', 1);
+                          })
+                          ->whereNull('plugin_id')
+                          ->orWhere('plugin_id', $blogs_id)
+                          ->orderBy('target', 'asc')
+                          ->orderBy('display_sequence', 'asc')
+                          ->get();
         return $blogs_categories;
     }
 
@@ -313,7 +324,8 @@ class BlogsPlugin extends UserPluginBase
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
                       ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                       ->where('status', 0)
-                      ->whereNull('deleted_at');
+                      ->where('disable_whatsnews', 0)
+                      ->whereNull('blogs_posts.deleted_at');
 
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
@@ -763,8 +775,8 @@ class BlogsPlugin extends UserPluginBase
             'blog_name'   => ['required'],
             'view_count'  => ['required'],
             'view_count'  => ['numeric'],
-            'rss_count'   => ['numeric'],
-            'scope_value' => ['numeric'],
+            'rss_count'   => ['nullable', 'numeric'],
+            'scope_value' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'blog_name'   => 'ブログ名',
@@ -795,7 +807,7 @@ class BlogsPlugin extends UserPluginBase
 
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
+                  'bucket_name' => $request->blog_name,
                   'plugin_name' => 'blogs'
             ]);
 
@@ -836,6 +848,14 @@ class BlogsPlugin extends UserPluginBase
 
         // データ保存
         $blogs->save();
+
+        // ブログ名で、Buckets名も更新する
+        Buckets::where('id', $blogs->bucket_id)->update(['bucket_name' => $request->blog_name]);
+
+        // ブログ名で、Buckets名も更新する
+Log::debug($blogs->bucket_id);
+Log::debug($request->blog_name);
+
 
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = false;
@@ -934,6 +954,9 @@ class BlogsPlugin extends UserPluginBase
             return $this->view_error("403_inframe", null, '関数実行権限がありません。');
         }
 
+        /* エラーチェック
+        ------------------------------------ */
+
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
 
@@ -980,16 +1003,27 @@ class BlogsPlugin extends UserPluginBase
             }
         }
 
+        /* カテゴリ追加
+        ------------------------------------ */
+
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
-            Categories::create(['category'         => $request->add_category,
+            $add_category = Categories::create([
+                                'classname'        => $request->add_classname,
+                                'category'         => $request->add_category,
                                 'color'            => $request->add_color,
                                 'background_color' => $request->add_background_color,
                                 'target'           => 'blogs',
                                 'plugin_id'        => $blog_frame->blogs_id,
+                                'display_sequence' => intval($request->add_display_sequence),
+                             ]);
+            BlogsCategories::create([
+                                'blogs_id'         => $blog_frame->blogs_id,
+                                'categories_id'    => $add_category->id,
+                                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
                                 'display_sequence' => intval($request->add_display_sequence),
                              ]);
         }
@@ -1003,6 +1037,7 @@ class BlogsPlugin extends UserPluginBase
                 $category = Categories::where('id', $plugin_categories_id)->first();
 
                 // データのセット
+                $category->classname        = $request->plugin_classname[$plugin_categories_id];
                 $category->category         = $request->plugin_category[$plugin_categories_id];
                 $category->color            = $request->plugin_color[$plugin_categories_id];
                 $category->background_color = $request->plugin_background_color[$plugin_categories_id];
@@ -1012,6 +1047,42 @@ class BlogsPlugin extends UserPluginBase
 
                 // 保存
                 $category->save();
+            }
+        }
+
+        /* 表示フラグ更新(共通カテゴリ)
+        ------------------------------------ */
+        if (!empty($request->general_categories_id)) {
+            foreach($request->general_categories_id as $general_categories_id) {
+
+                // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
+                BlogsCategories::updateOrCreate(
+                    ['categories_id' => $general_categories_id],
+                    [
+                     'blogs_id' => $blog_frame->blogs_id,
+                     'categories_id' => $general_categories_id,
+                     'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
+                     'display_sequence' => $request->general_display_sequence[$general_categories_id],
+                    ]
+                );
+            }
+        }
+
+        /* 表示フラグ更新(自ブログのカテゴリ)
+        ------------------------------------ */
+        if (!empty($request->plugin_categories_id)) {
+            foreach($request->plugin_categories_id as $plugin_categories_id) {
+
+                // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
+                BlogsCategories::updateOrCreate(
+                    ['categories_id' => $plugin_categories_id],
+                    [
+                     'blogs_id' => $blog_frame->blogs_id,
+                     'categories_id' => $plugin_categories_id,
+                     'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
+                     'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
+                    ]
+                );
             }
         }
 
@@ -1028,8 +1099,11 @@ class BlogsPlugin extends UserPluginBase
             return $this->view_error("403_inframe", null, '関数実行権限がありません。');
         }
 
-        // 削除
-        BlogsCategories::where('id', $id)->delete();
+        // 削除(ブログプラグインのカテゴリ表示データ)
+        BlogsCategories::where('categories_id', $id)->delete();
+
+        // 削除(カテゴリ)
+        Categories::where('id', $id)->delete();
 
         return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
     }

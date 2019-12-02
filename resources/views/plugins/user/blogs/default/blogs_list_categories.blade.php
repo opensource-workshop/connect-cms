@@ -66,7 +66,7 @@
                     <input type="hidden" value="{{$category->blogs_categories_id}}" name="general_blogs_categories_id[{{$category->id}}]"></input>
 
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="general_view_flag[{{$category->id}}]" class="custom-control-input" id="general_view_flag[{{$category->id}}]"@if ($category->blogs_categories_id) checked="checked"@endif>
+                        <input type="checkbox" value="1" name="general_view_flag[{{$category->id}}]" class="custom-control-input" id="general_view_flag[{{$category->id}}]"@if ($category->view_flag == 1) checked="checked"@endif>
                         <label class="custom-control-label" for="general_view_flag[{{$category->id}}]"></label>
                     </div>
                 </td>
@@ -95,10 +95,10 @@
             <tr>
                 <td nowrap>
                     <input type="hidden" value="{{$category->id}}" name="plugin_categories_id[{{$category->id}}]"></input>
-                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="plugin_blogs_categories_id[{{$category->blogs_categories_id}}]"></input>
+                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="plugin_blogs_categories_id[{{$category->id}}]"></input>
 
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="plugin_view_flag[{{$category->id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->id}}]"@if ($category->blogs_categories_id) checked="checked"@endif>
+                        <input type="checkbox" value="1" name="plugin_view_flag[{{$category->id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->id}}]"@if ($category->view_flag) checked="checked"@endif>
                         <label class="custom-control-label" for="plugin_view_flag[{{$category->id}}]"></label>
                     </div>
                 </td>

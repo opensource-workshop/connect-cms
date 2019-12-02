@@ -16,5 +16,5 @@ class BlogsCategories extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['blogs_id', 'display_sequence', 'category', 'color', 'background_color'];
+    protected $fillable = ['blogs_id', 'categories_id', 'view_flag', 'display_sequence'];
 }
