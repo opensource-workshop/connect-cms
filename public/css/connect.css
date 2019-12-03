@@ -51,17 +51,22 @@
 .cc-table-set dl {}
 .cc-table-set dl dt, .cc-table-set dl dd {
     /*padding: 0.5rem 2rem;*/
+    padding: 0rem 0.2rem;
 }
 .cc-table-set dl dt {
     /*background: #454545;*/
     /*color: #fff;*/
     text-align: center;
+/*
     border:1px #dedede solid;
     border-width: 0 1px 1px 0;
+*/
 }
 .cc-table-set dl dd {
+/*
     border:1px #333 solid;
     border-width: 0 1px 1px 0;
+*/
 }
 
 
