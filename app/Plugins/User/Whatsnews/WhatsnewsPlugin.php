@@ -111,13 +111,7 @@ class WhatsnewsPlugin extends UserPluginBase
     {
         // 新着情報がまだできていない場合
         if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
-            return $this->view(
-                'whatsnews', [
-                'whatsnews'   => null,
-                'link_pattern' => null,
-                'link_base' => null,
-            ]);
-        }
+            return array(null, null, null);
 
         // ターゲットプラグインをループ
         $target_plugins = explode(',', $whatsnews_frame->target_plugins);
