@@ -112,6 +112,7 @@ class WhatsnewsPlugin extends UserPluginBase
         // 新着情報がまだできていない場合
         if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
             return array(null, null, null);
+        }
 
         // ターゲットプラグインをループ
         $target_plugins = explode(',', $whatsnews_frame->target_plugins);
