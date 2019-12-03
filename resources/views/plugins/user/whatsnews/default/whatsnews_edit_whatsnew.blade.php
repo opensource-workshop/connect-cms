@@ -14,7 +14,12 @@
     @include('core.cms_frame_edit_tab')
 </ul>
 
-@if (isset($whatsnew) && !$whatsnew->id)
+@if ($errors)
+    <div class="alert alert-danger" style="margin-top: 10px;">
+        <i class="fas fa-exclamation-circle"></i>
+        エラーがあります。詳しくは各項目を参照してください。
+    </div>
+@elseif (isset($whatsnew) && !$whatsnew->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用する新着情報を選択するか、作成してください。
@@ -203,7 +208,7 @@
         <div class="col-md-9 d-flex align-items-center">
         @foreach($whatsnew->getTargetPlugins() as $target_plugin => $use_flag)
             <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="target_plugin[]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
+                <input type="checkbox" name="target_plugin[{{$target_plugin}}]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="target_plugin_{{$target_plugin}}">{{$target_plugin}}</label>
             </div>
         @endforeach
