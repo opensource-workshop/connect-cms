@@ -25,11 +25,11 @@
 @endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">表示ブログ選択</a>
+        <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">表示する施設予約を選択</a>
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示ブログ選択</a>
+        <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示する施設予約を選択</a>
     </li>
 @endif
 @if ($action == 'editBucketsRoles' || $action == '')

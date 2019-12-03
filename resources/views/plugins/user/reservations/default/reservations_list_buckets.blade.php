@@ -22,7 +22,7 @@
         <thead>
             <tr>
                 <th></th>
-                <th>施設名</th>
+                <th>施設予約名</th>
                 <th>項目＊＊＊</th>
                 <th>作成日</th>
             </tr>
@@ -32,7 +32,7 @@
             <tr @if ($reservation_frame->reservations_id == $reservation->id) class="active"@endif>
                 <td><input type="radio" value="{{$reservation->bucket_id}}" name="select_bucket"@if ($reservation_frame->bucket_id == $reservation->bucket_id) checked @endif></input></td>
                 <td>{{$reservation->name}}</td>
-                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}'"><i class="far fa-edit"></i> 施設設定変更</button></th>
+                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}'"><i class="far fa-edit"></i> 施設予約の設定変更</button></th>
                 <td>{{$reservation->created_at}}</td>
             </tr>
         @endforeach
@@ -48,6 +48,6 @@
 
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示施設変更</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示する施設予約を変更</button>
     </div>
 </form>

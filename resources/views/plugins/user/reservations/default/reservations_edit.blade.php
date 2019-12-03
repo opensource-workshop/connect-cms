@@ -1,5 +1,5 @@
 {{--
- * 施設編集画面テンプレート。
+ * 施設予約編集画面テンプレート。
  *
  * @author 
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -17,7 +17,7 @@
 @if (!$reservation->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する施設を選択するか、作成してください。
+        設定画面から、使用する施設予約を選択するか、作成してください。
     </div>
 @else
     <div class="alert alert-info" style="margin-top: 10px;">
@@ -27,9 +27,9 @@
             {{$message}}
         @else
             @if (empty($reservation) || $create_flag)
-                新しい施設を登録します。
+                新しい施設予約を登録します。
             @else
-                施設を変更します。
+                施設予約を変更します。
             @endif
         @endif
     </div>
@@ -48,7 +48,7 @@
     @endif
 
     <div class="form-group">
-        <label class="control-label">施設名 <label class="badge badge-danger">必須</span></label>
+        <label class="control-label">施設予約名 <label class="badge badge-danger">必須</span></label>
         <input type="text" name="name" value="{{old('name', $reservation->name)}}" class="form-control">
         @if ($errors && $errors->has('name')) <div class="text-danger">{{$errors->first('name')}}</div> @endif
     </div>
@@ -70,7 +70,7 @@
                 </button>
             </div>
 
-            {{-- 既存施設の場合は削除処理のボタンも表示 --}}
+            {{-- 既存施設予約の場合は削除処理のボタンも表示 --}}
             @if ($create_flag)
             @else
             <div class="col-sm-3 pull-right text-right">
@@ -86,7 +86,7 @@
 <div id="collapse{{$reservation_frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">施設を削除します。<br>この施設に紐づく予約も削除されます。よく確認して実行してください。</span>
+            <span class="text-danger">施設予約を削除します。<br>この施設予約に紐づく予約も削除されます。よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
