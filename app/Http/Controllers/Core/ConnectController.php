@@ -159,10 +159,21 @@ class ConnectController extends Controller
         }
 
         // メインエリア以外のフレームの取得
+        // --- クロージャでインスタンス変数の参照が構文エラーになったのでローカル変数で持つ。
+        $this_page_id = $this->page->id;
+
         $frames = Frame::where('area_id', '!=', 2)
                        ->select('frames.*', 'frames.id as frame_id', 'plugins.plugin_name_full')
                        ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
                        ->whereIn('page_id', $page_ins)
+                       // このページにのみ表示する。の処理用クロージャ。
+                       ->where(function($query) use($this_page_id) {
+                           $query->Where('page_only', 0)
+                               ->orWhere(function($query2) use($this_page_id) {
+                                   $query2->Where('page_only', 1)
+                                          ->Where('page_id', $this_page_id);
+                               });
+                       })
                        ->orderBy('area_id', 'asc')
                        ->orderBy('page_id', 'desc')
                        ->orderBy('display_sequence', 'asc')

@@ -121,6 +121,23 @@
         </div>
         @endif
 
+        {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
+        @if ($frame->area_id != 2)
+        <div class="form-group row mx-0">
+            <label for="page-name" class="{{$class_label}}">フレーム継承設定</label>
+            <div class="{{$class_input}} d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    @if($frame->page_only)
+                        <input name="page_only" value="1" type="checkbox" class="custom-control-input" id="page_only" checked="checked">
+                    @else
+                        <input name="page_only" value="1" type="checkbox" class="custom-control-input" id="page_only">
+                    @endif
+                    <label class="custom-control-label" for="page_only">このページにのみ表示する。</label>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="form-group row mx-0">
             <div class="offset-md-3 {{$class_input}}">
                 <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
