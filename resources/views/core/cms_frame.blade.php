@@ -7,10 +7,19 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
+@php
+// フレーム＆アクションのクラス名生成
+if ($frame_id == $frame->frame_id) {
+    $frame_class = 'frame-' . $action . '-' . $frame->frame_id;
+}
+else {
+    $frame_class = 'frame-' . $frame->frame_id;
+}
+@endphp
 @if($frame->frame_col==0)
-<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_class}}" id="frame-{{ $frame->frame_id }}">
 @else
-<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_class}}" id="frame-{{ $frame->frame_id }}">
 @endif
 
 @if ($frame->browser_width == '100%')
