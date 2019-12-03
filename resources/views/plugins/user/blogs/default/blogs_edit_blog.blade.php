@@ -81,7 +81,7 @@
 
     <div class="form-group">
         <label class="control-label">RSS件数</label>
-        <input type="text" name="rss_count" value="{{old('rss_count', $blog->rss_count)}}" class="form-control col-sm-3">
+        <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3">
         @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
     </div>
 
