@@ -24,7 +24,7 @@ use App\Plugins\User\UserPluginBase;
 /**
  * 施設予約プラグイン
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  * @package Contoroller
@@ -48,7 +48,7 @@ class ReservationsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['week', 'month', 'editBucketsRoles'];
+        $functions['get']  = ['week', 'month', 'editBucketsRoles', 'editFacilities'];
         $functions['post'] = ['saveBucketsRoles'];
         return $functions;
     }
@@ -60,7 +60,7 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function getFirstFrameEditAction()
     {
-        return "editBuckets";
+        return "editFacilities";
     }
 
     /**
@@ -88,17 +88,13 @@ class ReservationsPlugin extends UserPluginBase
      */
     private function getReservationsFrame($frame_id)
     {
-        // Frame データ
-        $frame = Frame::where('id', $frame_id)
-               ->first();
-// ここで、Frame と紐づく施設データを取得
-/*
+        // Frame と紐づく施設データを取得
         $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count')
-                 ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
+                 ->select('frames.*', 'reservations.id as reservation_id', 'reservations.*')
+                 ->leftJoin('reservations', 'reservations.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
-*/
+
         return $frame;
     }
 
@@ -358,19 +354,15 @@ class ReservationsPlugin extends UserPluginBase
     {
         // Frame データ
         $reservation_frame = null;
-/*
-        $reservation_frame = Frame::select('frames.*', 'reservations.id as reservations_id', 'reservations_views.id as reservations_views_id')
+
+        $reservation_frame = Frame::select('frames.*', 'reservations.id as reservations_id', 'reservations.*')
                            ->leftJoin('reservations', 'reservations.bucket_id', '=', 'frames.bucket_id')
-                           ->leftJoin('reservations_views', 'reservations_views.frame_id', '=', 'frames.id')
                            ->where('frames.id', $frame_id)->first();
-*/
+
         // 施設取得（1ページの表示件数指定）
         $reservations = array();
-/*
         $reservations = Reservations::orderBy('created_at', 'desc')
                       ->paginate(10);
-*/
-
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -393,7 +385,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 施設設定変更画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $reservation_id = null, $create_flag = false, $message = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -402,16 +394,15 @@ class ReservationsPlugin extends UserPluginBase
         $reservation_frame = $this->getReservationsFrame($frame_id);
 
         // 施設データ
-        //$reservation = null;
         $reservation = new Reservations();
 
         // id が渡ってくればid が対象
-        if (!empty($id)) {
-            //$reservation = Reservations::where('id', $id)->first();
+        if (!empty($reservation_id)) {
+            $reservation = Reservations::where('id', $reservation_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($reservations_frame->bucket_id) && $create_flag == false) {
-            //$reservation = Reservations::where('bucket_id', $reservations_frame->bucket_id)->first();
+        else if (!empty($reservation_frame->bucket_id) && $create_flag == false) {
+            $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
         // 表示テンプレートを呼び出す。
@@ -428,29 +419,29 @@ class ReservationsPlugin extends UserPluginBase
     /**
      *  施設登録処理
      */
-    public function saveBuckets($request, $page_id, $frame_id, $id = null)
+    public function saveBuckets($request, $page_id, $frame_id, $reservation_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            //'blog_name'  => ['required'],
-            //'view_count' => ['required'],
+            'reservation_name'  => ['required'],
+            'initial_display_setting'  => ['required'],
         ]);
         $validator->setAttributeNames([
-            //'blog_name'  => '施設予約名',
-            //'view_count' => '表示件数',
+            'reservation_name'  => '施設予約名',
+            'initial_display_setting'  => '初期表示設定',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
 
-            if (empty($id)) {
+            if (empty($reservation_id)) {
                 $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
+                return $this->createBuckets($request, $page_id, $frame_id, $reservation_id, $create_flag, $message, $validator->errors());
             }
             else  {
                 $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
+                return $this->editBuckets($request, $page_id, $frame_id, $reservation_id, $create_flag, $message, $validator->errors());
             }
         }
 
@@ -461,15 +452,14 @@ class ReservationsPlugin extends UserPluginBase
         if (empty($request->id)) {
 
             // バケツの登録
-/* 後でコメント外すこと。
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
+                  'bucket_name' => $request->reservation_name,
                   'plugin_name' => 'reservations'
             ]);
-*/
-            // 施設データ新規オブジェクト
-            //$reservations = new Reservations();
-            //$reservations->bucket_id = $bucket_id;
+
+            // 施設予約データ新規オブジェクト
+            $reservations = new Reservations();
+            $reservations->bucket_id = $bucket_id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆施設予約作成
@@ -479,29 +469,30 @@ class ReservationsPlugin extends UserPluginBase
             if (empty($frame->bucket_id)) {
 
                 // FrameのバケツIDの更新
-                //$frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = '施設設定を追加しました。';
+            $message = '施設予約の設定を追加しました。';
         }
-        // id があれば、施設を更新
+        // id があれば、施設予約を更新
         else {
 
-            // 施設データ取得
-            //$reservations = Reservations::where('id', $id)->first();
+            // 施設予約データ取得
+            $reservations = Reservations::where('id', $reservation_id)->first();
 
-            $message = '施設設定を変更しました。';
+            $message = '施設予約の設定を変更しました。';
         }
 
         // 施設設定
-        //$reservations->施設名     = $request->施設名;
+        $reservations->reservation_name = $request->reservation_name;
+        $reservations->initial_display_setting = $request->initial_display_setting;
 
         // データ保存
-        //$reservations->save();
+        $reservations->save();
 
         // 新規作成フラグを付けて施設設定変更画面を呼ぶ
         $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $reservation_id, $create_flag, $message);
     }
 
     /**
@@ -541,5 +532,39 @@ class ReservationsPlugin extends UserPluginBase
 
         // 表示施設予約選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * 施設登録・変更画面の表示
+     */
+    public function editFacilities($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 施設予約＆フレームデータ
+        $reservation_frame = $this->getReservationsFrame($frame_id);
+
+        // 施設データ
+        $reservation = new Reservations();
+
+        // id が渡ってくればid が対象
+        if (!empty($id)) {
+            $reservation = Reservations::where('id', $id)->first();
+        }
+        // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
+        else if (!empty($reservation_frame->bucket_id) && $create_flag == false) {
+            $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
+        }
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'reservations_edit', [
+            'reservation_frame'  => $reservation_frame,
+            'reservation'        => $reservation,
+            'create_flag'        => $create_flag,
+            'message'            => $message,
+            'errors'             => $errors,
+        ])->withInput($request->all);
     }
 }
