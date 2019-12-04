@@ -91,12 +91,14 @@
 
     <h4><span class="badge badge-primary">管理用項目（一般利用者には見えません）</span></h4>
 
+    {{--
     <div class="form-group row">
         <label class="col-md-2 control-label">ICタグUID</label>
         <div class="col-md-10">
             <input type="text" name="rf_uid" value="" class="form-control">
         </div>
     </div>
+    --}}
 
     <div class="form-group row">
         <label class="col-md-2 control-label">バーコード</label>
