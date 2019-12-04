@@ -1,7 +1,7 @@
 {{--
  * 編集画面(データ選択)テンプレート
  *
- * @author 
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
@@ -23,7 +23,8 @@
             <tr>
                 <th></th>
                 <th>施設予約名</th>
-                <th>項目＊＊＊</th>
+                <th>施設名</th>
+                <th></th>
                 <th>作成日</th>
             </tr>
         </thead>
@@ -31,8 +32,9 @@
         @foreach($reservations as $reservation)
             <tr @if ($reservation_frame->reservations_id == $reservation->id) class="active"@endif>
                 <td><input type="radio" value="{{$reservation->bucket_id}}" name="select_bucket"@if ($reservation_frame->bucket_id == $reservation->bucket_id) checked @endif></input></td>
-                <td>{{$reservation->name}}</td>
-                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}'"><i class="far fa-edit"></i> 施設予約の設定変更</button></th>
+                <td>{{$reservation->reservation_name}}</td>
+                <td></td>
+                <td><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}'"><i class="far fa-edit"></i> 設定変更</button></td>
                 <td>{{$reservation->created_at}}</td>
             </tr>
         @endforeach
@@ -41,9 +43,9 @@
     </div>
 
     <div class="text-center">
-{{--
+
         {{ $reservations->links() }}
---}}
+
     </div>
 
     <div class="form-group text-center">
