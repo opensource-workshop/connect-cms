@@ -6,9 +6,17 @@
  * @category 施設予約プラグイン
  --}}
 
-週表示テンプレート<br />
-<br />
-<a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/123#frame-{{$frame->id}}">月表示へ</a>
+@if (isset($frame) && $frame->bucket_id)
+    週表示テンプレート<br />
+    <br />
+    <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/123#frame-{{$frame->id}}">月表示へ</a>
+@else
+    <div class="card border-danger">
+        <div class="card-body">
+            <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用する施設予約を選択するか、作成してください。</p>
+        </div>
+    </div>
+@endif
 
 
 
