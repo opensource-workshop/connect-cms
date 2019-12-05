@@ -90,7 +90,7 @@ class ReservationsPlugin extends UserPluginBase
     {
         // Frame と紐づく施設データを取得
         $frame = DB::table('frames')
-                 ->select('frames.*', 'reservations.id as reservation_id', 'reservations.*')
+                 ->select('frames.*', 'reservations.id as reservations_id', 'reservations.*')
                  ->leftJoin('reservations', 'reservations.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -373,21 +373,21 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     * 施設新規作成画面
+     * 施設予約の新規作成画面の表示
      */
     public function createBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
     {
-        // 新規作成フラグを付けて施設設定変更画面を呼ぶ
+        // 設定変更画面を新規登録モードで呼び出す
         $create_flag = true;
         return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $errors);
     }
 
     /**
-     * 施設設定変更画面の表示
+     * 施設予約の設定画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $reservation_id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $reservations_id = null, $create_flag = false, $message = null, $errors = null)
     {
-        // セッション初期化などのLaravel 処理。
+        // セッション初期化などのLaravel 処理
         $request->flash();
 
         // 施設予約＆フレームデータ
@@ -397,8 +397,8 @@ class ReservationsPlugin extends UserPluginBase
         $reservation = new Reservations();
 
         // id が渡ってくればid が対象
-        if (!empty($reservation_id)) {
-            $reservation = Reservations::where('id', $reservation_id)->first();
+        if (!empty($reservations_id)) {
+            $reservation = Reservations::where('id', $reservations_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
         else if (!empty($reservation_frame->bucket_id) && $create_flag == false) {
@@ -417,9 +417,9 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     *  施設登録処理
+     *  施設予約の登録・更新処理
      */
-    public function saveBuckets($request, $page_id, $frame_id, $reservation_id = null)
+    public function saveBuckets($request, $page_id, $frame_id, $reservations_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -435,13 +435,13 @@ class ReservationsPlugin extends UserPluginBase
         $message = null;
         if ($validator->fails()) {
 
-            if (empty($reservation_id)) {
+            if (empty($reservations_id)) {
                 $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $reservation_id, $create_flag, $message, $validator->errors());
+                return $this->createBuckets($request, $page_id, $frame_id, $reservations_id, $create_flag, $message, $validator->errors());
             }
             else  {
                 $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $reservation_id, $create_flag, $message, $validator->errors());
+                return $this->editBuckets($request, $page_id, $frame_id, $reservations_id, $create_flag, $message, $validator->errors());
             }
         }
 
@@ -449,7 +449,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = null;
 
         // 画面から渡ってくるid が空ならバケツと施設を新規登録
-        if (empty($request->id)) {
+        if (empty($request->reservations_id)) {
 
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
@@ -478,7 +478,7 @@ class ReservationsPlugin extends UserPluginBase
         else {
 
             // 施設予約データ取得
-            $reservations = Reservations::where('id', $reservation_id)->first();
+            $reservations = Reservations::where('id', $request->reservations_id)->first();
 
             $message = '施設予約の設定を変更しました。';
         }
@@ -490,9 +490,14 @@ class ReservationsPlugin extends UserPluginBase
         // データ保存
         $reservations->save();
 
-        // 新規作成フラグを付けて施設設定変更画面を呼ぶ
-        $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $reservation_id, $create_flag, $message);
+        if(empty($request->reservations_id)){
+            // 新規登録時：施設予約選択画面を呼び出す
+            return $this->listBuckets($request, $page_id, $frame_id, null);
+        }else{
+            // 更新時：設定変更画面を更新モードで呼び出す
+            $create_flag = false;
+            return $this->editBuckets($request, $page_id, $frame_id, $request->reservations_id, $create_flag, $message);
+        }
     }
 
     /**
