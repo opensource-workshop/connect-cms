@@ -18,7 +18,7 @@ class Page extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'path', 'base_display_flag'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag'];
 
     use NodeTrait;
 
