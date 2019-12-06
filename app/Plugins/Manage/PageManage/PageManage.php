@@ -4,6 +4,7 @@ namespace App\Plugins\Manage\PageManage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -328,6 +329,7 @@ class PageManage extends ManagePluginBase
 
         return $errors;
     }
+
     /**
      *  ページインポート処理
      *
@@ -400,6 +402,10 @@ class PageManage extends ManagePluginBase
                 'base_display_flag' => $csv_columns[6]
             ]);
         }
+
+        // 一時ファイルの削除
+        fclose ($fp);
+        Storage::delete($path);
 
         // ページ管理画面に戻る
         return redirect("/manage/page/import");
