@@ -6,11 +6,20 @@
  * @category 開館カレンダープラグイン
  --}}
 
-<div class="text-right"><a href="#">年間カレンダー</a></div>
+<div class="openingcalendar-pdf">
+<p>
+@can("role_article")
+    <a href="{{url('/')}}/plugin/openingcalendars/editYearschedule/{{$page->id}}/{{$frame_id}}/{{$openingcalendar_frame->openingcalendars_id}}">
+        <i class="far fa-edit"></i>
+    </a>
+@endcan
+@if ($openingcalendar_frame->yearschedule_uploads_id)
+    <a href="{{url('/')}}/file/{{$openingcalendar_frame->yearschedule_uploads_id}}" target="_blank" rel="noopener">年間カレンダー</a>
+@endif
+</p>
+</div>
 
-{{$openingcalendar_frame->openingcalendar_name}}<br />
-{{$openingcalendar_frame->openingcalendar_sub_name}}<br />
-
+<p class="openingcalendar-title">{{$openingcalendar_frame->openingcalendar_name}} / <span>{{$openingcalendar_frame->openingcalendar_sub_name}}</span></p>
 
 <script type="text/javascript">
 
@@ -98,9 +107,15 @@
             <table class="table table-bordered">
             <thead>
                 <tr>
-                    @foreach (['日', '月', '火', '水', '木', '金', '土'] as $dayOfWeek)
-                    <th class="p-0">{{ $dayOfWeek }}</th>
+                @if ($openingcalendar_frame->week_format == 1)
+                    @foreach (['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as $dayOfWeek)
+                    <th class="p-0">{{$dayOfWeek}}</th>
                     @endforeach
+                @else
+                    @foreach (['日', '月', '火', '水', '木', '金', '土'] as $dayOfWeek)
+                    <th class="p-0">{{$dayOfWeek}}</th>
+                    @endforeach
+                @endif
                 </tr>
             </thead>
             <tbody>
@@ -130,17 +145,24 @@
             <div class="d-md-table cc-table-set">
                 @foreach($view_months_patterns[$calendar_ym] as $view_pattern)
                     <dl class="d-none d-md-table-row" style="font-size:90%;">
-                        <dl class="d-md-table-cell"><span style="color:{{$view_pattern[0]->color}}">■</span></dl>
-                        <dl class="d-md-table-cell">{{$view_pattern[0]->pattern}}</dl>
+                        <dt class="d-md-table-cell"><span style="color:{{$view_pattern[0]->color}}">■</span></dt>
+                        <dd class="d-md-table-cell">{{$view_pattern[0]->pattern}}</dd>
 {{--                        <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
                         @if (count($view_pattern) > 1)
-                            <dl class="d-md-table-cell ml-2"><span style="color:{{$view_pattern[1]->color}}">■</span></dl>
-                            <dl class="d-md-table-cell">{{$view_pattern[1]->pattern}}</dl>
+                            <dt class="d-md-table-cell ml-2"><span style="color:{{$view_pattern[1]->color}}">■</span></dt>
+                            <dd class="d-md-table-cell">{{$view_pattern[1]->pattern}}</dd>
 {{--                            <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
                         @endif
                     </dl>
                 @endforeach
             </div>
+
+            {{-- 月毎のコメント --}}
+            @if (isset($view_months[$calendar_ym]['comments']))
+            <div class="card mt-2">
+                <div class="card-body p-2">{!!$view_months[$calendar_ym]['comments']!!}</div>
+            </div>
+            @endif
 
         </div>
         @endforeach
@@ -152,13 +174,13 @@
 <div class="d-md-table cc-table-set">
 @foreach($patterns_chunks as $patterns_chunk)
     <dl class="d-none d-md-table-row" style="font-size:90%;">
-        <dl class="d-md-table-cell"><span style="color:{{$patterns_chunk[0]->color}}">■</span></dl>
-        <dl class="d-md-table-cell">{{$patterns_chunk[0]->pattern}}</dl>
-        <dl class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dl>
+        <dt class="d-md-table-cell"><span style="color:{{$patterns_chunk[0]->color}}">■</span></dt>
+        <dd class="d-md-table-cell">{{$patterns_chunk[0]->pattern}}</dd>
+        <dd class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dd>
         @if (count($patterns_chunk) > 1)
-            <dl class="d-md-table-cell ml-2"><span style="color:{{$patterns_chunk[1]->color}}">■</span></dl>
-            <dl class="d-md-table-cell">{{$patterns_chunk[1]->pattern}}</dl>
-            <dl class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dl>
+            <dt class="d-md-table-cell ml-2"><span style="color:{{$patterns_chunk[1]->color}}">■</span></dt>
+            <dd class="d-md-table-cell">{{$patterns_chunk[1]->pattern}}</dd>
+            <dd class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dd>
         @endif
     </dl>
 @endforeach
@@ -166,5 +188,5 @@
 --}}
 
 @can("role_article")
-    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 編集</button>
+    <button type="button" class="btn btn-success mt-3" onclick="location.href='{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 編集</button>
 @endcan

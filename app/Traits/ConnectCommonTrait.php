@@ -14,6 +14,9 @@ use App\Models\Core\UsersRoles;
 
 trait ConnectCommonTrait
 {
+    var $directory_base = "uploads/";
+    var $directory_file_limit = 1000;
+
     /**
      * Buckets のrole を配列で返却
      *
@@ -576,5 +579,24 @@ trait ConnectCommonTrait
 
         // 言語トップのページ確認
         return Page::where('permanent_link', '/'.$page_language)->first();
+    }
+
+    /**
+     *  対象ディレクトリの取得
+     *
+     */
+    public function getDirectory($file_id)
+    {
+        // ファイルID がなければ0ディレクトリを返す。
+        if (empty($file_id)) {
+            return $this->directory_base . '0';
+        }
+        // 1000で割った余りがディレクトリ名
+        $quotient = floor($file_id / $this->directory_file_limit);
+        $remainder = $file_id % $this->directory_file_limit;
+        $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
+        $directory = $this->directory_base . $sub_directory;
+
+        return $directory;
     }
 }

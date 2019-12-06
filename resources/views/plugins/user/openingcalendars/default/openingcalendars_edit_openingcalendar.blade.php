@@ -72,7 +72,8 @@
         <label class="control-label">週の表示形式 <label class="badge badge-danger">必須</label></label>
         <select class="form-control" name="week_format" class="form-control">
             <option value=""></option>
-            <option value="1" @if(Input::old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN</option>
+            <option value="1" @if(Input::old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN, MON, ...</option>
+            <option value="2" @if(Input::old('week_format', $openingcalendar->week_format)=="2") selected @endif>日, 月, 火, ...</option>
         </select>
         @if ($errors && $errors->has('week_format')) <div class="text-danger">{{$errors->first('week_format')}}</div> @endif
     </div>

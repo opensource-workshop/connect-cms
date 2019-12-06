@@ -69,10 +69,11 @@
 */
 }
 
-
-
-
-
+/* 開館カレンダー
+------------------------------------- */
+.openingcalendar-pdf {
+    text-align: right;
+}
 
 
 /*  Connect-CMS add CSS Bootstrap3
