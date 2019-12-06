@@ -9,7 +9,7 @@
 <div class="openingcalendar-pdf">
 <p>
 @can("role_article")
-    <a href="{{url('/')}}/plugin/openingcalendars/editYearschedule/{{$page->id}}/{{$frame_id}}/{{$openingcalendar_frame->openingcalendars_id}}">
+    <a href="{{url('/')}}/plugin/openingcalendars/editYearschedule/{{$page->id}}/{{$frame_id}}/{{$openingcalendar_frame->openingcalendars_id}}#frame-{{$frame->id}}">
         <i class="far fa-edit"></i>
     </a>
 @endcan
@@ -188,5 +188,5 @@
 --}}
 
 @can("role_article")
-    <button type="button" class="btn btn-success mt-3" onclick="location.href='{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 編集</button>
+    <button type="button" class="btn btn-success mt-3" onclick="location.href='{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 編集</button>
 @endcan
