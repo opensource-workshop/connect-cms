@@ -37,6 +37,7 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveLayout"]       = array('admin_site');
         $role_ckeck_table["categories"]       = array('admin_site');
         $role_ckeck_table["saveCategories"]   = array('admin_site');
+        $role_ckeck_table["deleteCategories"] = array('admin_site');
         $role_ckeck_table["loginPermit"]      = array('admin_site');
         $role_ckeck_table["saveLoginPermit"]  = array('admin_site');
         $role_ckeck_table["languages"]        = array('admin_site');
@@ -266,6 +267,17 @@ class SiteManage extends ManagePluginBase
                 $categories->save();
             }
         }
+
+        return $this->categories($request, $id, null);
+    }
+
+    /**
+     *  カテゴリ削除処理
+     */
+    public function deleteCategories($request, $id)
+    {
+        // カテゴリ削除
+        Categories::where('id', $id)->delete();
 
         return $this->categories($request, $id, null);
     }
