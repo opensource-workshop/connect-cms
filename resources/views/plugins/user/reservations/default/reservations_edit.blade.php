@@ -18,7 +18,7 @@
 @if (!$reservation->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する施設予約を選択するか、作成してください。
+        使用する施設予約を選択するか、新規作成してください。
     </div>
 @else
     <div class="alert alert-info" style="margin-top: 10px;">
