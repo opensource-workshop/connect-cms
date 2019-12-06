@@ -90,6 +90,26 @@
         @if ($errors && $errors->has('view_after_month')) <div class="text-danger">{{$errors->first('view_after_month')}}</div> @endif
     </div>
 
+    <div class="form-group">
+        <label class="col-form-label">スムーズスクロール</label><br />
+        <div class="custom-control custom-radio custom-control-inline">
+            @if($openingcalendar->smooth_scroll == 0)
+                <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input" checked="checked">
+            @else
+                <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input">
+            @endif
+            <label class="custom-control-label" for="smooth_scroll_off">しない</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            @if($openingcalendar->smooth_scroll == 1)
+                <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input" checked="checked">
+            @else
+                <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input">
+            @endif
+            <label class="custom-control-label" for="smooth_scroll_on">する</label>
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div>

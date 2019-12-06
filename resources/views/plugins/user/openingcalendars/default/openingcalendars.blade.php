@@ -100,7 +100,7 @@
 </a>
 --}}
 {{-- カレンダー --}}
-<div id="calendar{{$frame_id}}" class="carousel slide" data-ride="carousel" data-interval=false data-wrap=false>
+<div id="calendar{{$frame_id}}" class="carousel @if($openingcalendar_frame->smooth_scroll) slide @endif" data-ride="carousel" data-interval=false data-wrap=false>
     <div class="carousel-inner">
         @foreach ($calendars as $calendar_ym => $dates)
         <div class="carousel-item @if($calendar_ym == $view_ym) active @endif" data-prev="{{$view_months[$calendar_ym]["data-prev"]}}" data-next="{{$view_months[$calendar_ym]["data-next"]}}" data-prevmonth="{{$view_months[$calendar_ym]["data-prevmonth"]}}" data-nextmonth="{{$view_months[$calendar_ym]["data-nextmonth"]}}">

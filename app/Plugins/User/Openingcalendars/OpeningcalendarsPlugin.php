@@ -80,6 +80,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                           'openingcalendars.view_before_month',
                           'openingcalendars.view_after_month',
                           'openingcalendars.yearschedule_uploads_id',
+                          'openingcalendars.smooth_scroll',
                           'uploads.client_original_name'
                          )
                  ->leftJoin('openingcalendars', 'openingcalendars.bucket_id', '=', 'frames.bucket_id')
@@ -577,6 +578,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $openingcalendars->week_format              = $request->week_format;
         $openingcalendars->view_before_month        = $request->view_before_month;
         $openingcalendars->view_after_month         = $request->view_after_month;
+        $openingcalendars->smooth_scroll            = $request->smooth_scroll;
 
         // データ保存
         $openingcalendars->save();
