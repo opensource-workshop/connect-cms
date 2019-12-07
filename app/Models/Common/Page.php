@@ -158,4 +158,13 @@ class Page extends Model
     {
         return $this->permanent_link;
     }
+
+    /**
+     *  CSS セレクタ用クラス用取得
+     *
+     */
+    public function getPermanentlinkClassname()
+    {
+        return str_replace('/', '-', trim($this->permanent_link, '/'));
+    }
 }

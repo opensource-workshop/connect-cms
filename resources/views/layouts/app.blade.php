@@ -98,7 +98,7 @@
     </script>
 
 </head>
-<body>
+<body class="{{$page->getPermanentlinkClassname()}}">
 
 @if (Auth::check() || (isset($configs) && ($configs['base_header_hidden'] != '1')))
 <nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif">
