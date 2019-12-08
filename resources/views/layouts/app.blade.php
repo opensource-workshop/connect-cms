@@ -42,31 +42,32 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- CSRF Token -->
+@if(isset($configs_array['description']))
+    <meta name="description" content="{{$configs_array['description']->getNobrValue()}}">
+@endif
+    {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
-
-    @if(isset($configs))
-        <title>{{$configs['base_site_name']}}</title>
-    @else
-        <title>{{config('app.name', 'Connect-CMS')}}</title>
-    @endif
+@if(isset($configs))
+    <title>@if(isset($page)){{$page->page_name}} | @endif{{$configs['base_site_name']}}</title>
+@else
+    <title>@if(isset($page)){{$page->page_name}} | @endif{{config('app.name', 'Connect-CMS')}}</title>
+@endif
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
-    @if (isset($page))
-        <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
-    @endif
+@if (isset($page))
+    <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
+@endif
 
     <!-- Themes Styles & JS -->
-    @if (isset($themes['css']) && $themes['css'] != '')
-        <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
-    @endif
-    @if (isset($themes['js']) && $themes['js'] != '')
-        <link href="/themes/{{$themes['js']}}/themes.js" rel='stylesheet' type='text/css'>
-    @endif
+@if (isset($themes['css']) && $themes['css'] != '')
+    <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
+@endif
+@if (isset($themes['js']) && $themes['js'] != '')
+    <link href="/themes/{{$themes['js']}}/themes.js" rel='stylesheet' type='text/css'>
+@endif
 
     <!-- Fonts -->
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
@@ -98,7 +99,7 @@
     </script>
 
 </head>
-<body class="{{$page->getPermanentlinkClassname()}}">
+<body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif">
 
 @if (Auth::check() || (isset($configs) && ($configs['base_header_hidden'] != '1')))
 <nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif">

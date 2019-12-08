@@ -42,6 +42,8 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveLoginPermit"]  = array('admin_site');
         $role_ckeck_table["languages"]        = array('admin_site');
         $role_ckeck_table["saveLanguages"]    = array('admin_site');
+        $role_ckeck_table["meta"]             = array('admin_site');
+        $role_ckeck_table["saveMeta"]         = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -447,5 +449,44 @@ class SiteManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/site/layout");
+    }
+
+    /**
+     *  meta設定　表示画面
+     */
+    public function meta($request, $id, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 設定されているmeta情報のリスト取得
+        $meta = $this->getConfigs(null, 'meta');
+
+        return view('plugins.manage.site.meta',[
+            "function"  => __FUNCTION__,
+            "id"        => $id,
+            "meta"      => $meta,
+        ]);
+    }
+
+    /**
+     *  meta設定　更新
+     */
+    public function saveMeta($request, $page_id = null, $errors = array())
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // description
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'description'],
+            ['category' => 'meta',
+             'value'    => $request->description]
+        );
+
+        // ページ管理画面に戻る
+        return redirect("/manage/site/meta");
     }
 }
