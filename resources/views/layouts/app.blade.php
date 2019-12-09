@@ -66,7 +66,7 @@
     <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
 @endif
 @if (isset($themes['js']) && $themes['js'] != '')
-    <link href="/themes/{{$themes['js']}}/themes.js" rel='stylesheet' type='text/css'>
+    <script src="/themes/{{$themes['js']}}/themes.js"></script>
 @endif
 
     <!-- Fonts -->
