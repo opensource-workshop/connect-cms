@@ -13,18 +13,18 @@
         @endif
     </p>
 
-<div class="d-md-table cc-table-set">
-    <dl class="d-md-table-row">
+<div>
+    <dl>
     @foreach($whatsnews as $whatsnew)
         @if ($whatsnews_frame->view_posted_at)
-        <dt class="d-md-table-cell">
+        <dt>
             {{(new Carbon($whatsnew->posted_at))->format('Y/m/d')}}
             @if($whatsnew->category)
                 <span class="badge cc_category_{{$whatsnew->classname}}">{{$whatsnew->category}}</span>
             @endif
         </dt>
         @endif
-        <dd class="d-md-table-cell">
+        <dd>
             @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
             <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}">
                 {{$whatsnew->post_title}}
@@ -32,8 +32,8 @@
             @endif
         </dd>
         @if ($whatsnews_frame->view_posted_name)
-        <dd class="d-md-table-cell">
-                {{$whatsnew->posted_name}}
+        <dd>
+            {{$whatsnew->posted_name}}
         </dd>
         @endif
     @endforeach
