@@ -8,18 +8,21 @@
  * @category コア
 --}}
 @php
-// フレーム＆アクションのクラス名生成
-if ($frame_id == $frame->frame_id) {
-    $frame_class = 'frame-' . $action . '-' . $frame->frame_id;
+// 独自クラス名 ＆ フレーム＆アクションのクラス名生成
+if ($frame->classname) {
+    $frame_classname = $frame->classname;
 }
 else {
-    $frame_class = 'frame-' . $frame->frame_id;
+    $frame_classname = 'frame-' . $frame->frame_id;
+}
+if ($frame_id == $frame->frame_id) {
+    $frame_classname = $frame_classname . '-' . $action;
 }
 @endphp
 @if($frame->frame_col==0)
-<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_class}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}" id="frame-{{ $frame->frame_id }}">
 @else
-<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_class}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}" id="frame-{{ $frame->frame_id }}">
 @endif
 
 @if ($frame->browser_width == '100%')
