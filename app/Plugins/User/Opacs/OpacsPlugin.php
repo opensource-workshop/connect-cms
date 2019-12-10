@@ -686,10 +686,14 @@ class OpacsPlugin extends UserPluginBase
         $validator = Validator::make($request->all(), [
             'req_student_no'       => ['required'],
             'req_return_scheduled' => ['required'],
+            'req_phone_no'         => ['required'],
+            'req_email'            => ['required'],
         ]);
         $validator->setAttributeNames([
             'req_student_no'       => '学籍番号',
             'req_return_scheduled' => '返却予定日',
+            'req_phone_no'         => '連絡先電話番号',
+            'req_email'            => '連絡先メールアドレス',
         ]);
 
         // エラーがあった場合は詳細画面に戻る。
