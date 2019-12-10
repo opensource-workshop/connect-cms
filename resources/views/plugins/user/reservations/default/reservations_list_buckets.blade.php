@@ -23,9 +23,9 @@
             <tr>
                 <th></th>
                 <th>コンテンツ名</th>
+                <th>カレンダー<br>初期表示</th>
                 <th>施設名</th>
                 <th>コンテンツ編集</th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -36,18 +36,23 @@
                 <td><input type="radio" value="{{$reservation->bucket_id}}" name="select_bucket"@if ($reservation_frame->bucket_id == $reservation->bucket_id) checked @endif></input></td>
                 {{-- 施設予約名 --}}
                 <td>{{$reservation->reservation_name}}</td>
-                {{-- 施設名 --}}
-                <td>{!! nl2br(e($reservation->facility_names)) !!}</td>
+                {{-- 初期表示（月／週） --}}
+                <td>{{$reservation->initial_display_setting}}</td>
+                <td>
+                    {{-- 施設名 --}}
+                    @if ($reservation->facility_names)
+                        {!! nl2br(e($reservation->facility_names)) !!}
+                        <br>
+                    @endif
+                    {{-- 施設登録・変更ボタン --}}
+                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
+                        <i class="far fa-edit"></i> 施設登録・変更
+                    </button>
+                </td>
                 {{-- 設定変更ボタン --}}
                 <td>
                     <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
                         <i class="far fa-edit"></i> 設定変更
-                    </button>
-                </td>
-                {{-- 施設登録・変更ボタン --}}
-                <td>
-                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
-                        <i class="far fa-edit"></i> 施設登録・変更
                     </button>
                 </td>
             </tr>

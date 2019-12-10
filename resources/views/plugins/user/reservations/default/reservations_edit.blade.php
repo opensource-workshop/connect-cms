@@ -56,7 +56,7 @@
         @if ($errors && $errors->has('reservation_name')) <div class="text-danger">{{$errors->first('reservation_name')}}</div> @endif
 
         {{-- 初期表示設定（月/週） --}}
-        <label class="col-form-label">初期表示設定 <label class="badge badge-danger">必須</span></label></label>
+        <label class="col-form-label">カレンダー初期表示 <label class="badge badge-danger">必須</span></label></label>
         <div class="row">
             <div class="col-md-1">
                 <div class="custom-control custom-radio custom-control-inline">
