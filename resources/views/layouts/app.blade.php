@@ -61,12 +61,9 @@
     <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
 @endif
 
-    <!-- Themes Styles & JS -->
+    <!-- Themes CSS -->
 @if (isset($themes['css']) && $themes['css'] != '')
     <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
-@endif
-@if (isset($themes['js']) && $themes['js'] != '')
-    <script src="/themes/{{$themes['js']}}/themes.js"></script>
 @endif
 
     <!-- Fonts -->
@@ -87,6 +84,11 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js"></script>
     --}}
     <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
+
+    <!-- Themes JS -->
+@if (isset($themes['js']) && $themes['js'] != '')
+    <script src="/themes/{{$themes['js']}}/themes.js"></script>
+@endif
 
     <!-- Context -->
     <script>
