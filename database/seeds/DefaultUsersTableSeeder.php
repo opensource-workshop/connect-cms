@@ -19,7 +19,7 @@ class DefaultUsersTableSeeder extends Seeder
                         'name'=>'システム管理者',
                         'email'=>'info@opensource-workshop.jp',
                         'userid'=>'admin',
-                        'password'=>bcrypt('admin'),
+                        'password'=>bcrypt('C-admin'),
                         'remember_token'=>'',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
