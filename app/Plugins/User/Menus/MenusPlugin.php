@@ -125,7 +125,7 @@ class MenusPlugin extends UserPluginBase
         // メニューデータ作成 or 更新
         Menu::updateOrCreate(
             ['frame_id' => $frame_id],
-            ['frame_id' => $frame_id, 'select_flag' => $request->select_flag, 'page_ids' => implode(',', $request->page_select)]
+            ['frame_id' => $frame_id, 'select_flag' => $request->select_flag, 'page_ids' => (empty($request->page_select)) ? '' : implode(',', $request->page_select)]
         );
 
         // 画面へ
