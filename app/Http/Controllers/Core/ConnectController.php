@@ -84,6 +84,13 @@ class ConnectController extends Controller
 //Log::debug($this->page);
         }
 
+        // ページがある（管理画面ではページがない）＆IP制限がかかっていない場合は参照OK
+        $check_ip_only = true;
+        if (get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
+            abort(403, '参照できないページです。');
+        }
+
+
         // Frame データがあれば、画面のテンプレート情報をセット
         if (!empty($frame_id)) {
             $frame = Frame::where('id', $frame_id)->first();

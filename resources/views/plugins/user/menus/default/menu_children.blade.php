@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->display_flag == 1)
+@if ($children->isView())
 
     @if ($children->id == $page_id)
     <a href="{{ url("$children->permanent_link") }}" class="list-group-item active">

@@ -12,15 +12,17 @@ use DB;
 use Kalnoy\Nestedset\NodeTrait;
 
 use App\Models\Core\Configs;
+use App\Traits\ConnectCommonTrait;
 
 class Page extends Model
 {
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'ip_address'];
 
     use NodeTrait;
+    use ConnectCommonTrait;
 
     /**
      *  言語設定があれば、特定の言語ページのみに絞る
@@ -166,5 +168,30 @@ class Page extends Model
     public function getPermanentlinkClassname()
     {
         return str_replace('/', '-', trim($this->permanent_link, '/'));
+    }
+
+    /**
+     *  表示可否の判断
+     *
+     */
+    public function isView($check_ip_only = false)
+    {
+        // displayフラグ（ページの継承を加味した値）が 0 なら非表示
+        if ($check_ip_only == false && $this->display_flag == 0) {
+            return false;
+        }
+
+        // IP アドレス制限があれば、IP アドレスチェック
+        if (!empty($this->ip_address)) {
+
+            $ip_addresses = explode(',', $this->ip_address);
+
+            foreach($ip_addresses as $ip_address) {
+                if (!$this->isRangeIp(\Request::ip(), trim($ip_address))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

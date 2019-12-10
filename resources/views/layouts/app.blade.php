@@ -127,7 +127,7 @@
                 @foreach($page_list as $page_obj)
 
                     {{-- 非表示のページは対象外 --}}
-                    @if ($page_obj->display_flag == 1)
+                    @if ($page_obj->isView())
 
                         <li class="nav-item">
                         {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}

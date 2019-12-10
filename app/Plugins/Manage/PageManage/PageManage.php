@@ -135,6 +135,7 @@ class PageManage extends ManagePluginBase
         $page->theme             = $request->theme;
         $page->layout            = $request->layout;
         $page->base_display_flag = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
+        $page->ip_address        = $request->ip_address;
         $page->save();
 
         // ページ管理画面に戻る
@@ -162,6 +163,7 @@ class PageManage extends ManagePluginBase
                 'theme'             => $request->theme,
                 'layout'            => $request->layout,
                 'base_display_flag' => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
+                'ip_address'        => $request->ip_address,
         ]);
 
         // ページ管理画面に戻る

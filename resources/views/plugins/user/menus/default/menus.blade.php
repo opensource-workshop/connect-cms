@@ -12,7 +12,7 @@
     @foreach($pages as $page)
 
         {{-- 非表示のページは対象外 --}}
-        @if ($page->display_flag == 1)
+        @if ($page->isView())
 
             {{-- 子供のページがある場合 --}}
             @if (count($page->children) > 0)
