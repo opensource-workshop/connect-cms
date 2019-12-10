@@ -6,8 +6,7 @@ return [
     'no_image_path' => 'app/uploads/default/no_image.png',
 
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
-    'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies', 'opacs'],
-    //'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies'],
+    'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies'],
 
     // 特別なPath定義(管理画面)
     'CC_SPECIAL_PATH_MANAGE' => array_merge(

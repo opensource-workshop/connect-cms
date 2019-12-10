@@ -4,6 +4,7 @@ namespace App\Plugins\Manage\PageManage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -37,6 +38,9 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["sequence_up"]   = array('admin_page');
         $role_ckeck_table["sequence_down"] = array('admin_page');
         $role_ckeck_table["move_page"]     = array('admin_page');
+        $role_ckeck_table["import"]        = array('admin_page');
+        $role_ckeck_table["upload"]        = array('admin_page');
+
 /*
         $role_ckeck_table = array();
         $role_ckeck_table["index"]         = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
@@ -68,6 +72,7 @@ class PageManage extends ManagePluginBase
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.page.page',[
+            "function"     => __FUNCTION__,
             "plugin_name"  => "page",
             "page"         => new Page(),
             "pages"        => $pages,
@@ -130,6 +135,7 @@ class PageManage extends ManagePluginBase
         $page->theme             = $request->theme;
         $page->layout            = $request->layout;
         $page->base_display_flag = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
+        $page->ip_address        = $request->ip_address;
         $page->save();
 
         // ページ管理画面に戻る
@@ -157,6 +163,7 @@ class PageManage extends ManagePluginBase
                 'theme'             => $request->theme,
                 'layout'            => $request->layout,
                 'base_display_flag' => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
+                'ip_address'        => $request->ip_address,
         ]);
 
         // ページ管理画面に戻る
@@ -228,5 +235,181 @@ class PageManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/page");
+    }
+
+    /**
+     *  ページインポート画面表示
+     *
+     * @return view
+     */
+    public function import($request, $page_id, $errors = null)
+    {
+        // 画面呼び出し
+        return view('plugins.manage.page.page_import',[
+            "function"     => __FUNCTION__,
+            "plugin_name"  => "page",
+            'errors'       => $errors,
+        ]);
+    }
+
+    /**
+     *  CSVヘッダーチェック
+     */
+    private function checkHeader($header_columns)
+    {
+        // ヘッダーカラム
+        $header_column_format = array("page_name","permanent_link","background_color","header_color","theme","layout","base_display_flag");
+
+        if (empty($header_columns)) {
+            return array("CSVファイルが空です。");
+        }
+
+        // 項目の不足チェック
+        $shortness = array_diff($header_column_format, $header_columns);
+        if (!empty($shortness)) {
+            return array(implode(",", $shortness) . " が不足しています。");
+        }
+        // 項目の不要チェック
+        $excess = array_diff($header_columns, $header_column_format);
+        if (!empty($excess)) {
+            return array(implode(",", $excess) . " は不要です。");
+        }
+
+        return;
+    }
+
+    /**
+     *  CSVデータ行チェック
+     */
+    private function checkPageline($fp, $errors = null)
+    {
+        $line_count = 1;
+
+        while (($csv_columns = fgetcsv($fp, 0, ",")) !== FALSE) {
+            foreach($csv_columns as $column_index => $csv_column) {
+
+                switch ($column_index) {
+                case 0:
+                    if (empty($csv_column)) {
+                        $errors[] = $line_count . "行目の page_name は必須です。";
+                    }
+                    break;
+                case 1:
+                    if (empty($csv_column)) {
+                        $errors[] = $line_count . "行目の permanent_link は必須です。";
+                    }
+                    break;
+                case 2:
+                    if (empty($csv_column)) {
+                        $errors[] = $line_count . "行目の background_color は必須です。";
+                    }
+                    break;
+                case 3:
+                    if (empty($csv_column)) {
+                        $errors[] = $line_count . "行目の header_color は必須です。";
+                    }
+                    break;
+                case 4:
+                    if (empty($csv_column)) {
+                        $errors[] = $line_count . "行目の header_color は必須です。";
+                    }
+                    break;
+                case 5:
+                    if (empty($csv_column)) {
+                        $errors[] = $line_count . "行目の layout は必須です。";
+                    }
+                    break;
+                case 6:
+                    if (!$csv_column == '0' && !$csv_column == '1') {
+                        $errors[] = $line_count . "行目の base_display_flag は 0 もしくは 1 である必要があります。";
+                    }
+                    break;
+                }
+            }
+            $line_count++;
+        }
+
+        return $errors;
+    }
+
+    /**
+     *  ページインポート処理
+     *
+     * @return view
+     */
+    public function upload($request, $page_id)
+    {
+
+        // CSVファイルチェック
+        $validator = Validator::make($request->all(), [
+            'page_csv' => [
+                'required',
+                'file',
+                'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
+                'mimetypes:text/plain',
+            ],
+        ]);
+        $validator->setAttributeNames([
+            'page_csv' => 'インポートCSV',
+        ]);
+        if ($validator->fails()) {
+            return ( $this->import($request, $page_id, $validator->errors()->all()) );
+        }
+
+        // CSVファイル一時保孫
+        $path = $request->file('page_csv')->store('tmp');
+
+        // 一行目（ヘッダ）読み込み
+        $fp = fopen(storage_path('app/') . $path, 'r');
+        $header_columns = fgetcsv($fp);
+
+        // ヘッダー項目のエラーチェック
+        $error_msgs = $this->checkHeader($header_columns);
+        if (!empty($error_msgs)) {
+            return ( $this->import($request, $page_id, $error_msgs) );
+        }
+
+        // データ項目のエラーチェック
+        $error_msgs = $this->checkPageline($fp, $error_msgs);
+        if (!empty($error_msgs)) {
+            return ( $this->import($request, $page_id, $error_msgs) );
+        }
+
+        // ファイルを閉じて、開きなおす
+        fclose ($fp);
+        $fp = fopen(storage_path('app/') . $path, 'r');
+
+        // ヘッダー
+        $header_columns = fgetcsv($fp);
+
+        // データ
+        while (($csv_columns = fgetcsv($fp, 0, ",")) !== FALSE) {
+
+            // 固定リンクの先頭に / がない場合、追加する。
+            if (strncmp($csv_columns[1], '/', 1) !== 0) {
+                $csv_columns[1] = '/' . $csv_columns[1];
+            }
+
+            // ページ名をUTF-8 に変換
+            $csv_columns[0] = mb_convert_encoding($csv_columns[0], "UTF-8", "SJIS-WIN, Shift_JIS");
+
+            // ページ作成
+            $page = Page::create([
+                'page_name'         => $csv_columns[0],
+                'permanent_link'    => $csv_columns[1],
+                'background_color'  => ($csv_columns[2] == 'NULL') ? null : $csv_columns[2],
+                'header_color'      => ($csv_columns[3] == 'NULL') ? null : $csv_columns[3],
+                'theme'             => ($csv_columns[4] == 'NULL') ? null : $csv_columns[4],
+                'layout'            => ($csv_columns[5] == 'NULL') ? null : $csv_columns[5],
+                'base_display_flag' => $csv_columns[6]
+            ]);
+        }
+
+        // 一時ファイルの削除
+        fclose ($fp);
+        Storage::delete($path);
+
+        // ページ管理画面に戻る
+        return redirect("/manage/page/import");
     }
 }

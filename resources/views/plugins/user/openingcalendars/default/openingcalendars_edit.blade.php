@@ -74,6 +74,11 @@
     @endforeach
     </table>
 
+    <div class="form-group mt-3">
+        <label class="control-label">月毎のコメント</label>
+        <textarea name="comments" class="form-control" rows=2>{!!old('comments', $months->comments)!!}</textarea>
+    </div>
+
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i><span class="d-none d-md-inline"> 変更</span></button>

@@ -196,10 +196,12 @@
                     <div class="col-sm-4">
                         <label class="control-label" style="margin-top: 8px;">連絡先電話番号</label>
                         <input type="text" name="req_phone_no" value="{{old('req_phone_no')}}" class="form-control">
+                        @if ($errors && $errors->has('req_phone_no')) <div class="text-danger">{{$errors->first('req_phone_no')}}</div> @endif
                     </div>
                     <div class="col-sm-4">
                         <label class="control-label" style="margin-top: 8px;">連絡先メールアドレス</label>
                         <input type="text" name="req_email" value="{{old('req_email')}}" class="form-control">
+                        @if ($errors && $errors->has('req_email')) <div class="text-danger">{{$errors->first('req_email')}}</div> @endif
                     </div>
                     <div class="col-sm-3">
                         <label class="control-label" style="margin-top: 8px;">リクエスト</label>
@@ -260,5 +262,5 @@
 
 {{-- 一覧へ戻る --}}
 <p class="text-center" style="margin-top: 16px;">
-    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
+    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
 </p>

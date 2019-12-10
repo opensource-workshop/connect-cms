@@ -344,21 +344,30 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $id = null)
     {
+        // フレームから、新着の設定取得
+        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'whatsnew_name'     => ['required'],
             'target_plugin'     => ['required'],
+            'count'             => ['nullable', 'numeric'],
+            'days'              => ['nullable', 'numeric'],
+            'rss_count'         => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'whatsnew_name'     => '新着情報設定名称',
             'target_plugin'     => '対象プラグイン',
+            'count'             => '表示件数',
+            'days'              => '表示日数',
+            'rss_count'         => '対象RSS件数',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
 
-            if (empty($id)) {
+            if (empty($whatsnews_frame->whatsnews_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }
@@ -388,7 +397,6 @@ class WhatsnewsPlugin extends UserPluginBase
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆新着情報設定作成
             // Frame にBuckets が設定されている ＞ 既存のフレーム＆新着情報設定更新
             // （新着情報設定選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
-            $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
 
                 // FrameのバケツIDの更新
@@ -412,7 +420,7 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->count             = intval($request->count);
         $whatsnews->days              = intval($request->days);
         $whatsnews->rss               = $request->rss;
-        $whatsnews->rss_count         = $request->rss_count;
+        $whatsnews->rss_count         = intval($request->rss_count);
         $whatsnews->view_posted_name  = $request->view_posted_name;
         $whatsnews->view_posted_at    = $request->view_posted_at;
         $whatsnews->important         = $request->important;

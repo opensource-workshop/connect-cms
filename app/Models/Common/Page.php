@@ -12,21 +12,23 @@ use DB;
 use Kalnoy\Nestedset\NodeTrait;
 
 use App\Models\Core\Configs;
+use App\Traits\ConnectCommonTrait;
 
 class Page extends Model
 {
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'path', 'base_display_flag'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'ip_address'];
 
     use NodeTrait;
+    use ConnectCommonTrait;
 
     /**
      *  言語設定があれば、特定の言語ページのみに絞る
      *
      */
-    public static function getPages($current_page_obj = null)
+    public static function getPages($current_page_obj = null, $menu = null, $setting_mode = false)
     {
         // current_page_obj がない場合は、ページデータを全て取得（管理画面など）
         // 表示順は入れ子集合モデルの順番
@@ -34,13 +36,25 @@ class Page extends Model
             return self::defaultOrder()->get();
         }
 
+        // メニューで表示するページが絞られている場合は、選択したページのみ取得する。
+        $where_page_ids = array();
+        if (!empty($menu) && $menu->select_flag == 1 && !empty($menu->page_ids)) {
+            $where_page_ids = explode(',', $menu->page_ids);
+        }
+
         // 多言語の使用有無取得
         $language_multi_on_record = Configs::where('name', 'language_multi_on')->first();
         $language_multi_on = ($language_multi_on_record) ? $language_multi_on_record->value : null;
 
-        // 多言語モードでない場合はページデータを全て取得
-        if (!$language_multi_on) {
-            return self::defaultOrder()->get();
+        // 多言語モードでない場合 or 設定モードの場合 は表示設定されているページデータを全て取得
+        if (!$language_multi_on || $setting_mode) {
+
+            return self::defaultOrder()->where(function ($query_menu) use ($where_page_ids) {
+                             // メニューによるページ選択
+                             if (!empty($where_page_ids)) {
+                                 $query_menu->whereIn('id', $where_page_ids);
+                             }
+                         })->get();
         }
 
         // 使用する言語リストの取得
@@ -73,14 +87,29 @@ class Page extends Model
                                }
                                $query->where('permanent_link', 'not like', '%' . $language->additional1 . '%');
                            }
-                      })
-                      ->get();
+                       })
+                       ->where(function ($query_menu) use ($where_page_ids) {
+                           // メニューによるページ選択
+                           if (!empty($where_page_ids)) {
+                               $query_menu->whereIn('id', $where_page_ids);
+                           }
+                       })
+                       ->get();
+
+//Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
+
             return $ret;
         }
         else {
             return self::defaultOrder()
                        ->where('permanent_link', 'like', '%/' . $current_language . '/%')
                        ->orWhere('permanent_link', '/' . $current_language)
+                       ->where(function ($query_menu) use ($where_page_ids) {
+                           // メニューによるページ選択
+                           if (!empty($where_page_ids)) {
+                               $query_menu->whereIn('id', $where_page_ids);
+                           }
+                       })
                        ->get();
         }
     }
@@ -91,15 +120,16 @@ class Page extends Model
      * @param int $frame_id
      * @return view
      */
-    public static function defaultOrderWithDepth($format = null, $current_page_obj = null)
+    public static function defaultOrderWithDepth($format = null, $current_page_obj = null, $menu = null, $setting_mode = false)
     {
         // ページデータを全て取得
         // 表示順は入れ子集合モデルの順番
-        $pages = self::getPages($current_page_obj);
+        $pages = self::getPages($current_page_obj, $menu, $setting_mode);
+        //Log::debug($pages);
 
         // メニューの階層を表現するために、一度ツリーにしたものを取得し、クロージャで深さを追加
         $tree = $pages->toTree();
-        //Log::debug($tree);
+        //Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
 
         // クロージャでページ配列を再帰ループし、深さを追加する。
         // テンプレートでは深さをもとにデザイン処理する。
@@ -129,5 +159,39 @@ class Page extends Model
     public function getLinkUrl()
     {
         return $this->permanent_link;
+    }
+
+    /**
+     *  CSS セレクタ用クラス用取得
+     *
+     */
+    public function getPermanentlinkClassname()
+    {
+        return str_replace('/', '-', trim($this->permanent_link, '/'));
+    }
+
+    /**
+     *  表示可否の判断
+     *
+     */
+    public function isView($check_ip_only = false)
+    {
+        // displayフラグ（ページの継承を加味した値）が 0 なら非表示
+        if ($check_ip_only == false && $this->display_flag == 0) {
+            return false;
+        }
+
+        // IP アドレス制限があれば、IP アドレスチェック
+        if (!empty($this->ip_address)) {
+
+            $ip_addresses = explode(',', $this->ip_address);
+
+            foreach($ip_addresses as $ip_address) {
+                if (!$this->isRangeIp(\Request::ip(), trim($ip_address))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

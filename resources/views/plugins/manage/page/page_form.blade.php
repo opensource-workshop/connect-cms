@@ -84,6 +84,13 @@
                     </div>
                 </div>
             </div>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">IPアドレス制限</label>
+                <div class="col-md-9">
+                    <input type="text" name="ip_address" id="ip_address" value="{{$page->ip_address}}" class="form-control">
+                    <small class="form-text text-muted">カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
+                </div>
+            </div>
 
             <!-- Add or Update Page Button -->
             <div class="form-group">

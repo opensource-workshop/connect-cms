@@ -7,21 +7,21 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->isView())
+@if ($children->display_flag == 1)
 
-    @if ($children->id == $page_id)
-    <a href="{{ url("$children->permanent_link") }}" class="list-group-item active">
-    @else
-    <a href="{{ url("$children->permanent_link") }}" class="list-group-item">
-    @endif
+    <div class="custom-control custom-checkbox">
+        <input type="checkbox" class="custom-control-input" id="page_select{{$children->id}}" name="page_select[]" value="{{$children->id}}" @if ($menu && $menu->onPage($children->id)) checked @endif />
+        <label class="custom-control-label" for="page_select{{$children->id}}">
+
         {{-- 各ページの深さをもとにインデントの表現 --}}
         @for ($i = 0; $i < $children->depth; $i++)
             @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
         @endfor
         {{$children->page_name}}
-    </a>
+        </label>
+    </div>
 
     @if ($children->children && count($children->children) > 0)
-        @include('plugins.user.menus.default.menu_children',['children' => $children->children[0]])
+        @include('plugins.user.menus.default.menus_select_children',['children' => $children->children[0]])
     @endif
 @endif

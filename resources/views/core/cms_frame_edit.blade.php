@@ -34,14 +34,14 @@
     <form action="/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST" class="mt-3">
         {{ csrf_field() }}
         <div class="form-group row mx-0">
-            <label for="page-name" class="{{$class_label}}">フレームタイトル</label>
+            <label class="{{$class_label}}">フレームタイトル</label>
             <div class="{{$class_input}}">
                 <input type="text" name="frame_title" id="frame_title" class="form-control" value="{{$frame->frame_title}}">
             </div>
         </div>
 
         <div class="form-group row mx-0">
-            <label for="page-name" class="{{$class_label}}">フレームデザイン</label>
+            <label class="{{$class_label}}">フレームデザイン</label>
             <div class="{{$class_input}}">
                 <select class="form-control" name="frame_design" id="frame_design">
                     <option value="">Choose...</option>
@@ -57,7 +57,7 @@
         </div>
 
         <div class="form-group row mx-0">
-            <label for="page-name" class="{{$class_label}}">フレーム幅</label>
+            <label class="{{$class_label}}">フレーム幅</label>
             <div class="{{$class_input}}">
                 <select class="form-control" name="frame_col" id="frame_col">
                     <option value="">Choose...</option>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="form-group row mx-0">
-            <label for="page-name" class="{{$class_label}}">ブラウザ幅</label>
+            <label class="{{$class_label}}">ブラウザ幅</label>
             <div class="{{$class_input}} d-flex align-items-center">
                 <div class="custom-control custom-checkbox">
                     @if($frame->browser_width == "100%")
@@ -107,7 +107,7 @@
         {{-- 新着の表示制限を行うプラグインをConfig ファイルで設定 --}}
         @if (Config::get("connect.CC_DISABLE_WHATSNEWS_PLUGIN.$frame->plugin_name"))
         <div class="form-group row mx-0">
-            <label for="page-name" class="{{$class_label}}">新着の表示制限</label>
+            <label class="{{$class_label}}">新着の表示制限</label>
             <div class="{{$class_input}} d-flex align-items-center">
                 <div class="custom-control custom-checkbox">
                     @if($frame->disable_whatsnews)
@@ -124,7 +124,7 @@
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
         @if ($frame->area_id != 2)
         <div class="form-group row mx-0">
-            <label for="page-name" class="{{$class_label}}">フレーム継承設定</label>
+            <label class="{{$class_label}}">フレーム継承設定</label>
             <div class="{{$class_input}} d-flex align-items-center">
                 <div class="custom-control custom-checkbox">
                     @if($frame->page_only)
@@ -137,6 +137,13 @@
             </div>
         </div>
         @endif
+
+        <div class="form-group row mx-0">
+            <label class="{{$class_label}}">class名</label>
+            <div class="{{$class_input}}">
+                <input type="text" name="classname" id="classname" class="form-control" value="{{$frame->classname}}">
+            </div>
+        </div>
 
         <div class="form-group row mx-0">
             <div class="offset-md-3 {{$class_input}}">

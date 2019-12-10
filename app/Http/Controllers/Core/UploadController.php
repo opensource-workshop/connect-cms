@@ -32,8 +32,8 @@ class UploadController extends ConnectController
 
     use ConnectCommonTrait;
 
-    var $directory_base = "uploads/";
-    var $directory_file_limit = 1000;
+//    var $directory_base = "uploads/";
+//    var $directory_file_limit = 1000;
 
     /**
      *  ファイル送出
@@ -172,20 +172,20 @@ EOD;
      *  対象ディレクトリの取得
      *
      */
-    private function getDirectory($file_id)
-    {
-        // ファイルID がなければ0ディレクトリを返す。
-        if (empty($file_id)) {
-            return $this->directory_base . '0';
-        }
-        // 1000で割った余りがディレクトリ名
-        $quotient = floor($file_id / $this->directory_file_limit);
-        $remainder = $file_id % $this->directory_file_limit;
-        $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
-        $directory = $this->directory_base . $sub_directory;
-
-        return $directory;
-    }
+//    private function getDirectory($file_id)
+//    {
+//        // ファイルID がなければ0ディレクトリを返す。
+//        if (empty($file_id)) {
+//            return $this->directory_base . '0';
+//        }
+//        // 1000で割った余りがディレクトリ名
+//        $quotient = floor($file_id / $this->directory_file_limit);
+//        $remainder = $file_id % $this->directory_file_limit;
+//        $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
+//        $directory = $this->directory_base . $sub_directory;
+//
+//        return $directory;
+//    }
 
     /**
      *  対象ディレクトリの取得、なければ作成も。

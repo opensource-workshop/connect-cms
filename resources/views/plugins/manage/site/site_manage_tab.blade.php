@@ -11,6 +11,11 @@
 @else
     <li class="nav-item"><a href="{{url('/manage/site')}}" class="nav-link">サイト基本設定</a></li>
 @endif
+@if ($function == "meta")
+    <li class="nav-item"><a href="{{url('/manage/site/meta')}}" class="nav-link active">meta情報</a></li>
+@else
+    <li class="nav-item"><a href="{{url('/manage/site/meta')}}" class="nav-link">meta情報</a></li>
+@endif
 @if ($function == "layout")
     <li class="nav-item"><a href="{{url('/manage/site/layout')}}" class="nav-link active">レイアウト設定</a></li>
 @else

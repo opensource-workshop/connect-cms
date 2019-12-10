@@ -37,10 +37,13 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveLayout"]       = array('admin_site');
         $role_ckeck_table["categories"]       = array('admin_site');
         $role_ckeck_table["saveCategories"]   = array('admin_site');
+        $role_ckeck_table["deleteCategories"] = array('admin_site');
         $role_ckeck_table["loginPermit"]      = array('admin_site');
         $role_ckeck_table["saveLoginPermit"]  = array('admin_site');
         $role_ckeck_table["languages"]        = array('admin_site');
         $role_ckeck_table["saveLanguages"]    = array('admin_site');
+        $role_ckeck_table["meta"]             = array('admin_site');
+        $role_ckeck_table["saveMeta"]         = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -271,6 +274,17 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
+     *  カテゴリ削除処理
+     */
+    public function deleteCategories($request, $id)
+    {
+        // カテゴリ削除
+        Categories::where('id', $id)->delete();
+
+        return $this->categories($request, $id, null);
+    }
+
+    /**
      *  多言語設定　表示画面
      */
     public function languages($request, $id, $errors = null)
@@ -435,5 +449,44 @@ class SiteManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/site/layout");
+    }
+
+    /**
+     *  meta設定　表示画面
+     */
+    public function meta($request, $id, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 設定されているmeta情報のリスト取得
+        $meta = $this->getConfigs(null, 'meta');
+
+        return view('plugins.manage.site.meta',[
+            "function"  => __FUNCTION__,
+            "id"        => $id,
+            "meta"      => $meta,
+        ]);
+    }
+
+    /**
+     *  meta設定　更新
+     */
+    public function saveMeta($request, $page_id = null, $errors = array())
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // description
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'description'],
+            ['category' => 'meta',
+             'value'    => $request->description]
+        );
+
+        // ページ管理画面に戻る
+        return redirect("/manage/site/meta");
     }
 }

@@ -4,6 +4,7 @@ namespace App\Plugins\User\Openingcalendars;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use Carbon\Carbon;
@@ -12,8 +13,10 @@ use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Uploads;
 use App\Models\User\Openingcalendars\Openingcalendars;
 use App\Models\User\Openingcalendars\OpeningcalendarsDays;
+use App\Models\User\Openingcalendars\OpeningcalendarsMonths;
 use App\Models\User\Openingcalendars\OpeningcalendarsPatterns;
 
 use App\Plugins\User\UserPluginBase;
@@ -44,8 +47,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listPatterns'];
-        $functions['post'] = ['edit', 'savePatterns', 'deletePatterns'];
+        $functions['get']  = ['listPatterns', 'editYearschedule', 'sendYearschedule'];
+        $functions['post'] = ['edit', 'savePatterns', 'deletePatterns', 'saveYearschedule'];
         return $functions;
     }
 
@@ -75,9 +78,13 @@ class OpeningcalendarsPlugin extends UserPluginBase
                           'openingcalendars.month_format',
                           'openingcalendars.week_format',
                           'openingcalendars.view_before_month',
-                          'openingcalendars.view_after_month'
+                          'openingcalendars.view_after_month',
+                          'openingcalendars.yearschedule_uploads_id',
+                          'openingcalendars.smooth_scroll',
+                          'uploads.client_original_name'
                          )
                  ->leftJoin('openingcalendars', 'openingcalendars.bucket_id', '=', 'frames.bucket_id')
+                 ->leftJoin('uploads', 'uploads.id', '=', 'openingcalendars.yearschedule_uploads_id')
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
@@ -250,20 +257,33 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $dates = $this->getCalendarDates($view_ym);
         //print_r($dates);
 
+        // 月のコメント
+        $months = OpeningcalendarsMonths::where('openingcalendars_id', $openingcalendar_frame->openingcalendars_id)
+                                        ->where('month', '>=', $view_before_ym)
+                                        ->where('month', '<=', $view_after_ym)
+                                        ->orderBy('month', 'asc')
+                                        ->get();
+        foreach($months as $month) {
+            $view_months2[$month->month]['comments'] = $month->comments;
+        }
+        //print_r($view_months2);
+
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'openingcalendars', [
             'openingcalendar_frame' => $openingcalendar_frame,
-            'dates'                => $dates,
-            'view_ym'              => $view_ym,
-            'view_ym_str'          => $view_ym_str,
-            'view_days'            => $view_days,
-            'calendars'            => $calendars,
-            'patterns'             => $patterns,
-            'patterns_chunks'      => $patterns_chunks,
-            'view_months'          => $view_months2,
-            'view_months_patterns' => $view_months_patterns,
-            'default_disabled'     => $default_disabled,
+            'dates'                 => $dates,
+            'view_ym'               => $view_ym,
+            'view_ym_str'           => $view_ym_str,
+            'view_days'             => $view_days,
+            'calendars'             => $calendars,
+            'patterns'              => $patterns,
+            'patterns_chunks'       => $patterns_chunks,
+            'view_months'           => $view_months2,
+            'view_months_patterns'  => $view_months_patterns,
+            'default_disabled'      => $default_disabled,
+//            'months'                => $months,
         ]);
     }
 
@@ -344,6 +364,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
             $edit_days[date('j', strtotime($openingcalendars_day->opening_date))] = $openingcalendars_day;
         }
 
+        // 月のコメント
+        $months = OpeningcalendarsMonths::where('month', $edit_ym)
+                                        ->where('openingcalendars_id', $openingcalendar_frame->openingcalendars_id)
+                                        ->first();
+        if (empty($months)) {
+            $months = new OpeningcalendarsMonths();
+        }
+
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'openingcalendars_edit', [
@@ -353,6 +381,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
             'edit_ym'               => $edit_ym,
             'select_ym'             => $select_ym,
             'week_names'            => $week_names,
+            'months'                => $months,
         ])->withInput($request->all);
     }
 
@@ -381,6 +410,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
                                                       'openingcalendars_patterns_id' => $patterns_id,
                                                      ]);
             }
+        }
+
+        // 月のコメント
+        if ($request->comments) {
+            OpeningcalendarsMonths::updateOrCreate(['month'               => $target_ym,
+                                                    'openingcalendars_id' => $openingcalendar_frame->openingcalendars_id],
+                                                   ['openingcalendars_id' => $openingcalendar_frame->openingcalendars_id,
+                                                    'comments'            => $request->comments]);
         }
 
         // 登録後は編集画面を呼ぶ。
@@ -541,6 +578,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $openingcalendars->week_format              = $request->week_format;
         $openingcalendars->view_before_month        = $request->view_before_month;
         $openingcalendars->view_after_month         = $request->view_after_month;
+        $openingcalendars->smooth_scroll            = $request->smooth_scroll;
 
         // データ保存
         $openingcalendars->save();
@@ -715,5 +753,120 @@ class OpeningcalendarsPlugin extends UserPluginBase
         OpeningcalendarsPatterns::where('id', $id)->delete();
 
         return $this->listPatterns($request, $page_id, $frame_id, $id, null, true);
+    }
+
+    /**
+     * 年間カレンダーの編集画面
+     */
+    public function editYearschedule($request, $page_id, $frame_id, $id = null, $errors = null)
+    {
+        // 権限チェック（deletePatterns 関数は標準チェックにないので、独自チェック）
+        if ($this->can('role_article')) {
+            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
+        }
+
+        // 開館カレンダー＆フレームデータ
+        $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
+
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'openingcalendars_edit_yearschedule', [
+            'openingcalendar_frame' => $openingcalendar_frame,
+            'errors'                => $errors,
+        ]);
+    }
+
+    /**
+     *  年間カレンダー登録処理
+     *
+     * @return view
+     */
+    public function saveYearschedule($request, $page_id, $frame_id, $id = null)
+    {
+        // 権限チェック（deletePatterns 関数は標準チェックにないので、独自チェック）
+        if ($this->can('role_article')) {
+            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
+        }
+
+        // 開館カレンダー＆フレームデータ
+        $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
+
+        // 年間カレンダーがアップロードされた。
+        if ($request->hasFile('yearschedule_pdf')) {
+
+            // PDFファイルチェック
+            $validator = Validator::make($request->all(), [
+                'yearschedule_pdf' => [
+                    'required',
+                    'file',
+                    'mimes:pdf',
+                    'mimetypes:application/pdf',
+                ],
+            ]);
+            $validator->setAttributeNames([
+                'yearschedule_pdf' => '年間カレンダーPDF',
+            ]);
+            if ($validator->fails()) {
+                return ( $this->editYearschedule($request, $page_id, $frame_id, null, $validator->errors()->all()) );
+            }
+
+            // uploads テーブルに情報追加、ファイルのid を取得する
+            $upload = Uploads::create([
+                'client_original_name' => $request->file('yearschedule_pdf')->getClientOriginalName(),
+                'mimetype'             => $request->file('yearschedule_pdf')->getClientMimeType(),
+                'extension'            => $request->file('yearschedule_pdf')->getClientOriginalExtension(),
+                'size'                 => $request->file('yearschedule_pdf')->getClientSize(),
+                'plugin_name'          => 'openingcalendars',
+             ]);
+
+            // DBに情報保存
+            Openingcalendars::where('id', $openingcalendar_frame->openingcalendars_id)
+                            ->update(['yearschedule_uploads_id' => $upload->id]);
+
+            // PDFファイル保存
+            $directory = $this->getDirectory($upload->id);
+            $upload_path = $request->file('yearschedule_pdf')->storeAs($directory, $upload->id . '.' . $request->file('yearschedule_pdf')->getClientOriginalExtension());
+
+            //$path = $request->file('yearschedule_pdf')->storeAs('plugins/openingcalendars', $openingcalendar_frame->openingcalendars_id . '.pdf');
+        }
+
+        // 年間カレンダーの削除。
+        if ($request->has('delete_yearschedule_pdf') && $request->delete_yearschedule_pdf == '1') {
+
+            // ファイル削除
+            $directory = $this->getDirectory($openingcalendar_frame->yearschedule_uploads_id);
+            Storage::delete($directory . '/' . $openingcalendar_frame->yearschedule_uploads_id . '.pdf');
+
+            // uploads テーブルの情報削除
+            Uploads::where('id', $openingcalendar_frame->yearschedule_uploads_id)->delete();
+
+            // DBに情報保存
+            Openingcalendars::where('id', $openingcalendar_frame->openingcalendars_id)
+                            ->update(['yearschedule_uploads_id'=> null]);
+
+        }
+
+        // アップロード画面に戻る
+        return $this->editYearschedule($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     *  年間カレンダーPDF送出
+     *
+     */
+    public function sendYearschedule($request, $page_id, $frame_id, $id = null)
+    {
+
+        // 開館カレンダー＆フレームデータ
+        $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
+
+        // ファイルを返す(PDFの場合はinline)
+        $content_disposition = '';
+        //return response()
+        //         ->file( storage_path('app/plugins/openingcalendars/') . $openingcalendar_frame->openingcalendars_id . '.pdf');
+
+        echo response()->file( storage_path('app/plugins/openingcalendars/') . $openingcalendar_frame->openingcalendars_id . '.pdf');
+        exit;
     }
 }

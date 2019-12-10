@@ -11,6 +11,9 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+{{-- 機能選択タブ --}}
+@include('plugins.manage.page.page_manage_tab')
+
 {{-- 入力フォーム --}}
 @include('plugins.manage.page.page_form')
 

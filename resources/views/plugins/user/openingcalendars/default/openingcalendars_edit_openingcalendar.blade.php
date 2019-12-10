@@ -72,7 +72,8 @@
         <label class="control-label">週の表示形式 <label class="badge badge-danger">必須</label></label>
         <select class="form-control" name="week_format" class="form-control">
             <option value=""></option>
-            <option value="1" @if(Input::old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN</option>
+            <option value="1" @if(Input::old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN, MON, ...</option>
+            <option value="2" @if(Input::old('week_format', $openingcalendar->week_format)=="2") selected @endif>日, 月, 火, ...</option>
         </select>
         @if ($errors && $errors->has('week_format')) <div class="text-danger">{{$errors->first('week_format')}}</div> @endif
     </div>
@@ -87,6 +88,26 @@
         <label class="control-label">未来の表示月数</label>
         <input type="text" name="view_after_month" value="{{old('view_after_month', $openingcalendar->view_after_month)}}" class="form-control">
         @if ($errors && $errors->has('view_after_month')) <div class="text-danger">{{$errors->first('view_after_month')}}</div> @endif
+    </div>
+
+    <div class="form-group">
+        <label class="col-form-label">スムーズスクロール</label><br />
+        <div class="custom-control custom-radio custom-control-inline">
+            @if($openingcalendar->smooth_scroll == 0)
+                <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input" checked="checked">
+            @else
+                <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input">
+            @endif
+            <label class="custom-control-label" for="smooth_scroll_off">しない</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            @if($openingcalendar->smooth_scroll == 1)
+                <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input" checked="checked">
+            @else
+                <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input">
+            @endif
+            <label class="custom-control-label" for="smooth_scroll_on">する</label>
+        </div>
     </div>
 
     {{-- Submitボタン --}}
