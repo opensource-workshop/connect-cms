@@ -19,7 +19,6 @@
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
 
-
                     <li class="nav-item dropdown">
                     {{-- カレント --}}
                     @if ($page_obj->id == $page_id)
@@ -44,8 +43,12 @@
                         </div>
                     </li>
                 @else
-                    <li class="nav-item active">
+                    <li class="nav-item">
+                    @if ($page_obj->id == $page_id)
+                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}">
+                    @else
                         <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
+                    @endif
                             {{$page_obj->page_name}}
                         </a>
                     </li>
@@ -54,10 +57,18 @@
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
                     <li class="nav-item dropdown">
+                    @if ($page_obj->id == $page_id)
+                        <a class="nav-link dropdown-toggle active" href="{{ url("$page_obj->permanent_link") }}">
+                    @else
                         <a class="nav-link dropdown-toggle" href="{{ url("$page_obj->permanent_link") }}">
+                    @endif
                 @else
                     <li class="nav-item">
+                    @if ($page_obj->id == $page_id)
+                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}">
+                    @else
                         <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
+                    @endif
                 @endif
                         {{$page_obj->page_name}}
                             @if (count($page_obj->children) > 0)
