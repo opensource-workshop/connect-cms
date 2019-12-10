@@ -15,6 +15,7 @@ use App\Models\Common\Page;
 use DB;
 
 use App\Models\User\Reservations\Reservations;
+use App\Models\User\Reservations\reservations_facilities;
 //use App\Models\User\Reservations\ReservationsNos;
 //use App\Models\User\Reservations\ReservationsPosts;
 //use App\Models\User\Reservations\ReservationsViews;
@@ -49,7 +50,7 @@ class ReservationsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['week', 'month', 'editBucketsRoles', 'editFacilities'];
-        $functions['post'] = ['saveBucketsRoles'];
+        $functions['post'] = ['saveBucketsRoles', 'addFacility', 'updateFacility', 'updateSequence'];
         return $functions;
     }
 
@@ -60,7 +61,7 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function getFirstFrameEditAction()
     {
-        return "editFacilities";
+        return "editBuckets";
     }
 
     /**
@@ -99,6 +100,14 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
+     *  フレームデータの取得
+     */
+    private function getFrame($frame_id)
+    {
+        return DB::table('frames')->select('frames.*')->where('frames.id', $frame_id)->first();
+    }
+
+    /**
      *  施設予約登録チェック設定
      */
     private function makeValidator($request)
@@ -115,20 +124,6 @@ class ReservationsPlugin extends UserPluginBase
             //'post_text'  => '本文',
         ]);
         return $validator;
-    }
-
-    /**
-     *  施設予約 登録一覧取得
-     */
-    private function getPosts($blog_frame)
-    {
-        $reservations = null;
-
-        // 削除されていないデータでグルーピングして、最新のIDで全件
-        $reservations = null;
-//        $reservations = Reservations::where('年月 or 週')->get();
-
-        return $blogs_posts;
     }
 
     /**
@@ -359,10 +354,30 @@ class ReservationsPlugin extends UserPluginBase
                            ->leftJoin('reservations', 'reservations.bucket_id', '=', 'frames.bucket_id')
                            ->where('frames.id', $frame_id)->first();
 
-        // 施設取得（1ページの表示件数指定）
-        $reservations = array();
-        $reservations = Reservations::orderBy('created_at', 'desc')
-                      ->paginate(10);
+        // 施設予約の取得
+        $query = Reservations::query();
+        $query->select(
+            'reservations.id',
+            'reservations.bucket_id',
+            'reservations.reservation_name',
+            'reservations.initial_display_setting',
+            'reservations.created_at',
+            DB::raw('GROUP_CONCAT(reservations_facilities.facility_name SEPARATOR \'\n\') as facility_names'),
+        );
+        $query->leftjoin('reservations_facilities',function($join) {
+            $join->on('reservations.id','=','reservations_facilities.reservations_id');
+        });
+        $query->groupBy(
+            'reservations.id',
+            'reservations.bucket_id',
+            'reservations.reservation_name',
+            'reservations.initial_display_setting',
+            'reservations.created_at',
+        );
+        $query->orderBy('reservations.created_at', 'desc');
+        $reservations = $query->paginate(10);
+        // $reservations = Reservations::orderBy('created_at', 'desc')
+        //               ->paginate(10);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -390,8 +405,8 @@ class ReservationsPlugin extends UserPluginBase
         // セッション初期化などのLaravel 処理
         $request->flash();
 
-        // 施設予約＆フレームデータ
-        $reservation_frame = $this->getReservationsFrame($frame_id);
+        // フレームデータ
+        $reservation_frame = $this->getFrame($frame_id);
 
         // 施設データ
         $reservation = new Reservations();
@@ -491,10 +506,10 @@ class ReservationsPlugin extends UserPluginBase
         $reservations->save();
 
         if(empty($request->reservations_id)){
-            // 新規登録時：施設予約選択画面を呼び出す
+            // 新規登録後は、施設予約選択画面を呼び出す
             return $this->listBuckets($request, $page_id, $frame_id, null);
         }else{
-            // 更新時：設定変更画面を更新モードで呼び出す
+            // 更新後は、設定変更画面を更新モードで呼び出す
             $create_flag = false;
             return $this->editBuckets($request, $page_id, $frame_id, $request->reservations_id, $create_flag, $message);
         }
@@ -540,36 +555,170 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     * 施設登録・変更画面の表示
+     * 施設の設定画面の表示
      */
-    public function editFacilities($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
+    public function editFacilities($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
+        // --- 基本データの取得
         // 施設予約＆フレームデータ
-        $reservation_frame = $this->getReservationsFrame($frame_id);
+        $reservation_frame = $this->getFrame($frame_id);
 
         // 施設データ
         $reservation = new Reservations();
 
         // id が渡ってくればid が対象
-        if (!empty($id)) {
-            $reservation = Reservations::where('id', $id)->first();
+        if (!empty($reservations_id)) {
+            $reservation = Reservations::where('id', $reservations_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($reservation_frame->bucket_id) && $create_flag == false) {
+        else if (!empty($reservation_frame->bucket_id)) {
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
-        // 表示テンプレートを呼び出す。
+        // フレームに紐づく施設予約ID を探して取得
+        $reservation_db = $this->getreservation($frame_id);
+
+        // 施設予約データがない場合は0をセット
+        $reservations_id = empty($reservation_db) ? 0 : $reservation_db->id;
+
+        // --- 画面に値を渡す準備
+        $facilities = reservations_facilities::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
+
+        // 編集画面テンプレートを呼び出す。
         return $this->view(
-            'reservations_edit', [
-            'reservation_frame'  => $reservation_frame,
-            'reservation'        => $reservation,
-            'create_flag'        => $create_flag,
-            'message'            => $message,
-            'errors'             => $errors,
-        ])->withInput($request->all);
+            'reservations_facilities_edit', [
+            'reservations_id' => $reservations_id,
+            'reservation'     => $reservation,
+            'facilities'     => $facilities,
+            'message'     => $message,
+            'errors'     => $errors,
+        ]);
+    }
+
+    /**
+     *  フレームIDに紐づく施設予約データを取得
+     */
+    private function getReservation($frame_id)
+    {
+        $reservation = DB::table('reservations')
+            ->select('reservations.*')
+            ->join('frames', 'frames.bucket_id', '=', 'reservations.bucket_id')
+            ->where('frames.id', '=', $frame_id)
+            ->first();
+
+        return $reservation;
+    }
+
+    /**
+     * 施設の登録
+     */
+    public function addFacility($request, $page_id, $frame_id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'facility_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'facility_name'  => '施設名',
+        ]);
+
+        $erros = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $erros = $validator->errors();
+            return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = reservations_facilities::query()->where('reservations_id', $request->reservations_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        $facility = new reservations_facilities();
+        $facility->reservations_id = $request->reservations_id;
+        $facility->facility_name = $request->facility_name;
+        $facility->display_sequence = $max_display_sequence;
+        $facility->save();
+        $message = '施設【 '. $request->facility_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+    }
+
+    /**
+     * 施設の更新
+     */
+    public function updateFacility($request, $page_id, $frame_id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_facility_name = "facility_name_"."$request->facility_id";
+        $str_hide_flag = "hide_flag_"."$request->facility_id";
+
+        // エラーチェック用に値を詰める
+        $request->merge([
+            "facility_name" => $request->$str_facility_name,
+            "hide_flag" => $request->$str_hide_flag,
+        ]);
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'facility_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'facility_name'  => '施設名',
+        ]);
+
+        $erros = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $erros = $validator->errors();
+            return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+        }
+
+        // 施設の更新処理
+        $facility = reservations_facilities::query()->where('reservations_id', $request->reservations_id)->where('id', $request->facility_id)->first();
+        $facility->facility_name = $request->facility_name;
+        $facility->hide_flag = $request->hide_flag;
+        $facility->save();
+        $message = '施設【 '. $request->facility_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+    }
+
+    /**
+     * 施設の更新
+     */
+    public function updateSequence($request, $page_id, $frame_id)
+    {
+        // ボタンが押された行の施設データ
+        $target_facility = reservations_facilities::query()
+            ->where('reservations_id', $request->reservations_id)
+            ->where('id', $request->facility_id)
+            ->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = reservations_facilities::query()
+            ->where('reservations_id', $request->reservations_id);
+        $pair_facility = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_facility_display_sequence = $target_facility->display_sequence;
+        $pair_facility_display_sequence = $pair_facility->display_sequence;
+
+        // 入れ替えて更新
+        $target_facility->display_sequence = $pair_facility_display_sequence;
+        $target_facility->save();
+        $pair_facility->display_sequence = $target_facility_display_sequence;
+        $pair_facility->save();
+
+        $message = '施設【 '. $target_facility->facility_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, null);
     }
 }

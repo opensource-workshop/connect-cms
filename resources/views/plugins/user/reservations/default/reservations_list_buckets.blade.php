@@ -22,20 +22,34 @@
         <thead>
             <tr>
                 <th></th>
-                <th>施設予約名</th>
+                <th>コンテンツ名</th>
                 <th>施設名</th>
+                <th>コンテンツ編集</th>
                 <th></th>
-                <th>作成日</th>
             </tr>
         </thead>
         <tbody>
         @foreach($reservations as $reservation)
             <tr @if ($reservation_frame->reservations_id == $reservation->id) class="active"@endif>
+
+                {{-- 選択ラジオ --}}
                 <td><input type="radio" value="{{$reservation->bucket_id}}" name="select_bucket"@if ($reservation_frame->bucket_id == $reservation->bucket_id) checked @endif></input></td>
+                {{-- 施設予約名 --}}
                 <td>{{$reservation->reservation_name}}</td>
-                <td></td>
-                <td><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}'"><i class="far fa-edit"></i> 設定変更</button></td>
-                <td>{{$reservation->created_at}}</td>
+                {{-- 施設名 --}}
+                <td>{!! nl2br(e($reservation->facility_names)) !!}</td>
+                {{-- 設定変更ボタン --}}
+                <td>
+                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
+                        <i class="far fa-edit"></i> 設定変更
+                    </button>
+                </td>
+                {{-- 施設登録・変更ボタン --}}
+                <td>
+                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
+                        <i class="far fa-edit"></i> 施設登録・変更
+                    </button>
+                </td>
             </tr>
         @endforeach
         </tbody>
