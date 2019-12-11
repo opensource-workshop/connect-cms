@@ -16,6 +16,7 @@ use DB;
 
 use App\Models\User\Reservations\Reservations;
 use App\Models\User\Reservations\reservations_facilities;
+use App\Models\User\Reservations\reservations_columns;
 //use App\Models\User\Reservations\ReservationsNos;
 //use App\Models\User\Reservations\ReservationsPosts;
 //use App\Models\User\Reservations\ReservationsViews;
@@ -49,8 +50,22 @@ class ReservationsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['week', 'month', 'editBucketsRoles', 'editFacilities'];
-        $functions['post'] = ['saveBucketsRoles', 'addFacility', 'updateFacility', 'updateSequence'];
+        $functions['get']  = [
+            'week', 
+            'month', 
+            'editBucketsRoles', 
+            'editFacilities', 
+            'editColumns',
+        ];
+        $functions['post'] = [
+            'saveBucketsRoles', 
+            'addFacility', 
+            'updateFacility', 
+            'updateSequence', 
+            'addColumn', 
+            'updateColumn',
+            'deleteColumn',
+        ];
         return $functions;
     }
 
@@ -596,17 +611,52 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     *  フレームIDに紐づく施設予約データを取得
+     * 予約項目の設定画面の表示
      */
-    private function getReservation($frame_id)
+    public function editColumns($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
     {
-        $reservation = DB::table('reservations')
-            ->select('reservations.*')
-            ->join('frames', 'frames.bucket_id', '=', 'reservations.bucket_id')
-            ->where('frames.id', '=', $frame_id)
-            ->first();
+        if($errors){
+            // エラーあり：入力値をフラッシュデータとしてセッションへ保存
+            $request->flash();
+        }else{
+            // エラーなし：セッションから入力値を消去
+            $request->flush();
+        }
 
-        return $reservation;
+        // --- 基本データの取得
+        // 施設予約＆フレームデータ
+        $reservation_frame = $this->getFrame($frame_id);
+
+        // 施設データ
+        $reservation = new Reservations();
+
+        // id が渡ってくればid が対象
+        if (!empty($reservations_id)) {
+            $reservation = Reservations::where('id', $reservations_id)->first();
+        }
+        // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
+        else if (!empty($reservation_frame->bucket_id)) {
+            $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
+        }
+
+        // フレームに紐づく施設予約ID を探して取得
+        $reservation_db = $this->getreservation($frame_id);
+
+        // 施設予約データがない場合は0をセット
+        $reservations_id = empty($reservation_db) ? 0 : $reservation_db->id;
+
+        // --- 画面に値を渡す準備
+        $columns = reservations_columns::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
+
+        // 編集画面テンプレートを呼び出す。
+        return $this->view(
+            'reservations_columns_edit', [
+            'reservations_id' => $reservations_id,
+            'reservation'     => $reservation,
+            'columns'     => $columns,
+            'message'     => $message,
+            'errors'     => $errors,
+        ]);
     }
 
     /**
@@ -644,6 +694,61 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面を呼び出す
         return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+    }
+
+    /**
+     *  フレームIDに紐づく施設予約データを取得
+     */
+    private function getReservation($frame_id)
+    {
+        $reservation = DB::table('reservations')
+            ->select('reservations.*')
+            ->join('frames', 'frames.bucket_id', '=', 'reservations.bucket_id')
+            ->where('frames.id', '=', $frame_id)
+            ->first();
+
+        return $reservation;
+    }
+
+    /**
+     * 予約項目の登録
+     */
+    public function addColumn($request, $page_id, $frame_id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'column_name'  => ['required'],
+            'column_type'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'column_name'  => '予約項目名',
+            'column_type'  => '型',
+        ]);
+
+        $erros = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $erros = $validator->errors();
+            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = reservations_columns::query()->where('reservations_id', $request->reservations_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        $column = new reservations_columns();
+        $column->reservations_id = $request->reservations_id;
+        $column->column_name = $request->column_name;
+        $column->column_type = $request->column_type;
+        $column->required = $request->required ? \Required::on : \Required::off;
+        $column->display_sequence = $max_display_sequence;
+        $column->save();
+        $message = '予約項目【 '. $request->column_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
     }
 
     /**
@@ -689,7 +794,68 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     * 施設の更新
+     * 予約項目の更新
+     */
+    public function updateColumn($request, $page_id, $frame_id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_column_name = "column_name_"."$request->column_id";
+        $str_column_type = "column_type_"."$request->column_id";
+        $str_required = "required_"."$request->column_id";
+
+        // エラーチェック用に値を詰める
+        $request->merge([
+            "column_name" => $request->$str_column_name,
+            "column_type" => $request->$str_column_type,
+            "required" => $request->$str_required,
+        ]);
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'column_name'  => ['required'],
+            'column_type'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'column_name'  => '予約項目名',
+            'column_type'  => '型',
+        ]);
+
+        $erros = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $erros = $validator->errors();
+            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+        }
+
+        // 予約項目の更新処理
+        $column = reservations_columns::query()->where('reservations_id', $request->reservations_id)->where('id', $request->column_id)->first();
+        $column->column_name = $request->column_name;
+        $column->column_type = $request->column_type;
+        $column->required = $request->required ? \Required::on : \Required::off;
+        $column->save();
+        $message = '予約項目【 '. $request->column_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+    }
+
+    /**
+     * 予約項目の削除
+     */
+    public function deleteColumn($request, $page_id, $frame_id)
+    {
+        // 予約項目の削除処理
+        $column = reservations_columns::query()->where('reservations_id', $request->reservations_id)->where('id', $request->column_id)->first();
+        $column->delete();
+        $message = '予約項目【 '. $column->column_name .' 】を削除しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, null);
+    }
+
+    /**
+     * 施設の表示順の更新
      */
     public function updateSequence($request, $page_id, $frame_id)
     {
