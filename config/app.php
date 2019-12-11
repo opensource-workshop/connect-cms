@@ -228,6 +228,10 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'Input' => Illuminate\Support\Facades\Input::class,
         'Carbon' => Carbon\Carbon::class,
+
+        // enums
+        'Required' => \App\Enums\Required::class,
+        'ReservationColumnType' => \App\Enums\ReservationColumnType::class,
     ],
 
 ];
