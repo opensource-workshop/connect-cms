@@ -61,6 +61,18 @@
         @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
     </div>
 
+    <div class="form-group">
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" name="moderator_mail_send_flag" value="1" class="custom-control-input" id="moderator_mail_send_flag" @if(old('moderator_mail_send_flag', $opac->moderator_mail_send_flag)) checked=checked @endif>
+            <label class="custom-control-label" for="moderator_mail_send_flag">貸し出し・返却時に以下のアドレスにメール送信する</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
+        <input type="text" name="moderator_mail_send_address" value="{{old('moderator_mail_send_address', $opac->moderator_mail_send_address)}}" class="form-control">
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">

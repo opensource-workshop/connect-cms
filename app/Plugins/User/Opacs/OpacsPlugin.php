@@ -6,6 +6,7 @@ use SimpleXMLElement;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -17,6 +18,7 @@ use App\Models\User\Opacs\Opacs;
 use App\Models\User\Opacs\OpacsBooks;
 use App\Models\User\Opacs\OpacsBooksLents;
 
+use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -357,8 +359,10 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // OPAC設定
-        $opacs->opac_name  = $request->opac_name;
-        $opacs->view_count = $request->view_count;
+        $opacs->opac_name                   = $request->opac_name;
+        $opacs->view_count                  = $request->view_count;
+        $opacs->moderator_mail_send_flag    = (empty($request->moderator_mail_send_flag)) ? 0 : $request->moderator_mail_send_flag;
+        $opacs->moderator_mail_send_address = $request->moderator_mail_send_address;
 
         // データ保存
         $opacs->save();
@@ -621,6 +625,26 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
+     *  メール送信
+     */
+    private function sendMail($opacs, $subject, $content)
+    {
+        if (empty($opacs)) {
+            return;
+        }
+        if ($opacs->moderator_mail_send_flag == 0 || empty($opacs->moderator_mail_send_address)) {
+            return;
+        }
+
+        $moderator_mail_send_addresses = explode(',', $opacs->moderator_mail_send_address);
+
+        // メール送信
+        foreach($moderator_mail_send_addresses as $mail_send_address) {
+            Mail::to($mail_send_address)->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $content]));
+        }
+    }
+
+    /**
      *  貸し出し登録
      */
     public function lent($request, $page_id, $frame_id, $opacs_books_id)
@@ -662,6 +686,19 @@ class OpacsPlugin extends UserPluginBase
         $opacs_books_lents->save();
 
         $message = '貸し出し登録しました。';
+
+        // 書籍データ
+        $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
+
+        // メール送信
+        $subject = '図書を貸し出し登録しました。';
+        $content = $request->student_no . " が貸し出し登録しました。\n";
+        $content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $content .= 'タイトル：' . $opacs_books->title . "\n";
+        $content .= '返却予定日：' . $request->return_scheduled . "\n";
+
+        $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
+        $this->sendMail($opacs, $subject, $content);
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
@@ -715,6 +752,20 @@ class OpacsPlugin extends UserPluginBase
         $opacs_books_lents->save();
 
         $message = '郵送貸し出しリクエストを受け付けました。';
+
+        // 書籍データ
+        $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
+
+        // メール送信
+        $subject = '郵送貸し出しリクエストを受け付けました。';
+        $content = $request->req_student_no . " が郵送貸し出しリクエストしました。\n";
+        $content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $content .= 'タイトル：' . $opacs_books->title . "\n";
+        $content .= '連絡先電話番号：' . $request->req_phone_no . "\n";
+        $content .= '連絡先メールアドレス：' . $request->req_email . "\n";
+
+        $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
+        $this->sendMail($opacs, $subject, $content);
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
@@ -772,6 +823,19 @@ class OpacsPlugin extends UserPluginBase
         $books_lents->save();
 
         $message = '返却しました。';
+
+        // 書籍データ
+        $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
+
+        // メール送信
+        $subject = '図書を返却しました。';
+        $content = $request->return_student_no . " が返却しました。\n";
+        $content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $content .= 'タイトル：' . $opacs_books->title . "\n";
+        $content .= '返却日：' . $request->return_date . "\n";
+
+        $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
+        $this->sendMail($opacs, $subject, $content);
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());

@@ -109,7 +109,12 @@
                 <div class="row">
                     <div class="col-sm-4">
                         <label class="control-label">学籍番号</label><label class="badge badge-danger">必須</label>
-                        <input type="text" name="student_no" value="{{old('student_no')}}" class="form-control">
+                        @can("role_article")
+                            <input type="text" name="student_no" value="{{old('student_no')}}" class="form-control">
+                        @else
+                            <input type="hidden" name="student_no" value="{{old('student_no', Auth::user()->userid)}}" class="form-control">
+                            <br /><div class="card p-2">{{Auth::user()->userid}}</div>
+                        @endcan
                         @if ($errors && $errors->has('student_no')) <div class="text-danger">{{$errors->first('student_no')}}</div> @endif
                     </div>
                     <div class="col-sm-4">
@@ -166,7 +171,12 @@
                 <div class="row">
                     <div class="col-sm-4" style="margin-top: 8px;">
                         <label class="control-label">学籍番号</label><label class="badge badge-danger">必須</label>
-                        <input type="text" name="req_student_no" value="{{old('req_student_no')}}" class="form-control">
+                        @can("role_article")
+                            <input type="text" name="req_student_no" value="{{old('req_student_no')}}" class="form-control">
+                        @else
+                            <input type="hidden" name="req_student_no" value="{{old('req_student_no', Auth::user()->userid)}}" class="form-control">
+                            <br /><div class="card p-2">{{Auth::user()->userid}}</div>
+                        @endcan
                         @if ($errors && $errors->has('req_student_no')) <div class="text-danger">{{$errors->first('req_student_no')}}</div> @endif
                     </div>
 
@@ -221,7 +231,12 @@
                 <div class="row">
                     <div class="col-sm-4">
                         <label class="control-label">学籍番号</label><label class="badge badge-danger">必須</label>
-                        <input type="text" name="return_student_no" value="{{old('return_student_no')}}" class="form-control">
+                        @can("role_article")
+                            <input type="text" name="return_student_no" value="{{old('return_student_no')}}" class="form-control">
+                        @else
+                            <input type="hidden" name="return_student_no" value="{{old('return_student_no', Auth::user()->userid)}}" class="form-control">
+                            <br /><div class="card p-2">{{Auth::user()->userid}}</div>
+                        @endcan
                         @if ($errors && $errors->has('return_student_no')) <div class="text-danger">{{$errors->first('return_student_no')}}</div> @endif
                     </div>
                     <div class="col-sm-4">
