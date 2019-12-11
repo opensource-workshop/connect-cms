@@ -620,10 +620,13 @@ trait ConnectCommonTrait
         // NetCommons2 認証
         if ($auth_method->value == 'netcommons2') {
 
-// http://nc2.localhost?action=connectauthapi_view_main_init&login_id=nagahara&site_key=seisa_library&check_value=bf4049c65f6dc9c2d5ea0f929cb5e51b
-
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
+            // Log::debug($request['password']);
+            // Log::debug($auth_method['additional3']);
+            // Log::debug(md5($request['password']));
+            // Log::debug(md5(md5($request['password']) . $auth_method['additional3']));
+            // Log::debug($request_url);
 
             // NC2 をCall
             $ch = curl_init();
