@@ -5,7 +5,9 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
+use App\User;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
@@ -598,5 +600,65 @@ trait ConnectCommonTrait
         $directory = $this->directory_base . $sub_directory;
 
         return $directory;
+    }
+
+    /**
+     *  外部認証
+     *
+     */
+    public function authMethod($request)
+    {
+
+        // Config チェック
+        $auth_method = Configs::where('name', 'auth_method')->first();
+
+        // 外部認証ではない場合は戻る
+        if (empty($auth_method) || $auth_method->value == '') {
+            return;
+        }
+
+        // NetCommons2 認証
+        if ($auth_method->value == 'netcommons2') {
+
+// http://nc2.localhost?action=connectauthapi_view_main_init&login_id=nagahara&site_key=seisa_library&check_value=bf4049c65f6dc9c2d5ea0f929cb5e51b
+
+            // リクエストURLの組み立て
+            $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
+
+            // NC2 をCall
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $request_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $return_json = curl_exec($ch);
+
+            // JSON データを複合化
+            $check_result = json_decode($return_json, true);
+
+            // 戻り値のチェック
+            if (is_array($check_result) && array_key_exists('check', $check_result) && array_key_exists('ret_value', $check_result)) {
+                if ($check_result['check'] == true && $check_result['ret_value'] == md5($request['userid'] . $auth_method['additional3'])) {
+
+                    // ログインするユーザの存在を確認
+                    $user = User::where('userid', $request['userid'])->first();
+
+                    // ユーザが存在しない
+                    if (empty($user)) {
+
+                        // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                        $user           = new User;
+                        $user->name     = $request['userid'];
+                        $user->userid   = $request['userid'];
+                        $user->password = Hash::make($request['password']);
+                        $user->save();
+                    }
+
+                    // ログイン
+                    Auth::login($user, true);
+                    // トップページへ
+                    return redirect("/");
+                }
+            }
+        }
+        return;
     }
 }

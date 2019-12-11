@@ -11,4 +11,9 @@
 @else
     <li class="nav-item"><a href="{{url('/manage/system')}}" class="nav-link">デバックモード</a></li>
 @endif
+@if ($function == "auth")
+    <li class="nav-item"><a href="{{url('/manage/system/auth')}}" class="nav-link active">外部認証</a></li>
+@else
+    <li class="nav-item"><a href="{{url('/manage/system/auth')}}" class="nav-link">外部認証</a></li>
+@endif
 </ul>
