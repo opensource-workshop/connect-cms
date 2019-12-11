@@ -101,9 +101,9 @@
         {{-- エラーメッセージエリア --}}
         @if ($errors && $errors->any())
             <div class="alert alert-danger mt-2">
-                <i class="fas fa-exclamation-circle"></i>
                 @foreach ($errors->all() as $error)
-                    {{ $error }}
+                <i class="fas fa-exclamation-circle"></i>
+                    {{ $error }}<br>
                 @endforeach
             </div>
         @endif
