@@ -61,7 +61,7 @@ class ReservationsPlugin extends UserPluginBase
             'saveBucketsRoles', 
             'addFacility', 
             'updateFacility', 
-            'updateSequence', 
+            'updateFacilitySequence', 
             'addColumn', 
             'updateColumn',
             'deleteColumn',
@@ -857,7 +857,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 施設の表示順の更新
      */
-    public function updateSequence($request, $page_id, $frame_id)
+    public function updateFacilitySequence($request, $page_id, $frame_id)
     {
         // ボタンが押された行の施設データ
         $target_facility = reservations_facilities::query()

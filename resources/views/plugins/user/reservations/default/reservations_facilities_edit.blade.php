@@ -39,7 +39,7 @@
 
     {{-- 表示順操作のsubmit JavaScript --}}
     function submit_display_sequence(facility_id, display_sequence, display_sequence_operation) {
-        form_facilities.action = "/plugin/reservations/updateSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_facilities.action = "/plugin/reservations/updateFacilitySequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_facilities.facility_id.value = facility_id;
         form_facilities.display_sequence.value = display_sequence;
         form_facilities.display_sequence_operation.value = display_sequence_operation;
