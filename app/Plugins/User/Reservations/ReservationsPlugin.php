@@ -376,7 +376,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations.id',
             'reservations.bucket_id',
             'reservations.reservation_name',
-            'reservations.initial_display_setting',
+            'reservations.calendar_initial_display_type',
             'reservations.created_at',
             DB::raw('GROUP_CONCAT(reservations_facilities.facility_name SEPARATOR \'\n\') as facility_names'),
         );
@@ -387,7 +387,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations.id',
             'reservations.bucket_id',
             'reservations.reservation_name',
-            'reservations.initial_display_setting',
+            'reservations.calendar_initial_display_type',
             'reservations.created_at',
         );
         $query->orderBy('reservations.created_at', 'desc');
@@ -453,11 +453,11 @@ class ReservationsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'reservation_name'  => ['required'],
-            'initial_display_setting'  => ['required'],
+            'calendar_initial_display_type'  => ['required'],
         ]);
         $validator->setAttributeNames([
             'reservation_name'  => '施設予約名',
-            'initial_display_setting'  => '初期表示設定',
+            'calendar_initial_display_type'  => '初期表示設定',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -514,7 +514,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // 施設設定
         $reservations->reservation_name = $request->reservation_name;
-        $reservations->initial_display_setting = $request->initial_display_setting;
+        $reservations->calendar_initial_display_type = $request->calendar_initial_display_type;
 
         // データ保存
         $reservations->save();
