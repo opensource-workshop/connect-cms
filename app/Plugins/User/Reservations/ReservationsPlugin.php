@@ -579,16 +579,13 @@ class ReservationsPlugin extends UserPluginBase
         if (!empty($reservations_id)) {
             $reservation = Reservations::where('id', $reservations_id)->first();
         }
-        // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
+        // Frame のbucket_id があれば、bucket_id から施設データ取得
         else if (!empty($reservation_frame->bucket_id)) {
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
-        // フレームに紐づく施設予約ID を探して取得
-        $reservation_db = $this->getreservation($frame_id);
-
         // 施設予約データがない場合は0をセット
-        $reservations_id = empty($reservation_db) ? 0 : $reservation_db->id;
+        $reservations_id = empty($reservation) ? 0 : $reservation->id;
 
         // --- 画面に値を渡す準備
         $facilities = reservations_facilities::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
@@ -628,16 +625,13 @@ class ReservationsPlugin extends UserPluginBase
         if (!empty($reservations_id)) {
             $reservation = Reservations::where('id', $reservations_id)->first();
         }
-        // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
+        // Frame のbucket_id があれば、bucket_id から施設データ取得
         else if (!empty($reservation_frame->bucket_id)) {
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
-        // フレームに紐づく施設予約ID を探して取得
-        $reservation_db = $this->getreservation($frame_id);
-
         // 施設予約データがない場合は0をセット
-        $reservations_id = empty($reservation_db) ? 0 : $reservation_db->id;
+        $reservations_id = empty($reservation) ? 0 : $reservation->id;
 
         // --- 画面に値を渡す準備
         $columns = reservations_columns::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();

@@ -45,13 +45,13 @@
                         <br>
                     @endif
                     {{-- 施設登録・変更ボタン --}}
-                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
+                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame_id}}/{{ $reservation->id }}#frame-{{$frame->id}}'">
                         <i class="far fa-edit"></i> 施設登録・変更
                     </button>
                 </td>
                 {{-- 設定変更ボタン --}}
                 <td>
-                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
+                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}/{{ $reservation->id }}#frame-{{$frame->id}}'">
                         <i class="far fa-edit"></i> 設定変更
                     </button>
                 </td>
