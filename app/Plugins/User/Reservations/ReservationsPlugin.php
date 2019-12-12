@@ -191,7 +191,7 @@ class ReservationsPlugin extends UserPluginBase
         $reservations = null;
 
         // 表示テンプレートを呼び出す。
-        if ($view_format == 'week') {
+        if ($view_format == \ReservationCalendarDisplayType::week) {
             return $this->view(
                 'reservations_week', [
                 'reservations' => $reservations,
@@ -208,7 +208,7 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function week($request, $page_id, $frame_id)
     {
-        return $this->index($request, $page_id, $frame_id, 'week');
+        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week);
     }
 
     /**
@@ -216,7 +216,7 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function month($request, $page_id, $frame_id)
     {
-        return $this->index($request, $page_id, $frame_id, 'month');
+        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::month);
     }
 
     /**
