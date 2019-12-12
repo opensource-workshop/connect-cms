@@ -232,6 +232,7 @@ return [
         // enums
         'Required' => \App\Enums\Required::class,
         'ReservationColumnType' => \App\Enums\ReservationColumnType::class,
+        'ReservationCalendarDisplayType' => \App\Enums\ReservationCalendarDisplayType::class,
     ],
 
 ];
