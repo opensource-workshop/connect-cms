@@ -177,8 +177,10 @@ class ReservationsPlugin extends UserPluginBase
             return;
         }
 
-        // 施設予約表示設定
-        //$reservations_views = ReservationsViews::where('frame_id', $reservations_frame->id);
+        // カレンダー表示タイプの指定がない場合はフレームに紐づくコンテンツの初期表示設定で表示する
+        if(empty($view_format)){
+            $view_format = $reservations_frame->calendar_initial_display_type;
+        }
 
         // 予約データ
         // デフォルトはシステム日付から予約データを取得
