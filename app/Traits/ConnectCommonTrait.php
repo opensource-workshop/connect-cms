@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 
 use App\User;
+use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
@@ -478,18 +479,22 @@ trait ConnectCommonTrait
         // 管理プラグインの場合は、この後で呼ぶinvokeManageでインスタンス生成する。
         if ($this->isSpecialPath($path) === 1) {
 
+            // Page とFrame の生成
+            $page = Page::where('id', $cc_special_path[$path]['page_id'])->first();
+            $frame = Frame::where('id', $cc_special_path[$path]['frame_id'])->first();
+
             // 指定されたプラグインファイルの読み込み
             require $file_path;
 
             // config の値を取得すると、\ が / に置き換えられているので、元に戻す。
             // こうしないとclass がないというエラーになる。
             $class_name = str_replace('/', "\\", $cc_special_path[$path]['plugin']);
-            $plugin_instance = new $class_name;
+            $plugin_instance = new $class_name($page, $frame);
         }
 
         // 一般プラグインか管理プラグインかで呼び方を変える。
         if ($this->isSpecialPath($path) === 1) {
-            return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['flame_id']);
+            return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['frame_id']);
         }
         else if ($this->isSpecialPath($path) === 2) {
 
