@@ -18,7 +18,7 @@
     @foreach($rss_xml->channel->item as $rss_item)
         <div class="list-group-item list-group-item-action">
             <div class="d-flex w-100 justify-content-between">
-                <a href="{{$rss_item->link}}" >{{$rss_item->title}}</a>
+                <a href="{{$rss_item->link}}" target="_blank">{{$rss_item->title}}</a>
                 @php
                     $news_date = date('Y-m-d', strtotime($rss_item->pubDate))
                 @endphp
