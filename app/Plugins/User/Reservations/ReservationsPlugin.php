@@ -4,22 +4,16 @@ namespace App\Plugins\User\Reservations;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
 
 use DB;
 
 use App\Models\User\Reservations\Reservations;
 use App\Models\User\Reservations\reservations_facilities;
 use App\Models\User\Reservations\reservations_columns;
-//use App\Models\User\Reservations\ReservationsNos;
-//use App\Models\User\Reservations\ReservationsPosts;
-//use App\Models\User\Reservations\ReservationsViews;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -359,7 +353,7 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     * データ選択表示関数
+     * 表示コンテンツ選択画面の表示
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -530,7 +524,7 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     *  コンテンツ削除
      */
     public function destroyBuckets($request, $page_id, $frame_id, $reservations_id)
     {
