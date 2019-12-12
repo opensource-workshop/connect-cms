@@ -18,6 +18,7 @@ class CreateReservationsTable extends Migration
             $table->integer('bucket_id')->comment('バケツID');
             $table->string('reservation_name')->comment('施設予約カレンダー名');
             $table->string('initial_display_setting')->comment('初期表示設定');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

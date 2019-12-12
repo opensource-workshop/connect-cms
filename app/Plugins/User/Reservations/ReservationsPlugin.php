@@ -533,16 +533,15 @@ class ReservationsPlugin extends UserPluginBase
     /**
      *  削除処理
      */
-    public function destroyBuckets($request, $page_id, $frame_id, $id)
+    public function destroyBuckets($request, $page_id, $frame_id, $reservations_id)
     {
         // id がある場合、データを削除
-        if ($id) {
+        if ($reservations_id) {
 
-            // 予約データを削除する。
-            //ReservationsPost::where('reservations_id', $id)->delete();
+            // TODO 子テーブルの削除
 
-            // 施設設定を削除する。
-            //Reservations::delete($id);
+            // 施設予約を削除する。
+            Reservations::query()->where('id', $reservations_id)->first()->delete();
 
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();
