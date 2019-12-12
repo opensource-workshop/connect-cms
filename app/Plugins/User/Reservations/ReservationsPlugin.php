@@ -585,7 +585,7 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // 施設予約データがない場合は0をセット
-        $reservations_id = empty($reservation) ? 0 : $reservation->id;
+        $reservations_id = empty($reservation) ? null : $reservation->id;
 
         // --- 画面に値を渡す準備
         $facilities = reservations_facilities::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
@@ -631,7 +631,7 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // 施設予約データがない場合は0をセット
-        $reservations_id = empty($reservation) ? 0 : $reservation->id;
+        $reservations_id = empty($reservation) ? null : $reservation->id;
 
         // --- 画面に値を渡す準備
         $columns = reservations_columns::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
