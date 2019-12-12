@@ -64,6 +64,7 @@ class ReservationsPlugin extends UserPluginBase
             'updateFacilitySequence', 
             'addColumn', 
             'updateColumn',
+            'updateColumnSequence', 
             'deleteColumn',
         ];
         return $functions;
@@ -885,5 +886,39 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面を呼び出す
         return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, null);
+    }
+
+    /**
+     * 予約項目の表示順の更新
+     */
+    public function updateColumnSequence($request, $page_id, $frame_id)
+    {
+        // ボタンが押された行の施設データ
+        $target_column = reservations_columns::query()
+            ->where('reservations_id', $request->reservations_id)
+            ->where('id', $request->column_id)
+            ->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = reservations_columns::query()
+            ->where('reservations_id', $request->reservations_id);
+        $pair_column = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_column_display_sequence = $target_column->display_sequence;
+        $pair_column_display_sequence = $pair_column->display_sequence;
+
+        // 入れ替えて更新
+        $target_column->display_sequence = $pair_column_display_sequence;
+        $target_column->save();
+        $pair_column->display_sequence = $target_column_display_sequence;
+        $pair_column->save();
+
+        $message = '予約項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, null);
     }
 }

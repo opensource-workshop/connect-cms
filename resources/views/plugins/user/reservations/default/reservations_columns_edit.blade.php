@@ -50,7 +50,7 @@
 
     {{-- 予約項目の表示順操作のsubmit JavaScript --}}
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
-        form_columns.action = "/plugin/reservations/updateSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.action = "/plugin/reservations/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.column_id.value = column_id;
         form_columns.display_sequence.value = display_sequence;
         form_columns.display_sequence_operation.value = display_sequence_operation;
