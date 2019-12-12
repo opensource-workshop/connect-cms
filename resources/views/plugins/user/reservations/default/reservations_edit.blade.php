@@ -115,7 +115,7 @@
 <div id="collapse{{$reservation_frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">施設予約を削除します。<br>この施設予約に紐づく予約も削除されます。よく確認して実行してください。</span>
+            <span class="text-danger">コンテンツを削除します。<br>このコンテンツに紐づく施設、予約項目、予約も削除されます。よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
