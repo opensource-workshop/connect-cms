@@ -24,7 +24,7 @@
                 @endphp
                 <small>{{$news_date}}</small>
             </div>
-            <p class="mb-1">{{$rss_item->description}}</p>
+            <p class="mb-1"><small>{{$rss_item->description}}</small></p>
         </div>
     @endforeach
     </div>
