@@ -197,10 +197,20 @@ class ContentsPlugin extends UserPluginBase
         // Connect-CMSタグ変換
         $contents = $this->replaceConnectTagAll($contents, $this->page, $this->configs);
 
+        // ハンバーガーメニュー用ページ一覧
+        $format = 'layer1';
+        $level1_pages = $this->getPages($format);
+
+        // スマホメニュー用タグ生成とコンテンツ変換
+        $sp_menu = $this->getSmpMenu($level1_pages);
+        if ($contents && $sp_menu) {
+            $contents->content_text = str_replace('<cc value="cc:menu"></cc>', $sp_menu, $contents->content_text);
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'contents', [
-            'contents' => $contents,
+            'contents'     => $contents,
         ]);
     }
 

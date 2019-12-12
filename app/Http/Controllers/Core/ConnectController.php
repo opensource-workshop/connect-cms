@@ -51,6 +51,11 @@ class ConnectController extends Controller
     public $page = null;
 
     /**
+     *  ページ一覧
+     */
+    public $pages = null;
+
+    /**
      *  config 設定
      */
     public $configs = null;
@@ -73,6 +78,9 @@ class ConnectController extends Controller
             $this->frame_id = $allRouteParams['frame_id'];
         }
 
+        // Page データ
+        $this->pages = Page::defaultOrder()->get();
+
         // ページID が渡ってきた場合
         if (!empty($this->page_id)) {
              $this->page = Page::where('id', $this->page_id)->first();
@@ -89,7 +97,6 @@ class ConnectController extends Controller
         if (get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
             abort(403, '参照できないページです。');
         }
-
 
         // Frame データがあれば、画面のテンプレート情報をセット
         if (!empty($frame_id)) {

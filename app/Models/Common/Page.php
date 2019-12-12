@@ -156,9 +156,13 @@ class Page extends Model
      *  リンク用URL取得
      *
      */
-    public function getLinkUrl()
+    public function getLinkUrl($trim_str = null)
     {
-        return $this->permanent_link;
+        if ($trim_str == null) {
+            return $this->permanent_link;
+        }
+
+        return trim($this->permanent_link, $trim_str);
     }
 
     /**

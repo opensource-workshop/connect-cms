@@ -552,6 +552,31 @@ trait ConnectCommonTrait
     }
 
     /**
+     *  固定記事からスマホメニューを出すためのタグ生成
+     */
+    public function getSmpMenu($level1_pages)
+    {
+        $sp_menu  = '' . "\n";
+        $sp_menu .= '<nav class="sp_menu">' . "\n";
+        $sp_menu .= '<ul>' . "\n";
+        foreach ($level1_pages as $level1_page) {
+            $sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n";
+            $sp_menu .= '<p>' . $level1_page['parent']->page_name . '</p>' . "\n";
+            if (array_key_exists('child', $level1_page)) {
+                $sp_menu .= '<ul>' . "\n";
+                foreach ($level1_page['child'] as $child) {
+                    $sp_menu .= '<li><a href="' . $child->getLinkUrl() . '">' . $child->page_name . '</a></li>' . "\n";
+                }
+                $sp_menu .= '</ul>' . "\n";
+            }
+            $sp_menu .= '</li>' . "\n";
+        }
+        $sp_menu .= '</ul>' . "\n";
+        $sp_menu .= '</nav>' . "\n";
+        return $sp_menu;
+    }
+
+    /**
      *  ページの言語の取得
      */
     public function getPageLanguage($page, $languages)

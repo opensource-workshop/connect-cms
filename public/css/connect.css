@@ -75,6 +75,12 @@
     text-align: right;
 }
 
+/* ヘッダーバー
+------------------------------------- */
+#navbarsExampleDefault {
+    z-index: 9999;
+}
+
 
 /*  Connect-CMS add CSS Bootstrap3
 ------------------------------------- */

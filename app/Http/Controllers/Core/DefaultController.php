@@ -61,8 +61,9 @@ class DefaultController extends ConnectController
         $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);
 
         // Page データ
-        $pages = Page::defaultOrder()->get();
+        //$pages = Page::defaultOrder()->get();
         //Log::debug(json_decode($pages));
+        // ConnectController へ移動
 
         // フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
         $action_core_frame = $this->getActionCoreFrame($request);
@@ -83,7 +84,7 @@ class DefaultController extends ConnectController
             'frame_id'          => $request->frame_id,
             'page'              => $this->page,
             'frames'            => $frames,
-            'pages'             => $pages,
+            'pages'             => $this->pages,
             'plugin_instances'  => $plugin_instances,
             'layouts_info'      => $layouts_info,
             'themes'            => $themes,
@@ -288,7 +289,8 @@ class DefaultController extends ConnectController
         }
 
         // Page データ
-        $pages = Page::defaultOrder()->get();
+        //$pages = Page::defaultOrder()->get();
+        // ConnectController へ移動
 
         // view の場所を変更するテスト
         //$plugin_instances = ['contents' => new $class_name("User", "contents")];
@@ -312,7 +314,7 @@ class DefaultController extends ConnectController
             'id'                => $id,
             'page'              => $this->page,
             'frames'            => $frames,
-            'pages'             => $pages,
+            'pages'             => $this->pages,
             'plugin_instances'  => $plugin_instances,
             'layouts_info'      => $layouts_info,
             'themes'            => $themes,
@@ -343,7 +345,7 @@ class DefaultController extends ConnectController
 
         // 引数のアクションと同じメソッドを呼び出す。
         $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
-        $contentsPlugin = new $class_name($this->page, $action_frame);
+        $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
         $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
@@ -395,7 +397,7 @@ class DefaultController extends ConnectController
 
         // 引数のアクションと同じメソッドを呼び出す。
         $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
-        $contentsPlugin = new $class_name($this->page, $action_frame);
+        $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
         return $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
@@ -413,7 +415,7 @@ class DefaultController extends ConnectController
             $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
 //Log::debug($this->page);
 //Log::debug(print_r($frame,true));
-            $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame);
+            $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
         }
         return $plugin_instances;
     }
@@ -450,7 +452,7 @@ class DefaultController extends ConnectController
             if (array_key_exists('frames', $area)) {
                 foreach ($area['frames'] as $frame) {
                     $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
-                    $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame);
+                    $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
                 }
             }
         }
