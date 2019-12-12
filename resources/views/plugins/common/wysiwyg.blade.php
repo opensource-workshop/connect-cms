@@ -14,8 +14,6 @@
         // toolbar  : 'plugin insert media image bold italic underline strikethrough subscript superscript | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link jbimages | preview | code ',
         plugins  : 'file image link autolink preview textcolor code table lists',
         toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file |  preview | code ',
-        // オリジナルCSSのサンプル
-        // toolbar  : 'bold italic underline strikethrough subscript superscript | styleselect | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file |  preview | code ',
         block_formats: "スタイル=p;見出し1=h1;見出し2=h2;見出し3=h3;見出し4=h4;見出し5=h5;見出し6=h6",
         menubar  : '',
         relative_urls : false,
@@ -23,18 +21,14 @@
         branding: false,
         valid_children : "+body[style],+a[div|p]",
         extended_valid_elements : "script[type|charset]",
-        // オリジナルCSSのサンプル
-        //style_formats : [
-        //    {title : 'オリジナルボタン', inline : 'span', classes : 'btn-square'},
-        //],
-        // オリジナルCSSの読み込み
-        //content_css: "/themes/opac/themes.css",
-
         // file_picker_types: 'file image media',
         // media_live_embeds: true,
         image_caption: true,
         image_title: true,
-
+        image_class_list: [
+            {title: 'Responcie', value: 'img-fluid'},
+            {title: 'None', value: 'none'},
+        ],
         // 画像アップロード・ハンドラ
         images_upload_handler: function (blobInfo, success, failure) {
             var xhr, formData;
