@@ -171,16 +171,16 @@
 
 {{-- パターン --}}
 {{--
-<div class="d-md-table cc-table-set">
+<div class="timeLegend">
 @foreach($patterns_chunks as $patterns_chunk)
-    <dl class="d-none d-md-table-row" style="font-size:90%;">
-        <dt class="d-md-table-cell"><span style="color:{{$patterns_chunk[0]->color}}">■</span></dt>
-        <dd class="d-md-table-cell">{{$patterns_chunk[0]->pattern}}</dd>
-        <dd class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dd>
+    <dl>
+        <dt><span style="color:{{$patterns_chunk[0]->color}}">■</span></dt>
+        <dd>{{$patterns_chunk[0]->pattern}}</dd>
+        <dd>（{{$patterns_chunk[0]->caption}}）</dd>
         @if (count($patterns_chunk) > 1)
-            <dt class="d-md-table-cell ml-2"><span style="color:{{$patterns_chunk[1]->color}}">■</span></dt>
-            <dd class="d-md-table-cell">{{$patterns_chunk[1]->pattern}}</dd>
-            <dd class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dd>
+            <dt><span style="color:{{$patterns_chunk[1]->color}}">■</span></dt>
+            <dd>{{$patterns_chunk[1]->pattern}}</dd>
+            <dd>（{{$patterns_chunk[0]->caption}}）</dd>
         @endif
     </dl>
 @endforeach
