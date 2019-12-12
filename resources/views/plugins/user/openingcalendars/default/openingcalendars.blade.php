@@ -142,16 +142,16 @@
             </table>
 
             {{-- パターン --}}
-            <div class="d-md-table cc-table-set">
+            <div class="timeLegend">
                 @foreach($view_months_patterns[$calendar_ym] as $view_pattern)
-                    <dl class="d-none d-md-table-row" style="font-size:90%;">
-                        <dt class="d-md-table-cell"><span style="color:{{$view_pattern[0]->color}}">■</span></dt>
-                        <dd class="d-md-table-cell">{{$view_pattern[0]->pattern}}</dd>
-{{--                        <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
+                    <dl>
+                        <dt><span style="color:{{$view_pattern[0]->color}}">■</span></dt>
+                        <dd>{{$view_pattern[0]->pattern}}</dd>
+{{--                        <dl>（{{$view_pattern[0]->caption}}）</dl> --}}
                         @if (count($view_pattern) > 1)
-                            <dt class="d-md-table-cell ml-2"><span style="color:{{$view_pattern[1]->color}}">■</span></dt>
-                            <dd class="d-md-table-cell">{{$view_pattern[1]->pattern}}</dd>
-{{--                            <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
+                            <dt><span style="color:{{$view_pattern[1]->color}}">■</span></dt>
+                            <dd>{{$view_pattern[1]->pattern}}</dd>
+{{--                            <dl>（{{$view_pattern[0]->caption}}）</dl> --}}
                         @endif
                     </dl>
                 @endforeach
