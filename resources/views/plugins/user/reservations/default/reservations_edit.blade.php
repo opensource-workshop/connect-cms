@@ -60,22 +60,24 @@
         <div class="row">
             <div class="col-md-1">
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if($reservation->initial_display_setting == "month" || $create_flag)
-                        <input type="radio" value="month" id="initial_display_setting_off" name="initial_display_setting" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="month" id="initial_display_setting_off" name="initial_display_setting" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="initial_display_setting_off">月</label>
+                    {{-- 月 --}}
+                    <input type="radio" value="{{ ReservationCalendarDisplayType::month }}" id="initial_display_setting_off" name="initial_display_setting" class="custom-control-input"
+                        @if ($reservation->initial_display_setting == ReservationCalendarDisplayType::month || $create_flag)
+                            checked="checked"
+                        @endif
+                     >
+                    <label class="custom-control-label" for="initial_display_setting_off">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::month) }}</label>
                 </div>
             </div>
             <div class="col-md-1">
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if($reservation->initial_display_setting == "week")
-                        <input type="radio" value="week" id="initial_display_setting_on" name="initial_display_setting" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="week" id="initial_display_setting_on" name="initial_display_setting" class="custom-control-input">
+                    {{-- 週 --}}
+                    <input type="radio" value="{{ ReservationCalendarDisplayType::week }}" id="initial_display_setting_on" name="initial_display_setting" class="custom-control-input" 
+                    @if ($reservation->initial_display_setting == ReservationCalendarDisplayType::week)
+                        checked="checked"
                     @endif
-                    <label class="custom-control-label" for="initial_display_setting_on">週</label>
+                    >
+                    <label class="custom-control-label" for="initial_display_setting_on">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::week) }}</label>
                 </div>
             </div>
         </div>

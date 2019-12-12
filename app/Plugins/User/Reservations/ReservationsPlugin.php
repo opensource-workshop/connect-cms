@@ -376,7 +376,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations.id',
             'reservations.bucket_id',
             'reservations.reservation_name',
-            DB::raw('CASE WHEN reservations.initial_display_setting = \'month\' THEN \'月\' ELSE \'週\' END AS initial_display_setting'),
+            'reservations.initial_display_setting',
             'reservations.created_at',
             DB::raw('GROUP_CONCAT(reservations_facilities.facility_name SEPARATOR \'\n\') as facility_names'),
         );

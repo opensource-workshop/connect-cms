@@ -37,7 +37,7 @@
                 {{-- 施設予約名 --}}
                 <td>{{$reservation->reservation_name}}</td>
                 {{-- 初期表示（月／週） --}}
-                <td>{{$reservation->initial_display_setting}}</td>
+                <td>{{ ReservationCalendarDisplayType::getDescription($reservation->initial_display_setting) }}</td>
                 <td>
                     {{-- 施設名 --}}
                     @if ($reservation->facility_names)
