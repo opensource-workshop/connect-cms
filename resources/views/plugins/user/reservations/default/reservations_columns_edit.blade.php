@@ -103,7 +103,7 @@
                 @endforeach
                 {{-- 新規登録用の行 --}}
                 <tr>
-                    <th colspan="4">【予約項目の追加行】</th>
+                    <th colspan="6">【予約項目の追加行】</th>
                 </tr>
                     @include('plugins.user.reservations.default.reservations_columns_edit_row_add')
                 </tr>
