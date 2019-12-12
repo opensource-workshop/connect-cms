@@ -392,8 +392,6 @@ class ReservationsPlugin extends UserPluginBase
         );
         $query->orderBy('reservations.created_at', 'desc');
         $reservations = $query->paginate(10);
-        // $reservations = Reservations::orderBy('created_at', 'desc')
-        //               ->paginate(10);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
