@@ -27,7 +27,7 @@
     </td>
     <td style="vertical-align: middle;">
         {{-- 必須 --}}
-        <input type="checkbox" name="required" value="1">
+        <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
     </td>
     <td style="vertical-align: middle;">
         {{-- ＋ボタン --}}

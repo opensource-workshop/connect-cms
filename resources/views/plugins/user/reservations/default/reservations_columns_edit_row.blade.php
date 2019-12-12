@@ -42,7 +42,7 @@
     </td>
     <td style="vertical-align: middle;">
         {{-- 必須 --}}
-        <input type="checkbox" name="required_{{ $column->id }}" value="1" @if ($column->required == Required::on) checked="checked" @endif>
+        <input type="checkbox" name="required_{{ $column->id }}" value="1" @if ($column->required == Required::on) checked="checked" @endif  data-toggle="tooltip" title="必須項目として指定します。">
     </td>
     {{-- 更新ボタン --}}
     <td style="vertical-align: middle;">
