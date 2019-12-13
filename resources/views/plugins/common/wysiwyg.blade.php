@@ -22,6 +22,7 @@
         forced_root_block : '',
         valid_children : "+body[style],+a[div|p]",
         extended_valid_elements : "script[type|charset],cc[value]",
+        content_css: "/css/app.css, /css/connect.css", // スタイル
         // file_picker_types: 'file image media',
         // media_live_embeds: true,
         image_caption: true,
