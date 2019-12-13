@@ -1,5 +1,14 @@
 /*  Connect-CMS add CSS
 ------------------------------------- */
+
+/*  body
+------------------------------------- */
+body {
+    background-color: #ffffff;
+}
+
+/*  ナビバー
+------------------------------------- */
 .nav-tabs .nav-link.active {
     background-color: #f0f0f0;
 }
