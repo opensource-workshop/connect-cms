@@ -149,6 +149,7 @@ class Page extends Model
             return $pages;
         }
 
+        //Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
         return $tree;
     }
 
