@@ -169,7 +169,7 @@ class ReservationsPlugin extends UserPluginBase
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      */
-    public function index($request, $page_id, $frame_id, $view_format = null)
+    public function index($request, $page_id, $frame_id, $view_format = null, $carbon_target_date = null)
     {
         // 施設予約＆フレームデータ
         $reservations_frame = $this->getReservationsFrame($frame_id);
@@ -183,19 +183,42 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // 予約データ
-        // デフォルトはシステム日付から予約データを取得
-        $reservations = null;
+        $reservations = reservations::query()->where('id', $reservations_frame->reservations_id)->get();
 
-        // 表示テンプレートを呼び出す。
-        if ($view_format == \ReservationCalendarDisplayType::week) {
-            return $this->view(
-                'reservations_week', [
-                'reservations' => $reservations,
-            ]);
+        // 施設データ
+        $facilities = reservations_facilities::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();
+
+        // 予約項目データ
+        $columns = reservations_columns::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();
+
+        // ---------------------------
+        if(empty($carbon_target_date)){
+            $carbon_target_date = Carbon::now();
         }
+
+        $firstDay = new Carbon("$carbon_target_date->year-$carbon_target_date->month-01");
+        // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
+        $firstDay->subDay($firstDay->dayOfWeek);
+        // 月末日が日曜の場合
+        $addDay = ($firstDay->copy()->endOfmonth()->isSunday()) ? 7 : 0;
+        // 月末日以降の処理
+        $count = 31 + $addDay + $firstDay->dayOfWeek;
+        $count =  ceil($count / 7) * 7;
+        $dates = [];
+
+        for($i = 0; $i < $count; $i++, $firstDay->addDay()){
+            $dates[] = $firstDay->copy();
+        }
+        // ---------------------------
+
         return $this->view(
-            'reservations_month', [
+            'reservations_calendar', [
+            'view_format' => $view_format,
+            'carbon_target_date' => $carbon_target_date,
             'reservations' => $reservations,
+            'facilities' => $facilities,
+            'columns' => $columns,
+            'dates' => $dates,
         ]);
     }
 
@@ -204,15 +227,19 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function week($request, $page_id, $frame_id)
     {
-        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week);
+        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week, null);
     }
 
     /**
      *  月表示関数
      */
-    public function month($request, $page_id, $frame_id)
+    public function month($request, $page_id, $frame_id, $target_ym)
     {
-        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::month);
+        // dd(substr($target_ym, 0, 4), substr($target_ym, 4, 2));
+        $year = substr($target_ym, 0, 4);
+        $month = substr($target_ym, 4, 2);
+        $carbon_target_date = new Carbon("$year-$month-01");
+        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::month, $carbon_target_date);
     }
 
     /**
