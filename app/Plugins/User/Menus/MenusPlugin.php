@@ -74,10 +74,11 @@ class MenusPlugin extends UserPluginBase
 
         // 画面へ
         return $this->view('menus', [
-            'page_id'   => $page_id,
-            'pages'     => $pages,
-            'ancestors' => $ancestors,
-            'page'      => $this->page,
+            'page_id'      => $page_id,
+            'pages'        => $pages,
+            'ancestors'    => $ancestors,
+            'current_page' => $this->page,
+//            'page'      => $this->page,
         ]);
     }
 

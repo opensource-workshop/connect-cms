@@ -157,6 +157,13 @@ class SiteManage extends ManagePluginBase
              'value'    => (isset($request->base_touch_callout) ? $request->base_touch_callout : 0)]
         );
 
+        // スマホメニューのフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'smartphone_menu_template'],
+            ['category' => 'general',
+             'value'    => (isset($request->smartphone_menu_template) ? $request->smartphone_menu_template : "")]
+        );
+
         // ページ管理画面に戻る
         return redirect("/manage/site");
     }

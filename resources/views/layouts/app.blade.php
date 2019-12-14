@@ -126,26 +126,64 @@
             <div class="d-block d-md-none">
                 @foreach($page_list as $page_obj)
 
-                    {{-- 非表示のページは対象外 --}}
-                    @if ($page_obj->isView())
+                    {{-- スマホメニューテンプレート(default) --}}
+                    @if (isset($configs) && ($configs['smartphone_menu_template'] == ''))
 
-                        <li class="nav-item">
-                        {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                        @if (isset($page_obj) && $page_obj->id == $page->id)
-                            <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
-                        @else
-                            <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
+                        {{-- 非表示のページは対象外 --}}
+                        @if ($page_obj->isView())
+
+                            <li class="nav-item">
+                            {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
+                            @if (isset($page_obj) && $page_obj->id == $page->id)
+                                <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
+                            @else
+                                <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
+                            @endif
+
+                            {{-- 各ページの深さをもとにインデントの表現 --}}
+                            @for ($i = 0; $i < $page_obj->depth; $i++)
+                                @if ($i+1==$page_obj->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
+                            @endfor
+                                {{$page_obj->page_name}}
+                                </a>
+                            </li>
                         @endif
+                    @elseif (isset($configs) && ($configs['smartphone_menu_template'] == 'opencurrenttree'))
 
-                        {{-- 各ページの深さをもとにインデントの表現 --}}
-                        @for ($i = 0; $i < $page_obj->depth; $i++)
-                            @if ($i+1==$page_obj->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
-                        @endfor
-                            {{$page_obj->page_name}}
-                            </a>
-                        </li>
+                        {{-- 非表示のページは対象外 --}}
+                        @if ($page_obj->isView())
+
+                            {{-- カレント or 自分のルート筋 or 第1階層 or 子のページ or 同階層のページ なら表示する --}}
+                            @if ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->depth == 0 || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page))
+
+                                <li class="nav-item">
+                                {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
+                                @if (isset($page_obj) && $page_obj->id == $page->id)
+                                    <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
+                                @else
+                                    <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
+                                @endif
+
+                                {{-- 各ページの深さをもとにインデントの表現 --}}
+                                @for ($i = 0; $i < $page_obj->depth; $i++)
+                                    @if ($i+1==$page_obj->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
+                                @endfor
+                                {{$page_obj->page_name}}
+
+                                {{-- カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
+                                @if (count($page_obj->children) > 0)
+                                    @if ($page_obj->isAncestorOf($page) || $page_obj->id == $page->id)
+                                        <i class="fas fa-minus"></i>
+                                    @else
+                                        <i class="fas fa-plus"></i>
+                                    @endif
+                                @endif
+
+                                </a>
+                            </li>
+                            @endif
+                        @endif
                     @endif
-
                 @endforeach
                 <div class="dropdown-divider"></div>
             </div>
