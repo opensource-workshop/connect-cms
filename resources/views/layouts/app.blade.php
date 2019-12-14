@@ -127,7 +127,7 @@
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
-                    @if (isset($configs) && ($configs['smartphone_menu_template'] == ''))
+                    @if (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
 
                         {{-- 非表示のページは対象外 --}}
                         @if ($page_obj->isView())
