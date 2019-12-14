@@ -90,6 +90,14 @@ body {
     z-index: 9999;
 }
 
+/* Card の中のUL
+------------------------------------- */
+.card ul {
+    margin-bottom: 0;
+    padding-left: 1.5em;
+}
+
+
 
 /*  Connect-CMS add CSS Bootstrap3
 ------------------------------------- */
