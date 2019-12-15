@@ -78,13 +78,21 @@
 
 </script>
 
-<a href="javascript:prev{{$frame_id}}();" class="@if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
-  <i class="fas fa-chevron-circle-left"></i>
-</a>
-<span id="view_ym_str{{$frame_id}}">{{$view_ym_str}}</span>
-<a href="javascript:next{{$frame_id}}();" class="@if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
-  <i class="fas fa-chevron-circle-right"></i>
-</a>
+<div class="openingcalendar-monthWrap">
+    <div class="openingcalendar-arrow-left">
+        <a href="javascript:prev{{$frame_id}}();" class="@if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
+            <i class="fas fa-chevron-circle-left"></i>
+        </a>
+    </div>
+    <div class="openingcalendar-month">
+        <span id="view_ym_str{{$frame_id}}">{{$view_ym_str}}</span>
+    </div>
+    <div class="openingcalendar-arrow-right">
+        <a href="javascript:next{{$frame_id}}();" class="@if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
+            <i class="fas fa-chevron-circle-right"></i>
+        </a>
+    </div>
+</div>
 
 {{-- <a href="javascript:prev();" class="btn btn-primary @if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}"> --}}
 {{--
@@ -142,7 +150,7 @@
             </table>
 
             {{-- パターン --}}
-            <div class="timeLegend">
+            <div class="openingcalendar-timeLegend">
                 @foreach($view_months_patterns[$calendar_ym] as $view_pattern)
                     <dl>
                         <dt><span style="color:{{$view_pattern[0]->color}}">■</span></dt>
@@ -171,7 +179,7 @@
 
 {{-- パターン --}}
 {{--
-<div class="timeLegend">
+<div class="openingcalendar-timeLegend">
 @foreach($patterns_chunks as $patterns_chunk)
     <dl>
         <dt><span style="color:{{$patterns_chunk[0]->color}}">■</span></dt>
