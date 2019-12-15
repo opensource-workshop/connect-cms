@@ -31,6 +31,32 @@
             {title: 'Responcie', value: 'img-fluid'},
             {title: 'None', value: 'none'},
         ],
+        invalid_styles: {
+            'table': 'height width',
+            'tr': 'height width',
+            'th': 'height width',
+            'td': 'height width',
+        },
+        //table_resize_bars: false,
+        //object_resizing: 'img',
+        table_default_attributes: {
+            class: 'table'
+        },
+        table_class_list: [
+            {title: 'none', value: ''},
+            {title: 'table', value: 'table'},
+            {title: 'tables-striped', value: 'table table-striped'},
+            {title: 'tables-bordered', value: 'table table-bordered'},
+            {title: 'tables-hover-rows', value: 'table table-hover-rows'},
+            {title: 'table-sm', value: 'table table-sm'},
+            {title: 'table-responsive', value: 'table table-responsive'},
+            {title: 'table-dark', value: 'table table-dark'},
+        ],
+        table_cell_class_list: [
+            {title: 'none', value: ''},
+            {title: 'd-block d-sm-table-cell', value: 'd-block d-sm-table-cell'},
+            {title: 'd-block d-sm-table-cell bg-light', value: 'd-block d-sm-table-cell bg-light'},
+        ],
         // 画像アップロード・ハンドラ
         images_upload_handler: function (blobInfo, success, failure) {
             var xhr, formData;
