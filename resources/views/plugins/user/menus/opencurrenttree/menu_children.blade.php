@@ -38,11 +38,8 @@
         @if ($children->isAncestorOf($current_page) || $current_page->id == $children->id)
 
             @foreach($children->children as $grandchild)
-                @include('plugins.user.menus.default.menu_children',['children' => $grandchild])
+                @include('plugins.user.menus.opencurrenttree.menu_children',['children' => $grandchild])
             @endforeach
-{{--
-        @include('plugins.user.menus.default.menu_children',['children' => $children->children[0]])
---}}
         @endif
     @endif
 @endif
