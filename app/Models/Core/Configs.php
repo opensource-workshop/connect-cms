@@ -10,7 +10,7 @@ class Configs extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['name', 'value', 'category', 'additional1', 'additional2', 'additional3'];
+    protected $fillable = ['name', 'value', 'category', 'additional1', 'additional2', 'additional3', 'additional4', 'additional5'];
 
     /**
      * 値から改行を取りにぞいたものを返す

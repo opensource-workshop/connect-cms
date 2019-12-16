@@ -44,7 +44,7 @@
             {{-- サイトURL --}}
             <div class="form-group row mb-0">
                 <div class="col-1"></div>
-                <div class="col-10">
+                <div class="col-11">
                     <label class="col-form-label">サイトURL</label>
                     <input type="text" name="auth_netcomons2_site_url" value="{{$config->additional1}}" class="form-control">
                     <small class="form-text text-muted">NetCommons2 のURL（最後の / はナシ）</small>
@@ -66,6 +66,15 @@
                 <div class="col-10 col-sm-6 col-md-4">
                     <label class="col-form-label">Salt</label>
                     <input type="text" name="auth_netcomons2_salt" value="{{$config->additional3}}" class="form-control">
+                </div>
+            </div>
+
+            {{-- デフォルトで追加するオリジナル権限 --}}
+            <div class="form-group row">
+                <div class="col-1"></div>
+                <div class="col-11">
+                    <label class="col-form-label">デフォルトで追加するオリジナル権限</label>
+                    <input type="text" name="auth_netcomons2_add_role" value="{{$config->additional4}}" class="form-control">
                 </div>
             </div>
 

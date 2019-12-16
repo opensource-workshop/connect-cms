@@ -683,6 +683,17 @@ trait ConnectCommonTrait
                         $user->userid   = $request['userid'];
                         $user->password = Hash::make($request['password']);
                         $user->save();
+
+                        // 追加権限設定があれば作成
+                        if (!empty($auth_method['additional4'])) {
+                            $original_rols_options = explode(':', $auth_method['additional4']);
+                            UsersRoles::create([
+                                'users_id'   => $user->id,
+                                'target'     => 'original_role',
+                                'role_name'  => $original_rols_options[1],
+                                'role_value' => 1
+                            ]);
+                        }
                     }
 
                     // ログイン
