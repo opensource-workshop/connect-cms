@@ -570,18 +570,19 @@ class OpacsPlugin extends UserPluginBase
                       ->where('opacs_books.id', $opacs_books_id)->first();
 
         // 冊数による貸し出し制限
-        $lent_limit_check = $this->lentCountCheck($opac_frame);
+        list($lent_limit_check, $lent_error_message) = $this->lentCountCheck($opac_frame);
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'opacs_show', [
-            'opac_frame'       => $opac_frame,
-            'opacs_books'      => $opacs_book,
-            'opacs_books_id'   => $opacs_books_id,
-            'lent_limit_check' => $lent_limit_check,
-            'message'          => $message,
-            'message_class'    => $message_class,
-            'errors'           => $errors,
+            'opac_frame'         => $opac_frame,
+            'opacs_books'        => $opacs_book,
+            'opacs_books_id'     => $opacs_books_id,
+            'lent_limit_check'   => $lent_limit_check,
+            'message'            => $message,
+            'message_class'      => $message_class,
+            'lent_error_message' => $lent_error_message,
+            'errors'             => $errors,
         ]);
     }
 
@@ -700,7 +701,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 冊数を制限しない。
         if ($opac_frame->lent_limit == 0) {
-            return true;
+            return array(true, '');
         }
 
         // すでに借りている冊数を取得
@@ -728,6 +729,10 @@ class OpacsPlugin extends UserPluginBase
         // 役割毎に冊数を設定して貸し出しする。
         if ($opac_frame->lent_limit == 2) {
 
+            if (!array_key_exists('original_role', $users_roles)) {
+                return array(false, '貸出権限が設定されていないため、貸し出しできません。');
+            }
+
             // ユーザに設定されている役割をループし、Opac設定の貸し出し許可冊数を取得。一番多い冊数を採用する。
             foreach($users_roles['original_role'] as $users_role => $users_role_value) {
                 if (array_key_exists('lent_limit_'.$users_role, $opac_configs)) {
@@ -739,9 +744,9 @@ class OpacsPlugin extends UserPluginBase
         }
 
         if ($lent_count < $lent_limit_count) {
-            return true;
+            return array(true, '');
         }
-        return false;
+        return array(false, '貸出上限数まで借りているので、貸し出しできません。');
     }
 
     /**

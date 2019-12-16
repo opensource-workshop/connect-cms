@@ -14,11 +14,6 @@
             <i class="fas fa-exclamation-circle"></i>
             この書籍は「禁帯出」のため、貸し出しはできません。
         </div>
-    @elseif (!$lent_limit_check) 
-        <div class="alert alert-danger" style="margin-top: 10px;">
-            <i class="fas fa-exclamation-circle"></i>
-            貸出上限数まで借りているので、貸し出しできません。
-        </div>
     @elseif ($opacs_books->lent_flag == 1) 
         <div class="alert alert-warning" style="margin-top: 10px;">
             <i class="fas fa-exclamation-circle"></i>
@@ -28,6 +23,11 @@
         <div class="alert alert-warning" style="margin-top: 10px;">
             <i class="fas fa-exclamation-circle"></i>
             この書籍は現在、貸し出しリクエスト中のため、貸し出しはできません。
+        </div>
+    @elseif (!$lent_limit_check) 
+        <div class="alert alert-danger" style="margin-top: 10px;">
+            <i class="fas fa-exclamation-circle"></i>
+            {{$lent_error_message}}
         </div>
     @else
         <div class="form-group">
@@ -82,11 +82,6 @@
                 <i class="fas fa-exclamation-circle"></i>
                 この書籍は「禁帯出」のため、貸し出しはできません。
             </div>
-        @elseif (!$lent_limit_check) 
-            <div class="alert alert-danger" style="margin-top: 10px;">
-                <i class="fas fa-exclamation-circle"></i>
-                貸出上限数まで借りているので、貸し出しできません。
-            </div>
         @elseif ($opacs_books->lent_flag == 1) 
             <div class="alert alert-warning" style="margin-top: 10px;">
                 <i class="fas fa-exclamation-circle"></i>
@@ -96,6 +91,11 @@
             <div class="alert alert-warning" style="margin-top: 10px;">
                 <i class="fas fa-exclamation-circle"></i>
                 この書籍は現在、貸し出しリクエスト中のため、郵送貸し出しリクエストはできません。
+            </div>
+        @elseif (!$lent_limit_check) 
+            <div class="alert alert-danger" style="margin-top: 10px;">
+                <i class="fas fa-exclamation-circle"></i>
+                {{$lent_error_message}}
             </div>
         @else
             <form action="/plugin/opacs/requestLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
