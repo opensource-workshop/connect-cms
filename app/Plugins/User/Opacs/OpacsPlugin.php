@@ -699,13 +699,17 @@ class OpacsPlugin extends UserPluginBase
      */
     public function lentCountCheck($opac_frame)
     {
+        // すでに借りている冊数を取得
+        $user = Auth::user();
+        if (empty($user)) {
+            return array(false, '');
+        }
+
         // 冊数を制限しない。
         if ($opac_frame->lent_limit == 0) {
             return array(true, '');
         }
 
-        // すでに借りている冊数を取得
-        $user = Auth::user();
         $lent_count = OpacsBooksLents::where('student_no', $user->userid)->count();
 
         // 役割設定の情報取得
