@@ -32,11 +32,14 @@ class UserManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["index"]   = array('admin_user');
-        $role_ckeck_table["regist"]  = array('admin_user');
-        $role_ckeck_table["edit"]    = array('admin_user');
-        $role_ckeck_table["update"]  = array('admin_user');
-        $role_ckeck_table["destroy"] = array('admin_user');
+        $role_ckeck_table["index"]              = array('admin_user');
+        $role_ckeck_table["regist"]             = array('admin_user');
+        $role_ckeck_table["edit"]               = array('admin_user');
+        $role_ckeck_table["update"]             = array('admin_user');
+        $role_ckeck_table["destroy"]            = array('admin_user');
+        $role_ckeck_table["originalRole"]       = array('admin_user');
+        $role_ckeck_table["saveOriginalRoles"]  = array('admin_user');
+        $role_ckeck_table["deleteOriginalRole"] = array('admin_user');
 /*
         $role_ckeck_table = array();
         $role_ckeck_table["index"]   = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
@@ -54,9 +57,43 @@ class UserManage extends ManagePluginBase
     private function getUsers()
     {
         // ユーザデータ取得
-        $users = DB::table('users')
-                 ->orderBy('id', 'asc')
-                 ->paginate(10);
+        $users = User::orderBy('id', 'asc')->paginate(10);
+
+        // ユーザデータからID の配列生成
+        $user_ids = array();
+        foreach($users as $user) {
+            $user_ids[] = $user->id;
+        }
+
+        // ユーザ権限データ取得（役割設定）
+        $original_roles = null;
+        if ($user_ids) {
+            $original_roles = UsersRoles::select('users_roles.*', 'configs.name', 'configs.value')
+                                        ->leftJoin('configs', function ($join) {
+                                            $join->on('configs.name', '=', 'users_roles.role_name')
+                                                 ->where('configs.category', '=', 'original_role');
+                                        })
+                                        ->whereIn('users_id', $user_ids)
+                                        ->where('target', 'original_role')
+                                        ->get();
+        }
+
+        // ユーザデータへマージ
+        if ($original_roles) {
+            $user_original_roles = array();
+            foreach($original_roles as $original_role) {
+                $user_original_roles[$original_role->users_id][] = $original_role;
+            }
+            foreach($users as &$user) {
+                if (array_key_exists($user->id, $user_original_roles)) {
+                    $user->user_original_roles = $user_original_roles[$user->id];
+                }
+            }
+        }
+
+        //$users = DB::table('users')
+        //         ->orderBy('id', 'asc')
+        //         ->paginate(10);
 
         return $users;
     }
@@ -85,8 +122,8 @@ class UserManage extends ManagePluginBase
         $users = $this->getUsers();
 
         return view('plugins.manage.user.list',[
+            "function"    => __FUNCTION__,
             "plugin_name" => "user",
-            "function" => __FUNCTION__,
             "users"       => $users,
         ]);
     }
@@ -101,6 +138,7 @@ class UserManage extends ManagePluginBase
 
         return view('plugins.manage.user.regist',[
             "function" => __FUNCTION__,
+            "plugin_name" => "user",
             "user"     => $user,
         ]);
     }
@@ -119,11 +157,25 @@ class UserManage extends ManagePluginBase
         // ユーザ権限取得
         $users_roles = $this->getRoles($id);
 
+        // 役割設定取得
+        $original_role_configs = Configs::select('configs.*', 'users_roles.role_value')
+                                        ->leftJoin('users_roles', function ($join) use ($id) {
+                                            $join->on('users_roles.role_name', '=', 'configs.name')
+                                                 ->where('users_roles.users_id', '=', $id)
+                                                 ->where('users_roles.target', '=', 'original_role');
+                                        })
+                                        ->where('category', 'original_role')
+                                        ->orderBy('additional1', 'asc')
+                                        ->get();
+
+        // 画面呼び出し
         return view('plugins.manage.user.regist',[
-            "function"    => __FUNCTION__,
-            "id"          => $id,
-            "user"        => $user,
-            "users_roles" => $users_roles,
+            "function"              => __FUNCTION__,
+            "plugin_name"           => "user",
+            "id"                    => $id,
+            "user"                  => $user,
+            "users_roles"           => $users_roles,
+            "original_role_configs" => $original_role_configs,
         ]);
     }
 
@@ -195,6 +247,18 @@ class UserManage extends ManagePluginBase
             }
         }
 
+        // 役割設定の登録
+        if (!empty($request->original_role)) {
+            foreach($request->original_role as $original_role => $value) {
+                UsersRoles::create([
+                    'users_id'   => $id,
+                    'target'     => 'original_role',
+                    'role_name'  => $original_role,
+                    'role_value' => 1
+                ]);
+            }
+        }
+
         return $this->edit($request, $id);
     }
 
@@ -211,5 +275,116 @@ class UserManage extends ManagePluginBase
         }
         // 削除後はユーザ一覧を呼ぶ。
         return redirect('manage/user');
+    }
+
+    /**
+     *  役割設定画面表示
+     */
+    public function originalRole($request, $id, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 役割設定取得
+        $configs = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
+        return view('plugins.manage.user.original_role',[
+            "function"    => __FUNCTION__,
+            "plugin_name" => "user",
+            "id"          => $id,
+            "configs"     => $configs,
+            "create_flag" => true,
+            "errors"      => $errors,
+        ]);
+    }
+
+    /**
+     *  役割設定保存処理
+     */
+    public function saveOriginalRoles($request, $id)
+    {
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_additional1) || !empty($request->add_name) || !empty($request->add_value)) {
+
+            // 項目のエラーチェック
+            $validator = Validator::make($request->all(), [
+                'add_additional1' => ['required', 'numeric'],
+                'add_name'        => ['required', 'alpha_num'],
+                'add_value'       => ['required'],
+            ]);
+            $validator->setAttributeNames([
+                'add_additional1' => '追加行の表示順',
+                'add_name'        => '追加行の定義名',
+                'add_value'       => '追加行の表示名',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->originalRole($request, $id, $validator->errors());
+            }
+        }
+
+        // 既存項目のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->configs_id)) {
+            foreach($request->configs_id as $config_id) {
+
+                // 項目のエラーチェック
+                $validator = Validator::make($request->all(), [
+                    'additional1.'.$config_id => ['required', 'numeric'],
+                    'name.'.$config_id        => ['required', 'alpha_num'],
+                    'value.'.$config_id       => ['required'],
+                ]);
+                $validator->setAttributeNames([
+                    'additional1.'.$config_id => '表示順',
+                    'name.'.$config_id        => '定義名',
+                    'value.'.$config_id       => '表示名',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->originalRole($request, $id, $validator->errors());
+                }
+            }
+        }
+
+        // 追加項目アリ
+        if (!empty($request->add_additional1)) {
+            Configs::create([
+                'additional1' => intval($request->add_additional1),
+                'name'        => $request->add_name,
+                'category'    => 'original_role',
+                'value'       => $request->add_value,
+            ]);
+        }
+
+        // 既存項目アリ
+        if (!empty($request->configs_id)) {
+
+            foreach($request->configs_id as $config_id) {
+
+                // モデルオブジェクト取得
+                $configs = Configs::where('id', $config_id)->first();
+
+                // データのセット
+                $configs->name        = $request->name[$config_id];
+                $configs->value       = $request->value[$config_id];
+                $configs->category    = 'original_role';
+                $configs->additional1 = $request->additional1[$config_id];
+
+                // 保存
+                $configs->save();
+            }
+        }
+
+        return $this->originalRole($request, $id, null);
+    }
+
+    /**
+     *  カテゴリ削除処理
+     */
+    public function deleteOriginalRole($request, $id)
+    {
+        // カテゴリ削除
+        Configs::where('id', $id)->delete();
+
+        return $this->originalRole($request, $id, null);
     }
 }

@@ -11,6 +11,9 @@ class User extends Authenticatable
 {
     use Notifiable;
 
+    // 日付型の場合、$dates にカラムを指定しておく。
+    protected $dates = ['created_at', 'updated_at'];
+
     /**
      * The attributes that are mass assignable.
      *

@@ -73,20 +73,162 @@
         <input type="text" name="moderator_mail_send_address" value="{{old('moderator_mail_send_address', $opac->moderator_mail_send_address)}}" class="form-control">
     </div>
 
+    <div class="form-group">
+        <label class="control-label">貸出設定</label>
+
+        <div class="form-group mb-0">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('lent_setting', $opac->lent_setting) == '0')
+                    <input type="radio" value="0" id="lent_setting0" name="lent_setting" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="lent_setting0" name="lent_setting" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="lent_setting0">貸し出ししない。</label>
+            </div>
+        </div>
+        <div class="form-group mb-0">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('lent_setting', $opac->lent_setting) == '1')
+                    <input type="radio" value="1" id="lent_setting1" name="lent_setting" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="lent_setting1" name="lent_setting" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="lent_setting1">貸し出し許可日数を設定せずに貸し出しする。</label>
+            </div>
+        </div>
+        <div class="form-group mb-0">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('lent_setting', $opac->lent_setting) == '2')
+                    <input type="radio" value="2" id="lent_setting2" name="lent_setting" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="2" id="lent_setting2" name="lent_setting" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="lent_setting2">貸し出し許可日数を設定して貸し出しする。</label>
+            </div>
+        </div>
+
+        {{-- 貸し出し日数 --}}
+        <div class="form-group row mb-0">
+            <div class="col-1"></div>
+            <div class="col-11 row">
+                <div class="col-sm-3">
+                    <label class="col-form-label">日数</label>
+                </div>
+                <div class="col-sm-4">
+                    <input type="text" name="opacs_configs[lent_days_global]" value="{{old('opacs_configs.lent_days_global', $opac_configs['lent_days_global'])}}" class="form-control">
+                    @if ($errors && $errors->has('opacs_configs.lent_days_global')) <div class="text-danger">{{$errors->first('opacs_configs.lent_days_global')}}</div> @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-0">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('lent_setting', $opac->lent_setting) == '3')
+                    <input type="radio" value="3" id="lent_setting3" name="lent_setting" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="3" id="lent_setting3" name="lent_setting" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="lent_setting3">役割毎に貸し出し許可日数を設定して貸し出しする。</label>
+            </div>
+        </div>
+
+        {{-- 貸し出し日数（役割設定毎） --}}
+        @foreach($original_roles as $original_role)
+        <div class="form-group row mb-0">
+            <div class="col-1"></div>
+            <div class="col-11 row">
+                <div class="col-sm-3">
+                    <label class="col-form-label">日数（{{$original_role->value}}）</label>
+                </div>
+                <div class="col-sm-4">
+                    <input type="text" name="opacs_configs[lent_days_{{$original_role->name}}]" value="{{old("opacs_configs.lent_days_$original_role->name", $opac_configs["lent_days_$original_role->name"])}}" class="form-control">
+                    @if ($errors && $errors->has("opacs_configs.lent_days_$original_role->name")) <div class="text-danger">{{$errors->first("opacs_configs.lent_days_$original_role->name")}}</div> @endif
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">貸出冊数</label>
+
+        <div class="form-group mb-0">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('lent_limit', $opac->lent_limit) == '0')
+                    <input type="radio" value="0" id="lent_limit0" name="lent_limit" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="lent_limit0" name="lent_limit" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="lent_limit0">制限しない。</label>
+            </div>
+        </div>
+        <div class="form-group mb-0">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('lent_limit', $opac->lent_limit) == '1')
+                    <input type="radio" value="1" id="lent_limit1" name="lent_limit" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="lent_limit1" name="lent_limit" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="lent_limit1">冊数を制限する。</label>
+            </div>
+        </div>
+
+        {{-- 貸し出し冊数 --}}
+        <div class="form-group row mb-0">
+            <div class="col-1"></div>
+            <div class="col-11 row">
+                <div class="col-sm-3">
+                    <label class="col-form-label">冊数</label>
+                </div>
+                <div class="col-sm-4">
+                    <input type="text" name="opacs_configs[lent_limit_global]" value="{{old('opacs_configs.lent_limit_global', $opac_configs['lent_limit_global'])}}" class="form-control">
+                    @if ($errors && $errors->has('opacs_configs.lent_limit_global')) <div class="text-danger">{{$errors->first('opacs_configs.lent_limit_global')}}</div> @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-0">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('lent_limit', $opac->lent_limit) == '2')
+                    <input type="radio" value="2" id="lent_limit2" name="lent_limit" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="2" id="lent_limit2" name="lent_limit" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="lent_limit2">役割毎に冊数を設定して貸し出しする。</label>
+            </div>
+        </div>
+
+        {{-- 貸し出し冊数（役割設定毎） --}}
+        @foreach($original_roles as $original_role)
+        <div class="form-group row mb-0">
+            <div class="col-1"></div>
+            <div class="col-11 row">
+                <div class="col-sm-3">
+                    <label class="col-form-label">冊数（{{$original_role->value}}）</label>
+                </div>
+                <div class="col-sm-4">
+                    <input type="text" name="opacs_configs[lent_limit_{{$original_role->name}}]" value="{{old("opacs_configs.lent_limit_$original_role->name", $opac_configs["lent_limit_$original_role->name"])}}" class="form-control">
+                    @if ($errors && $errors->has("opacs_configs.lent_limit_$original_role->name")) <div class="text-danger">{{$errors->first("opacs_configs.lent_limit_$original_role->name")}}</div> @endif
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-6">
-                <button type="submit" class="btn btn-primary form-horizontal mr-3"><i class="fas fa-check"></i> 
+                <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
                 @if (empty($opac) || $create_flag)
                     登録確定
                 @else
                     変更確定
                 @endif
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                    <i class="fas fa-times"></i> キャンセル
                 </button>
             </div>
 

@@ -18,6 +18,12 @@
     <li class="nav-item"><a href="{{url('/manage/user/regist')}}" class="nav-link">ユーザ登録</a></li>
 @endif
 
+@if ($function == "originalRole")
+    <li class="nav-item"><a href="{{url('/manage/user/originalRole')}}" class="nav-link active">役割設定</a></li>
+@else
+    <li class="nav-item"><a href="{{url('/manage/user/originalRole')}}" class="nav-link">役割設定</a></li>
+@endif
+
 @if ($function == "edit")
     <li class="nav-item"><a class="nav-link active">ユーザ変更</a></li>
 @endif

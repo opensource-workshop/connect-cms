@@ -24,6 +24,7 @@
                 <th nowrap>ユーザID</th>
                 <th nowrap>ユーザー名</th>
                 <th nowrap>eメール</th>
+                <th nowrap>役割設定</th>
 {{--                <th nowrap>権限</th> --}}
                 <th nowrap>作成日</th>
                 <th nowrap>更新日</th>
@@ -40,6 +41,13 @@
                 </td>
                 <td>{{$user->name}}</td>
                 <td>{{$user->email}}</td>
+                <td>
+                    @isset($user->user_original_roles)
+                    @foreach($user->user_original_roles as $user_original_role)
+                        {{$user_original_role->value}}@if (!$loop->last) ,@endif
+                    @endforeach
+                    @endif
+                </td>
 {{--
                 @if ($user->role == 1)
                     <td>システム管理者</td>
@@ -59,8 +67,8 @@
                     <td>{{$user->role}}</td>
                 @endif
 --}}
-                <td>{{$user->created_at}}</td>
-                <td>{{$user->updated_at}}</td>
+                <td>{{$user->created_at->format('Y/m/d')}}</td>
+                <td>{{$user->updated_at->format('Y/m/d')}}</td>
             </tr>
         @endforeach
         </tbody>

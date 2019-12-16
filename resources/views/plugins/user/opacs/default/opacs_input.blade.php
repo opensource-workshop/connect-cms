@@ -365,12 +365,12 @@
             <div class="col-sm-6">
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
+                    <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                     @if (empty($opacs_books->id))
-                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 登録確定</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                     @else
-                        <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 変更確定</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
                     @endif
-                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>
             </div>
             <div class="col-sm-3 pull-right text-right">
