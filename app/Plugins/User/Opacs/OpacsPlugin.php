@@ -1031,6 +1031,7 @@ class OpacsPlugin extends UserPluginBase
         // キーワードをセッションに保存しておく。
         $request->session()->put('search_keyword', $request->keyword);
 
+        // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
         return $this->index($request, $page_id, $frame_id);
     }
 }
