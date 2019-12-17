@@ -60,7 +60,7 @@
                                 @if ($date->month != $carbon_target_date->month) class="bg-secondary" @endif
                                 {{-- 日曜なら赤文字 --}}
                                 @if ($date->dayOfWeek == 0) class="text-danger" @endif
-                                {{-- 日曜なら青文字 --}}
+                                {{-- 土曜なら青文字 --}}
                                 @if ($date->dayOfWeek == 6) class="text-primary" @endif
                                 {{-- 当日ならセル背景を黄色 --}}
                                 @if ($date == Carbon::today()) class="bg-warning" @endif
