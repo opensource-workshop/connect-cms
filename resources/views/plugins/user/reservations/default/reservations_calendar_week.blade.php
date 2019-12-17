@@ -8,4 +8,3 @@
 
     週表示テンプレート<br />
     <br />
-    <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/#frame-{{$frame->id}}">月表示へ</a>

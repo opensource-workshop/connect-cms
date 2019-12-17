@@ -16,6 +16,18 @@
         !$columns->isEmpty()
         )
 
+        {{-- タブ表示 --}}
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                {{-- 月タブ --}}
+                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}" class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}">月</a>
+            </li>
+            <li class="nav-item">
+                {{-- 週タブ --}}
+                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}" class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}">週</a>
+            </li>
+        </ul>
+
         @if ($view_format == ReservationCalendarDisplayType::month)
 
             {{-- 月で表示 --}}

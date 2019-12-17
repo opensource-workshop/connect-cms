@@ -6,7 +6,6 @@
  * @category 施設予約プラグイン
  --}}
 
-<a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/#frame-{{$frame->id}}">週表示へ</a>
 <br>
     <div class="row">
         <div class="col-12 clearfix">
