@@ -27,7 +27,8 @@
             {{-- カレンダーヘッダ部の曜日を表示 --}}
             <tr>
                 @foreach (DayOfWeek::getMembers() as $key => $desc)
-                    <th class="text-center">{{ $desc }}</th>
+                    {{-- 日曜なら赤文字、土曜なら青文字 --}}
+                    <th class="text-center{{ $key == DayOfWeek::sun ? ' text-danger' : '' }}{{ $key == DayOfWeek::sat ? ' text-primary' : '' }}">{{ $desc }}</th>
                 @endforeach
             </tr>
         </thead>
@@ -38,8 +39,14 @@
             @if ($date->dayOfWeek == 0)
                 <tr>
             @endif
-                    
-                    <td @if ($date->month != $carbon_target_date->month) class="bg-secondary" @endif>
+                    <td 
+                        {{-- 当月以外ならセル背景をグレーアウト --}}
+                        @if ($date->month != $carbon_target_date->month) class="bg-secondary" @endif
+                        {{-- 日曜なら赤文字 --}}
+                        @if ($date->dayOfWeek == 0) class="text-danger" @endif
+                        {{-- 日曜なら青文字 --}}
+                        @if ($date->dayOfWeek == 6) class="text-primary" @endif
+                    >
                         {{ $date->day }}
                     </td>
             {{-- 土曜日なら行を閉じる --}}
