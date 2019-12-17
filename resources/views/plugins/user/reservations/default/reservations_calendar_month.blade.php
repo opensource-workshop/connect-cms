@@ -36,7 +36,7 @@
 
         {{-- 施設名 --}}
         <span class="h4">＜{{ $facility->facility_name }}＞</span>
-        
+
         {{-- カレンダーデータ部 --}}
         <table class="table table-bordered">
             <thead>
@@ -44,7 +44,7 @@
                 <tr>
                     @foreach (DayOfWeek::getMembers() as $key => $desc)
                         {{-- 日曜なら赤文字、土曜なら青文字 --}}
-                        <th class="text-center{{ $key == DayOfWeek::sun ? ' text-danger' : '' }}{{ $key == DayOfWeek::sat ? ' text-primary' : '' }}">{{ $desc }}</th>
+                        <th class="text-center bg-light{{ $key == DayOfWeek::sun ? ' text-danger' : '' }}{{ $key == DayOfWeek::sat ? ' text-primary' : '' }}">{{ $desc }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -62,6 +62,8 @@
                                 @if ($date->dayOfWeek == 0) class="text-danger" @endif
                                 {{-- 日曜なら青文字 --}}
                                 @if ($date->dayOfWeek == 6) class="text-primary" @endif
+                                {{-- 当日ならセル背景を黄色 --}}
+                                @if ($date == Carbon::today()) class="bg-warning" @endif
                             >
                                 {{ $date->day }}
                             </td>
