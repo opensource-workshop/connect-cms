@@ -21,7 +21,10 @@
 <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addMonth()->format('Ym') }}#frame-{{$frame->id}}">
     <i class="text-info fas fa-angle-right fa-3x"></i>
 </a>
-
+{{-- 今月へボタン --}}
+<a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}">
+    <button type="button" class="btn btn-primary rounded-pill">今月へ</button>
+</a>
     <table class="table table-bordered">
         <thead>
             {{-- カレンダーヘッダ部の曜日を表示 --}}
