@@ -38,40 +38,55 @@
         <span class="h4">＜{{ $facility->facility_name }}＞</span>
 
         {{-- カレンダーデータ部 --}}
-        <table class="table table-bordered">
-            <thead>
-                {{-- カレンダーヘッダ部の曜日を表示 --}}
-                <tr>
-                    @foreach (DayOfWeek::getMembers() as $key => $desc)
-                        {{-- 日曜なら赤文字、土曜なら青文字 --}}
-                        <th class="text-center bg-light{{ $key == DayOfWeek::sun ? ' text-danger' : '' }}{{ $key == DayOfWeek::sat ? ' text-primary' : '' }}">{{ $desc }}</th>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    {{-- カレンダーヘッダ部の曜日を表示 --}}
+                    <tr>
+                        @foreach (DayOfWeek::getMembers() as $key => $desc)
+                            {{-- 日曜なら赤文字、土曜なら青文字 --}}
+                            <th class="text-center bg-light{{ $key == DayOfWeek::sun ? ' text-danger' : '' }}{{ $key == DayOfWeek::sat ? ' text-primary' : '' }}">{{ $desc }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    {{-- カレンダーデータ部の表示 --}}
+                    @foreach ($dates as $date)
+                        {{-- 日曜日なら新しい行 --}}
+                        @if ($date->dayOfWeek == 0)
+                            <tr>
+                        @endif
+                                <td 
+                                    {{-- 当月以外ならセル背景をグレーアウト --}}
+                                    @if ($date->month != $carbon_target_date->month) class="bg-secondary" @endif
+                                    {{-- 日曜なら赤文字 --}}
+                                    @if ($date->dayOfWeek == 0) class="text-danger" @endif
+                                    {{-- 土曜なら青文字 --}}
+                                    @if ($date->dayOfWeek == 6) class="text-primary" @endif
+                                    {{-- 当日ならセル背景を黄色 --}}
+                                    @if ($date == Carbon::today()) class="bg-warning" @endif
+                                >
+                                    <div class="clearfix">
+                                        {{-- 日付 --}}
+                                        <div class="float-left">
+                                            {{ $date->day }}
+                                        </div>
+                                        {{-- ＋ボタン --}}
+                                        <div class="float-right">
+                                            @auth
+                                                <i class="fas fa-plus-square fa-2x"></i>
+                                            @endauth
+                                        </div>
+                                    </div>
+                                    <p class="small">10:00~12:00</p>
+                                    <p class="small">12:00~14:00</p>
+                                </td>
+                        {{-- 土曜日なら行を閉じる --}}
+                        @if ($date->dayOfWeek == 6)
+                            </tr>
+                        @endif
                     @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                {{-- カレンダーデータ部の表示 --}}
-                @foreach ($dates as $date)
-                    {{-- 日曜日なら新しい行 --}}
-                    @if ($date->dayOfWeek == 0)
-                        <tr>
-                    @endif
-                            <td 
-                                {{-- 当月以外ならセル背景をグレーアウト --}}
-                                @if ($date->month != $carbon_target_date->month) class="bg-secondary" @endif
-                                {{-- 日曜なら赤文字 --}}
-                                @if ($date->dayOfWeek == 0) class="text-danger" @endif
-                                {{-- 土曜なら青文字 --}}
-                                @if ($date->dayOfWeek == 6) class="text-primary" @endif
-                                {{-- 当日ならセル背景を黄色 --}}
-                                @if ($date == Carbon::today()) class="bg-warning" @endif
-                            >
-                                {{ $date->day }}
-                            </td>
-                    {{-- 土曜日なら行を閉じる --}}
-                    @if ($date->dayOfWeek == 6)
-                        </tr>
-                    @endif
-                @endforeach
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     @endforeach
