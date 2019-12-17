@@ -102,8 +102,11 @@ class Page extends Model
         }
         else {
             return self::defaultOrder()
-                       ->where('permanent_link', 'like', '%/' . $current_language . '/%')
-                       ->orWhere('permanent_link', '/' . $current_language)
+                       ->where(function ($query_lang) use ($current_language) {
+                           // 多言語トップページは /en のように後ろに / がない。 /en* だと、/env なども拾ってしまう。
+                           $query_lang->where('permanent_link', 'like', '%/' . $current_language . '/%')
+                                      ->orWhere('permanent_link', '/' . $current_language);
+                       })
                        ->where(function ($query_menu) use ($where_page_ids) {
                            // メニューによるページ選択
                            if (!empty($where_page_ids)) {
