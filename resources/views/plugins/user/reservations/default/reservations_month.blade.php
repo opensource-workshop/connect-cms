@@ -8,7 +8,9 @@
 
 <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/#frame-{{$frame->id}}">週表示へ</a>
 <br>
-    <div class="d-flex align-items-center">
+    <div class="row">
+        <div class="col-12 clearfix">
+            <div class="float-left">
         {{-- 前月ボタン --}}
         <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subMonth()->format('Ym') }}#frame-{{$frame->id}}">
             <i class="fas fa-angle-left fa-3x"></i>
@@ -19,10 +21,14 @@
         <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addMonth()->format('Ym') }}#frame-{{$frame->id}}">
             <i class="fas fa-angle-right fa-3x"></i>
         </a>
+            </div>
+            <div class="float-right">
         {{-- 今月へボタン --}}
         <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}">
             <button type="button" class="btn btn-primary rounded-pill">今月へ</button>
         </a>
+        </div>
+    </div>
     </div>
     <table class="table table-bordered">
         <thead>
