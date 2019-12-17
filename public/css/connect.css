@@ -7,6 +7,12 @@ body {
     background-color: #ffffff;
 }
 
+/*  プラグイン追加
+------------------------------------- */
+#pluginAddModal {
+    z-index: 9999;
+}
+
 /*  ナビバー
 ------------------------------------- */
 .nav-tabs .nav-link.active {
