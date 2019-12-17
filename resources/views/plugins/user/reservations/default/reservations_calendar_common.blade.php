@@ -19,12 +19,12 @@
         @if ($view_format == ReservationCalendarDisplayType::month)
 
             {{-- 月で表示 --}}
-            @include('plugins.user.reservations.default.reservations_month')
+            @include('plugins.user.reservations.default.reservations_calendar_month')
 
         @elseif ($view_format == ReservationCalendarDisplayType::week)
 
             {{-- 週で表示 --}}
-            @include('plugins.user.reservations.default.reservations_week')
+            @include('plugins.user.reservations.default.reservations_calendar_week')
 
         @endif
 

@@ -212,7 +212,7 @@ class ReservationsPlugin extends UserPluginBase
         // ---------------------------
 
         return $this->view(
-            'reservations_calendar', [
+            'reservations_calendar_common', [
             'view_format' => $view_format,
             'carbon_target_date' => $carbon_target_date,
             'reservations' => $reservations,
