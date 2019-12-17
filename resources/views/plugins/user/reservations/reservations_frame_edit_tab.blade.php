@@ -20,6 +20,7 @@
 <li role="presentation" class="nav-item">
     <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'listBuckets' ? 'active' : '' }}">表示コンテンツ選択</a>
 </li>
-<li class="nav-item">
+{{-- TODO:権限機能が解析しきれていない為、一旦非表示＠2019/12/17 --}}
+{{-- <li class="nav-item">
     <a href="{{url('/')}}/plugin/reservations/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editBucketsRoles' || $action == '' ? 'active' : '' }}">権限設定</a>
-</li>
+</li> --}}
