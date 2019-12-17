@@ -28,18 +28,22 @@
             </li>
         </ul>
 
-        @if ($view_format == ReservationCalendarDisplayType::month)
+        <div id="app">
 
-            {{-- 月で表示 --}}
-            @include('plugins.user.reservations.default.reservations_calendar_month')
+            @if ($view_format == ReservationCalendarDisplayType::month)
 
-        @elseif ($view_format == ReservationCalendarDisplayType::week)
+                {{-- 月で表示 --}}
+                @include('plugins.user.reservations.default.reservations_calendar_month')
 
-            {{-- 週で表示 --}}
-            @include('plugins.user.reservations.default.reservations_calendar_week')
+            @elseif ($view_format == ReservationCalendarDisplayType::week)
 
-        @endif
+                {{-- 週で表示 --}}
+                @include('plugins.user.reservations.default.reservations_calendar_week')
 
+            @endif
+            <reservations-calendar-add-booking v-show="showContent" v-on:from-child="closeModal"></reservations-calendar-add-booking>
+        </div>
+    
     @else
         {{-- フレームに紐づくコンテンツがない場合、データ登録を促すメッセージを表示 --}}
         <div class="card border-danger">
@@ -59,3 +63,20 @@
             </div>
         </div>
     @endif
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            showContent: false
+        },
+        methods:{
+            openModal: function(){
+                this.showContent = true
+            },    
+            closeModal: function(){
+                this.showContent = false
+            },
+        }
+    })
+</script>

@@ -74,12 +74,14 @@
                                         {{-- ＋ボタン --}}
                                         <div class="float-right">
                                             @auth
-                                                <i class="fas fa-plus-square fa-2x"></i>
+                                                <a href="#" @click="openModal">
+                                                    <i class="fas fa-plus-square fa-2x"></i>
+                                                </a>
                                             @endauth
                                         </div>
                                     </div>
-                                    <p class="small">10:00~12:00</p>
-                                    <p class="small">12:00~14:00</p>
+                                    <span class="small">10:00~12:00</span>
+                                    <span class="small">12:00~14:00</span>
                                 </td>
                         {{-- 土曜日なら行を閉じる --}}
                         @if ($date->dayOfWeek == 6)
