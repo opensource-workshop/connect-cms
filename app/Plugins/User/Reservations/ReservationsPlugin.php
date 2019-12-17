@@ -199,11 +199,17 @@ class ReservationsPlugin extends UserPluginBase
         $firstDay = new Carbon("$carbon_target_date->year-$carbon_target_date->month-01");
         // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
         $firstDay->subDay($firstDay->dayOfWeek);
-        // 月末日が日曜の場合
-        $addDay = ($firstDay->copy()->endOfmonth()->isSunday()) ? 7 : 0;
-        // 月末日以降の処理
-        $count = 31 + $addDay + $firstDay->dayOfWeek;
+        // 35マス（7列×5行）で収まらない場合の加算日数の算出
+        $addDay = 
+            // 当月の日数が31日、且つ、前の月末日が木曜か金曜の場合
+            $carbon_target_date->copy()->endOfmonth()->day == 31 && ($firstDay->copy()->endOfmonth()->isThursday() || $firstDay->copy()->endOfmonth()->isFriday()) ||
+            // 当月の日数が30日、且つ、前の月末日が金曜の場合
+            $carbon_target_date->copy()->endOfmonth()->day == 30 && ($firstDay->copy()->endOfmonth()->isFriday())
+            ? 7 : 0;
+        // 当月の月末日以降の処理
+        $count = 31 + $addDay;
         $count =  ceil($count / 7) * 7;
+        // dd("addDay：$addDay","カレンダー1日目：$firstDay","カレンダー1日目の曜日：$firstDay->dayOfWeek","count:$count");
         $dates = [];
 
         for($i = 0; $i < $count; $i++, $firstDay->addDay()){
