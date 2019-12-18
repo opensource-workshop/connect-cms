@@ -70,7 +70,7 @@
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
     <!-- Scripts -->
-    <script src="{{asset('js/app.js')}}"></script>
+    <script src="{{ mix('js/app.js')}}"></script>
 
     <!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" />
