@@ -17,7 +17,7 @@ class DefaultUsersTableSeeder extends Seeder
                     /** 初期管理者 */
                     [
                         'name'=>'システム管理者',
-                        'email'=>'info@opensource-workshop.jp',
+                        'email'=>'',
                         'userid'=>'admin',
                         'password'=>bcrypt('C-admin'),
                         'remember_token'=>'',
