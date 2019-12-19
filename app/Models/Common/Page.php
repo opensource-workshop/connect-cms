@@ -175,6 +175,9 @@ class Page extends Model
      */
     public function getPermanentlinkClassname()
     {
+        if (empty(trim($this->permanent_link, '/'))) {
+            return "home";
+        }
         return str_replace('/', '-', trim($this->permanent_link, '/'));
     }
 
