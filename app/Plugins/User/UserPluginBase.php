@@ -261,6 +261,27 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  テーマ取得
+     *  配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
+     *  値がなければキーのみで値は空
+     */
+    protected function getThemeName()
+    {
+        // ページ固有の設定がある場合
+        $theme = $this->page->theme;
+        if ($theme) {
+            return  $this->page->theme;
+        }
+        // テーマが設定されていない場合は一般設定の取得
+        foreach($this->configs as $config) {
+            if ($config->name == 'base_theme') {
+                return $config->value;
+            }
+        }
+        return "";
+    }
+
+    /**
      * view 関数のラッパー
      * 共通的な要素を追加する。
      */
@@ -283,6 +304,9 @@ class UserPluginBase extends PluginBase
 
         // 表示しているBuckets
         $arg['buckets'] = empty($this->buckets) ? null : $this->buckets;
+
+        // 表示しているテーマ
+        $arg['theme'] = $this->getThemeName();
 
         return $arg;
     }

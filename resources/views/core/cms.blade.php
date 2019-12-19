@@ -41,9 +41,9 @@ $(function () {
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
         @if (isset($configs_array['browser_width_header']) && $configs_array['browser_width_header']->value == '100%')
-    <div id="ccHeaderArea" class="row p-0 mx-auto">
+    <div id="ccHeaderArea" class="ccHeaderArea row p-0 mx-auto">
         @else
-    <div id="ccHeaderArea" class="row container p-0 mx-auto">
+    <div id="ccHeaderArea" class="ccHeaderArea row container p-0 mx-auto">
         @endif
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[0]['frames'])
@@ -56,14 +56,14 @@ $(function () {
 
     {{-- 中央エリア --}}
         @if (isset($configs_array['browser_width_center']) && $configs_array['browser_width_center']->value == '100%')
-    <div id="ccCenterArea" class="row mx-auto p-0 d-flex align-items-start">
+    <div id="ccCenterArea" class="ccCenterArea row mx-auto p-0 d-flex align-items-start">
         @else
-    <div id="ccCenterArea" class="row container mx-auto p-0 d-flex align-items-start">
+    <div id="ccCenterArea" class="ccCenterArea row container mx-auto p-0 d-flex align-items-start">
         @endif
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
 {{--        <div class="{{$layouts_info[1]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
-        <div id="ccLeftArea" class="p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
+        <div id="ccLeftArea" class="ccLeftArea p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
             {{-- サービス取得 --}}
             {{-- Todo：実際には、ページ内で使用されているプラグインを動的に定義する必要がある --}}
             @isset($layouts_info[1]['frames'])
@@ -77,7 +77,7 @@ $(function () {
         {{-- メインエリア --}}
 {{--        <div class="{{$layouts_info[2]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
 {{--        <div class="row px-lg-0 {{$layouts_info[2]['col']}} order-1 order-lg-2"> --}}
-        <div id="ccMainArea" class="row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
+        <div id="ccMainArea" class="ccMainArea row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
             {{-- ページ内のフレームのループ --}}
             @foreach($frames as $frame)
                 @if ($frame->area_id == 2)
@@ -89,7 +89,7 @@ $(function () {
         {{-- 右エリア --}}
         @if ($layouts_info[3]['exists'])
 {{--        <div class="{{$layouts_info[3]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
-        <div id="ccRightArea" class="p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
+        <div id="ccRightArea" class="ccRightArea p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
             {{-- ページ内のフレームのループ --}}
             @isset($layouts_info[3]['frames'])
                 @foreach($layouts_info[3]['frames'] as $frame)
@@ -104,9 +104,9 @@ $(function () {
     {{-- フッターエリア --}}
     @if ($layouts_info[4]['exists'])
         @if (isset($configs_array['browser_width_footer']) && $configs_array['browser_width_footer']->value == '100%')
-    <div id="ccFooterArea" class="row p-0 mx-auto">
+    <div id="ccFooterArea" class="ccFooterArea row p-0 mx-auto">
         @else
-    <div id="ccFooterArea" class="row container p-0 mx-auto">
+    <div id="ccFooterArea" class="ccFooterArea row container p-0 mx-auto">
         @endif
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[4]['frames'])

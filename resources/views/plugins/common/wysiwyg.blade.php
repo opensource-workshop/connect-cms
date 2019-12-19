@@ -5,16 +5,55 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン共通
  --}}
+@php
+    // テーマ固有書式
+    $style_formats_file = '';
+    $style_formats_path = public_path() . '/themes/' . $theme . '/wysiwyg/style_formats.txt';
+    if (File::exists($style_formats_path)) {
+        $style_formats_file = File::get($style_formats_path);
+    }
+
+    // テーマ固有スタイル
+    $block_formats_file = '';
+    $block_formats_path = public_path() . '/themes/' . $theme . '/wysiwyg/block_formats.txt';
+    if (File::exists($style_formats_path)) {
+        $block_formats_file = File::get($block_formats_path);
+    }
+
+    // TinyMCE Body クラス
+    $body_class = '';
+    if ($frame->area_id == 0) {
+        $body_class = 'ccHeaderArea';
+    }
+    elseif ($frame->area_id == 1) {
+        $body_class = 'ccCenterArea ccLeftArea';
+    }
+    elseif ($frame->area_id == 2) {
+        $body_class = 'ccCenterArea ccMainArea';
+    }
+    elseif ($frame->area_id == 3) {
+        $body_class = 'ccCenterArea ccRightArea';
+    }
+    elseif ($frame->area_id == 4) {
+        $body_class = 'ccFooterArea';
+    }
+@endphp
 <script type="text/javascript" src="/js/tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
     tinymce.init({
         selector : 'textarea',
         language : 'ja',
-        // plugins  : 'file media image jbimages link autolink preview textcolor code table lists',
-        // toolbar  : 'plugin insert media image bold italic underline strikethrough subscript superscript | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link jbimages | preview | code ',
         plugins  : 'file image link autolink preview textcolor code table lists',
-        toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file |  preview | code ',
-        block_formats: "スタイル=p;見出し1=h1;見出し2=h2;見出し3=h3;見出し4=h4;見出し5=h5;見出し6=h6",
+
+        {{-- formatselect = スタイル, styleselect = 書式 --}}
+        toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file |  preview | code ',
+
+        {{-- テーマ固有書式 --}}
+        {!!$style_formats_file!!}
+
+        {{-- テーマ固有スタイル --}}
+        {!!$block_formats_file!!}
+
         menubar  : '',
         relative_urls : false,
         height: 300,
@@ -22,7 +61,9 @@
         forced_root_block : '',
         valid_children : "+body[style],+a[div|p]",
         extended_valid_elements : "script[type|charset],cc[value]",
-        content_css: "/css/app.css, /css/connect.css", // スタイル
+        content_css: "/css/app.css, /css/connect.css, /themes/tat/themes.css", // スタイル
+        body_class : "{{$body_class}}",
+
         // file_picker_types: 'file image media',
         // media_live_embeds: true,
         image_caption: true,
@@ -32,30 +73,22 @@
             {title: 'None', value: 'none'},
         ],
         invalid_styles: {
-            'table': 'height width',
+            'table': 'height width border-collapse',
             'tr': 'height width',
             'th': 'height width',
             'td': 'height width',
         },
         //table_resize_bars: false,
         //object_resizing: 'img',
-        table_default_attributes: {
-            class: 'table'
-        },
+        //table_default_attributes: {
+        //    class: 'table'
+        //},
         table_class_list: [
-            {title: 'none', value: ''},
-            {title: 'table', value: 'table'},
-            {title: 'tables-striped', value: 'table table-striped'},
-            {title: 'tables-bordered', value: 'table table-bordered'},
-            {title: 'tables-hover-rows', value: 'table table-hover-rows'},
-            {title: 'table-sm', value: 'table table-sm'},
-            {title: 'table-responsive', value: 'table table-responsive'},
-            {title: 'table-dark', value: 'table table-dark'},
+            {title: 'なし', value: ''},
         ],
         table_cell_class_list: [
-            {title: 'none', value: ''},
-            {title: 'd-block d-sm-table-cell', value: 'd-block d-sm-table-cell'},
-            {title: 'd-block d-sm-table-cell bg-light', value: 'd-block d-sm-table-cell bg-light'},
+            {title: 'なし', value: ''},
+            {title: '行タイトル', value: 'th02'},
         ],
         // 画像アップロード・ハンドラ
         images_upload_handler: function (blobInfo, success, failure) {
