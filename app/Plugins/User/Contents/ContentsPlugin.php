@@ -53,10 +53,12 @@ class ContentsPlugin extends UserPluginBase
      *
      *  スーパークラスをオーバーライド
      */
+/*
     public function getFirstFrameEditAction()
     {
         return "editBucketsRoles";
     }
+*/
 
     /**
      *  フレームとBuckets 取得
