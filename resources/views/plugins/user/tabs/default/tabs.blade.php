@@ -6,10 +6,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category タブ・プラグイン
 --}}
-
 <ul>
 @foreach($frames as $frame)
-    <li class="tab_{{$frame->id}}"><a href="#" onclick="return false;">{{$frame->frame_title}}</a></li>
+    <li id="tab_{{$frame->id}}" class="tab_{{$frame->id}}@if (isset($tabs) && $tabs->default_frame_id == $frame->id) current @endif"><a href="#" onclick="return false;">{{$frame->frame_title}}</a></li>
 @endforeach
 </ul>
 
@@ -22,9 +21,11 @@ $(document).ready(function(){
           @if($frame->id == $frame2->id)
             $('#frame-{{$frame2->id}}').removeClass('d-none');
             $('#frame-{{$frame2->id}}').addClass('d-block');
+            $('.tab_{{$frame2->id}}').addClass('current');
           @else
             $('#frame-{{$frame2->id}}').removeClass('d-block');
             $('#frame-{{$frame2->id}}').addClass('d-none');
+            $('.tab_{{$frame2->id}}').removeClass('current');
           @endif
         @endforeach
         });

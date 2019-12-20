@@ -53,7 +53,7 @@ class TabsPlugin extends UserPluginBase
     public function index($request, $page_id, $frame_id)
     {
         // 自分自身の設定
-        $tabs = Tabs::where('id', $frame_id)->first();
+        $tabs = Tabs::where('frame_id', $frame_id)->first();
 
         // タブでくくるために、同じページの自分以外のフレーム取得
         $frames = Frame::where('page_id', $page_id)
