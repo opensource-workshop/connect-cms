@@ -1145,7 +1145,16 @@ EOD;
 
             $title = $blogs_post->post_title;
             $link = url("/plugin/blogs/show/" . $page_id . "/" . $frame_id . "/" . $blogs_post->id);
-            $description = strip_tags(mb_substr($blogs_post->post_text, 0, 20));
+            if (mb_strlen(strip_tags($blogs_post->post_text)) > 100) {
+                $description = mb_substr(strip_tags($blogs_post->post_text), 0, 100) . "...";
+                $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
+                $description = str_replace($replaceTarget, '', $description);
+            }
+            else {
+                $description = strip_tags($blogs_post->post_text);
+                $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
+                $description = str_replace($replaceTarget, '', $description);
+            }
             $pub_date = date(DATE_RSS, strtotime($blogs_post->posted_at));
             $content = strip_tags(html_entity_decode($blogs_post->post_text));
 echo <<<EOD

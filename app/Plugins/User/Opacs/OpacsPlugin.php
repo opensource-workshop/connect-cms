@@ -6,6 +6,7 @@ use SimpleXMLElement;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -13,10 +14,14 @@ use DB;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Core\Configs;
+use App\Models\Core\UsersRoles;
 use App\Models\User\Opacs\Opacs;
 use App\Models\User\Opacs\OpacsBooks;
 use App\Models\User\Opacs\OpacsBooksLents;
+use App\Models\User\Opacs\OpacsConfigs;
 
+use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -65,7 +70,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'opacs.id as opacs_id', 'opacs.opac_name', 'opacs.view_count')
+                 ->select('frames.*', 'opacs.id as opacs_id', 'opacs.opac_name', 'opacs.view_count', 'lent_setting', 'lent_limit')
                  ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -278,14 +283,22 @@ class OpacsPlugin extends UserPluginBase
             $opac = Opacs::where('bucket_id', $opac_frame->bucket_id)->first();
         }
 
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
+        // Opac の設定情報
+        $opac_configs = OpacsConfigs::getConfigs($opac->id, $original_roles);
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'opacs_edit_opac', [
-            'opac_frame'  => $opac_frame,
-            'opac'        => $opac,
-            'create_flag' => $create_flag,
-            'message'     => $message,
-            'errors'      => $errors,
+            'opac_frame'     => $opac_frame,
+            'opac'           => $opac,
+            'original_roles' => $original_roles,
+            'opac_configs'   => $opac_configs,
+            'create_flag'    => $create_flag,
+            'message'        => $message,
+            'errors'         => $errors,
         ])->withInput($request->all);
     }
 
@@ -294,21 +307,64 @@ class OpacsPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $opacs_id = null)
     {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
+        // 項目のエラーチェック条件設定
+        $validator_columns = array(
             'opac_name'  => ['required'],
             'view_count' => ['required'],
-        ]);
-        $validator->setAttributeNames([
+        );
+        $validator_attribute = array(
             'opac_name'  => 'OPAC名',
             'view_count' => '表示件数',
-        ]);
+        );
+
+        // 貸し出し許可日数を設定して貸し出しする。の場合は日数が必須
+        if ($request->lent_setting == '2') {
+            $validator_columns['opacs_configs.lent_days_global']   = ['required', 'numeric'];
+            $validator_attribute['opacs_configs.lent_days_global'] = '日数';
+//            $validator_columns['lent_days_global']   = ['required', 'numeric'];
+//            $validator_attribute['lent_days_global'] = '日数';
+        }
+
+        // 役割毎に貸し出し許可日数を設定して貸し出しする。の場合は役割設定毎の日数が必須
+        if ($request->lent_setting == '3') {
+            foreach($original_roles as $original_role) {
+                $validator_columns['opacs_configs.lent_days_'.$original_role->name]   = ['required', 'numeric'];
+                $validator_attribute['opacs_configs.lent_days_'.$original_role->name] = '日数';
+//                $validator_columns['lent_days_'.$original_role->name]   = ['required', 'numeric'];
+//                $validator_attribute['lent_days_'.$original_role->name] = '日数';
+            }
+        }
+
+        // 貸し出し冊数を設定して貸し出しする。の場合は冊数が必須
+        if ($request->lent_limit == '1') {
+            $validator_columns['opacs_configs.lent_limit_global']   = ['required', 'numeric'];
+            $validator_attribute['opacs_configs.lent_limit_global'] = '冊数';
+//            $validator_columns['lent_limit_global']   = ['required', 'numeric'];
+//            $validator_attribute['lent_limit_global'] = '冊数';
+        }
+
+        // 役割毎に冊数を設定して貸し出しする。の場合は役割設定毎の冊数が必須
+        if ($request->lent_limit == '2') {
+            foreach($original_roles as $original_role) {
+                $validator_columns['opacs_configs.lent_limit_'.$original_role->name]   = ['required', 'numeric'];
+                $validator_attribute['opacs_configs.lent_limit_'.$original_role->name] = '冊数';
+//                $validator_columns['lent_limit_'.$original_role->name]   = ['required', 'numeric'];
+//                $validator_attribute['lent_limit_'.$original_role->name] = '冊数';
+            }
+        }
+
+        // 項目のエラーチェック実施
+        $validator = Validator::make($request->all(), $validator_columns);
+        $validator->setAttributeNames($validator_attribute);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
 
-            if (empty($opacs_id)) {
+            if (empty($opacs_id) && empty($request->opacs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $validator->errors());
             }
@@ -357,11 +413,24 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // OPAC設定
-        $opacs->opac_name  = $request->opac_name;
-        $opacs->view_count = $request->view_count;
+        $opacs->opac_name                   = $request->opac_name;
+        $opacs->view_count                  = $request->view_count;
+        $opacs->moderator_mail_send_flag    = (empty($request->moderator_mail_send_flag)) ? 0 : $request->moderator_mail_send_flag;
+        $opacs->moderator_mail_send_address = $request->moderator_mail_send_address;
+        $opacs->lent_setting                = $request->lent_setting;
+        $opacs->lent_limit                  = $request->lent_limit;
 
         // データ保存
         $opacs->save();
+
+        // OpacConfigs テーブル保存
+        // 貸出日数
+        foreach($request->opacs_configs as $config_name => $config_value ) {
+            OpacsConfigs::updateOrCreate(
+                ['opacs_id' => $opacs->id, 'name' => $config_name],
+                ['value' => intval($config_value)],
+            );
+        }
 
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = false;
@@ -500,15 +569,20 @@ class OpacsPlugin extends UserPluginBase
                       })
                       ->where('opacs_books.id', $opacs_books_id)->first();
 
+        // 冊数による貸し出し制限
+        list($lent_limit_check, $lent_error_message) = $this->lentCountCheck($opac_frame);
+
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'opacs_show', [
-            'opac_frame'     => $opac_frame,
-            'opacs_books'    => $opacs_book,
-            'opacs_books_id' => $opacs_books_id,
-            'message'        => $message,
-            'message_class'  => $message_class,
-            'errors'         => $errors,
+            'opac_frame'         => $opac_frame,
+            'opacs_books'        => $opacs_book,
+            'opacs_books_id'     => $opacs_books_id,
+            'lent_limit_check'   => $lent_limit_check,
+            'message'            => $message,
+            'message_class'      => $message_class,
+            'lent_error_message' => $lent_error_message,
+            'errors'             => $errors,
         ]);
     }
 
@@ -621,6 +695,85 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
+     * 貸出冊数チェック
+     */
+    public function lentCountCheck($opac_frame)
+    {
+        // すでに借りている冊数を取得
+        $user = Auth::user();
+        if (empty($user)) {
+            return array(false, '');
+        }
+
+        // 冊数を制限しない。
+        if ($opac_frame->lent_limit == 0) {
+            return array(true, '');
+        }
+
+        $lent_count = OpacsBooksLents::where('student_no', $user->userid)->count();
+
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
+        // Opac の設定情報
+        $opac_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
+
+        // ユーザーの役割設定
+        $users_roles_obj = new UsersRoles();
+        $users_roles = $users_roles_obj->getUsersRoles($user->id, 'original_role');
+
+        // 貸出冊数
+        $lent_limit_count = 0;
+
+        // 冊数を制限する。
+        if ($opac_frame->lent_limit == 1) {
+            $lent_limit_count = $opac_configs['lent_limit_global'];
+        }
+
+        // 役割毎に冊数を設定して貸し出しする。
+        if ($opac_frame->lent_limit == 2) {
+
+            if (!array_key_exists('original_role', $users_roles)) {
+                return array(false, '貸出権限が設定されていないため、貸し出しできません。');
+            }
+
+            // ユーザに設定されている役割をループし、Opac設定の貸し出し許可冊数を取得。一番多い冊数を採用する。
+            foreach($users_roles['original_role'] as $users_role => $users_role_value) {
+                if (array_key_exists('lent_limit_'.$users_role, $opac_configs)) {
+                    if ($lent_limit_count < $opac_configs['lent_limit_'.$users_role] ) {
+                        $lent_limit_count = $opac_configs['lent_limit_'.$users_role];
+                    }
+                }
+            }
+        }
+
+        if ($lent_count < $lent_limit_count) {
+            return array(true, '');
+        }
+        return array(false, '貸出上限数まで借りているので、貸し出しできません。');
+    }
+
+    /**
+     *  メール送信
+     */
+    private function sendMail($opacs, $subject, $content)
+    {
+        if (empty($opacs)) {
+            return;
+        }
+        if ($opacs->moderator_mail_send_flag == 0 || empty($opacs->moderator_mail_send_address)) {
+            return;
+        }
+
+        $moderator_mail_send_addresses = explode(',', $opacs->moderator_mail_send_address);
+
+        // メール送信
+        foreach($moderator_mail_send_addresses as $mail_send_address) {
+            Mail::to($mail_send_address)->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $content]));
+        }
+    }
+
+    /**
      *  貸し出し登録
      */
     public function lent($request, $page_id, $frame_id, $opacs_books_id)
@@ -635,15 +788,65 @@ class OpacsPlugin extends UserPluginBase
             return $this->show($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は貸出中です。', 'danger');
         }
 
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
+        // Opac設定取得
+        $opac_frame = $this->getOpacFrame($frame_id);
+
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
+        // Opac の設定情報
+        $opac_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
+
+        // ユーザー情報
+        $user = Auth::user();
+
+        // ユーザーの役割設定
+        $users_roles_obj = new UsersRoles();
+        $users_roles = $users_roles_obj->getUsersRoles($user->id, 'original_role');
+
+        // 項目のエラーチェック条件設定（基本）
+        $validator_columns = array(
             'student_no'       => ['required'],
             'return_scheduled' => ['required'],
-        ]);
-        $validator->setAttributeNames([
+        );
+        $validator_attribute = array(
             'student_no'       => '学籍番号',
             'return_scheduled' => '返却予定日',
-        ]);
+        );
+
+        // 貸し出し許可日数を設定して貸し出しする。
+        if ($opac_frame->lent_setting == 2) {
+            $validator_columns['return_scheduled'][] = 'before_or_equal:' . date('Y-m-d', strtotime("+" . $opac_configs['lent_days_global'] ." day"));
+        }
+
+        // 役割毎に貸し出し許可日数を設定して貸し出しする。
+        if ($opac_frame->lent_setting == 3 && array_key_exists('original_role', $users_roles) && is_array($users_roles['original_role'])) {
+
+            $lent_days = 0; // 貸出日
+            // ユーザに設定されている役割をループし、Opac設定の役割毎貸し出し許可日数を取得。一番長い日数を採用する。
+            foreach($users_roles['original_role'] as $users_role => $users_role_value) {
+                if (array_key_exists('lent_days_'.$users_role, $opac_configs)) {
+                    if ($lent_days < $opac_configs['lent_days_'.$users_role] ) {
+                        $lent_days = $opac_configs['lent_days_'.$users_role];
+                    }
+                }
+            }
+            $validator_columns['return_scheduled'][] = 'before_or_equal:' . date('Y-m-d', strtotime("+" . $lent_days ." day"));
+        }
+
+        // すでに借りている冊数を取得
+//        $lented = OpacsBooksLents
+//$user
+
+
+        // 冊数を制限する。
+//        if ($opac_frame->lent_limit == 1) {
+//            $validator_columns['return_scheduled'][] = 'before_or_equal:' . date('Y-m-d', strtotime("+" . $opac_configs['lent_days_global'] ." day"));
+//        }
+
+        // 項目のエラーチェック実施
+        $validator = Validator::make($request->all(), $validator_columns);
+        $validator->setAttributeNames($validator_attribute);
 
         // エラーがあった場合は詳細画面に戻る。
         $message = null;
@@ -662,6 +865,19 @@ class OpacsPlugin extends UserPluginBase
         $opacs_books_lents->save();
 
         $message = '貸し出し登録しました。';
+
+        // 書籍データ
+        $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
+
+        // メール送信
+        $subject = '図書を貸し出し登録しました。';
+        $content = $request->student_no . " が貸し出し登録しました。\n";
+        $content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $content .= 'タイトル：' . $opacs_books->title . "\n";
+        $content .= '返却予定日：' . $request->return_scheduled . "\n";
+
+        $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
+        $this->sendMail($opacs, $subject, $content);
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
@@ -715,6 +931,20 @@ class OpacsPlugin extends UserPluginBase
         $opacs_books_lents->save();
 
         $message = '郵送貸し出しリクエストを受け付けました。';
+
+        // 書籍データ
+        $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
+
+        // メール送信
+        $subject = '郵送貸し出しリクエストを受け付けました。';
+        $content = $request->req_student_no . " が郵送貸し出しリクエストしました。\n";
+        $content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $content .= 'タイトル：' . $opacs_books->title . "\n";
+        $content .= '連絡先電話番号：' . $request->req_phone_no . "\n";
+        $content .= '連絡先メールアドレス：' . $request->req_email . "\n";
+
+        $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
+        $this->sendMail($opacs, $subject, $content);
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
@@ -773,6 +1003,19 @@ class OpacsPlugin extends UserPluginBase
 
         $message = '返却しました。';
 
+        // 書籍データ
+        $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
+
+        // メール送信
+        $subject = '図書を返却しました。';
+        $content = $request->return_student_no . " が返却しました。\n";
+        $content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $content .= 'タイトル：' . $opacs_books->title . "\n";
+        $content .= '返却日：' . $request->return_date . "\n";
+
+        $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
+        $this->sendMail($opacs, $subject, $content);
+
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
     }
@@ -788,6 +1031,7 @@ class OpacsPlugin extends UserPluginBase
         // キーワードをセッションに保存しておく。
         $request->session()->put('search_keyword', $request->keyword);
 
+        // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
         return $this->index($request, $page_id, $frame_id);
     }
 }

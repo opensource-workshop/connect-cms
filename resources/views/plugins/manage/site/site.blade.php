@@ -198,6 +198,15 @@
             <small class="form-text text-muted">画像の保存機能を無効化するものを選択</small>
         </div>
 
+        {{-- スマホメニューのフォーマット --}}
+        <div class="form-group">
+            <label class="col-form-label">スマホメニューのフォーマット</label>
+            <select name="smartphone_menu_template" class="form-control">
+                <option value=""@if(!isset($configs["smartphone_menu_template"]) || $configs["smartphone_menu_template"] == "") selected @endif>default</option>
+                <option value="opencurrenttree"@if(isset($configs["smartphone_menu_template"]) && $configs["smartphone_menu_template"] == "opencurrenttree") selected @endif>opencurrenttree</option>
+            </select>
+        </div>
+
         {{-- Submitボタン --}}
         <div class="form-group text-center">
             <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>

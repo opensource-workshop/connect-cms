@@ -131,7 +131,7 @@
                             <div><i class="far fa-eye-slash"></i></div>
                         @endif
                     </td>
-                    <td class="table-text p-1">
+                    <td class="table-text p-1" nowrap>
                         <div><a href="{{url($page_item->permanent_link)}}">{{ $page_item->permanent_link }}</a></div>
                     </td>
                     <td class="table-text p-1">

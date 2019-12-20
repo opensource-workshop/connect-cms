@@ -18,9 +18,14 @@ else {
 if ($frame_id == $frame->frame_id) {
     $frame_classname = $frame_classname . '-' . $action;
 }
+
+$default_hidden = '';
+if ($frame->default_hidden && (!Auth::check() || !Auth::user()->can('role_arrangement'))) {
+    $default_hidden = ' d-none';
+}
 @endphp
 @if($frame->frame_col==0)
-<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$default_hidden}}" id="frame-{{ $frame->frame_id }}">
 @else
 <div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}" id="frame-{{ $frame->frame_id }}">
 @endif

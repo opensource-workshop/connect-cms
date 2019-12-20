@@ -38,6 +38,11 @@ class UserPluginBase extends PluginBase
     public $page = null;
 
     /**
+     *  ページ一覧オブジェクト
+     */
+    public $pages = null;
+
+    /**
      *  フレームオブジェクト
      */
     public $frame = null;
@@ -60,13 +65,16 @@ class UserPluginBase extends PluginBase
     /**
      *  コンストラクタ
      */
-    function __construct($page = null, $frame = null, $plugin_name = null)
+    function __construct($page = null, $frame = null, $pages = null)
     {
         // ページの保持
         $this->page = $page;
 
         // フレームの保持
         $this->frame = $frame;
+
+        // ページ一覧の保持
+        $this->pages = $pages;
 
         // Buckets の保持
         $this->buckets = Buckets::select('buckets.*')
@@ -253,6 +261,27 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  テーマ取得
+     *  配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
+     *  値がなければキーのみで値は空
+     */
+    protected function getThemeName()
+    {
+        // ページ固有の設定がある場合
+        $theme = $this->page->theme;
+        if ($theme) {
+            return  $this->page->theme;
+        }
+        // テーマが設定されていない場合は一般設定の取得
+        foreach($this->configs as $config) {
+            if ($config->name == 'base_theme') {
+                return $config->value;
+            }
+        }
+        return "";
+    }
+
+    /**
      * view 関数のラッパー
      * 共通的な要素を追加する。
      */
@@ -275,6 +304,9 @@ class UserPluginBase extends PluginBase
 
         // 表示しているBuckets
         $arg['buckets'] = empty($this->buckets) ? null : $this->buckets;
+
+        // 表示しているテーマ
+        $arg['theme'] = $this->getThemeName();
 
         return $arg;
     }
@@ -435,6 +467,52 @@ class UserPluginBase extends PluginBase
             'buckets'     => $buckets,
             'plugin_name' => $this->frame->plugin_name,
         ]);
+    }
+
+    /**
+     *  ページ取得
+     */
+    protected function getPages($format = null)
+    {
+        // format 指定なしはフラットな形式
+        if ($format == null) {
+            return $this->pages;
+        }
+
+        // layer1 は親とその下を1階層の配列に束ねるもの
+        if ($format == 'layer1') {
+
+            // 戻り値用
+            $ret_array = array();
+
+            // 一度ツリーにしてから、親と子を分ける。ツリーにしないと、親と子の見分けがし難かったので。
+            $tree = $this->pages->toTree();
+
+            // クロージャ。子を再帰呼び出しするためのもの。
+            $recursiveMenu = function($pages, $page_id) use(&$recursiveMenu, &$ret_array) {
+                foreach($pages as $page) {
+
+                    //$ret_array[$page_id]['child'][] = $page->page_name;
+                    $ret_array[$page_id]['child'][] = $page;
+                    if (count($page->children) > 0) {
+                        // 孫以降の呼び出し。page_id は親のものを引き継ぐことに、1階層に集約する。
+                        $recursiveMenu($page->children, $page_id);
+                    }
+                };
+            };
+
+            // 親階層のループ
+            foreach($tree as $pages) {
+                //$ret_array[$pages->id]['parent'] = $pages->page_name;
+                $ret_array[$pages->id]['parent'] = $pages;
+                if (count($pages->children) > 0) {
+                    $recursiveMenu($pages->children, $pages->id);
+                }
+            }
+            // Log::debug($ret_array);
+            return $ret_array;
+        }
+
     }
 
     /**

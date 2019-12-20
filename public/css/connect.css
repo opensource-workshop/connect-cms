@@ -1,5 +1,20 @@
 /*  Connect-CMS add CSS
 ------------------------------------- */
+
+/*  body
+------------------------------------- */
+body {
+    background-color: #ffffff;
+}
+
+/*  プラグイン追加
+------------------------------------- */
+#pluginAddModal {
+    z-index: 9999;
+}
+
+/*  ナビバー
+------------------------------------- */
 .nav-tabs .nav-link.active {
     background-color: #f0f0f0;
 }
@@ -74,6 +89,20 @@
 .openingcalendar-pdf {
     text-align: right;
 }
+
+/* ヘッダーバー
+------------------------------------- */
+#navbarsExampleDefault {
+    z-index: 9999;
+}
+
+/* Card の中のUL
+------------------------------------- */
+.card ul {
+    margin-bottom: 0;
+    /* padding-left: 1.5em; POPUPカレンダーのレイアウトに影響あり  */
+}
+
 
 
 /*  Connect-CMS add CSS Bootstrap3

@@ -128,6 +128,7 @@ class FrameController extends ConnectController
                       'browser_width'     => $request->browser_width,
                       'disable_whatsnews' => ($request->disable_whatsnews == '') ? 0 : $request->disable_whatsnews,
                       'page_only'         => ($request->page_only == '') ? 0 : $request->page_only,
+                      'default_hidden'    => ($request->default_hidden == '') ? 0 : $request->default_hidden,
                       'classname'         => $request->classname,
                       'plug_name'         => $request->plug_name
         ]);

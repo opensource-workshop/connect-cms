@@ -22,6 +22,11 @@
     </div>
 
     @if ($children->children && count($children->children) > 0)
+        @foreach($children->children as $grandchild)
+            @include('plugins.user.menus.default.menus_select_children',['children' => $grandchild])
+        @endforeach
+{{--
         @include('plugins.user.menus.default.menus_select_children',['children' => $children->children[0]])
+--}}
     @endif
 @endif

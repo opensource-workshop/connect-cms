@@ -59,6 +59,7 @@ class MenusPlugin extends UserPluginBase
     {
         // メニュー
         $menu = Menu::where('frame_id', $frame_id)->first();
+        //Log::debug(json_encode( $menu, JSON_UNESCAPED_UNICODE));
 
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
@@ -73,10 +74,11 @@ class MenusPlugin extends UserPluginBase
 
         // 画面へ
         return $this->view('menus', [
-            'page_id'   => $page_id,
-            'pages'     => $pages,
-            'ancestors' => $ancestors,
-            'page'      => $this->page,
+            'page_id'      => $page_id,
+            'pages'        => $pages,
+            'ancestors'    => $ancestors,
+            'current_page' => $this->page,
+//            'page'      => $this->page,
         ]);
     }
 
@@ -97,6 +99,7 @@ class MenusPlugin extends UserPluginBase
         $menu = null;
         $setting_mode = true;
         $pages = Page::defaultOrderWithDepth($format, $this->page, $menu, $setting_mode);
+        //Log::debug(json_encode( $pages, JSON_UNESCAPED_UNICODE));
 
         // メニュー
         $menu = Menu::where('frame_id', $frame_id)->first();

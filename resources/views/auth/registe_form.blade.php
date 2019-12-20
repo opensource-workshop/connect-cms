@@ -171,6 +171,25 @@
         </div>
     </div>
 
+    {{-- 役割設定 --}}
+    @if (isset($original_role_configs))
+    <div class="form-group row">
+        <label for="password-confirm" class="col-md-4 text-md-right">役割設定</label>
+        <div class="col-md-6">
+            @foreach($original_role_configs as $original_role_config)
+            <div class="custom-control custom-checkbox">
+                @if(isset($original_role_config["role_value"]) && $original_role_config["role_value"] == 1)
+                    <input name="original_role[{{$original_role_config->name}}]" value="1" type="checkbox" class="custom-control-input" id="original_role{{$original_role_config->id}}" checked="checked">
+                @else
+                    <input name="original_role[{{$original_role_config->name}}]" value="1" type="checkbox" class="custom-control-input" id="original_role{{$original_role_config->id}}">
+                @endif
+                <label class="custom-control-label" for="original_role{{$original_role_config->id}}">{{$original_role_config->value}}</label>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     <div class="form-group row text-center">
         <div class="col-sm-3"></div>
         <div class="col-sm-6">

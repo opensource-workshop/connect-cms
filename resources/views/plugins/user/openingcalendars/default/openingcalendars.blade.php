@@ -78,13 +78,21 @@
 
 </script>
 
-<a href="javascript:prev{{$frame_id}}();" class="@if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
-  <i class="fas fa-chevron-circle-left"></i>
-</a>
-<span id="view_ym_str{{$frame_id}}">{{$view_ym_str}}</span>
-<a href="javascript:next{{$frame_id}}();" class="@if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
-  <i class="fas fa-chevron-circle-right"></i>
-</a>
+<div class="openingcalendar-monthWrap">
+    <div class="openingcalendar-arrow-left">
+        <a href="javascript:prev{{$frame_id}}();" class="@if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}">
+            <i class="fas fa-chevron-circle-left"></i>
+        </a>
+    </div>
+    <div class="openingcalendar-month">
+        <span id="view_ym_str{{$frame_id}}">{{$view_ym_str}}</span>
+    </div>
+    <div class="openingcalendar-arrow-right">
+        <a href="javascript:next{{$frame_id}}();" class="@if ($default_disabled['next'] == 'off') disabled @endif" id="calendar_next_link{{$frame_id}}">
+            <i class="fas fa-chevron-circle-right"></i>
+        </a>
+    </div>
+</div>
 
 {{-- <a href="javascript:prev();" class="btn btn-primary @if ($default_disabled['prev'] == 'off') disabled @endif" id="calendar_prev_link{{$frame_id}}"> --}}
 {{--
@@ -142,16 +150,16 @@
             </table>
 
             {{-- パターン --}}
-            <div class="d-md-table cc-table-set">
+            <div class="openingcalendar-timeLegend">
                 @foreach($view_months_patterns[$calendar_ym] as $view_pattern)
-                    <dl class="d-none d-md-table-row" style="font-size:90%;">
-                        <dt class="d-md-table-cell"><span style="color:{{$view_pattern[0]->color}}">■</span></dt>
-                        <dd class="d-md-table-cell">{{$view_pattern[0]->pattern}}</dd>
-{{--                        <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
+                    <dl>
+                        <dt><span style="color:{{$view_pattern[0]->color}}">■</span></dt>
+                        <dd>{{$view_pattern[0]->pattern}}</dd>
+{{--                        <dl>（{{$view_pattern[0]->caption}}）</dl> --}}
                         @if (count($view_pattern) > 1)
-                            <dt class="d-md-table-cell ml-2"><span style="color:{{$view_pattern[1]->color}}">■</span></dt>
-                            <dd class="d-md-table-cell">{{$view_pattern[1]->pattern}}</dd>
-{{--                            <dl class="d-md-table-cell">（{{$view_pattern[0]->caption}}）</dl> --}}
+                            <dt><span style="color:{{$view_pattern[1]->color}}">■</span></dt>
+                            <dd>{{$view_pattern[1]->pattern}}</dd>
+{{--                            <dl>（{{$view_pattern[0]->caption}}）</dl> --}}
                         @endif
                     </dl>
                 @endforeach
@@ -171,16 +179,16 @@
 
 {{-- パターン --}}
 {{--
-<div class="d-md-table cc-table-set">
+<div class="openingcalendar-timeLegend">
 @foreach($patterns_chunks as $patterns_chunk)
-    <dl class="d-none d-md-table-row" style="font-size:90%;">
-        <dt class="d-md-table-cell"><span style="color:{{$patterns_chunk[0]->color}}">■</span></dt>
-        <dd class="d-md-table-cell">{{$patterns_chunk[0]->pattern}}</dd>
-        <dd class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dd>
+    <dl>
+        <dt><span style="color:{{$patterns_chunk[0]->color}}">■</span></dt>
+        <dd>{{$patterns_chunk[0]->pattern}}</dd>
+        <dd>（{{$patterns_chunk[0]->caption}}）</dd>
         @if (count($patterns_chunk) > 1)
-            <dt class="d-md-table-cell ml-2"><span style="color:{{$patterns_chunk[1]->color}}">■</span></dt>
-            <dd class="d-md-table-cell">{{$patterns_chunk[1]->pattern}}</dd>
-            <dd class="d-md-table-cell">（{{$patterns_chunk[0]->caption}}）</dd>
+            <dt><span style="color:{{$patterns_chunk[1]->color}}">■</span></dt>
+            <dd>{{$patterns_chunk[1]->pattern}}</dd>
+            <dd>（{{$patterns_chunk[0]->caption}}）</dd>
         @endif
     </dl>
 @endforeach

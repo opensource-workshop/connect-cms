@@ -14,7 +14,7 @@
 {{-- 機能選択タブ --}}
 @include('plugins.manage.system.system_tab')
 
-<form name="form_plugins" id="form_plugins" class="form-horizontal" method="post" action="/manage/system/updateDebugmode">
+<form name="form_debug" id="form_debug" class="form-horizontal" method="post" action="/manage/system/updateDebugmode">
     {{ csrf_field() }}
 
     <div class="card">

@@ -121,6 +121,21 @@
         </div>
         @endif
 
+        {{-- 初期状態を非表示とする --}}
+        <div class="form-group row mx-0">
+            <label class="{{$class_label}}">初期状態</label>
+            <div class="{{$class_input}} d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    @if($frame->default_hidden)
+                        <input name="default_hidden" value="1" type="checkbox" class="custom-control-input" id="default_hidden" checked="checked">
+                    @else
+                        <input name="default_hidden" value="1" type="checkbox" class="custom-control-input" id="default_hidden">
+                    @endif
+                    <label class="custom-control-label" for="default_hidden">初期状態を非表示とする。</label>
+                </div>
+            </div>
+        </div>
+
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
         @if ($frame->area_id != 2)
         <div class="form-group row mx-0">

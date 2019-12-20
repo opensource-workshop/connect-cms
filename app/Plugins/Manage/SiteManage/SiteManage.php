@@ -157,6 +157,13 @@ class SiteManage extends ManagePluginBase
              'value'    => (isset($request->base_touch_callout) ? $request->base_touch_callout : 0)]
         );
 
+        // スマホメニューのフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'smartphone_menu_template'],
+            ['category' => 'general',
+             'value'    => (isset($request->smartphone_menu_template) ? $request->smartphone_menu_template : "")]
+        );
+
         // ページ管理画面に戻る
         return redirect("/manage/site");
     }
@@ -177,6 +184,7 @@ class SiteManage extends ManagePluginBase
 
         return view('plugins.manage.site.categories',[
             "function"    => __FUNCTION__,
+            "plugin_name" => "site",
             "id"          => $id,
             "categories"  => $categories,
             "create_flag" => true,
@@ -301,6 +309,7 @@ class SiteManage extends ManagePluginBase
 
         return view('plugins.manage.site.languages',[
             "function"          => __FUNCTION__,
+            "plugin_name"       => "site",
             "id"                => $id,
             "language_multi_on" => $language_multi_on,
             "languages"         => $languages,
@@ -411,6 +420,7 @@ class SiteManage extends ManagePluginBase
 
         return view('plugins.manage.site.browserwidths',[
             "function"       => __FUNCTION__,
+            "plugin_name"    => "site",
             "id"             => $id,
             "browser_widths" => $browser_widths,
         ]);
@@ -463,9 +473,10 @@ class SiteManage extends ManagePluginBase
         $meta = $this->getConfigs(null, 'meta');
 
         return view('plugins.manage.site.meta',[
-            "function"  => __FUNCTION__,
-            "id"        => $id,
-            "meta"      => $meta,
+            "function"    => __FUNCTION__,
+            "plugin_name" => "site",
+            "id"          => $id,
+            "meta"        => $meta,
         ]);
     }
 

@@ -32,6 +32,9 @@
 
     {{-- フレームタイトル --}}
     {{$frame->frame_title}}
+    @if (Auth::check() && $frame->default_hidden)
+        <span class="badge badge-dark">初期非表示</span>
+    @endif
 
     {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}
     @if (Auth::check() &&

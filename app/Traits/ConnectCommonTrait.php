@@ -5,7 +5,10 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
+use App\User;
+use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
@@ -476,18 +479,22 @@ trait ConnectCommonTrait
         // 管理プラグインの場合は、この後で呼ぶinvokeManageでインスタンス生成する。
         if ($this->isSpecialPath($path) === 1) {
 
+            // Page とFrame の生成
+            $page = Page::where('id', $cc_special_path[$path]['page_id'])->first();
+            $frame = Frame::where('id', $cc_special_path[$path]['frame_id'])->first();
+
             // 指定されたプラグインファイルの読み込み
             require $file_path;
 
             // config の値を取得すると、\ が / に置き換えられているので、元に戻す。
             // こうしないとclass がないというエラーになる。
             $class_name = str_replace('/', "\\", $cc_special_path[$path]['plugin']);
-            $plugin_instance = new $class_name;
+            $plugin_instance = new $class_name($page, $frame);
         }
 
         // 一般プラグインか管理プラグインかで呼び方を変える。
         if ($this->isSpecialPath($path) === 1) {
-            return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['flame_id']);
+            return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['frame_id']);
         }
         else if ($this->isSpecialPath($path) === 2) {
 
@@ -550,6 +557,31 @@ trait ConnectCommonTrait
     }
 
     /**
+     *  固定記事からスマホメニューを出すためのタグ生成
+     */
+    public function getSmpMenu($level1_pages)
+    {
+        $sp_menu  = '' . "\n";
+        $sp_menu .= '<nav class="sp_menu">' . "\n";
+        $sp_menu .= '<ul>' . "\n";
+        foreach ($level1_pages as $level1_page) {
+            $sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n";
+            $sp_menu .= '<p>' . $level1_page['parent']->page_name . '</p>' . "\n";
+            if (array_key_exists('child', $level1_page)) {
+                $sp_menu .= '<ul>' . "\n";
+                foreach ($level1_page['child'] as $child) {
+                    $sp_menu .= '<li><a href="' . $child->getLinkUrl() . '">' . $child->page_name . '</a></li>' . "\n";
+                }
+                $sp_menu .= '</ul>' . "\n";
+            }
+            $sp_menu .= '</li>' . "\n";
+        }
+        $sp_menu .= '</ul>' . "\n";
+        $sp_menu .= '</nav>' . "\n";
+        return $sp_menu;
+    }
+
+    /**
      *  ページの言語の取得
      */
     public function getPageLanguage($page, $languages)
@@ -598,5 +630,79 @@ trait ConnectCommonTrait
         $directory = $this->directory_base . $sub_directory;
 
         return $directory;
+    }
+
+    /**
+     *  外部認証
+     *
+     */
+    public function authMethod($request)
+    {
+
+        // Config チェック
+        $auth_method = Configs::where('name', 'auth_method')->first();
+
+        // 外部認証ではない場合は戻る
+        if (empty($auth_method) || $auth_method->value == '') {
+            return;
+        }
+
+        // NetCommons2 認証
+        if ($auth_method->value == 'netcommons2') {
+
+            // リクエストURLの組み立て
+            $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
+            // Log::debug($request['password']);
+            // Log::debug($auth_method['additional3']);
+            // Log::debug(md5($request['password']));
+            // Log::debug(md5(md5($request['password']) . $auth_method['additional3']));
+            // Log::debug($request_url);
+
+            // NC2 をCall
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $request_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $return_json = curl_exec($ch);
+
+            // JSON データを複合化
+            $check_result = json_decode($return_json, true);
+
+            // 戻り値のチェック
+            if (is_array($check_result) && array_key_exists('check', $check_result) && array_key_exists('ret_value', $check_result)) {
+                if ($check_result['check'] == true && $check_result['ret_value'] == md5($request['userid'] . $auth_method['additional3'])) {
+
+                    // ログインするユーザの存在を確認
+                    $user = User::where('userid', $request['userid'])->first();
+
+                    // ユーザが存在しない
+                    if (empty($user)) {
+
+                        // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                        $user           = new User;
+                        $user->name     = $request['userid'];
+                        $user->userid   = $request['userid'];
+                        $user->password = Hash::make($request['password']);
+                        $user->save();
+
+                        // 追加権限設定があれば作成
+                        if (!empty($auth_method['additional4'])) {
+                            $original_rols_options = explode(':', $auth_method['additional4']);
+                            UsersRoles::create([
+                                'users_id'   => $user->id,
+                                'target'     => 'original_role',
+                                'role_name'  => $original_rols_options[1],
+                                'role_value' => 1
+                            ]);
+                        }
+                    }
+
+                    // ログイン
+                    Auth::login($user, true);
+                    // トップページへ
+                    return redirect("/");
+                }
+            }
+        }
+        return;
     }
 }

@@ -33,19 +33,14 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
     {
 
         // ログイン前だけれど、$user にはユーザーオブジェクトが入っている。
+        // IP アドレスチェックなどでログインの可否をチェック
         $judgment_login = $this->judgmentLogin($user);
 
         if (!$judgment_login) {
             abort(403, 'ログイン制限によるログイン拒否');
         }
 
-
-
-        //Log::debug($user);
-        //Log::debug($credentials);
-
-//abort(403);
-
+        // 通常のログイン
         return parent::validateCredentials($user, $credentials);
     }
 

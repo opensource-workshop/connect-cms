@@ -25,7 +25,7 @@ class UsersRoles extends Model
      * @return roles array
      */
     //public static function getUsersRoles($users_id, $target = null, $role_name = null)
-    public function getUsersRoles($users_id)
+    public function getUsersRoles($users_id, $target = null)
     {
 
         // すでに内容を保持している場合は保持している内容を返却
@@ -35,7 +35,12 @@ class UsersRoles extends Model
 
         // 指定されたユーザの権限を取得する。
         // target、role_name が指定された場合は絞り込んで値を返す。(後で実装予定)
-        $users_roles = self::where('users_id', $users_id)->get();
+        if ($target) {
+            $users_roles = self::where('users_id', $users_id)->where('target', $target)->get();
+        }
+        else {
+            $users_roles = self::where('users_id', $users_id)->get();
+        }
 
         // 配列の形式は[target][role_name] = value{1|0}
         $this->user_roles = array();
