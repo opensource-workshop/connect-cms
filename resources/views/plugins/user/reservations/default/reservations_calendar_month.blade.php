@@ -74,7 +74,7 @@
                                         {{-- ＋ボタン --}}
                                         <div class="float-right">
                                             @auth
-                                                <a href="#" @click="openModal">
+                                                <a href="#" @click="openModal({{ $date->format('Ymd') }})">
                                                     <i class="fas fa-plus-square fa-2x"></i>
                                                 </a>
                                             @endauth
