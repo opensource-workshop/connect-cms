@@ -70,7 +70,7 @@
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
     <!-- Scripts -->
-    <script src="{{ mix('js/app.js')}}"></script>
+    <script src="{{asset('js/app.js')}}"></script>
 
     <!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" />
@@ -127,7 +127,11 @@
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
-                    @if (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
+                    @if (isset($configs) && 
+                            (!isset($configs['smartphone_menu_template']) ||
+                                (isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
+                            )
+                        )
 
                         {{-- 非表示のページは対象外 --}}
                         @if ($page_obj->isView())
