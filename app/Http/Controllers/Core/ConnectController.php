@@ -78,8 +78,8 @@ class ConnectController extends Controller
             $this->frame_id = $allRouteParams['frame_id'];
         }
 
-        // Page データ
-        $this->pages = Page::defaultOrder()->get();
+//        // Page データ
+//        $this->pages = Page::defaultOrder()->get();
 
         // ページID が渡ってきた場合
         if (!empty($this->page_id)) {
@@ -97,6 +97,17 @@ class ConnectController extends Controller
         if (get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
             abort(403, '参照できないページです。');
         }
+
+        // ページ一覧データはカレントページの取得後に取得。多言語対応をカレントページで判定しているため。
+        if (get_class($this->page) == 'App\Models\Common\Page') {
+            // Page データ
+            $this->pages = Page::defaultOrderWithDepth('flat', $this->page);
+        }
+        else {
+            // Page データ
+            $this->pages = Page::defaultOrder()->get();
+        }
+
 
         // Frame データがあれば、画面のテンプレート情報をセット
         if (!empty($frame_id)) {
