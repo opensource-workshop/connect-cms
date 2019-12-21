@@ -24,7 +24,7 @@
             </li>
             <li class="nav-item">
                 {{-- 週タブ --}}
-                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}" class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}">週</a>
+                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}">週</a>
             </li>
         </ul>
 

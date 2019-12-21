@@ -193,27 +193,43 @@ class ReservationsPlugin extends UserPluginBase
 
         // ---------------------------
         if(empty($carbon_target_date)){
-            $carbon_target_date = Carbon::now();
+            $carbon_target_date = Carbon::today();
         }
 
-        $firstDay = new Carbon("$carbon_target_date->year-$carbon_target_date->month-01");
-        // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
-        $firstDay->subDay($firstDay->dayOfWeek);
-        // 35マス（7列×5行）で収まらない場合の加算日数の算出
-        $addDay = 
-            // 当月の日数が31日、且つ、前の月末日が木曜か金曜の場合
-            $carbon_target_date->copy()->endOfmonth()->day == 31 && ($firstDay->copy()->endOfmonth()->isThursday() || $firstDay->copy()->endOfmonth()->isFriday()) ||
-            // 当月の日数が30日、且つ、前の月末日が金曜の場合
-            $carbon_target_date->copy()->endOfmonth()->day == 30 && ($firstDay->copy()->endOfmonth()->isFriday())
-            ? 7 : 0;
-        // 当月の月末日以降の処理
-        $count = 31 + $addDay;
-        $count =  ceil($count / 7) * 7;
-        // dd("addDay：$addDay","カレンダー1日目：$firstDay","カレンダー1日目の曜日：$firstDay->dayOfWeek","count:$count");
         $dates = [];
+        if($view_format == \ReservationCalendarDisplayType::month){
 
-        for($i = 0; $i < $count; $i++, $firstDay->addDay()){
-            $dates[] = $firstDay->copy();
+            /**
+             * 月表示用のデータ
+             */
+            $firstDay = new Carbon("$carbon_target_date->year-$carbon_target_date->month-01");
+            // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
+            $firstDay->subDay($firstDay->dayOfWeek);
+            // 35マス（7列×5行）で収まらない場合の加算日数の算出
+            $addDay = 
+                // 当月の日数が31日、且つ、前の月末日が木曜か金曜の場合
+                $carbon_target_date->copy()->endOfmonth()->day == 31 && ($firstDay->copy()->endOfmonth()->isThursday() || $firstDay->copy()->endOfmonth()->isFriday()) ||
+                // 当月の日数が30日、且つ、前の月末日が金曜の場合
+                $carbon_target_date->copy()->endOfmonth()->day == 30 && ($firstDay->copy()->endOfmonth()->isFriday())
+                ? 7 : 0;
+            // 当月の月末日以降の処理
+            $count = 31 + $addDay;
+            $count =  ceil($count / 7) * 7;
+            // dd("addDay：$addDay","カレンダー1日目：$firstDay","カレンダー1日目の曜日：$firstDay->dayOfWeek","count:$count");
+    
+            for($i = 0; $i < $count; $i++, $firstDay->addDay()){
+                $dates[] = $firstDay->copy();
+            }
+    
+        }else{
+
+            /**
+             * 週表示用のデータ
+             */
+            $firstDay = $carbon_target_date->copy();
+            for($i = 0; $i < 7; $i++, $firstDay->addDay()){
+                $dates[] = $firstDay->copy();
+            }
         }
         // ---------------------------
 
@@ -231,9 +247,16 @@ class ReservationsPlugin extends UserPluginBase
     /**
      *  週表示関数
      */
-    public function week($request, $page_id, $frame_id)
+    public function week($request, $page_id, $frame_id, $target_ymd)
     {
-        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week, null);
+        $year = substr($target_ymd, 0, 4);
+        $month = substr($target_ymd, 4, 2);
+        $day = substr($target_ymd, 6, 2);
+        if(!checkdate($month, $day, $year)){
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
+        }
+        $carbon_target_date = new Carbon("$target_ymd");
+        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week, $carbon_target_date);
     }
 
     /**
@@ -241,9 +264,11 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function month($request, $page_id, $frame_id, $target_ym)
     {
-        // dd(substr($target_ym, 0, 4), substr($target_ym, 4, 2));
         $year = substr($target_ym, 0, 4);
         $month = substr($target_ym, 4, 2);
+        if(!checkdate($month, '01', $year)){
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')' );
+        }
         $carbon_target_date = new Carbon("$year-$month-01");
         return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::month, $carbon_target_date);
     }

@@ -24,8 +24,8 @@
             </div>
             <div class="float-right">
                 {{-- 今月へボタン --}}
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}">
-                    <button type="button" class="btn btn-primary rounded-pill">今月へ</button>
+                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}">
+                    <button type="button" class="btn btn-primary rounded-pill">今月へ<br>({{ Carbon::today()->format('Y年m月') }})</button>
                 </a>
             </div>
         </div>
@@ -56,15 +56,16 @@
                         @if ($date->dayOfWeek == 0)
                             <tr>
                         @endif
-                                <td 
+                                <td class="
                                     {{-- 当月以外ならセル背景をグレーアウト --}}
-                                    @if ($date->month != $carbon_target_date->month) class="bg-secondary" @endif
-                                    {{-- 日曜なら赤文字 --}}
-                                    @if ($date->dayOfWeek == 0) class="text-danger" @endif
-                                    {{-- 土曜なら青文字 --}}
-                                    @if ($date->dayOfWeek == 6) class="text-primary" @endif
+                                    {{ $date->month != $carbon_target_date->month ? 'bg-secondary' : '' }}
+                                    {{-- 当月、且つ、日曜なら赤文字 --}}
+                                    {{ $date->month == $carbon_target_date->month && $date->dayOfWeek == DayOfWeek::sun ? ' text-danger' : '' }}
+                                    {{-- 当月、且つ、日曜なら赤文字 --}}
+                                    {{ $date->month == $carbon_target_date->month && $date->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}
                                     {{-- 当日ならセル背景を黄色 --}}
-                                    @if ($date == Carbon::today()) class="bg-warning" @endif
+                                    {{ $date == Carbon::today() ? ' bg-warning' : '' }}
+                                    "
                                 >
                                     <div class="clearfix">
                                         {{-- 日付 --}}
@@ -80,8 +81,10 @@
                                             @endauth
                                         </div>
                                     </div>
+                                    {{-- 
                                     <span class="small">10:00~12:00</span>
                                     <span class="small">12:00~14:00</span>
+                                     --}}
                                 </td>
                         {{-- 土曜日なら行を閉じる --}}
                         @if ($date->dayOfWeek == 6)
