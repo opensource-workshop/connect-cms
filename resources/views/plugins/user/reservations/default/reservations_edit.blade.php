@@ -1,7 +1,7 @@
 {{--
- * 施設編集画面テンプレート。
+ * 施設予約の編集画面
  *
- * @author 
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
@@ -14,10 +14,11 @@
     @include('core.cms_frame_edit_tab')
 </ul>
 
-@if (!$reservation->id)
+{{-- メッセージエリア --}}
+@if (!$reservation_frame->bucket_id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する施設を選択するか、作成してください。
+        使用する施設予約コンテンツを選択するか、新規作成してください。
     </div>
 @else
     <div class="alert alert-info" style="margin-top: 10px;">
@@ -27,9 +28,9 @@
             {{$message}}
         @else
             @if (empty($reservation) || $create_flag)
-                新しい施設を登録します。
+                新しい施設予約を登録します。
             @else
-                施設を変更します。
+                施設予約を変更します。
             @endif
         @endif
     </div>
@@ -47,13 +48,42 @@
         <input type="hidden" name="reservations_id" value="{{$reservation->id}}">
     @endif
 
+    {{-- 入力項目エリア --}}
     <div class="form-group">
-        <label class="control-label">施設名 <label class="badge badge-danger">必須</span></label>
-        <input type="text" name="name" value="{{old('name', $reservation->name)}}" class="form-control">
-        @if ($errors && $errors->has('name')) <div class="text-danger">{{$errors->first('name')}}</div> @endif
+        {{-- 施設予約名 --}}
+        <label class="control-label">コンテンツ名 <label class="badge badge-danger">必須</span></label></label>
+        <input type="text" name="reservation_name" value="{{old('reservation_name', $reservation->reservation_name)}}" class="form-control">
+        @if ($errors && $errors->has('reservation_name')) <div class="text-danger">{{$errors->first('reservation_name')}}</div> @endif
+
+        {{-- 初期表示設定（月/週） --}}
+        <label class="col-form-label">カレンダー初期表示 <label class="badge badge-danger">必須</span></label></label>
+        <div class="row">
+            <div class="col-md-1">
+                <div class="custom-control custom-radio custom-control-inline">
+                    {{-- 月 --}}
+                    <input type="radio" value="{{ ReservationCalendarDisplayType::month }}" id="calendar_initial_display_type_off" name="calendar_initial_display_type" class="custom-control-input"
+                        @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::month || $create_flag)
+                            checked="checked"
+                        @endif
+                     >
+                    <label class="custom-control-label" for="calendar_initial_display_type_off">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::month) }}</label>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="custom-control custom-radio custom-control-inline">
+                    {{-- 週 --}}
+                    <input type="radio" value="{{ ReservationCalendarDisplayType::week }}" id="calendar_initial_display_type_on" name="calendar_initial_display_type" class="custom-control-input" 
+                    @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::week)
+                        checked="checked"
+                    @endif
+                    >
+                    <label class="custom-control-label" for="calendar_initial_display_type_on">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::week) }}</label>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {{-- Submitボタン --}}
+    {{-- ボタンエリア --}}
     <div class="form-group text-center">
         <div class="row">
             <div class="col-sm-3"></div>
@@ -70,7 +100,7 @@
                 </button>
             </div>
 
-            {{-- 既存施設の場合は削除処理のボタンも表示 --}}
+            {{-- 既存施設予約の場合は削除処理のボタンも表示 --}}
             @if ($create_flag)
             @else
             <div class="col-sm-3 pull-right text-right">
@@ -83,10 +113,11 @@
     </div>
 </form>
 
+{{-- 削除ボタン押下時の表示エリア --}}
 <div id="collapse{{$reservation_frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">施設を削除します。<br>この施設に紐づく予約も削除されます。よく確認して実行してください。</span>
+            <span class="text-danger">コンテンツを削除します。<br>このコンテンツに紐づく施設、予約項目、予約も削除されます。よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
