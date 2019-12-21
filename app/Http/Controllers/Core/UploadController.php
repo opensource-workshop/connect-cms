@@ -237,6 +237,17 @@ EOD;
         // クライアント（WYSIWYGのAjax通信）へ返すための配列（返す直前にjsonへ変換）
         $msg_array = array();
 
+        // アップロードファイルの数。タグ出力する際、ファイルが1つなら<a>のみ、複数あれば<p><a>とするため。
+        $file_count = 0;
+        for ($i = 1; $i <= 5; $i++) {
+            $input_name = 'file' . $i;
+            if ($request->hasFile($input_name)) {
+                if ($request->file($input_name)->isValid()) {
+                    $file_count++;
+                }
+            }
+        }
+
         // アップロード画面に合わせて、5回のループ
         for ($i = 1; $i <= 5; $i++) {
             $input_name = 'file' . $i;
@@ -262,7 +273,14 @@ EOD;
                     if (strtolower($request->file($input_name)->getClientOriginalExtension()) == 'pdf') {
                         $target = ' target="_blank"';
                     }
-                    $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
+
+                    // ファイルが1つなら<a>のみ、複数あれば<p><a>とする。
+                    if ($file_count > 1) {
+                        $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
+                    }
+                    else {
+                        $msg_array['link_texts'][] = '<a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a>';
+                    }
                 }
             }
         }
