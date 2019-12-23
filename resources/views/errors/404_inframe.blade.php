@@ -1,14 +1,25 @@
 {{--
- * 404 ‘ÎÛƒf[ƒ^‚È‚µ
+ * 404 å¯¾è±¡ãƒ‡ãƒ¼ã‚¿ãªã—
  *
- * @author ‰iŒ´@“Ä <nagahara@opensource-workshop.jp>
+ * @author æ°¸åŸã€€ç¯¤ <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category ƒRƒA
+ * @category ã‚³ã‚¢
  --}}
-<div class="container">
+ <div class="container">
     <div class="alert alert-danger" role="alert">
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
-        404 Not Found. iw’è‚Ì‹L–‚ª‚ ‚è‚Ü‚¹‚ñj<br />
+        404 Not Found. ï¼ˆæŒ‡å®šã®è¨˜äº‹ãŒã‚ã‚Šã¾ã›ã‚“ï¼‰<br />
+
+        @if (Config::get('app.debug'))
+            <div class="card mt-3">
+                <div class="card-header">
+                    Debug message
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{$debug_message}}</p>
+                </div>
+            </div>
+        @endif
     </div>
 </div>

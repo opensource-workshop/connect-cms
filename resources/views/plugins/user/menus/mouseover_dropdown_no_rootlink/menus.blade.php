@@ -17,7 +17,7 @@
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
 
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown" onmouseleave="$(this).find('a.nav-link').click();$(this).find('a.nav-link').blur();">
                     {{-- カレント --}}
                     @if ($page_obj->id == $page_id)
                         <a class="nav-link active dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
