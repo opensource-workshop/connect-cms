@@ -20,6 +20,20 @@
         $block_formats_file = File::get($block_formats_path);
     }
 
+    // CSS
+    $content_css_file = '';
+    $content_css_path = public_path() . '/themes/' . $theme . '/wysiwyg/content_css.txt';
+    if (File::exists($content_css_path)) {
+        $content_css_file = File::get($content_css_path);
+    }
+
+    // テーブルセル
+    $table_cell_class_list_file = '';
+    $table_cell_class_list_path = public_path() . '/themes/' . $theme . '/wysiwyg/table_cell_class_list.txt';
+    if (File::exists($table_cell_class_list_path)) {
+        $table_cell_class_list_file = File::get($table_cell_class_list_path);
+    }
+
     // TinyMCE Body クラス
     $body_class = '';
     if ($frame->area_id == 0) {
@@ -61,7 +75,10 @@
         forced_root_block : '',
         valid_children : "+body[style],+a[div|p]",
         extended_valid_elements : "script[type|charset],cc[value]",
-        content_css: "/css/app.css, /css/connect.css, /themes/tat/themes.css", // スタイル
+
+        {{-- CSS --}}
+        {!!$content_css_file!!}
+
         body_class : "{{$body_class}}",
 
         // file_picker_types: 'file image media',
@@ -86,10 +103,10 @@
         table_class_list: [
             {title: 'なし', value: ''},
         ],
-        table_cell_class_list: [
-            {title: 'なし', value: ''},
-            {title: '行タイトル', value: 'th02'},
-        ],
+
+        {{-- テーブルセル --}}
+        {!!$table_cell_class_list_file!!}
+
         // 画像アップロード・ハンドラ
         images_upload_handler: function (blobInfo, success, failure) {
             var xhr, formData;

@@ -240,19 +240,17 @@
 
     <div class="form-group row px-3">
         <label class="col-md-3 col-form-label text-md-right pl-0">対象ページ - フレーム</label>
+        <div class="card col-md-9">
+            <div class="card-body py-2 pl-0">
 
-    <div class="card col-md-9">
-        <div class="card-body py-2 pl-0">
-
-        @foreach($target_plugins_frames as $target_plugins_frame)
-        <div class="custom-control custom-checkbox">
-            <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $whatsnew->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
-            <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->bucket_name}}</label>
+            @foreach($target_plugins_frames as $target_plugins_frame)
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $whatsnew->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
+                <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->bucket_name}}</label>
+            </div>
+            @endforeach
+            @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
         </div>
-        @endforeach
-        @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
-
-    </div>
     </div>
 
     </div>
