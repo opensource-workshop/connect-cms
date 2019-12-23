@@ -185,6 +185,45 @@ class ContentsPlugin extends UserPluginBase
         return $this->buckets->needApprovalUser(Auth::user());
     }
 
+    /**
+     *  検索用メソッド
+     */
+    public static function getSearchArgs($search_keyword)
+    {
+        $return[] = DB::table('contents')
+                      ->select('contents.id                 as post_id',
+                               'frames.id                   as frame_id',
+                               'frames.page_id              as page_id',
+                               'pages.permanent_link        as permanent_link',
+                               'frames.frame_title          as post_title',
+                               DB::raw('0 as important'),
+                               'contents.created_at         as posted_at',
+                               'contents.created_name       as posted_name',
+                               DB::raw('null as classname'),
+                               DB::raw('null as categories_id'),
+                               DB::raw('null as category'),
+                               DB::raw('"contents" as plugin_name')
+                              )
+                      ->join('frames', 'frames.bucket_id', '=', 'contents.bucket_id')
+                      ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
+                      ->where('status', '?')
+
+                       ->where(function($plugin_query) use($search_keyword) {
+                           $plugin_query->where('contents.content_text', 'like', '?')
+                                        ->orWhere('frames.frame_title', 'like', '?');
+                       })
+
+                      ->whereNull('contents.deleted_at');
+
+
+        $bind = array(0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $return[] = $bind;
+        $return[] = 'show_page';
+        $return[] = '/page';
+
+        return $return;
+    }
+
     /* 画面アクション関数 */
 
     /**

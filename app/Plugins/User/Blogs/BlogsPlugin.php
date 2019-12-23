@@ -335,6 +335,45 @@ class BlogsPlugin extends UserPluginBase
         return $return;
     }
 
+    /**
+     *  検索用メソッド
+     */
+    public static function getSearchArgs($search_keyword)
+    {
+        $return[] = DB::table('blogs_posts')
+                      ->select('blogs_posts.id              as post_id',
+                               'frames.id                   as frame_id',
+                               'frames.page_id              as page_id',
+                               'pages.permanent_link        as permanent_link',
+                               'blogs_posts.post_title      as post_title',
+                               'blogs_posts.important       as important',
+                               'blogs_posts.posted_at       as posted_at',
+                               'blogs_posts.created_name    as posted_name',
+                               'categories.classname        as classname',
+                               'blogs_posts.categories_id   as categories_id',
+                               'categories.category         as category',
+                               DB::raw('"blogs" as plugin_name')
+                              )
+                      ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
+                      ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
+                      ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
+                      ->where('status', '?')
+                      ->where(function($plugin_query) use($search_keyword) {
+                          $plugin_query->where('blogs_posts.post_title', 'like', '?')
+                                       ->orWhere('blogs_posts.post_text', 'like', '?');
+                      })
+                      ->whereNull('blogs_posts.deleted_at');
+
+
+        $bind = array(0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $return[] = $bind;
+        $return[] = 'show_page_frame_post';
+        $return[] = '/plugin/blogs/show';
+
+        return $return;
+    }
+
     /* 画面アクション関数 */
 
     /**
