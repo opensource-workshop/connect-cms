@@ -380,7 +380,7 @@ class WhatsnewsPlugin extends UserPluginBase
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるopeningcalendars_id が空ならバケツと開館カレンダーを新規登録
+        // 画面から渡ってくるwhatsnews_id が空ならバケツと設定データを新規登録
         if (empty($request->whatsnews_id)) {
 
             // バケツの登録
