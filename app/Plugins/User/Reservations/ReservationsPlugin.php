@@ -221,6 +221,9 @@ class ReservationsPlugin extends UserPluginBase
             return $this->editBooking($request, $page_id, $frame_id, $target_ymd, $validator->errors());
         }
 
+        // 施設データ
+        $facility = reservations_facilities::query()->where('id', $request->facility_id)->first();
+
         // 予約入力 新規登録
         $reservations_inputs = new reservations_inputs();
         $reservations_inputs->reservations_id = $request->reservations_id;
@@ -244,8 +247,10 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs_columns->save();
         }
 
+        $message = '予約を追加しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+
         // 登録後はカレンダー表示
-        return $this->index($request, $page_id, $frame_id, null, null);
+        return $this->index($request, $page_id, $frame_id, null, null, $message);
     }
 
     /**
@@ -292,7 +297,7 @@ class ReservationsPlugin extends UserPluginBase
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      */
-    public function index($request, $page_id, $frame_id, $view_format = null, $carbon_target_date = null)
+    public function index($request, $page_id, $frame_id, $view_format = null, $carbon_target_date = null, $message = null)
     {
         // 施設予約＆フレームデータ
         $reservations_frame = $this->getReservationsFrame($frame_id);
@@ -364,6 +369,7 @@ class ReservationsPlugin extends UserPluginBase
             'facilities' => $facilities,
             'columns' => $columns,
             'dates' => $dates,
+            'message' => $message,
         ]);
     }
 
@@ -379,7 +385,7 @@ class ReservationsPlugin extends UserPluginBase
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
         }
         $carbon_target_date = new Carbon("$target_ymd");
-        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week, $carbon_target_date);
+        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week, $carbon_target_date, null);
     }
 
     /**
@@ -393,7 +399,7 @@ class ReservationsPlugin extends UserPluginBase
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')' );
         }
         $carbon_target_date = new Carbon("$year-$month-01");
-        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::month, $carbon_target_date);
+        return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::month, $carbon_target_date, null);
     }
 
     /**
