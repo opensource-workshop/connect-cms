@@ -43,7 +43,8 @@
             ignoreReadonly: true,
             locale: 'ja',
             sideBySide: true,
-            format: 'HH:mm'
+            format: 'HH:mm',
+            stepping: 5
         });
     });
     /**
@@ -68,7 +69,8 @@
             ignoreReadonly: true,
             locale: 'ja',
             sideBySide: true,
-            format: 'HH:mm'
+            format: 'HH:mm',
+            stepping: 5
         });
     });
 </script>
