@@ -85,7 +85,7 @@ class Page extends Model
                                    // デフォルト言語 "/" は表示するので、除外の対象外
                                    continue;
                                }
-                               $query->where('permanent_link', 'not like', '%' . $language->additional1 . '%');
+                               $query->where('permanent_link', 'not like', $language->additional1 . '%');
                            }
                        })
                        ->where(function ($query_menu) use ($where_page_ids) {
@@ -104,7 +104,7 @@ class Page extends Model
             return self::defaultOrder()
                        ->where(function ($query_lang) use ($current_language) {
                            // 多言語トップページは /en のように後ろに / がない。 /en* だと、/env なども拾ってしまう。
-                           $query_lang->where('permanent_link', 'like', '%/' . $current_language . '/%')
+                           $query_lang->where('permanent_link', 'like', '/' . $current_language . '/%')
                                       ->orWhere('permanent_link', '/' . $current_language);
                        })
                        ->where(function ($query_menu) use ($where_page_ids) {
