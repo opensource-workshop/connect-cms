@@ -14,6 +14,8 @@ use DB;
 use App\Models\User\Reservations\Reservations;
 use App\Models\User\Reservations\reservations_facilities;
 use App\Models\User\Reservations\reservations_columns;
+use App\Models\User\Reservations\reservations_inputs;
+use App\Models\User\Reservations\reservations_inputs_columns;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -59,6 +61,8 @@ class ReservationsPlugin extends UserPluginBase
             'addColumn', 
             'updateColumn',
             'updateColumnSequence', 
+            'editBooking', 
+            'saveBooking', 
             'deleteColumn',
         ];
         return $functions;
@@ -166,6 +170,119 @@ class ReservationsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
+     *  予約追加処理
+     */
+    public function saveBooking($request, $page_id, $frame_id, $target_ymd)
+    {
+        // 認証チェック
+        if(!Auth::check()){
+            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。' );
+        }
+
+        // URLパラメータチェック
+        $year = substr($target_ymd, 0, 4);
+        $month = substr($target_ymd, 4, 2);
+        $day = substr($target_ymd, 6, 2);
+        if(!checkdate($month, $day, $year)){
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
+        }
+
+        // バリデーション用の配列を生成（基本項目）
+        $validationArray = 
+            [
+                'start_datetime'  => ['required'],
+                'end_datetime'  => ['required'],
+            ]
+        ;
+        $attributeArray = 
+            [
+                'start_datetime'  => '開始時間',
+                'end_datetime'  => '終了時間',
+            ]
+        ;
+
+        // バリデーション用の配列を生成（可変項目）
+        $required_columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->where('required', \Required::on)->get();
+        foreach($required_columns as $column){
+            $key_str = 'columns_value.' . $column->id;
+            $validationArray[$key_str] = ['required'];
+            $attributeArray[$key_str] = $column->column_name;
+        }
+
+        // バリデーション定義
+        $validator = Validator::make(
+            $request->all(), 
+            $validationArray
+        );
+        $validator->setAttributeNames($attributeArray);
+
+        // バリデーション実施、エラー時は予約追加画面へ戻る
+        if ($validator->fails()) {
+            return $this->editBooking($request, $page_id, $frame_id, $target_ymd, $validator->errors());
+        }
+
+        // 予約入力 新規登録
+        $reservations_inputs = new reservations_inputs();
+        $reservations_inputs->reservations_id = $request->reservations_id;
+        $reservations_inputs->facility_id = $request->facility_id;
+        $reservations_inputs->start_datetime = new Carbon($target_ymd . ' ' . $request->start_datetime . ':00');
+        $reservations_inputs->end_datetime = new Carbon($target_ymd . ' ' . $request->end_datetime . ':00');
+        $reservations_inputs->input_user_id = Auth::user()->userid;
+        $reservations_inputs->update_user_id = Auth::user()->userid;
+        $reservations_inputs->save();
+
+        // 項目IDを取得
+        $keys = array_keys($request->columns_value);
+        foreach($keys as $key){
+
+            // 予約入力項目 新規登録
+            $reservations_inputs_columns = new reservations_inputs_columns();
+            $reservations_inputs_columns->reservations_id = $request->reservations_id;
+            $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
+            $reservations_inputs_columns->column_id = $key;
+            $reservations_inputs_columns->value = $request->columns_value[$key];;
+            $reservations_inputs_columns->save();
+        }
+
+        // 登録後はカレンダー表示
+        return $this->index($request, $page_id, $frame_id, null, null);
+    }
+
+    /**
+     *  予約追加画面の表示
+     */
+    public function editBooking($request, $page_id, $frame_id, $target_ymd, $errors = null)
+    {
+        $request->flash();
+
+        // 認証チェック
+        if(!Auth::check()){
+            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。' );
+        }
+        // パラメータチェック
+        $year = substr($target_ymd, 0, 4);
+        $month = substr($target_ymd, 4, 2);
+        $day = substr($target_ymd, 6, 2);
+        if(!checkdate($month, $day, $year)){
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
+        }
+
+        // 予約項目データ
+        $columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->orderBy('display_sequence')->get();
+
+        $target_date = new Carbon($target_ymd);
+        return $this->view(
+            'reservations_calendar_edit_booking', [
+                'target_date' => $target_date,
+                'reservations_id' => $request->reservations_id,
+                'facility_id' => $request->facility_id,
+                'columns' => $columns,
+                'errors'      => $errors,
+            ]
+        );
+    }
+
+    /**
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      */
@@ -183,10 +300,10 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // 予約データ
-        $reservations = reservations::query()->where('id', $reservations_frame->reservations_id)->get();
+        $reservations = reservations::query()->where('id', $reservations_frame->reservations_id)->first();
 
         // 施設データ
-        $facilities = reservations_facilities::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();
+        $facilities = reservations_facilities::query()->where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
 
         // 予約項目データ
         $columns = reservations_columns::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();

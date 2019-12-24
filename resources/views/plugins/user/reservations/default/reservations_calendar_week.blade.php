@@ -69,9 +69,12 @@
                                     {{-- ＋ボタン --}}
                                     <div class="float-right">
                                         @auth
-                                            <a href="#" @click="openModal({{ $date->format('Ymd') }})">
-                                                <i class="fas fa-plus-square fa-2x"></i>
-                                            </a>
+                                            <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{ $date->format('Ymd') }}#frame-{{$frame_id}}" name="form_edit_booking{{$frame_id}}" method="POST" class="form-horizontal">
+                                                {{ csrf_field() }}
+                                                <input type="hidden" name="reservations_id" value="{{ $reservations->id }}">
+                                                <input type="hidden" name="facility_id" value="{{ $facility->id }}">
+                                                <button class="btn btn-link btn-sm"><i class="fas fa-plus-square fa-2x"></i></button>
+                                            </form>
                                         @endauth
                                     </div>
                                 </div>
