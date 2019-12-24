@@ -8,7 +8,14 @@
 
     {{-- カレンダーヘッダ部 --}}
     <br>
-    
+
+    {{-- メッセージエリア --}}
+    @if ($message)
+        <div class="alert alert-info mt-2">
+            <i class="fas fa-exclamation-circle"></i>{{ $message }}
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-12 clearfix">
             <div class="float-left">
@@ -69,9 +76,14 @@
                                     {{-- ＋ボタン --}}
                                     <div class="float-right">
                                         @auth
-                                            <a href="#" @click="openModal({{ $date->format('Ymd') }})">
-                                                <i class="fas fa-plus-square fa-2x"></i>
-                                            </a>
+                                            <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{ $date->format('Ymd') }}#frame-{{$frame_id}}" name="form_edit_booking_{{ $reservations->id }}_{{ $facility->id }}_{{ $date->format('Ymd') }}" method="POST" class="form-horizontal">
+                                                {{ csrf_field() }}
+                                                <input type="hidden" name="reservations_id" value="{{ $reservations->id }}">
+                                                <input type="hidden" name="facility_id" value="{{ $facility->id }}">
+                                                <a href="javascript:form_edit_booking_{{ $reservations->id }}_{{ $facility->id }}_{{ $date->format('Ymd') }}.submit()">
+                                                    <i class="fas fa-plus-square fa-2x"></i>
+                                                </a>
+                                            </form>
                                         @endauth
                                     </div>
                                 </div>

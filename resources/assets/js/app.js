@@ -16,7 +16,7 @@ window.Vue = require('vue');
  */
 
 // Vue.component('example-component', require('./components/ExampleComponent.vue'));
-Vue.component('reservations-calendar-add-booking', require('./components/ReservationsCalendarAddBooking.vue'));
+// Vue.component('reservations-calendar-add-booking', require('./components/ReservationsCalendarAddBooking.vue'));
 /*
 const app = new Vue({
     el: '#app'
