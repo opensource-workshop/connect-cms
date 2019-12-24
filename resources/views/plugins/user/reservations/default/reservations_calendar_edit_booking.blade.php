@@ -97,7 +97,7 @@
     <div class="form-group">
         <label class="col-3 control-label">開始時間</label>
         <div class="col-3 input-group date" id="start_datetime" data-target-input="nearest">
-            <input type="text" name="start_datetime" value="{{ old('start_datetime') }}" class="form-control datetimepicker-input" data-target="#start_datetime" readonly>
+            <input type="text" name="start_datetime" value="{{ old('start_datetime', Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime" readonly>
             <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
                 <div class="input-group-text"><i class="fa fa-calendar"></i></div>
             </div>
@@ -108,7 +108,7 @@
     <div class="form-group">
         <label class="col-3 control-label">終了時間</label>
         <div class="col-3 input-group date" id="end_datetime" data-target-input="nearest">
-            <input type="text" name="end_datetime" value="{{ old('end_datetime') }}" class="form-control datetimepicker-input" data-target="#end_datetime" readonly>
+            <input type="text" name="end_datetime" value="{{ old('end_datetime', Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime" readonly>
             <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
                 <div class="input-group-text"><i class="fa fa-calendar"></i></div>
             </div>
