@@ -75,9 +75,19 @@
 
 <form action="" name="form_save_booking{{$frame_id}}" method="POST" class="form-horizontal">
     {{ csrf_field() }}
-    <input type="hidden" name="reservations_id" value="{{ $reservations_id }}">
-    <input type="hidden" name="facility_id" value="{{ $facility_id }}">
+    <input type="hidden" name="reservations_id" value="{{ $reservation->id }}">
+    <input type="hidden" name="facility_id" value="{{ $facility->id }}">
 
+    {{-- コンテンツ名 --}}
+    <div class="form-group">
+        <label class="col-3 control-label">コンテンツ名</label>
+        <input type="text" class="form-control col-md-3" value="{{ $reservation->reservation_name }}" name="reservation_name" readonly>
+    </div>
+    {{-- 施設名 --}}
+    <div class="form-group">
+        <label class="col-3 control-label">施設名</label>
+        <input type="text" class="form-control col-md-3" value="{{ $facility->facility_name }}" name="facility_name" readonly>
+    </div>
     {{-- 予約日 --}}
     <div class="form-group">
         <label class="col-3 control-label">予約日</label>

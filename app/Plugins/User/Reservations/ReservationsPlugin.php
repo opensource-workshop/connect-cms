@@ -267,6 +267,12 @@ class ReservationsPlugin extends UserPluginBase
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
         }
 
+        // 施設予約データ
+        $reservation = Reservations::query()->where('id', $request->reservations_id)->first();
+
+        // 施設データ
+        $facility = reservations_facilities::query()->where('id', $request->facility_id)->first();
+
         // 予約項目データ
         $columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->orderBy('display_sequence')->get();
 
@@ -274,8 +280,8 @@ class ReservationsPlugin extends UserPluginBase
         return $this->view(
             'reservations_calendar_edit_booking', [
                 'target_date' => $target_date,
-                'reservations_id' => $request->reservations_id,
-                'facility_id' => $request->facility_id,
+                'reservation' => $reservation,
+                'facility' => $facility,
                 'columns' => $columns,
                 'errors'      => $errors,
             ]
