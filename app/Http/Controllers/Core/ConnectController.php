@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Core;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
@@ -63,7 +64,7 @@ class ConnectController extends Controller
     /**
      *  コンストラクタ
      */
-    function __construct(Router $router)
+    function __construct(Request $request, Router $router)
     {
         // ルートパラメータを取得する
         $allRouteParams = $router->getCurrentRoute()->parameters();
@@ -92,14 +93,45 @@ class ConnectController extends Controller
 //Log::debug($this->page);
         }
 
+        // 404 の場合、設定画面の404 ページを探す。
+        if (!$this->isManagePage($request) && (empty($this->page->id) || empty($this->page))) {
+            $configs = $this->getConfigs('array');
+            if (!empty($configs['page_permanent_link_404'])) {
+                $this->page = $this->getPage($configs['page_permanent_link_404']->value);
+                if (empty($this->page)) {
+                    abort(404, 'ページがありません。');
+                }
+                else {
+                    $this->page_id = $this->page->id;
+                }
+            }
+            else {
+                abort(404, 'ページがありません。');
+            }
+        }
+
         // ページがある（管理画面ではページがない）＆IP制限がかかっていない場合は参照OK
         $check_ip_only = true;
-        if (get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
-            abort(403, '参照できないページです。');
+        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
+            //abort(403, '参照できないページです。');
+
+            $configs = $this->getConfigs('array');
+            if (!empty($configs['page_permanent_link_403'])) {
+                $this->page = $this->getPage($configs['page_permanent_link_403']->value);
+                if (!empty($this->page)) {
+                    $this->page_id = $this->page->id;
+                }
+                else {
+                    abort(403, '参照できないページです。');
+                }
+            }
+            else {
+                abort(403, '参照できないページです。');
+            }
         }
 
         // ページ一覧データはカレントページの取得後に取得。多言語対応をカレントページで判定しているため。
-        if (get_class($this->page) == 'App\Models\Common\Page') {
+        if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
             // Page データ
             $this->pages = Page::defaultOrderWithDepth('flat', $this->page);
         }

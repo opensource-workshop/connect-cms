@@ -705,4 +705,26 @@ trait ConnectCommonTrait
         }
         return;
     }
+
+    /**
+     *  URLからページIDを取得
+     */
+    public function getPage($permanent_link)
+    {
+        // ページ確認
+        return Page::where('permanent_link', $permanent_link)->first();
+    }
+
+    /**
+     *  URLから管理画面かどうかを判定
+     */
+    public function isManagePage($request)
+    {
+        $url_parts = explode('/', $request->path());
+        if ($url_parts[0] == 'manage') {
+            return true;
+        }
+        return false;
+    }
+
 }
