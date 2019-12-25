@@ -99,14 +99,14 @@ class ConnectController extends Controller
             if (!empty($configs['page_permanent_link_404'])) {
                 $this->page = $this->getPage($configs['page_permanent_link_404']->value);
                 if (empty($this->page)) {
-                    abort(404, 'ページがありません。');
+//                    abort(404, 'ページがありません。');
                 }
                 else {
                     $this->page_id = $this->page->id;
                 }
             }
             else {
-                abort(404, 'ページがありません。');
+//                abort(404, 'ページがありません。');
             }
         }
 
