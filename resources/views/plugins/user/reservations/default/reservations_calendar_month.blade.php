@@ -40,10 +40,10 @@
     </div>
     <br>
     {{-- 登録している施設分ループ --}}
-    @foreach ($facilities as $facility)
+    @foreach ($calendars as $facility_name => $calendar_details)
 
         {{-- 施設名 --}}
-        <span class="h4">＜{{ $facility->facility_name }}＞</span>
+        <span class="h4">＜{{ $facility_name }}＞</span>
 
         {{-- カレンダーデータ部 --}}
         <div class="table-responsive">
@@ -59,48 +59,54 @@
                 </thead>
                 <tbody>
                     {{-- カレンダーデータ部の表示 --}}
-                    @foreach ($dates as $date)
+                    @foreach ($calendar_details['calendar_cells'] as $cell)
                         {{-- 日曜日なら新しい行 --}}
-                        @if ($date->dayOfWeek == 0)
+                        @if ($cell['date']->dayOfWeek == 0)
                             <tr>
                         @endif
                                 <td class="
                                     {{-- 当月以外ならセル背景をグレーアウト --}}
-                                    {{ $date->month != $carbon_target_date->month ? 'bg-secondary' : '' }}
+                                    {{ $cell['date']->month != $carbon_target_date->month ? 'bg-secondary' : '' }}
                                     {{-- 当月、且つ、日曜なら赤文字 --}}
-                                    {{ $date->month == $carbon_target_date->month && $date->dayOfWeek == DayOfWeek::sun ? ' text-danger' : '' }}
+                                    {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sun ? ' text-danger' : '' }}
                                     {{-- 当月、且つ、日曜なら赤文字 --}}
-                                    {{ $date->month == $carbon_target_date->month && $date->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}
+                                    {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}
                                     {{-- 当日ならセル背景を黄色 --}}
-                                    {{ $date == Carbon::today() ? ' bg-warning' : '' }}
+                                    {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
                                     "
                                 >
                                     <div class="clearfix">
                                         {{-- 日付 --}}
                                         <div class="float-left">
-                                            {{ $date->day }}
+                                            {{ $cell['date']->day }}
                                         </div>
                                         {{-- ＋ボタン --}}
                                         <div class="float-right">
                                             @auth
-                                                <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{ $date->format('Ymd') }}#frame-{{$frame_id}}" name="form_edit_booking_{{ $reservations->id }}_{{ $facility->id }}_{{ $date->format('Ymd') }}" method="POST" class="form-horizontal">
+                                                {{-- セル毎に予約追加画面呼び出し用のformをセット --}}
+                                                <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{ $cell['date']->format('Ymd') }}#frame-{{$frame_id}}" name="form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}" method="POST" class="form-horizontal">
                                                     {{ csrf_field() }}
+                                                    {{-- 施設予約ID --}}
                                                     <input type="hidden" name="reservations_id" value="{{ $reservations->id }}">
-                                                    <input type="hidden" name="facility_id" value="{{ $facility->id }}">
-                                                    <a href="javascript:form_edit_booking_{{ $reservations->id }}_{{ $facility->id }}_{{ $date->format('Ymd') }}.submit()">
+                                                    {{-- 施設ID --}}
+                                                    <input type="hidden" name="facility_id" value="{{ $calendar_details['facility']->id }}">
+                                                    {{-- ＋ボタンクリックでformサブミット --}}
+                                                    <a href="javascript:form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
                                                         <i class="fas fa-plus-square fa-2x"></i>
                                                     </a>
                                                 </form>
                                             @endauth
                                         </div>
                                     </div>
-                                    {{-- 
-                                    <span class="small">10:00~12:00</span>
-                                    <span class="small">12:00~14:00</span>
-                                     --}}
+                                    @if (isset($cell['bookings']))
+                                        @foreach ($cell['bookings'] as $booking)
+                                            {{-- 予約時間 --}}
+                                            <div class="small">{{ substr($booking->start_datetime, 11, 5) . '~' . substr($booking->end_datetime, 11, 5) }}</div>
+                                        @endforeach
+                                    @endif
                                 </td>
                         {{-- 土曜日なら行を閉じる --}}
-                        @if ($date->dayOfWeek == 6)
+                        @if ($cell['date']->dayOfWeek == 6)
                             </tr>
                         @endif
                     @endforeach

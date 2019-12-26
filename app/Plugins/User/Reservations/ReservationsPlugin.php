@@ -325,6 +325,9 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         $dates = [];
+        $search_start_date = null;
+        $search_end_date = null;
+
         if($view_format == \ReservationCalendarDisplayType::month){
 
             /**
@@ -359,8 +362,60 @@ class ReservationsPlugin extends UserPluginBase
                 $dates[] = $firstDay->copy();
             }
         }
-        // ---------------------------
 
+        // 予約データ検索条件
+        $search_start_date = $dates[0];
+        $search_end_date = end($dates)->endOfDay();
+
+        /**
+         * カレンダー情報は入れ子の連想配列で返却する
+         * calendars['施設名'] : 施設データ
+         * calendars['calendar_cells'] : カレンダーセルデータの連想配列
+         *   calendar_cell['date'] : Carbon日付データ
+         *   calendar_cell['bookings'] : 予約データの配列
+         */
+        $calendars = null;
+        // 施設毎に予約情報を付加したカレンダーデータを生成
+        // $time_start = microtime(true);
+        foreach($facilities as $facility){
+
+            $calendar = null;
+            $calendar_cells = null;
+            $calendar['facility'] = $facility;
+
+            // カレンダー表示期間内で該当施設に紐づく予約データを抽出
+            $bookings = reservations_inputs::query()
+                ->where('reservations_id', $reservations->id)
+                ->where('facility_id', $facility->id)
+                ->whereBetween('start_datetime', [$search_start_date, $search_end_date])
+                ->orderBy('start_datetime')
+                ->get();
+
+            foreach($dates as $date){
+                $calendar_cell = null;
+                // セルの日付に日付データを追加
+                $calendar_cell['date'] = $date;
+                // 日付データと予約データを突き合わせて該当日に予約データを付加
+                foreach($bookings as $booking){
+                    if($date->format('Ymd') == $booking->start_datetime->format('Ymd')){
+                        // セルの予約配列に予約データを追加
+                        $calendar_cell['bookings'][] = $booking;
+                    }
+                }
+                // パフォーマンス比較（10施設30予約）したところ、大して変わらないので初期の実装コード↑を採用
+                // $calendar_cell['bookings'] = $bookings->filter(function($booking) use($date) {
+                //     return $booking['start_datetime']->format('Ymd') == $date->format('Ymd');
+                // });
+
+                $calendar_cells[] = $calendar_cell;
+            }
+            $calendar['calendar_cells'] = $calendar_cells;
+            $calendars[$facility->facility_name] = $calendar;
+        }
+
+        // $time = microtime(true) - $time_start;
+        // dd($time . '秒');
+        // dd($calendars);
         return $this->view(
             'reservations_calendar_common', [
             'view_format' => $view_format,
@@ -368,7 +423,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations' => $reservations,
             'facilities' => $facilities,
             'columns' => $columns,
-            'dates' => $dates,
+            'calendars' => $calendars,
             'message' => $message,
         ]);
     }
