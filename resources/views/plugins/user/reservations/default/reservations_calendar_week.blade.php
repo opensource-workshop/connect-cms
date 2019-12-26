@@ -47,7 +47,7 @@
 
         {{-- カレンダーデータ部 --}}
         <div class="table-responsive">
-            <table class="table table-bordered">
+            <table class="table table-bordered" style="table-layout:fixed;">
                 <thead>
                     {{-- カレンダーヘッダ部の曜日を表示 --}}
                     <tr>
