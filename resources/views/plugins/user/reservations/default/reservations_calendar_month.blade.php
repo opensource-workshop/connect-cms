@@ -72,7 +72,7 @@
                                     {{-- 当月、且つ、日曜なら赤文字 --}}
                                     {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}
                                     {{-- 当日ならセル背景を黄色 --}}
-                                    {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
+                                    {{ $cell['date'] == Carbon::today() ? ' current' : '' }}
                                     "
                                 >
                                     <div class="clearfix">
