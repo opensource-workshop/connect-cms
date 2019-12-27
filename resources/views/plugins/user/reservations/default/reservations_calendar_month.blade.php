@@ -46,8 +46,7 @@
         <span class="h4">＜{{ $facility_name }}＞</span>
 
         {{-- カレンダーデータ部 --}}
-        <div class="table-responsive">
-            <table class="table table-bordered" style="table-layout:fixed;">
+            <table class="table table-bordered cc_responsive_table" style="table-layout:fixed;">
                 <thead>
                     {{-- カレンダーヘッダ部の曜日を表示 --}}
                     <tr>
@@ -79,6 +78,10 @@
                                         {{-- 日付 --}}
                                         <div class="float-left">
                                             {{ $cell['date']->day }}
+                                            {{-- 曜日（767px以下で表示） --}}
+                                            <span class="d-md-none">
+                                                {{ '(' . DayOfWeek::getDescription($cell['date']->dayOfWeek) . ')' }}
+                                            </span>
                                         </div>
                                         {{-- ＋ボタン --}}
                                         <div class="float-right">
@@ -112,5 +115,4 @@
                     @endforeach
                 </tbody>
             </table>
-        </div>
     @endforeach
