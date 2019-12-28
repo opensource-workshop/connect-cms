@@ -97,6 +97,25 @@ a.cc-cursor-text:hover {
 .openingcalendar-pdf {
     text-align: right;
 }
+.openingcalendar-monthWrap {
+    display: flex;
+    justify-content: space-between;
+}
+.openingcalendar-timeLegend dl {
+    display: flex;
+    line-height: 1;
+    margin: 0 0 5px;
+    overflow: hidden;
+}
+.openingcalendar-timeLegend dl dt {
+    width: 15px;
+    margin-right: 7px;
+}
+.openingcalendar-timeLegend dl dd {
+    margin-right: 20px;
+    width: 100px;
+}
+
 
 /* ヘッダーバー
 ------------------------------------- */
