@@ -112,7 +112,7 @@
     <div class="carousel-inner">
         @foreach ($calendars as $calendar_ym => $dates)
         <div class="carousel-item @if($calendar_ym == $view_ym) active @endif" data-prev="{{$view_months[$calendar_ym]["data-prev"]}}" data-next="{{$view_months[$calendar_ym]["data-next"]}}" data-prevmonth="{{$view_months[$calendar_ym]["data-prevmonth"]}}" data-nextmonth="{{$view_months[$calendar_ym]["data-nextmonth"]}}">
-            <table class="table table-bordered">
+            <table class="table table-bordered openingcalendar-month-table">
             <thead>
                 <tr>
                 @if ($openingcalendar_frame->week_format == 1)

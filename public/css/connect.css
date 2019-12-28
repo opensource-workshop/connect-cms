@@ -120,6 +120,13 @@ a.cc-cursor-text:hover {
     margin-right: 20px;
     width: 100px;
 }
+.openingcalendar-month-table {
+    text-align: center;
+    border: 1px solid #dee2e6;
+}
+.openingcalendar-month-table th {
+    font-weight: normal;
+}
 
 
 /* ヘッダーバー
