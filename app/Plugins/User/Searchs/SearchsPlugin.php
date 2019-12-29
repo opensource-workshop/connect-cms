@@ -67,14 +67,15 @@ class SearchsPlugin extends UserPluginBase
     private function getSearchsFrame($frame_id)
     {
         // Frame データ
-        $frame = Searchs::select('searchs.*',
+        $frame = Frame::select('searchs.*',
                               'frames.id as frames_id',
                               'frames.bucket_id',
                               'frames.disable_searchs',
                           )
-                        ->join('frames', 'frames.bucket_id', '=', 'searchs.bucket_id')
+                        ->leftJoin('searchs', 'frames.bucket_id', '=', 'searchs.bucket_id')
                         ->where('frames.id', $frame_id)
                         ->first();
+
         return $frame;
     }
 
