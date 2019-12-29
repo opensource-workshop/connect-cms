@@ -6,10 +6,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category タブ・プラグイン
 --}}
-
-<ul class="nav nav-tabs">
+<ul>
 @foreach($frames as $frame)
-    <li id="tab_{{$frame->id}}" class="tab_{{$frame->id}} nav-item"><a href="#" class="nav-link tab_a_{{$frame->id}} @if (isset($tabs) && $tabs->default_frame_id == $frame->id) active @endif" onclick="return false;">{{$frame->frame_title}}</a></li>
+    <li id="tab_{{$frame->id}}" class="tab_{{$frame->id}}@if (isset($tabs) && $tabs->default_frame_id == $frame->id) current @endif"><a href="#" onclick="return false;">{{$frame->frame_title}}</a></li>
 @endforeach
 </ul>
 
@@ -22,11 +21,11 @@ $(document).ready(function(){
           @if($frame->id == $frame2->id)
             $('#frame-{{$frame2->id}}').removeClass('d-none');
             $('#frame-{{$frame2->id}}').addClass('d-block');
-            $('.tab_a_{{$frame2->id}}').addClass('active');
+            $('.tab_{{$frame2->id}}').addClass('current');
           @else
             $('#frame-{{$frame2->id}}').removeClass('d-block');
             $('#frame-{{$frame2->id}}').addClass('d-none');
-            $('.tab_a_{{$frame2->id}}').removeClass('active');
+            $('.tab_{{$frame2->id}}').removeClass('current');
           @endif
         @endforeach
         });

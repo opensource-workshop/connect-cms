@@ -28,4 +28,12 @@ class Tabs extends Model
         }
         return false;
     }
+
+    /**
+     *  指定されたフレームID の配列取得
+     */
+    public function getFrameIdArray()
+    {
+        return explode(',', $this->frame_ids);
+    }
 }

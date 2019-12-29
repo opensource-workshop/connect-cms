@@ -55,13 +55,18 @@ class TabsPlugin extends UserPluginBase
         // 自分自身の設定
         $tabs = Tabs::where('frame_id', $frame_id)->first();
 
+        $frame_ids = array();
+        if (!empty($tabs)) {
+            $frame_ids = explode(',', $tabs->frame_ids);
+        }
+
         // タブでくくるために、同じページの自分以外のフレーム取得
         $frames = Frame::where('page_id', $page_id)
                        ->where('area_id', $this->frame->area_id)
                        ->where('id', '!=', $frame_id)
+                       ->whereIn('id', $frame_ids)
                        ->orderBy('display_sequence', 'asc')
                        ->get();
-
 
         // 画面へ
         return $this->view('tabs', [
