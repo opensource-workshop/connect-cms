@@ -5,15 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Blogプラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.blogs.blogs_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 {{-- エラーメッセージ --}}
 @if ($errors)
     <div class="card border-danger">
@@ -185,11 +184,11 @@
 
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i><span class="d-none d-md-inline"> 変更</span></button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更</button>
     </div>
 </form>
 
 <form action="" method="POST" name="form_delete_category" class="">
     {{ csrf_field() }}
 </form>
-
+@endsection

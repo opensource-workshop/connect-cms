@@ -5,6 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
+@extends('core.cms_frame_base')
+
+@section("plugin_contsnts_$frame->id")
 @if ($form && $forms_columns)
 
     <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
@@ -110,3 +113,4 @@
 @else
     フォームが定義されていません。
 @endif
+@endsection

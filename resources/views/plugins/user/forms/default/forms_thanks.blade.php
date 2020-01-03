@@ -5,5 +5,8 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
-{!!$after_message!!}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
+{!!$after_message!!}
+@endsection

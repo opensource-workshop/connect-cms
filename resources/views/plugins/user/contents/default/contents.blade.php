@@ -7,6 +7,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  --}}
+@extends('core.cms_frame_base')
+
+@section("plugin_contsnts_$frame->id")
 @if ($contents)
     {!! $contents->content_text !!}
     @can('role_update_or_approval',[[$contents, 'contents', $buckets]])
@@ -48,3 +51,4 @@
     </p>
     @endcan
 @endif
+@endsection

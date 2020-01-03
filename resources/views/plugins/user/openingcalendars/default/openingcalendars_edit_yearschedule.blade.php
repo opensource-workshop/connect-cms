@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 開館カレンダープラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- エラー表示 --}}
 @if ($errors)
 <div class="alert alert-danger my-3">
@@ -47,4 +49,4 @@
     </div>
 
 </form>
-
+@endsection

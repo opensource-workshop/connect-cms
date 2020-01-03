@@ -5,16 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-{{-- 機能選択タブ --}}
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.forms.forms_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @auth
 @if (empty($forms_id))
     <div class="alert alert-warning mt-2">
@@ -152,8 +150,8 @@
             </tbody>
             </table>
         </div>
-        <div class="text-center">
-            <button type="button" class="btn btn-secondary mr-2" onclick="javascript:forms_cancel.submit();"><i class="fas fa-times"></i> キャンセル</button>
+        <div class="text-center mt-3 mt-md-0">
+            <button type="button" class="btn btn-secondary mr-2" onclick="javascript:forms_cancel.submit();"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-check"></i> フォーム保存
             </button>
@@ -168,3 +166,4 @@
 
 @endif
 @endauth
+@endsection

@@ -7,7 +7,7 @@
  --}}
 @if ($action == 'editBuckets')
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/blogs/editBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">設定変更</a>
+        <span class="nav-link"><span class="active">設定変更</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
@@ -16,7 +16,7 @@
 @endif
 @if ($action == 'createBuckets')
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/blogs/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">新規作成</a>
+        <span class="nav-link"><span class="active">新規作成</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
@@ -25,7 +25,7 @@
 @endif
 @if ($action == 'listCategories')
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/blogs/listCategories/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">カテゴリ</a>
+        <span class="nav-link"><span class="active">カテゴリ</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
@@ -34,7 +34,7 @@
 @endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/blogs/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">表示ブログ選択</a>
+        <span class="nav-link"><span class="active">表示ブログ選択</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
@@ -42,7 +42,11 @@
     </li>
 @endif
 @if ($action == 'editBucketsRoles' || $action == '')
-    <li class="nav-item"><a href="{{url('/')}}/plugin/blogs/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">権限設定</a></li>
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">権限設定</span></span>
+    </li>
 @else
-    <li class="nav-item"><a href="{{url('/')}}/plugin/blogs/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">権限設定</a></li>
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/blogs/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">権限設定</a>
+    </li>
 @endif

@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 開館カレンダープラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 <div class="openingcalendar-pdf">
 <p>
 @can("role_article")
@@ -198,3 +200,4 @@
 @can("role_article")
     <button type="button" class="btn btn-success mt-3" onclick="location.href='{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 編集</button>
 @endcan
+@endsection

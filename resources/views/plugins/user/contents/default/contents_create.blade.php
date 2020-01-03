@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
@@ -28,9 +30,10 @@
         <div class="form-group">
             <input type="hidden" name="bucket_id" value="">
             <br />
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
-            <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i> 一時保存</button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
+            <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
         </div>
     </form>
 </div>
+@endsection

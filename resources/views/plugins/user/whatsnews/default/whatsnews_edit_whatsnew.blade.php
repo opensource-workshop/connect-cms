@@ -5,15 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.whatsnews.whatsnews_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @if ($errors)
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
@@ -53,15 +52,17 @@
         <input type="hidden" name="whatsnews_id" value="{{$whatsnew->id}}">
     @endif
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">新着情報名 <label class="badge badge-danger">必須</label></label>
-        <input type="text" name="whatsnew_name" value="{{old('whatsnew_name', $whatsnew->whatsnew_name)}}" class="form-control col-md-9">
-        @if ($errors && $errors->has('whatsnew_name')) <div class="text-danger">{{$errors->first('whatsnew_name')}}</div> @endif
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">新着情報名 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="whatsnew_name" value="{{old('whatsnew_name', $whatsnew->whatsnew_name)}}" class="form-control">
+            @if ($errors && $errors->has('whatsnew_name')) <div class="text-danger">{{$errors->first('whatsnew_name')}}</div> @endif
+        </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">新着の取得方式</label>
-        <div class="col-md-9 d-flex align-items-center">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">新着の取得方式</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($whatsnew->view_pattern == 0)
                     <input type="radio" value="0" id="view_pattern_0" name="view_pattern" class="custom-control-input" checked="checked">
@@ -81,21 +82,25 @@
         </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">表示件数</label>
-        <input type="text" name="count" value="{{old('count', $whatsnew->count)}}" class="form-control col-sm-3">
-        @if ($errors && $errors->has('count')) <div class="text-danger">{{$errors->first('count')}}</div> @endif
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="count" value="{{old('count', $whatsnew->count)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('count')) <div class="text-danger">{{$errors->first('count')}}</div> @endif
+        </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">表示日数</label>
-        <input type="text" name="days" value="{{old('days', $whatsnew->days)}}" class="form-control col-sm-3">
-        @if ($errors && $errors->has('days')) <div class="text-danger">{{$errors->first('days')}}</div> @endif
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">表示日数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="days" value="{{old('days', $whatsnew->days)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('days')) <div class="text-danger">{{$errors->first('days')}}</div> @endif
+        </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">RSS</label>
-        <div class="col-md-9 d-flex align-items-center">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">RSS</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($whatsnew->rss == 1)
                     <input type="radio" value="1" id="rss_1" name="rss" class="custom-control-input" checked="checked">
@@ -115,15 +120,17 @@
         </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">RSS件数</label>
-        <input type="text" name="rss_count" value="{{old('rss_count', $whatsnew->rss_count)}}" class="form-control col-sm-3">
-        @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">RSS件数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="rss_count" value="{{old('rss_count', $whatsnew->rss_count)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
+        </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">登録者の表示</label><br />
-        <div class="col-md-9 d-flex align-items-center">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">登録者の表示</label><br />
+        <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($whatsnew->view_posted_name == 1)
                     <input type="radio" value="1" id="view_posted_name_1" name="view_posted_name" class="custom-control-input" checked="checked">
@@ -143,9 +150,9 @@
         </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">登録日時の表示</label><br />
-        <div class="col-md-9 d-flex align-items-center">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">登録日時の表示</label><br />
+        <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($whatsnew->view_posted_at == 1)
                     <input type="radio" value="1" id="view_posted_at_1" name="view_posted_at" class="custom-control-input" checked="checked">
@@ -165,9 +172,9 @@
         </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">重要記事の扱い</label><br />
-        <div class="col-md-9 align-items-center">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}} @if(!$frame->isExpandNarrow()) pt-sm-0 @endif">重要記事の扱い</label><br />
+        <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($whatsnew->important == "")
                     <input type="radio" value="" id="important_0" name="important" class="custom-control-input" checked="checked">
@@ -203,9 +210,9 @@
         </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
-        <div class="col-md-9 d-flex align-items-center">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
         @foreach($whatsnew->getTargetPlugins() as $target_plugin => $use_flag)
             <div class="custom-control custom-checkbox custom-control-inline">
                 <input type="checkbox" name="target_plugin[{{$target_plugin}}]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
@@ -216,9 +223,9 @@
         @if ($errors && $errors->has('target_plugin')) <div class="text-danger">{{$errors->first('target_plugin')}}</div> @endif
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">フレームの選択</label>
-        <div class="col-md-9 d-flex align-items-center">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($whatsnew->frame_select == 0)
                     <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input" checked="checked">
@@ -238,11 +245,10 @@
         </div>
     </div>
 
-    <div class="form-group row px-3">
-        <label class="col-md-3 col-form-label text-md-right pl-0">対象ページ - フレーム</label>
-        <div class="card col-md-9">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
+        <div class="card {{$frame->getSettingInputClass(false, true)}}">
             <div class="card-body py-2 pl-0">
-
             @foreach($target_plugins_frames as $target_plugins_frame)
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $whatsnew->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
@@ -258,13 +264,13 @@
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
-            <div class="col-sm-3"></div>
-            <div class="col-sm-6">
+            <div class="col-3"></div>
+            <div class="col-6">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                    <i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span>
+                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
                 </button>
                 <button type="submit" class="btn btn-primary form-horizontal mr-2"><i class="fas fa-check"></i>
-                    <span class="d-none d-xl-inline">
+                    <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($whatsnew) || $create_flag)
                         登録
                     @else
@@ -276,9 +282,9 @@
             {{-- 既存新着情報設定の場合は削除処理のボタンも表示 --}}
             @if ($create_flag)
             @else
-                <div class="col-sm-3 pull-right text-right">
+                <div class="col-3 text-right">
                     <a data-toggle="collapse" href="#collapse{{$whatsnew_frame->id}}">
-                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="d-none d-xl-inline"> 削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                     </a>
                 </div>
             @endif
@@ -304,3 +310,4 @@
     </div>
 </div>
 @endif
+@endsection

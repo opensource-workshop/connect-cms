@@ -5,15 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.blogs.blogs_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @if (!$blog->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
@@ -47,124 +46,115 @@
         <input type="hidden" name="blogs_id" value="{{$blog->id}}">
     @endif
 
-    <div class="form-group">
-        <label class="control-label">ブログ名 <label class="badge badge-danger">必須</label></label>
-        <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control">
-        @if ($errors && $errors->has('blog_name')) <div class="text-danger">{{$errors->first('blog_name')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="control-label">表示件数 <label class="badge badge-danger">必須</label></label>
-        <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3">
-        @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="col-form-label">RSS</label><br />
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($blog->rss == 1)
-                <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="rss_off">表示する</label>
-        </div>
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($blog->rss == 0)
-                <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="rss_on">表示しない</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ブログ名 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control">
+            @if ($errors && $errors->has('blog_name')) <div class="text-danger">{{$errors->first('blog_name')}}</div> @endif
         </div>
     </div>
 
-    <div class="form-group">
-        <label class="control-label">RSS件数</label>
-        <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3">
-        @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="col-form-label">表示条件</label><br />
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($blog->scope == '')
-                <input type="radio" value="" id="scope_all" name="scope" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="" id="scope_all" name="scope" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="scope_all">全て</label>
-        </div>
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($blog->scope == 'year')
-                <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="scope_year">年</label>
-        </div>
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($blog->scope == 'fiscal')
-                <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="scope_fiscal">年度</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
         </div>
     </div>
 
-    <div class="form-group">
-        <label class="control-label">指定年</label>
-        <input type="text" name="scope_value" value="{{old('scope_value', $blog->scope_value)}}" class="form-control col-sm-3">
-        @if ($errors && $errors->has('scope_value')) <div class="text-danger">{{$errors->first('scope_value')}}</div> @endif
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">RSS</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($blog->rss == 1)
+                    <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="rss_off">表示する</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($blog->rss == 0)
+                    <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="rss_on">表示しない</label>
+            </div>
+        </div>
     </div>
 
-    {{-- 承認機能の選択 --}}
-{{--
-    <div class="form-group">
-        <label class="col-form-label">承認の有無</label><br />
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($blog->approval_flag == 0)
-                <input type="radio" value="0" id="approval_flag_0" name="approval_flag" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="0" id="approval_flag_0" name="approval_flag" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="approval_flag_0">承認しない</label>
-        </div>
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($blog->approval_flag == 1)
-                <input type="radio" value="1" id="approval_flag_1" name="approval_flag" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="1" id="approval_flag_1" name="approval_flag" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="approval_flag_1">承認する</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">RSS件数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
         </div>
     </div>
---}}
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">表示条件</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($blog->scope == '')
+                    <input type="radio" value="" id="scope_all" name="scope" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="" id="scope_all" name="scope" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="scope_all">全て</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($blog->scope == 'year')
+                    <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="scope_year">年</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($blog->scope == 'fiscal')
+                    <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="scope_fiscal">年度</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">指定年</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <input type="text" name="scope_value" value="{{old('scope_value', $blog->scope_value)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('scope_value')) <div class="text-danger">{{$errors->first('scope_value')}}</div> @endif
+        </div>
+    </div>
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
-            <div class="col-sm-3"></div>
-            <div class="col-sm-6">
+            <div class="col-3"></div>
+            <div class="col-6">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                    <i class="fas fa-times"></i> キャンセル
+                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
-                @if (empty($blog) || $create_flag)
-                    登録確定
-                @else
-                    変更確定
-                @endif
+                    <span class="{{$frame->getSettingButtonCaptionClass()}}">
+                    @if (empty($blog) || $create_flag)
+                        登録確定
+                    @else
+                        変更確定
+                    @endif
+                    </span>
                 </button>
             </div>
 
             {{-- 既存ブログの場合は削除処理のボタンも表示 --}}
             @if ($create_flag)
             @else
-            <div class="col-sm-3 pull-right text-right">
+            <div class="col-3 text-right">
                 <a data-toggle="collapse" href="#collapse{{$blog_frame->id}}">
-                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                 </a>
             </div>
             @endif
@@ -189,3 +179,4 @@
     </div>
 </div>
 @endif
+@endsection

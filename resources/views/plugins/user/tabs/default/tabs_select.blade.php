@@ -5,16 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category タブ・プラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-{{-- 機能選択タブ --}}
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.tabs.tabs_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 <form action="/plugin/tabs/saveSelect/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->id}}" name="tabs_form" method="POST">
     {{ csrf_field() }}
 
@@ -24,23 +22,23 @@
             <th class="pr-3">初期選択</th>
             <th>対象フレーム</th>
         </tr>
-        @foreach($frames as $frame)
+        @foreach($frames as $frame_record)
         <tr>
             <td class="text-center">
                 <div class="custom-control custom-radio">
-                    @if(isset($tabs) && $tabs->default_frame_id == $frame->id)
-                    <input type="radio" value="{{$frame->id}}" id="default_frame_id{{$frame->id}}" name="default_frame_id" class="custom-control-input" checked="checked">
+                    @if(isset($tabs) && $tabs->default_frame_id == $frame_record->id)
+                    <input type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}" name="default_frame_id" class="custom-control-input" checked="checked">
                     @else
-                    <input type="radio" value="{{$frame->id}}" id="default_frame_id{{$frame->id}}" name="default_frame_id" class="custom-control-input">
+                    <input type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}" name="default_frame_id" class="custom-control-input">
                     @endif
-                    <label class="custom-control-label" for="default_frame_id{{$frame->id}}"></label>
+                    <label class="custom-control-label" for="default_frame_id{{$frame_record->id}}"></label>
                 </div>
             </td>
             <td>
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="frame_select{{$frame->id}}" name="frame_select[]" value="{{$frame->id}}" @if ($tabs && $tabs->onFrame($frame->id)) checked @endif />
-                    <label class="custom-control-label" for="frame_select{{$frame->id}}">
-                        {{$frame->frame_title}}({{$frame->plugin_name}})
+                    <input type="checkbox" class="custom-control-input" id="frame_select{{$frame_record->id}}" name="frame_select[]" value="{{$frame_record->id}}" @if ($tabs && $tabs->onFrame($frame_record->id)) checked @endif />
+                    <label class="custom-control-label" for="frame_select{{$frame_record->id}}">
+                        {{$frame_record->frame_title}}({{$frame_record->plugin_name}})
                     </label>
                 </div>
             </td>
@@ -49,11 +47,15 @@
     </table>
     @endif
 
-    <div class="form-group row mx-0">
-        <div class="offset-md-3">
-            <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
-            <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+    <div class="form-group text-center mt-3">
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+        </div>
         </div>
     </div>
 </form>
-
+@endsection

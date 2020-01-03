@@ -427,6 +427,16 @@ class DefaultController extends ConnectController
     private function getFramesMain($pages_id)
     {
         // フレーム一覧取得（メインエリアのみ）
+        $frames = Frame::select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
+                            'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'frames.browser_width', 'frames.disable_whatsnews',
+                            'frames.default_hidden', 'frames.classname',
+                            'plugins.plugin_name_full')
+                    ->join('pages', 'frames.page_id', '=', 'pages.id')
+                    ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
+                    ->where('pages.id', $pages_id)
+                    ->where('frames.area_id', 2)
+                    ->orderBy('frames.display_sequence')->get();
+/*
         $frames = DB::table('pages')
                     ->select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
                             'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'frames.browser_width', 'frames.disable_whatsnews',
@@ -437,7 +447,7 @@ class DefaultController extends ConnectController
                     ->where('pages.id', $pages_id)
                     ->where('frames.area_id', 2)
                     ->orderBy('frames.display_sequence')->get();
-
+*/
         return $frames;
     }
 

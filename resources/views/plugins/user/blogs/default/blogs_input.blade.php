@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
@@ -92,11 +94,15 @@
 
     <div class="form-group">
         <div class="row">
-            <div class="col-sm-3"></div>
-            <div class="col-sm-6">
+            @if (empty($blogs_posts->id))
+            <div class="col-12">
+            @else
+            <div class="col-3 d-none d-xl-block"></div>
+            <div class="col-9 col-xl-6">
+            @endif
                 <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
-                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i> 一時保存</button>
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
                         @if ($buckets->needApprovalUser(Auth::user()))
@@ -111,34 +117,15 @@
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
                         @endif
                     @endif
-{{--
-                    @if (empty($blogs_posts->id))
-                        @if ($blog_frame->approval_flag == 0 ||
-                             Auth::user()->can('role_article',[[null, 'blogs']]) ||
-                             Auth::user()->can('role_article_admin',[[null, 'blogs']]))
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
-                        @else
-                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
-                        @endif
-                    @else
-                        @if ($blog_frame->approval_flag == 0 ||
-                             Auth::user()->can('role_article',[[null, 'blogs']]) ||
-                             Auth::user()->can('role_article_admin',[[null, 'blogs']]))
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
-                        @else
-                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
-                        @endif
-                    @endif
---}}
                 </div>
             </div>
-            <div class="col-sm-3 pull-right text-right">
-                @if (!empty($blogs_posts->id))
+            @if (!empty($blogs_posts->id))
+            <div class="col-3 col-xl-3 text-right">
                     <a data-toggle="collapse" href="#collapse{{$blogs_posts->id}}">
-                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
                     </a>
-                @endif
             </div>
+            @endif
         </div>
     </div>
 </form>
@@ -159,3 +146,4 @@
         </div>
     </div>
 </div>
+@endsection

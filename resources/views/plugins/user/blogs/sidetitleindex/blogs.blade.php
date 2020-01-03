@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
     <div class="sidetitleindex">
@@ -40,4 +42,4 @@
     </div>
      --}}
 @endif
-
+@endsection

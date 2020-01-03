@@ -27,4 +27,7 @@ return [
     'CC_DISABLE_WHATSNEWS_PLUGIN' => array(
         'blogs' => true,
     ),
+
+    // 設定メニューの折り畳みcol
+    'CC_SETTING_EXPAND_COL' => 6,
 ];

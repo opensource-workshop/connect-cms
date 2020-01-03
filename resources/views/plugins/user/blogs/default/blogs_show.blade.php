@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- タイトル --}}
 <h2>{{$post->post_title}}</h2>
 
@@ -78,3 +80,4 @@
         @endif
     </div>
 </div>
+@endsection

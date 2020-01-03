@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- 投稿日時 --}}
 <b>{{$post->posted_at->format('Y年n月j日')}}</b>
 
@@ -74,3 +76,4 @@
         @endif
     </div>
 </div>
+@endsection

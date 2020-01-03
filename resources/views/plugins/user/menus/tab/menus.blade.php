@@ -6,6 +6,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
+@extends('core.cms_frame_base')
+
+@section("plugin_contsnts_$frame->id")
 @if ($pages)
 
 <ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
@@ -23,3 +26,4 @@
 </ul>
 
 @endif
+@endsection

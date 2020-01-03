@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- 新規登録 --}}
 @can('posts.create',[[null, 'blogs', $buckets]])
     @if (isset($frame) && $frame->bucket_id)
@@ -97,4 +99,4 @@
         {{ $blogs_posts->links() }}
     </div>
 @endif
-
+@endsection

@@ -5,15 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 開館カレンダープラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.openingcalendars.openingcalendars_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @if (!$openingcalendar->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
@@ -47,91 +46,110 @@
         <input type="hidden" name="openingcalendars_id" value="{{$openingcalendar->id}}">
     @endif
 
-    <div class="form-group">
-        <label class="control-label">開館カレンダー名 <label class="badge badge-danger">必須</label></label>
-        <input type="text" name="openingcalendar_name" value="{{old('openingcalendar_name', $openingcalendar->openingcalendar_name)}}" class="form-control">
-        @if ($errors && $errors->has('openingcalendar_name')) <div class="text-danger">{{$errors->first('openingcalendar_name')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="control-label">開館カレンダー名（副題） <label class="badge badge-danger">必須</label></label>
-        <input type="text" name="openingcalendar_sub_name" value="{{old('openingcalendar_sub_name', $openingcalendar->openingcalendar_sub_name)}}" class="form-control">
-        @if ($errors && $errors->has('openingcalendar_sub_name')) <div class="text-danger">{{$errors->first('openingcalendar_sub_name')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="control-label">月の表示形式 <label class="badge badge-danger">必須</label></label>
-        <select class="form-control" name="month_format" class="form-control">
-            <option value=""></option>
-            <option value="1" @if(Input::old('month_format', $openingcalendar->month_format)=="1") selected @endif>1:January / YYMM</option>
-        </select>
-        @if ($errors && $errors->has('month_format')) <div class="text-danger">{{$errors->first('month_format')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="control-label">週の表示形式 <label class="badge badge-danger">必須</label></label>
-        <select class="form-control" name="week_format" class="form-control">
-            <option value=""></option>
-            <option value="1" @if(Input::old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN, MON, ...</option>
-            <option value="2" @if(Input::old('week_format', $openingcalendar->week_format)=="2") selected @endif>日, 月, 火, ...</option>
-        </select>
-        @if ($errors && $errors->has('week_format')) <div class="text-danger">{{$errors->first('week_format')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="control-label">過去の表示月数</label>
-        <input type="text" name="view_before_month" value="{{old('view_before_month', $openingcalendar->view_before_month)}}" class="form-control">
-        @if ($errors && $errors->has('view_before_month')) <div class="text-danger">{{$errors->first('view_before_month')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="control-label">未来の表示月数</label>
-        <input type="text" name="view_after_month" value="{{old('view_after_month', $openingcalendar->view_after_month)}}" class="form-control">
-        @if ($errors && $errors->has('view_after_month')) <div class="text-danger">{{$errors->first('view_after_month')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <label class="col-form-label">スムーズスクロール</label><br />
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($openingcalendar->smooth_scroll == 0)
-                <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="smooth_scroll_off">しない</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">開館カレンダー名 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="openingcalendar_name" value="{{old('openingcalendar_name', $openingcalendar->openingcalendar_name)}}" class="form-control">
+            @if ($errors && $errors->has('openingcalendar_name')) <div class="text-danger">{{$errors->first('openingcalendar_name')}}</div> @endif
         </div>
-        <div class="custom-control custom-radio custom-control-inline">
-            @if($openingcalendar->smooth_scroll == 1)
-                <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input" checked="checked">
-            @else
-                <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input">
-            @endif
-            <label class="custom-control-label" for="smooth_scroll_on">する</label>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">開館カレンダー名（副題） <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="openingcalendar_sub_name" value="{{old('openingcalendar_sub_name', $openingcalendar->openingcalendar_sub_name)}}" class="form-control">
+            @if ($errors && $errors->has('openingcalendar_sub_name')) <div class="text-danger">{{$errors->first('openingcalendar_sub_name')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">月の表示形式 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <select class="form-control" name="month_format" class="form-control">
+                <option value=""></option>
+                <option value="1" @if(Input::old('month_format', $openingcalendar->month_format)=="1") selected @endif>1:January / YYMM</option>
+            </select>
+            @if ($errors && $errors->has('month_format')) <div class="text-danger">{{$errors->first('month_format')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">週の表示形式 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <select class="form-control" name="week_format" class="form-control">
+                <option value=""></option>
+                <option value="1" @if(Input::old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN, MON, ...</option>
+                <option value="2" @if(Input::old('week_format', $openingcalendar->week_format)=="2") selected @endif>日, 月, 火, ...</option>
+            </select>
+            @if ($errors && $errors->has('week_format')) <div class="text-danger">{{$errors->first('week_format')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">過去の表示月数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_before_month" value="{{old('view_before_month', $openingcalendar->view_before_month)}}" class="form-control">
+            @if ($errors && $errors->has('view_before_month')) <div class="text-danger">{{$errors->first('view_before_month')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">未来の表示月数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_after_month" value="{{old('view_after_month', $openingcalendar->view_after_month)}}" class="form-control">
+            @if ($errors && $errors->has('view_after_month')) <div class="text-danger">{{$errors->first('view_after_month')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">スムーズスクロール</label><br />
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($openingcalendar->smooth_scroll == 0)
+                    <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="smooth_scroll_off" name="smooth_scroll" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="smooth_scroll_off">しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($openingcalendar->smooth_scroll == 1)
+                    <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="smooth_scroll_on" name="smooth_scroll" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="smooth_scroll_on">する</label>
+            </div>
         </div>
     </div>
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">
-        <div>
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                <i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span>
-            </button>
-            <button type="submit" class="btn btn-primary form-horizontal mr-2"><i class="fas fa-check"></i>
-                <span class="d-none d-xl-inline">
-                @if (empty($openingcalendar) || $create_flag)
-                    登録
-                @else
-                    変更
-                @endif
-                </span>
-            </button>
+        <div class="row">
+            <div class="col-3"></div>
+            <div class="col-6">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
+                </button>
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
+                    <span class="{{$frame->getSettingButtonCaptionClass()}}">
+                    @if (empty($openingcalendar) || $create_flag)
+                        登録
+                    @else
+                        変更
+                    @endif
+                    </span>
+                </button>
+            </div>
 
             {{-- 既存開館カレンダーの場合は削除処理のボタンも表示 --}}
             @if ($create_flag)
             @else
+            <div class="col-3 text-right">
                 <a data-toggle="collapse" href="#collapse{{$openingcalendar_frame->id}}">
-                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="d-none d-xl-inline"> 削除</span></span>
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                 </a>
+            </div>
             @endif
         </div>
     </div>
@@ -154,3 +172,4 @@
     </div>
 </div>
 @endif
+@endsection

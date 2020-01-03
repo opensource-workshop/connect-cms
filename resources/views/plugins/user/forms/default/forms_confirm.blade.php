@@ -5,6 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
+@extends('core.cms_frame_base')
+
+@section("plugin_contsnts_$frame->id")
 <script type="text/javascript">
     {{-- 保存のsubmit JavaScript --}}
     function submit_forms_store() {
@@ -80,3 +83,4 @@
         <button type="submit" class="btn btn-primary" onclick="javascript:submit_forms_store();"><i class="fas fa-check"></i> 送信</button>
     </div>
 </form>
+@endsection

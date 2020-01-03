@@ -5,23 +5,16 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 開館カレンダープラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<style type="text/css">
-<!--
-    #frame-card-{{ $frame->frame_id }} { width: 50vw; z-index: 999; }
--->
-</style>
-
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.openingcalendars.openingcalendars_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @if (!$openingcalendar->id)
-    <div class="alert alert-warning" style="margin-top: 10px;">
+    <div class="alert alert-warning mt-3">
         <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用する開館カレンダーを選択するか、作成してください。
     </div>
@@ -63,7 +56,7 @@
     {{ csrf_field() }}
 
     <div class="form-group table-responsive">
-        <table class="table table-hover" style="margin-bottom: 0;">
+        <table class="table table-hover mb-sm-0" style="min-width: 500px;">
         <thead>
             <tr>
                 <th nowrap>表示順</th>
@@ -140,3 +133,4 @@
 </form>
 
 @endif
+@endsection

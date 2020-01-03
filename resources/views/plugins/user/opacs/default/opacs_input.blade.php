@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 <script type="text/javascript">
     {{-- 項目追加のsubmit JavaScript --}}
     function submit_book_search() {
@@ -399,3 +401,4 @@
         </div>
     </div>
 </div>
+@endsection

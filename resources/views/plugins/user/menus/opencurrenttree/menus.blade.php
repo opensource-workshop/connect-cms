@@ -6,6 +6,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
+@extends('core.cms_frame_base')
+
+@section("plugin_contsnts_$frame->id")
 @if ($pages)
 
     <div class="list-group" style="margin-bottom: 0;">
@@ -67,3 +70,4 @@
     @endforeach
     </div>
 @endif
+@endsection

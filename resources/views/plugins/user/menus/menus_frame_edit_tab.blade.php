@@ -6,7 +6,11 @@
  * @category メニュープラグイン
  --}}
 @if ($action == 'select')
-    <li class="nav-item"><a href="{{url('/')}}/plugin/menus/select/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">ページ選択</a></li>
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">ページ選択</span></span>
+    </li>
 @else
-    <li class="nav-item"><a href="{{url('/')}}/plugin/menus/select/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">ページ選択</a></li>
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/menus/select/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">ページ選択</a>
+    </li>
 @endif

@@ -5,6 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
  --}}
+@extends('core.cms_frame_base')
+
+@section("plugin_contsnts_$frame->id")
 @if ($errors && $errors->any())
     <div class="alert alert-danger">
         <i class="fas fa-exclamation-triangle"></i>
@@ -93,3 +96,4 @@
 <p class="text-center" style="margin-top: 16px;">
     <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
 </p>
+@endsection

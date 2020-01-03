@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Opac・プラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 {{-- OPAC表示 --}}
 @if (isset($opacs_books))
 
@@ -137,3 +139,4 @@
     @endif
 @endcan
 --}}
+@endsection

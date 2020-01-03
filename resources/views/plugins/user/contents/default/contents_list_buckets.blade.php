@@ -5,23 +5,20 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-{{-- 機能選択タブ --}}
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.contents.contents_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 <form action="/redirect/plugin/contents/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
-    <table class="table table-hover" style="margin-bottom: 0;">
+    <table class="table table-hover table-responsive">
     <thead>
         <tr>
-            <th></th>
-            {{-- <th>選択</th> --}}
+            <th nowrap>選択</th>
             <th nowrap>
                 <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}">更新日</a>
                 @if ($request_order_str == "contents_updated_at|asc")
@@ -66,8 +63,10 @@
     </thead>
     <tbody>
     @foreach($buckets_list as $bucket)
-        <tr @if ($bucket->frames_id == $frame_id) class="active"@endif>
-            <td><input type="radio" value="{{$bucket->id}}" name="select_bucket"@if ($bucket->frames_id == $frame_id) checked @endif></input></td>
+        <tr @if ($bucket->frames_id == $frame_id) class="cc-active-tr"@endif>
+            <td>
+                <input type="radio" value="{{$bucket->id}}" name="select_bucket"@if ($bucket->frames_id == $frame_id) checked @endif></input>
+            </td>
             <td>{{$bucket->contents_updated_at}}</td>
             <td>{{$bucket->page_name}}</td>
             <td>{{$bucket->bucket_name}}</td>
@@ -83,7 +82,8 @@
     </div>
 
     <div class="text-center">
-        <button type="button" class="btn btn-secondary mr-2" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+        <button type="button" class="btn btn-secondary mr-2" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
     </div>
 </form>
+@endsection

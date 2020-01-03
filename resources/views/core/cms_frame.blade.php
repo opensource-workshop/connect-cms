@@ -77,12 +77,13 @@ if ($frame->default_hidden && (!Auth::check() || !Auth::user()->can('role_arrang
         @else
 
             {{-- フレームボディ --}}
+{{--
             @if ($frame->frame_design == 'none')
             <div class="card-body" style="padding: 0; clear: both;">
             @else
             <div class="card-body">
             @endif
-
+--}}
                 {{-- プラグが設定されていれば、プラグ優先 --}}
                 {{-- 実際には、プラグのデータを画面に渡すなどという動きをしたい --}}
 
@@ -129,7 +130,9 @@ if ($frame->default_hidden && (!Auth::check() || !Auth::user()->can('role_arrang
                 @endif
 
                 @endif
+{{--
             </div>
+--}}
         @endif
     </div>
 </div>

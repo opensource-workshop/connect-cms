@@ -5,15 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォームプラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.forms.forms_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @if (!$form->id && !$create_flag)
     <div class="alert alert-warning mt-2">
         <i class="fas fa-exclamation-circle"></i>
@@ -47,28 +46,39 @@
         <input type="hidden" name="forms_id" value="{{$form->id}}">
     @endif
 
-    <div class="form-group">
-        <label class="control-label">フォーム名 <label class="badge badge-danger">必須</span></label>
-        <input type="text" name="forms_name" value="{{old('forms_name', $form->forms_name)}}" class="form-control">
-        @if ($errors && $errors->has('forms_name')) <div class="text-danger">{{$errors->first('forms_name')}}</div> @endif
-    </div>
-
-    <div class="form-group">
-        <div class="custom-control custom-checkbox">
-            <input type="checkbox" name="mail_send_flag" value="1" class="custom-control-input" id="mail_send_flag" @if(old('mail_send_flag', $form->mail_send_flag)) checked=checked @endif>
-            <label class="custom-control-label" for="mail_send_flag">以下のアドレスにメール送信する</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">フォーム名 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="forms_name" value="{{old('forms_name', $form->forms_name)}}" class="form-control">
+            @if ($errors && $errors->has('forms_name')) <div class="text-danger">{{$errors->first('forms_name')}}</div> @endif
         </div>
     </div>
 
-    <div class="form-group">
-        <label class="control-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
-        <input type="text" name="mail_send_address" value="{{old('mail_send_address', $form->mail_send_address)}}" class="form-control">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="mail_send_flag" value="1" class="custom-control-input" id="mail_send_flag" @if(old('mail_send_flag', $form->mail_send_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="mail_send_flag">以下のアドレスにメール送信する</label>
+            </div>
+        </div>
     </div>
 
-    <div class="form-group">
-        <div class="custom-control custom-checkbox">
-            <input type="checkbox" name="user_mail_send_flag" value="1" class="custom-control-input" id="user_mail_send_flag" @if(old('user_mail_send_flag', $form->user_mail_send_flag)) checked=checked @endif>
-            <label class="custom-control-label" for="user_mail_send_flag">登録者にメール送信する</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
+            <input type="text" name="mail_send_address" value="{{old('mail_send_address', $form->mail_send_address)}}" class="form-control">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="user_mail_send_flag" value="1" class="custom-control-input" id="user_mail_send_flag" @if(old('user_mail_send_flag', $form->user_mail_send_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="user_mail_send_flag">登録者にメール送信する</label>
+            </div>
         </div>
     </div>
 {{--
@@ -77,51 +87,63 @@
         <input type="text" name="from_mail_name" value="{{old('from_mail_name', $form->from_mail_name)}}" class="form-control">
     </div>
 --}}
-    <div class="form-group">
-        <label class="control-label">メール件名</label>
-        <input type="text" name="mail_subject" value="{{old('mail_subject', $form->mail_subject)}}" class="form-control">
-    </div>
-
-    <div class="form-group">
-        <label class="control-label">メールフォーマット　[[body]]　の部分に登録内容が入ります。</label>
-        <textarea name="mail_format" class="form-control" rows=5>{{old('mail_format', $form->mail_format)}}</textarea>
-    </div>
-
-    <div class="form-group">
-        <div class="custom-control custom-checkbox">
-            <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', $form->data_save_flag)) checked=checked @endif>
-            <label class="custom-control-label" for="data_save_flag">データを保存する（チェックを外すと、サイト上にデータを保持しません）</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">メール件名</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="mail_subject" value="{{old('mail_subject', $form->mail_subject)}}" class="form-control">
         </div>
     </div>
 
-    <div class="form-group">
-        <label class="control-label">登録後のメッセージ</label>
-        <textarea name="after_message" class="form-control">{{old('after_message', $form->after_message)}}</textarea>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">メールフォーマット</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <textarea name="mail_format" class="form-control" rows=5>{{old('mail_format', $form->mail_format)}}</textarea>
+            <small class="text-muted">[[body]] の部分に登録内容が入ります。</small>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">データ保存</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', $form->data_save_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="data_save_flag">データを保存する（チェックを外すと、サイト上にデータを保持しません）</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">登録後のメッセージ</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <textarea name="after_message" class="form-control">{{old('after_message', $form->after_message)}}</textarea>
+        </div>
     </div>
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
-            <div class="col-sm-3"></div>
-            <div class="col-sm-6">
+            <div class="col-3"></div>
+            <div class="col-6">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                    <i class="fas fa-times"></i> キャンセル
+                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i></span> 
-                @if (empty($form) || $create_flag)
-                    登録確定
-                @else
-                    変更確定
-                @endif
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
+                    <span class="{{$frame->getSettingButtonCaptionClass()}}">
+                    @if (empty($form) || $create_flag)
+                        登録確定
+                    @else
+                        変更確定
+                    @endif
+                    </span>
                 </button>
             </div>
 
             {{-- 既存フォームの場合は削除処理のボタンも表示 --}}
             @if ($create_flag)
             @else
-            <div class="col-sm-3 pull-right text-right">
+            <div class="col-3 text-right">
                 <a data-toggle="collapse" href="#collapse{{$form_frame->id}}">
-                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none">削除</span></span>
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                 </a>
             </div>
             @endif
@@ -146,3 +168,4 @@
     </div>
 </div>
 @endif
+@endsection

@@ -5,21 +5,19 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-{{-- 機能選択タブ --}}
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 <form action="/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST" class="mt-3">
     {{ csrf_field() }}
 
     <div class="form-group">
-        <table class="table table-hover" style="margin-bottom: 0;">
+        <table class="table {{$frame->getSettingTableClass()}}">
         <thead>
             <tr>
                 <th class="border-top-0"></th>
@@ -79,11 +77,9 @@
         </table>
     </div>
 
-    <div class="form-group row mx-0">
-        <div class="offset-md-3">
-            <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
-            <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
-        </div>
+    <div class="form-group text-center">
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 更新</button>
     </div>
 </form>
-
+@endsection

@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 開館カレンダープラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 <style type="text/css">
 <!--
     #frame-card-{{ $frame->frame_id }} { width: 60vw; z-index: 999; background-color: white !important;}
@@ -84,3 +86,4 @@
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i><span class="d-none d-md-inline"> 変更</span></button>
     </div>
 </form>
+@endsection

@@ -6,8 +6,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
-@if ($ancestors)
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
+@if ($ancestors)
     <nav>
         <ol class="breadcrumb">
             @foreach($ancestors as $ancestor)
@@ -20,3 +22,4 @@
         </ol>
     </nav>
 @endif
+@endsection

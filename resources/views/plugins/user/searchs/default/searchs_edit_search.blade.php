@@ -5,15 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.searchs.searchs_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @if ($errors)
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
@@ -53,21 +52,25 @@
                 <input type="hidden" name="searchs_id" value="{{$searchs->id}}">
             @endif
 
-            <div class="form-group row px-3">
-                <label class="col-md-3 col-form-label text-md-right pl-0">検索設定名 <label class="badge badge-danger">必須</label></label>
-                <input type="text" name="search_name" value="{{old('search_name', $searchs->search_name)}}" class="form-control col-md-9">
-                @if ($errors && $errors->has('search_name')) <div class="text-danger">{{$errors->first('search_name')}}</div> @endif
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">検索設定名 <label class="badge badge-danger">必須</label></label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <input type="text" name="search_name" value="{{old('search_name', $searchs->search_name)}}" class="form-control">
+                    @if ($errors && $errors->has('search_name')) <div class="text-danger">{{$errors->first('search_name')}}</div> @endif
+                </div>
             </div>
 
-            <div class="form-group row px-3">
-                <label class="col-md-3 col-form-label text-md-right pl-0">1ページの表示件数 <label class="badge badge-danger">必須</label></label>
-                <input type="text" name="count" value="{{old('count', $searchs->count)}}" class="form-control col-sm-3">
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">1ページの表示件数 <label class="badge badge-danger">必須</label></label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <input type="text" name="count" value="{{old('count', $searchs->count)}}" class="form-control col-sm-4">
+                </div>
                 @if ($errors && $errors->has('count')) <div class="text-danger">{{$errors->first('count')}}</div> @endif
             </div>
 
-            <div class="form-group row px-3">
-                <label class="col-md-3 col-form-label text-md-right pl-0">登録者の表示</label><br />
-                <div class="col-md-9 d-flex align-items-center">
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">登録者の表示</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if($searchs->view_posted_name == 1)
                             <input type="radio" value="1" id="view_posted_name_1" name="view_posted_name" class="custom-control-input" checked="checked">
@@ -87,9 +90,9 @@
                 </div>
             </div>
 
-            <div class="form-group row px-3">
-                <label class="col-md-3 col-form-label text-md-right pl-0">登録日時の表示</label><br />
-                <div class="col-md-9 d-flex align-items-center">
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">登録日時の表示</label><br />
+                <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if($searchs->view_posted_at == 1)
                             <input type="radio" value="1" id="view_posted_at_1" name="view_posted_at" class="custom-control-input" checked="checked">
@@ -109,9 +112,9 @@
                 </div>
             </div>
 
-            <div class="form-group row px-3">
-                <label class="col-md-3 col-form-label text-md-right pl-0">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
-                <div class="col-md-9 d-flex align-items-center">
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
                 @foreach($searchs->getTargetPlugins() as $target_plugin => $use_flag)
                     <div class="custom-control custom-checkbox custom-control-inline">
                         <input type="checkbox" name="target_plugin[{{$target_plugin}}]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
@@ -122,9 +125,9 @@
                 @if ($errors && $errors->has('target_plugin')) <div class="text-danger">{{$errors->first('target_plugin')}}</div> @endif
             </div>
 
-            <div class="form-group row px-3">
-                <label class="col-md-3 col-form-label text-md-right pl-0">フレームの選択</label>
-                <div class="col-md-9 d-flex align-items-center">
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
                         @if($searchs->frame_select == 0)
                             <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input" checked="checked">
@@ -144,9 +147,9 @@
                 </div>
             </div>
 
-            <div class="form-group row px-3">
-                <label class="col-md-3 col-form-label text-md-right pl-0">対象ページ - フレーム</label>
-                <div class="card col-md-9">
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
+                <div class="card {{$frame->getSettingInputClass(false, true)}}">
                     <div class="card-body py-2 pl-0">
 
                         @foreach($target_plugins_frames as $target_plugins_frame)
@@ -163,13 +166,13 @@
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <div class="row">
-                    <div class="col-sm-3"></div>
-                    <div class="col-sm-6">
+                    <div class="col-3"></div>
+                    <div class="col-6">
                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                            <i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span>
+                            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}">キャンセル</span>
                         </button>
                         <button type="submit" class="btn btn-primary form-horizontal mr-2"><i class="fas fa-check"></i>
-                            <span class="d-none d-xl-inline">
+                            <span class="{{$frame->getSettingButtonCaptionClass()}}">
                             @if (empty($searchs) || $create_flag)
                                 登録
                             @else
@@ -181,9 +184,9 @@
                     {{-- 既存の検索設定の場合は削除処理のボタンも表示 --}}
                     @if ($create_flag)
                     @else
-                        <div class="col-sm-3 pull-right text-right">
+                        <div class="col-3 text-right">
                             <a data-toggle="collapse" href="#collapse{{$searchs_frame->frames_id}}">
-                                <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="d-none d-xl-inline"> 削除</span></span>
+                                <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                             </a>
                         </div>
                     @endif
@@ -211,4 +214,4 @@
         @endif
     @endif
 @endif
-
+@endsection

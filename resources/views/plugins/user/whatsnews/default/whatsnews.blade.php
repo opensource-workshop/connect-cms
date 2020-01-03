@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contsnts_$frame->id")
 @if ($whatsnews)
     <p class="text-left">
         @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
@@ -40,3 +42,4 @@
     </dl>
 </div>
 @endif
+@endsection
