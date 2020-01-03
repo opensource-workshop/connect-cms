@@ -191,7 +191,7 @@ class ReservationsPlugin extends UserPluginBase
         $validationArray = 
             [
                 'start_datetime'  => ['required'],
-                'end_datetime'  => ['required'],
+                'end_datetime'  => ['required', 'after:start_datetime'],
             ]
         ;
         $attributeArray = 
