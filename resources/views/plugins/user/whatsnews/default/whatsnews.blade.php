@@ -7,7 +7,7 @@
 --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 @if ($whatsnews)
     <p class="text-left">
         @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)

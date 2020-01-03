@@ -9,7 +9,7 @@
  --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 @if ($contents)
     {!! $contents->content_text !!}
     @can('role_update_or_approval',[[$contents, 'contents', $buckets]])

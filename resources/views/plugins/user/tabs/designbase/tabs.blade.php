@@ -8,7 +8,7 @@
 --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 <ul>
 @foreach($frames as $frame_record)
     <li id="tab_{{$frame_record->id}}" class="tab_{{$frame_record->id}}@if (isset($tabs) && $tabs->default_frame_id == $frame_record->id) current @endif"><a href="#" onclick="return false;">{{$frame_record->frame_title}}</a></li>
