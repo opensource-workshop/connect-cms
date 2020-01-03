@@ -13,6 +13,6 @@
 <div class="card-body">
 @endif
 
-    @yield("plugin_contsnts_$frame->id")
+    @yield("plugin_contents_$frame->id")
 
 </div>

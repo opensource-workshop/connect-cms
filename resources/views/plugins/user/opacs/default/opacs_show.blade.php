@@ -7,7 +7,7 @@
  --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 @if ($errors && $errors->any())
     <div class="alert alert-danger">
         <i class="fas fa-exclamation-triangle"></i>

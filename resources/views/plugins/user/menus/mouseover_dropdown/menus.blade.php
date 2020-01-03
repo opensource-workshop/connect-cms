@@ -8,7 +8,7 @@
 --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 @if ($pages)
     <ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
     @foreach($pages as $page_obj)

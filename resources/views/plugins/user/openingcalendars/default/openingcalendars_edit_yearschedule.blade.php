@@ -7,7 +7,7 @@
  --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 {{-- エラー表示 --}}
 @if ($errors)
 <div class="alert alert-danger my-3">

@@ -7,7 +7,7 @@
  --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 {{-- 新規登録 --}}
 @can('posts.create',[[null, 'blogs', $buckets]])
     @if (isset($frame) && $frame->bucket_id)

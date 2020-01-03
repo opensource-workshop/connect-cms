@@ -7,7 +7,7 @@
  --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 <style type="text/css">
 <!--
     #frame-card-{{ $frame->frame_id }} { width: 60vw; z-index: 999; background-color: white !important;}

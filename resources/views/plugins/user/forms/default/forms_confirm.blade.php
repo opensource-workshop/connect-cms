@@ -7,7 +7,7 @@
  --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 <script type="text/javascript">
     {{-- 保存のsubmit JavaScript --}}
     function submit_forms_store() {

@@ -7,7 +7,7 @@
 --}}
 @extends('core.cms_frame_base')
 
-@section("plugin_contsnts_$frame->id")
+@section("plugin_contents_$frame->id")
 @if(isset($searchs_frame))
     @include('plugins.user.searchs.default.searchs_form')
 @else
