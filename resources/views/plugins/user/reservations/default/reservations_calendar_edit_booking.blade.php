@@ -93,7 +93,7 @@
     {{-- 予約日 --}}
     <div class="form-group">
         <label class="col-3 control-label">予約日</label>
-        <input type="text" class="form-control col-md-3" value="{{ $target_date->format('Y年m月d日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}" name="reservation_date" readonly>
+        <input type="text" class="form-control col-md-3" value="{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}" name="reservation_date" readonly>
     </div>
     {{-- 予約開始時間 --}}
     <div class="form-group">
