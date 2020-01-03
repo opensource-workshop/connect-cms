@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
+@extends('core.cms_frame_base')
 
+@section("plugin_contents_$frame->id")
  <script type="text/javascript">
     /**
      * 登録ボタン押下
@@ -158,3 +160,4 @@
         <button type="submit" class="btn btn-primary" onclick="javascript:submit_booking_store();"><i class="fas fa-check"></i> 登録</button>
     </div>
 </form>
+@endsection
