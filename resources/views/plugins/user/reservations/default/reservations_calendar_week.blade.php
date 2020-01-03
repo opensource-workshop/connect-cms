@@ -97,8 +97,19 @@
                                 </div>
                                 @if (isset($cell['bookings']))
                                     @foreach ($cell['bookings'] as $booking)
-                                        {{-- 予約時間 --}}
-                                        <div class="small">{{ substr($booking->start_datetime, 11, 5) . '~' . substr($booking->end_datetime, 11, 5) }}</div>
+                                        <a href="#bookingDetailModal" role="button" data-toggle="modal" 
+                                            {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
+                                            data-facility_name="{{ $facility_name }}" 
+                                            data-reservation_date="{{ $booking['booking_header']->start_datetime->format('Y年n月j日') }}" 
+                                            data-reservation_time="{{ substr($booking['booking_header']->start_datetime, 11, 5) . ' ~ ' . substr($booking['booking_header']->end_datetime, 11, 5) }}" 
+                                            {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
+                                            @foreach ($booking['booking_details'] as $bookingDetail)
+                                                data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
+                                            @endforeach
+                                        >
+                                            {{-- 表示用の予約時間 --}}
+                                            <div class="small">{{ substr($booking['booking_header']->start_datetime, 11, 5) . '~' . substr($booking['booking_header']->end_datetime, 11, 5) }}</div>
+                                        </a>
                                     @endforeach
                                 @endif
                             </td>

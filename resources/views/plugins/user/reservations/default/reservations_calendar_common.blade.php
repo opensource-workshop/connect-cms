@@ -16,6 +16,65 @@
         !$columns->isEmpty()
         )
 
+        {{-- 予約詳細モーダルウィンドウ --}}
+        <div class="modal" id="bookingDetailModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+
+                    {{-- ヘッダー --}}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    {{-- メインコンテンツ --}}
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                            {{-- 利用日 --}}
+                            <label for="reservation_date" class="col-form-label">利用日</label>
+                            <input type="text" class="form-control" id="reservation_date" readonly>
+                            {{-- 利用時間 --}}
+                            <label for="reservation_time" class="col-form-label">利用時間</label>
+                            <input type="text" class="form-control" id="reservation_time" readonly>
+                            {{-- 予約可変項目 --}}
+                            @foreach ($columns as $column)
+                                <label for="column_{{ $column->id }}" class="col-form-label">{{ $column->column_name }}</label>
+                                <input type="{{ $column->column_type }}" class="form-control" id="column_{{ $column->id }}" readonly>
+                            @endforeach
+                        </div>
+                    </form>
+                    </div>
+
+                    {{-- フッター --}}
+                    <div class="modal-footer" style="justify-content : left;">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> 閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            // モーダル表示前イベント時処理
+            $('#bookingDetailModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget)
+                var modal = $(this)
+                // モーダルタイトル
+                modal.find('.modal-title').text('予約詳細（' + button.data('facility_name') + '）')
+                // 予約項目（固定）
+                modal.find('#reservation_date').val(button.data('reservation_date'))
+                modal.find('#reservation_time').val(button.data('reservation_time'))
+                // 予約項目（可変）
+                @foreach ($columns as $column)
+                    modal.find('#column_{{ $column->id }}').val(button.data('column_{{ $column->id }}'))
+                @endforeach
+            })
+        </script>
+
         {{-- タブ表示 --}}
         <ul class="nav nav-tabs">
             <li class="nav-item">

@@ -384,7 +384,7 @@ class ReservationsPlugin extends UserPluginBase
             $calendar['facility'] = $facility;
 
             // カレンダー表示期間内で該当施設に紐づく予約データを抽出
-            $bookings = reservations_inputs::query()
+            $bookingHeaders = reservations_inputs::query()
                 ->where('reservations_id', $reservations->id)
                 ->where('facility_id', $facility->id)
                 ->whereBetween('start_datetime', [$search_start_date, $search_end_date])
@@ -396,9 +396,17 @@ class ReservationsPlugin extends UserPluginBase
                 // セルの日付に日付データを追加
                 $calendar_cell['date'] = $date;
                 // 日付データと予約データを突き合わせて該当日に予約データを付加
-                foreach($bookings as $booking){
-                    if($date->format('Ymd') == $booking->start_datetime->format('Ymd')){
+                foreach($bookingHeaders as $bookingHeader){
+                    if($date->format('Ymd') == $bookingHeader->start_datetime->format('Ymd')){
                         // セルの予約配列に予約データを追加
+                        $booking = null;
+                        $booking['booking_header'] = $bookingHeader;
+                        $booking['booking_details'] = reservations_inputs_columns::query()
+                            ->where('reservations_id', $reservations->id)
+                            ->where('inputs_id', $bookingHeader->id)
+                            ->orderBy('column_id')
+                            ->get();
+
                         $calendar_cell['bookings'][] = $booking;
                     }
                 }
