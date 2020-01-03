@@ -5,16 +5,15 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン共通
  --}}
-<ul class="nav nav-tabs">
+@extends('core.cms_frame_base_setting')
+
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
-    @include('plugins.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab')
+    @include('plugins.user.forms.forms_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 @auth
-
     {{-- 選択されているBucketがあるかの判定 --}}
     @php
         $plugin_selected = false;
@@ -54,7 +53,7 @@
     <form action="/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
         {{ csrf_field() }}
         <div class="form-group">
-            <table class="table table-hover" style="margin-bottom: 0;">
+            <table class="table table-hover table-responsive">
             <thead>
                 <tr>
                     <th></th>
@@ -66,9 +65,9 @@
             <tbody>
             @foreach($plugins as $plugin)
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
-                    <td><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></input></td>
-                    <td>{{$plugin->plugin_bucket_name}}</td>
-                    <td>
+                    <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></input></td>
+                    <td nowrap>{{$plugin->plugin_bucket_name}}</td>
+                    <td nowrap>
                         <button class="btn btn-primary btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}'">
                             <i class="far fa-edit"></i> 設定変更
                         </button>
@@ -76,7 +75,7 @@
                             <i class="fas fa-file-download"></i> ダウンロード
                         </button>
                     </td>
-                    <td>{{$plugin->created_at}}</td>
+                    <td nowrap>{{$plugin->created_at}}</td>
                 </tr>
             @endforeach
             </tbody>
@@ -88,8 +87,9 @@
         </div>
 
         <div class="form-group text-center">
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
         </div>
     </form>
 @endauth
+@endsection

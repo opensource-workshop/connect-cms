@@ -32,3 +32,12 @@
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">フォーム作成</a>
     </li>
 @endif
+@if ($action == 'listBuckets')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">フォーム選択</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">フォーム選択</a>
+    </li>
+@endif
