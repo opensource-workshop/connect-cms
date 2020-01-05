@@ -5,15 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
+@extends('core.cms_frame_base_setting')
 
-<ul class="nav nav-tabs">
+@section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.reservations.reservations_frame_edit_tab')
+@endsection
 
-    {{-- コア側のフレームメニュー --}}
-    @include('core.cms_frame_edit_tab')
-</ul>
-
+@section("plugin_setting_$frame->id")
 {{-- メッセージエリア --}}
 @if (!$reservation_frame->bucket_id)
     <div class="alert alert-warning" style="margin-top: 10px;">
@@ -131,3 +130,4 @@
     </div>
 </div>
 @endif
+@endsection

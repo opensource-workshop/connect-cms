@@ -5,7 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
+ @extends('core.cms_frame_base')
 
+ @section("plugin_contents_$frame->id")
     {{-- 必要なデータ揃っているか確認 --}}
     @if (
         // フレームに紐づいた施設予約親データが存在すること
@@ -121,3 +123,4 @@
             </div>
         </div>
     @endif
+@endsection
