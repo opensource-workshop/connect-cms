@@ -7,6 +7,7 @@
  --}}
 
 @auth
+{{--
     <h4><span class="badge badge-primary">貸し出し</span></h4>
 
     @if ($opacs_books->lend_flag == '9:禁帯出') 
@@ -72,7 +73,7 @@
             </form>
         </div>
     @endif
-
+--}}
     <h4><span class="badge badge-primary">郵送貸し出しリクエスト</span></h4>
 
     <div class="form-group">
@@ -112,10 +113,10 @@
                         @if ($errors && $errors->has('req_student_no')) <div class="text-danger">{{$errors->first('req_student_no')}}</div> @endif
                     </div>
 
-
                     <div class="col-sm-4" style="margin-top: 8px;">
-                        <label class="control-label">返却予定日</label><label class="badge badge-danger">必須</label>
+                        <label class="control-label">返却期限</label><label class="badge badge-danger">必須</label>
 
+                        @can("role_article")
                         <div class="input-group date" id="req_return_scheduled" data-target-input="nearest">
                             <input type="text" name="req_return_scheduled" value="{{old('req_return_scheduled')}}" class="form-control datetimepicker-input" data-target="#req_return_scheduled"/>
                             <div class="input-group-append" data-target="#req_return_scheduled" data-toggle="datetimepicker">
@@ -132,6 +133,10 @@
                                 });
                             });
                         </script>
+                        @else
+                            <input type="hidden" name="req_return_scheduled" value="{{old('req_return_scheduled', $lent_max_date)}}" class="form-control">
+                            <br /><div class="card p-2">{{$lent_max_date}}</div>
+                        @endcan
                     </div>
                 </div>
                 <div class="row">
@@ -154,6 +159,7 @@
         @endif
     </div>
 
+{{--
     @if (($opacs_books->lent_flag == 1 || $opacs_books->lent_flag == 2) &&
          (Auth::user()->can('role_article') || $opacs_books->student_no == Auth::user()->userid)) 
         <form action="/plugin/opacs/returnLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_returnLent" name="form_returnLent" method="POST">
@@ -200,10 +206,11 @@
             </div>
         </form>
     @endif
-
+--}}
 @else
     <div class="alert alert-warning text-center">
         <i class="fas fa-exclamation-circle"></i>
-        貸し出し操作、返却、貸し出しリクエストはログインすると行えます。
+        {{-- 貸し出し操作、返却、貸し出しリクエストはログインすると行えます。 --}}
+        貸し出しリクエストはログインすると行えます。
     </div>
 @endauth

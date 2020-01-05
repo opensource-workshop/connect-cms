@@ -8,8 +8,9 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
 {{-- OPAC表示 --}}
-@if (isset($opacs_books))
+{{--@if (isset($opacs_books)) --}}
 
     <form action="/redirect/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
     {{ csrf_field() }}
@@ -47,6 +48,8 @@
         </div>
     </div>
     </form>
+
+@if (isset($opacs_books))
 
     {{-- ページング処理 --}}
     <div class="text-center">
@@ -111,13 +114,15 @@
 
     <div class="alert alert-warning text-center">
         <i class="fas fa-exclamation-circle"></i>
-        貸出、返却、リクエストはログイン後、各書籍の詳細画面から操作できます。
+        {{-- 貸出、返却、リクエストはログイン後、各書籍の詳細画面から操作できます。 --}}
+        貸出リクエストはログイン後、各書籍の詳細画面から操作できます。
     </div>
 
     {{-- ページング処理 --}}
     <div class="text-center">
         {{ $opacs_books->fragment('frame-'.$frame_id)->links() }}
     </div>
+
 @endif
 
 {{-- 新規登録 --}}
