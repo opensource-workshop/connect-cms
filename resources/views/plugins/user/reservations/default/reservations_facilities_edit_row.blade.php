@@ -23,11 +23,8 @@
         <input class="form-control" type="text" name="facility_name_{{ $facility->id }}" value="{{$facility->facility_name}}">
     </td>
     {{-- 非表示フラグ --}}
-    <td class="table-text p-1 w-auto" nowrap>
-        <div class="custom-control custom-checkbox ml-3 mt-1">
-            <input name="hide_flag_{{ $facility->id }}" id="hide_flag_{{ $facility->id }}" value="1" type="checkbox" class="custom-control-input" @if (isset($facility->hide_flag)) checked="checked" @endif>
-            <label class="custom-control-label" for="hide_flag_{{ $facility->id }}"></label>
-        </div>
+    <td style="vertical-align: middle;">
+        <input name="hide_flag_{{ $facility->id }}" id="hide_flag_{{ $facility->id }}" value="1" type="checkbox" @if (isset($facility->hide_flag)) checked="checked" @endif>
     </td>
     {{-- 更新ボタン --}}
     <td style="vertical-align: middle;">
