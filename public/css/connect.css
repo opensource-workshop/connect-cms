@@ -169,6 +169,12 @@ a.cc-cursor-text:hover {
     /* padding-left: 1.5em; POPUPカレンダーのレイアウトに影響あり  */
 }
 
+/* Menu
+------------------------------------- */
+.dropdown-menu {
+    /* bootstrap4 デフォルトのままだとヘッダーの画像の後ろに回り込むため  */
+    z-index: 9999;
+}
 
 
 /*  Connect-CMS add CSS Bootstrap3
