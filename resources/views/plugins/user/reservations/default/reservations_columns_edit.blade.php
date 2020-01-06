@@ -56,6 +56,13 @@
         form_columns.submit();
     }
 
+    // ツールチップ
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+        // 常時表示 ※表示の判定は項目側で実施
+        $('#select-button-tip').tooltip('show');
+    })
 </script>
 
 {{-- キャンセル用のフォーム。キャンセル時はセッションをクリアするため、トークン付きでPOST でsubmit したい。 --}}
@@ -63,7 +70,6 @@
     {{ csrf_field() }}
 </form>
 
-<!-- Add or Update Form Button -->
 <div class="form-group">
     <form action="/plugin/reservations/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
         {{ csrf_field() }}
@@ -90,6 +96,7 @@
                         <th nowrap>項目名</th>
                         <th nowrap>型</th>
                         <th nowrap>必須</th>
+                        <th nowrap>選択肢の設定</th>
                         <th nowrap>更新</th>
                         <th nowrap>削除</th>
                     @endif
@@ -102,10 +109,9 @@
                 @endforeach
                 {{-- 新規登録用の行 --}}
                 <tr>
-                    <th colspan="6">【予約項目の追加行】</th>
+                    <th colspan="7">【予約項目の追加行】</th>
                 </tr>
-                    @include('plugins.user.reservations.default.reservations_columns_edit_row_add')
-                </tr>
+                @include('plugins.user.reservations.default.reservations_columns_edit_row_add')
             </tbody>
             </table>
         </div>

@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
-<tr id="column_add_tr">
+<tr>
     <td style="vertical-align: middle;" nowrap><br /></td>
     <td>
         {{-- 予約項目名 --}}
@@ -29,12 +29,14 @@
         {{-- 必須 --}}
         <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
     </td>
-    <td style="vertical-align: middle;">
+    <td class="text-center" style="vertical-align: middle;">
         {{-- ＋ボタン --}}
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>
+    {{-- 表示上の区切り線が切れてしまう為、空のtdタグを設置 --}}
     <td>
-        {{-- 表示上の区切り線が切れてしまう為、空のtdタグを設置 --}}
     </td>
-
+    <td>
+    </td>
+    
 </tr>

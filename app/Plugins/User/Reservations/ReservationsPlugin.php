@@ -14,6 +14,7 @@ use DB;
 use App\Models\User\Reservations\Reservations;
 use App\Models\User\Reservations\reservations_facilities;
 use App\Models\User\Reservations\reservations_columns;
+use App\Models\User\Reservations\reservations_columns_selects;
 use App\Models\User\Reservations\reservations_inputs;
 use App\Models\User\Reservations\reservations_inputs_columns;
 
@@ -52,6 +53,7 @@ class ReservationsPlugin extends UserPluginBase
             'editBucketsRoles', 
             'editFacilities', 
             'editColumns',
+            'editSelects',
         ];
         $functions['post'] = [
             'saveBucketsRoles', 
@@ -61,6 +63,9 @@ class ReservationsPlugin extends UserPluginBase
             'addColumn', 
             'updateColumn',
             'updateColumnSequence', 
+            'addSelect', 
+            'updateSelect',
+            'updateSelectSequence', 
             'editBooking', 
             'saveBooking', 
             'deleteColumn',
@@ -854,6 +859,50 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 予約項目の設定画面の表示
      */
+    public function editSelects($request, $page_id, $frame_id, $reservations_columns_id = null, $message = null, $errors = null)
+    {
+        if($errors){
+            // エラーあり：入力値をフラッシュデータとしてセッションへ保存
+            $request->flash();
+        }else{
+            // エラーなし：セッションから入力値を消去
+            $request->flush();
+        }
+
+        // --- 基本データの取得
+        // フレームデータ
+        $reservation_frame = $this->getFrame($frame_id);
+
+        // 施設データ
+        $reservation = new Reservations();
+
+        // Frame のbucket_id があれば、bucket_id から施設データ取得
+        if (!empty($reservation_frame->bucket_id)) {
+            $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
+        }
+
+        // 施設予約データがない場合は0をセット
+        $reservations_id = empty($reservation) ? null : $reservation->id;
+
+        // --- 画面に値を渡す準備
+        $column = reservations_columns::query()->where('id', $reservations_columns_id)->first();
+        $selects = reservations_columns_selects::query()->where('column_id', $column->id)->orderby('display_sequence')->get();
+
+        // 編集画面テンプレートを呼び出す。
+        return $this->view(
+            'reservations_columns_select_edit', [
+            'reservations_id' => $reservations_id,
+            'reservation'     => $reservation,
+            'column'     => $column,
+            'selects'     => $selects,
+            'message'     => $message,
+            'errors'     => $errors,
+        ]);
+    }
+
+    /**
+     * 予約項目の設定画面の表示
+     */
     public function editColumns($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
     {
         if($errors){
@@ -883,8 +932,33 @@ class ReservationsPlugin extends UserPluginBase
         // 施設予約データがない場合は0をセット
         $reservations_id = empty($reservation) ? null : $reservation->id;
 
-        // --- 画面に値を渡す準備
-        $columns = reservations_columns::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
+        // 予約項目データ
+        $columns = reservations_columns::query()
+            ->select(
+                'reservations_columns.id',
+                'reservations_columns.reservations_id',
+                'reservations_columns.column_type',
+                'reservations_columns.column_name',
+                'reservations_columns.required',
+                'reservations_columns.display_sequence',
+                DB::raw('count(reservations_columns_selects.id) as select_count'),
+                DB::raw('GROUP_CONCAT(reservations_columns_selects.select_name order by reservations_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
+            )
+            ->where('reservations_columns.reservations_id', $reservations_id)
+            // 予約項目の子データ（選択肢）
+            ->leftjoin('reservations_columns_selects',function($join) {
+                $join->on('reservations_columns.id','=','reservations_columns_selects.column_id');
+            })
+            ->groupby(
+                'reservations_columns.id',
+                'reservations_columns.reservations_id',
+                'reservations_columns.column_type',
+                'reservations_columns.column_name',
+                'reservations_columns.required',
+                'reservations_columns.display_sequence',
+            )
+            ->orderby('reservations_columns.display_sequence')
+            ->get();
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
@@ -946,6 +1020,44 @@ class ReservationsPlugin extends UserPluginBase
             ->first();
 
         return $reservation;
+    }
+
+    /**
+     * 予約詳細項目（選択肢）の登録
+     */
+    public function addSelect($request, $page_id, $frame_id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        $erros = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $erros = $validator->errors();
+            return $this->editSelects($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = reservations_columns_selects::query()->where('column_id', $request->column_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        $select = new reservations_columns_selects();
+        $select->reservations_id = $request->reservations_id;
+        $select->column_id = $request->column_id;
+        $select->select_name = $request->select_name;
+        $select->display_sequence = $max_display_sequence;
+        $select->save();
+        $message = '予約詳細項目【 '. $request->select_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $erros);
     }
 
     /**
@@ -1029,6 +1141,45 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面を呼び出す
         return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+    }
+
+    /**
+     * 選択肢の更新
+     */
+    public function updateSelect($request, $page_id, $frame_id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_select_name = "select_name_"."$request->select_id";
+
+        // エラーチェック用に値を詰める
+        $request->merge([
+            "select_name" => $request->$str_select_name,
+        ]);
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        $erros = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $erros = $validator->errors();
+            return $this->editSelects($request, $page_id, $frame_id, $request->column_id, null, $erros);
+        }
+
+        // 予約項目の更新処理
+        $select = reservations_columns_selects::query()->where('id', $request->select_id)->first();
+        $select->select_name = $request->select_name;
+        $select->save();
+        $message = '選択肢【 '. $request->select_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $erros);
     }
 
     /**
@@ -1159,4 +1310,39 @@ class ReservationsPlugin extends UserPluginBase
         // 編集画面を呼び出す
         return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, null);
     }
+
+    /**
+     * 選択肢の表示順の更新
+     */
+    public function updateSelectSequence($request, $page_id, $frame_id)
+    {
+        // ボタンが押された行の施設データ
+        $target_select = reservations_columns_selects::query()
+            ->where('id', $request->select_id)
+            ->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = reservations_columns_selects::query()
+            ->where('reservations_id', $request->reservations_id)
+            ->where('column_id', $request->column_id);
+        $pair_select = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_select_display_sequence = $target_select->display_sequence;
+        $pair_select_display_sequence = $pair_select->display_sequence;
+
+        // 入れ替えて更新
+        $target_select->display_sequence = $pair_select_display_sequence;
+        $target_select->save();
+        $pair_select->display_sequence = $target_select_display_sequence;
+        $pair_select->save();
+
+        $message = '選択肢【 '. $target_select->select_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, null);
+    }
+
 }
