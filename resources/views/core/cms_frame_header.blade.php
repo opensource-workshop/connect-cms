@@ -23,11 +23,11 @@
 
     {{-- 認証していてフレームタイトルが空の場合は、パネルヘッダーの中央にアイコンを配置したいので、高さ指定する。 --}}
     @if (Auth::check() && empty($frame->frame_title) && app('request')->input('mode') == 'preview')
-        <h5 class="card-header bg-transparent border-0" style="padding-top: 0px;padding-bottom: 0px;">
+        <h1 class="card-header bg-transparent border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @elseif (Auth::check() && empty($frame->frame_title))
-        <h5 class="card-header bg-transparent border-0" style="padding-top: 0px;padding-bottom: 0px;height: 24px;">
+        <h1 class="card-header bg-transparent border-0" style="padding-top: 0px;padding-bottom: 0px;height: 24px;">
     @else
-        <h5 class="card-header bg-{{$frame->frame_design}} cc-{{$frame->frame_design}}-font-color">
+        <h1 class="card-header bg-{{$frame->frame_design}} cc-{{$frame->frame_design}}-font-color">
     @endif
 
     {{-- フレームタイトル --}}
@@ -80,5 +80,5 @@
         </div>
         @endif
     @endif
-    </h5>
+    </h1>
 @endif
