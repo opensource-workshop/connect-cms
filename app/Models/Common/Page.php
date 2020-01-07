@@ -233,6 +233,9 @@ class Page extends Model
      */
     public function getUrl()
     {
+        if (!empty($this->othersite_url)) {
+            return $this->othersite_url;
+        }
         return url("/") . $this->permanent_link;
     }
 
