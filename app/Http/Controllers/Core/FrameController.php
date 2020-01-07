@@ -130,7 +130,8 @@ class FrameController extends ConnectController
                       'page_only'         => ($request->page_only == '') ? 0 : $request->page_only,
                       'default_hidden'    => ($request->default_hidden == '') ? 0 : $request->default_hidden,
                       'classname'         => $request->classname,
-                      'plug_name'         => $request->plug_name
+                      'plug_name'         => $request->plug_name,
+                      'none_hidden'       => ($request->none_hidden == '') ? 0 : $request->none_hidden,
         ]);
 
         return redirect($page->permanent_link."#".$frame_id);

@@ -33,7 +33,11 @@
     {{-- フレームタイトル --}}
     {{$frame->frame_title}}
     @if (Auth::check() && $frame->default_hidden)
-        <span class="badge badge-dark">初期非表示</span>
+        <small><span class="badge badge-warning">初期非表示</span></small>
+    @endif
+
+    @if (Auth::check() && $frame->none_hidden)
+        <small><span class="badge badge-warning">データがない場合は非表示</span></small>
     @endif
 
     {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}

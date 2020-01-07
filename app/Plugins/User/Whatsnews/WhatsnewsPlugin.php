@@ -34,6 +34,17 @@ class WhatsnewsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    /**
+     *  新着の検索結果
+     */
+    public $whatsnews_results = null;
+
+    /**
+     *  新着のフレーム情報
+     */
+    public $whatsnews_frame = null;
+
+
     /* コアから呼び出す関数 */
 
     /**
@@ -65,8 +76,13 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getWhatsnewsFrame($frame_id)
     {
+        // 1回呼ばれている場合
+        if ($this->whatsnews_frame) {
+            return $this->whatsnews_frame;
+        }
+
         // Frame データ
-        $frame = DB::table('frames')
+        $this->whatsnews_frame = DB::table('frames')
                  ->select('frames.*',
                           'whatsnews.id as whatsnews_id',
                           'whatsnews.whatsnew_name',
@@ -85,7 +101,7 @@ class WhatsnewsPlugin extends UserPluginBase
                  ->leftJoin('whatsnews', 'whatsnews.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
-        return $frame;
+        return $this->whatsnews_frame;
     }
 
     /**
@@ -105,6 +121,21 @@ class WhatsnewsPlugin extends UserPluginBase
     }
 
     /**
+     * 表示記事の件数取得
+     */
+    public function getContentsCount($frame_id)
+    {
+        // フレームから、新着の設定取得
+        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
+
+        // 新着の一覧取得
+        list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
+
+        // 件数を返却
+        return count($whatsnews);
+    }
+
+    /**
      * 新着記事の取得
      */
     private function getWhatsnews($whatsnews_frame, $method = null)
@@ -112,6 +143,11 @@ class WhatsnewsPlugin extends UserPluginBase
         // 新着情報がまだできていない場合
         if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
             return array(null, null, null);
+        }
+
+        // 1回呼ばれている場合
+        if ($this->whatsnews_results) {
+            return $this->whatsnews_results;
         }
 
         // ターゲットプラグインをループ
@@ -243,7 +279,10 @@ class WhatsnewsPlugin extends UserPluginBase
         // 取得
         $whatsnews = $whatsnews_sql->get();
 
-        return array($whatsnews, $link_pattern, $link_base);
+        // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
+        $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
+
+        return $this->whatsnews_results;
     }
 
 

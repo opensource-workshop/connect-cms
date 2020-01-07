@@ -112,7 +112,27 @@
         </div>
 
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">ブラウザ幅</label>
+            <label class="{{$frame->getSettingLabelClass()}}">テンプレート</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <select class="form-control" name="template" id="template">
+                    <option value="default">default</option>
+                    @foreach ($action_core_frame->getTemplates() as $template_name)
+                        <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_name}}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">class名</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="classname" id="classname" class="form-control" value="{{$frame->classname}}">
+            </div>
+        </div>
+
+        {{-- フレーム表示設定 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}} py-sm-0">フレーム表示設定</label>
             <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
                 <div class="custom-control custom-checkbox">
                     @if($frame->browser_width == "100%")
@@ -125,38 +145,9 @@
             </div>
         </div>
 
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">テンプレート</label>
-            <div class="{{$frame->getSettingInputClass()}}">
-                <select class="form-control" name="template" id="template">
-                    <option value="default">default</option>
-                    @foreach ($action_core_frame->getTemplates() as $template_name)
-                        <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_name}}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-
-        {{-- 新着の表示制限を行うプラグインをConfig ファイルで設定 --}}
-        @if (Config::get("connect.CC_DISABLE_WHATSNEWS_PLUGIN.$frame->plugin_name"))
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">新着の表示制限</label>
-            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
-                <div class="custom-control custom-checkbox">
-                    @if($frame->disable_whatsnews)
-                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews" checked="checked">
-                    @else
-                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews">
-                    @endif
-                    <label class="custom-control-label" for="disable_whatsnews">新着に表示しない。</label>
-                </div>
-            </div>
-        </div>
-        @endif
-
         {{-- 初期状態を非表示とする --}}
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">初期状態</label>
+            <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
                 <div class="custom-control custom-checkbox">
                     @if($frame->default_hidden)
@@ -172,7 +163,7 @@
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
         @if ($frame->area_id != 2)
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">フレーム継承設定</label>
+            <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
                 <div class="custom-control custom-checkbox">
                     @if($frame->page_only)
@@ -186,12 +177,39 @@
         </div>
         @endif
 
+        {{-- 新着の表示制限を行うプラグインをConfig ファイルで設定 --}}
+        @if (Config::get("connect.CC_DISABLE_WHATSNEWS_PLUGIN.$frame->plugin_name"))
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">class名</label>
-            <div class="{{$frame->getSettingInputClass()}}">
-                <input type="text" name="classname" id="classname" class="form-control" value="{{$frame->classname}}">
+            <label class="{{$frame->getSettingLabelClass()}}"></label>
+            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    @if($frame->disable_whatsnews)
+                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews" checked="checked">
+                    @else
+                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews">
+                    @endif
+                    <label class="custom-control-label" for="disable_whatsnews">新着に表示しない。</label>
+                </div>
             </div>
         </div>
+        @endif
+
+        {{-- データがない場合にフレームも非表示にする --}}
+        @if (Config::get("connect.CC_NONE_HIDDEN_PLUGIN.$frame->plugin_name"))
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}"></label>
+            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
+                <div class="custom-control custom-checkbox">
+                    @if($frame->none_hidden)
+                        <input name="none_hidden" value="1" type="checkbox" class="custom-control-input" id="none_hidden" checked="checked">
+                    @else
+                        <input name="none_hidden" value="1" type="checkbox" class="custom-control-input" id="none_hidden">
+                    @endif
+                    <label class="custom-control-label" for="none_hidden">データがない場合にフレームも非表示にする。</label>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <div class="form-group row mx-auto text-center">
             <div class="col-md-12">

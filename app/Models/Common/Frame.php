@@ -16,6 +16,11 @@ class Frame extends Model
     public $templates = null;
 
     /**
+     *  フレーム非表示の判定
+     */
+    public $hidden_flag = null;
+
+    /**
      *  テンプレートの設定
      */
     public function setTemplates($templates)

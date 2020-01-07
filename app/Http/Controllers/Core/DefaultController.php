@@ -334,6 +334,35 @@ class DefaultController extends ConnectController
     }
 
     /**
+     *  データがない場合にフレームも非表示にする。
+     */
+    private function setHiddenFrame($frames, $plugin_instances)
+    {
+        // フレームをループし、対応するインスタンスの件数取得メソッドを呼んで、条件が合致すれば非表示フラグをon
+        foreach($frames as $key => $frame) {
+
+            // データがない場合にフレームも非表示にする。
+            if ($frame->none_hidden) {
+
+                // 表示コンテンツの件数取得メソッドの有無確認と呼び出し
+                if (method_exists($plugin_instances[$frame->frame_id], 'getContentsCount')) {
+                    $count = $plugin_instances[$frame->frame_id]->getContentsCount($frame->frame_id);
+                    if ($count == 0) {
+
+                        // フレームオブジェクトの非表示フラグ
+                        $frames[$key]->hidden_flag = true;
+
+                        // 以下の方法だと、フレームとインスタンスを消してしまうことも可能。
+                        // unset($plugin_instances[$frame->frame_id]);
+                        // unset($frames[$key]);
+                    }
+                }
+            }
+        }
+        return array($frames, $plugin_instances);
+    }
+
+    /**
      *  画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
@@ -428,10 +457,13 @@ class DefaultController extends ConnectController
         $plugin_instances = array();
         foreach ($frames as $frame) {
             $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
-//Log::debug($this->page);
-//Log::debug(print_r($frame,true));
             $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
         }
+
+        // フレームの非表示条件を判定して非表示に合致するならFrame オブジェクトのhidden_flag をtrue に。
+        // 引数はオブジェクトなので参照だけど、明示的にしたいので戻り値で受け取る。
+        list($frames, $plugin_instances) = $this->setHiddenFrame($frames, $plugin_instances);
+
         return $plugin_instances;
     }
 
@@ -442,15 +474,26 @@ class DefaultController extends ConnectController
     private function getFramesMain($pages_id)
     {
         // フレーム一覧取得（メインエリアのみ）
-        $frames = Frame::select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
+        $frames = Frame::select('frames.*', 'frames.id as frame_id',
+                                'pages.page_name', 'pages.id as page_id',
+                                'plugins.plugin_name_full')
+                       ->join('pages', 'frames.page_id', '=', 'pages.id')
+                       ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
+                       ->where('pages.id', $pages_id)
+                       ->where('frames.area_id', 2)
+                       ->orderBy('frames.display_sequence')->get();
+
+/*
+        $frames = Frame::select('frames.*', 'pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
                             'frames.frame_col', 'frames.plugin_name', 'frames.template', 'frames.plug_name', 'frames.bucket_id', 'frames.browser_width', 'frames.disable_whatsnews',
-                            'frames.default_hidden', 'frames.classname',
+                            'frames.default_hidden', 'frames.classname', 'frames.none_hidden',
                             'plugins.plugin_name_full')
                     ->join('pages', 'frames.page_id', '=', 'pages.id')
                     ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
                     ->where('pages.id', $pages_id)
                     ->where('frames.area_id', 2)
                     ->orderBy('frames.display_sequence')->get();
+*/
 /*
         $frames = DB::table('pages')
                     ->select('pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
@@ -479,8 +522,13 @@ class DefaultController extends ConnectController
                     $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
                     $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
                 }
+
+                // フレームの非表示条件を判定して非表示に合致するならFrame オブジェクトのhidden_flag をtrue に。
+                // 引数はオブジェクトなので参照だけど、明示的にしたいので戻り値で受け取る。
+                list($area['frames'], $plugin_instances) = $this->setHiddenFrame($area['frames'], $plugin_instances);
             }
         }
+
         return $plugin_instances;
     }
 }

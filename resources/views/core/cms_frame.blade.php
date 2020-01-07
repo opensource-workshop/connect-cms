@@ -23,11 +23,17 @@ $default_hidden = '';
 if ($frame->default_hidden && (!Auth::check() || !Auth::user()->can('role_arrangement'))) {
     $default_hidden = ' d-none';
 }
+// フレーム非表示の判定
+$hidden_flag = '';
+if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag == true && (!Auth::check() || !Auth::user()->can('role_arrangement'))) {
+    $hidden_flag = ' d-none';
+}
+
 @endphp
 @if($frame->frame_col==0)
-<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$default_hidden}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$default_hidden}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
 @else
-<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
 @endif
 
 @if ($frame->browser_width == '100%')

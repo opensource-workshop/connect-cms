@@ -28,6 +28,11 @@ return [
         'blogs' => true,
     ),
 
+    // データがない場合にフレームに表示する対象のプラグイン
+    'CC_NONE_HIDDEN_PLUGIN' => array(
+        'whatsnews' => true,
+    ),
+
     // 設定メニューの折り畳みcol
     'CC_SETTING_EXPAND_COL' => 6,
 ];
