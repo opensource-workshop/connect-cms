@@ -38,18 +38,17 @@
     @foreach($blogs_posts as $post)
         {{-- 投稿日時 --}}
         <dt>
-            <p>{{$post->posted_at->format('Y/n/d')}}
+            {{$post->posted_at->format('Y/n/d')}}
             {{-- 重要記事 --}}
             @if($post->important == 1)
                 <span class="badge badge-danger">重要</span>
             @endif
             @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
-            </p>
         </dt>
 
         <dd>
             {{-- タイトル --}}
-            <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a></h2>
+            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
         </dd>
     @endforeach
 
