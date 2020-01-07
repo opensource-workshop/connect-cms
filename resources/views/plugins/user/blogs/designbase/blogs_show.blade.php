@@ -9,7 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 {{-- 投稿日時 --}}
-<b>{{$post->posted_at->format('Y年n月j日')}}</b>
+<b>{{$post->posted_at->format('Y/n/d')}}</b>
 
 {{-- タイトル --}}
 <h2>{{$post->post_title}}</h2>
