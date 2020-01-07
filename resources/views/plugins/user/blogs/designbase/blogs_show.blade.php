@@ -9,13 +9,17 @@
 
 @section("plugin_contents_$frame->id")
 {{-- 投稿日時 --}}
-<b>{{$post->posted_at->format('Y/n/d')}}</b>
+<p>
+{{$post->posted_at->format('Y/n/d')}}
+{{-- 重要 --}}
+@if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
+{{-- カテゴリ --}}
+@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+</p>
 
 {{-- タイトル --}}
 <h2>{{$post->post_title}}</h2>
 
-{{-- カテゴリ --}}
-@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
 <article>
 
     {{-- 記事本文 --}}
