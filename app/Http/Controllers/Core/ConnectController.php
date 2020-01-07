@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
@@ -62,10 +63,23 @@ class ConnectController extends Controller
     public $configs = null;
 
     /**
+     *  HTTP ステータスコード（null なら200）
+     */
+    public $http_status_code = null;
+
+    /**
+     *  router（コンストラクタで受け取ったものを後に使用するため、保持しておく）
+     */
+    public $router = null;
+
+    /**
      *  コンストラクタ
      */
     function __construct(Request $request, Router $router)
     {
+        // 別メソッドで使用するために保持しておく。
+        $this->router = $router;
+
         // ルートパラメータを取得する
         $allRouteParams = $router->getCurrentRoute()->parameters();
 
@@ -79,56 +93,29 @@ class ConnectController extends Controller
             $this->frame_id = $allRouteParams['frame_id'];
         }
 
-//        // Page データ
-//        $this->pages = Page::defaultOrder()->get();
-
         // ページID が渡ってきた場合
         if (!empty($this->page_id)) {
              $this->page = Page::where('id', $this->page_id)->first();
-//Log::debug($this->page);
         }
         // ページID が渡されなかった場合、URL から取得
         else {
             $this->page = $this->getCurrentPage();
-//Log::debug($this->page);
         }
 
-        // 404 の場合、設定画面の404 ページを探す。
-        if (!$this->isManagePage($request) && (empty($this->page->id) || empty($this->page))) {
-            $configs = $this->getConfigs('array');
-            if (!empty($configs['page_permanent_link_404'])) {
-                $this->page = $this->getPage($configs['page_permanent_link_404']->value);
-                if (empty($this->page)) {
-//                    abort(404, 'ページがありません。');
-                }
-                else {
-                    $this->page_id = $this->page->id;
-                }
-            }
-            else {
-//                abort(404, 'ページがありません。');
-            }
-        }
+        // ページがあるか判定し、なければ、404 ページを表示する。
+        // 対象となる処理は、画面を持つルートの処理とする。
+        // 404 ページは、管理画面でエラーページが設定されている場合はそのページを呼ぶ。
+        // ただし、多言語対応がONの場合は、現在のページ用に作成された404 ページを呼ぶ。
+        // 現在のページ用の404 ページがない場合は、デフォルト言語の404 ページを呼ぶ。
+        // 404 ページの設定がない場合は、Connect-CMS デフォルトの404 ページを呼ぶ。
+        // 404 ページを表示する場合は、HTTP ステータスコードも404 にしたいため、インスタンス変数でステータスコードを保持しておき、画面出力時に設定する。
+
+        // 必要な結果はインスタンス変数にセットするので、戻り値は受け取らない。
+        $this->checkPageNotFound($request, $router);
 
         // ページがある（管理画面ではページがない）＆IP制限がかかっていない場合は参照OK
-        $check_ip_only = true;
-        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
-            //abort(403, '参照できないページです。');
-
-            $configs = $this->getConfigs('array');
-            if (!empty($configs['page_permanent_link_403'])) {
-                $this->page = $this->getPage($configs['page_permanent_link_403']->value);
-                if (!empty($this->page)) {
-                    $this->page_id = $this->page->id;
-                }
-                else {
-                    abort(403, '参照できないページです。');
-                }
-            }
-            else {
-                abort(403, '参照できないページです。');
-            }
-        }
+        // コンストラクタではAuth による処理がうまくできなかったので、各コントローラのメソッドで必要なところから呼ぶ方式にした。
+        //$this->checkPageForbidden($router);
 
         // ページ一覧データはカレントページの取得後に取得。多言語対応をカレントページで判定しているため。
         if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
@@ -140,23 +127,164 @@ class ConnectController extends Controller
             $this->pages = Page::defaultOrder()->get();
         }
 
-
+        // 使用していない部分なのでコメントアウト（$frame_id はここでは存在しないので実質無効になっていた）2020-01-07
         // Frame データがあれば、画面のテンプレート情報をセット
-        if (!empty($frame_id)) {
-            $frame = Frame::where('id', $frame_id)->first();
-            $finder = View::getFinder();
-            $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name;
+        //if (!empty($frame_id)) {
+        //    $frame = Frame::where('id', $frame_id)->first();
+        //    $finder = View::getFinder();
+        //    $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name;
 
-            $file_list = scandir($plugin_view_path);
-            foreach ($file_list as $file) {
-                if (in_array($file, array('.', '..', 'default'))) {
-                    continue;
+        //    $file_list = scandir($plugin_view_path);
+        //    foreach ($file_list as $file) {
+        //        if (in_array($file, array('.', '..', 'default'))) {
+        //            continue;
+        //        }
+        //        if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name . '/' . $file))) {
+        //            $this->target_frame_templates[] = $file;
+        //        }
+        //    }
+        //}
+    }
+
+    /**
+     *  404 判定
+     */
+    protected function checkPageNotFound($request, $router)
+    {
+        // Log::debug($router->current()->getName());
+        // Log::debug($router->current()->getActionMethod());
+
+        // 特別なパス（管理画面の最初など）は404 扱いにしない。
+        if (array_key_exists($request->path(), config('connect.CC_SPECIAL_PATH_MANAGE'))) {
+            // 対象外の処理なので、戻る
+            return;
+        }
+
+        // 特別なパス（特殊な一般画面など）は404 扱いにしない。
+        if (array_key_exists($request->path(), config('connect.CC_SPECIAL_PATH'))) {
+            // 対象外の処理なので、戻る
+            return;
+        }
+
+        // 対象となる処理は、画面を持つルートの処理とする。
+        $route_name = $router->current()->getName();
+        if ($route_name == 'get_plugin'    ||
+            $route_name == 'post_plugin'   ||
+            $route_name == 'post_redirect' ||
+            $route_name == 'get_redirect'  ||
+            $route_name == 'get_all'       ||
+            $route_name == 'post_all') {
+            // 対象として次へ
+        }
+        else {
+            // 対象外の処理なので、戻る
+            return;
+        }
+
+        // ページがない場合
+        if ($this->page === false || empty($this->page) || empty($this->page->id)) {
+            // 404 対象として次へ
+        }
+        else {
+            // ページありとして、戻る
+            return;
+        }
+
+        // 表示中の他言語を取得（設定がない場合は空が返る）
+        $view_language = $this->getPageLanguage4url($this->getLanguages());
+
+        // 設定されている404 ページを探す。
+        $configs = $this->getConfigs('array');
+        if (array_key_exists('page_permanent_link_404', $configs)) {
+            $this->page = $this->getPage($configs['page_permanent_link_404']->value, $view_language);
+            if (empty($this->page)) {
+                // 再度、デフォルト言語で調査
+                $this->page = $this->getPage($configs['page_permanent_link_404']->value);
+                if (empty($this->page)) {
+                    // Connect-CMS のデフォルト404 ページ
+                    abort(404, 'ページがありません。');
                 }
-                if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name . '/' . $file))) {
-                    $this->target_frame_templates[] = $file;
+                else {
+                    $this->page_id = $this->page->id;
+                    $this->http_status_code = 404;
                 }
             }
+            else {
+                $this->page_id = $this->page->id;
+                $this->http_status_code = 404;
+            }
         }
+        else {
+            abort(404, 'ページがありません。');
+        }
+        return;
+    }
+
+    /**
+     *  403 判定
+     *  403 にする場合は、戻り先で処理の無効化を行う可能性もあるので、HTTPステータスコードを返す。
+     */
+    protected function checkPageForbidden()
+    {
+        // モデレータ以上ならOK
+        $user = Auth::user();//ログインしたユーザーを取得
+        if (isset($user) && $user->can('role_article')) {
+            return;
+        }
+
+        // 対象となる処理は、画面を持つルートの処理とする。
+        $route_name = $this->router->current()->getName();
+        if ($route_name == 'get_plugin'    ||
+            $route_name == 'post_plugin'   ||
+            $route_name == 'post_redirect' ||
+            $route_name == 'get_redirect'  ||
+            $route_name == 'get_all'       ||
+            $route_name == 'post_all') {
+            // 対象として次へ
+        }
+        else {
+            // 対象外の処理なので、戻る
+            return;
+        }
+
+        // 参照できない場合
+        $check_ip_only = true;
+        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
+            // 403 対象として次へ
+        }
+        else {
+            // 参照可能
+            return;
+        }
+
+        // 表示中の他言語を取得（設定がない場合は空が返る）
+        $view_language = $this->getPageLanguage4url($this->getLanguages());
+
+        // 設定されている403 ページを探す。
+        $configs = $this->getConfigs('array');
+        if (array_key_exists('page_permanent_link_403', $configs)) {
+            $this->page = $this->getPage($configs['page_permanent_link_403']->value, $view_language);
+            if (empty($this->page)) {
+                // 再度、デフォルト言語で調査
+                $this->page = $this->getPage($configs['page_permanent_link_403']->value);
+                if (empty($this->page)) {
+                    // Connect-CMS のデフォルト403 ページ
+                    abort(403, 'ページ参照権限がありません。');
+                }
+                else {
+                    $this->page_id = $this->page->id;
+                    $this->http_status_code = 403;
+                }
+            }
+            else {
+                $this->page_id = $this->page->id;
+                $this->http_status_code = 403;
+            }
+        }
+        else {
+            abort(403, 'ページ参照権限がありません。');
+        }
+        return $this->http_status_code;
     }
 
     /**
@@ -479,7 +607,7 @@ class ConnectController extends Controller
         // URL パスでPage テーブル検索
         $page = Page::where('permanent_link', '=', $current_permanent_link)->first();
         if (empty($page)) {
-            return view('404_not_found');
+            return false;
         }
         return $page;
     }
@@ -516,6 +644,10 @@ class ConnectController extends Controller
 
         // ハンバーガーメニューで使用するページの一覧
         $args["page_list"] = $this->getPageList();
+
+        if ($this->http_status_code) {
+            return response()->view($blade_path, $args, $this->http_status_code);
+        }
 
         return view($blade_path, $args);
     }

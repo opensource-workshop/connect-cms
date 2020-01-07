@@ -42,49 +42,49 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
 //Route::post('/test/{id?}', 'Core\TestController@invokePost');
 
 // コアのget処理(Frame関係)
-Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore');
+Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore')->name('get_core');
 
 // コアのpost処理(Frame関係)
-Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\ClassController@invokePostCore');
+Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\ClassController@invokePostCore')->name('post_core');
 
 // コアのAPI処理
-Route::get('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi');
+Route::get('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi')->name('get_api');
 
 // 管理画面getアクション：管理画面用のクラスをURL をもとに、ClassController で呼び出す。
-Route::get('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokeGetManage');
+Route::get('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokeGetManage')->name('get_manage');
 
 // 管理画面postアクション
-Route::post('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokePostManage');
+Route::post('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokePostManage')->name('post_manage');
 
 // 一般プラグインの表示系アクション
-Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost');
+Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost')->name('get_plugin');
 
 // 一般プラグインの更新系アクション（画面がある場合）
-Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost');
+Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost')->name('post_plugin');
 
 // 一般プラグインの更新系アクション（リダイレクトする場合）
-Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect');
-Route::get('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect');
+Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect')->name('post_redirect');
+Route::get('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect')->name('get_redirect');
 
 // 一般プラグインのダウンロード系アクション
-Route::post('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload');
+Route::post('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload')->name('post_download');
 
 // CSS の取得アクション
-Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss');
+Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss')->name('get_css');
 
 // アップロードファイルの保存アクション
-Route::post('/upload', 'Core\UploadController@postFile');
+Route::post('/upload', 'Core\UploadController@postFile')->name('post_upload');
 
 // アップロードファイルの取得アクション
-Route::get('/file/{id?}', 'Core\UploadController@getFile');
+Route::get('/file/{id?}', 'Core\UploadController@getFile')->name('get_file');
 
 // 言語切り替えアクション
-Route::get('/language/{language_or_1stdir?}/{link_or_after2nd?}', 'Core\DefaultController@changeLanguage')->where('link_or_after2nd', '.*');
+Route::get('/language/{language_or_1stdir?}/{link_or_after2nd?}', 'Core\DefaultController@changeLanguage')->where('link_or_after2nd', '.*')->name('get_language');
 
 // 基本のアクション
 // コアの画面処理や各プラグインの処理はここから呼び出す。
-Route::get( '{all}', 'Core\DefaultController')->where('all', '.*');
-Route::post('{all}', 'Core\DefaultController')->where('all', '.*');
+Route::get( '{all}', 'Core\DefaultController')->where('all', '.*')->name('get_all');
+Route::post('{all}', 'Core\DefaultController')->where('all', '.*')->name('post_all');
 
 // ログの書式
 //Log::debug($request->action);

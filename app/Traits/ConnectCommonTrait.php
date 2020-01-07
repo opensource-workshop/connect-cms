@@ -603,6 +603,31 @@ trait ConnectCommonTrait
     }
 
     /**
+     *  ページの言語の取得
+     */
+    public function getPageLanguage4url($languages)
+    {
+        // ページの言語
+        $page_language = null;
+
+        $current_url = url()->current();
+        $base_url = url('/');
+        $current_permanent_link = str_replace( $base_url, '', $current_url);
+
+        // 今、表示しているページの言語を判定
+        $page_paths = explode('/', $current_permanent_link);
+        if ($page_paths && is_array($page_paths) && array_key_exists(1, $page_paths)) {
+            foreach($languages as $language) {
+                if (trim($language->additional1, '/') == $page_paths[1]) {
+                    $page_language = $page_paths[1];
+                    break;
+                }
+            }
+        }
+        return $page_language;
+    }
+
+    /**
      *  現在の言語設定のトップページ
      */
     public function getTopPage($page, $languages = null)
@@ -709,8 +734,17 @@ trait ConnectCommonTrait
     /**
      *  URLからページIDを取得
      */
-    public function getPage($permanent_link)
+    public function getPage($permanent_link, $language = null)
     {
+        // 多言語指定されたとき
+        if (!empty($language)) {
+            $page = Page::where('permanent_link', '/' . $language . $permanent_link)->first();
+            if (!empty($page)) {
+                return $page;
+            }
+        }
+        // 多言語指定されていない or 多言語側にページがない場合は全体から探す。
+
         // ページ確認
         return Page::where('permanent_link', $permanent_link)->first();
     }
@@ -722,6 +756,20 @@ trait ConnectCommonTrait
     {
         $url_parts = explode('/', $request->path());
         if ($url_parts[0] == 'manage') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  page 変数がページオブジェクトか判定
+     */
+    public function isPageObj($page)
+    {
+        if (empty($page)) {
+            return false;
+        }
+        if (get_class($page) == 'App\Models\Common\Page') {
             return true;
         }
         return false;

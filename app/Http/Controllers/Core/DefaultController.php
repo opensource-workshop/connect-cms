@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
@@ -40,6 +41,9 @@ class DefaultController extends ConnectController
      */
     public function __invoke(Request $request)
     {
+        // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
+        $this->checkPageForbidden();
+
         // 特別なPath が指定された場合は処理を行い、return する。
         if ($this->isSpecialPath($request->path())) {
             return $this->callSpecialPath($request->path(), $request);
@@ -236,6 +240,9 @@ class DefaultController extends ConnectController
     public function invokePost(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
 
+        // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
+        $this->checkPageForbidden();
+
 // 親クラスで取得しているはず
 /*
         if (empty($page_id)) {
@@ -334,6 +341,14 @@ class DefaultController extends ConnectController
      */
     public function invokePostRedirect(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
+        // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
+        $http_status_code = $this->checkPageForbidden();
+
+        // 403 なら、不正な実行を疑い、actoin を無効化する。
+        if ($http_status_code == 403) {
+            $action = null;
+        }
+
         // プラグイン毎に動的にnew する。
         // Todo：プラグインを動的にインスタンス生成すること。
 

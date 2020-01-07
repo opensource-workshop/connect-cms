@@ -81,6 +81,7 @@
                 <th nowrap>背景色</th>
                 <th nowrap>ヘッダー</th>
                 <th nowrap>レイアウト</th>
+                <th nowrap>IP</th>
             </thead>
             <tbody>
                 @foreach($pages as $page_item)
@@ -142,6 +143,9 @@
                     </td>
                     <td class="table-text p-1">
                         <div>{{ $page_item->layout }}</div>
+                    </td>
+                    <td class="table-text p-1">
+                        <div>@if($page_item->ip_address)<i class="fas fa-exclamation-circle"></i>@endif</div>
                     </td>
                 </tr>
                 @endforeach
