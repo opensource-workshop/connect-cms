@@ -23,10 +23,10 @@ body {
     border: none;
 }
 
-.frame_setting_menu .navbar-light .navbar-nav .nav-link {
+.frame-setting-menu .navbar-light .navbar-nav .nav-link {
     color: #007bff;
 }
-.frame_setting_menu .navbar-light .navbar-nav .active {
+.frame-setting-menu .navbar-light .navbar-nav .active {
     color: #909090;
     /* padding: 0.5rem; */
     border-bottom: 2px solid #b64c4c;
