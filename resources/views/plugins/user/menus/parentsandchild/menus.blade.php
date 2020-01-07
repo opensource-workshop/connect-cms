@@ -32,7 +32,7 @@
             @if($page_obj->parent_id == null)
                 {{-- 非表示のページは対象外 --}}
                 @if ($page_obj->display_flag == 1)
-                        <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item">{{$page_obj->page_name}}</a>
+                        <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item">{{$page_obj->page_name}}</a>
                         @if (isset($page_obj->children))
                             {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
                             @include('plugins.user.menus.parentsandchild.menu_children',['children' => $page_obj->children])

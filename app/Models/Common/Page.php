@@ -19,7 +19,7 @@ class Page extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'ip_address'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'ip_address', 'othersite_url', 'othersite_url_target'];
 
     use NodeTrait;
     use ConnectCommonTrait;
@@ -225,5 +225,28 @@ class Page extends Model
             }
         }
         return true;
+    }
+
+    /**
+     *  ページのURLを返す
+     *
+     */
+    public function getUrl()
+    {
+        return url("/") . $this->permanent_link;
+    }
+
+    /**
+     *  ページのリンク用target タグを返す
+     *
+     */
+    public function getUrlTargetTag()
+    {
+        $return_str = '';
+        if ($this->othersite_url_target) {
+            $return_str .= 'target="_blank"';
+        }
+
+        return $return_str;
     }
 }

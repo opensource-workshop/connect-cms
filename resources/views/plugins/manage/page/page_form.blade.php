@@ -91,6 +91,27 @@
                     <small class="form-text text-muted">カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
                 </div>
             </div>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">外部サイトURL</label>
+                <div class="col-md-9">
+                    <input type="text" name="othersite_url" id="othersite_url" value="{{$page->othersite_url}}" class="form-control">
+                    <small class="form-text text-muted">メニューから直接開く外部サイトURL</small>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">外部サイトTarget</label>
+                <div class="col-md-9">
+
+                    <div class="custom-control custom-checkbox mt-2">
+                        @if(isset($page->othersite_url_target) && $page->othersite_url_target == 1)
+                            <input name="othersite_url_target" value="1" type="checkbox" class="custom-control-input" id="othersite_url_target" checked="checked">
+                        @else
+                            <input name="othersite_url_target" value="1" type="checkbox" class="custom-control-input" id="othersite_url_target">
+                        @endif
+                        <label class="custom-control-label" for="othersite_url_target">新しいウィンドウまたはタブで開く</label>
+                    </div>
+                </div>
+            </div>
 
             <!-- Add or Update Page Button -->
             <div class="form-group">

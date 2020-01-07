@@ -10,9 +10,9 @@
         @if ($page_obj->display_flag == 1)
 
             @if ($page_obj->id == $page_id)
-            <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item active">
+            <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item active">
             @else
-            <a href="{{ url("$page_obj->permanent_link") }}" class="list-group-item">
+            <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item">
             @endif
 
             {{-- 各ページの深さをもとにインデントの表現 --}}

@@ -28,9 +28,9 @@
 @if ($children->isView())
 
     @if ($children->id == $page_id)
-    <a href="{{ url("$children->permanent_link") }}" class="list-group-item active">
+    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item active">
     @else
-    <a href="{{ url("$children->permanent_link") }}" class="list-group-item">
+    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item">
     @endif
 
         {{-- 各ページの深さをもとにインデントの表現 --}}

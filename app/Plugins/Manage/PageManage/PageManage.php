@@ -128,14 +128,16 @@ class PageManage extends ManagePluginBase
 
         // ページデータの登録
         $page = new Page;
-        $page->page_name         = $request->page_name;
-        $page->permanent_link    = $request->permanent_link;
-        $page->background_color  = $request->background_color;
-        $page->header_color      = $request->header_color;
-        $page->theme             = $request->theme;
-        $page->layout            = $request->layout;
-        $page->base_display_flag = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
-        $page->ip_address        = $request->ip_address;
+        $page->page_name            = $request->page_name;
+        $page->permanent_link       = $request->permanent_link;
+        $page->background_color     = $request->background_color;
+        $page->header_color         = $request->header_color;
+        $page->theme                = $request->theme;
+        $page->layout               = $request->layout;
+        $page->base_display_flag    = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
+        $page->ip_address           = $request->ip_address;
+        $page->othersite_url        = $request->othersite_url;
+        $page->othersite_url_target = (isset($request->othersite_url_target) ? $request->othersite_url_target : 0);
         $page->save();
 
         // ページ管理画面に戻る
@@ -156,14 +158,16 @@ class PageManage extends ManagePluginBase
         // ページデータの更新
         Page::where('id', $page_id)
             ->update([
-                'page_name'         => $request->page_name,
-                'permanent_link'    => $request->permanent_link,
-                'background_color'  => $request->background_color,
-                'header_color'      => $request->header_color,
-                'theme'             => $request->theme,
-                'layout'            => $request->layout,
-                'base_display_flag' => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
-                'ip_address'        => $request->ip_address,
+                'page_name'            => $request->page_name,
+                'permanent_link'       => $request->permanent_link,
+                'background_color'     => $request->background_color,
+                'header_color'         => $request->header_color,
+                'theme'                => $request->theme,
+                'layout'               => $request->layout,
+                'base_display_flag'    => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
+                'ip_address'           => $request->ip_address,
+                'othersite_url'        => $request->othersite_url,
+                'othersite_url_target' => (isset($request->othersite_url_target) ? $request->othersite_url_target : 0),
         ]);
 
         // ページ管理画面に戻る

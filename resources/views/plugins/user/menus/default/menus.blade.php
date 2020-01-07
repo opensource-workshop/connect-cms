@@ -11,7 +11,7 @@
 @section("plugin_contents_$frame->id")
 @if ($pages)
 
-    <div class="list-group" style="margin-bottom: 0;">
+    <div class="list-group mb-0">
     @foreach($pages as $page)
 
         {{-- 子供のページがある場合 --}}
@@ -22,9 +22,9 @@
 
                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                 @if ($page->id == $page_id)
-                <a href="{{ url("$page->permanent_link") }}" class="list-group-item active">
+                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item active">
                 @else
-                <a href="{{ url("$page->permanent_link") }}" class="list-group-item">
+                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item">
                 @endif
                     {{-- 各ページの深さをもとにインデントの表現 --}}
                     @for ($i = 0; $i < $page->depth; $i++)
@@ -46,9 +46,9 @@
 
                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                 @if ($page->id == $page_id)
-                <a href="{{ url("$page->permanent_link") }}" class="list-group-item active">
+                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item active">
                 @else
-                <a href="{{ url("$page->permanent_link") }}" class="list-group-item">
+                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item">
                 @endif
                     {{-- 各ページの深さをもとにインデントの表現 --}}
                     @for ($i = 0; $i < $page->depth; $i++)

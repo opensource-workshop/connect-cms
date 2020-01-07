@@ -10,7 +10,7 @@
     @foreach($children as $page_obj)
         @if ($page_obj->display_flag == 1)
             <li>
-                <a href="{{ url("$page_obj->permanent_link") }}">{{$page_obj->page_name}}</a>
+                <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>{{$page_obj->page_name}}</a>
                 @if (isset($page_obj->children))
                     @include('plugins.user.menus.footersitemap.menu_children',['children' => $page_obj->children])
                 @endif

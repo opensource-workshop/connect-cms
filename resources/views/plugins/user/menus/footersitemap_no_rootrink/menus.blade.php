@@ -20,7 +20,7 @@
                     <a href="#" onclick="return false" class="cc-cursor-text">{{$page_obj->page_name}}</a>
                     @if (isset($page_obj->children))
                         {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
-                        @include('plugins.user.menus.footersitemap.menu_children',['children' => $page_obj->children])
+                        @include('plugins.user.menus.footersitemap_no_rootrink.menu_children',['children' => $page_obj->children])
                     @endif
                 </li>
             @endif

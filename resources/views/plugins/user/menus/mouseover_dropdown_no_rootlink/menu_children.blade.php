@@ -9,7 +9,7 @@
 
 @if ($children->display_flag == 1)
 
-    <a class="dropdown-item" href="{{ url("$children->permanent_link") }}">
+    <a class="dropdown-item" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
 
         {{-- 各ページの深さをもとにインデントの表現 --}}
         @for ($i = 0; $i < $children->depth; $i++)

@@ -36,7 +36,7 @@
                         <div class="dropdown-menu">
 
                             {{-- 自分へのリンク（ドロップダウンでリンクができなくなるため） --}}
-                            <a class="dropdown-item" href="{{ url("$page_obj->permanent_link") }}">{{$page_obj->page_name}}</a>
+                            <a class="dropdown-item" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>{{$page_obj->page_name}}</a>
                             <div class="dropdown-divider"></div>
 
                             {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
@@ -48,9 +48,9 @@
                 @else
                     <li class="nav-item">
                     @if ($page_obj->id == $page_id)
-                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
-                        <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                             {{$page_obj->page_name}}
                         </a>
@@ -61,16 +61,16 @@
                 @if (count($page_obj->children) > 0)
                     <li class="nav-item dropdown">
                     @if ($page_obj->id == $page_id)
-                        <a class="nav-link dropdown-toggle active" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link dropdown-toggle active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
-                        <a class="nav-link dropdown-toggle" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link dropdown-toggle" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                 @else
                     <li class="nav-item">
                     @if ($page_obj->id == $page_id)
-                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
-                        <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                 @endif
                         {{$page_obj->page_name}}

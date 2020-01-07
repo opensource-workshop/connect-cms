@@ -16,7 +16,7 @@
                 @if ($loop->last)
                     <li class="breadcrumb-item">{{$ancestor->page_name}}</li>
                 @else
-                    <li class="breadcrumb-item"><a href="{{$ancestor->permanent_link}}">{{$ancestor->page_name}}</a></li>
+                    <li class="breadcrumb-item"><a href="{{$ancestor->getUrl()}}" {!!$ancestor->getUrlTargetTag()!!}>{{$ancestor->page_name}}</a></li>
                 @endif
             @endforeach
         </ol>

@@ -17,9 +17,9 @@
     {{-- 非表示のページは対象外 --}}
     @if ($page->display_flag == 1)
         @if ($page->id == $page_id)
-            <li role="presentation" class="nav-item"><a href="{{ url("$page->permanent_link") }}" class="nav-link active">{{$page->page_name}}</a></li>
+            <li role="presentation" class="nav-item"><a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="nav-link active">{{$page->page_name}}</a></li>
         @else
-            <li role="presentation" class="nav-item"><a href="{{ url("$page->permanent_link") }}" class="nav-link">{{$page->page_name}}</a></li>
+            <li role="presentation" class="nav-item"><a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="nav-link">{{$page->page_name}}</a></li>
         @endif
     @endif
 @endforeach

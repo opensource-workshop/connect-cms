@@ -35,18 +35,18 @@
 
                             {{-- 自分へのリンク（ドロップダウンでリンクができなくなるため） --}}
 {{--
-                            <a class="dropdown-item" href="{{ url("$page_obj->permanent_link") }}">{{$page_obj->page_name}}</a>
+                            <a class="dropdown-item" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>{{$page_obj->page_name}}</a>
                             <div class="dropdown-divider"></div>
 --}}
                             {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
                             @foreach($page_obj->children as $children)
-                                @include('plugins.user.menus.mouseover_dropdown.menu_children',['children' => $children])
+                                @include('plugins.user.menus.mouseover_dropdown_no_rootlink.menu_children',['children' => $children])
                             @endforeach
                         </div>
                     </li>
                 @else
                     <li class="nav-item active">
-                        <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                             {{$page_obj->page_name}}
                         </a>
                     </li>
