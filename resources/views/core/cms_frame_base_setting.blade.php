@@ -7,7 +7,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
-<div class="frame_setting">
+<div class="frame_setting_menu">
     <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
         <span class="{{$frame->getNavbarBrand()}}">設定メニュー</span>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
@@ -26,9 +26,9 @@
 </div>
 
 @if ($frame->frame_design == 'none')
-<div class="card-body" style="padding: 0; clear: both;">
+<div class="card-body frame_setting_body" style="padding: 0; clear: both;">
 @else
-<div class="card-body">
+<div class="card-body frame_setting_body">
 @endif
 
     @yield("plugin_setting_$frame->id")
