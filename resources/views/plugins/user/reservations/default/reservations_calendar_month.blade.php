@@ -19,21 +19,25 @@
     <div class="row">
         <div class="col-12 clearfix">
             <div class="float-left">
-                {{-- 前月ボタン --}}
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subMonth()->format('Ym') }}#frame-{{$frame->id}}">
-                    <i class="fas fa-angle-left fa-3x"></i>
-                </a>
-                {{-- 当月表示 --}}
-                <span class="h2">{{ $carbon_target_date->year }}年 {{ $carbon_target_date->month }}月</span>
-                {{-- 翌月ボタン --}}
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addMonth()->format('Ym') }}#frame-{{$frame->id}}">
-                    <i class="fas fa-angle-right fa-3x"></i>
-                </a>
+                <div class="list-group list-group-horizontal">
+                    {{-- 前月ボタン --}}
+                    <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subMonth()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
+                        <i class="fas fa-angle-double-left fa-2x"></i>
+                    </a>
+                    {{-- 当月表示 --}}
+                    <a class="list-group-item h2 d-flex align-items-center">
+                        {{ $carbon_target_date->year }}年 {{ $carbon_target_date->month }}月
+                    </a>
+                    {{-- 翌月ボタン --}}
+                    <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addMonth()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
+                        <i class="fas fa-angle-double-right fa-2x"></i>
+                    </a>
+                </div>
             </div>
             <div class="float-right">
                 {{-- 今月へボタン --}}
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}">
-                    <button type="button" class="btn btn-primary rounded-pill">今月へ<br>({{ Carbon::today()->format('Y年m月') }})</button>
+                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
+                    今月へ<br>({{ Carbon::today()->format('Y年m月') }})
                 </a>
             </div>
         </div>
