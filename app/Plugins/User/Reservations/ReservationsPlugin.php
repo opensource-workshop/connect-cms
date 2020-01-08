@@ -68,7 +68,6 @@ class ReservationsPlugin extends UserPluginBase
             'updateSelectSequence', 
             'editBooking', 
             'saveBooking', 
-            'deleteColumn',
         ];
         return $functions;
     }
@@ -1264,20 +1263,6 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面を呼び出す
         return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
-    }
-
-    /**
-     * 予約項目の削除
-     */
-    public function deleteColumn($request, $page_id, $frame_id)
-    {
-        // 予約項目の削除処理
-        $column = reservations_columns::query()->where('reservations_id', $request->reservations_id)->where('id', $request->column_id)->first();
-        $column->delete();
-        $message = '予約項目【 '. $column->column_name .' 】を削除しました。';
-
-        // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, null);
     }
 
     /**

@@ -36,17 +36,6 @@
         form_columns.submit();
     }
 
-    {{-- 予約項目の削除のsubmit JavaScript --}}
-    function submit_delete_column(column_id) {
-        if(confirm('予約項目を削除してよろしいですか？')){
-            form_columns.action = "/plugin/reservations/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-            form_columns.column_id.value = column_id;
-            form_columns.submit();
-        }else{
-            return false;
-        }
-    }
-
     {{-- 予約項目の表示順操作のsubmit JavaScript --}}
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
         form_columns.action = "/plugin/reservations/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
