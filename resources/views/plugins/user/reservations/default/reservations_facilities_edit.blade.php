@@ -67,11 +67,9 @@
         <input type="hidden" name="display_sequence_operation" value="">
         <input type="hidden" name="return_frame_action" value="edit">
         {{-- メッセージエリア --}}
-        @if ($message)
-            <div class="alert alert-info mt-2">
-                <i class="fas fa-exclamation-circle"></i>{{ $message }}
-            </div>
-        @endif
+        <div class="alert alert-info mt-2">
+            <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '予約対象の施設を追加・変更します。' }}
+        </div>
 
         <div class="table-responsive">
 
