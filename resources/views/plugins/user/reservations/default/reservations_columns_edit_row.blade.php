@@ -44,6 +44,10 @@
         {{-- 必須 --}}
         <input type="checkbox" name="required_{{ $column->id }}" value="1" @if ($column->required == Required::on) checked="checked" @endif>
     </td>
+    {{-- 非表示フラグ --}}
+    <td style="vertical-align: middle;">
+        <input name="hide_flag_{{ $column->id }}" id="hide_flag_{{ $column->id }}" value="1" type="checkbox" @if (isset($column->hide_flag)) checked="checked" @endif>
+    </td>
     {{-- 選択肢の設定ボタン --}}
     <td class="text-center">
         @if ($column->column_type == ReservationColumnType::radio)
@@ -67,15 +71,6 @@
             onclick="javascript:submit_update_column({{ $column->id }});"
         >
             <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
-        </button>
-    </td>
-    {{-- 削除ボタン --}}
-    <td style="vertical-align: middle;">
-        <button 
-            class="btn btn-danger cc-font-90 text-nowrap" 
-            onclick="javascript:return submit_delete_column({{ $column->id }});"
-        >
-            <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
         </button>
     </td>
 </tr>

@@ -207,7 +207,7 @@ class ReservationsPlugin extends UserPluginBase
         ;
 
         // バリデーション用の配列を生成（可変項目）
-        $required_columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->where('required', \Required::on)->get();
+        $required_columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->where('required', \Required::on)->get();
         foreach($required_columns as $column){
             $key_str = 'columns_value.' . $column->id;
             $validationArray[$key_str] = ['required'];
@@ -284,7 +284,7 @@ class ReservationsPlugin extends UserPluginBase
         $facility = reservations_facilities::query()->where('id', $request->facility_id)->first();
 
         // 予約項目データ
-        $columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->orderBy('display_sequence')->get();
+        $columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
 
         // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
         $selects = reservations_columns_selects::query()->where('reservations_id', $request->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
@@ -326,7 +326,7 @@ class ReservationsPlugin extends UserPluginBase
         $facilities = reservations_facilities::query()->where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
 
         // 予約項目データ
-        $columns = reservations_columns::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();
+        $columns = reservations_columns::query()->where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
 
         // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
         $selects = reservations_columns_selects::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
@@ -972,6 +972,7 @@ class ReservationsPlugin extends UserPluginBase
                 'reservations_columns.column_type',
                 'reservations_columns.column_name',
                 'reservations_columns.required',
+                'reservations_columns.hide_flag',
                 'reservations_columns.display_sequence',
                 DB::raw('count(reservations_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(reservations_columns_selects.select_name order by reservations_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
@@ -987,6 +988,7 @@ class ReservationsPlugin extends UserPluginBase
                 'reservations_columns.column_type',
                 'reservations_columns.column_name',
                 'reservations_columns.required',
+                'reservations_columns.hide_flag',
                 'reservations_columns.display_sequence',
             )
             ->orderby('reservations_columns.display_sequence')
@@ -1223,12 +1225,14 @@ class ReservationsPlugin extends UserPluginBase
         $str_column_name = "column_name_"."$request->column_id";
         $str_column_type = "column_type_"."$request->column_id";
         $str_required = "required_"."$request->column_id";
+        $str_hide_flag = "hide_flag_"."$request->column_id";
 
         // エラーチェック用に値を詰める
         $request->merge([
             "column_name" => $request->$str_column_name,
             "column_type" => $request->$str_column_type,
             "required" => $request->$str_required,
+            "hide_flag" => $request->$str_hide_flag,
         ]);
 
         // エラーチェック
@@ -1254,6 +1258,7 @@ class ReservationsPlugin extends UserPluginBase
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
         $column->required = $request->required ? \Required::on : \Required::off;
+        $column->hide_flag = $request->hide_flag;
         $column->save();
         $message = '予約項目【 '. $request->column_name .' 】を更新しました。';
 
