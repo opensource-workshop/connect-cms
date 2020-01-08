@@ -377,7 +377,9 @@ class ReservationsPlugin extends UserPluginBase
          * calendars['施設名'] : 施設データ
          * calendars['calendar_cells'] : カレンダーセルデータの連想配列
          *   calendar_cell['date'] : Carbon日付データ
-         *   calendar_cell['bookings'] : 予約データの配列
+         *   calendar_cell['bookings'] : 予約データの連想配列
+         *     calendar_cell['booking_header'] : 予約データの親テーブル（reservations_inputs）情報
+         *     calendar_cell['booking_details'] : 予約データの子テーブル（reservations_inputs_columns）情報
          */
         $calendars = null;
         // 施設毎に予約情報を付加したカレンダーデータを生成
