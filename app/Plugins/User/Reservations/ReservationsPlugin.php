@@ -328,6 +328,9 @@ class ReservationsPlugin extends UserPluginBase
         // 予約項目データ
         $columns = reservations_columns::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();
 
+        // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
+        $selects = reservations_columns_selects::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+
         // 予約項目データの内、選択肢が指定されていた場合に選択肢データが登録済みかチェック
         $isExistSelect = true;
         $filtered_columns = $columns->filter(function($column) {
@@ -335,8 +338,10 @@ class ReservationsPlugin extends UserPluginBase
             return $column->column_type == \ReservationColumnType::radio;
         });
         foreach($filtered_columns as $column){
-            $selects = reservations_columns_selects::query()->where('reservations_id', $reservations_frame->reservations_id)->where('column_id', $column->id)->get();
-            if($selects->isEmpty()){
+            $filtered_selects = $selects->filter(function($select) use($column) {
+                return $column->id == $select->column_id;
+            });
+            if($filtered_selects->isEmpty()){
                 $isExistSelect = false;
             }
         }
