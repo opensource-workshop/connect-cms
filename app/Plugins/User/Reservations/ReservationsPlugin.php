@@ -337,11 +337,14 @@ class ReservationsPlugin extends UserPluginBase
             }
         }
 
-        // ---------------------------
+        // 対象日時未設定（初期表示）の場合は現在日時をセット
         if(empty($carbon_target_date)){
             $carbon_target_date = Carbon::today();
         }
 
+        /**
+         * カレンダー表示データの生成
+         */
         $dates = [];
         $search_start_date = null;
         $search_end_date = null;
@@ -381,7 +384,7 @@ class ReservationsPlugin extends UserPluginBase
             }
         }
 
-        // 予約データ検索条件
+        // 予約データを検索する為の条件生成
         $search_start_date = $dates[0];
         $search_end_date = end($dates)->endOfDay();
 
@@ -396,7 +399,7 @@ class ReservationsPlugin extends UserPluginBase
          */
         $calendars = null;
         // 施設毎に予約情報を付加したカレンダーデータを生成
-        // $time_start = microtime(true);
+        // $time_start = microtime(true); //debug用
         foreach($facilities as $facility){
 
             $calendar = null;
@@ -441,9 +444,9 @@ class ReservationsPlugin extends UserPluginBase
             $calendars[$facility->facility_name] = $calendar;
         }
 
-        // $time = microtime(true) - $time_start;
-        // dd($time . '秒');
-        // dd($calendars);
+        // $time = microtime(true) - $time_start;  //debug用
+        // dd($time . '秒');  //debug用
+        // dd($calendars);  //debug用
         return $this->view(
             'reservations_calendar_common', [
             'view_format' => $view_format,
