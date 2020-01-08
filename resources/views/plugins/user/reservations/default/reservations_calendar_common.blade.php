@@ -15,7 +15,9 @@
         // 施設データが存在すること
         !$facilities->isEmpty() &&
         // 予約項目データが存在すること
-        !$columns->isEmpty()
+        !$columns->isEmpty() &&
+        // 予約項目で選択肢が指定されていた場合に選択肢データが存在すること
+        $isExistSelect
         )
 
         {{-- 予約詳細モーダルウィンドウ --}}
@@ -119,6 +121,10 @@
                 {{-- 予約項目データがない場合 --}}
                 @if ($columns->isEmpty())
                     <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目データを作成してください。</p>
+                @endif
+                {{-- 予約項目で選択肢のデータ型が指定されていた時に選択肢データがない場合 --}}
+                @if (!$isExistSelect)
+                    <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目の選択肢データを作成してください。</p>
                 @endif
             </div>
         </div>

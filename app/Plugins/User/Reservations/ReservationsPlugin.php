@@ -324,6 +324,19 @@ class ReservationsPlugin extends UserPluginBase
         // 予約項目データ
         $columns = reservations_columns::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();
 
+        // 予約項目データの内、選択肢が指定されていた場合に選択肢データが登録済みかチェック
+        $isExistSelect = true;
+        $filtered_columns = $columns->filter(function($column) {
+            // 選択肢が設定可能なデータ型のみ抽出
+            return $column->column_type == \ReservationColumnType::radio;
+        });
+        foreach($filtered_columns as $column){
+            $selects = reservations_columns_selects::query()->where('reservations_id', $reservations_frame->reservations_id)->where('column_id', $column->id)->get();
+            if($selects->isEmpty()){
+                $isExistSelect = false;
+            }
+        }
+
         // ---------------------------
         if(empty($carbon_target_date)){
             $carbon_target_date = Carbon::today();
@@ -438,6 +451,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations' => $reservations,
             'facilities' => $facilities,
             'columns' => $columns,
+            'isExistSelect' => $isExistSelect,
             'calendars' => $calendars,
             'message' => $message,
         ]);
