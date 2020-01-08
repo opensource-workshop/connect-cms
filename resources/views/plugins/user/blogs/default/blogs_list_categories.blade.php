@@ -13,6 +13,16 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+{{-- エラーメッセージ --}}
+@if (empty($blog_frame) || empty($blog_frame->blogs_id))
+    <div class="alert alert-warning" style="margin-top: 10px;">
+        <i class="fas fa-exclamation-circle"></i>
+        設定画面から、使用するFAQを選択するか、作成してください。
+    </div>
+@else
+{{-- 最後にendif --}}
+
 {{-- エラーメッセージ --}}
 @if ($errors)
     <div class="card border-danger">
@@ -90,6 +100,7 @@
                 <th nowrap><i class="fas fa-trash-alt"></i></th>
             </tr>
 
+        @if ($plugin_categories)
         @foreach($plugin_categories as $category)
             <tr>
                 <td nowrap>
@@ -121,6 +132,7 @@
                 </td>
             </tr>
         @endforeach
+        @endif
         @if ($create_flag)
             <tr>
                 <td nowrap>
@@ -191,4 +203,5 @@
 <form action="" method="POST" name="form_delete_category" class="">
     {{ csrf_field() }}
 </form>
+@endif
 @endsection

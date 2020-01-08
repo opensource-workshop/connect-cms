@@ -894,9 +894,8 @@ class BlogsPlugin extends UserPluginBase
         Buckets::where('id', $blogs->bucket_id)->update(['bucket_name' => $request->blog_name]);
 
         // ブログ名で、Buckets名も更新する
-Log::debug($blogs->bucket_id);
-Log::debug($request->blog_name);
-
+        //Log::debug($blogs->bucket_id);
+        //Log::debug($request->blog_name);
 
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = false;
@@ -968,11 +967,14 @@ Log::debug($request->blog_name);
                                         ->orderBy('display_sequence', 'asc')
                                         ->get();
         // カテゴリ（このブログ）
-        $plugin_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
-                                       ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
-                                       ->where('plugin_id', $blog_frame->blogs_id)
-                                       ->orderBy('display_sequence', 'asc')
-                                       ->get();
+        $plugin_categories = null;
+        if ($blog_frame->blogs_id) {
+            $plugin_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
+                                           ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                                           ->where('plugin_id', $blog_frame->blogs_id)
+                                           ->orderBy('display_sequence', 'asc')
+                                           ->get();
+        }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
