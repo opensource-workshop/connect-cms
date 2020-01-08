@@ -95,7 +95,7 @@
                         <th nowrap>表示順の操作</th>
                         <th nowrap>項目名</th>
                         <th nowrap>型</th>
-                        <th nowrap>必須</th>
+                        <th nowrap>必須 <span class="fas fa-info-circle" data-toggle="tooltip" title="必須項目として指定します。"></th>
                         <th nowrap>選択肢の設定</th>
                         <th nowrap>更新</th>
                         <th nowrap>削除</th>
