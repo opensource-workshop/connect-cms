@@ -110,7 +110,28 @@
                                                 data-reservation_time="{{ substr($booking['booking_header']->start_datetime, 11, 5) . ' ~ ' . substr($booking['booking_header']->end_datetime, 11, 5) }}" 
                                                 {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
                                                 @foreach ($booking['booking_details'] as $bookingDetail)
-                                                    data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
+                                                    @switch($bookingDetail->column_type)
+                                                        {{-- テキスト項目 --}}
+                                                        @case(ReservationColumnType::txt)
+
+                                                            data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
+                                                            @break
+
+                                                        {{-- ラジオボタン項目 --}}
+                                                        @case(ReservationColumnType::radio)
+
+                                                            {{-- ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする --}}
+                                                            @php
+                                                                $filtered_select = $selects->first(function($select) use($bookingDetail) {
+                                                                    return $select->reservations_id == $bookingDetail->reservations_id && $select->column_id == $bookingDetail->id && $select->id == $bookingDetail->value;
+                                                                });
+                                                                $filtered_select->toArray();
+                                                            @endphp
+                                                                data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select->select_name }}"
+                                                                @break
+                                                        @default
+                                                            
+                                                    @endswitch
                                                 @endforeach
                                             >
                                                 {{-- 表示用の予約時間 --}}

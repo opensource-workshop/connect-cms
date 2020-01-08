@@ -434,9 +434,12 @@ class ReservationsPlugin extends UserPluginBase
                         $booking = null;
                         $booking['booking_header'] = $bookingHeader;
                         $booking['booking_details'] = reservations_inputs_columns::query()
-                            ->where('reservations_id', $reservations->id)
+                            ->leftjoin('reservations_columns',function($join) {
+                                $join->on('reservations_inputs_columns.column_id','=','reservations_columns.id');
+                            })
+                            ->where('reservations_inputs_columns.reservations_id', $reservations->id)
                             ->where('inputs_id', $bookingHeader->id)
-                            ->orderBy('column_id')
+                            ->orderBy('reservations_inputs_columns.column_id')
                             ->get();
 
                         $calendar_cell['bookings'][] = $booking;
@@ -463,6 +466,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations' => $reservations,
             'facilities' => $facilities,
             'columns' => $columns,
+            'selects' => $selects,
             'isExistSelect' => $isExistSelect,
             'calendars' => $calendars,
             'message' => $message,

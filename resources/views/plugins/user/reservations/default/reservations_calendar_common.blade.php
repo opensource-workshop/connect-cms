@@ -46,7 +46,7 @@
                             {{-- 予約可変項目 --}}
                             @foreach ($columns as $column)
                                 <label for="column_{{ $column->id }}" class="col-form-label">{{ $column->column_name }}</label>
-                                <input type="{{ $column->column_type }}" class="form-control" id="column_{{ $column->id }}" readonly>
+                                <input type="text" class="form-control" id="column_{{ $column->id }}" readonly>
                             @endforeach
                         </div>
                     </form>
