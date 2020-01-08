@@ -19,7 +19,7 @@ class Page extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'ip_address', 'othersite_url', 'othersite_url_target'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class'];
 
     use NodeTrait;
     use ConnectCommonTrait;
@@ -182,6 +182,15 @@ class Page extends Model
 
         //Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
         return $tree;
+    }
+
+    /**
+     *  クラス名取得
+     *
+     */
+    public function getClass()
+    {
+        return $this->class;
     }
 
     /**

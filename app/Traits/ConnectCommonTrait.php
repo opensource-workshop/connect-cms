@@ -579,7 +579,8 @@ trait ConnectCommonTrait
             else {
                 $active_class = '';
             }
-            $sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n";
+            //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
+            $sp_menu .= '<li class="' . $level1_page['parent']->getClass() . '">' . "\n";
             $sp_menu .= '<p' . $active_class . '>' . $level1_page['parent']->page_name . '</p>' . "\n";
             if (array_key_exists('child', $level1_page)) {
                 $sp_menu .= '<ul' . $active_class . '>' . "\n";

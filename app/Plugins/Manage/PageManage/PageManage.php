@@ -138,6 +138,7 @@ class PageManage extends ManagePluginBase
         $page->ip_address           = $request->ip_address;
         $page->othersite_url        = $request->othersite_url;
         $page->othersite_url_target = (isset($request->othersite_url_target) ? $request->othersite_url_target : 0);
+        $page->class                = $request->class;
         $page->save();
 
         // ページ管理画面に戻る
@@ -168,6 +169,7 @@ class PageManage extends ManagePluginBase
                 'ip_address'           => $request->ip_address,
                 'othersite_url'        => $request->othersite_url,
                 'othersite_url_target' => (isset($request->othersite_url_target) ? $request->othersite_url_target : 0),
+                'class'                => $request->class,
         ]);
 
         // ページ管理画面に戻る
