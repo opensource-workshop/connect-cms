@@ -72,15 +72,29 @@
             </div>
             <div class="form-group row">
                 <label for="permanent_link" class="col-md-3 col-form-label text-md-right">メニュー表示</label>
-                <div class="col-md-9">
+                <div class="col-md-9 d-sm-flex align-items-center">
 
-                    <div class="custom-control custom-checkbox mt-2">
+                    <div class="custom-control custom-checkbox">
                         @if(isset($page->base_display_flag) && $page->base_display_flag == 1)
                             <input name="base_display_flag" value="1" type="checkbox" class="custom-control-input" id="base_display_flag" checked="checked">
                         @else
                             <input name="base_display_flag" value="1" type="checkbox" class="custom-control-input" id="base_display_flag">
                         @endif
                         <label class="custom-control-label" for="base_display_flag">表示する</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ウィンドウ</label>
+                <div class="col-md-9 d-sm-flex align-items-center">
+
+                    <div class="custom-control custom-checkbox">
+                        @if(isset($page->othersite_url_target) && $page->othersite_url_target == 1)
+                            <input name="othersite_url_target" value="1" type="checkbox" class="custom-control-input" id="othersite_url_target" checked="checked">
+                        @else
+                            <input name="othersite_url_target" value="1" type="checkbox" class="custom-control-input" id="othersite_url_target">
+                        @endif
+                        <label class="custom-control-label" for="othersite_url_target">新しいウィンドウまたはタブで開く</label>
                     </div>
                 </div>
             </div>
@@ -99,17 +113,10 @@
                 </div>
             </div>
             <div class="form-group row">
-                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">外部サイトTarget</label>
+                <label for="permanent_link" class="col-md-3 col-form-label text-md-right">クラス名</label>
                 <div class="col-md-9">
-
-                    <div class="custom-control custom-checkbox mt-2">
-                        @if(isset($page->othersite_url_target) && $page->othersite_url_target == 1)
-                            <input name="othersite_url_target" value="1" type="checkbox" class="custom-control-input" id="othersite_url_target" checked="checked">
-                        @else
-                            <input name="othersite_url_target" value="1" type="checkbox" class="custom-control-input" id="othersite_url_target">
-                        @endif
-                        <label class="custom-control-label" for="othersite_url_target">新しいウィンドウまたはタブで開く</label>
-                    </div>
+                    <input type="text" name="class" id="class" value="{{$page->class}}" class="form-control">
+                    <small class="form-text text-muted">デザインで使用するためのclass名</small>
                 </div>
             </div>
 

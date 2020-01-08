@@ -78,10 +78,18 @@
                 <th nowrap>ページ名</th>
                 <th nowrap class="pl-1"><i class="far fa-eye"></i></th>
                 <th nowrap>固定リンク</th>
+{{--
                 <th nowrap>背景色</th>
                 <th nowrap>ヘッダー</th>
                 <th nowrap>レイアウト</th>
+--}}
+                <th nowrap>背</th>
+                <th nowrap>ヘ</th>
+                <th nowrap>レ</th>
+                <th nowrap>新</th>
                 <th nowrap>IP</th>
+                <th nowrap>外</th>
+                <th nowrap>ク</th>
             </thead>
             <tbody>
                 @foreach($pages as $page_item)
@@ -136,16 +144,27 @@
                         <div><a href="{{url($page_item->permanent_link)}}">{{ $page_item->permanent_link }}</a></div>
                     </td>
                     <td class="table-text p-1">
-                        <div>{{ $page_item->background_color }}</div>
+                        {{-- <div>{{ $page_item->background_color }}</div> --}}
+                        <div>@if($page_item->background_color)<i class="fas fa-exclamation-circle"></i>@endif</div>
                     </td>
                     <td class="table-text p-1">
-                        <div>{{ $page_item->header_color }}</div>
+                        {{-- <div>{{ $page_item->header_color }}</div> --}}
+                        <div>@if($page_item->header_color)<i class="fas fa-exclamation-circle"></i>@endif</div>
                     </td>
                     <td class="table-text p-1">
                         <div>{{ $page_item->layout }}</div>
                     </td>
                     <td class="table-text p-1">
+                        <div>@if($page_item->othersite_url_target)<i class="fas fa-check"></i>@endif</div>
+                    </td>
+                    <td class="table-text p-1">
                         <div>@if($page_item->ip_address)<i class="fas fa-exclamation-circle"></i>@endif</div>
+                    </td>
+                    <td class="table-text p-1">
+                        <div>@if($page_item->othersite_url)<i class="fas fa-exclamation-circle"></i>@endif</div>
+                    </td>
+                    <td class="table-text p-1">
+                        <div>{{$page_item->class}}</div>
                     </td>
                 </tr>
                 @endforeach
