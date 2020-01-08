@@ -286,6 +286,9 @@ class ReservationsPlugin extends UserPluginBase
         // 予約項目データ
         $columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->orderBy('display_sequence')->get();
 
+        // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
+        $selects = reservations_columns_selects::query()->where('reservations_id', $request->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+
         $target_date = new Carbon($target_ymd);
         return $this->view(
             'reservations_calendar_edit_booking', [
@@ -293,6 +296,7 @@ class ReservationsPlugin extends UserPluginBase
                 'reservation' => $reservation,
                 'facility' => $facility,
                 'columns' => $columns,
+                'selects' => $selects,
                 'errors'      => $errors,
             ]
         );
