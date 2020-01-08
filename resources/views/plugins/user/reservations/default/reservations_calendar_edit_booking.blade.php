@@ -151,7 +151,7 @@
                     @php
                         $filtered_selects = $selects->filter(function($select) use($column) {
                             return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
-                        });
+                        })->sortBy('display_sequence');
                     @endphp
 
                     {{-- 項目に紐づく選択肢データを表示 --}}
