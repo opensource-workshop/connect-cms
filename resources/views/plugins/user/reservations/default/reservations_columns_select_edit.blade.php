@@ -43,7 +43,11 @@
         form_selects.submit();
     }
 
-
+    // ツールチップ
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 </script>
 
 <form action="" id="form_selects" name="form_selects" method="POST" class="form-horizontal">
@@ -74,6 +78,7 @@
                     @if (count($selects) > 0)
                         <th nowrap>表示順の操作</th>
                         <th nowrap>選択肢名</th>
+                        <th nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした選択肢を非表示にします。"></th>
                         <th nowrap>更新</th>
                     @endif
                 </tr>
@@ -100,6 +105,11 @@
                             <input class="form-control" type="text" name="select_name_{{ $select->id }}" value="{{ old('select_name_'.$select->id, $select->select_name)}}">
                         </td>
 
+                        {{-- 非表示フラグ --}}
+                        <td style="vertical-align: middle;">
+                            <input name="hide_flag_{{ $select->id }}" id="hide_flag_{{ $select->id }}" value="1" type="checkbox" @if (isset($select->hide_flag)) checked="checked" @endif>
+                        </td>
+    
                         {{-- 更新ボタン --}}
                         <td style="vertical-align: middle;">
                             <button 

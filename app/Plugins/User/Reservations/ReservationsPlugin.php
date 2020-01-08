@@ -286,7 +286,7 @@ class ReservationsPlugin extends UserPluginBase
         $columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
 
         // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-        $selects = reservations_columns_selects::query()->where('reservations_id', $request->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+        $selects = reservations_columns_selects::query()->where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
 
         $target_date = new Carbon($target_ymd);
         return $this->view(
@@ -1183,10 +1183,12 @@ class ReservationsPlugin extends UserPluginBase
     {
         // 明細行から更新対象を抽出する為のnameを取得
         $str_select_name = "select_name_"."$request->select_id";
+        $str_hide_flag = "hide_flag_"."$request->select_id";
 
         // エラーチェック用に値を詰める
         $request->merge([
             "select_name" => $request->$str_select_name,
+            "hide_flag" => $request->$str_hide_flag,
         ]);
 
         // エラーチェック
@@ -1208,6 +1210,7 @@ class ReservationsPlugin extends UserPluginBase
         // 予約項目の更新処理
         $select = reservations_columns_selects::query()->where('id', $request->select_id)->first();
         $select->select_name = $request->select_name;
+        $select->hide_flag = $request->hide_flag;
         $select->save();
         $message = '選択肢【 '. $request->select_name .' 】を更新しました。';
 
