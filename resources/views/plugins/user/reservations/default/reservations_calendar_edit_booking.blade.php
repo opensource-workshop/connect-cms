@@ -126,7 +126,7 @@
     @foreach ($columns as $column)
         <div class="form-group">
             {{-- 項目名称 --}}
-            <label class="col-sm-2 control-label">{{$column->column_name}} 
+            <label class="control-label">{{$column->column_name}} 
                 @if ($column->required)
                     {{-- 必須マーク --}}
                     <label class="badge badge-danger">必須</label> 
@@ -134,18 +134,37 @@
             </label>
             {{-- 項目本体 --}}
             @switch($column->column_type)
+
+                {{-- テキスト項目 --}}
                 @case(ReservationColumnType::txt)
 
-                    {{-- テキスト項目 --}}
                     <input name="columns_value[{{$column->id}}]" class="form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id)}}">
                         @if ($errors && $errors->has("columns_value.$column->id"))
                             <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("columns_value.$column->id")}}</div>
                         @endif
                     @break
 
+                {{-- ラジオボタン項目 --}}
                 @case(ReservationColumnType::radio)
                     
+                    {{-- 項目に紐づく選択肢データを抽出 --}}
+                    @php
+                        $filtered_selects = $selects->filter(function($select) use($column) {
+                            return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
+                        });
+                    @endphp
+
+                    {{-- 項目に紐づく選択肢データを表示 --}}
+                    <div class="container-fluid">
+                        @foreach ($filtered_selects as $select)
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input name="columns_value[{{ $column->id }}]" id="columns_value[{{ $column->id . '_' . $select->id }}]" class="custom-control-input" type="{{ $column->column_type }}" value="{{ $select->id }}" {{ $loop->first || old('columns_value.'.$column->id) == $select->id ? 'checked' : null }} >
+                                <label class="custom-control-label" for="columns_value[{{ $column->id . '_' . $select->id }}]">{{ $select->select_name }}</label>
+                            </div>
+                        @endforeach
+                    </div>
                     @break
+
                 @default
                     
             @endswitch

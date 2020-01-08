@@ -286,6 +286,9 @@ class ReservationsPlugin extends UserPluginBase
         // 予約項目データ
         $columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->orderBy('display_sequence')->get();
 
+        // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
+        $selects = reservations_columns_selects::query()->where('reservations_id', $request->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+
         $target_date = new Carbon($target_ymd);
         return $this->view(
             'reservations_calendar_edit_booking', [
@@ -293,6 +296,7 @@ class ReservationsPlugin extends UserPluginBase
                 'reservation' => $reservation,
                 'facility' => $facility,
                 'columns' => $columns,
+                'selects' => $selects,
                 'errors'      => $errors,
             ]
         );
@@ -324,11 +328,32 @@ class ReservationsPlugin extends UserPluginBase
         // 予約項目データ
         $columns = reservations_columns::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('display_sequence')->get();
 
-        // ---------------------------
+        // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
+        $selects = reservations_columns_selects::query()->where('reservations_id', $reservations_frame->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+
+        // 予約項目データの内、選択肢が指定されていた場合に選択肢データが登録済みかチェック
+        $isExistSelect = true;
+        $filtered_columns = $columns->filter(function($column) {
+            // 選択肢が設定可能なデータ型のみ抽出
+            return $column->column_type == \ReservationColumnType::radio;
+        });
+        foreach($filtered_columns as $column){
+            $filtered_selects = $selects->filter(function($select) use($column) {
+                return $column->id == $select->column_id;
+            });
+            if($filtered_selects->isEmpty()){
+                $isExistSelect = false;
+            }
+        }
+
+        // 対象日時未設定（初期表示）の場合は現在日時をセット
         if(empty($carbon_target_date)){
             $carbon_target_date = Carbon::today();
         }
 
+        /**
+         * カレンダー表示データの生成
+         */
         $dates = [];
         $search_start_date = null;
         $search_end_date = null;
@@ -368,7 +393,7 @@ class ReservationsPlugin extends UserPluginBase
             }
         }
 
-        // 予約データ検索条件
+        // 予約データを検索する為の条件生成
         $search_start_date = $dates[0];
         $search_end_date = end($dates)->endOfDay();
 
@@ -377,11 +402,13 @@ class ReservationsPlugin extends UserPluginBase
          * calendars['施設名'] : 施設データ
          * calendars['calendar_cells'] : カレンダーセルデータの連想配列
          *   calendar_cell['date'] : Carbon日付データ
-         *   calendar_cell['bookings'] : 予約データの配列
+         *   calendar_cell['bookings'] : 予約データの連想配列
+         *     calendar_cell['booking_header'] : 予約データの親テーブル（reservations_inputs）情報
+         *     calendar_cell['booking_details'] : 予約データの子テーブル（reservations_inputs_columns）情報
          */
         $calendars = null;
         // 施設毎に予約情報を付加したカレンダーデータを生成
-        // $time_start = microtime(true);
+        // $time_start = microtime(true); //debug用
         foreach($facilities as $facility){
 
             $calendar = null;
@@ -407,9 +434,12 @@ class ReservationsPlugin extends UserPluginBase
                         $booking = null;
                         $booking['booking_header'] = $bookingHeader;
                         $booking['booking_details'] = reservations_inputs_columns::query()
-                            ->where('reservations_id', $reservations->id)
+                            ->leftjoin('reservations_columns',function($join) {
+                                $join->on('reservations_inputs_columns.column_id','=','reservations_columns.id');
+                            })
+                            ->where('reservations_inputs_columns.reservations_id', $reservations->id)
                             ->where('inputs_id', $bookingHeader->id)
-                            ->orderBy('column_id')
+                            ->orderBy('reservations_inputs_columns.column_id')
                             ->get();
 
                         $calendar_cell['bookings'][] = $booking;
@@ -426,9 +456,9 @@ class ReservationsPlugin extends UserPluginBase
             $calendars[$facility->facility_name] = $calendar;
         }
 
-        // $time = microtime(true) - $time_start;
-        // dd($time . '秒');
-        // dd($calendars);
+        // $time = microtime(true) - $time_start;  //debug用
+        // dd($time . '秒');  //debug用
+        // dd($calendars);  //debug用
         return $this->view(
             'reservations_calendar_common', [
             'view_format' => $view_format,
@@ -436,6 +466,8 @@ class ReservationsPlugin extends UserPluginBase
             'reservations' => $reservations,
             'facilities' => $facilities,
             'columns' => $columns,
+            'selects' => $selects,
+            'isExistSelect' => $isExistSelect,
             'calendars' => $calendars,
             'message' => $message,
         ]);

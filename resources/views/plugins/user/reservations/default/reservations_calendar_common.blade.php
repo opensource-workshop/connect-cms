@@ -15,7 +15,9 @@
         // 施設データが存在すること
         !$facilities->isEmpty() &&
         // 予約項目データが存在すること
-        !$columns->isEmpty()
+        !$columns->isEmpty() &&
+        // 予約項目で選択肢が指定されていた場合に選択肢データが存在すること
+        $isExistSelect
         )
 
         {{-- 予約詳細モーダルウィンドウ --}}
@@ -34,20 +36,24 @@
                     {{-- メインコンテンツ --}}
                     <div class="modal-body">
                         <form>
-                            <div class="form-group">
                             {{-- 利用日 --}}
-                            <label for="reservation_date" class="col-form-label">利用日</label>
-                            <input type="text" class="form-control" id="reservation_date" readonly>
+                            <div class="form-group row">
+                                <label for="reservation_date" class="col-3 col-form-label">利用日</label>
+                                <input type="text" class="col-9 form-control-plaintext" id="reservation_date" readonly>
+                            </div>
                             {{-- 利用時間 --}}
-                            <label for="reservation_time" class="col-form-label">利用時間</label>
-                            <input type="text" class="form-control" id="reservation_time" readonly>
+                            <div class="form-group row">
+                                <label for="reservation_time" class="col-3 col-form-label">利用時間</label>
+                                <input type="text" class="col-9 form-control-plaintext" id="reservation_time" readonly>
+                            </div>
                             {{-- 予約可変項目 --}}
                             @foreach ($columns as $column)
-                                <label for="column_{{ $column->id }}" class="col-form-label">{{ $column->column_name }}</label>
-                                <input type="{{ $column->column_type }}" class="form-control" id="column_{{ $column->id }}" readonly>
+                            <div class="form-group row">
+                                <label for="column_{{ $column->id }}" class="col-3 col-form-label">{{ $column->column_name }}</label>
+                                <input type="text" class="col-9 form-control-plaintext" id="column_{{ $column->id }}" readonly>
+                            </div>
                             @endforeach
-                        </div>
-                    </form>
+                        </form>
                     </div>
 
                     {{-- フッター --}}
@@ -119,6 +125,10 @@
                 {{-- 予約項目データがない場合 --}}
                 @if ($columns->isEmpty())
                     <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目データを作成してください。</p>
+                @endif
+                {{-- 予約項目で選択肢のデータ型が指定されていた時に選択肢データがない場合 --}}
+                @if (!$isExistSelect)
+                    <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目の選択肢データを作成してください。</p>
                 @endif
             </div>
         </div>
