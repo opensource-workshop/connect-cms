@@ -7,7 +7,9 @@
  * @category メニュープラグイン
 --}}
 
+{{-- 設定画面では、全てのページを表示して、選択可能とする。
 @if ($children->display_flag == 1)
+--}}
 
     <div class="custom-control custom-checkbox">
         <input type="checkbox" class="custom-control-input" id="page_select{{$children->id}}" name="page_select[]" value="{{$children->id}}" @if ($menu && $menu->onPage($children->id)) checked @endif />
@@ -28,5 +30,7 @@
 {{--
         @include('plugins.user.menus.default.menus_select_children',['children' => $children->children[0]])
 --}}
+{{--
     @endif
+--}}
 @endif

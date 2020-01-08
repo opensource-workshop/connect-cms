@@ -146,7 +146,7 @@ class Page extends Model
 
         // クロージャでページ配列を再帰ループし、深さを追加する。
         // テンプレートでは深さをもとにデザイン処理する。
-        $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse, $where_page_ids) {
+        $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
             $depth = $depth+1;
             foreach ($pages as $page) {
                 $page->depth = $depth;
@@ -155,7 +155,14 @@ class Page extends Model
                 // 表示フラグを親を引き継いで保持
                 // 表示フラグはローカル変数に保持して、子要素の再帰呼び出し処理へ引き継ぐ
                 // (自身のページの表示/非表示はこの後、メニュー設定で変更されるため)
-                $page_display_flag = ($page->base_display_flag == 0 || $display_flag == 0 ? 0 : 1);
+
+                // メニュー設定を見ない or メニュー設定でページ設定の条件を使用するとなっている場合は、基本表示フラグを反映
+                if (empty($menu) || $menu->select_flag === 0) {
+                    $page_display_flag = ($page->base_display_flag == 0 || $display_flag == 0 ? 0 : 1);
+                }
+                else {
+                    $page_display_flag = ($display_flag == 0 ? 0 : 1);
+                }
                 $page->display_flag = $page_display_flag;
 
                 // メニュー設定からの表示/非表示の反映(メニューが選択表示＆選択されていなかったら display_flag に 0 を)
