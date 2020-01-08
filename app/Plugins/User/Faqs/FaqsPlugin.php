@@ -981,6 +981,7 @@ class FaqsPlugin extends UserPluginBase
         if ($faq_frame->faqs_id) {
             $plugin_categories = Categories::select('categories.*', 'faqs_categories.id as faqs_categories_id', 'faqs_categories.categories_id', 'faqs_categories.view_flag')
                                            ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
+                                           ->where('target', 'faqs')
                                            ->where('plugin_id', $faq_frame->faqs_id)
                                            ->orderBy('display_sequence', 'asc')
                                            ->get();

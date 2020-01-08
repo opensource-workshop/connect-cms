@@ -971,6 +971,7 @@ class BlogsPlugin extends UserPluginBase
         if ($blog_frame->blogs_id) {
             $plugin_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
                                            ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                                           ->where('target', 'blogs')
                                            ->where('plugin_id', $blog_frame->blogs_id)
                                            ->orderBy('display_sequence', 'asc')
                                            ->get();
