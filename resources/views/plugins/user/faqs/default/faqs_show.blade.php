@@ -9,28 +9,12 @@
 
 @section("plugin_contents_$frame->id")
 {{-- タイトル --}}
-<h2>{{$post->post_title}}</h2>
-
-{{-- 投稿日時 --}}
-<b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
-
-{{-- 重要記事 --}}
-@if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
-
-{{-- カテゴリ --}}
-@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+<h2>{!!$post->post_title!!}</h2>
 
 <article>
 
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
-
-    {{-- タグ --}}
-    @isset($post_tags)
-        @foreach($post_tags as $tags)
-            <span class="badge badge-secondary">{{$tags->tags}}</span>
-        @endforeach
-    @endisset
 
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
     <div class="row">
@@ -61,6 +45,23 @@
         </div>
     </div>
 </article>
+
+
+{{-- 投稿日時 --}}
+{{$post->posted_at->format('Y年n月j日 H時i分')}}
+
+{{-- 重要記事 --}}
+@if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
+
+{{-- カテゴリ --}}
+@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+
+{{-- タグ --}}
+@isset($post_tags)
+    @foreach($post_tags as $tags)
+        <span class="badge badge-secondary">{{$tags->tags}}</span>
+    @endforeach
+@endisset
 
 {{-- 一覧へ戻る --}}
 <div class="row">

@@ -19,6 +19,8 @@ if ($frame_id == $frame->frame_id) {
     $frame_classname = $frame_classname . '-' . $action;
 }
 
+$plugin_name = ' plugin-' . $frame->plugin_name . ' ';
+
 $default_hidden = '';
 if ($frame->default_hidden && (!Auth::check() || !Auth::user()->can('role_arrangement'))) {
     $default_hidden = ' d-none';
@@ -31,9 +33,9 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
 
 @endphp
 @if($frame->frame_col==0)
-<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$default_hidden}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$default_hidden}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
 @else
-<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
 @endif
 
 @if ($frame->browser_width == '100%')
