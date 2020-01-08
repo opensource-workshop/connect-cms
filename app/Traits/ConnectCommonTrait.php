@@ -565,10 +565,24 @@ trait ConnectCommonTrait
         $sp_menu .= '<nav class="sp_menu">' . "\n";
         $sp_menu .= '<ul>' . "\n";
         foreach ($level1_pages as $level1_page) {
+
+            // コンストラクタで全体作業用として取得したページを使用する想定
+            // そのため、ページの基本の表示設定を反映する。
+            if ($level1_page['parent']->base_display_flag == 0) {
+                continue;
+            }
+
+            // ルーツのチェック
+            if ($level1_page['parent']->isAncestorOf($this->page)) {
+                $active_class = ' class="active"';
+            }
+            else {
+                $active_class = '';
+            }
             $sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n";
-            $sp_menu .= '<p>' . $level1_page['parent']->page_name . '</p>' . "\n";
+            $sp_menu .= '<p' . $active_class . '>' . $level1_page['parent']->page_name . '</p>' . "\n";
             if (array_key_exists('child', $level1_page)) {
-                $sp_menu .= '<ul>' . "\n";
+                $sp_menu .= '<ul' . $active_class . '>' . "\n";
                 foreach ($level1_page['child'] as $child) {
                     $sp_menu .= '<li><a href="' . $child->getLinkUrl() . '">' . $child->page_name . '</a></li>' . "\n";
                 }

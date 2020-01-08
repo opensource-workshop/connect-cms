@@ -24,7 +24,7 @@
             @else
                 <input type="radio" value="0" id="select_on" name="select_flag" class="custom-control-input">
             @endif
-            <label class="custom-control-label" for="select_on">全て</label>
+            <label class="custom-control-label" for="select_on">ページ管理の条件</label>
         </div>
         <div class="custom-control custom-radio custom-control-inline">
             @if(isset($menu) && $menu->select_flag == 1)
@@ -43,8 +43,10 @@
     @foreach($pages as $page_record)
 
         {{-- 非表示のページは対象外 --}}
-        @if ($page_record->display_flag == 1)
 
+        {{-- 設定画面では、全てのページを表示して、選択可能とする。
+        @if ($page_record->display_flag == 1)
+        --}}
             {{-- 子供のページがある場合 --}}
             @if (count($page_record->children) > 0)
 
@@ -80,7 +82,9 @@
                     </label>
                 </div>
             @endif
+        {{--
         @endif
+        --}}
     @endforeach
     </div>
     </div>
