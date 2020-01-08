@@ -82,8 +82,8 @@
                     @if (count($facilities) > 0)
                         <th nowrap>表示順の操作</th>
                         <th nowrap>施設名</th>
-                        <th nowrap>更新</th>
                         <th nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした施設を施設予約カレンダーから非表示にします。"></th>
+                        <th nowrap>更新</th>
                     @endif
                 </tr>
             </thead>

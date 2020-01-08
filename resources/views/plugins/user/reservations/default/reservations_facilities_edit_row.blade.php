@@ -22,12 +22,12 @@
     <td>
         <input class="form-control" type="text" name="facility_name_{{ $facility->id }}" value="{{$facility->facility_name}}">
     </td>
-    {{-- 更新ボタン --}}
-    <td style="vertical-align: middle;">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_update_facility({{ $facility->id }});"><i class="fas fa-save"></i> <span class="d-sm-none">更新</span></button>
-    </td>
     {{-- 非表示フラグ --}}
     <td style="vertical-align: middle;">
         <input name="hide_flag_{{ $facility->id }}" id="hide_flag_{{ $facility->id }}" value="1" type="checkbox" @if (isset($facility->hide_flag)) checked="checked" @endif>
+    </td>
+    {{-- 更新ボタン --}}
+    <td style="vertical-align: middle;">
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_update_facility({{ $facility->id }});"><i class="fas fa-save"></i> <span class="d-sm-none">更新</span></button>
     </td>
 </tr>
