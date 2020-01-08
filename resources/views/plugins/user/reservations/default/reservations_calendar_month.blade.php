@@ -106,7 +106,7 @@
                                             <a href="#bookingDetailModal" role="button" data-toggle="modal" 
                                                 {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
                                                 data-facility_name="{{ $facility_name }}" 
-                                                data-reservation_date="{{ $booking['booking_header']->start_datetime->format('Y年n月j日') }}" 
+                                                data-reservation_date="{{ $booking['booking_header']->start_datetime->format('Y年n月j日') . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')' }}" 
                                                 data-reservation_time="{{ substr($booking['booking_header']->start_datetime, 11, 5) . ' ~ ' . substr($booking['booking_header']->end_datetime, 11, 5) }}" 
                                                 {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
                                                 @foreach ($booking['booking_details'] as $bookingDetail)

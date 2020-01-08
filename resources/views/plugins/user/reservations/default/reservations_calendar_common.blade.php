@@ -36,20 +36,24 @@
                     {{-- メインコンテンツ --}}
                     <div class="modal-body">
                         <form>
-                            <div class="form-group">
                             {{-- 利用日 --}}
-                            <label for="reservation_date" class="col-form-label">利用日</label>
-                            <input type="text" class="form-control" id="reservation_date" readonly>
+                            <div class="form-group row">
+                                <label for="reservation_date" class="col-3 col-form-label">利用日</label>
+                                <input type="text" class="col-9 form-control-plaintext" id="reservation_date" readonly>
+                            </div>
                             {{-- 利用時間 --}}
-                            <label for="reservation_time" class="col-form-label">利用時間</label>
-                            <input type="text" class="form-control" id="reservation_time" readonly>
+                            <div class="form-group row">
+                                <label for="reservation_time" class="col-3 col-form-label">利用時間</label>
+                                <input type="text" class="col-9 form-control-plaintext" id="reservation_time" readonly>
+                            </div>
                             {{-- 予約可変項目 --}}
                             @foreach ($columns as $column)
-                                <label for="column_{{ $column->id }}" class="col-form-label">{{ $column->column_name }}</label>
-                                <input type="text" class="form-control" id="column_{{ $column->id }}" readonly>
+                            <div class="form-group row">
+                                <label for="column_{{ $column->id }}" class="col-3 col-form-label">{{ $column->column_name }}</label>
+                                <input type="text" class="col-9 form-control-plaintext" id="column_{{ $column->id }}" readonly>
+                            </div>
                             @endforeach
-                        </div>
-                    </form>
+                        </form>
                     </div>
 
                     {{-- フッター --}}
