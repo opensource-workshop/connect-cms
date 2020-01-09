@@ -12,6 +12,7 @@ use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\User\Searchs\Searchs;
 use App\Models\User\Searchs\SearchsDual;
@@ -108,6 +109,10 @@ class SearchsPlugin extends UserPluginBase
         // 検索キーワードを取得
         $search_keyword = $request->search_keyword;
 
+        // 現在の言語を取得
+        $page_ids = Page::getPageIds($this->page);
+//print_r($page_ids);
+
         // ターゲットプラグインをループ
         $target_plugins = explode(',', $searchs_frame->target_plugins);
 
@@ -125,7 +130,7 @@ class SearchsPlugin extends UserPluginBase
 
             // 各プラグインのgetSearchArgs() 関数を呼び出し。
             $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
-            list($union_sqls[$target_plugin], $sql_binds[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getSearchArgs($search_keyword);
+            list($union_sqls[$target_plugin], $sql_binds[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getSearchArgs($search_keyword, $page_ids);
         }
 
         // ベースの新着DUAL（ダミーテーブル）

@@ -516,6 +516,25 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  言語の取得
+     */
+    protected function getLanguages()
+    {
+        $configs = $this->configs;
+        if (empty($configs)) {
+            return null;
+        }
+
+        $languages = array();
+        foreach($configs as $config) {
+            if ($config->category == 'language') {
+                $languages[$config->additional1] = $config;
+            }
+        }
+        return $languages;
+    }
+
+    /**
      * 権限チェック
      * roll_or_auth : 権限 or 役割
      */

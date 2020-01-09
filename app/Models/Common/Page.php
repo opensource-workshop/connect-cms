@@ -28,6 +28,20 @@ class Page extends Model
      *  言語設定があれば、特定の言語ページのみに絞る
      *
      */
+    public static function getPageIds($current_page_obj = null, $menu = null, $setting_mode = false)
+    {
+        $page_ids = array();
+        $pages = self::getPages($current_page_obj, $menu, $setting_mode);
+        foreach($pages as $page) {
+            $page_ids[] = $page->id; 
+        }
+        return $page_ids;
+    }
+
+    /**
+     *  言語設定があれば、特定の言語ページのみに絞る
+     *
+     */
     public static function getPages($current_page_obj = null, $menu = null, $setting_mode = false)
     {
         // current_page_obj がない場合は、ページデータを全て取得（管理画面など）

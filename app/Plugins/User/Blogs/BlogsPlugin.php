@@ -339,7 +339,7 @@ class BlogsPlugin extends UserPluginBase
     /**
      *  検索用メソッド
      */
-    public static function getSearchArgs($search_keyword)
+    public static function getSearchArgs($search_keyword, $page_ids = null)
     {
         $return[] = DB::table('blogs_posts')
                       ->select('blogs_posts.id              as post_id',
@@ -358,7 +358,8 @@ class BlogsPlugin extends UserPluginBase
                       ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
                       ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
-                      ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
+                      ->join('pages', 'pages.id', '=', 'frames.page_id')
+                      ->whereIn('pages.id', $page_ids)
                       ->where('status', '?')
                       ->where(function($plugin_query) use($search_keyword) {
                           $plugin_query->where('blogs_posts.post_title', 'like', '?')
@@ -367,7 +368,7 @@ class BlogsPlugin extends UserPluginBase
                       ->whereNull('blogs_posts.deleted_at');
 
 
-        $bind = array(0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
         $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
