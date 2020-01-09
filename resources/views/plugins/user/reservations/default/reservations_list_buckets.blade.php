@@ -16,6 +16,11 @@
 <form action="/plugin/reservations/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
+    {{-- メッセージエリア --}}
+    <div class="alert alert-info mt-2">
+        <i class="fas fa-exclamation-circle"></i> フレームに表示するコンテンツを変更します。
+    </div>
+
     <div class="form-group">
         <table class="table table-hover" style="margin-bottom: 0;">
         <thead class="thead-light">
