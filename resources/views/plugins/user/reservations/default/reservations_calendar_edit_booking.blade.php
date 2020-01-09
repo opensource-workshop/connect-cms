@@ -77,41 +77,41 @@
     });
 </script>
 
-<form action="" name="form_save_booking{{$frame_id}}" method="POST" class="form-horizontal">
+<form action="" name="form_save_booking{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="reservations_id" value="{{ $reservation->id }}">
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
 
     {{-- コンテンツ名 --}}
-    <div class="form-group">
-        <label class="col-3 control-label">コンテンツ名</label>
-        <input type="text" class="form-control col-md-3" value="{{ $reservation->reservation_name }}" name="reservation_name" readonly>
+    <div class="row">
+        <div class="col-md-3">コンテンツ名：</div>
+        <div class="col-md-9">{{ $reservation->reservation_name }}</div>
     </div>
     {{-- 施設名 --}}
-    <div class="form-group">
-        <label class="col-3 control-label">施設名</label>
-        <input type="text" class="form-control col-md-3" value="{{ $facility->facility_name }}" name="facility_name" readonly>
+    <div class="row">
+        <div class="col-md-3">施設名：</div>
+        <div class="col-md-9">{{ $facility->facility_name }}</div>
     </div>
     {{-- 予約日 --}}
-    <div class="form-group">
-        <label class="col-3 control-label">予約日</label>
-        <input type="text" class="form-control col-md-3" value="{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}" name="reservation_date" readonly>
+    <div class="row">
+        <div class="col-md-3">予約日：</div>
+        <div class="col-md-9">{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}</div>
     </div>
-    {{-- 予約開始時間 --}}
-    <div class="form-group">
-        <label class="col-3 control-label">開始時間</label>
-        <div class="col-3 input-group date" id="start_datetime" data-target-input="nearest">
+    {{-- 予約時間 --}}
+    <div class="row">
+        <div class="col-3">予約時間：</div>
+    </div>
+    <div class="form-group row">
+        {{-- 予約開始時間 --}}
+        <div class="col-md-3 input-group date" id="start_datetime" data-target-input="nearest">
             <input type="text" name="start_datetime" value="{{ old('start_datetime', Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime" readonly>
             <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
                 <div class="input-group-text"><i class="fa fa-calendar"></i></div>
             </div>
             @if ($errors && $errors->has('start_datetime')) <div class="text-danger">{{$errors->first('start_datetime')}}</div> @endif
         </div>
-    </div>
-    {{-- 予約終了時間 --}}
-    <div class="form-group">
-        <label class="col-3 control-label">終了時間</label>
-        <div class="col-3 input-group date" id="end_datetime" data-target-input="nearest">
+        {{-- 予約終了時間 --}}
+        <div class="col-md-3 input-group date" id="end_datetime" data-target-input="nearest">
             <input type="text" name="end_datetime" value="{{ old('end_datetime', Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime" readonly>
             <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
                 <div class="input-group-text"><i class="fa fa-calendar"></i></div>
