@@ -140,9 +140,9 @@
         <div class="card-body">
             {{-- 予約項目の出力 --}}
             @foreach ($columns as $column)
-                <div class="form-group">
+                <div class="form-group row">
                     {{-- 項目名称 --}}
-                    <label class="control-label">{{$column->column_name}} 
+                    <label class="col-sm-2 control-label">{{$column->column_name}} 
                         @if ($column->required)
                             {{-- 必須マーク --}}
                             <label class="badge badge-danger">必須</label> 
@@ -154,7 +154,7 @@
                         {{-- テキスト項目 --}}
                         @case(ReservationColumnType::txt)
 
-                            <input name="columns_value[{{$column->id}}]" class="form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id)}}">
+                            <input name="columns_value[{{$column->id}}]" class="col-sm-10 form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id)}}">
                                 @if ($errors && $errors->has("columns_value.$column->id"))
                                     <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("columns_value.$column->id")}}</div>
                                 @endif
@@ -171,7 +171,7 @@
                             @endphp
 
                             {{-- 項目に紐づく選択肢データを表示 --}}
-                            <div class="container-fluid">
+                            <div class="col-sm-10 container-fluid">
                                 @foreach ($filtered_selects as $select)
                                     <div class="custom-control custom-radio custom-control-inline">
                                         <input name="columns_value[{{ $column->id }}]" id="columns_value[{{ $column->id . '_' . $select->id }}]" class="custom-control-input" type="{{ $column->column_type }}" value="{{ $select->id }}" {{ $loop->first || old('columns_value.'.$column->id) == $select->id ? 'checked' : null }} >
