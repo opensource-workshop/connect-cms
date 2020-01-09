@@ -34,7 +34,7 @@
                     </a>
                 </div>
             </div>
-            <div class="float-right">
+            <div class="float-right col-sm-5">
                 {{-- 当日へボタン --}}
                 <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
                     今日へ<br>({{ Carbon::today()->format('Y年n月j日') }})
