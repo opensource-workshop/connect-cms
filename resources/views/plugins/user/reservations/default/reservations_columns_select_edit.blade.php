@@ -73,7 +73,7 @@
 
         {{-- 選択項目の一覧 --}}
         <table class="table table-hover">
-            <thead>
+            <thead class="thead-light">
                 <tr>
                     @if (count($selects) > 0)
                         <th nowrap>表示順の操作</th>
@@ -121,7 +121,7 @@
                         </td>
                     </tr>
                 @endforeach
-                <tr>
+                <tr class="thead-light">
                     <th colspan="7">【選択肢の追加行】</th>
                 </tr>
 

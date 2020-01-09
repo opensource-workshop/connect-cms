@@ -18,7 +18,7 @@
 
     <div class="form-group">
         <table class="table table-hover" style="margin-bottom: 0;">
-        <thead>
+        <thead class="thead-light">
             <tr>
                 <th></th>
                 <th>コンテンツ名</th>

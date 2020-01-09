@@ -76,7 +76,7 @@
 
             {{-- 予約項目の一覧 --}}
             <table class="table table-hover">
-            <thead>
+            <thead class="thead-light">
                 <tr>
                     @if (count($columns) > 0)
                         <th nowrap>表示順の操作</th>
@@ -95,7 +95,7 @@
                     @include('plugins.user.reservations.default.reservations_columns_edit_row')
                 @endforeach
                 {{-- 新規登録用の行 --}}
-                <tr>
+                <tr class="thead-light">
                     <th colspan="7">【予約項目の追加行】</th>
                 </tr>
                 @include('plugins.user.reservations.default.reservations_columns_edit_row_add')
