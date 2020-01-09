@@ -962,7 +962,10 @@ class BlogsPlugin extends UserPluginBase
 
         // カテゴリ（全体）
         $general_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
-                                        ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                                        ->leftJoin('blogs_categories', function ($join) use($blog_frame) {
+                                            $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                                                 ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
+                                        })
                                         ->where('target', null)
                                         ->orderBy('display_sequence', 'asc')
                                         ->get();
