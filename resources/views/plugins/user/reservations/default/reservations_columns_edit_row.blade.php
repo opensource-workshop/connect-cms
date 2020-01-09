@@ -22,8 +22,8 @@
     <td>
         <input class="form-control" type="text" name="column_name_{{ $column->id }}" value="{{ old('column_name_'.$column->id, $column->column_name)}}">
     </td>
+    {{-- 入力データ型 --}}
     <td>
-        {{-- 型 --}}
         <select class="form-control" name="column_type_{{ $column->id }}" style="min-width: 140px;">
             <option value="" disabled>型を指定</option>
             @foreach (ReservationColumnType::getMembers() as $key=>$value)

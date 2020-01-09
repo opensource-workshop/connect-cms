@@ -66,12 +66,12 @@
         </table>
     </div>
 
+    {{-- ページャー --}}
     <div class="text-center">
-
         {{ $reservations->links() }}
-
     </div>
 
+    {{-- ボタンエリア --}}
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示する施設予約を変更</button>
