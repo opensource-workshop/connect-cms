@@ -36,17 +36,6 @@
         form_columns.submit();
     }
 
-    {{-- 予約項目の削除のsubmit JavaScript --}}
-    function submit_delete_column(column_id) {
-        if(confirm('予約項目を削除してよろしいですか？')){
-            form_columns.action = "/plugin/reservations/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-            form_columns.column_id.value = column_id;
-            form_columns.submit();
-        }else{
-            return false;
-        }
-    }
-
     {{-- 予約項目の表示順操作のsubmit JavaScript --}}
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
         form_columns.action = "/plugin/reservations/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
@@ -79,11 +68,9 @@
         <input type="hidden" name="display_sequence_operation" value="">
         <input type="hidden" name="return_frame_action" value="edit">
         {{-- メッセージエリア --}}
-        @if ($message)
-            <div class="alert alert-info mt-2">
-                <i class="fas fa-exclamation-circle"></i>{{ $message }}
-            </div>
-        @endif
+        <div class="alert alert-info mt-2">
+            <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '予約登録時の項目を追加・変更します。' }}
+        </div>
 
         <div class="table-responsive">
 
@@ -95,10 +82,10 @@
                         <th nowrap>表示順の操作</th>
                         <th nowrap>項目名</th>
                         <th nowrap>型</th>
-                        <th nowrap>必須</th>
+                        <th nowrap>必須 <span class="fas fa-info-circle" data-toggle="tooltip" title="必須項目として指定します。"></th>
+                        <th nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした項目を非表示にします。"></th>
                         <th nowrap>選択肢の設定</th>
                         <th nowrap>更新</th>
-                        <th nowrap>削除</th>
                     @endif
                 </tr>
             </thead>

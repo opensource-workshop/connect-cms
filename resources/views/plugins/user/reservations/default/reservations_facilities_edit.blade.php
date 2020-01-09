@@ -44,6 +44,11 @@
         form_facilities.display_sequence_operation.value = display_sequence_operation;
         form_facilities.submit();
     }
+    // ツールチップ
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 
 </script>
 
@@ -62,11 +67,9 @@
         <input type="hidden" name="display_sequence_operation" value="">
         <input type="hidden" name="return_frame_action" value="edit">
         {{-- メッセージエリア --}}
-        @if ($message)
-            <div class="alert alert-info mt-2">
-                <i class="fas fa-exclamation-circle"></i>{{ $message }}
-            </div>
-        @endif
+        <div class="alert alert-info mt-2">
+            <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '予約対象の施設を追加・変更します。' }}
+        </div>
 
         <div class="table-responsive">
 
@@ -79,7 +82,6 @@
                         <th nowrap>施設名</th>
                         <th nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした施設を施設予約カレンダーから非表示にします。"></th>
                         <th nowrap>更新</th>
-                        <th nowrap></th>
                     @endif
                 </tr>
             </thead>
