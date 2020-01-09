@@ -119,8 +119,9 @@ class BlogsPlugin extends UserPluginBase
     private function getBlogsCategories($blogs_id)
     {
         $blogs_categories = Categories::select('categories.*')
-                          ->join('blogs_categories', function ($join) {
+                          ->join('blogs_categories', function ($join) use($blogs_id) {
                               $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                                   ->where('blogs_categories.blogs_id', '=', $blogs_id)
                                    ->where('blogs_categories.view_flag', 1);
                           })
                           ->whereNull('plugin_id')
@@ -1104,7 +1105,7 @@ class BlogsPlugin extends UserPluginBase
 
                 // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 BlogsCategories::updateOrCreate(
-                    ['categories_id' => $general_categories_id],
+                    ['categories_id' => $general_categories_id, 'blogs_id' => $blog_frame->blogs_id],
                     [
                      'blogs_id' => $blog_frame->blogs_id,
                      'categories_id' => $general_categories_id,
@@ -1122,7 +1123,7 @@ class BlogsPlugin extends UserPluginBase
 
                 // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 BlogsCategories::updateOrCreate(
-                    ['categories_id' => $plugin_categories_id],
+                    ['categories_id' => $plugin_categories_id, 'blogs_id' => $blog_frame->blogs_id],
                     [
                      'blogs_id' => $blog_frame->blogs_id,
                      'categories_id' => $plugin_categories_id,

@@ -119,8 +119,9 @@ class FaqsPlugin extends UserPluginBase
     private function getFaqsCategories($faqs_id)
     {
         $faqs_categories = Categories::select('categories.*')
-                          ->join('faqs_categories', function ($join) {
+                          ->join('faqs_categories', function ($join) use($faqs_id) {
                               $join->on('faqs_categories.categories_id', '=', 'categories.id')
+                                   ->where('faqs_categories.blogs_id', '=', $faqs_id)
                                    ->where('faqs_categories.view_flag', 1);
                           })
                           ->whereNull('plugin_id')
@@ -1114,7 +1115,7 @@ class FaqsPlugin extends UserPluginBase
 
                 // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 FaqsCategories::updateOrCreate(
-                    ['categories_id' => $general_categories_id],
+                    ['categories_id' => $general_categories_id, 'faqs_id' => $faq_frame->faqs_id],
                     [
                      'faqs_id' => $faq_frame->faqs_id,
                      'categories_id' => $general_categories_id,
@@ -1132,7 +1133,7 @@ class FaqsPlugin extends UserPluginBase
 
                 // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 FaqsCategories::updateOrCreate(
-                    ['categories_id' => $plugin_categories_id],
+                    ['categories_id' => $plugin_categories_id, 'faqs_id' => $faq_frame->faqs_id],
                     [
                      'faqs_id' => $faq_frame->faqs_id,
                      'categories_id' => $plugin_categories_id,
