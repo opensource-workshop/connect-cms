@@ -6,13 +6,15 @@
  * @category 施設予約プラグイン
  --}}
 <tr id="column_add_tr">
-    <td style="vertical-align: middle;" nowrap><br /></td>
+    <td><br /></td>
     <td>
         {{-- 施設名 --}}
         <input class="form-control" type="text" name="facility_name" placeholder="施設名">
     </td>
-    <td style="vertical-align: middle;">
+    <td class="text-center">
         {{-- ＋ボタン --}}
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_facility(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+    </td>
+    <td>
     </td>
 </tr>

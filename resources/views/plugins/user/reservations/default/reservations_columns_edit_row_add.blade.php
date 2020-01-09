@@ -6,7 +6,7 @@
  * @category 施設予約プラグイン
  --}}
 <tr>
-    <td style="vertical-align: middle;" nowrap><br /></td>
+    <td></td>
     <td>
         {{-- 予約項目名 --}}
         <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}" placeholder="予約項目名">
@@ -25,11 +25,11 @@
             @endforeach
         </select>
     </td>
-    <td style="vertical-align: middle;">
+    <td class="align-middle text-center">
         {{-- 必須 --}}
         <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
     </td>
-    <td class="text-center" style="vertical-align: middle;">
+    <td class="text-center">
         {{-- ＋ボタン --}}
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>

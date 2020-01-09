@@ -20,11 +20,11 @@
         <table class="table table-hover" style="margin-bottom: 0;">
         <thead class="thead-light">
             <tr>
-                <th></th>
-                <th>コンテンツ名</th>
-                <th>カレンダー<br>初期表示</th>
-                <th>施設名</th>
-                <th>コンテンツ編集</th>
+                <th class="text-center"></th>
+                <th class="text-center">コンテンツ名</th>
+                <th class="text-center">カレンダー<br>初期表示</th>
+                <th class="text-center">施設名</th>
+                <th class="text-center">コンテンツ編集</th>
             </tr>
         </thead>
         <tbody>
@@ -32,12 +32,18 @@
             <tr @if ($reservation_frame->reservations_id == $reservation->id) class="active"@endif>
 
                 {{-- 選択ラジオ --}}
-                <td><input type="radio" value="{{$reservation->bucket_id}}" name="select_bucket"@if ($reservation_frame->bucket_id == $reservation->bucket_id) checked @endif></input></td>
+                <td class="text-center">
+                    <input type="radio" value="{{$reservation->bucket_id}}" name="select_bucket"@if ($reservation_frame->bucket_id == $reservation->bucket_id) checked @endif>
+                </td>
                 {{-- 施設予約名 --}}
-                <td>{{$reservation->reservation_name}}</td>
+                <td class="text-center">
+                    {{$reservation->reservation_name}}
+                </td>
                 {{-- 初期表示（月／週） --}}
-                <td>{{ ReservationCalendarDisplayType::getDescription($reservation->calendar_initial_display_type) }}</td>
-                <td>
+                <td class="text-center">
+                    {{ ReservationCalendarDisplayType::getDescription($reservation->calendar_initial_display_type) }}
+                </td>
+                <td class="text-center">
                     {{-- 施設名 --}}
                     @if ($reservation->facility_names)
                         {!! nl2br(e($reservation->facility_names)) !!}
@@ -49,7 +55,7 @@
                     </button>
                 </td>
                 {{-- 設定変更ボタン --}}
-                <td>
+                <td class="text-center">
                     <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}/{{ $reservation->id }}#frame-{{$frame->id}}'">
                         <i class="far fa-edit"></i> 設定変更
                     </button>

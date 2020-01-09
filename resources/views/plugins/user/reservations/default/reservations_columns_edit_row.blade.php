@@ -7,7 +7,7 @@
  --}}
 <tr>
     {{-- 表示順操作 --}}
-    <td style="vertical-align: middle;" nowrap>
+    <td nowrap>
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $column->id }}, {{ $column->display_sequence }}, 'up')">
             <i class="fas fa-arrow-up"></i>
@@ -40,12 +40,12 @@
             @endforeach
         </select>
     </td>
-    <td style="vertical-align: middle;">
-        {{-- 必須 --}}
+    {{-- 必須 --}}
+    <td class="align-middle text-center">
         <input type="checkbox" name="required_{{ $column->id }}" value="1" @if ($column->required == Required::on) checked="checked" @endif>
     </td>
     {{-- 非表示フラグ --}}
-    <td style="vertical-align: middle;">
+    <td class="align-middle text-center">
         <input name="hide_flag_{{ $column->id }}" id="hide_flag_{{ $column->id }}" value="1" type="checkbox" @if (isset($column->hide_flag)) checked="checked" @endif>
     </td>
     {{-- 選択肢の設定ボタン --}}
@@ -65,7 +65,7 @@
         @endif
     </td>
     {{-- 更新ボタン --}}
-    <td style="vertical-align: middle;">
+    <td>
         <button 
             class="btn btn-primary cc-font-90 text-nowrap" 
             onclick="javascript:submit_update_column({{ $column->id }});"

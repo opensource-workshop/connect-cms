@@ -79,13 +79,13 @@
             <thead class="thead-light">
                 <tr>
                     @if (count($columns) > 0)
-                        <th nowrap>表示順の操作</th>
-                        <th nowrap>項目名</th>
-                        <th nowrap>型</th>
-                        <th nowrap>必須 <span class="fas fa-info-circle" data-toggle="tooltip" title="必須項目として指定します。"></th>
-                        <th nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした項目を非表示にします。"></th>
-                        <th nowrap>選択肢の設定</th>
-                        <th nowrap>更新</th>
+                        <th class="text-center" nowrap>表示順</th>
+                        <th class="text-center" nowrap>項目名</th>
+                        <th class="text-center" nowrap>型</th>
+                        <th class="text-center" nowrap>必須 <span class="fas fa-info-circle" data-toggle="tooltip" title="必須項目として指定します。"></th>
+                        <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした項目を非表示にします。"></th>
+                        <th class="text-center" nowrap>選択肢</th>
+                        <th class="text-center" nowrap>更新</th>
                     @endif
                 </tr>
             </thead>
