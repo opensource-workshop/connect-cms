@@ -182,6 +182,12 @@ a.cc-cursor-text:hover {
     z-index: 9999;
 }
 
+/* FAQ
+------------------------------------- */
+.faq-list-title p {
+    display: inline;
+}
+
 
 /*  Connect-CMS add CSS Bootstrap3
 ------------------------------------- */

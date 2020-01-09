@@ -142,10 +142,10 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_classname" class="form-control"></input>
+                    <input type="text" value="" name="add_display_sequence" class="form-control"></input>
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_display_sequence" class="form-control"></input>
+                    <input type="text" value="" name="add_classname" class="form-control"></input>
                 </td>
                 <td nowrap>
                     <input type="text" value="" name="add_category" class="form-control"></input>

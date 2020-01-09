@@ -17,4 +17,13 @@ class FaqsPosts extends Model
 
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = ['posted_at'];
+
+    /**
+     *  リスト表示用タイトル
+     *  改行を取り除いたもの。
+     */
+    public function getNobrPostTitle()
+    {
+        return str_ireplace(['<br>', '<br />'], ' ', $this->post_title);
+    }
 }

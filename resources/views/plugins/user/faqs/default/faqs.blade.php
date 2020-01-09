@@ -42,9 +42,14 @@
     @foreach($faqs_posts as $post)
         <div class="card">
             <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}">
-                <div class="card-header" id="headingFaq{{$post->id}}">
+                <div class="card-header faq-list-title" id="headingFaq{{$post->id}}">
                     {{-- タイトル --}}
-                    {!!$post->post_title!!}
+                    {!!$post->getNobrPostTitle()!!}
+
+                    {{-- カテゴリ --}}
+                    @if($post->category)
+                        <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
+                    @endif
                </div>
             </button>
 

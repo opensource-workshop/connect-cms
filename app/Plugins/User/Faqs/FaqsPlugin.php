@@ -972,7 +972,10 @@ class FaqsPlugin extends UserPluginBase
 
         // カテゴリ（全体）
         $general_categories = Categories::select('categories.*', 'faqs_categories.id as faqs_categories_id', 'faqs_categories.categories_id', 'faqs_categories.view_flag')
-                                        ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
+                                        ->leftJoin('faqs_categories', function ($join) use($faq_frame) {
+                                            $join->on('faqs_categories.categories_id', '=', 'categories.id')
+                                                 ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id);
+                                        })
                                         ->where('target', null)
                                         ->orderBy('display_sequence', 'asc')
                                         ->get();
