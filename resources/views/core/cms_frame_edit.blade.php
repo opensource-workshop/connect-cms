@@ -23,7 +23,8 @@
 --}}
 {{-- <table class="table"><tr><td> --}}
 
-<div class="frame_setting">
+<div class="frame-setting">
+<div class="frame-setting-menu">
     <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
         <span class="{{$frame->getNavbarBrand()}}">設定メニュー</span>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
@@ -45,6 +46,7 @@
         </div>
     </nav>
 </div>
+</div>
 
 {{--
     <div class="card-body">
@@ -63,7 +65,7 @@
     </div>
 --}}
 
-<div class="card-body">
+<div class="card-body frame-setting-body">
     <form action="/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST">
         {{ csrf_field() }}
         <div class="form-group row">

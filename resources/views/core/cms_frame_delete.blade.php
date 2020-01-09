@@ -10,7 +10,8 @@
 {{-- フレーム(削除) --}}
 {{-- <table class="table"><tr><td> --}}
  
-<div class="frame_setting">
+<div class="frame-setting">
+<div class="frame-setting-menu">
     <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
         <span class="{{$frame->getNavbarBrand()}}">設定メニュー</span>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
@@ -31,6 +32,7 @@
             </ul>
         </div>
     </nav>
+</div>
 </div>
 
 {{--
@@ -53,7 +55,7 @@
     {{-- 削除画面(入力フォーム) --}}
     <div class="container-fluid">
         <div class="card border-danger mt-3">
-            <div class="card-body">
+            <div class="card-body frame-setting-body">
 
                 <form action="{{url('/core/frame/destroy')}}/{{$page->id}}/{{$frame->frame_id}}" method="POST" class="form-horizontal">
                     {{ csrf_field() }}
