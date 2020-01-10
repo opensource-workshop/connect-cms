@@ -56,16 +56,6 @@
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
-    <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
-@if (isset($page))
-    <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
-@endif
-
-    <!-- Themes CSS -->
-@if (isset($themes['css']) && $themes['css'] != '')
-    <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
-@endif
-
     <!-- Fonts -->
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
@@ -84,6 +74,17 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js"></script>
     --}}
     <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
+
+    <!-- Connect-CMS CSS -->
+    <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
+@if (isset($page))
+    <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
+@endif
+
+    <!-- Themes CSS -->
+@if (isset($themes['css']) && $themes['css'] != '')
+    <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
+@endif
 
     <!-- Themes JS -->
 @if (isset($themes['js']) && $themes['js'] != '')
