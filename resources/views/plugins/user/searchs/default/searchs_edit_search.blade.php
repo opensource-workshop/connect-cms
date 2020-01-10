@@ -126,6 +126,28 @@
             </div>
 
             <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">他ページからのキーワード</label><br />
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($searchs->recieve_keyword == 1)
+                            <input type="radio" value="1" id="recieve_keyword_1" name="recieve_keyword" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="recieve_keyword_1" name="recieve_keyword" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="recieve_keyword_1">受け取る</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($searchs->recieve_keyword == 0)
+                            <input type="radio" value="0" id="recieve_keyword_0" name="recieve_keyword" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="recieve_keyword_0" name="recieve_keyword" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="recieve_keyword_0">受け取らない</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">

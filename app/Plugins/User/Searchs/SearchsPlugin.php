@@ -206,7 +206,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs_frame = $this->getSearchsFrame($frame_id);
 
         // 検索キーワードが入ってきたら、検索メソッドへ
-        if ($request->search_keyword) {
+        if (!empty($searchs_frame) && $searchs_frame->recieve_keyword == 1 && $request->search_keyword) {
             return $this->search($request, $page_id, $frame_id);
         }
 
@@ -396,13 +396,14 @@ class SearchsPlugin extends UserPluginBase
         }
 
         // 設定データ
-        $searchs->search_name      = $request->search_name;
-        $searchs->count            = $request->count;
-        $searchs->view_posted_name = intval($request->view_posted_name);
-        $searchs->view_posted_at   = intval($request->view_posted_at);
-        $searchs->target_plugins   = implode(',', $request->target_plugin);
+        $searchs->search_name       = $request->search_name;
+        $searchs->count             = $request->count;
+        $searchs->view_posted_name  = intval($request->view_posted_name);
+        $searchs->view_posted_at    = intval($request->view_posted_at);
+        $searchs->target_plugins    = implode(',', $request->target_plugin);
         $searchs->frame_select      = intval($request->frame_select);
         $searchs->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
+        $searchs->recieve_keyword   = intval($request->recieve_keyword);
 
         // データ保存
         $searchs->save();
