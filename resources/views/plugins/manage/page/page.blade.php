@@ -111,7 +111,7 @@
                     <td class="table-text col-md-2 p-1">
                         {{-- 指定場所移動 --}}
                         <form name="form_select_page{{$page_item->id}}" id="form_select_page{{$page_item->id}}" class="form-horizontal">
-                            <select name="select_page" onChange="submit_move_page({{$page_item->id}});">
+                            <select name="select_page" class="manage-page-selectpage" onChange="submit_move_page({{$page_item->id}});">
                                 <option value="">...</option>
                                 <option value="0">最上位の階層へ</option>
                                 @foreach($pages_select as $page_select)
@@ -126,7 +126,7 @@
                             </select>
                         </form>
                     </td>
-                    <td class="table-text p-1" nowrap>
+                    <td class="table-text p-1 manage-page-pagename">
                         {{-- 各ページの深さをもとにインデントの表現 --}}
                         @for ($i = 0; $i < $page_item->depth; $i++)
                             @if ($i+1==$page_item->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif

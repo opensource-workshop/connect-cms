@@ -188,6 +188,15 @@ a.cc-cursor-text:hover {
     display: inline;
 }
 
+/* 管理画面（ページ管理）
+------------------------------------- */
+.manage-page-selectpage {
+    max-width: 150px;
+}
+.manage-page-pagename {
+    min-width: 200px;
+}
+
 
 /*  Connect-CMS add CSS Bootstrap3
 ------------------------------------- */
