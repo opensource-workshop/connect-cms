@@ -6,13 +6,15 @@
  * @category 施設予約プラグイン
  --}}
 <tr>
-    <td style="vertical-align: middle;" nowrap><br /></td>
+    {{-- 余白 --}}
     <td>
-        {{-- 予約項目名 --}}
+    </td>
+    {{-- 予約項目名 --}}
+    <td>
         <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}" placeholder="予約項目名">
     </td>
+    {{-- 入力データ型 --}}
     <td>
-        {{-- 型 --}}
         <select class="form-control" name="column_type" style="min-width: 100px;">
             <option value="" disabled>型を指定</option>
             @foreach (ReservationColumnType::getMembers() as $key=>$value)
@@ -25,12 +27,12 @@
             @endforeach
         </select>
     </td>
-    <td style="vertical-align: middle;">
-        {{-- 必須 --}}
+    {{-- 必須 --}}
+    <td class="align-middle text-center">
         <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
     </td>
-    <td class="text-center" style="vertical-align: middle;">
-        {{-- ＋ボタン --}}
+    {{-- ＋ボタン --}}
+    <td class="text-center">
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>
     {{-- 表示上の区切り線が切れてしまう為、空のtdタグを設置 --}}
@@ -38,5 +40,4 @@
     </td>
     <td>
     </td>
-    
 </tr>

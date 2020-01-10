@@ -59,27 +59,23 @@
     <input type="hidden" name="display_sequence" value="">
     <input type="hidden" name="display_sequence_operation" value="">
 
-    {{-- 画面タイトル --}}
-    <h5 class="card-title">選択肢の設定【 {{ $column->column_name }} 】</h5>
-
     {{-- メッセージエリア --}}
-    @if ($message)
-        <div class="alert alert-info mt-2">
-            <i class="fas fa-exclamation-circle"></i>{{ $message }}
-        </div>
-    @endif
+    <div class="alert alert-info mt-2">
+        <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '予約項目【' . $column->column_name . ' 】の選択肢を追加・変更します。' }}
+    </div>
+    
 
     <div class="table-responsive">
 
         {{-- 選択項目の一覧 --}}
         <table class="table table-hover">
-            <thead>
+            <thead class="thead-light">
                 <tr>
                     @if (count($selects) > 0)
-                        <th nowrap>表示順の操作</th>
-                        <th nowrap>選択肢名</th>
-                        <th nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした選択肢を非表示にします。"></th>
-                        <th nowrap>更新</th>
+                        <th class="text-center" nowrap>表示順</th>
+                        <th class="text-center" nowrap>選択肢名</th>
+                        <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした選択肢を非表示にします。"></th>
+                        <th class="text-center" nowrap>更新</th>
                     @endif
                 </tr>
             </thead>
@@ -88,7 +84,7 @@
                 @foreach($selects as $select)
                     <tr>
                         {{-- 表示順操作 --}}
-                        <td style="vertical-align: middle;" nowrap>
+                        <td class="text-center" nowrap>
                             {{-- 上移動 --}}
                             <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
                                 <i class="fas fa-arrow-up"></i>
@@ -106,12 +102,12 @@
                         </td>
 
                         {{-- 非表示フラグ --}}
-                        <td style="vertical-align: middle;">
+                        <td class="align-middle text-center">
                             <input name="hide_flag_{{ $select->id }}" id="hide_flag_{{ $select->id }}" value="1" type="checkbox" @if (isset($select->hide_flag)) checked="checked" @endif>
                         </td>
     
                         {{-- 更新ボタン --}}
-                        <td style="vertical-align: middle;">
+                        <td class="align-middle text-center">
                             <button 
                                 class="btn btn-primary cc-font-90 text-nowrap" 
                                 onclick="javascript:submit_update_select({{ $select->id }});"
@@ -121,18 +117,18 @@
                         </td>
                     </tr>
                 @endforeach
-                <tr>
+                <tr class="thead-light">
                     <th colspan="7">【選択肢の追加行】</th>
                 </tr>
 
                 {{-- 新規登録用の行 --}}
                 <tr>
-                    <td style="vertical-align: middle;" nowrap><br /></td>
+                    <td><br /></td>
                     <td>
                         {{-- 選択肢名 --}}
                         <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
                     </td>
-                    <td style="vertical-align: middle;">
+                    <td class="text-center">
                         {{-- ＋ボタン --}}
                         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
                     </td>

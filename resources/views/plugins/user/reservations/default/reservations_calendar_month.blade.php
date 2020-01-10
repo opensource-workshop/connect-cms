@@ -22,19 +22,19 @@
                 <div class="list-group list-group-horizontal">
                     {{-- 前月ボタン --}}
                     <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subMonth()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
-                        <i class="fas fa-angle-double-left fa-2x"></i>
+                        <i class="fas fa-angle-double-left"></i>
                     </a>
                     {{-- 当月表示 --}}
-                    <a class="list-group-item h2 d-flex align-items-center">
+                    <a class="list-group-item h5 d-flex align-items-center">
                         {{ $carbon_target_date->year }}年 {{ $carbon_target_date->month }}月
                     </a>
                     {{-- 翌月ボタン --}}
                     <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addMonth()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
-                        <i class="fas fa-angle-double-right fa-2x"></i>
+                        <i class="fas fa-angle-double-right"></i>
                     </a>
                 </div>
             </div>
-            <div class="float-right">
+            <div class="float-right col-sm-5">
                 {{-- 今月へボタン --}}
                 <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
                     今月へ<br>({{ Carbon::today()->format('Y年m月') }})
@@ -47,7 +47,7 @@
     @foreach ($calendars as $facility_name => $calendar_details)
 
         {{-- 施設名 --}}
-        <span class="h4">＜{{ $facility_name }}＞</span>
+        <span class="h5">＜{{ $facility_name }}＞</span>
 
         {{-- カレンダーデータ部 --}}
             <table class="table table-bordered cc_responsive_table" style="table-layout:fixed;">

@@ -75,13 +75,13 @@
 
             {{-- 施設の一覧 --}}
             <table class="table table-hover">
-            <thead>
+            <thead class="thead-light">
                 <tr>
                     @if (count($facilities) > 0)
-                        <th nowrap>表示順の操作</th>
-                        <th nowrap>施設名</th>
-                        <th nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした施設を施設予約カレンダーから非表示にします。"></th>
-                        <th nowrap>更新</th>
+                        <th class="text-center" nowrap>表示順</th>
+                        <th class="text-center" nowrap>施設名</th>
+                        <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした施設を施設予約カレンダーから非表示にします。"></th>
+                        <th class="text-center" nowrap>更新</th>
                     @endif
                 </tr>
             </thead>
@@ -91,7 +91,7 @@
                     @include('plugins.user.reservations.default.reservations_facilities_edit_row')
                 @endforeach
                 {{-- 新規登録用の行 --}}
-                <tr>
+                <tr class="thead-light">
                     <th colspan="4">【施設の追加行】</th>
                 </tr>
                 @include('plugins.user.reservations.default.reservations_facilities_edit_row_add')
