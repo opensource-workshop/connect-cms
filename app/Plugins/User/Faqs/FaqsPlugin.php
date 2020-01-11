@@ -121,7 +121,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs_categories = Categories::select('categories.*')
                           ->join('faqs_categories', function ($join) use($faqs_id) {
                               $join->on('faqs_categories.categories_id', '=', 'categories.id')
-                                   ->where('faqs_categories.blogs_id', '=', $faqs_id)
+                                   ->where('faqs_categories.faqs_id', '=', $faqs_id)
                                    ->where('faqs_categories.view_flag', 1);
                           })
                           ->whereNull('plugin_id')
