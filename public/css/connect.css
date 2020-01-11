@@ -188,6 +188,12 @@ a.cc-cursor-text:hover {
     display: inline;
 }
 
+/* LearningTasks
+------------------------------------- */
+.learningtasks-list-title p {
+    display: inline;
+}
+
 /* 管理画面（ページ管理）
 ------------------------------------- */
 .manage-page-selectpage {
