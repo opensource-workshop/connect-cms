@@ -81,7 +81,6 @@
                         @endforeach
                     @endif
 
-
                     {{-- 重要記事 --}}
                     @if($post->important == 1)
                         <span class="badge badge-danger">重要</span>

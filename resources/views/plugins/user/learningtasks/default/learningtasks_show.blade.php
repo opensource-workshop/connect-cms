@@ -16,6 +16,15 @@
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
 
+    {{-- 課題ファイル --}}
+    @if ($post_files)
+        @foreach($post_files as $post_file)
+        <p>
+            <a href="{{url('/')}}/file/{{$post_file->task_file_uploads_id}}" target="_blank" rel="noopener">{{$post_file->client_original_name}}</a>
+        </p>
+        @endforeach
+    @endif
+
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
     <div class="row">
         <div class="col-12 text-right mb-1">

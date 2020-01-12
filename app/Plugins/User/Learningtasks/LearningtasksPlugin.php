@@ -653,6 +653,14 @@ class LearningtasksPlugin extends UserPluginBase
             $learningtasks_post_tags = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
         }
 
+        // 課題管理データを取得
+        $learningtasks_posts_files
+            = LearningtasksPostsFiles::select('learningtasks_posts_files.*',
+                                              'uploads.id as uploads_id', 'uploads.client_original_name')
+                 ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.task_file_uploads_id')
+                 ->where('learningtasks_posts_id', $learningtasks_post->id)
+                 ->get();
+
         // ひとつ前、ひとつ後の記事
         $before_post = null;
         $after_post = null;
@@ -679,6 +687,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_frame'  => $learningtasks_frame,
             'post'        => $learningtasks_post,
             'post_tags'   => $learningtasks_post_tags,
+            'post_files'  => $learningtasks_posts_files,
             'before_post' => $before_post,
             'after_post'  => $after_post,
         ]);
