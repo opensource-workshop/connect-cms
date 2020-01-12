@@ -38,51 +38,53 @@
 
 {{-- 課題管理表示 --}}
 @if (isset($learningtasks_posts))
-    <div class="accordion" id="accordionLearningTask{{$frame_id}}">
-    @foreach($learningtasks_posts as $post)
+    @foreach($categories_and_posts as $category_id => $categories_and_post)
+    <div class="accordion @if (!$loop->first) mt-3 @endif" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
+        <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
+    @foreach($categories_and_post as $post)
         <div class="card">
             <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseLearningTask{{$post->id}}" aria-expanded="true" aria-controls="collapseLearningTask{{$post->id}}">
-                <div class="card-header learningtasks-list-title" id="headingLearningTask{{$post->id}}">
-                    {{-- タイトル --}}
-                    {!!$post->getNobrPostTitle()!!}
-
-                    {{-- カテゴリ --}}
-                    @if($post->category)
-                        <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
-                    @endif
-
-                    @if($post->user_status)
+                <div class="card-header learningtasks-list-title row" id="headingLearningTask{{$post->id}}">
+                    @auth
+                    <div class="col-sm-1">
+                    @if($post->user_task_status)
                         <span class="badge badge-pill badge-primary">修了</span>
                     @endif
+                    </div>
+                    @endauth
+
+                    @auth
+                    <div class="col-sm-11">
+                    @else
+                    <div class="col-sm-12">
+                    @endauth
+                    {{-- タイトル --}}
+                    {!!$post->getNobrPostTitle()!!}
+                    </div>
                </div>
             </button>
 
-            <div id="collapseLearningTask{{$post->id}}" class="collapse" aria-labelledby="headingLearningTask{{$post->id}}" data-parent="#accordionLearningTask{{$frame_id}}">
+            <div id="collapseLearningTask{{$post->id}}" class="collapse" aria-labelledby="headingLearningTask{{$post->id}}" data-parent="#accordionLearningTask{{$frame_id}}_{{$category_id}}">
                 <div class="card-body">
 
                 {{-- 記事本文 --}}
-                <article class="cc_article">
+                <article class="">
                     {{-- 記事本文 --}}
                     {!!$post->post_text!!}
 
                     {{-- 課題ファイル --}}
                     @if ($post->task_files)
-                    <p>
                         @foreach($post->task_files as $task_file)
-                        <a href="{{url('/')}}/file/{{$task_file->task_file_uploads_id}}" target="_blank" rel="noopener">{{$task_file->client_original_name}}</a>
+                        <p>
+                            <a href="{{url('/')}}/file/{{$task_file->task_file_uploads_id}}" target="_blank" rel="noopener">{{$task_file->client_original_name}}</a>
+                        </p>
                         @endforeach
-                    </p>
                     @endif
 
 
                     {{-- 重要記事 --}}
                     @if($post->important == 1)
                         <span class="badge badge-danger">重要</span>
-                    @endif
-
-                    {{-- カテゴリ --}}
-                    @if($post->category)
-                        <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
                     @endif
 
                     {{-- タグ --}}
@@ -94,34 +96,34 @@
                 </article>
 
                 {{-- 修了チェック --}}
-                <article class="cc_article">
-                    @auth
-                        <form action="{{url('/')}}/plugin/learningtasks/changeStatus/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="post" name="form_status" class="d-inline">
-                            {{ csrf_field() }}
+                @auth
+                <div class="card p-3 m-3">
+                    <form action="{{url('/')}}/plugin/learningtasks/changeStatus/{{$page->id}}/{{$frame_id}}/{{$post->contents_id}}" method="post" name="form_status" class="d-inline">
+                        {{ csrf_field() }}
+                        @if ($post->user_task_status == 0)
+                        <p>修了したら下の「修了」ボタンをクリックしてください。</p>
 
-    <div class="form-group">
-        <div class="custom-control custom-checkbox">
-            <input type="checkbox" name="task_status" value="1" class="custom-control-input" id="task_status" @if(old('task_status')) checked=checked @endif>
-{{--
-            <input type="checkbox" name="task_status" value="1" class="custom-control-input" id="task_status" @if(old('task_status', $learningtasks_users_status->task_status)) checked=checked @endif>
---}}
-            <label class="custom-control-label" for="important">修了したらチェックして「修了」ボタンをクリックしてください。</label>
-        </div>
-    </div>
+                        <input type="hidden" name="task_status" value="1">
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('修了しましたか？');">
+                            <i class="fas fa-check"></i> 修了
+                        </button>
+                        @else
+                        <p>修了を取り消す場合は下の「修了取り消し」ボタンをクリックしてください。</p>
 
-                            <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('終了しましたか？');">
-                                <i class="fas fa-check"></i> 終了
-                            </button>
-                        </form>
-                    @endauth
-                </article>
-
+                        <input type="hidden" name="task_status" value="0">
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('修了を取り消しますか？');">
+                            <i class="fas fa-check"></i> 修了取り消し
+                        </button>
+                        @endif
+                    </form>
+                </div>
+                @endauth
 
                 {{-- 投稿日時 --}}
                 公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
 
                 {{-- 詳細画面 --}}
-                <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><i class="fas fa-external-link-square-alt"></i></a>
+                <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><i class="fas fa-expand-alt"></i></a>
 
                 {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
                 <div class="row">
@@ -154,7 +156,7 @@
     </div>
     @endforeach
     </div>
-
+    @endforeach
     {{-- ページング処理 --}}
     <div class="text-center">
         {{ $learningtasks_posts->links() }}

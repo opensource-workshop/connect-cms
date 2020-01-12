@@ -50,6 +50,20 @@
     </div>
 
     <div class="form-group">
+        <label class="control-label">ファイル一覧（削除する場合はチェック）</label>
+        <div class="card p-2">
+        @isset($learningtasks_posts_files)
+        @foreach($learningtasks_posts_files as $posts_file)
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="del_task_file[{{$posts_file->id}}]" value="1" class="custom-control-input" id="del_task_file[{{$posts_file->id}}]" @if(old("del_task_file.$posts_file->id")) checked=checked @endif>
+                <label class="custom-control-label" for="del_task_file[{{$posts_file->id}}]"><a href="{{url('/')}}/file/{{$posts_file->task_file_uploads_id}}" target="_blank" rel="noopener">{{$posts_file->client_original_name}}</a></label>
+            </div>
+        @endforeach
+        @endisset
+        </div>
+    </div>
+
+    <div class="form-group">
         <label class="control-label">投稿日時 <label class="badge badge-danger">必須</label></label>
 
         <div class="input-group date" id="posted_at" data-target-input="nearest">

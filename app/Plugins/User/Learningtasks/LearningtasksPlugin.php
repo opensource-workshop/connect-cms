@@ -218,6 +218,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 削除されていないデータでグルーピングして、最新のIDで全件
         $learningtasks_posts = LearningtasksPosts::select('learningtasks_posts.*',
+                                          'categories.id as category_id',
                                           'categories.color as category_color',
                                           'categories.background_color as category_background_color',
                                           'categories.category as category')
@@ -231,8 +232,12 @@ class LearningtasksPlugin extends UserPluginBase
                                            ->where(function($query_auth){
                                                $query_auth = $this->appendAuthWhere($query_auth);
                                            })
+                                           ->groupBy('categories.display_sequence')
                                            ->groupBy('contents_id');
                                    });
+        // カテゴリソート条件追加
+        $learningtasks_posts->orderBy('categories.display_sequence', 'asc');
+
         // 表示条件に対するソート条件追加
 
         // 最新順
@@ -277,7 +282,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  タグの保存
      */
-    private function saveTag($request, $learningtasks_post)
+    private function saveTag($request, $learningtasks_post, $old_learningtasks_post)
     {
         // タグの保存
         if ($request->tags) {
@@ -314,10 +319,14 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  アップロードファイルの保存
+     *  課題ファイルの保存
      */
-    private function saveTaskFile($request, $learningtasks_post)
+    private function saveTaskFile($request, $learningtasks_post, $old_learningtasks_post)
     {
+        // 旧データがある場合は、履歴のためにコピーする。
+        if (!empty($old_learningtasks_post) && !empty($old_learningtasks_post->id)) {
+            $this->copyTaskFile($request, $old_learningtasks_post, $learningtasks_post);
+        }
 
         // 課題ファイルがアップロードされた。
         if ($request->hasFile('add_task_file')) {
@@ -356,6 +365,31 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
+     *  課題ファイル情報のコピー
+     */
+    private function copyTaskFile($request, $from_post, $to_post)
+    {
+        // 課題ファイル情報の保存
+        $learningtasks_posts_files = LearningtasksPostsFiles::where('learningtasks_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
+        foreach($learningtasks_posts_files as $learningtasks_posts_file) {
+
+            // 削除対象のファイルはデータをコピーしない
+            if ($request->del_task_file) {
+                if (array_key_exists($learningtasks_posts_file->id, $request->del_task_file)) {
+                    continue;
+                }
+            }
+
+            // レコードコピー
+            $new_file = $learningtasks_posts_file->replicate();
+            $new_file->learningtasks_posts_id = $to_post->id;
+            $new_file->save();
+        }
+
+        return;
+    }
+
+    /**
      *  紐づく課題ファイルの取得
      */
     private function getTaskFile($posts_ids)
@@ -380,7 +414,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  紐づくユーザーstatusの取得
      */
-    private function getUserStatus($posts_ids)
+    private function getUserStatus($contents_ids)
     {
         // ユーザ
         $user = Auth::user();
@@ -390,14 +424,14 @@ class LearningtasksPlugin extends UserPluginBase
 
         // ユーザーstatusテーブル
         $users_statuses
-            = LearningtasksUsersStatuses::whereIn('learningtasks_users_statuses.learningtasks_posts_id', $posts_ids)
+            = LearningtasksUsersStatuses::whereIn('learningtasks_users_statuses.contents_id', $contents_ids)
                                         ->where('user_id', '=', $user->id)
                                         ->get();
 
-        // ユーザーstatusテーブル詰めなおし（課題管理データの一覧にあてるための外配列）
+        // ユーザーstatusテーブル詰めなおし（課題管理データの一覧にあてるための配列）
         $learningtasks_users_statuses = array();
         foreach($users_statuses as $record) {
-            $learningtasks_users_statuses[$record->learningtasks_posts_id][] = $record;
+            $learningtasks_users_statuses[$record->contents_id] = $record;
         }
 
         return $learningtasks_users_statuses;
@@ -532,20 +566,36 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
 
+        // ユーザーstatus：画面表示するデータのcontents_id を集める
+        $contents_ids = array();
+        foreach($learningtasks_posts as $learningtasks_post) {
+            $contents_ids[] = $learningtasks_post->contents_id;
+        }
+
         // ユーザーstatusテーブルを取得
-        $learningtasks_users_statuses = $this->getUserStatus($posts_ids);
+        $learningtasks_users_statuses = $this->getUserStatus($contents_ids);
 
         // ユーザーstatusテーブルをポストデータに紐づけ
         foreach($learningtasks_posts as &$learningtasks_post) {
-            if ($learningtasks_users_statuses && array_key_exists($learningtasks_post->id, $learningtasks_users_statuses)) {
-                $learningtasks_post->user_status = $learningtasks_users_statuses[$learningtasks_post->id];
+            if ($learningtasks_users_statuses && array_key_exists($learningtasks_post->contents_id, $learningtasks_users_statuses)) {
+                $learningtasks_post->user_task_status = $learningtasks_users_statuses[$learningtasks_post->contents_id]->task_status;
             }
+        }
+
+        // カテゴリごとにまとめる＆カテゴリの配列も作る
+        $categories_and_posts = array();
+        $categories = array();
+        foreach($learningtasks_posts as $learningtasks_post) {
+            $categories_and_posts[$learningtasks_post->categories_id][] = $learningtasks_post;
+            $categories[$learningtasks_post->categories_id] = $learningtasks_post;
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'learningtasks', [
-            'learningtasks_posts' => $learningtasks_posts,
+            'learningtasks_posts'  => $learningtasks_posts,
+            'categories_and_posts' => $categories_and_posts,
+            'categories'           => $categories,
             'learningtasks_frame'  => $learningtasks_frame,
         ]);
     }
@@ -662,13 +712,17 @@ class LearningtasksPlugin extends UserPluginBase
         }
         $learningtasks_posts_tags = trim($learningtasks_posts_tags, ',');
 
+        // 課題管理データを取得
+        $learningtasks_posts_files = $this->getTaskFile([$learningtasks_post->id]);
+
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'learningtasks_input', [
             'learningtasks_frame'       => $learningtasks_frame,
-            'learningtasks_posts'      => $learningtasks_post,
-            'learningtasks_categories' => $learningtasks_categories,
-            'learningtasks_posts_tags' => $learningtasks_posts_tags,
+            'learningtasks_posts'       => $learningtasks_post,
+            'learningtasks_categories'  => $learningtasks_categories,
+            'learningtasks_posts_tags'  => $learningtasks_posts_tags,
+            'learningtasks_posts_files' => $learningtasks_posts_files[$learningtasks_post->id],
             'errors'           => $errors,
         ])->withInput($request->all);
     }
@@ -683,7 +737,12 @@ class LearningtasksPlugin extends UserPluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->create($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
+            if ($learningtasks_posts_id) {
+                return ( $this->edit($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
+            }
+            else {
+                return ( $this->create($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
+            }
         }
 
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
@@ -751,10 +810,10 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // タグの保存
-        $this->saveTag($request, $learningtasks_post);
+        $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
 
         // 課題ファイルの保存
-        $this->saveTaskFile($request, $learningtasks_post);
+        $this->saveTaskFile($request, $learningtasks_post, $old_learningtasks_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -810,7 +869,10 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // タグの保存
-        $this->saveTag($request, $learningtasks_post);
+        $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
+
+        // 課題ファイルの保存
+        $this->saveTaskFile($request, $learningtasks_post, $old_learningtasks_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -862,6 +924,9 @@ class LearningtasksPlugin extends UserPluginBase
 
         // タグもコピー
         $this->copyTag($check_learningtasks_post, $learningtasks_post);
+
+        // 課題ファイル情報もコピー
+        $this->copyTaskFile($request, $check_learningtasks_post, $learningtasks_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -1295,11 +1360,11 @@ class LearningtasksPlugin extends UserPluginBase
 
         // ユーザーの進捗ステータス
         LearningtasksUsersStatuses::updateOrCreate(
-            ['learningtasks_posts_id' => $id, 'user_id' => $user->id],
+            ['contents_id' => $id, 'user_id' => $user->id],
             [
-             'learningtasks_posts_id' => $id,
+             'contents_id' => $id,
              'user_id' => $user->id,
-             'task_status' => 1,
+             'task_status' => $request->task_status,
             ]
         );
 
