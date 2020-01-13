@@ -83,7 +83,7 @@
                 公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
 
                 {{-- 詳細画面 --}}
-                <a href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><i class="fas fa-external-link-square-alt"></i></a>
+                <a href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><i class="fas fa-expand-alt"></i></a>
 
                 {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
                 <div class="row">
