@@ -6,13 +6,17 @@ use App\Notifications\PasswordResetNotification;
 
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
     use Notifiable;
 
-    // “ú•tŒ^‚Ìê‡A$dates ‚ÉƒJƒ‰ƒ€‚ğw’è‚µ‚Ä‚¨‚­B
+    // æ—¥ä»˜å‹ã®å ´åˆã€$dates ã«ã‚«ãƒ©ãƒ ã‚’æŒ‡å®šã—ã¦ãŠãã€‚
     protected $dates = ['created_at', 'updated_at'];
+
+    // ãƒ¦ãƒ¼ã‚¶ãƒ¼ã®æ¨©é™ã‚»ãƒƒãƒˆ
+    public $user_roles = null;
 
     /**
      * The attributes that are mass assignable.
@@ -34,7 +38,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * ƒpƒXƒ[ƒhƒŠƒZƒbƒg’Ê’m‚Ì‘—M‚ğƒI[ƒo[ƒ‰ƒCƒh
+     * ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ãƒªã‚»ãƒƒãƒˆé€šçŸ¥ã®é€ä¿¡ã‚’ã‚ªãƒ¼ãƒãƒ¼ãƒ©ã‚¤ãƒ‰
      *
      * @param  string  $token
      * @return void
