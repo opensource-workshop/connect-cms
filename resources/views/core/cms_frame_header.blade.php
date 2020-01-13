@@ -62,7 +62,7 @@
             </form>
 
             {{-- 変更画面へのリンク --}}
-            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}"><i class="far fa-edit bg-{{$frame->frame_design}} small cc-font-color"></i></a>
+            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}"><i class="fas fa-cog bg-{{$frame->frame_design}} small cc-font-color"></i></a>
 
 {{-- モーダル実装 --}}
             {{-- 変更画面へのリンク --}}
