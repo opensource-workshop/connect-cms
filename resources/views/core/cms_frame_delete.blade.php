@@ -54,7 +54,7 @@
 
     {{-- 削除画面(入力フォーム) --}}
     <div class="container-fluid">
-        <div class="card border-danger mt-3">
+        <div class="card border-danger my-3">
             <div class="card-body frame-setting-body">
 
                 <form action="{{url('/core/frame/destroy')}}/{{$page->id}}/{{$frame->frame_id}}" method="POST" class="form-horizontal">
