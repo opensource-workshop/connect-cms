@@ -254,6 +254,7 @@ class Page extends Model
                 }
             }
         }
+        return true;
         return false;
     }
 
