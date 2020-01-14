@@ -249,12 +249,12 @@ class Page extends Model
             $ip_addresses = explode(',', $this->ip_address);
 
             foreach($ip_addresses as $ip_address) {
-                if (!$this->isRangeIp(\Request::ip(), trim($ip_address))) {
-                    return false;
+                if ($this->isRangeIp(\Request::ip(), trim($ip_address))) {
+                    return true;
                 }
             }
         }
-        return true;
+        return false;
     }
 
     /**
