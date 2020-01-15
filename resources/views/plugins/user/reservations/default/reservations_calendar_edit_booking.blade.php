@@ -111,7 +111,7 @@
             </div>
             {{-- 予約時間 --}}
             <div class="row">
-                <div class="col-3">予約時間：</div>
+                <div class="col-md-3">予約時間：</div>
             </div>
             <div class="form-group row">
                 {{-- 予約開始時間 --}}
