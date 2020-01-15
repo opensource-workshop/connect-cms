@@ -149,41 +149,43 @@
                         @endif
                     </label>
                     {{-- 項目本体 --}}
-                    @switch($column->column_type)
+                    <div class="col-sm-10">
+                        @switch($column->column_type)
 
-                        {{-- テキスト項目 --}}
-                        @case(ReservationColumnType::txt)
+                            {{-- テキスト項目 --}}
+                            @case(ReservationColumnType::txt)
 
-                            <input name="columns_value[{{$column->id}}]" class="col-sm-10 form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id)}}">
-                                @if ($errors && $errors->has("columns_value.$column->id"))
-                                    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("columns_value.$column->id")}}</div>
-                                @endif
-                            @break
+                                <input name="columns_value[{{$column->id}}]" class="form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id)}}">
+                                    @if ($errors && $errors->has("columns_value.$column->id"))
+                                        <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("columns_value.$column->id")}}</div>
+                                    @endif
+                                @break
 
-                        {{-- ラジオボタン項目 --}}
-                        @case(ReservationColumnType::radio)
-                            
-                            {{-- 項目に紐づく選択肢データを抽出 --}}
-                            @php
-                                $filtered_selects = $selects->filter(function($select) use($column) {
-                                    return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
-                                })->sortBy('display_sequence');
-                            @endphp
+                            {{-- ラジオボタン項目 --}}
+                            @case(ReservationColumnType::radio)
+                                
+                                {{-- 項目に紐づく選択肢データを抽出 --}}
+                                @php
+                                    $filtered_selects = $selects->filter(function($select) use($column) {
+                                        return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
+                                    })->sortBy('display_sequence');
+                                @endphp
 
-                            {{-- 項目に紐づく選択肢データを表示 --}}
-                            <div class="col-sm-10 container-fluid">
-                                @foreach ($filtered_selects as $select)
-                                    <div class="custom-control custom-radio custom-control-inline">
-                                        <input name="columns_value[{{ $column->id }}]" id="columns_value[{{ $column->id . '_' . $select->id }}]" class="custom-control-input" type="{{ $column->column_type }}" value="{{ $select->id }}" {{ $loop->first || old('columns_value.'.$column->id) == $select->id ? 'checked' : null }} >
-                                        <label class="custom-control-label" for="columns_value[{{ $column->id . '_' . $select->id }}]">{{ $select->select_name }}</label>
-                                    </div>
-                                @endforeach
-                            </div>
-                            @break
+                                {{-- 項目に紐づく選択肢データを表示 --}}
+                                <div class="container-fluid">
+                                    @foreach ($filtered_selects as $select)
+                                        <div class="custom-control custom-radio custom-control-inline">
+                                            <input name="columns_value[{{ $column->id }}]" id="columns_value[{{ $column->id . '_' . $select->id }}]" class="custom-control-input" type="{{ $column->column_type }}" value="{{ $select->id }}" {{ $loop->first || old('columns_value.'.$column->id) == $select->id ? 'checked' : null }} >
+                                            <label class="custom-control-label" for="columns_value[{{ $column->id . '_' . $select->id }}]">{{ $select->select_name }}</label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @break
 
-                        @default
-                            
-                    @endswitch
+                            @default
+                                
+                        @endswitch
+                    </div>
                 </div>
             @endforeach
         </div>
