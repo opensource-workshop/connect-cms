@@ -125,7 +125,6 @@
                     <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                     </div>
-                    @if ($errors && $errors->has('start_datetime')) <div class="text-danger">{{$errors->first('start_datetime')}}</div> @endif
                 </div>
                 {{-- 予約終了時間 --}}
                 <div class="col-md-3 input-group date" id="end_datetime" data-target-input="nearest">
@@ -138,6 +137,12 @@
                     <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                     </div>
+                    
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    @if ($errors && $errors->has('start_datetime')) <div class="text-danger">{{$errors->first('start_datetime')}}</div> @endif
                     @if ($errors && $errors->has('end_datetime')) <div class="text-danger">{{$errors->first('end_datetime')}}</div> @endif
                 </div>
             </div>
