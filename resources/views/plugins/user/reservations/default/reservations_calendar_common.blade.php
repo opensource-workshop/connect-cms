@@ -35,8 +35,8 @@
                         <form>
                             {{-- 利用日 --}}
                             <div class="form-group row">
-                                <label for="reservation_date" class="col-3 col-form-label">利用日</label>
-                                <input type="text" class="col-9 form-control-plaintext" id="reservation_date" readonly>
+                                <label for="reservation_date_display" class="col-3 col-form-label">利用日</label>
+                                <input type="text" class="col-9 form-control-plaintext" id="reservation_date_display" readonly>
                             </div>
                             {{-- 利用時間 --}}
                             <div class="form-group row">
@@ -55,9 +55,25 @@
 
                     {{-- フッター --}}
                     <div class="modal-footer" style="justify-content : left;">
+                        {{-- 閉じるボタン --}}
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times"></i> 閉じる
                         </button>
+                        {{-- 予約編集ボタン（ログイン時のみ表示） --}}
+                        @auth
+                            <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking" method="POST" class="form-horizontal">
+                                {{ csrf_field() }}
+
+                                {{-- 予約ID --}}
+                                <input type="hidden" name="booking_id" id="booking_id" value="">
+                                {{-- ＋ボタンクリックでformサブミット --}}
+                                <a href="javascript:form_edit_booking.submit()">
+                                    <button type="button" class="btn btn-primary">
+                                        <i class="far fa-edit bg-default small cc-font-color"></i> 予約修正
+                                    </button>
+                                </a>
+                            </form>
+                        @endauth
                     </div>
                 </div>
             </div>
@@ -71,7 +87,8 @@
                 // モーダルタイトル
                 modal.find('.modal-title').text('予約詳細（' + button.data('facility_name') + '）')
                 // 予約項目（固定）
-                modal.find('#reservation_date').val(button.data('reservation_date'))
+                modal.find('#booking_id').val(button.data('booking_id'))
+                modal.find('#reservation_date_display').val(button.data('reservation_date_display'))
                 modal.find('#reservation_time').val(button.data('reservation_time'))
                 // 予約項目（可変）
                 @foreach ($columns as $column)

@@ -91,12 +91,14 @@
                                         <div class="float-right">
                                             @auth
                                                 {{-- セル毎に予約追加画面呼び出し用のformをセット --}}
-                                                <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{ $cell['date']->format('Ymd') }}#frame-{{$frame_id}}" name="form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}" method="POST" class="form-horizontal">
+                                                <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}" method="POST" class="form-horizontal">
                                                     {{ csrf_field() }}
                                                     {{-- 施設予約ID --}}
                                                     <input type="hidden" name="reservations_id" value="{{ $reservations->id }}">
                                                     {{-- 施設ID --}}
                                                     <input type="hidden" name="facility_id" value="{{ $calendar_details['facility']->id }}">
+                                                    {{-- 対象日付 --}}
+                                                    <input type="hidden" name="target_date" value="{{ $cell['date']->format('Ymd') }}">
                                                     {{-- ＋ボタンクリックでformサブミット --}}
                                                     <a href="javascript:form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
                                                         <i class="fas fa-plus-square fa-2x"></i>
@@ -109,8 +111,9 @@
                                         @foreach ($cell['bookings'] as $booking)
                                             <a href="#bookingDetailModal" role="button" data-toggle="modal" 
                                                 {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
+                                                data-booking_id="{{ $booking['booking_header']->id }}" 
                                                 data-facility_name="{{ $facility_name }}" 
-                                                data-reservation_date="{{ $booking['booking_header']->start_datetime->format('Y年n月j日') . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')' }}" 
+                                                data-reservation_date_display="{{ $booking['booking_header']->start_datetime->format('Y年n月j日') . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')' }}" 
                                                 data-reservation_time="{{ substr($booking['booking_header']->start_datetime, 11, 5) . ' ~ ' . substr($booking['booking_header']->end_datetime, 11, 5) }}" 
                                                 {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
                                                 @foreach ($booking['booking_details'] as $bookingDetail)
