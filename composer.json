@@ -1,7 +1,7 @@
 {
-    "name": "laravel/laravel",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "name": "opensource-workshop/connect-cms",
+    "description": "Connect-CMS is a content management system for easily creating websites.",
+    "keywords": ["cms", "connect-cms", "laravel"],
     "license": "MIT",
     "type": "project",
     "require": {
