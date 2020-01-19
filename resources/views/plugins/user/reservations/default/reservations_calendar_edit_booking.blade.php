@@ -1,5 +1,5 @@
 {{--
- * 施設予約の追加予約画面
+ * 施設予約の予約登録（更新）画面
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -13,7 +13,7 @@
      * 登録ボタン押下
      */
      function submit_booking_store() {
-        form_save_booking{{$frame_id}}.action = "{{URL::to('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{ $target_date->format('Ymd') }}#frame-{{$frame_id}}";
+        form_save_booking{{$frame_id}}.action = "{{URL::to('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_save_booking{{$frame_id}}.submit();
     }
     /**
@@ -79,13 +79,15 @@
 
 <form action="" name="form_save_booking{{$frame_id}}" method="POST">
     {{-- メッセージエリア --}}
-    <div class="alert alert-info mt-2">
-        <i class="fas fa-exclamation-circle"></i> 対象施設への予約を登録します。
+    <div class="alert {{ $booking ? 'alert-warning' : 'alert-info' }} mt-2">
+        <i class="fas fa-exclamation-circle"></i> 対象施設の予約を{{ $booking ? '更新' : '登録' }}します。
     </div>
-    
+
     {{ csrf_field() }}
     <input type="hidden" name="reservations_id" value="{{ $reservation->id }}">
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
+    <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}">
+    <input type="hidden" name="target_date" value="{{ $target_date->format('Ymd') }}">
 
     {{-- 基本項目 --}}
     <div class="card">
@@ -109,23 +111,38 @@
             </div>
             {{-- 予約時間 --}}
             <div class="row">
-                <div class="col-3">予約時間：</div>
+                <div class="col-md-3">予約時間：</div>
             </div>
             <div class="form-group row">
                 {{-- 予約開始時間 --}}
                 <div class="col-md-3 input-group date" id="start_datetime" data-target-input="nearest">
-                    <input type="text" name="start_datetime" value="{{ old('start_datetime', Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime" readonly>
+                    {{-- 表示優先順：
+                        ・旧入力値（入力エラー時）
+                        ・予約値（更新時）
+                        ・初期表示値（新規登録時）
+                    --}}
+                    <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->hour : Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime" readonly>
                     <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                     </div>
-                    @if ($errors && $errors->has('start_datetime')) <div class="text-danger">{{$errors->first('start_datetime')}}</div> @endif
                 </div>
                 {{-- 予約終了時間 --}}
                 <div class="col-md-3 input-group date" id="end_datetime" data-target-input="nearest">
-                    <input type="text" name="end_datetime" value="{{ old('end_datetime', Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime" readonly>
+                    {{-- 表示優先順：
+                        ・旧入力値（入力エラー時）
+                        ・予約値（更新時）
+                        ・初期表示値（新規登録時）
+                    --}}
+                    <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->hour : Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime" readonly>
                     <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                     </div>
+                    
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    @if ($errors && $errors->has('start_datetime')) <div class="text-danger">{{$errors->first('start_datetime')}}</div> @endif
                     @if ($errors && $errors->has('end_datetime')) <div class="text-danger">{{$errors->first('end_datetime')}}</div> @endif
                 </div>
             </div>
@@ -149,41 +166,43 @@
                         @endif
                     </label>
                     {{-- 項目本体 --}}
-                    @switch($column->column_type)
+                    <div class="col-sm-10">
+                        @switch($column->column_type)
 
-                        {{-- テキスト項目 --}}
-                        @case(ReservationColumnType::txt)
+                            {{-- テキスト項目 --}}
+                            @case(ReservationColumnType::txt)
 
-                            <input name="columns_value[{{$column->id}}]" class="col-sm-10 form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id)}}">
-                                @if ($errors && $errors->has("columns_value.$column->id"))
-                                    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("columns_value.$column->id")}}</div>
-                                @endif
-                            @break
+                                <input name="columns_value[{{$column->id}}]" class="form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id , $column->value ? $column->value : '')}}">
+                                    @if ($errors && $errors->has("columns_value.$column->id"))
+                                        <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("columns_value.$column->id")}}</div>
+                                    @endif
+                                @break
 
-                        {{-- ラジオボタン項目 --}}
-                        @case(ReservationColumnType::radio)
-                            
-                            {{-- 項目に紐づく選択肢データを抽出 --}}
-                            @php
-                                $filtered_selects = $selects->filter(function($select) use($column) {
-                                    return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
-                                })->sortBy('display_sequence');
-                            @endphp
+                            {{-- ラジオボタン項目 --}}
+                            @case(ReservationColumnType::radio)
+                                
+                                {{-- 項目に紐づく選択肢データを抽出 --}}
+                                @php
+                                    $filtered_selects = $selects->filter(function($select) use($column) {
+                                        return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
+                                    })->sortBy('display_sequence');
+                                @endphp
 
-                            {{-- 項目に紐づく選択肢データを表示 --}}
-                            <div class="col-sm-10 container-fluid">
-                                @foreach ($filtered_selects as $select)
-                                    <div class="custom-control custom-radio custom-control-inline">
-                                        <input name="columns_value[{{ $column->id }}]" id="columns_value[{{ $column->id . '_' . $select->id }}]" class="custom-control-input" type="{{ $column->column_type }}" value="{{ $select->id }}" {{ $loop->first || old('columns_value.'.$column->id) == $select->id ? 'checked' : null }} >
-                                        <label class="custom-control-label" for="columns_value[{{ $column->id . '_' . $select->id }}]">{{ $select->select_name }}</label>
-                                    </div>
-                                @endforeach
-                            </div>
-                            @break
+                                {{-- 項目に紐づく選択肢データを表示 --}}
+                                <div class="container-fluid">
+                                    @foreach ($filtered_selects as $select)
+                                        <div class="custom-control custom-radio custom-control-inline">
+                                            <input name="columns_value[{{ $column->id }}]" id="columns_value[{{ $column->id . '_' . $select->id }}]" class="custom-control-input" type="{{ $column->column_type }}" value="{{ $select->id }}" {{ $loop->first || old('columns_value.'.$column->id) == $select->id || $column->value == $select->id ? 'checked' : null }} >
+                                            <label class="custom-control-label" for="columns_value[{{ $column->id . '_' . $select->id }}]">{{ $select->select_name }}</label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @break
 
-                        @default
-                            
-                    @endswitch
+                            @default
+                                
+                        @endswitch
+                    </div>
                 </div>
             @endforeach
         </div>
@@ -196,7 +215,7 @@
         {{-- キャンセルボタン --}}
         <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_booking_cancel();"><i class="fas fa-times"></i> キャンセル</button>
         {{-- 登録ボタン --}}
-        <button type="submit" class="btn btn-primary" onclick="javascript:submit_booking_store();"><i class="fas fa-check"></i> 登録</button>
+        <button type="submit" class="btn btn-primary" onclick="javascript:submit_booking_store();"><i class="fas fa-check"></i> {{ $booking ? '更新' : '登録' }} </button>
     </div>
 </form>
 @endsection
