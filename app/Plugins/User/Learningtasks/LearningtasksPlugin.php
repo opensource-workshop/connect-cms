@@ -731,7 +731,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_posts'       => $learningtasks_post,
             'learningtasks_categories'  => $learningtasks_categories,
             'learningtasks_posts_tags'  => $learningtasks_posts_tags,
-            'learningtasks_posts_files' => $learningtasks_posts_files[$learningtasks_post->id],
+            'learningtasks_posts_files' => (array_key_exists($learningtasks_post->id, $learningtasks_posts_files)) ? $learningtasks_posts_files[$learningtasks_post->id] : null,
             'errors'           => $errors,
         ])->withInput($request->all);
     }
