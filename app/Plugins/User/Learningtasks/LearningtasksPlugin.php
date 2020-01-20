@@ -331,17 +331,25 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題ファイルがアップロードされた。
         if ($request->hasFile('add_task_file')) {
 
-            // ファイルチェック
-            $validator = Validator::make($request->all(), [
-                'add_task_file' => 'required|mimes:pdf,doc,docx,sb2,sb3',
-            ]);
-            $validator->setAttributeNames([
-                'add_task_file' => '課題ファイル',
-            ]);
-            if ($validator->fails()) {
+            // Scratchを許可
+            $extension = $request->file('add_task_file')->getClientOriginalExtension();
+            if ($extension == 'sb2' || $extension == 'sb3') {
+                // OK
+            }
+            else {
+
+                // ファイルチェック
+                $validator = Validator::make($request->all(), [
+                    'add_task_file' => 'required|mimes:pdf,doc,docx',
+                ]);
+                $validator->setAttributeNames([
+                    'add_task_file' => '課題ファイル',
+                ]);
+                if ($validator->fails()) {
                 // return ( $this->create($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
                 // エラーの表示方法を検討する。
-                return;
+                    return;
+                }
             }
 
             // uploads テーブルに情報追加、ファイルのid を取得する
