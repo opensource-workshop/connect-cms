@@ -26,7 +26,7 @@
                     <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>操作</th>
+                            <th>表示順</th>
                             <th>選択肢</th>
                             <th>削除</th>
                         </tr>
