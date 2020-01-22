@@ -1,7 +1,7 @@
 {{--
- * 設定画面テンプレート。
+ * 項目の詳細設定画面
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
@@ -34,6 +34,7 @@
                     <tbody id="column_detail_tbody{{$row_no}}">
 
                         <tr class="column_detail_row_hidden{{$row_no}}" style="display:none;">
+                            {{-- 表示順 --}}
                             <td style="vertical-align: middle;" nowrap>
                                 <button type="button" class="btn btn-default btn-xs" disabled>
                                     <i class="fas fa-arrow-up"></i>
@@ -42,10 +43,12 @@
                                    <i class="fas fa-arrow-down"></i>
                                </button>
                            </td>
-                           <td>
+                            {{-- 選択肢名 --}}
+                            <td>
                                 <input type="text" name="select_value" value="" class="form-control select_value">
                            </td>
-                           <td nowrap>
+                            {{-- 削除ボタン --}}
+                            <td nowrap>
                                <button class="btn btn-danger form-horizontal" onclick="">
                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
                                </button>
@@ -56,6 +59,7 @@
                        @if (isset($row['select']))
                        @foreach ($row['select'] as $select_no => $row_select)
                         <tr class="column_detail_row_{{$row_no}}_{{$select_no}}">
+                            {{-- 表示順 --}}
                             <td style="vertical-align: middle;" nowrap>
                                 <button type="button" class="btn btn-default btn-xs" disabled>
                                     <i class="fas fa-arrow-up"></i>
@@ -64,9 +68,11 @@
                                    <i class="fas fa-arrow-down"></i>
                                </button>
                            </td>
-                           <td>
+                            {{-- 選択肢名 --}}
+                            <td>
                                 <input type="text" name="forms[{{$frame_id}}][{{$row_no}}][select][{{$select_no}}][value]" value="{{$row['select'][$select_no]['value']}}" class="form-control select_value">
                            </td>
+                           {{-- 削除ボタン --}}
                            <td nowrap>
                                <button class="btn btn-danger form-horizontal" onclick="javascript:remove_select_row('{{$row_no}}','{{$select_no}}');return false;">
                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
@@ -77,6 +83,7 @@
                        @endforeach
                        @else
                         <tr class="column_detail_row_{{$row_no}}_1">
+                            {{-- 表示順 --}}
                             <td style="vertical-align: middle;" nowrap>
                                 <button type="button" class="btn btn-default btn-xs" disabled>
                                     <i class="fas fa-arrow-up"></i>
@@ -85,9 +92,11 @@
                                     <i class="fas fa-arrow-down"></i>
                                 </button>
                             </td>
+                            {{-- 選択肢名 --}}
                             <td>
                                  <input type="text" name="forms[{{$frame_id}}][{{$row_no}}][select][1][value]" value="" class="form-control select_value">
                             </td>
+                            {{-- 削除ボタン --}}
                             <td nowrap>
                                 <button class="btn btn-danger" onclick="javascript:remove_select_row('{{$row_no}}','1');return false;">
                                     <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
@@ -100,6 +109,7 @@
                        <tr class="column_detail_row_add">
                            <td style="vertical-align: middle;" nowrap></td>
                            <td class="text-center">
+                               {{-- ＋ボタン --}}
                                <button class="btn btn-primary" onclick="javascript:add_select_row('{{$row_no}}');return false;">
                                    <i class="fas fa-plus"></i> <span class="d-sm-none">選択肢追加</span>
                                </button>
@@ -110,10 +120,13 @@
                     </tfoot>
                     </table>
 
+                    {{-- ボタンエリア --}}
                     <div class="text-center mt-1">
+                        {{-- キャンセルボタン --}}
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times"></i> キャンセル
                         </button>
+                        {{-- 変更ボタン --}}
                         <button type="button" class="btn btn-primary mr-3" onclick="javascript:submit_reload_column('{{$row_no}}');">
                             <i class="far fa-edit"></i> 変更
                         </button>
