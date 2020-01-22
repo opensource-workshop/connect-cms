@@ -6,7 +6,9 @@
  * @category フォーム・プラグイン
  --}}
 <tr id="column_add_tr">
-    <td style="vertical-align: middle;" nowrap><br /></td>
+    {{-- 余白 --}}
+    <td>
+    </td>
     {{-- 項目名 --}}
     <td>
         <input class="form-control" type="text" name="forms[{{$frame_id}}][{{$row_no}}][column_name]" value="" style="min-width: 150px;">
@@ -33,14 +35,14 @@
         </select>
     </td>
     {{-- 必須 --}}
-    <td class="text-center" style="vertical-align: middle;">
+    <td class="align-middle text-center">
         <input type="checkbox" name="forms[{{$frame_id}}][{{$row_no}}][required]" value="1">
     </td>
     <td>
         <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][frame_col]" value="0">
     </td>
     {{-- ＋ボタン --}}
-    <td class="text-center" style="vertical-align: middle;">
+    <td class="text-center">
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_setting_column();"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>
 </tr>

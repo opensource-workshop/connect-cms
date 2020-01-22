@@ -123,7 +123,7 @@
                         @endforeach
                         {{-- 新規登録用の行 --}}
                         <tr>
-                            <th colspan="4">【項目の追加行】</th>
+                            <th colspan="6">【項目の追加行】</th>
                         </tr>
                         @include('plugins.user.forms.default.forms_edit_row_add',['row_no' => 0, 'delete_flag' => 0])
                     </tbody>

@@ -35,7 +35,7 @@
 
                         <tr class="column_detail_row_hidden{{$row_no}}" style="display:none;">
                             {{-- 表示順 --}}
-                            <td style="vertical-align: middle;" nowrap>
+                            <td nowrap>
                                 <button type="button" class="btn btn-default btn-xs" disabled>
                                     <i class="fas fa-arrow-up"></i>
                                 </button>
@@ -60,7 +60,7 @@
                        @foreach ($row['select'] as $select_no => $row_select)
                         <tr class="column_detail_row_{{$row_no}}_{{$select_no}}">
                             {{-- 表示順 --}}
-                            <td style="vertical-align: middle;" nowrap>
+                            <td nowrap>
                                 <button type="button" class="btn btn-default btn-xs" disabled>
                                     <i class="fas fa-arrow-up"></i>
                                 </button>
@@ -84,7 +84,7 @@
                        @else
                         <tr class="column_detail_row_{{$row_no}}_1">
                             {{-- 表示順 --}}
-                            <td style="vertical-align: middle;" nowrap>
+                            <td nowrap>
                                 <button type="button" class="btn btn-default btn-xs" disabled>
                                     <i class="fas fa-arrow-up"></i>
                                 </button>
@@ -107,7 +107,7 @@
                     </tbody>
                     <tfoot>
                        <tr class="column_detail_row_add">
-                           <td style="vertical-align: middle;" nowrap></td>
+                           <td></td>
                            <td class="text-center">
                                {{-- ＋ボタン --}}
                                <button class="btn btn-primary" onclick="javascript:add_select_row('{{$row_no}}');return false;">

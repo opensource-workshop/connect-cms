@@ -7,7 +7,7 @@
  --}}
 <tr @if ($delete_flag == '1') class="d-none" @endif>
     {{-- 表示順 --}}
-    <td style="vertical-align: middle;" nowrap>
+    <td nowrap>
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row_no}})">
             <i class="fas fa-arrow-up"></i>
@@ -45,7 +45,7 @@
         </select>
     </td>
     {{-- 必須 --}}
-    <td class="text-center" style="vertical-align: middle;">
+    <td class="align-middle text-center">
         @if ($row['column_type'] == 'group')
             <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][required]" value="0">
         @else
@@ -68,7 +68,7 @@
         @endif
     </td>
     {{-- 削除ボタン --}}
-    <td class="text-center" style="vertical-align: middle;">
+    <td class="text-center">
         <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:submit_destroy_column({{$row_no}});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
     </td>
 </tr>
