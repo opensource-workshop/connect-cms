@@ -84,7 +84,7 @@
                         <th class="text-center" nowrap>型</th>
                         <th class="text-center" nowrap>必須 <span class="fas fa-info-circle" data-toggle="tooltip" title="必須項目として指定します。"></th>
                         <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした項目を非表示にします。"></th>
-                        <th class="text-center" nowrap>選択肢</th>
+                        <th class="text-center" nowrap>詳細</th>
                         <th class="text-center" nowrap>更新</th>
                     @endif
                 </tr>

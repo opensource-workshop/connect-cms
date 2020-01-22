@@ -65,7 +65,7 @@
         @endif
     </td>
     {{-- 更新ボタン --}}
-    <td>
+    <td class="text-center">
         <button 
             class="btn btn-primary cc-font-90 text-nowrap" 
             onclick="javascript:submit_update_column({{ $column->id }});"
