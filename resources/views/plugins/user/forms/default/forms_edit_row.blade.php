@@ -45,7 +45,7 @@
         </select>
     </td>
     {{-- 必須 --}}
-    <td style="vertical-align: middle;">
+    <td class="text-center" style="vertical-align: middle;">
         @if ($row['column_type'] == 'group')
             <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][required]" value="0">
         @else
@@ -53,7 +53,7 @@
         @endif
     </td>
     {{-- 詳細ボタン --}}
-    <td>
+    <td class="text-center">
         @if ($row['column_type'] == 'group')
             <select class="form-control" name="forms[{{$frame_id}}][{{$row_no}}][frame_col]">
                 {{-- <option value="">Choose...</option> --}}
@@ -68,7 +68,7 @@
         @endif
     </td>
     {{-- 削除ボタン --}}
-    <td style="vertical-align: middle;">
+    <td class="text-center" style="vertical-align: middle;">
         <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:submit_destroy_column({{$row_no}});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
     </td>
 </tr>

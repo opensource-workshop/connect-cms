@@ -107,13 +107,13 @@
                     <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th nowrap>表示順</th>
-                            <th nowrap>項目名</th>
-                            <th nowrap>型</th>
-                            <th nowrap>必須</th>
-                            <th nowrap>詳細</th>
-                            <th nowrap>削除</th>
-                            <th nowrap></th>
+                            <th class="text-center" nowrap>表示順</th>
+                            <th class="text-center" nowrap>項目名</th>
+                            <th class="text-center" nowrap>型</th>
+                            <th class="text-center" nowrap>必須</th>
+                            <th class="text-center" nowrap>詳細</th>
+                            <th class="text-center" nowrap>削除</th>
+                            <th class="text-center" nowrap></th>
                         </tr>
                     </thead>
                     <tbody>

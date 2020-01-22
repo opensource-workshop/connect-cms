@@ -26,9 +26,9 @@
                     <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>表示順</th>
-                            <th>選択肢</th>
-                            <th>削除</th>
+                            <th class="text-center" nowrap>表示順</th>
+                            <th class="text-center" nowrap>選択肢</th>
+                            <th class="text-center" nowrap>削除</th>
                         </tr>
                     </thead>
                     <tbody id="column_detail_tbody{{$row_no}}">
@@ -73,7 +73,7 @@
                                 <input type="text" name="forms[{{$frame_id}}][{{$row_no}}][select][{{$select_no}}][value]" value="{{$row['select'][$select_no]['value']}}" class="form-control select_value">
                            </td>
                            {{-- 削除ボタン --}}
-                           <td nowrap>
+                           <td class="text-center">
                                <button class="btn btn-danger form-horizontal" onclick="javascript:remove_select_row('{{$row_no}}','{{$select_no}}');return false;">
                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
                                </button>
@@ -97,7 +97,7 @@
                                  <input type="text" name="forms[{{$frame_id}}][{{$row_no}}][select][1][value]" value="" class="form-control select_value">
                             </td>
                             {{-- 削除ボタン --}}
-                            <td nowrap>
+                            <td class="text-center">
                                 <button class="btn btn-danger" onclick="javascript:remove_select_row('{{$row_no}}','1');return false;">
                                     <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
                                 </button>
