@@ -1,12 +1,13 @@
 {{--
- * 設定画面テンプレート。
+ * 項目の追加行テンプレート
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
 <tr id="column_add_tr">
     <td style="vertical-align: middle;" nowrap><br /></td>
+    {{-- 項目名 --}}
     <td>
         <input class="form-control" type="text" name="forms[{{$frame_id}}][{{$row_no}}][column_name]" value="" style="min-width: 150px;">
         {{-- forms_columns テーブルのid を隠しておく。DB更新の際、変更分とわかるようにするため。 --}}
@@ -15,6 +16,7 @@
         {{-- 画面上、削除されたことを判定するフラグ。データ削除はフォームの保存時に行うが、どのデータを削除するのかの判定で使用 --}}
         <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][delete_flag]" value="0">
     </td>
+    {{-- 型 --}}
     <td>
         <select class="form-control" name="forms[{{$frame_id}}][{{$row_no}}][column_type]" style="min-width: 100px;">
             <option value="">項目追加...</option>
@@ -30,12 +32,14 @@
             <option value="group">まとめ行</option>
         </select>
     </td>
+    {{-- 必須 --}}
     <td style="vertical-align: middle;">
         <input type="checkbox" name="forms[{{$frame_id}}][{{$row_no}}][required]" value="1">
     </td>
     <td>
         <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][frame_col]" value="0">
     </td>
+    {{-- ＋ボタン --}}
     <td style="vertical-align: middle;">
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_setting_column();"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>

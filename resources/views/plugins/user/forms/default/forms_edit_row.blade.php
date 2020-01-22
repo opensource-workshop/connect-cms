@@ -1,28 +1,24 @@
 {{--
- * 設定画面テンプレート。
+ * 項目の設定行テンプレート
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
 <tr @if ($delete_flag == '1') class="d-none" @endif>
+    {{-- 表示順 --}}
     <td style="vertical-align: middle;" nowrap>
         {{-- 上移動 --}}
-{{--
-        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row['columns_id']}})">
---}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$row_no}})">
             <i class="fas fa-arrow-up"></i>
         </button>
 
         {{-- 下移動 --}}
-{{--
-        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$row['columns_id']}})">
---}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$row_no}})">
             <i class="fas fa-arrow-down"></i>
         </button>
     </td>
+    {{-- 項目名 --}}
     <td>
         <input class="form-control" type="text" name="forms[{{$frame_id}}][{{$row_no}}][column_name]" value="{{$row['column_name']}}" style="min-width: 150px;">
 
@@ -32,6 +28,7 @@
         {{-- 画面上、削除されたことを判定するフラグ。データ削除はフォームの保存時に行うが、どのデータを削除するのかの判定で使用 --}}
         <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][delete_flag]" value="{{$row['delete_flag']}}">
     </td>
+    {{-- 型 --}}
     <td>
         <select class="form-control" name="forms[{{$frame_id}}][{{$row_no}}][column_type]" style="min-width: 100px;">
             <option value="">項目追加...</option>
@@ -47,6 +44,7 @@
             <option value="group"    @if ($row['column_type'] == 'group')    selected @endif >まとめ行</option>
         </select>
     </td>
+    {{-- 必須 --}}
     <td style="vertical-align: middle;">
         @if ($row['column_type'] == 'group')
             <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][required]" value="0">
@@ -54,6 +52,7 @@
             <input type="checkbox" name="forms[{{$frame_id}}][{{$row_no}}][required]" value="1" @if($row['required'] == "1")checked @endif>
         @endif
     </td>
+    {{-- 詳細ボタン --}}
     <td>
         @if ($row['column_type'] == 'group')
             <select class="form-control" name="forms[{{$frame_id}}][{{$row_no}}][frame_col]">
@@ -68,10 +67,12 @@
             @endif
         @endif
     </td>
+    {{-- 削除ボタン --}}
     <td style="vertical-align: middle;">
         <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:submit_destroy_column({{$row_no}});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
     </td>
 </tr>
+{{-- 選択肢の設定内容の表示行 --}}
 @if ($delete_flag == '0')
     @if ($row['column_type'] == 'radio' || $row['column_type'] == 'checkbox' || $row['column_type'] == 'select')
     <tr>
