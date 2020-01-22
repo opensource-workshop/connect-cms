@@ -68,6 +68,7 @@ class ReservationsPlugin extends UserPluginBase
             'updateSelectSequence', 
             'editBooking', 
             'saveBooking', 
+            'destroyBooking', 
         ];
         return $functions;
     }
@@ -902,6 +903,32 @@ class ReservationsPlugin extends UserPluginBase
             Buckets::where('id', $frame->bucket_id)->delete();
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     *  予約削除
+     */
+    public function destroyBooking($request, $page_id, $frame_id)
+    {
+        $message = null;
+        // id がある場合、データを削除
+        if ($request->booking_id) {
+
+            // 予約（子）を削除
+            $input_columns = reservations_inputs_columns::query()->where('inputs_id', $request->booking_id)->get();
+            foreach($input_columns as $input_column){
+                $input_column->delete();
+            }
+
+            // 予約（親）、施設情報を取得してメッセージ修正
+            $input = reservations_inputs::query()->where('id', $request->booking_id)->first();
+            $facility = reservations_facilities::query()->where('id', $input->facility_id)->first();
+            $message = '予約を削除しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($input->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($input->end_datetime, 'H時i分');
+
+            // 予約（親）を削除
+            $input->delete();
+        }
+        return $this->index($request, $page_id, $frame_id, null, null, $message);
     }
 
    /**

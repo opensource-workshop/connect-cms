@@ -73,6 +73,18 @@
                                     </button>
                                 </a>
                             </form>
+                            <form action="{{URL::to('/')}}/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_destroy_booking" method="POST" class="form-horizontal">
+                                {{ csrf_field() }}
+
+                                {{-- 予約ID --}}
+                                <input type="hidden" name="booking_id" id="booking_id" value="">
+                                {{-- ＋ボタンクリックでformサブミット --}}
+                                <a href="javascript:form_destroy_booking.submit()">
+                                    <button type="button" class="btn btn-danger" onclick="javascript:return confirm('予約を削除します。\nよろしいですか？')">
+                                        <i class="fas fa-trash-alt"></i> 予約削除
+                                    </button>
+                                </a>
+                            </form>
                         @endauth
                     </div>
                 </div>
@@ -87,7 +99,7 @@
                 // モーダルタイトル
                 modal.find('.modal-title').text('予約詳細（' + button.data('facility_name') + '）')
                 // 予約項目（固定）
-                modal.find('#booking_id').val(button.data('booking_id'))
+                modal.find('[id=booking_id]').val(button.data('booking_id'))
                 modal.find('#reservation_date_display').val(button.data('reservation_date_display'))
                 modal.find('#reservation_time').val(button.data('reservation_time'))
                 // 予約項目（可変）
