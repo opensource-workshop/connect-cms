@@ -2,6 +2,10 @@
 
 // 本来はDB管理
 $sites = array();
+
+// site_key = A001
+// site_url = https://xxxxxxxxx/
+// salt     = xxxxxx
 $sites['A001']['salt'] = 'xxxxxx';
 $sites['A001']['url']  = 'https://xxxxxxxxx/';
 
