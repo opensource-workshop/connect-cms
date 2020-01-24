@@ -357,7 +357,13 @@ class ConnectController extends Controller
                                ->orWhere(function($query2) use($this_page_id) {
                                    $query2->Where('page_only', 1)
                                           ->Where('page_id', $this_page_id);
-                               });
+                               })
+                               ->orWhere('page_only', 2);
+                               // 管理者ではフレームが見えないと設定できないので、以下の条件は付けない
+                               //->orWhere(function($query3) use($this_page_id) {
+                               //    $query3->Where('page_only', 2)
+                               //           ->Where('page_id', '<>', $this_page_id);
+                               //});
                        })
                        ->orderBy('area_id', 'asc')
                        ->orderBy('page_id', 'desc')

@@ -164,4 +164,28 @@ class Frame extends Model
         }
         return "d-none d-md-block";
     }
+
+    /**
+     *  フレームが表示対象か判定
+     */
+    public function isVisible($page = null, $user = null)
+    {
+        // ページは渡ってくるはずだが一応チェック
+        if (empty($page)) {
+            return false;
+        }
+
+        // ゲスト（ログインしていない状態）
+        // プラグイン配置権限を持たない場合
+        if (empty($user) || !$user->can('role_arrangement')) {
+
+           // フレームがこのページのみ表示しないの場合、表示対象外とする。
+           if ($this->page_id == $page->id && $this->page_only == 2) {
+               return false;
+           }
+        }
+
+        // 上記以外の条件（非表示対象ページではない or プラグイン配置権限を持つ）
+        return true;
+    }
 }
