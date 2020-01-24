@@ -226,11 +226,11 @@ class ConnectController extends Controller
      */
     protected function checkPageForbidden()
     {
-        // モデレータ以上ならOK
-        $user = Auth::user();//ログインしたユーザーを取得
-        if (isset($user) && $user->can('role_article')) {
-            return;
-        }
+        // プラグイン配置権限以上ならOK
+        //$user = Auth::user();//ログインしたユーザーを取得
+        //if (isset($user) && $user->can('role_arrangement')) {
+        //    return;
+        //}
 
         // 対象となる処理は、画面を持つルートの処理とする。
         $route_name = $this->router->current()->getName();
@@ -248,8 +248,9 @@ class ConnectController extends Controller
         }
 
         // 参照できない場合
-        $check_ip_only = true;
-        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
+        $user = Auth::user();  // 権限チェックをpage のisView で行うためにユーザを渡す。
+        $check_ip_only = true; // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
+        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($user, $check_ip_only)) {
             // 403 対象として次へ
         }
         else {

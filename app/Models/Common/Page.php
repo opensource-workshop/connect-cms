@@ -236,26 +236,41 @@ class Page extends Model
      *  表示可否の判断
      *
      */
-    public function isView($check_ip_only = false)
+    public function isView($user = null, $check_ip_only = false)
     {
         // displayフラグ（ページの継承を加味した値）が 0 なら非表示
-        if ($check_ip_only == false && $this->display_flag == 0) {
-            return false;
+        //if ($check_ip_only == false && $this->display_flag === 0) {
+        //    return false;
+        //}
+
+        // ip アドレスのみのチェックをしたい場合はdisplay_flag を考慮しない。
+        if ($check_ip_only == false) {
+            if ($this->display_flag == 1) {
+                // 以下のipチェックに進む
+            }
+            else {
+                return false;
+            }
         }
 
-        // IP アドレス制限があれば、IP アドレスチェック
-        if (!empty($this->ip_address)) {
+        // ゲスト（ログインしていない状態）
+        // プラグイン配置権限を持たない場合
+        // 上記条件の場合のみ、IPアドレスチェックを行う
+        if (empty($user) || !$user->can('role_arrangement')) {
 
-            $ip_addresses = explode(',', $this->ip_address);
+            // IP アドレス制限があれば、IP アドレスチェック
+            if (!empty($this->ip_address)) {
 
-            foreach($ip_addresses as $ip_address) {
-                if ($this->isRangeIp(\Request::ip(), trim($ip_address))) {
-                    return true;
+                $ip_addresses = explode(',', $this->ip_address);
+
+                foreach($ip_addresses as $ip_address) {
+                    if (!$this->isRangeIp(\Request::ip(), trim($ip_address))) {
+                        return false;
+                    }
                 }
             }
         }
         return true;
-        return false;
     }
 
     /**

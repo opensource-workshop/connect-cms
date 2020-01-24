@@ -14,7 +14,7 @@
     @foreach($pages as $page_obj)
 
         {{-- 非表示のページは対象外 --}}
-        @if ($page_obj->display_flag == 1)
+        @if ($page_obj->isView(Auth::user()))
 
             {{-- カレントページ、もしくは自分が親の場合の処理 --}}
             @if ($page_obj->id == $page_id || $page->isDescendantOf($page_obj))

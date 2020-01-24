@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->isView())
+@if ($children->isView(Auth::user()))
 
     @if ($children->id == $page_id)
     <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item active">

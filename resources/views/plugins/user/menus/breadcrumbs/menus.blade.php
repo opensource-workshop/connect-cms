@@ -12,13 +12,16 @@
 @if ($ancestors)
     <nav>
         <ol class="breadcrumb">
-            @foreach($ancestors as $ancestor)
+        @foreach($ancestors as $ancestor)
+            {{-- パンくずはdisplay_flag を継承した値を持っていないので、ページの表示フラグを参照 --}}
+            @if ($ancestor->base_display_flag == 1)
                 @if ($loop->last)
                     <li class="breadcrumb-item">{{$ancestor->page_name}}</li>
                 @else
                     <li class="breadcrumb-item"><a href="{{$ancestor->getUrl()}}" {!!$ancestor->getUrlTargetTag()!!}>{{$ancestor->page_name}}</a></li>
                 @endif
-            @endforeach
+            @endif
+        @endforeach
         </ol>
     </nav>
 @endif
