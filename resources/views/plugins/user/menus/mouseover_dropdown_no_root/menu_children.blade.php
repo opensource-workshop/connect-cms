@@ -7,12 +7,12 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->isView(Auth::user()))
+@if ($children->display_flag == 1)
 
     @if ($children->id == $page_id)
-    <a class="dropdown-item active" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    <a class="dropdown-item active" href="{{ url("$children->permanent_link") }}">
     @else
-    <a class="dropdown-item" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    <a class="dropdown-item" href="{{ url("$children->permanent_link") }}">
     @endif
 
         {{-- 各ページの深さをもとにインデントの表現 --}}
@@ -23,7 +23,7 @@
     </a>
     @if ($children->children && count($children->children) > 0)
         @foreach($children->children as $ckey => $depth_children)
-            @include('plugins.user.menus.mouseover_dropdown.menu_children',['children' => $children->children[$ckey]])
+            @include('plugins.user.menus.mouseover_dropdown_no_root.menu_children',['children' => $children->children[$ckey]])
         @endforeach
     @endif
 @endif

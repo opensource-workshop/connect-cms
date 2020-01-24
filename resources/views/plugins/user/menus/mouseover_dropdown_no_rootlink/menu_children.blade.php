@@ -9,7 +9,11 @@
 
 @if ($children->isView(Auth::user()))
 
+    @if ($children->id == $page_id)
+    <a class="dropdown-item active" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    @else
     <a class="dropdown-item" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    @endif
 
         {{-- 各ページの深さをもとにインデントの表現 --}}
         @for ($i = 0; $i < $children->depth; $i++)
@@ -19,7 +23,7 @@
     </a>
     @if ($children->children && count($children->children) > 0)
         @foreach($children->children as $ckey => $depth_children)
-            @include('plugins.user.menus.mouseover_dropdown.menu_children',['children' => $children->children[$ckey]])
+            @include('plugins.user.menus.mouseover_dropdown_no_rootlink.menu_children',['children' => $children->children[$ckey]])
         @endforeach
     @endif
 @endif
