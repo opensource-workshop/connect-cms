@@ -75,6 +75,7 @@
         forced_root_block : '',
         valid_children : "+body[style],+a[div|p]",
         extended_valid_elements : "script[type|charset],cc[value]",
+        //extended_valid_elements : "script[type|charset|async|src],cc[value]",
 
         {{-- CSS --}}
         {!!$content_css_file!!}
