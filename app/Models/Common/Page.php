@@ -261,13 +261,16 @@ class Page extends Model
             // IP アドレス制限があれば、IP アドレスチェック
             if (!empty($this->ip_address)) {
 
+                // IP アドレスをループしてチェック。
+                // 一つでもOKなら、OK とする。
                 $ip_addresses = explode(',', $this->ip_address);
-
                 foreach($ip_addresses as $ip_address) {
-                    if (!$this->isRangeIp(\Request::ip(), trim($ip_address))) {
-                        return false;
+                    if ($this->isRangeIp(\Request::ip(), trim($ip_address))) {
+                        return true;
                     }
                 }
+                // 設定されたIPアドレスのどれにも合致しなかったため、参照NG
+                return false;
             }
         }
         return true;
