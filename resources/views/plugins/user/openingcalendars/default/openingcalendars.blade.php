@@ -16,7 +16,11 @@
     </a>
 @endcan
 @if ($openingcalendar_frame->yearschedule_uploads_id)
-    <a href="{{url('/')}}/file/{{$openingcalendar_frame->yearschedule_uploads_id}}" target="_blank" rel="noopener">年間カレンダー</a>
+    <a href="{{url('/')}}/file/{{$openingcalendar_frame->yearschedule_uploads_id}}" target="_blank" class="openingcalendar-year-pdf" rel="noopener">
+    @if ($openingcalendar_frame->yearschedule_link_text)
+        {{$openingcalendar_frame->yearschedule_link_text}}
+    @endif
+    </a>
 @endif
 </p>
 </div>

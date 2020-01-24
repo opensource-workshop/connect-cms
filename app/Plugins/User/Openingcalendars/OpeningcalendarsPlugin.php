@@ -80,6 +80,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                           'openingcalendars.view_before_month',
                           'openingcalendars.view_after_month',
                           'openingcalendars.yearschedule_uploads_id',
+                          'openingcalendars.yearschedule_link_text',
                           'openingcalendars.smooth_scroll',
                           'uploads.client_original_name'
                          )
@@ -822,13 +823,19 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
             // DBに情報保存
             Openingcalendars::where('id', $openingcalendar_frame->openingcalendars_id)
-                            ->update(['yearschedule_uploads_id' => $upload->id]);
+                            ->update(['yearschedule_uploads_id' => $upload->id, 'yearschedule_link_text' => $request->yearschedule_link_text]);
 
             // PDFファイル保存
             $directory = $this->getDirectory($upload->id);
             $upload_path = $request->file('yearschedule_pdf')->storeAs($directory, $upload->id . '.' . $request->file('yearschedule_pdf')->getClientOriginalExtension());
 
             //$path = $request->file('yearschedule_pdf')->storeAs('plugins/openingcalendars', $openingcalendar_frame->openingcalendars_id . '.pdf');
+        }
+        // 年間カレンダーがアップロードされなかった。
+        else {
+            // DBに情報保存
+            Openingcalendars::where('id', $openingcalendar_frame->openingcalendars_id)
+                            ->update(['yearschedule_link_text' => $request->yearschedule_link_text]);
         }
 
         // 年間カレンダーの削除。

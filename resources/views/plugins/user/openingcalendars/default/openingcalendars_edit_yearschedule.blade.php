@@ -21,25 +21,38 @@
 <form action="/plugin/openingcalendars/saveYearschedule/{{$page->id}}/{{$frame_id}}/{{$openingcalendar_frame->openingcalendars_id}}" method="POST" class="" name="chenge_yearschedule" enctype="multipart/form-data">
     {{ csrf_field() }}
 
-    <div class="form-group">
-        <label for="nowCarendar">現在の年間カレンダー</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">現在の年間カレンダー</label>
+        <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
         @if (isset($openingcalendar_frame->yearschedule_uploads_id))
-            <br /><a href="{{url('/')}}/file/{{$openingcalendar_frame->yearschedule_uploads_id}}" target="_blank" rel="noopener">{{$openingcalendar_frame->client_original_name}}</a>
+            <a href="{{url('/')}}/file/{{$openingcalendar_frame->yearschedule_uploads_id}}" target="_blank" rel="noopener">{{$openingcalendar_frame->client_original_name}}</a>
         @else
-            <br /><span class="text-primary">年間カレンダーはアップロードされていません。</span>
+            <span class="text-primary">年間カレンダーはアップロードされていません。</span>
         @endif
+        </div>
     </div>
 
-    <div class="form-group">
-        <label for="File">年間カレンダーPDF</label>
-        <input type="file" name="yearschedule_pdf" class="form-control-file" id="File">
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">年間カレンダーPDF</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="file" name="yearschedule_pdf" class="form-control-file" id="File">
+        </div>
     </div>
 
-    <div class="form-group">
-        <label class="control-label">年間カレンダーを削除</label>
-        <div class="custom-control custom-checkbox">
-            <input type="checkbox" name="delete_yearschedule_pdf" value="1" class="custom-control-input" id="delete_yearschedule_pdf">
-            <label class="custom-control-label" for="delete_yearschedule_pdf">削除する。</label>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">年間カレンダーを削除</label>
+        <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="delete_yearschedule_pdf" value="1" class="custom-control-input" id="delete_yearschedule_pdf">
+                <label class="custom-control-label" for="delete_yearschedule_pdf">削除する。</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">年間カレンダーのリンク文字列</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="yearschedule_link_text" value="{{old('yearschedule_link_text', $openingcalendar_frame->yearschedule_link_text)}}" class="form-control">
         </div>
     </div>
 
