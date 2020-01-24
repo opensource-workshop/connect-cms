@@ -582,7 +582,15 @@ trait ConnectCommonTrait
             }
             //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
             $sp_menu .= '<li class="' . $level1_page['parent']->getClass() . '">' . "\n";
-            $sp_menu .= '<p' . $active_class . '>' . $level1_page['parent']->page_name . '</p>' . "\n";
+
+            // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
+            if ($level1_page['parent']->getClass() == 'smp_a_link') {
+                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getLinkUrl() . '">' . $level1_page['parent']->page_name . '</a>' . "\n";
+            }
+            else {
+                $sp_menu .= '<p' . $active_class . '>' . $level1_page['parent']->page_name . '</p>' . "\n";
+            }
+
             if (array_key_exists('child', $level1_page)) {
                 $sp_menu .= '<ul' . $active_class . '>' . "\n";
                 foreach ($level1_page['child'] as $child) {
