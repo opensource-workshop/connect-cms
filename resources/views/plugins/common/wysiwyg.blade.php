@@ -72,9 +72,11 @@
         relative_urls : false,
         height: 300,
         branding: false,
-        forced_root_block : '',
-        valid_children : "+body[style],+a[div|p]",
-        extended_valid_elements : "script[type|charset],cc[value]",
+        //forced_root_block : false,
+        valid_children : "+body[style],+a[div|p],",
+        extended_valid_elements : "script[type|charset]"
+                                 +",div[*]"
+                                 +",cc[*]",
         //extended_valid_elements : "script[type|charset|async|src],cc[value]",
 
         {{-- CSS --}}
