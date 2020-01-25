@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
 use DB;
+use File;
 
 use App\Http\Controllers\Core\ConnectController;
 
@@ -197,15 +198,56 @@ class DefaultController extends ConnectController
             $finder = View::getFinder();
             $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name;
 
+            // テンプレートソート時に順番が書いていない場合用の変数。通常の順番が1からと想定し、空のものは1000から開始
+            $tmp_display_sequence = 1000;
+
+            // テンプレートソート用配列
+            $sort_array = array();
+
+            // テンプレート・ディレクトリをループ
             $file_list = scandir($plugin_view_path);
             foreach ($file_list as $file) {
-                if (in_array($file, array('.', '..', 'default'))) {
+                if (in_array($file, array('.', '..'))) {
                     continue;
                 }
-                if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
-                    $target_frame_templates[] = $file;
+                // テンプレートディレクトリを探す
+                //if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
+                $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
+                if (is_dir($template_dir)) {
+
+                    // テンプレート設定ファイルがある場合
+                    if (File::exists($template_dir."/template.ini")) {
+
+                        // テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
+                        $template_inis = parse_ini_file($template_dir."/template.ini");
+                        $template_name = $template_inis['template_name'];
+                        if (empty($template_name)) {
+                            $template_name = $file;
+                        }
+                    }
+                    // テンプレート設定ファイルがない場合、テンプレートディレクトリ名をテンプレート名とする
+                    else {
+                        $template_name = $file;
+                        $template_inis = array();
+                    }
+
+                    // テンプレート配列
+                    $target_frame_templates[$template_name] = $file;
+
+                    // テンプレートソート用配列
+                    if (array_key_exists('display_sequence', $template_inis)) {
+                        $sort_array[] = $template_inis['display_sequence'];
+                    }
+                    else {
+                        $sort_array[] = $tmp_display_sequence;
+                        $tmp_display_sequence++;
+                    }
                 }
             }
+            // 編集画面でのテンプレート順番の変更
+            array_multisort($sort_array, $target_frame_templates);
+
+            // フレームにテンプレート情報を付与して返却
             $action_core_frame->setTemplates($target_frame_templates);
         }
         return $action_core_frame;

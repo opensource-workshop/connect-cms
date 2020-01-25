@@ -117,9 +117,8 @@
             <label class="{{$frame->getSettingLabelClass()}}">テンプレート</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <select class="form-control" name="template" id="template">
-                    <option value="default">default</option>
-                    @foreach ($action_core_frame->getTemplates() as $template_name)
-                        <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_name}}</option>
+                    @foreach ($action_core_frame->getTemplates() as $template_key => $template_name)
+                        <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_key}}</option>
                     @endforeach
                 </select>
             </div>
