@@ -82,7 +82,7 @@
             <tbody>
                 {{-- 更新用の行 --}}
                 @foreach($selects as $select)
-                    <tr>
+                    <tr  @if (isset($select->hide_flag)) class="table-secondary" @endif>
                         {{-- 表示順操作 --}}
                         <td class="text-center" nowrap>
                             {{-- 上移動 --}}

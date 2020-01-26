@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
-<tr>
+<tr @if (isset($column->hide_flag)) class="table-secondary" @endif>
     {{-- 表示順操作 --}}
     <td nowrap>
         {{-- 上移動 --}}
