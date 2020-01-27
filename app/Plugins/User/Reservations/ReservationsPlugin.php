@@ -249,16 +249,17 @@ class ReservationsPlugin extends UserPluginBase
         $keys = array_keys($request->columns_value);
         foreach($keys as $key){
 
-            // 予約明細 登録 ※予約IDがある場合は更新
-            $reservations_inputs_columns = $request->booking_id ?
-                reservations_inputs_columns::query()
+            // 予約明細 更新レコード取得
+            $reservations_inputs_columns = reservations_inputs_columns::query()
                     ->where('reservations_id', $request->reservations_id)
                     ->where('inputs_id', $reservations_inputs->id)
                     ->where('column_id', $key)
-                    ->first() : 
-                new reservations_inputs_columns();
-            // 新規登録時のみの登録項目
-            if(!$request->booking_id){
+                    ->first();
+
+            // 更新レコードが取得できなかったらnew
+            if(!$reservations_inputs_columns){
+                $reservations_inputs_columns = new reservations_inputs_columns();
+                // 新規登録時のみの登録項目
                 $reservations_inputs_columns->reservations_id = $request->reservations_id;
                 $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
                 $reservations_inputs_columns->column_id = $key;
