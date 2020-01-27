@@ -60,7 +60,7 @@
         plugins  : 'file image link autolink preview textcolor code table lists',
 
         {{-- formatselect = スタイル, styleselect = 書式 --}}
-        toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file |  preview | code ',
+        toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file | preview | code ',
 
         {{-- テーマ固有書式 --}}
         {!!$style_formats_file!!}
