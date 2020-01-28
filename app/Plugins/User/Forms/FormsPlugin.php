@@ -468,7 +468,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = 'フォーム設定を追加しました。<br />　 カラムを設定してください。［ <a href="/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">カラム設定</a> ］';
+            $message = 'フォーム設定を追加しました。<br />　 フォームで使用する項目を設定してください。［ <a href="/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">項目設定</a> ］';
         }
         // forms_id があれば、フォームを更新
         else {
