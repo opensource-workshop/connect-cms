@@ -74,7 +74,7 @@
         branding: false,
         //forced_root_block : false,
         valid_children : "+body[style],+a[div|p],",
-        extended_valid_elements : "script[type|charset]"
+        extended_valid_elements : "script[type|charset|async|src]"
                                  +",div[*]"
                                  +",cc[*]",
         //extended_valid_elements : "script[type|charset|async|src],cc[value]",
