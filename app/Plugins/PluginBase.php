@@ -5,6 +5,8 @@ namespace App\Plugins;
 use Illuminate\Support\Facades\View;
 use Illuminate\View\FileViewFinder;
 
+use App\Models\Common\Numbers;
+
 /**
  * プラグイン基底クラス
  *
@@ -61,6 +63,29 @@ class PluginBase
         return method_exists($this, $function_name);
     }
 
+    /**
+     * 連番取得
+     *
+     */
+    public function getNo($plugin_name = null, $buckets_id = null, $prefix = null)
+    {
+        // 連番データは、払いだした最大の数値を保持している状態。
+
+        // firstOrCreate で最初の連番に 0 を指定して、取得した値をインクリメント
+        $numbers = Numbers::firstOrCreate([
+                               'plugin_name'   => $plugin_name,
+                               'buckets_id'    => $buckets_id,
+                               'prefix'        => $prefix
+                            ],
+                            [
+                               'serial_number' => 0,
+                            ]);
+
+        // インクリメント
+        $numbers->increment('serial_number', 1);
+
+        return $numbers->serial_number;
+    }
     /**
      * invoke（プラグインのフレーム用メソッドをコア（cms_frame.blade.php）から呼ぶ）
      *

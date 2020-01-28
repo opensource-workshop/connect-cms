@@ -15,7 +15,7 @@
     @foreach($pages as $page_obj)
         @if($page_obj->parent_id == null)
             {{-- 非表示のページは対象外 --}}
-            @if ($page_obj->display_flag == 1)
+            @if ($page_obj->isView(Auth::user()))
                 <li class="nav-item">
                     <a href="#" onclick="return false" class="cc-cursor-text">{{$page_obj->page_name}}</a>
                     @if (isset($page_obj->children))

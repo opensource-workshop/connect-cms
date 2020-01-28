@@ -226,11 +226,11 @@ class ConnectController extends Controller
      */
     protected function checkPageForbidden()
     {
-        // モデレータ以上ならOK
-        $user = Auth::user();//ログインしたユーザーを取得
-        if (isset($user) && $user->can('role_article')) {
-            return;
-        }
+        // プラグイン配置権限以上ならOK
+        //$user = Auth::user();//ログインしたユーザーを取得
+        //if (isset($user) && $user->can('role_arrangement')) {
+        //    return;
+        //}
 
         // 対象となる処理は、画面を持つルートの処理とする。
         $route_name = $this->router->current()->getName();
@@ -248,8 +248,9 @@ class ConnectController extends Controller
         }
 
         // 参照できない場合
-        $check_ip_only = true;
-        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($check_ip_only)) {
+        $user = Auth::user();  // 権限チェックをpage のisView で行うためにユーザを渡す。
+        $check_ip_only = true; // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
+        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($user, $check_ip_only)) {
             // 403 対象として次へ
         }
         else {
@@ -357,7 +358,13 @@ class ConnectController extends Controller
                                ->orWhere(function($query2) use($this_page_id) {
                                    $query2->Where('page_only', 1)
                                           ->Where('page_id', $this_page_id);
-                               });
+                               })
+                               ->orWhere('page_only', 2);
+                               // 管理者ではフレームが見えないと設定できないので、以下の条件は付けない
+                               //->orWhere(function($query3) use($this_page_id) {
+                               //    $query3->Where('page_only', 2)
+                               //           ->Where('page_id', '<>', $this_page_id);
+                               //});
                        })
                        ->orderBy('area_id', 'asc')
                        ->orderBy('page_id', 'desc')

@@ -7,9 +7,13 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->display_flag == 1)
+@if ($children->isView(Auth::user()))
 
+    @if ($children->id == $page_id)
+    <a class="dropdown-item active" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    @else
     <a class="dropdown-item" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    @endif
 
         {{-- 各ページの深さをもとにインデントの表現 --}}
         @for ($i = 0; $i < $children->depth; $i++)

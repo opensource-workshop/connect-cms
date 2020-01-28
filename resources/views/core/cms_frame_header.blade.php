@@ -40,6 +40,10 @@
         <small><span class="badge badge-warning">データがない場合は非表示</span></small>
     @endif
 
+    @if (Auth::check() && $frame->page_only == 2 && $page->id == $frame->page_id)
+        <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
+    @endif
+
     {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}
     @if (Auth::check() &&
         (Auth::user()->can('role_arrangement')) &&

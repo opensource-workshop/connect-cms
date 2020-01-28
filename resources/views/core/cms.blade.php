@@ -48,7 +48,11 @@ $(function () {
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[0]['frames'])
             @foreach($layouts_info[0]['frames'] as $frame)
-                @include('core.cms_frame')
+                @if ($frame->isVisible($page, Auth::user()))
+                    @include('core.cms_frame')
+                @else
+                    {{-- このページのみ表示しない --}}
+                @endif
             @endforeach
         @endif
     </div>
@@ -62,21 +66,22 @@ $(function () {
         @endif
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
-{{--        <div class="{{$layouts_info[1]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
         <div id="ccLeftArea" class="ccLeftArea p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
             {{-- サービス取得 --}}
             {{-- Todo：実際には、ページ内で使用されているプラグインを動的に定義する必要がある --}}
             @isset($layouts_info[1]['frames'])
                 @foreach($layouts_info[1]['frames'] as $frame)
-                    @include('core.cms_frame')
+                    @if ($frame->isVisible($page, Auth::user()))
+                        @include('core.cms_frame')
+                    @else
+                        {{-- このページのみ表示しない --}}
+                    @endif
                 @endforeach
             @endif
         </div>
         @endif
 
         {{-- メインエリア --}}
-{{--        <div class="{{$layouts_info[2]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
-{{--        <div class="row px-lg-0 {{$layouts_info[2]['col']}} order-1 order-lg-2"> --}}
         <div id="ccMainArea" class="ccMainArea row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
             {{-- ページ内のフレームのループ --}}
             @foreach($frames as $frame)
@@ -88,12 +93,15 @@ $(function () {
 
         {{-- 右エリア --}}
         @if ($layouts_info[3]['exists'])
-{{--        <div class="{{$layouts_info[3]['col']}}" style="padding-left: 0; padding-right: 0;"> --}}
         <div id="ccRightArea" class="ccRightArea p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
             {{-- ページ内のフレームのループ --}}
             @isset($layouts_info[3]['frames'])
                 @foreach($layouts_info[3]['frames'] as $frame)
-                    @include('core.cms_frame')
+                    @if ($frame->isVisible($page, Auth::user()))
+                        @include('core.cms_frame')
+                    @else
+                        {{-- このページのみ表示しない --}}
+                    @endif
                 @endforeach
             @endif
         </div>
@@ -108,10 +116,14 @@ $(function () {
         @else
     <div id="ccFooterArea" class="ccFooterArea row container p-0 mx-auto">
         @endif
-        {{-- ヘッダーフレームのループ --}}
+        {{-- フッターフレームのループ --}}
         @isset($layouts_info[4]['frames'])
             @foreach($layouts_info[4]['frames'] as $frame)
-                @include('core.cms_frame')
+                @if ($frame->isVisible($page, Auth::user()))
+                    @include('core.cms_frame')
+                @else
+                    {{-- このページのみ表示しない --}}
+                @endif
             @endforeach
         @endif
 {{--

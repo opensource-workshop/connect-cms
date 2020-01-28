@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->display_flag == 1)
+@if ($children->isView(Auth::user()))
     <a class="dropdown-item" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
 
         {{-- 各ページの深さをもとにインデントの表現 --}}

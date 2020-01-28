@@ -117,9 +117,8 @@
             <label class="{{$frame->getSettingLabelClass()}}">テンプレート</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <select class="form-control" name="template" id="template">
-                    <option value="default">default</option>
-                    @foreach ($action_core_frame->getTemplates() as $template_name)
-                        <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_name}}</option>
+                    @foreach ($action_core_frame->getTemplates() as $template_key => $template_name)
+                        <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_key}}</option>
                     @endforeach
                 </select>
             </div>
@@ -166,14 +165,31 @@
         @if ($frame->area_id != 2)
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}"></label>
-            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
-                <div class="custom-control custom-checkbox">
-                    @if($frame->page_only)
-                        <input name="page_only" value="1" type="checkbox" class="custom-control-input" id="page_only" checked="checked">
+            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center row m-0">
+
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if ($frame->page_only == 0)
+                        <input type="radio" value="0" id="page_only_0" name="page_only" class="custom-control-input" checked="checked">
                     @else
-                        <input name="page_only" value="1" type="checkbox" class="custom-control-input" id="page_only">
+                        <input type="radio" value="0" id="page_only_0" name="page_only" class="custom-control-input">
                     @endif
-                    <label class="custom-control-label" for="page_only">このページにのみ表示する。</label>
+                    <label class="custom-control-label" for="page_only_0">対象ページ全てで表示する。</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if ($frame->page_only == 1)
+                        <input type="radio" value="1" id="page_only_1" name="page_only" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="page_only_1" name="page_only" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="page_only_1">このページのみ表示する。</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if ($frame->page_only == 2)
+                        <input type="radio" value="2" id="page_only_2" name="page_only" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="2" id="page_only_2" name="page_only" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="page_only_2">このページのみ表示しない。</label>
                 </div>
             </div>
         </div>
