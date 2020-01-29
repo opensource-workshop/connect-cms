@@ -27,6 +27,16 @@
 
         <textarea name="contents">{!! $contents->content_text !!}</textarea>
 
+        @if ($contents->status == 1)
+            <span class="badge badge-warning align-bottom float-left mt-1">一時保存</span>
+        @endif
+
+        @if ($contents->status == 2)
+            @can('role_update_or_approval',[[$contents, 'contents', $buckets]])
+                <span class="badge badge-warning align-bottom float-left mt-1">承認待ち</span>
+            @endcan
+        @endif
+
         <div class="form-group">
             <input type="hidden" name="bucket_id" value="{{$contents->bucket_id}}">
             <br />
