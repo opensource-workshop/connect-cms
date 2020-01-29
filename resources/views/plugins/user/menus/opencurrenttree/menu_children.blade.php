@@ -35,7 +35,7 @@
 
         {{-- 各ページの深さをもとにインデントの表現 --}}
         @for ($i = 0; $i < $children->depth; $i++)
-            @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
+            @if ($i+1==$children->depth) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
         @endfor
 
     {{-- 子ページがある＆子ページに表示ON のページがある --}}
@@ -43,9 +43,9 @@
 
         {{-- カレントもしくは自分のルート筋なら表示する --}}
         @if ($children->isAncestorOf($current_page) || $current_page->id == $children->id)
-            {{$children->page_name}} <i class="fas fa-minus"></i>
+            {{$children->page_name}} {!!$menu->getFolderCloseFont()!!}
         @else
-            {{$children->page_name}} <i class="fas fa-plus"></i>
+            {{$children->page_name}} {!!$menu->getFolderOpenFont()!!}
         @endif
 
     @else

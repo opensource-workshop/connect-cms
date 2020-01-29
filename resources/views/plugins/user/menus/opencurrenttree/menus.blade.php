@@ -28,15 +28,15 @@
                 @endif
                     {{-- 各ページの深さをもとにインデントの表現 --}}
                     @for ($i = 0; $i < $page->depth; $i++)
-                        @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
+                        @if ($i+1==$children->depth) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
                     @endfor
                     {{$page->page_name}}
 
                     {{-- カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
                     @if ($page->isAncestorOf($current_page) || $current_page->id == $page->id)
-                        <i class="fas fa-minus"></i>
+                        {!!$menu->getFolderCloseFont()!!}
                     @else
-                        <i class="fas fa-plus"></i>
+                        {!!$menu->getFolderOpenFont()!!}
                     @endif
                 </a>
             @endif
@@ -61,7 +61,7 @@
                 @endif
                     {{-- 各ページの深さをもとにインデントの表現 --}}
                     @for ($i = 0; $i < $page->depth; $i++)
-                        @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
+                        @if ($i+1==$children->depth) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
                     @endfor
                     {{$page->page_name}}
                 </a>

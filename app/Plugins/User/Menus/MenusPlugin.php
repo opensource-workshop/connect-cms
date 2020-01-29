@@ -78,6 +78,7 @@ class MenusPlugin extends UserPluginBase
             'pages'        => $pages,
             'ancestors'    => $ancestors,
             'current_page' => $this->page,
+            'menu'         => $menu,
 //            'page'      => $this->page,
         ]);
     }
@@ -127,8 +128,15 @@ class MenusPlugin extends UserPluginBase
 
         // メニューデータ作成 or 更新
         Menu::updateOrCreate(
-            ['frame_id' => $frame_id],
-            ['frame_id' => $frame_id, 'select_flag' => $request->select_flag, 'page_ids' => (empty($request->page_select)) ? '' : implode(',', $request->page_select)]
+            ['frame_id'          => $frame_id],
+            [
+             'frame_id'          => $frame_id,
+             'select_flag'       => $request->select_flag,
+             'page_ids'          => (empty($request->page_select)) ? '' : implode(',', $request->page_select),
+             'folder_close_font' => $request->folder_close_font,
+             'folder_open_font'  => $request->folder_open_font,
+             'indent_font'       => $request->indent_font,
+            ]
         );
 
         // 画面へ

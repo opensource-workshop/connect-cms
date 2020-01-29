@@ -9,7 +9,7 @@ class Menu extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['frame_id', 'select_flag', 'page_ids'];
+    protected $fillable = ['frame_id', 'select_flag', 'page_ids', 'folder_close_font', 'folder_open_font', 'indent_font'];
 
     /**
      *  指定されたページID がメニューで表示onになっているか判定
@@ -27,5 +27,47 @@ class Menu extends Model
             return true;
         }
         return false;
+    }
+
+    /**
+     *  閉じるフォントの取得
+     */
+    public function getFolderCloseFont()
+    {
+        if ($this->folder_close_font == 1) {
+            return '<span class="px-2"></span>';
+        }
+        else {
+            return '<i class="fas fa-minus"></i>';
+        }
+    }
+
+    /**
+     *  開くフォントの取得
+     */
+    public function getFolderOpenFont()
+    {
+        if ($this->folder_open_font == 1) {
+            return '<span class="px-2"></span>';
+        }
+        else {
+            return '<i class="fas fa-plus"></i>';
+        }
+    }
+
+    /**
+     *  インデントフォントの取得
+     */
+    public function getIndentFont()
+    {
+        if ($this->indent_font == 1) {
+            return '<span class="px-2"></span>';
+        }
+        else if ($this->indent_font == 2) {
+            return '<i class="fas fa-minus"></i>';
+        }
+        else {
+            return '<i class="fas fa-chevron-right"></i>';
+        }
     }
 }

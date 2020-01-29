@@ -90,6 +90,34 @@
     </div>
 @endif
 
+     <div class="form-group">
+        <label class="control-label">閉じるフォント</label>
+        <select class="form-control" name="folder_close_font" class="form-control">
+            <option value="0" @if(Input::old('folder_close_font', $menu->folder_close_font)==0) selected="selected" @endif>－（初期値）</option>
+            <option value="1" @if(Input::old('folder_close_font', $menu->folder_close_font)==1) selected="selected" @endif>なし</option>
+        </select>
+        @if ($errors && $errors->has('folder_close_font')) <div class="text-danger">{{$errors->first('folder_close_font')}}</div> @endif
+    </div>
+
+     <div class="form-group">
+        <label class="control-label">開くフォント</label>
+        <select class="form-control" name="folder_open_font" class="form-control">
+            <option value="0" @if(Input::old('folder_open_font', $menu->folder_open_font)==0) selected="selected" @endif>＋（初期値）</option>
+            <option value="1" @if(Input::old('folder_open_font', $menu->folder_open_font)==1) selected="selected" @endif>なし</option>
+        </select>
+        @if ($errors && $errors->has('folder_open_font')) <div class="text-danger">{{$errors->first('folder_open_font')}}</div> @endif
+    </div>
+
+     <div class="form-group">
+        <label class="control-label">インデントフォント</label>
+        <select class="form-control" name="indent_font" class="form-control">
+            <option value="0" @if(Input::old('indent_font', $menu->indent_font)==0) selected="selected" @endif>＞（初期値）</option>
+            <option value="1" @if(Input::old('indent_font', $menu->indent_font)==1) selected="selected" @endif>なし</option>
+            <option value="2" @if(Input::old('indent_font', $menu->indent_font)==2) selected="selected" @endif>－</option>
+        </select>
+        @if ($errors && $errors->has('indent_font')) <div class="text-danger">{{$errors->first('indent_font')}}</div> @endif
+    </div>
+
     <div class="form-group row mx-0">
         <div class="offset-md-3">
             <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($current_pages->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
