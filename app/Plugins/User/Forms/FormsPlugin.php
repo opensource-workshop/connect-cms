@@ -14,6 +14,7 @@ use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
+use App\Models\User\Forms\FormsColumnsSelects;
 use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Forms\FormsInputCols;
 
@@ -25,7 +26,7 @@ use App\Plugins\User\UserPluginBase;
  *
  * フォームの作成＆データ収集用プラグイン。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  * @package Contoroller
@@ -43,8 +44,21 @@ class FormsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
-        $functions['post'] = ['index', 'publicConfirm', 'publicStore', 'cancel'];
+        $functions['get']  = [
+            'editColumnDetail',
+        ];
+        $functions['post'] = [
+            'index', 
+            'publicConfirm', 
+            'publicStore', 
+            'cancel', 
+            'updateColumn',
+            'updateColumnSequence',
+            'addSelect',
+            'updateSelect',
+            'updateSelectSequence',
+            'deleteSelect',
+        ];
         return $functions;
     }
 
@@ -132,6 +146,8 @@ class FormsPlugin extends UserPluginBase
                                      ->join('forms', 'forms.id', '=', 'forms_columns.forms_id')
                                      ->select('forms_columns_selects.*')
                                      ->where('forms.id', '=', $forms_id)
+                                     ->orderBy('forms_columns_selects.forms_columns_id', 'asc')
+                                     ->orderBy('forms_columns_selects.display_sequence', 'asc')
                                      ->get();
         // カラムID毎に詰めなおし
         $forms_columns_id_select = array();
@@ -208,6 +224,24 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     }
 
     /**
+     * （再帰関数）入力値の前後をトリムする
+     *
+     * @param $request
+     * @return void
+     */
+    public static function trimInput($value){
+        if (is_array($value)){
+            // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
+            $value = array_map(['self', 'trimInput'], $value);
+        }elseif (is_string($value)){
+            $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
+        }
+ 
+        return $value;
+    }
+
+
+    /**
      * 登録時の確認
      */
     public function publicConfirm($request, $page_id, $frame_id, $id = null)
@@ -238,6 +272,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
             }
         }
+
+        // 入力値をトリム
+        $request->merge(self::trimInput($request->all()));
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
@@ -468,7 +505,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = 'フォーム設定を追加しました。<br />　 カラムを設定してください。［ <a href="/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">カラム設定</a> ］';
+            $message = 'フォーム設定を追加しました。<br />　 フォームで使用する項目を設定してください。［ <a href="/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">項目設定</a> ］';
         }
         // forms_id があれば、フォームを更新
         else {
@@ -542,11 +579,61 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     }
 
     /**
-     * カラム追加関数
+     * 項目の追加
      */
     public function addColumn($request, $page_id, $frame_id, $id = null)
     {
-        // フレームに紐づくフォームID を探して取得
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'column_name'  => ['required'],
+            'column_type'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'column_name'  => '項目名',
+            'column_type'  => '型',
+        ]);
+
+        $errors = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $errors = $validator->errors();
+            return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, null, $errors);
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = FormsColumns::query()->where('forms_id', $request->forms_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 項目の登録処理
+        $column = new FormsColumns();
+        $column->forms_id = $request->forms_id;
+        $column->column_name = $request->column_name;
+        $column->column_type = $request->column_type;
+        $column->required = $request->required ? \Required::on : \Required::off;
+        $column->display_sequence = $max_display_sequence;
+        $column->save();
+        $message = '項目【 '. $request->column_name .' 】を追加しました。';
+        
+        // 編集画面へ戻る。
+        return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, $errors);
+    }
+
+    /**
+     * 項目の詳細画面の表示
+     */
+    public function editColumnDetail($request, $page_id, $frame_id, $column_id, $message = null, $errors = null)
+    {
+        if($errors){
+            // エラーあり：入力値をフラッシュデータとしてセッションへ保存
+            $request->flash();
+        }else{
+            // エラーなし：セッションから入力値を消去
+            $request->flush();
+        }
+
+        // --- 基本データの取得
+        // フレームデータ
         $form_db = $this->getForms($frame_id);
 
         // フォームのID。まだフォームがない場合は0
@@ -555,47 +642,35 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $forms_id = $form_db->id;
         }
 
-        // 画面の項目を詰めなおして、再度編集画面へ。
-        foreach($request->forms[$frame_id] as $row_no => $row) {
-            $forms[$frame_id][$forms_id][$row_no] = $row;
-        }
+        // --- 画面に値を渡す準備
+        $column = FormsColumns::query()->where('id', $column_id)->first();
+        $selects = FormsColumnsSelects::query()->where('forms_columns_id', $column->id)->orderBy('display_sequence', 'asc')->get();
 
-        // Session に保持している詳細画面情報も付与する。
-        $forms = $this->formSessionMarge($request, $forms);
-
-        session(['forms' => $forms]);
-
-        // 編集画面へ戻る。
-        return $this->editColumn($request, $page_id, $frame_id, $id);
+        // 編集画面テンプレートを呼び出す。
+        return $this->view(
+            'forms_edit_row_detail', 
+            [
+                'forms_id' => $forms_id,
+                'column'     => $column,
+                'selects'     => $selects,
+                'message'     => $message,
+                'errors'     => $errors,
+            ]
+        );
     }
 
     /**
      * カラム編集画面の表示
      */
-    public function editColumn($request, $page_id, $frame_id, $id = null)
+    public function editColumn($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
-        /* Session の構造
-
-            forms[frame_id][forms_id][row_no]['column_type']  型
-            forms[frame_id][forms_id][row_no]['column_name']  項目名
-            forms[frame_id][forms_id][row_no]['frame_col']    幅
-
-            ※ forms_id = 0 は新規
-               row_no は画面に表示するときに連番を設定したものが、POSTされてきて、Sessionに保存される。
-        */
-
-        /*
-          セッションデータがあればセッションデータから編集画面を表示
-          セッションデータがなければ、データベースから編集画面を表示
-          データベースになければ、項目追加のプルダウンのみ
-        */
-
-        // --- 基本データの取得
-
-        // Session データ
-        $forms_session = session('forms');
-
-        // --- フォームデータの取得
+        if($errors){
+            // エラーあり：入力値をフラッシュデータとしてセッションへ保存
+            $request->flash();
+        }else{
+            // エラーなし：セッションから入力値を消去
+            $request->flush();
+        }
 
         // フレームに紐づくフォームID を探して取得
         $form_db = $this->getForms($frame_id);
@@ -606,342 +681,290 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $forms_id = $form_db->id;
         }
 
-        // カラムデータ取得
-        $columns_db = DB::table('forms_columns')
-            ->where('forms_columns.forms_id', '=', $forms_id)
-            ->orderBy('display_sequence')
+        // 項目データ取得
+        // 予約項目データ
+        $columns = FormsColumns::query()
+            ->select(
+                'forms_columns.id',
+                'forms_columns.forms_id',
+                'forms_columns.column_type',
+                'forms_columns.column_name',
+                'forms_columns.required',
+                'forms_columns.frame_col',
+                'forms_columns.display_sequence',
+                DB::raw('count(forms_columns_selects.id) as select_count'),
+                DB::raw('GROUP_CONCAT(forms_columns_selects.value order by forms_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
+            )
+            ->where('forms_columns.forms_id', $forms_id)
+            // 予約項目の子データ（選択肢）
+            ->leftjoin('forms_columns_selects',function($join) {
+                $join->on('forms_columns.id','=','forms_columns_selects.forms_columns_id');
+            })
+            ->groupby(
+                'forms_columns.id',
+                'forms_columns.forms_id',
+                'forms_columns.column_type',
+                'forms_columns.column_name',
+                'forms_columns.required',
+                'forms_columns.frame_col',
+                'forms_columns.display_sequence',
+            )
+            ->orderby('forms_columns.display_sequence')
             ->get();
-
-        // --- 画面に値を渡す準備
-        $rows = [];
-
-        // カラムの選択肢用データ
-        $forms_columns_id_select = $this->getFormsColumnsSelects($forms_id);
-
-        // Session データに該当フォームのデータがあるか確認
-        $form_my_frame = null;
-        if (is_array($forms_session) && array_key_exists($frame_id, $forms_session)) {
-            $form_my_frame = $forms_session[$frame_id];
-        }
-        if (empty($form_my_frame)) {
-
-            // データベースから画面の値を作成
-            $index = 1;
-            foreach($columns_db as $record) {
-                $rows[$index]['columns_id']  = $record->id;
-                $rows[$index]['delete_flag'] = 0;
-                $rows[$index]['column_type'] = $record->column_type;
-                $rows[$index]['column_name'] = $record->column_name;
-                $rows[$index]['required']    = $record->required;
-                $rows[$index]['frame_col']   = $record->frame_col;
-
-                if (array_key_exists($rows[$index]['columns_id'], $forms_columns_id_select)) {
-                    $rows[$index]['select'] = $forms_columns_id_select[$rows[$index]['columns_id']];
-                }
-                $index++;
-            }
-        }
-        // Session データあり。(画面で編集中)
-        else {
-            if (!empty($forms_session) && array_key_exists($frame_id, $forms_session) && array_key_exists($forms_id, $forms_session[$frame_id])) {
-
-                $index = 1;
-                foreach($forms_session[$frame_id][$forms_id] as $record) {
-                    $rows[$index]['columns_id']  = $record["columns_id"];
-                    $rows[$index]['delete_flag'] = 0;
-                    $rows[$index]['column_type'] = $record["column_type"];
-                    $rows[$index]['column_name'] = $record["column_name"];
-                    $rows[$index]['required']    = ( array_key_exists('required', $record) ? $record['required'] : 0 );
-                    $rows[$index]['frame_col']   = ( array_key_exists('frame_col', $record) ? $record['frame_col'] : 0 );
-                    $rows[$index]['delete_flag'] = $record["delete_flag"];
-
-                    if (array_key_exists("select", $record)) {
-                        $rows[$index]['select'] = $record["select"];
-                    }
-                    $index++;
-                }
-            }
-        }
-
-        // セッションに保持しなおしておく。
-        //（保存時にセッションを見る、詳細画面でセッションを使用するなど、操作の度にセッションを使用するため）
-        $forms = array();
-        foreach($rows as $key => $row) {
-            $forms[$frame_id][$forms_id][$key] = $row;
-        }
-        session(['forms' => $forms]);
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
-            'forms_edit', [
-            'forms_id' => $forms_id,
-            'rows'     => $rows,
+            'forms_edit', 
+            [
+                'forms_id'   => $forms_id,
+                'columns'    => $columns,
+                'message'    => $message,
+                'errors'     => $errors,
+            ]
+        );
+    }
+
+    /**
+     * 項目の削除
+     */
+    public function deleteColumn($request, $page_id, $frame_id)
+    {
+        // 明細行から削除対象の項目名を抽出
+        $str_column_name = "column_name_"."$request->column_id";
+
+        // 項目の削除
+        FormsColumns::query()->where('id', $request->column_id)->delete();
+        // 項目に紐づく選択肢の削除
+        $this->deleteColumnsSelects($request->column_id);
+        $message = '項目【 '. $request->$str_column_name .' 】を削除しました。';
+
+        // 編集画面へ戻る。
+        return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, null);
+    }
+
+    /**
+     * 項目の更新
+     */
+    public function updateColumn($request, $page_id, $frame_id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_column_name = "column_name_"."$request->column_id";
+        $str_column_type = "column_type_"."$request->column_id";
+        $str_required = "required_"."$request->column_id";
+
+        // エラーチェック用に値を詰める
+        $request->merge([
+            "column_name" => $request->$str_column_name,
+            "column_type" => $request->$str_column_type,
+            "required" => $request->$str_required,
         ]);
+
+        $validate_value = [
+            'column_name'  => ['required'],
+            'column_type'  => ['required'],
+        ];
+
+        $validate_attribute = [
+            'column_name'  => '項目名',
+            'column_type'  => '型',
+        ];
+
+        // データ型が「まとめ行」の場合
+        if($request->$str_column_type == \FormColumnType::group){
+            $str_frame_col = "frame_col_"."$request->column_id";
+            // まとめ数を設定
+            $request->merge([
+                "frame_col" => $request->$str_frame_col,
+            ]);
+
+            // チェック処理を追加
+            $validate_value['frame_col'] = ['required'];
+            $validate_attribute['frame_col'] = 'まとめ数';
+        }
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), $validate_value);
+        $validator->setAttributeNames($validate_attribute);
+
+        $errors = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $errors = $validator->errors();
+            return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, null, $errors);
+        }
+
+        // 項目の更新処理
+        $column = FormsColumns::query()->where('id', $request->column_id)->first();
+        $column->column_name = $request->column_name;
+        $column->column_type = $request->column_type;
+        $column->required = $request->required ? \Required::on : \Required::off;
+        $column->frame_col = $request->frame_col;
+        $column->save();
+        $message = '項目【 '. $request->column_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, $errors);
     }
 
     /**
-     * カラム再設定関数
-     * POPUP からアクションした場合などに呼び出す。
+     * 項目の表示順の更新
      */
-    public function reloadColumn($request, $page_id, $frame_id, $id = null)
+    public function updateColumnSequence($request, $page_id, $frame_id)
     {
-        // フレームに紐づくフォームID を探して取得
-        $form_db = $this->getForms($frame_id);
+        // ボタンが押された行の施設データ
+        $target_column = FormsColumns::query()
+            ->where('forms_id', $request->forms_id)
+            ->where('id', $request->column_id)
+            ->first();
 
-        // フォームのID。まだフォームがない場合は0
-        $forms_id = 0;
-        if (!empty($form_db)) {
-            $forms_id = $form_db->id;
-        }
+        // ボタンが押された前（後）の施設データ
+        $query = FormsColumns::query()
+            ->where('forms_id', $request->forms_id);
+        $pair_column = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
 
-        // 画面の項目を詰めなおして、再度編集画面へ。
-        foreach($request->forms[$frame_id] as $row_no => $row) {
+        // それぞれの表示順を退避
+        $target_column_display_sequence = $target_column->display_sequence;
+        $pair_column_display_sequence = $pair_column->display_sequence;
 
-            // 追加用の行は無視
-            if ($row_no == 0) {
-                continue;
-            }
+        // 入れ替えて更新
+        $target_column->display_sequence = $pair_column_display_sequence;
+        $target_column->save();
+        $pair_column->display_sequence = $target_column_display_sequence;
+        $pair_column->save();
 
-            $forms[$frame_id][$forms_id][$row_no] = $row;
-        }
+        $message = '項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
 
-        // Session に保持している詳細画面情報も付与する。
-        $forms = $this->formSessionMarge($request, $forms);
-
-        session(['forms' => $forms]);
-
-        // 編集画面へ戻る。
-        return $this->editColumn($request, $page_id, $frame_id, $id);
+        // 編集画面を呼び出す
+        return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, null);
     }
 
     /**
-     * カラム削除関数
+     * 項目に紐づく選択肢の登録
      */
-    public function deleteColumn($request, $page_id, $frame_id, $id = null)
+    public function addSelect($request, $page_id, $frame_id)
     {
-        // フレームに紐づくフォームID を探して取得
-        $form_db = $this->getForms($frame_id);
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
 
-        // フォームのID。まだフォームがない場合は0
-        $forms_id = 0;
-        if (!empty($form_db)) {
-            $forms_id = $form_db->id;
+        $errors = null;
+        if ($validator->fails()) {
+
+            // エラーと共に編集画面を呼び出す
+            $errors = $validator->errors();
+            return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
         }
 
-        // 画面の項目を詰めなおして、再度編集画面へ。
-        $forms = array();
-        foreach($request->forms[$frame_id] as $row_no => $row) {
-            // 追加用の行は無視
-            if ($row_no == 0) {
-                continue;
-            }
-            // 削除された項目
-            if ($request->destroy_no == $row_no) {
-                $row['delete_flag'] = 1;
-            }
-            $forms[$frame_id][$forms_id][$row_no] = $row;
-        }
+        // 新規登録時の表示順を設定
+        $max_display_sequence = FormsColumnsSelects::query()->where('forms_columns_id', $request->column_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
 
-        // Session に保持している詳細画面情報も付与する。
-        $forms = $this->formSessionMarge($request, $forms);
+        // 施設の登録処理
+        $select = new FormsColumnsSelects();
+        $select->forms_columns_id = $request->column_id;
+        $select->value = $request->select_name;
+        $select->display_sequence = $max_display_sequence;
+        $select->save();
+        $message = '選択肢【 '. $request->select_name .' 】を追加しました。';
 
-        session(['forms' => $forms]);
-
-        // 編集画面へ戻る。
-        return $this->editColumn($request, $page_id, $frame_id, $id);
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, $errors);
     }
 
     /**
-     *  メインの画面内容に詳細画面の内容をSessionから追加する。
+     * 項目に紐づく選択肢の更新
      */
-    private function formSessionMarge($request, $forms, $from_row_no = null, $to_row_no = null)
+    public function updateSelect($request, $page_id, $frame_id)
     {
-        // 位置移動用変数
-        $tmp_frame_id = 0;
-        $tmp_form_id = 0;
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_select_name = "select_name_"."$request->select_id";
 
-        // Session データ
-        $forms_session = session('forms');
+        // エラーチェック用に値を詰める
+        $request->merge([
+            "select_name" => $request->$str_select_name,
+        ]);
 
-        // 階層を手繰ってselect があれば追加
-        foreach($forms_session as $frame_id => $frame) {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
 
-            $tmp_frame_id = $frame_id;
-            foreach($frame as $form_id => $form) {
+        $errors = null;
+        if ($validator->fails()) {
 
-                $tmp_form_id = $form_id;
-                foreach($form as $row_no => $row) {
-
-                    // リクエストがあれば優先（画面で入力してリロードのケースなので）
-                    $select_array = null;
-                    foreach ($request->forms as $request_frame) {
-                        foreach ($request_frame as $request_row_no => $request_row) {
-
-//                            if ( $row['columns_id'] == $request_row && array_key_exists('select', $request_row) ) {
-                            if ( $row_no == $request_row_no && array_key_exists('select', $request_row) ) {
-                                $select_array = $request_row['select'];
-                            }
-                        }
-                    }
-
-                    // リクエストに選択肢がなく、セッションにある場合はセッションからセット
-                    if (empty($select_array) && array_key_exists('select', $forms_session[$frame_id][$form_id][$row_no])) {
-                        $select_array = $row['select'];
-                    }
-
-                    if ($select_array) {
-                        $forms[$frame_id][$form_id][$row_no]['select'] = $select_array;
-                    }
-                }
-            }
+            // エラーと共に編集画面を呼び出す
+            $errors = $validator->errors();
+            return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
         }
 
-        // 位置移動がある場合
-        if (!empty($to_row_no)) {
+        // 予約項目の更新処理
+        $select = FormsColumnsSelects::query()->where('id', $request->select_id)->first();
+        $select->value = $request->select_name;
+        $select->save();
+        $message = '選択肢【 '. $request->select_name .' 】を更新しました。';
 
-            $tmp_row_select = null;
-            // 先を退避
-            if (array_key_exists('select', $forms[$frame_id][$form_id][$to_row_no])) {
-                $tmp_row_select = $forms[$frame_id][$form_id][$to_row_no]['select'];
-                unset($forms[$frame_id][$form_id][$to_row_no]['select']);
-            }
-            // 元->先
-            if (array_key_exists('select', $forms[$frame_id][$form_id][$from_row_no])) {
-                $forms[$frame_id][$form_id][$to_row_no]['select'] = $forms[$frame_id][$form_id][$from_row_no]['select'];
-            }
-            // 退避->先
-            if (!empty($tmp_row_select)) {
-                $forms[$frame_id][$form_id][$from_row_no]['select'] = $tmp_row_select;
-            }
-        }
-        //Log::debug($forms);
-
-        return $forms;
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, $errors);
     }
 
     /**
-     *  カラム上移動
+     * 項目に紐づく選択肢の表示順の更新
      */
-    public function upColumnSequence($request, $page_id, $frame_id, $target_row_no)
+    public function updateSelectSequence($request, $page_id, $frame_id)
     {
-        // フレームに紐づくフォームID を探して取得
-        $form_db = $this->getForms($frame_id);
+        // ボタンが押された行の施設データ
+        $target_select = FormsColumnsSelects::query()
+            ->where('id', $request->select_id)
+            ->first();
 
-        // フォームのID。まだフォームがない場合は0
-        $forms_id = 0;
-        if (!empty($form_db)) {
-            $forms_id = $form_db->id;
-        }
+        // ボタンが押された前（後）の施設データ
+        $query = FormsColumnsSelects::query()
+            ->where('forms_columns_id', $request->column_id);
+        $pair_select = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
 
-        // 移動する行番号
-        $from_row_no = null;
-        $to_row_no = null;
+        // それぞれの表示順を退避
+        $target_select_display_sequence = $target_select->display_sequence;
+        $pair_select_display_sequence = $pair_select->display_sequence;
 
-        // 画面の項目を詰めなおして、再度編集画面へ。
-        $forms = array();
-        foreach($request->forms[$frame_id] as $row_no => $row) {
+        // 入れ替えて更新
+        $target_select->display_sequence = $pair_select_display_sequence;
+        $target_select->save();
+        $pair_select->display_sequence = $target_select_display_sequence;
+        $pair_select->save();
 
-            // 追加用の行は無視
-            if ($row_no == 0) {
-                continue;
-            }
+        $message = '選択肢【 '. $target_select->value .' 】の表示順を更新しました。';
 
-            // ループで合致した対象行を一つ上に移動。
-//            if ( $row['columns_id'] == $columns_id ) {
-            if ( $target_row_no == $row_no ) {
-                $forms[$frame_id][$forms_id][$row_no] = $forms[$frame_id][$forms_id][$row_no - 1];
-                $forms[$frame_id][$forms_id][$row_no - 1] = $row;
-
-                $from_row_no = $row_no;
-                $to_row_no = ($row_no - 1);
-            }
-            else {
-                $forms[$frame_id][$forms_id][$row_no] = $row;
-            }
-        }
-        //Log::debug($forms);
-
-        // Session に保持している詳細画面情報も付与する。
-        $forms = $this->formSessionMarge($request, $forms, $from_row_no, $to_row_no);
-
-        session(['forms' => $forms]);
-
-        // 編集画面へ戻る。
-        return $this->editColumn($request, $page_id, $frame_id, null);
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
     }
 
     /**
-     *  カラム下移動
+     * 項目に紐づく選択肢の削除
      */
-    public function downColumnSequence($request, $page_id, $frame_id, $target_row_no)
+    public function deleteSelect($request, $page_id, $frame_id)
     {
-        // フレームに紐づくフォームID を探して取得
-        $form_db = $this->getForms($frame_id);
 
-        // フォームのID。まだフォームがない場合は0
-        $forms_id = 0;
-        if (!empty($form_db)) {
-            $forms_id = $form_db->id;
-        }
+        // 削除
+        FormsColumnsSelects::query()->where('id', $request->select_id)->delete();
 
-        // 移動する行番号
-        $from_row_no = null;
-        $to_row_no = null;
+        // 明細行から削除対象の選択肢名を抽出
+        $str_select_name = "select_name_"."$request->select_id";
+        $message = '選択肢【 '. $request->$str_select_name .' 】を削除しました。';
 
-        // 画面の項目を詰めなおして、再度編集画面へ。
-        $skip = false;
-        $forms = array();
-        foreach($request->forms[$frame_id] as $row_no => $row) {
-
-            if ($skip == true ) {
-                $forms[$frame_id][$forms_id][$row_no - 1] = $row;
-                $skip = false;
-                continue;
-            }
-
-            // 追加用の行は無視
-            if ($row_no == 0) {
-                continue;
-            }
-            // ループで合致した対象行を一つ下に移動。
-//            if ( $row['columns_id'] == $columns_id ) {
-            if ( $target_row_no == $row_no ) {
-                $forms[$frame_id][$forms_id][$row_no + 1] = $row;
-                $skip = true;
-
-                $from_row_no = $row_no;
-                $to_row_no = ($row_no + 1);
-            }
-            else {
-                $forms[$frame_id][$forms_id][$row_no] = $row;
-            }
-        }
-
-        ksort($forms[$frame_id][$forms_id]);
-
-        // Session に保持している詳細画面情報も付与する。
-        $forms = $this->formSessionMarge($request, $forms, $from_row_no, $to_row_no);
-
-        session(['forms' => $forms]);
-
-        // 編集画面へ戻る。
-        return $this->editColumn($request, $page_id, $frame_id, null);
-    }
-
-    /**
-     * カラム編集キャンセル関数
-     */
-    public function cancel($request, $page_id, $frame_id, $id = null)
-    {
-        // 権限チェック(カラムの編集ができる権限が必要)
-        if ($this->can('buckets.editColumn')) {
-            return $this->view_error(403);
-        }
-
-        // 関連するセッションクリア
-        $request->session()->forget('forms');
-
-        return;
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
     }
 
     /**
@@ -952,162 +975,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if (!empty($columns_id)) {
             DB::table('forms_columns_selects')->where('forms_columns_id', $columns_id)->delete();
         }
-    }
-
-    /**
-     * カラム選択肢追加
-     */
-    private function insertColumnsSelects($columns_id, $column)
-    {
-        if (!empty($columns_id)) {
-            if (!empty($column['select'])) {
-
-                foreach($column['select'] as $select) {
-
-                    // forms_columns_selects の登録
-                    $bucket_id = DB::table('forms_columns_selects')->insertGetId([
-                          'forms_columns_id' => $columns_id,
-                          'value' => $select['value'],
-                    ]);
-                }
-            }
-        }
-    }
-
-    /**
-     * カラム保存関数
-     */
-    public function saveColumn($request, $page_id, $frame_id, $id = null)
-    {
-        // 対象のフォームID
-        $forms_id = $request->forms_id;
-
-        // 新規登録
-        if ($request->forms_id == 0) {
-
-            // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'forms'
-            ]);
-
-            // フォームの登録
-            $forms_id = DB::table('forms')->insertGetId(
-                ['bucket_id' => $bucket_id, 'forms_name' => '無題']
-            );
-        }
-
-        // Session データ
-        $forms_session = session('forms');
-
-        /* Session の構造
-
-            forms[frame_id][forms_id][row_no]['column_type']  型
-            forms[frame_id][forms_id][row_no]['column_name']  項目名
-            forms[frame_id][forms_id][row_no]['frame_col']          幅
-
-            ※ forms_id = 0 は新規
-               row_no は画面に表示するときに連番を設定したものが、POSTされてきて、Sessionに保存される。
-        */
-
-        // カラムデータ取得
-        $columns_db = DB::table('forms_columns')
-            ->where('forms_columns.forms_id', '=', $forms_id)
-            ->get();
-
-//Log::debug($request->forms);
-
-// セッションからカラムデータを登録し、カラムID を取ったら、セッション配列に戻す。
-// 選択肢データの保存はカラムID を使用
-
-        // forms_columnsテーブルの保存
-        foreach($request->forms[$frame_id] as $row_no => $row) {
-
-            // frame_col は画面にない場合がある。
-            $frame_col = 0;
-            if ( array_key_exists( 'frame_col', $row ) ) {
-                $frame_col = $row['frame_col'];
-            }
-
-            // 保存時、追加行は対象外
-            if ( $row_no == 0 ) {
-                continue;
-            }
-
-            // 削除
-            if ($row['delete_flag'] == '1') {
-                $id = DB::table('forms_columns')->where('id', $row['columns_id'])->delete();
-                // 選択肢の削除
-                $this->deleteColumnsSelects($row['columns_id']);
-            }
-            // 更新
-            else if ($row['columns_id']) {
-                $id = DB::table('forms_columns')->where('id', $row['columns_id'])->update([
-                    'forms_id' => $forms_id,
-                    'column_type' => $row['column_type'],
-                    'column_name' => $row['column_name'],
-                    'required' => ( array_key_exists('required', $row) ? $row['required'] : 0 ),
-                    'frame_col' => $frame_col,
-                    'display_sequence' => $row_no
-                ]);
-                // 選択肢の削除・追加
-                $this->deleteColumnsSelects($row['columns_id']);
-                $this->insertColumnsSelects($row['columns_id'], $forms_session[$frame_id][$forms_id][$row_no]);
-            }
-            // 追加
-            else {
-                $id = DB::table('forms_columns')->insertGetId([
-                    'forms_id' => $forms_id,
-                    'column_type' => $row['column_type'],
-                    'column_name' => $row['column_name'],
-                    'required' => ( array_key_exists('required', $row) ? $row['required'] : 0 ),
-                    'frame_col' => $frame_col,
-                    'display_sequence' => $row_no
-                ]);
-                // 選択肢の追加
-                $this->insertColumnsSelects($id, $forms_session[$frame_id][$forms_id][$row_no]);
-            }
-        }
-
-        // Session データ
-//        $forms_session = session('forms');
-
-//Log::debug($forms_session);
-/*
-        // forms_columns_selects テーブルの保存
-        foreach($forms_session[$frame_id][$forms_id] as $column) {
-
-            if (array_key_exists('select', $column)) {
-
-                // forms_columns_selects テーブルは delete->insert
-                DB::table('forms_columns_selects')->where('forms_columns_id', $column['columns_id'])->delete();
-
-                foreach($column['select'] as $select) {
-
-                    // forms_columns_selects の登録
-                    $bucket_id = DB::table('forms_columns_selects')->insertGetId([
-                          'forms_columns_id' => $column['columns_id'],
-                          'value' => $select['value'],
-                    ]);
-                }
-            }
-        }
-*/
-
-        // 新規登録時
-        if ($request->forms_id == 0) {
-
-            // FrameのバケツIDの更新
-            Frame::where('id', $frame_id)
-                      ->update(['bucket_id' => $bucket_id]);
-        }
-
-
-        // 関連するセッションクリア
-        $request->session()->forget('forms');
-
-        // 編集画面へ戻る。
-        return $this->editColumn($request, $page_id, $frame_id, $id);
     }
 
     /**

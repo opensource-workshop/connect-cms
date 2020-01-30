@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォームプラグイン
  --}}
-@if ($action == 'editColumn' || $action == '')
+@if ($action == 'editColumn' || $action == 'editColumnDetail'  || $action == '')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">項目設定</span></span>
     </li>

@@ -150,7 +150,7 @@
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
         {{-- キャンセルボタン --}}
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'"><i class="fas fa-times"></i> 戻る</button>
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'"><i class="fas fa-times"></i> キャンセル</button>
     </div>
 </form>
 @endsection

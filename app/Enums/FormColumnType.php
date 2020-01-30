@@ -3,26 +3,34 @@
 namespace App\Enums;
 
 /**
- * 予約項目区分
+ * フォーム項目区分
  */
-final class ReservationColumnType
+final class FormColumnType
 {
     // 定数メンバ
     const text = 'text';
-    // const textarea = 'textarea';
+    const textarea = 'textarea';
     const radio = 'radio';
-    // const checkbox = 'checkbox';
-    // const select = 'select';
+    const checkbox = 'checkbox';
+    const select = 'select';
+    const mail = 'mail';
+    // const birthday = 'birthday';
     // const datetime = 'datetime';
+    // const file = 'file';
+    const group = 'group';
 
     // key/valueの連想配列
     const enum = [
         self::text=>'1行文字列型',
-        // self::textarea=>'複数行文字列型',
+        self::textarea=>'複数行文字列型',
         self::radio=>'単一選択型',
-        // self::checkbox=>'複数選択型',
-        // self::select=>'リストボックス型',
+        self::checkbox=>'複数選択型',
+        self::select=>'リストボックス型',
+        self::mail=>'メールアドレス型',
+        // self::birthday=>'生年月日型',
         // self::datetime=>'日付＆時間型',
+        // self::file=>'ファイル型',
+        self::group=>'まとめ行',
     ];
 
     /*

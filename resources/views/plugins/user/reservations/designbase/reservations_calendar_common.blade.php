@@ -121,17 +121,17 @@
             </li>
         </ul>
 
-        <div id="app">
+        <div id="app" class="orderCalendar">
 
             @if ($view_format == ReservationCalendarDisplayType::month)
 
                 {{-- 月で表示 --}}
-                @include('plugins.user.reservations.default.reservations_calendar_month')
+                @include('plugins.user.reservations.designbase.reservations_calendar_month')
 
             @elseif ($view_format == ReservationCalendarDisplayType::week)
 
                 {{-- 週で表示 --}}
-                @include('plugins.user.reservations.default.reservations_calendar_week')
+                @include('plugins.user.reservations.designbase.reservations_calendar_week')
 
             @endif
         </div>

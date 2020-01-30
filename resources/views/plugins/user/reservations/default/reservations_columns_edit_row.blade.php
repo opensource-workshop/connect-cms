@@ -58,7 +58,7 @@
                 @if ($column->select_count == 0)
                     id="select-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
                 @endif
-                onclick="location.href='{{url('/')}}/plugin/reservations/editSelects/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
+                onclick="location.href='{{url('/')}}/plugin/reservations/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
             >
                 <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
             </button>
@@ -74,7 +74,7 @@
         </button>
     </td>
 </tr>
-{{-- 選択肢の設定内容の表示 --}}
+{{-- 選択肢の設定内容の表示行 --}}
 @if ($column->column_type == ReservationColumnType::radio)
 <tr>
     <td class="pt-0 border border-0"></td>

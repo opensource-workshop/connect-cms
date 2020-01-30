@@ -111,6 +111,18 @@
     </form>
 
 @else
-    フォームが定義されていません。
+    {{-- フレームに紐づくコンテンツがない場合、データ登録を促すメッセージを表示 --}}
+    <div class="card border-danger">
+        <div class="card-body">
+            {{-- フレームに紐づく親データがない場合 --}}
+            @if (!$form)
+                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するフォームを選択するか、作成してください。</p>
+            @endif
+            {{-- 項目データがない場合 --}}
+            @if (!$forms_columns)
+                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、項目データを作成してください。</p>
+            @endif
+        </div>
+    </div>
 @endif
 @endsection
