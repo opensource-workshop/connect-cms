@@ -233,6 +233,7 @@ return [
         'Required' => \App\Enums\Required::class,
         'ReservationColumnType' => \App\Enums\ReservationColumnType::class,
         'ReservationCalendarDisplayType' => \App\Enums\ReservationCalendarDisplayType::class,
+        'FormColumnType' => \App\Enums\FormColumnType::class,
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
     ],
 

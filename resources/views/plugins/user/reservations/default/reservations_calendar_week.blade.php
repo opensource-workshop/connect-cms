@@ -113,7 +113,7 @@
                                             @foreach ($booking['booking_details'] as $bookingDetail)
                                                 @switch($bookingDetail->column_type)
                                                     {{-- テキスト項目 --}}
-                                                    @case(ReservationColumnType::txt)
+                                                    @case(ReservationColumnType::text)
 
                                                         data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
                                                         @break

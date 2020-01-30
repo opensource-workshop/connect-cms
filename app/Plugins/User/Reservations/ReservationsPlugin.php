@@ -1113,12 +1113,12 @@ class ReservationsPlugin extends UserPluginBase
             'facility_name'  => '施設名',
         ]);
 
-        $erros = null;
+        $errors = null;
         if ($validator->fails()) {
 
             // エラーと共に編集画面を呼び出す
-            $erros = $validator->errors();
-            return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+            $errors = $validator->errors();
+            return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 新規登録時の表示順を設定
@@ -1134,7 +1134,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '施設【 '. $request->facility_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
-        return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+        return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**
@@ -1164,12 +1164,12 @@ class ReservationsPlugin extends UserPluginBase
             'select_name'  => '選択肢名',
         ]);
 
-        $erros = null;
+        $errors = null;
         if ($validator->fails()) {
 
             // エラーと共に編集画面を呼び出す
-            $erros = $validator->errors();
-            return $this->editSelects($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+            $errors = $validator->errors();
+            return $this->editSelects($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 新規登録時の表示順を設定
@@ -1186,7 +1186,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約詳細項目【 '. $request->select_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
-        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $erros);
+        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $errors);
     }
 
     /**
@@ -1204,12 +1204,12 @@ class ReservationsPlugin extends UserPluginBase
             'column_type'  => '型',
         ]);
 
-        $erros = null;
+        $errors = null;
         if ($validator->fails()) {
 
             // エラーと共に編集画面を呼び出す
-            $erros = $validator->errors();
-            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+            $errors = $validator->errors();
+            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 新規登録時の表示順を設定
@@ -1227,7 +1227,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $request->column_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**
@@ -1253,12 +1253,12 @@ class ReservationsPlugin extends UserPluginBase
             'facility_name'  => '施設名',
         ]);
 
-        $erros = null;
+        $errors = null;
         if ($validator->fails()) {
 
             // エラーと共に編集画面を呼び出す
-            $erros = $validator->errors();
-            return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+            $errors = $validator->errors();
+            return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 施設の更新処理
@@ -1269,7 +1269,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '施設【 '. $request->facility_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+        return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**
@@ -1295,12 +1295,12 @@ class ReservationsPlugin extends UserPluginBase
             'select_name'  => '選択肢名',
         ]);
 
-        $erros = null;
+        $errors = null;
         if ($validator->fails()) {
 
             // エラーと共に編集画面を呼び出す
-            $erros = $validator->errors();
-            return $this->editSelects($request, $page_id, $frame_id, $request->column_id, null, $erros);
+            $errors = $validator->errors();
+            return $this->editSelects($request, $page_id, $frame_id, $request->column_id, null, $errors);
         }
 
         // 予約項目の更新処理
@@ -1311,7 +1311,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '選択肢【 '. $request->select_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $erros);
+        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $errors);
     }
 
     /**
@@ -1343,12 +1343,12 @@ class ReservationsPlugin extends UserPluginBase
             'column_type'  => '型',
         ]);
 
-        $erros = null;
+        $errors = null;
         if ($validator->fails()) {
 
             // エラーと共に編集画面を呼び出す
-            $erros = $validator->errors();
-            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $erros);
+            $errors = $validator->errors();
+            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 予約項目の更新処理
@@ -1361,7 +1361,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $request->column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $erros);
+        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**

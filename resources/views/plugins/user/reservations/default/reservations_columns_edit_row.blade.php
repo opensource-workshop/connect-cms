@@ -74,7 +74,7 @@
         </button>
     </td>
 </tr>
-{{-- 選択肢の設定内容の表示 --}}
+{{-- 選択肢の設定内容の表示行 --}}
 @if ($column->column_type == ReservationColumnType::radio)
 <tr>
     <td class="pt-0 border border-0"></td>

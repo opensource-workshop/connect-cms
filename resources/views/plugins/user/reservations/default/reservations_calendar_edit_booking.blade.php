@@ -170,7 +170,7 @@
                         @switch($column->column_type)
 
                             {{-- テキスト項目 --}}
-                            @case(ReservationColumnType::txt)
+                            @case(ReservationColumnType::text)
 
                                 <input name="columns_value[{{$column->id}}]" class="form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id , $column->value ? $column->value : '')}}">
                                     @if ($errors && $errors->has("columns_value.$column->id"))
