@@ -53,7 +53,7 @@ class ReservationsPlugin extends UserPluginBase
             'editBucketsRoles', 
             'editFacilities', 
             'editColumns',
-            'editSelects',
+            'editColumnDetail',
         ];
         $functions['post'] = [
             'saveBucketsRoles', 
@@ -986,7 +986,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 予約項目の設定画面の表示
      */
-    public function editSelects($request, $page_id, $frame_id, $reservations_columns_id = null, $message = null, $errors = null)
+    public function editColumnDetail($request, $page_id, $frame_id, $reservations_columns_id = null, $message = null, $errors = null)
     {
         if($errors){
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
@@ -1169,7 +1169,7 @@ class ReservationsPlugin extends UserPluginBase
 
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
-            return $this->editSelects($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
+            return $this->editColumnDetail($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 新規登録時の表示順を設定
@@ -1186,7 +1186,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約詳細項目【 '. $request->select_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
-        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $errors);
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, $errors);
     }
 
     /**
@@ -1300,7 +1300,7 @@ class ReservationsPlugin extends UserPluginBase
 
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
-            return $this->editSelects($request, $page_id, $frame_id, $request->column_id, null, $errors);
+            return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
         }
 
         // 予約項目の更新処理
@@ -1311,7 +1311,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '選択肢【 '. $request->select_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, $errors);
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, $errors);
     }
 
     /**
@@ -1463,7 +1463,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '選択肢【 '. $target_select->select_name .' 】の表示順を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editSelects($request, $page_id, $frame_id, $request->column_id, $message, null);
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
     }
 
 }
