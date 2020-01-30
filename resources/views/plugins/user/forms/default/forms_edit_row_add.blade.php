@@ -5,44 +5,40 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
-<tr id="column_add_tr">
+    <tr id="column_add_tr">
     {{-- 余白 --}}
     <td>
     </td>
     {{-- 項目名 --}}
     <td>
-        <input class="form-control" type="text" name="forms[{{$frame_id}}][{{$row_no}}][column_name]" value="" style="min-width: 150px;">
-        {{-- forms_columns テーブルのid を隠しておく。DB更新の際、変更分とわかるようにするため。 --}}
-        <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][columns_id]" value="0">
-
-        {{-- 画面上、削除されたことを判定するフラグ。データ削除はフォームの保存時に行うが、どのデータを削除するのかの判定で使用 --}}
-        <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][delete_flag]" value="0">
+        <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}" style="min-width: 150px;">
     </td>
     {{-- 型 --}}
     <td>
-        <select class="form-control" name="forms[{{$frame_id}}][{{$row_no}}][column_type]" style="min-width: 100px;">
-            <option value="">項目追加...</option>
-            <option value="text">1行文字列型</option>
-            <option value="textarea">複数行文字列型</option>
-            <option value="radio">単一選択型</option>
-            <option value="checkbox">複数選択型</option>
-            <option value="select">リストボックス型</option>
-            <option value="mail">メールアドレス型</option>
-            <option value="birthday" disabled style="background-color: #f0f0f0;">生年月日型</option>
-            <option value="datetime" disabled style="background-color: #f0f0f0;">日付＆時間型</option>
-            <option value="file"     disabled style="background-color: #f0f0f0;">ファイル型</option>
-            <option value="group">まとめ行</option>
+        <select class="form-control" name="column_type" style="min-width: 100px;">
+            <option value="" disabled>型を指定</option>
+            @foreach (FormColumnType::getMembers() as $key=>$value)
+                <option value="{{$key}}"
+                    {{-- validation用 --}}
+                    @if($key == old('column_type'))
+                        selected="selected"
+                    @endif
+                >{{ $value }}</option>
+            @endforeach
         </select>
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        <input type="checkbox" name="forms[{{$frame_id}}][{{$row_no}}][required]" value="1">
+        <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
+    </td>
+    {{-- 余白 --}}
+    <td>
     </td>
     {{-- ＋ボタン --}}
     <td class="text-center">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_setting_column();"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>
+    {{-- 余白 --}}
     <td>
-        <input type="hidden" name="forms[{{$frame_id}}][{{$row_no}}][frame_col]" value="0">
     </td>
 </tr>
