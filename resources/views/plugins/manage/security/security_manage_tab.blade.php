@@ -5,10 +5,22 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category セキュリティ管理
  --}}
-<ul class="nav nav-tabs">
-@if ($function == "index")
-    <li class="nav-item"><a href="{{url('/manage/security')}}" class="nav-link active">ログイン制限</a></li>
-@else
-    <li class="nav-item"><a href="{{url('/manage/security')}}" class="nav-link">ログイン制限</a></li>
-@endif
-</ul>
+<div class="frame-setting-menu">
+    <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
+        <span class="d-md-none">処理選択 - セキュリティ管理</span>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="collapsingNavbarLg">
+            <ul class="navbar-nav">
+                <li role="presentation" class="nav-item">
+                @if ($function == "index")
+                    <span class="nav-link"><span class="active">ログイン制限</span></span>
+                @else
+                    <a href="{{url('/manage/security')}}" class="nav-link">ログイン制限</a></li>
+                @endif
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>

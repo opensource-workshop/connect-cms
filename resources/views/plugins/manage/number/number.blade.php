@@ -11,6 +11,9 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+<div class="card">
+<div class="card-header p-0">
+
 {{-- 機能選択タブ --}}
 @include('plugins.manage.number.number_manage_tab')
 
@@ -28,7 +31,7 @@
     {{ csrf_field() }}
 </form>
 
-<div class="card">
+</div>
 <div class="card-body">
 
 <table class="table table-bordered table_border_radius table-hover">

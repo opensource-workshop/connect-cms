@@ -11,8 +11,14 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+<div class="card mb-1">
+<div class="card-header p-0">
+
 {{-- 機能選択タブ --}}
 @include('plugins.manage.page.page_manage_tab')
+
+</div>
+</div>
 
 {{-- 入力フォーム --}}
 @include('plugins.manage.page.page_form')

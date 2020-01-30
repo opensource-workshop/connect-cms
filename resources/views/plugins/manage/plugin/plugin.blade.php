@@ -11,13 +11,17 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+<div class="card">
+<div class="card-header p-0">
+
 {{-- 機能選択タブ --}}
 @include('plugins.manage.plugin.plugin_tab')
 
+</div>
 <form name="form_plugins" id="form_plugins" class="form-horizontal" method="post" action="/manage/plugin/update">
     {{ csrf_field() }}
-    <div class="card table-responsive">
-        <table class="table">
+    <div class="table-responsive">
+        <table class="card-body table">
         <thead>
             <th nowrap>表示順</th>
             <th nowrap>表示</th>
@@ -67,7 +71,7 @@
             <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
         </div>
     </div>
-
 </form>
+</div>
 
 @endsection

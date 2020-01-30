@@ -3,29 +3,45 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コンテンツプラグイン
+ * @category ユーザ管理
  --}}
-<ul class="nav nav-tabs">
-@if ($function == "index")
-    <li class="nav-item"><a href="{{url('/manage/user')}}" class="nav-link active">ユーザ一覧</a></li>
-@else
-    <li class="nav-item"><a href="{{url('/manage/user')}}" class="nav-link">ユーザ一覧</a></li>
-@endif
+<div class="frame-setting-menu">
+    <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
+        <span class="d-md-none">処理選択 - ユーザ管理</span>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="collapsingNavbarLg">
+            <ul class="navbar-nav">
+                <li role="presentation" class="nav-item">
+                @if ($function == "index")
+                    <span class="nav-link"><span class="active">ユーザ一覧</span></span>
+                @else
+                    <a href="{{url('/manage/user')}}" class="nav-link">ユーザ一覧</a></li>
+                @endif
+                </li>
 
-@if ($function == "regist")
-    <li class="nav-item"><a href="{{url('/manage/user/regist')}}" class="nav-link active">ユーザ登録</a></li>
-@else
-    <li class="nav-item"><a href="{{url('/manage/user/regist')}}" class="nav-link">ユーザ登録</a></li>
-@endif
+                <li role="presentation" class="nav-item">
+                @if ($function == "regist")
+                    <span class="nav-link"><span class="active">ユーザ登録</span></span>
+                @else
+                    <a href="{{url('/manage/user/regist')}}" class="nav-link">ユーザ登録</a></li>
+                @endif
+                </li>
 
-@if ($function == "originalRole")
-    <li class="nav-item"><a href="{{url('/manage/user/originalRole')}}" class="nav-link active">役割設定</a></li>
-@else
-    <li class="nav-item"><a href="{{url('/manage/user/originalRole')}}" class="nav-link">役割設定</a></li>
-@endif
+                <li role="presentation" class="nav-item">
+                @if ($function == "originalRole")
+                    <span class="nav-link"><span class="active">役割設定</span></span>
+                @else
+                    <a href="{{url('/manage/user/originalRole')}}" class="nav-link">役割設定</a></li>
+                @endif
 
-@if ($function == "edit")
-    <li class="nav-item"><a class="nav-link active">ユーザ変更</a></li>
-@endif
-
-</ul>
+                <li role="presentation" class="nav-item">
+                @if ($function == "edit")
+                    <span class="nav-link"><span class="active">ユーザ変更</span></span>
+                @endif
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>

@@ -8,9 +8,9 @@
  * @category ページ管理
  --}}
 <div class="card">
-    <div class="card-header">
-        @if ($page->id)ページ更新 @else ページ追加 @endif
-    </div>
+    @if ($page->id)
+        <div class="card-header">ページ更新</div>
+    @endif
     <div class="card-body">
 
         <!-- Display Validation Errors -->
