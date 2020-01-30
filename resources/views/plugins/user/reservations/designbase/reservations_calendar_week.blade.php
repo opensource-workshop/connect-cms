@@ -18,7 +18,7 @@
 
     <div class="row">
         <div class="col-12 clearfix">
-            <div class="float-left">
+            <div class="float-left week_nav">
                 <div class="list-group list-group-horizontal">
                     {{-- 前週ボタン --}}
                     <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subDay(7)->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
@@ -34,7 +34,7 @@
                     </a>
                 </div>
             </div>
-            <div class="float-right col-sm-5">
+            <div class="float-right col-sm-5 to_current">
                 {{-- 当日へボタン --}}
                 <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
                     今日へ<br>({{ Carbon::today()->format('Y年n月j日') }})
@@ -72,7 +72,7 @@
                                 {{-- 土曜なら青文字 --}}
                                 {{ $cell['date']->dayOfWeek == DayOfWeek::sat ? 'text-primary' : '' }}
                                 {{-- 当日ならセル背景を黄色 --}}
-                                {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
+                                {{ $cell['date'] == Carbon::today() ? ' current' : '' }}
                                 "
                             >
                                 <div class="clearfix">
