@@ -669,6 +669,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.column_type',
                 'forms_columns.column_name',
                 'forms_columns.required',
+                'forms_columns.frame_col',
                 'forms_columns.display_sequence',
                 DB::raw('count(forms_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(forms_columns_selects.value order by forms_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
@@ -684,6 +685,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.column_type',
                 'forms_columns.column_name',
                 'forms_columns.required',
+                'forms_columns.frame_col',
                 'forms_columns.display_sequence',
             )
             ->orderby('forms_columns.display_sequence')
@@ -736,23 +738,32 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             "required" => $request->$str_required,
         ]);
 
-        // データ型が「まとめ行」の場合、まとめ数を設定
+        $validate_value = [
+            'column_name'  => ['required'],
+            'column_type'  => ['required'],
+        ];
+
+        $validate_attribute = [
+            'column_name'  => '項目名',
+            'column_type'  => '型',
+        ];
+
+        // データ型が「まとめ行」の場合
         if($request->$str_column_type == \FormColumnType::group){
             $str_frame_col = "frame_col_"."$request->column_id";
+            // まとめ数を設定
             $request->merge([
                 "frame_col" => $request->$str_frame_col,
             ]);
+
+            // チェック処理を追加
+            $validate_value['frame_col'] = ['required'];
+            $validate_attribute['frame_col'] = 'まとめ数';
         }
 
         // エラーチェック
-        $validator = Validator::make($request->all(), [
-            'column_name'  => ['required'],
-            'column_type'  => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'column_name'  => '項目名',
-            'column_type'  => '型',
-        ]);
+        $validator = Validator::make($request->all(), $validate_value);
+        $validator->setAttributeNames($validate_attribute);
 
         $errors = null;
         if ($validator->fails()) {

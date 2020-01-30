@@ -48,9 +48,15 @@
     <td class="text-center">
         @if ($column->column_type == FormColumnType::group)
             {{-- まとめ行 --}}
-            <select class="form-control" name="frame_col_{{ $column->id }}">
+            <select class="form-control" name="frame_col_{{ $column->id }}" 
+                {{-- まとめ数の設定がない場合、ツールチップで設定を促すメッセージを表示 --}}
+                @if (!$column->frame_col)
+                    id="frame-col-tip" data-toggle="tooltip" title="まとめ数の設定がありません。設定してください。" data-trigger="manual" data-placement="bottom"
+                @endif
+            >
+                <option value=""></option>
                 @for ($i = 1; $i < 5; $i++)
-                    <option value="{{$i}}"  @if($column['frame_col']==$i)  selected @endif>{{$i}}</option>
+                    <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>{{$i}}</option>
                 @endfor
             </select>
         @else
@@ -85,17 +91,26 @@
     </td>
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
-@if ($column->column_type == FormColumnType::radio || $column->column_type == FormColumnType::checkbox || $column->column_type == FormColumnType::select)
+@if (
+    $column->column_type == FormColumnType::radio || 
+    $column->column_type == FormColumnType::checkbox || 
+    $column->column_type == FormColumnType::select ||
+    $column->column_type == FormColumnType::group
+    )
     <tr>
         <td class="pt-0 border border-0"></td>
         <td class="pt-0 border border-0" colspan="7">
         
-        @if ($column->select_count > 0)
+        @if ($column->column_type != FormColumnType::group && $column->select_count > 0)
             {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
             <i class="far fa-list-alt"></i> 
             {{ $column->select_names }}
-        @elseif($column->select_count == 0)
+        @elseif($column->column_type != FormColumnType::group && $column->select_count == 0)
             {{-- 選択肢データがない場合はツールチップ分、余白として改行する --}}
+            <br>
+        @endif
+        @if ($column->column_type == FormColumnType::group && !isset($column->frame_col))
+            {{-- まとめ行でまとめ数の設定がない場合はツールチップ分、余白として改行する --}}
             <br>
         @endif
         </td>
