@@ -224,6 +224,24 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     }
 
     /**
+     * （再帰関数）入力値の前後をトリムする
+     *
+     * @param $request
+     * @return void
+     */
+    public static function trimInput($value){
+        if (is_array($value)){
+            // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
+            $value = array_map(['self', 'trimInput'], $value);
+        }elseif (is_string($value)){
+            $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
+        }
+ 
+        return $value;
+    }
+
+
+    /**
      * 登録時の確認
      */
     public function publicConfirm($request, $page_id, $frame_id, $id = null)
@@ -254,6 +272,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
             }
         }
+
+        // 入力値をトリム
+        $request->merge(self::trimInput($request->all()));
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
