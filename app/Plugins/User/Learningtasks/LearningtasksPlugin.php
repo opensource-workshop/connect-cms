@@ -407,7 +407,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題ファイルテーブル
         $posts_files_db
             = LearningtasksPostsFiles::select('learningtasks_posts_files.*',
-                                              'uploads.id as uploads_id', 'uploads.client_original_name')
+                                              'uploads.id as uploads_id', 'uploads.client_original_name', 'uploads.download_count')
                  ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.task_file_uploads_id')
                  ->whereIn('learningtasks_posts_files.learningtasks_posts_id', $posts_ids)
                  ->get();

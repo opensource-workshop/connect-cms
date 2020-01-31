@@ -54,6 +54,11 @@ class UploadController extends ConnectController
             return response()->download( storage_path(config('connect.no_image_path')));
         }
 
+        // カウントアップの対象拡張子ならカウントアップ
+        if (isset($uploads['extension']) && in_array(strtolower($uploads['extension']), config('connect.CC_COUNT_EXTENSION'))) {
+            $uploads->increment('download_count', 1);
+        }
+
         // ファイルを返す(PDFの場合はinline)
         //$content = '';
         $content_disposition = '';

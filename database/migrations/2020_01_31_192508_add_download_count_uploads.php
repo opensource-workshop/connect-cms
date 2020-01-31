@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddDisplaySequenceFormsColumnsSelectsTable extends Migration
+class AddDownloadCountUploads extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,9 @@ class AddDisplaySequenceFormsColumnsSelectsTable extends Migration
      */
     public function up()
     {
-        Schema::table('forms_columns_selects', function (Blueprint $table) {
-            $table->integer('display_sequence')->comment('表示順')->after('default');
+        Schema::table('uploads', function (Blueprint $table) {
+            //
+            $table->integer('download_count')->comment('ダウンロード数')->default(0)->after('plugin_name');
         });
     }
 
@@ -25,9 +26,9 @@ class AddDisplaySequenceFormsColumnsSelectsTable extends Migration
      */
     public function down()
     {
-        Schema::table('forms_columns_selects', function (Blueprint $table) {
+        Schema::table('uploads', function (Blueprint $table) {
             //
-            $table->dropColumn('display_sequence');
+            $table->dropColumn('download_count');
         });
     }
 }

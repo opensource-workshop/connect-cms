@@ -77,6 +77,7 @@
                         @foreach($post->task_files as $task_file)
                         <p>
                             <a href="{{url('/')}}/file/{{$task_file->task_file_uploads_id}}" target="_blank" rel="noopener">{{$task_file->client_original_name}}</a>
+                            <span class="ml-2"><span><i class="fas fa-arrow-circle-down"></i> {{$task_file->download_count}}
                         </p>
                         @endforeach
                     @endif
