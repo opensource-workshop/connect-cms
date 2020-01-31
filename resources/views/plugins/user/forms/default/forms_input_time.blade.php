@@ -41,7 +41,6 @@
             value="{{old('forms_columns_value.'.$form_obj->id, Carbon::now()->addHour(1)->hour)}}"
             class="form-control datetimepicker-input" 
             data-target="#{{ $form_obj->id }}"
-            readonly
         >
         <div class="input-group-append" data-target="#{{ $form_obj->id }}" data-toggle="datetimepicker">
             <div class="input-group-text"><i class="fa fa-calendar"></i></div>
