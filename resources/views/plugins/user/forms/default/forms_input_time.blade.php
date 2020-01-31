@@ -25,9 +25,6 @@
                 togglePeriod: '午前/午後切替',
                 selectTime: '時間を選択'
             },
-            ignoreReadonly: true,
-            locale: 'ja',
-            sideBySide: true,
             format: 'HH:mm',
             stepping: 5
         });
@@ -38,7 +35,7 @@
         <input 
             type="text" 
             name="forms_columns_value[{{ $form_obj->id }}]" 
-            value="{{old('forms_columns_value.'.$form_obj->id, Carbon::now()->addHour(1)->hour)}}"
+            value="{{old('forms_columns_value.'.$form_obj->id)}}"
             class="form-control datetimepicker-input" 
             data-target="#{{ $form_obj->id }}"
         >
