@@ -66,6 +66,9 @@
                             @case("mail")
                                 @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $group_row])
                                 @break
+                            @case("date")
+                                @include('plugins.user.forms.default.forms_input_date',['form_obj' => $group_row])
+                                @break
                             @case("time")
                                 @include('plugins.user.forms.default.forms_input_time',['form_obj' => $group_row])
                                 @break
@@ -105,13 +108,16 @@
                     @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $form_column])
                 </div>
                 @break
+            @case("date")
+                <div class="col-sm-8">
+                    @include('plugins.user.forms.default.forms_input_date',['form_obj' => $form_column])
+                </div>
+                @break
             @case("time")
                 <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_time',['form_obj' => $form_column])
                 </div>
                 @break
-
-
             @endswitch
         </div>{{-- /form-group --}}
         @endforeach

@@ -16,6 +16,7 @@ final class FormColumnType
     const mail = 'mail';
     // const birthday = 'birthday';
     // const datetime = 'datetime';
+    const date = 'date';
     const time = 'time';
     // const file = 'file';
     const group = 'group';
@@ -30,6 +31,7 @@ final class FormColumnType
         self::mail=>'メールアドレス型',
         // self::birthday=>'生年月日型',
         // self::datetime=>'日付＆時間型',
+        self::date=>'日付型',
         self::time=>'時間型',
         // self::file=>'ファイル型',
         self::group=>'まとめ行',
