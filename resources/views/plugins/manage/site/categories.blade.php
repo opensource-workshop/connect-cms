@@ -90,7 +90,11 @@
                     </td>
                     <td nowrap>
                         <input type="hidden" value="{{old('target.'.$category->id, $category->target)}}" name="target[{{$category->id}}]" class="form-control"></input>
-                        {{$category->target}}
+                        @if ($category->target)
+                            <span class="badge" style="color:{{$category->color}};background-color:{{$category->background_color}};">{{$category->target}}</span>
+                        @else
+                            <span class="badge" style="color:{{$category->color}};background-color:{{$category->background_color}};">ALL</span>
+                        @endif
                     </td>
                     <td nowrap>
                         <input type="hidden" value="{{old('plugin_id.'.$category->id, $category->plugin_id)}}" name="plugin_id[{{$category->id}}]"></input>
