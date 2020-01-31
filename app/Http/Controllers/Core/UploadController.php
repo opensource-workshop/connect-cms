@@ -55,7 +55,8 @@ class UploadController extends ConnectController
         }
 
         // カウントアップの対象拡張子ならカウントアップ
-        if (isset($uploads['extension']) && in_array(strtolower($uploads['extension']), config('connect.CC_COUNT_EXTENSION'))) {
+        $cc_count_extension = config('connect.CC_COUNT_EXTENSION');
+        if (isset($uploads['extension']) && is_array($cc_count_extension) && in_array(strtolower($uploads['extension']), $cc_count_extension)) {
             $uploads->increment('download_count', 1);
         }
 
