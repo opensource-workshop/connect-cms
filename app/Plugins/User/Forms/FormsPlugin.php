@@ -305,9 +305,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $form = $this->getForms($frame_id);
 
         // forms_inputs 登録
-        $forms_inputs_id = DB::table('forms_inputs')->insertGetId([
-            'forms_id' => $form->id,
-        ]);
+        $forms_inputs = new FormsInputs();
+        $forms_inputs->forms_id = $form->id;
+        $forms_inputs->save();
 
         // フォームのカラムデータ
         $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
@@ -334,11 +334,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
             // データ登録フラグを見て登録
             if ($form->data_save_flag) {
-                DB::table('forms_input_cols')->insertGetId([
-                    'forms_inputs_id' => $forms_inputs_id,
-                    'forms_columns_id' => $forms_column['id'],
-                    'value' => $value,
-                ]);
+                $forms_input_cols = new FormsInputCols();
+                $forms_input_cols->forms_inputs_id = $forms_inputs->id;
+                $forms_input_cols->forms_columns_id = $forms_column['id'];
+                $forms_input_cols->value = $value;
+                $forms_input_cols->save();
             }
 
             // メールの内容
@@ -485,14 +485,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if (empty($request->forms_id)) {
 
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'forms'
-            ]);
+            $bucket = new Buckets();
+            $bucket->bucket_name = '無題';
+            $bucket->plugin_name = 'forms';
+            $bucket->save();
 
             // ブログデータ新規オブジェクト
             $forms = new Forms();
-            $forms->bucket_id = $bucket_id;
+            $forms->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆ブログ作成
@@ -502,7 +502,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if (empty($frame->bucket_id)) {
 
                 // FrameのバケツIDの更新
-                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
             $message = 'フォーム設定を追加しました。<br />　 フォームで使用する項目を設定してください。［ <a href="/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">項目設定</a> ］';
