@@ -8,6 +8,13 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+@if (!$frame->bucket_id)
+    <div class="alert alert-warning" style="margin-top: 10px;">
+        <i class="fas fa-exclamation-circle"></i>
+        開館カレンダーが設定されていません。
+    </div>
+@else
+
 <div class="openingcalendar-pdf">
 <p>
 @can("role_article")
@@ -204,4 +211,5 @@
 @can("role_article")
     <button type="button" class="btn btn-success mt-3" onclick="location.href='{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 編集</button>
 @endcan
+@endif
 @endsection

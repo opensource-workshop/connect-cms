@@ -389,7 +389,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
     /**
      *  開館カレンダー記事登録処理
      */
-    public function save($request, $page_id, $frame_id, $blogs_posts_id = null)
+    public function save($request, $page_id, $frame_id, $posts_id = null)
     {
 
         // 対象年月
@@ -579,8 +579,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $openingcalendars->openingcalendar_sub_name = $request->openingcalendar_sub_name;
         $openingcalendars->month_format             = $request->month_format;
         $openingcalendars->week_format              = $request->week_format;
-        $openingcalendars->view_before_month        = $request->view_before_month;
-        $openingcalendars->view_after_month         = $request->view_after_month;
+        $openingcalendars->view_before_month        = empty($request->view_before_month) ? 0 : intval($request->view_before_month);
+        $openingcalendars->view_after_month         = empty($request->view_before_month) ? 0 : intval($request->view_after_month);
         $openingcalendars->smooth_scroll            = $request->smooth_scroll;
 
         // データ保存
@@ -594,8 +594,40 @@ class OpeningcalendarsPlugin extends UserPluginBase
     /**
      *  削除処理
      */
-    public function destroyBuckets($request, $page_id, $frame_id, $blogs_id)
+    public function destroyBuckets($request, $page_id, $frame_id, $openingcalendars_id)
     {
+        // openingcalendars_id がある場合、データを削除
+        if ( $openingcalendars_id ) {
+
+            // Bucket_id でフレームを更新するため、削除対象のOpeningcalendars を取得しておく。
+            $openingcalendars = Openingcalendars::where('id', $openingcalendars_id)->first();
+
+            // 開館カレンダーを削除する。（論理削除）
+            Openingcalendars::where('id', $openingcalendars_id)->delete();
+
+            // 削除した開館カレンダーを使用しているフレームからは、開館カレンダーとの紐づけを削除する。
+            // 開館カレンダーID -> 開館カレンダー.bucket_id -> frames.bucket_id で使用しているフレームの特定
+            // 該当フレームの bucket_id を null に更新
+            Frame::where('bucket_id', $openingcalendars->bucket_id)->update(['bucket_id' => null]);
+
+
+
+            // ブログ設定を削除する。
+//            Blogs::destroy($blogs_id);
+
+// Frame に紐づく開館カレンダーを削除した場合のみ、Frame の更新。（Frame に紐づかないBlog の削除もあるので、その場合はFrame は更新しない。）
+// 実装は後で。
+
+            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            //$frame = Frame::where('id', $frame_id)->first();
+
+            // FrameのバケツIDの更新
+            //Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+
+            // backetsの削除
+            //Buckets::where('id', $frame->bucket_id)->delete();
+        }
+        // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
    /**
