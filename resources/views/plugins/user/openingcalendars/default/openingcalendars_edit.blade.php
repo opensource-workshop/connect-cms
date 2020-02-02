@@ -46,32 +46,29 @@
             <th>日</th>
             <th>パターン</th>
         </tr>
-        <tr>
-            <td><label>全て</label></td>
-            <td>
+        <tr class="border-bottom border-primary">
+            <td class="px-1"><label class="my-1">全て</label></td>
                 @foreach($patterns as $pattern)
+            <td class="px-1">
+{{$pattern->caption}}<br />
                 <label><input type="radio" name="all_check" onclick="javascript:set_all_time({{$loop->index}});">{{$pattern->pattern}}</input></label>
-                @endforeach
             </td>
-        </tr>
-        <tr>
-            <th></th>
-            <td><hr /></td>
+                @endforeach
         </tr>
         @foreach($edit_days as $key => $edit_day)
-        <tr>
-            <td><label>{{$key}}日({{$week_names[$key]}})</label></td>
-            <td nowrap>
+        <tr class="border-bottom">
+            <td class="px-1"><label class="my-1">{{$key}}日({{$week_names[$key]}})</label></td>
                 @foreach($patterns as $pattern)
-                <label>
+            <td class="px-1" nowrap>
+                <label class="my-1">
                     @if ($edit_day && $edit_day->openingcalendars_patterns_id == $pattern->id)
                     <input type="radio" value="{{$pattern->id}}" name="openingcalendars[{{$key}}]" checked="checked">{{$pattern->pattern}}</input>
                     @else
                     <input type="radio" value="{{$pattern->id}}" name="openingcalendars[{{$key}}]">{{$pattern->pattern}}</input>
                     @endif
                 </label>
-                @endforeach
             </td>
+                @endforeach
         </tr>
     @endforeach
     </table>
