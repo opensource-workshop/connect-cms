@@ -172,9 +172,9 @@
             </div>
 
             {{-- 月毎のコメント --}}
-            @if (isset($view_months[$calendar_ym]['comments']))
+            @if (isset($view_months[$calendar_ym]['comments']) && !empty($view_months[$calendar_ym]['comments']))
             <div class="card mt-2">
-                <div class="card-body p-2">{!!$view_months[$calendar_ym]['comments']!!}</div>
+                <div class="card-body p-2">{!!nl2br(e($view_months[$calendar_ym]['comments']))!!}</div>
             </div>
             @endif
 

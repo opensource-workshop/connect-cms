@@ -414,12 +414,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
         }
 
         // 月のコメント
+        $comments = '';
         if ($request->comments) {
-            OpeningcalendarsMonths::updateOrCreate(['month'               => $target_ym,
-                                                    'openingcalendars_id' => $openingcalendar_frame->openingcalendars_id],
-                                                   ['openingcalendars_id' => $openingcalendar_frame->openingcalendars_id,
-                                                    'comments'            => $request->comments]);
+            $comments = $request->comments;
         }
+        OpeningcalendarsMonths::updateOrCreate(['month'               => $target_ym,
+                                                'openingcalendars_id' => $openingcalendar_frame->openingcalendars_id],
+                                               ['openingcalendars_id' => $openingcalendar_frame->openingcalendars_id,
+                                                'comments'            => $comments]);
 
         // 登録後は編集画面を呼ぶ。
         return $this->edit($request, $page_id, $frame_id);
