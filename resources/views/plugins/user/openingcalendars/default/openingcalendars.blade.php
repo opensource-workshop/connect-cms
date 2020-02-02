@@ -129,12 +129,24 @@
             <thead>
                 <tr>
                 @if ($openingcalendar_frame->week_format == 1)
-                    @foreach (['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as $dayOfWeek)
-                    <th class="p-0">{{$dayOfWeek}}</th>
+                    @foreach (['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as $weekNo => $dayOfWeek)
+                        @if ($weekNo == 0)
+                            <th class="p-0 openingcalendar-sun">{{$dayOfWeek}}</th>
+                        @elseif ($weekNo == 6)
+                            <th class="p-0 openingcalendar-sat">{{$dayOfWeek}}</th>
+                        @else
+                            <th class="p-0 openingcalendar-weekday">{{$dayOfWeek}}</th>
+                        @endif
                     @endforeach
                 @else
-                    @foreach (['日', '月', '火', '水', '木', '金', '土'] as $dayOfWeek)
-                    <th class="p-0">{{$dayOfWeek}}</th>
+                    @foreach (['日', '月', '火', '水', '木', '金', '土'] as $weekNo => $dayOfWeek)
+                        @if ($weekNo == 0)
+                            <th class="p-0 openingcalendar-sun">{{$dayOfWeek}}</th>
+                        @elseif ($weekNo == 6)
+                            <th class="p-0 openingcalendar-sat">{{$dayOfWeek}}</th>
+                        @else
+                            <th class="p-0 openingcalendar-weekday">{{$dayOfWeek}}</th>
+                        @endif
                     @endforeach
                 @endif
                 </tr>

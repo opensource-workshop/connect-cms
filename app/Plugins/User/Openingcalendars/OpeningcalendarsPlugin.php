@@ -138,12 +138,20 @@ class OpeningcalendarsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
-        // 当月（初期表示）
-        $view_ym = date("Y-m");
-        $view_ym_str = date("F / Y");
-
         // Frame データ
         $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
+
+        // 当月（初期表示）
+        $view_ym = date("Y-m");
+        if ($openingcalendar_frame->month_format == 1) {
+            $view_ym_str = date("F / Y");
+        }
+        else if ($openingcalendar_frame->month_format == 2) {
+            $view_ym_str = date("F Y");
+        }
+        else {
+            $view_ym_str = date("F / Y");
+        }
 
         // パターン取得(画面で2列に分けて表示したいので、配列にして2列に分割、画面へ渡す)
         $openingcalendars_patterns = OpeningcalendarsPatterns::where('openingcalendars_id', '=', $openingcalendar_frame->openingcalendars_id)
@@ -232,8 +240,20 @@ class OpeningcalendarsPlugin extends UserPluginBase
             if ($i == ($count - 1)) {
                 $view_month_value["data-next"] = "off";
             }
-            $view_month_value["data-prevmonth"] = date('F / Y', strtotime($view_month . "-01 - 1 month"));
-            $view_month_value["data-nextmonth"] = date('F / Y', strtotime($view_month . "-01 + 1 month"));
+
+            // 月日のフォーマット
+            if ($openingcalendar_frame->month_format == 1) {
+                $view_month_value["data-prevmonth"] = date('F / Y', strtotime($view_month . "-01 - 1 month"));
+                $view_month_value["data-nextmonth"] = date('F / Y', strtotime($view_month . "-01 + 1 month"));
+            }
+            else if ($openingcalendar_frame->month_format == 2) {
+                $view_month_value["data-prevmonth"] = date('F Y', strtotime($view_month . "-01 - 1 month"));
+                $view_month_value["data-nextmonth"] = date('F Y', strtotime($view_month . "-01 + 1 month"));
+            }
+            else {
+                $view_month_value["data-prevmonth"] = date('F / Y', strtotime($view_month . "-01 - 1 month"));
+                $view_month_value["data-nextmonth"] = date('F / Y', strtotime($view_month . "-01 + 1 month"));
+            }
 
             $view_months2[$view_month] = $view_month_value;
 
