@@ -61,8 +61,8 @@
         //    $("#calendar_next_link{{$frame_id}}").removeClass("disabled");
         //    $("#calendar_prev_link{{$frame_id}}").removeClass("disabled");
         //}
-        $("#calendar{{$frame_id}}").carousel('prev');
         $("#view_ym_str{{$frame_id}}").text($("#calendar{{$frame_id}} .active").attr('data-prevmonth'));
+        $("#calendar{{$frame_id}}").carousel('prev');
     }
     // 進
     function next{{$frame_id}}() {
@@ -77,8 +77,8 @@
         //    $("#calendar_next_link{{$frame_id}}").removeClass("disabled");
         //    $("#calendar_prev_link{{$frame_id}}").removeClass("disabled");
         //}
-        $("#calendar{{$frame_id}}").carousel('next');
         $("#view_ym_str{{$frame_id}}").text($("#calendar{{$frame_id}} .active").attr('data-nextmonth'));
+        $("#calendar{{$frame_id}}").carousel('next');
     }
 
 
