@@ -48,28 +48,28 @@
 
                     {{-- 項目 ※まとめ設定時 --}}
                     @switch($group_row->column_type)
-                        @case("text")
+                        @case(FormColumnType::text)
                             @include('plugins.user.forms.default.forms_input_text',['form_obj' => $group_row])
                             @break
-                        @case("textarea")
+                        @case(FormColumnType::textarea)
                             @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $group_row])
                             @break
-                        @case("radio")
+                        @case(FormColumnType::radio)
                             @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $group_row])
                             @break
-                        @case("checkbox")
+                        @case(FormColumnType::checkbox)
                             @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $group_row])
                             @break
-                        @case("select")
+                        @case(FormColumnType::select)
                             @include('plugins.user.forms.default.forms_input_select',['form_obj' => $group_row])
                             @break
-                        @case("mail")
+                        @case(FormColumnType::mail)
                             @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $group_row])
                             @break
-                        @case("date")
+                        @case(FormColumnType::date)
                             @include('plugins.user.forms.default.forms_input_date',['form_obj' => $group_row])
                             @break
-                        @case("time")
+                        @case(FormColumnType::time)
                             @include('plugins.user.forms.default.forms_input_time',['form_obj' => $group_row])
                             @break
                     @endswitch
@@ -79,42 +79,42 @@
                 </div>
                 @break
             {{-- 項目 ※まとめ未設定行 --}}
-            @case("text")
+            @case(FormColumnType::text)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_text',['form_obj' => $form_column])
                 </div>
                 @break
-            @case("textarea")
+            @case(FormColumnType::textarea)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $form_column])
                 </div>
                 @break
-            @case("radio")
+            @case(FormColumnType::radio)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $form_column])
                 </div>
                 @break
-            @case("checkbox")
+            @case(FormColumnType::checkbox)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $form_column])
                 </div>
                 @break
-            @case("select")
+            @case(FormColumnType::select)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_select',['form_obj' => $form_column])
                 </div>
                 @break
-            @case("mail")
+            @case(FormColumnType::mail)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $form_column])
                 </div>
                 @break
-            @case("date")
+            @case(FormColumnType::date)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_date',['form_obj' => $form_column])
                 </div>
                 @break
-            @case("time")
+            @case(FormColumnType::time)
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_time',['form_obj' => $form_column])
                 </div>
