@@ -776,19 +776,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'column_type'  => '型',
         ];
 
-        // データ型が「まとめ行」の場合
-        if($request->$str_column_type == \FormColumnType::group){
-            $str_frame_col = "frame_col_"."$request->column_id";
-            // まとめ数を設定
-            $request->merge([
-                "frame_col" => $request->$str_frame_col,
-            ]);
-
-            // チェック処理を追加
-            $validate_value['frame_col'] = ['required'];
-            $validate_attribute['frame_col'] = 'まとめ数';
-        }
-        
         // エラーチェック
         $validator = Validator::make($request->all(), $validate_value);
         $validator->setAttributeNames($validate_attribute);
