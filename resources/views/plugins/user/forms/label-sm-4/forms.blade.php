@@ -34,50 +34,51 @@
                 <div class="container-fluid row" style="padding: 0;">
                 @foreach($form_column->group as $group_row)
 
+                    {{-- 項目名 --}}
                     @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
                         <div class="col-sm-{{$col_count}}" style="padding-left: 0px;">
+                        <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
                     @else
                         <div class="col-sm-{{$col_count}} pr-0">
+                        <label class="control-label">{{$group_row->column_name}}</label>
                     @endif
 
-                            @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
-                                <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
-                            @else
-                                <label class="control-label">{{$group_row->column_name}}</label>
-                            @endif
-                            @if ($group_row->required)<label class="badge badge-danger">必須</label> @endif
+                    {{-- 必須 --}}
+                    @if ($group_row->required)<label class="badge badge-danger">必須</label> @endif
 
-                            @switch($group_row->column_type)
-                            @case("text")
-                                @include('plugins.user.forms.default.forms_input_text',['form_obj' => $group_row])
-                                @break
-                            @case("textarea")
-                                @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $group_row])
-                                @break
-                            @case("radio")
-                                @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $group_row])
-                                @break
-                            @case("checkbox")
-                                @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $group_row])
-                                @break
-                            @case("select")
-                                @include('plugins.user.forms.default.forms_input_select',['form_obj' => $group_row])
-                                @break
-                            @case("mail")
-                                @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $group_row])
-                                @break
-                            @case("date")
-                                @include('plugins.user.forms.default.forms_input_date',['form_obj' => $group_row])
-                                @break
-                            @case("time")
-                                @include('plugins.user.forms.default.forms_input_time',['form_obj' => $group_row])
-                                @break
-                            @endswitch
+                    {{-- 項目 ※まとめ設定行 --}}
+                    @switch($group_row->column_type)
+                        @case("text")
+                            @include('plugins.user.forms.default.forms_input_text',['form_obj' => $group_row])
+                            @break
+                        @case("textarea")
+                            @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $group_row])
+                            @break
+                        @case("radio")
+                            @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $group_row])
+                            @break
+                        @case("checkbox")
+                            @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $group_row])
+                            @break
+                        @case("select")
+                            @include('plugins.user.forms.default.forms_input_select',['form_obj' => $group_row])
+                            @break
+                        @case("mail")
+                            @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $group_row])
+                            @break
+                        @case("date")
+                            @include('plugins.user.forms.default.forms_input_date',['form_obj' => $group_row])
+                            @break
+                        @case("time")
+                            @include('plugins.user.forms.default.forms_input_time',['form_obj' => $group_row])
+                            @break
+                    @endswitch
                         </div>
-                    @endforeach
+                @endforeach
                     </div>
                 </div>
                 @break
+            {{-- 項目 ※まとめ未設定行 --}}
             @case("text")
                 <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_text',['form_obj' => $form_column])
@@ -119,8 +120,9 @@
                 </div>
                 @break
             @endswitch
-        </div>{{-- /form-group --}}
+        </div>
         @endforeach
+        {{-- ボタンエリア --}}
         <div class="form-group text-center">
             <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> 確認画面へ</button>
         </div>
