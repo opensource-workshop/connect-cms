@@ -55,6 +55,14 @@
         }
         return false;
     }
+
+    /**
+     * その他の設定の更新ボタン押下
+     */
+     function submit_update_column_detail() {
+        form_column_detail.action = "/plugin/forms/updateColumnDetail/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_column_detail.submit();
+    }
 </script>
 
 <form action="" id="form_column_detail" name="form_column_detail" method="POST" class="form-horizontal">
@@ -68,88 +76,7 @@
 
     {{-- メッセージエリア --}}
     <div class="alert alert-info mt-2">
-        <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '項目【' . $column->column_name . ' 】の選択肢を追加・変更します。' }}
-    </div>
-    
-    <div class="table-responsive">
-
-        {{-- 選択項目の一覧 --}}
-        <table class="table table-hover">
-            <thead class="thead-light">
-                <tr>
-                    @if (count($selects) > 0)
-                        <th class="text-center" nowrap>表示順</th>
-                        <th class="text-center" nowrap>選択肢名</th>
-                        <th class="text-center" nowrap>更新</th>
-                        <th class="text-center" nowrap>削除</th>
-                    @endif
-                </tr>
-            </thead>
-            <tbody>
-                {{-- 更新用の行 --}}
-                @foreach($selects as $select)
-                    <tr  @if (isset($select->hide_flag)) class="table-secondary" @endif>
-                        {{-- 表示順操作 --}}
-                        <td class="text-center" nowrap>
-                            {{-- 上移動 --}}
-                            <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
-                                <i class="fas fa-arrow-up"></i>
-                            </button>
-                    
-                            {{-- 下移動 --}}
-                            <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
-                                <i class="fas fa-arrow-down"></i>
-                            </button>
-                        </td>
-
-                        {{-- 選択肢名 --}}
-                        <td>
-                            <input class="form-control" type="text" name="select_name_{{ $select->id }}" value="{{ old('select_name_'.$select->id, $select->value)}}">
-                        </td>
-
-                        {{-- 更新ボタン --}}
-                        <td class="align-middle text-center">
-                            <button 
-                                class="btn btn-primary cc-font-90 text-nowrap" 
-                                onclick="javascript:submit_update_select({{ $select->id }});"
-                            >
-                                <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
-                            </button>
-                        </td>
-                        {{-- 削除ボタン --}}
-                        <td class="text-center">
-                                <button 
-                                class="btn btn-danger cc-font-90 text-nowrap" 
-                                onclick="javascript:return submit_delete_select({{ $select->id }});"
-                            >
-                                <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
-                            </button>
-                        </td>
-                    </tr>
-                @endforeach
-                <tr class="thead-light">
-                    <th colspan="7">【選択肢の追加行】</th>
-                </tr>
-
-                {{-- 新規登録用の行 --}}
-                <tr>
-                    <td>
-                        {{-- 余白 --}}
-                    </td>
-                    <td>
-                        {{-- 選択肢名 --}}
-                        <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
-                    </td>
-                    <td class="text-center">
-                        {{-- ＋ボタン --}}
-                        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
-                    </td>
-                    <td>
-                        {{-- 余白 --}}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '項目【' . $column->column_name . ' 】の詳細設定を行います。' }}
     </div>
 
     {{-- エラーメッセージエリア --}}
@@ -161,6 +88,117 @@
             @endforeach
         </div>
     @endif
+
+    @if ($column->column_type == FormColumnType::radio || $column->column_type == FormColumnType::checkbox || $column->column_type == FormColumnType::select)
+    {{-- 選択肢の設定 --}}
+    <div class="card">
+        <h5 class="card-header">選択肢の設定</h5>
+        <div class="card-body">
+            <div class="table-responsive">
+
+                {{-- 選択項目の一覧 --}}
+                <table class="table table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            @if (count($selects) > 0)
+                                <th class="text-center" nowrap>表示順</th>
+                                <th class="text-center" nowrap>選択肢名</th>
+                                <th class="text-center" nowrap>更新</th>
+                                <th class="text-center" nowrap>削除</th>
+                            @endif
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{-- 更新用の行 --}}
+                        @foreach($selects as $select)
+                            <tr  @if (isset($select->hide_flag)) class="table-secondary" @endif>
+                                {{-- 表示順操作 --}}
+                                <td class="text-center" nowrap>
+                                    {{-- 上移動 --}}
+                                    <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </button>
+                            
+                                    {{-- 下移動 --}}
+                                    <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </button>
+                                </td>
+
+                                {{-- 選択肢名 --}}
+                                <td>
+                                    <input class="form-control" type="text" name="select_name_{{ $select->id }}" value="{{ old('select_name_'.$select->id, $select->value)}}">
+                                </td>
+
+                                {{-- 更新ボタン --}}
+                                <td class="align-middle text-center">
+                                    <button 
+                                        class="btn btn-primary cc-font-90 text-nowrap" 
+                                        onclick="javascript:submit_update_select({{ $select->id }});"
+                                    >
+                                        <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
+                                    </button>
+                                </td>
+                                {{-- 削除ボタン --}}
+                                <td class="text-center">
+                                        <button 
+                                        class="btn btn-danger cc-font-90 text-nowrap" 
+                                        onclick="javascript:return submit_delete_select({{ $select->id }});"
+                                    >
+                                        <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                        <tr class="thead-light">
+                            <th colspan="7">【選択肢の追加行】</th>
+                        </tr>
+
+                       {{-- 新規登録用の行 --}}
+                        <tr>
+                            <td>
+                                {{-- 余白 --}}
+                            </td>
+                            <td>
+                                {{-- 選択肢名 --}}
+                                <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
+                            </td>
+                            <td class="text-center">
+                                {{-- ＋ボタン --}}
+                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+                            </td>
+                            <td>
+                                {{-- 余白 --}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <br>
+    @endif
+
+    {{-- その他の設定 --}}
+    <div class="card">
+        <h5 class="card-header">その他の設定</h5>
+        <div class="card-body">
+            {{-- 入力項目エリア --}}
+            <div class="form-group">
+                {{-- キャプション --}}
+                <label class="control-label">キャプション </label>
+                <textarea name="caption" class="form-control">{{old('caption', $column->caption)}}</textarea>
+            </div>
+
+            {{-- ボタンエリア --}}
+            <div class="form-group text-center">
+                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+            </div>
+        </div>
+    </div>
+
+    <br>
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">

@@ -54,6 +54,7 @@ class FormsPlugin extends UserPluginBase
             'cancel', 
             'updateColumn',
             'updateColumnSequence',
+            'updateColumnDetail',
             'addSelect',
             'updateSelect',
             'updateSelectSequence',
@@ -840,6 +841,22 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, null);
     }
+
+    /**
+     * 項目に紐づく選択肢の更新
+     */
+    public function updateColumnDetail($request, $page_id, $frame_id)
+    {
+        // 項目の更新処理
+        $column = FormsColumns::query()->where('id', $request->column_id)->first();
+        $column->caption = $request->caption;
+        $column->save();
+        $message = '項目【 '. $column->column_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
+    }
+
 
     /**
      * 項目に紐づく選択肢の登録
