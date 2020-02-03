@@ -48,15 +48,18 @@
 
                     {{-- 項目 ※まとめ設定行 --}}
                     @include('plugins.user.forms.default.forms_input_' . $group_row->column_type,['form_obj' => $group_row])
+                    {!! nl2br(e($group_row->caption)) !!}
                         </div>
                 @endforeach
                     </div>
+                    {!! nl2br(e($form_column->caption)) !!}
                 </div>
                 @break
             {{-- 項目 ※まとめ未設定行 --}}
             @default
                 <div class="col-sm-10">
                     @include('plugins.user.forms.default.forms_input_' . $form_column->column_type,['form_obj' => $form_column])
+                    {!! nl2br(e($form_column->caption)) !!}
                 </div>
             @endswitch
         </div>
