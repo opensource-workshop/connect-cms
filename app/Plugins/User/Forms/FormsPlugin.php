@@ -849,7 +849,27 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // 項目の更新処理
         $column = FormsColumns::query()->where('id', $request->column_id)->first();
+
+        // データ型が「まとめ行」の場合はまとめ数について必須チェック
+        if($column->column_type == \FormColumnType::group){
+            $errors = null;
+            // エラーチェック
+            $validator = Validator::make($request->all(), [
+                'frame_col'  => ['required'],
+            ]);
+            $validator->setAttributeNames([
+                'frame_col'  => 'まとめ数',
+            ]);
+            if ($validator->fails()) {
+
+                // エラーと共に編集画面を呼び出す
+                $errors = $validator->errors();
+                return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
+            }
+        }
+
         $column->caption = $request->caption;
+        $column->frame_col = $request->frame_col;
         $column->save();
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 

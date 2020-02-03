@@ -46,38 +46,27 @@
     </td>
     {{-- 詳細設定 --}}
     <td class="text-center">
-        @if ($column->column_type == FormColumnType::group)
-            {{-- まとめ行 --}}
-            <select class="form-control" name="frame_col_{{ $column->id }}" 
-                {{-- まとめ数の設定がない場合、ツールチップで設定を促すメッセージを表示 --}}
-                @if (!$column->frame_col)
-                    id="frame-col-tip" data-toggle="tooltip" title="まとめ数の設定がありません。設定してください。" data-trigger="manual" data-placement="bottom"
-                @endif
-            >
-                <option value=""></option>
-                @for ($i = 1; $i < 5; $i++)
-                    <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>{{$i}}</option>
-                @endfor
-            </select>
-        @else
-            {{-- 詳細ボタン --}}
-            <button 
-                type="button" 
-                class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
-                {{-- 選択肢を保持する項目、且つ、選択肢の設定がない場合のみツールチップを表示 --}}
-                @if (
-                    ($column->column_type == FormColumnType::radio || 
-                    $column->column_type == FormColumnType::checkbox || 
-                    $column->column_type == FormColumnType::select) && 
-                    $column->select_count == 0
-                    )
-                    id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
-                @endif
-                onclick="location.href='{{url('/')}}/plugin/forms/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
-            >
-                <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
-            </button>
-        @endif
+        {{-- 詳細ボタン --}}
+        <button 
+            type="button" 
+            class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
+            {{-- 選択肢を保持する項目、且つ、選択肢の設定がない場合のみツールチップを表示 --}}
+            @if (
+                ($column->column_type == FormColumnType::radio || 
+                $column->column_type == FormColumnType::checkbox || 
+                $column->column_type == FormColumnType::select) && 
+                $column->select_count == 0
+                )
+                id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
+            @endif
+            {{-- まとめ数を保持する項目、且つ、まとめ数の設定がない場合、ツールチップで設定を促すメッセージを表示 --}}
+            @if ($column->column_type == FormColumnType::group && !$column->frame_col)
+                id="frame-col-tip" data-toggle="tooltip" title="まとめ数の設定がありません。設定してください。" data-trigger="manual" data-placement="bottom"
+            @endif
+            onclick="location.href='{{url('/')}}/plugin/forms/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
+        >
+            <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
+        </button>
     </td>
     {{-- 更新ボタン --}}
     <td class="text-center">

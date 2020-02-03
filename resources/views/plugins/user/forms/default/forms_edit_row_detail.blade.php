@@ -186,6 +186,18 @@
         <div class="card-body">
             {{-- 入力項目エリア --}}
             <div class="form-group">
+
+                {{-- まとめ数 ※データ型が「まとめ行」のみ表示 --}}
+                @if ($column->column_type == FormColumnType::group)
+                    <label class="control-label">まとめ数 <label class="badge badge-danger">必須</label></label>
+                    <select class="form-control" name="frame_col">
+                        <option value=""></option>
+                        @for ($i = 1; $i < 5; $i++)
+                            <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>{{$i}}</option>
+                        @endfor
+                    </select>
+                @endif
+
                 {{-- キャプション --}}
                 <label class="control-label">キャプション </label>
                 <textarea name="caption" class="form-control">{{old('caption', $column->caption)}}</textarea>
