@@ -31,7 +31,7 @@
     });
 </script>
     {{-- 時間 --}}
-    <div class="col-md-3 input-group date" id="{{ $form_obj->id }}" data-target-input="nearest">
+    <div class="input-group date" id="{{ $form_obj->id }}" data-target-input="nearest">
         <input 
             type="text" 
             name="forms_columns_value[{{ $form_obj->id }}]" 
