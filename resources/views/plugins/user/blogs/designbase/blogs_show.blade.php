@@ -11,12 +11,12 @@
 {{-- 投稿日時 --}}
 <p>
 {{$post->posted_at->format('Y/n/d')}}
+</p>
+
 {{-- 重要 --}}
 @if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
 {{-- カテゴリ --}}
 @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
-</p>
-
 {{-- タイトル --}}
 <h2>{{$post->post_title}}</h2>
 
