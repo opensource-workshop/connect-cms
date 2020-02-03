@@ -61,19 +61,22 @@
             </select>
         @else
             {{-- 詳細ボタン --}}
-            @if ($column->column_type == FormColumnType::radio || $column->column_type == FormColumnType::checkbox || $column->column_type == FormColumnType::select)
-                <button 
-                    type="button" 
-                    class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
-                    {{-- 選択肢の設定がない場合のみツールチップを表示 --}}
-                    @if ($column->select_count == 0)
-                        id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
-                    @endif
-                    onclick="location.href='{{url('/')}}/plugin/forms/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
-                >
-                    <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
-                </button>
-            @endif
+            <button 
+                type="button" 
+                class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
+                {{-- 選択肢を保持する項目、且つ、選択肢の設定がない場合のみツールチップを表示 --}}
+                @if (
+                    ($column->column_type == FormColumnType::radio || 
+                    $column->column_type == FormColumnType::checkbox || 
+                    $column->column_type == FormColumnType::select) && 
+                    $column->select_count == 0
+                    )
+                    id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
+                @endif
+                onclick="location.href='{{url('/')}}/plugin/forms/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
+            >
+                <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
+            </button>
         @endif
     </td>
     {{-- 更新ボタン --}}
