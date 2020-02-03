@@ -46,79 +46,18 @@
                     {{-- 必須 --}}
                     @if ($group_row->required)<label class="badge badge-danger">必須</label> @endif
 
-                    {{-- 項目 ※まとめ設定時 --}}
-                    @switch($group_row->column_type)
-                        @case(FormColumnType::text)
-                            @include('plugins.user.forms.default.forms_input_text',['form_obj' => $group_row])
-                            @break
-                        @case(FormColumnType::textarea)
-                            @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $group_row])
-                            @break
-                        @case(FormColumnType::radio)
-                            @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $group_row])
-                            @break
-                        @case(FormColumnType::checkbox)
-                            @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $group_row])
-                            @break
-                        @case(FormColumnType::select)
-                            @include('plugins.user.forms.default.forms_input_select',['form_obj' => $group_row])
-                            @break
-                        @case(FormColumnType::mail)
-                            @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $group_row])
-                            @break
-                        @case(FormColumnType::date)
-                            @include('plugins.user.forms.default.forms_input_date',['form_obj' => $group_row])
-                            @break
-                        @case(FormColumnType::time)
-                            @include('plugins.user.forms.default.forms_input_time',['form_obj' => $group_row])
-                            @break
-                    @endswitch
+                    {{-- 項目 ※まとめ設定行 --}}
+                    @include('plugins.user.forms.default.forms_input_' . $group_row->column_type,['form_obj' => $group_row])
                         </div>
                 @endforeach
                     </div>
                 </div>
                 @break
             {{-- 項目 ※まとめ未設定行 --}}
-            @case(FormColumnType::text)
+            @default
                 <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_text',['form_obj' => $form_column])
+                    @include('plugins.user.forms.default.forms_input_' . $form_column->column_type,['form_obj' => $form_column])
                 </div>
-                @break
-            @case(FormColumnType::textarea)
-                <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_textarea',['form_obj' => $form_column])
-                </div>
-                @break
-            @case(FormColumnType::radio)
-                <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_radio',['form_obj' => $form_column])
-                </div>
-                @break
-            @case(FormColumnType::checkbox)
-                <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_checkbox',['form_obj' => $form_column])
-                </div>
-                @break
-            @case(FormColumnType::select)
-                <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_select',['form_obj' => $form_column])
-                </div>
-                @break
-            @case(FormColumnType::mail)
-                <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_mail',['form_obj' => $form_column])
-                </div>
-                @break
-            @case(FormColumnType::date)
-                <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_date',['form_obj' => $form_column])
-                </div>
-                @break
-            @case(FormColumnType::time)
-                <div class="col-sm-10">
-                    @include('plugins.user.forms.default.forms_input_time',['form_obj' => $form_column])
-                </div>
-                @break
             @endswitch
         </div>
         @endforeach
