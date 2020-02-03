@@ -67,7 +67,7 @@
                     class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
                     {{-- 選択肢の設定がない場合のみツールチップを表示 --}}
                     @if ($column->select_count == 0)
-                        id="select-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
+                        id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
                     @endif
                     onclick="location.href='{{url('/')}}/plugin/forms/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
                 >

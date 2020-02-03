@@ -70,7 +70,7 @@
         // 有効化
         $('[data-toggle="tooltip"]').tooltip()
         // 常時表示 ※表示の判定は項目側で実施
-        $('#select-button-tip').tooltip('show');
+        $('[id^=detail-button-tip]').tooltip('show');
         $('#frame-col-tip').tooltip('show');
     })
 </script>
