@@ -35,6 +35,7 @@
                 @else
                     <a href="{{url('/manage/user/originalRole')}}" class="nav-link">役割設定</a></li>
                 @endif
+                </li>
 
                 <li role="presentation" class="nav-item">
                 @if ($function == "edit")
