@@ -212,6 +212,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
         }
 
+        // データ型が「まとめ行」、且つ、まとめ数の設定がないデータを取得
+        $forms_columns_errors = FormsColumns::query()->where('forms_id', $form->id)->where('column_type', \FormColumnType::group)->whereNull('frame_col')->get();
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'forms', [
@@ -220,6 +223,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'form' => $form,
             'forms_columns' => $forms_columns,
             'forms_columns_id_select' => $forms_columns_id_select,
+            'forms_columns_errors' => $forms_columns_errors,
             'errors'      => $errors,
         ])->withInput($request->all);
     }
@@ -784,7 +788,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $validate_value['frame_col'] = ['required'];
             $validate_attribute['frame_col'] = 'まとめ数';
         }
-
+        
         // エラーチェック
         $validator = Validator::make($request->all(), $validate_value);
         $validator->setAttributeNames($validate_attribute);

@@ -8,7 +8,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-@if ($form && $forms_columns)
+@if ($form && $forms_columns && $forms_columns_errors->count() == 0)
 
     <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
         {{ csrf_field() }}
@@ -81,6 +81,10 @@
             {{-- 項目データがない場合 --}}
             @if (!$forms_columns)
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、項目データを作成してください。</p>
+            @endif
+            {{-- データ型が「まとめ行」で、まとめ数の設定がないデータが存在する場合 --}}
+            @if ($forms_columns_errors)
+                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、項目データ（まとめ行のまとめ数）を設定してください。</p>
             @endif
         </div>
     </div>
