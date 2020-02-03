@@ -95,6 +95,16 @@
                     <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : 'ユーザが登録時の項目を設定します。' }}
                 </div>
 
+                {{-- エラーメッセージエリア --}}
+                @if ($errors && $errors->any())
+                    <div class="alert alert-danger mt-2">
+                        @foreach ($errors->all() as $error)
+                        <i class="fas fa-exclamation-circle"></i>
+                            {{ $error }}<br>
+                        @endforeach
+                    </div>
+                @endif
+
                 <div class="table-responsive">
 
                     {{-- 項目の一覧 --}}
@@ -123,15 +133,6 @@
                     </tbody>
                     </table>
                 </div>
-                {{-- エラーメッセージエリア --}}
-                @if ($errors && $errors->any())
-                    <div class="alert alert-danger mt-2">
-                        @foreach ($errors->all() as $error)
-                        <i class="fas fa-exclamation-circle"></i>
-                            {{ $error }}<br>
-                        @endforeach
-                    </div>
-                @endif
                 {{-- ボタンエリア --}}
                 <div class="text-center mt-3 mt-md-0">
                     {{-- キャンセルボタン --}}
