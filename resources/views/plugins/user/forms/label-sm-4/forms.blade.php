@@ -48,7 +48,7 @@
 
                     {{-- 項目 ※まとめ設定行 --}}
                     @include('plugins.user.forms.default.forms_input_' . $group_row->column_type,['form_obj' => $group_row])
-                    {!! nl2br($form_column->caption) !!}
+                    {!! nl2br($group_row->caption) !!}
                         </div>
                 @endforeach
                     </div>
