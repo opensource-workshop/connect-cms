@@ -692,6 +692,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.column_name',
                 'forms_columns.required',
                 'forms_columns.frame_col',
+                'forms_columns.caption',
                 'forms_columns.display_sequence',
                 DB::raw('count(forms_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(forms_columns_selects.value order by forms_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
@@ -708,6 +709,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.column_name',
                 'forms_columns.required',
                 'forms_columns.frame_col',
+                'forms_columns.caption',
                 'forms_columns.display_sequence',
             )
             ->orderby('forms_columns.display_sequence')
