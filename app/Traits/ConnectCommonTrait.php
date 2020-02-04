@@ -588,7 +588,7 @@ trait ConnectCommonTrait
 
             // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
             if (is_array($classes) && in_array('smp_a_link', $classes)) {
-                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getLinkUrl() . '">' . $level1_page['parent']->page_name . '</a>' . "\n";
+                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>' . $level1_page['parent']->page_name . '</a>' . "\n";
             }
             else {
                 $sp_menu .= '<p' . $active_class . '>' . $level1_page['parent']->page_name . '</p>' . "\n";
@@ -597,7 +597,7 @@ trait ConnectCommonTrait
             if (array_key_exists('child', $level1_page)) {
                 $sp_menu .= '<ul' . $active_class . '>' . "\n";
                 foreach ($level1_page['child'] as $child) {
-                    $sp_menu .= '<li><a href="' . $child->getLinkUrl() . '">' . $child->page_name . '</a></li>' . "\n";
+                    $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . '>' . $child->page_name . '</a></li>' . "\n";
                 }
                 $sp_menu .= '</ul>' . "\n";
             }
