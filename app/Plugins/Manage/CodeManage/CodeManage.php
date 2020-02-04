@@ -67,6 +67,7 @@ class CodeManage extends ManagePluginBase
                           ->orderBy('type_code4')
                           ->orderBy('type_code5')
                           ->orderBy('display_sequence')
+                          ->orderBy('code')
                           ->paginate(10);
 
         // 管理画面プラグインの戻り値の返し方

@@ -99,6 +99,7 @@ class FormsPlugin extends UserPluginBase
 
     /**
      *  カラムデータ取得
+     *  ※まとめ行の設定が不正な場合はリテラル「frame_setting_error」を返す
      */
     private function getFormsColumns($form)
     {
@@ -121,7 +122,12 @@ class FormsPlugin extends UserPluginBase
                 $tmp_group = $forms_columns[$i];
                 $group_row = array();
                 for ($j = 1; $j <= $forms_columns[$i]->frame_col; $j++) {
-                    $group_row[] = $forms_columns[$i + $j];
+                    // dd(count($forms_columns), $i, $j);
+                    if(count($forms_columns) >= (1 + $i + $j)){
+                        $group_row[] = $forms_columns[$i + $j];
+                    }else{
+                        return 'frame_setting_error';
+                    }
                 }
                 $tmp_group->group = $group_row;
 
@@ -203,17 +209,17 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
-        // フォームのカラムデータ
+        // フォームのカラムデータ ※ まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
         $forms_columns = $this->getFormsColumns($form);
 
         // カラムの選択肢用データ
         $forms_columns_id_select = null;
+        $forms_columns_errors = null;
         if ($form) {
             $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
+            // データ型が「まとめ行」、且つ、まとめ数の設定がないデータを取得
+            $forms_columns_errors = FormsColumns::query()->where('forms_id', $form->id)->where('column_type', \FormColumnType::group)->whereNull('frame_col')->get();
         }
-
-        // データ型が「まとめ行」、且つ、まとめ数の設定がないデータを取得
-        $forms_columns_errors = FormsColumns::query()->where('forms_id', $form->id)->where('column_type', \FormColumnType::group)->whereNull('frame_col')->get();
 
         // 表示テンプレートを呼び出す。
         return $this->view(
