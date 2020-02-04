@@ -93,8 +93,8 @@
      <div class="form-group">
         <label class="control-label">閉じるフォント</label>
         <select class="form-control" name="folder_close_font" class="form-control">
-            <option value="0" @if(Input::old('folder_close_font', isset($menu) && $menu->folder_close_font)==0) selected="selected" @endif>－（初期値）</option>
-            <option value="1" @if(Input::old('folder_close_font', isset($menu) && $menu->folder_close_font)==1) selected="selected" @endif>なし</option>
+            <option value="0" @if(Input::old('folder_close_font') == 0 || (isset($menu) && $menu->folder_close_font == 0)) selected="selected" @endif>－（初期値）</option>
+            <option value="1" @if(Input::old('folder_close_font') == 1 || (isset($menu) && $menu->folder_close_font == 1)) selected="selected" @endif>なし</option>
         </select>
         @if ($errors && $errors->has('folder_close_font')) <div class="text-danger">{{$errors->first('folder_close_font')}}</div> @endif
     </div>
@@ -102,8 +102,8 @@
      <div class="form-group">
         <label class="control-label">開くフォント</label>
         <select class="form-control" name="folder_open_font" class="form-control">
-            <option value="0" @if(Input::old('folder_open_font', isset($menu) && $menu->folder_open_font)==0) selected="selected" @endif>＋（初期値）</option>
-            <option value="1" @if(Input::old('folder_open_font', isset($menu) && $menu->folder_open_font)==1) selected="selected" @endif>なし</option>
+            <option value="0" @if(Input::old('folder_open_font') == 0 || (isset($menu) && $menu->folder_open_font == 0)) selected="selected" @endif>＋（初期値）</option>
+            <option value="1" @if(Input::old('folder_open_font') == 1 || (isset($menu) && $menu->folder_open_font == 1)) selected="selected" @endif>なし</option>
         </select>
         @if ($errors && $errors->has('folder_open_font')) <div class="text-danger">{{$errors->first('folder_open_font')}}</div> @endif
     </div>
@@ -111,9 +111,9 @@
      <div class="form-group">
         <label class="control-label">インデントフォント</label>
         <select class="form-control" name="indent_font" class="form-control">
-            <option value="0" @if(Input::old('indent_font', isset($menu) && $menu->indent_font)==0) selected="selected" @endif>＞（初期値）</option>
-            <option value="1" @if(Input::old('indent_font', isset($menu) && $menu->indent_font)==1) selected="selected" @endif>なし</option>
-            <option value="2" @if(Input::old('indent_font', isset($menu) && $menu->indent_font)==2) selected="selected" @endif>－</option>
+            <option value="0" @if(Input::old('indent_font') == 0 || (isset($menu) && $menu->indent_font == 0)) selected="selected" @endif>＞（初期値）</option>
+            <option value="1" @if(Input::old('indent_font') == 1 || (isset($menu) && $menu->indent_font == 1)) selected="selected" @endif>なし</option>
+            <option value="2" @if(Input::old('indent_font') == 2 || (isset($menu) && $menu->indent_font == 2)) selected="selected" @endif>－</option>
         </select>
         @if ($errors && $errors->has('indent_font')) <div class="text-danger">{{$errors->first('indent_font')}}</div> @endif
     </div>
