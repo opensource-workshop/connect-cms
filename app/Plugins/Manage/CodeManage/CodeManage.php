@@ -70,12 +70,15 @@ class CodeManage extends ManagePluginBase
                           ->orderBy('code')
                           ->paginate(10);
 
+        // $paginate_page = $request->get('page', 1);
+
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.code.code',[
             "function"    => __FUNCTION__,
             "plugin_name" => "code",
-            "codes"     => $codes,
+            "codes"       => $codes,
+            // "paginate_page" => $paginate_page,
         ]);
     }
 
@@ -128,7 +131,7 @@ class CodeManage extends ManagePluginBase
             return ( $this->regist($request, null, $validator->errors()) );
         }
 
-        // ページデータの登録
+        // 登録
         $codes = new Codes();
         $codes->plugin_name          = $request->plugin_name;
         $codes->buckets_id           = $request->buckets_id;
@@ -144,7 +147,7 @@ class CodeManage extends ManagePluginBase
         $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
         $codes->save();
 
-        // ページ管理画面に戻る
+        // 一覧画面に戻る
         return redirect("/manage/code");
     }
 
@@ -155,7 +158,7 @@ class CodeManage extends ManagePluginBase
      */
     public function edit($request, $id = null, $errors = array())
     {
-        // ページID で1件取得
+        // ID で1件取得
         $code = Codes::where('id', $id)->first();
 
         // プラグイン一覧の取得
@@ -197,7 +200,7 @@ class CodeManage extends ManagePluginBase
             return ( $this->regist($request, $id, $validator->errors()) );
         }
 
-        // ページデータの更新
+        // 更新
         $codes = Codes::find($id);
         // Codes::where('id', $id)
         //     ->update(['name' => 'xxxx']);
@@ -217,8 +220,10 @@ class CodeManage extends ManagePluginBase
         $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
         $codes->save();
 
-        // コード一覧画面に戻る
+        // 一覧画面に戻る
         return redirect("/manage/code");
+        // $page = $request->get('page', 1);
+        // return redirect("/manage/code?page=$page");
     }
 
     /**
