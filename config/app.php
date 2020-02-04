@@ -235,6 +235,7 @@ return [
         'ReservationCalendarDisplayType' => \App\Enums\ReservationCalendarDisplayType::class,
         'FormColumnType' => \App\Enums\FormColumnType::class,
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
+        'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
     ],
 
 ];
