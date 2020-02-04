@@ -208,12 +208,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // カラムの選択肢用データ
         $forms_columns_id_select = null;
+        $forms_columns_errors = null;
         if ($form) {
             $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
+            // データ型が「まとめ行」、且つ、まとめ数の設定がないデータを取得
+            $forms_columns_errors = FormsColumns::query()->where('forms_id', $form->id)->where('column_type', \FormColumnType::group)->whereNull('frame_col')->get();
         }
-
-        // データ型が「まとめ行」、且つ、まとめ数の設定がないデータを取得
-        $forms_columns_errors = FormsColumns::query()->where('forms_id', $form->id)->where('column_type', \FormColumnType::group)->whereNull('frame_col')->get();
 
         // 表示テンプレートを呼び出す。
         return $this->view(

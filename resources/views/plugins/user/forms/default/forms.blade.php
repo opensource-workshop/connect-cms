@@ -83,7 +83,7 @@
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、項目データを作成してください。</p>
             @endif
             {{-- データ型が「まとめ行」で、まとめ数の設定がないデータが存在する場合 --}}
-            @if ($forms_columns_errors)
+            @if ($forms_columns_errors->count() > 0)
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、項目データ（まとめ行のまとめ数）を設定してください。</p>
             @endif
         </div>
