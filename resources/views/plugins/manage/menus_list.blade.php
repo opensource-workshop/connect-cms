@@ -60,4 +60,11 @@
             <a href="/manage/number" class="list-group-item"><i class="fas fa-chevron-right"></i> 連番管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_site'))
+        @if (isset($plugin_name) && $plugin_name == 'code')
+            <a href="/manage/code" class="list-group-item active"><i class="fas fa-chevron-right"></i> コード管理</a>
+        @else
+            <a href="/manage/code" class="list-group-item"><i class="fas fa-chevron-right"></i> コード管理</a>
+        @endif
+    @endif
 </div>
