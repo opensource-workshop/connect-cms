@@ -26,7 +26,7 @@
                 selectTime: '時間を選択'
             },
             format: 'HH:mm',
-            stepping: 5
+            stepping: {{ $form_obj->minutes_increments }}
         });
     });
 </script>

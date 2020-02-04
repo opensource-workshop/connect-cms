@@ -187,6 +187,25 @@
             {{-- 入力項目エリア --}}
             <div class="form-group">
 
+                {{-- 分刻み指定 ※データ型が「時間型」のみ表示 --}}
+                @if ($column->column_type == FormColumnType::time)
+                    <label class="control-label">分刻み指定 </label>
+                    <select class="form-control" name="minutes_increments">
+                        @foreach (MinutesIncrements::getMembers() as $key=>$value)
+                            <option value="{{$key}}"
+                                {{-- 初期表示用 --}}
+                                @if($key == $column->minutes_increments)
+                                    selected="selected"
+                                @endif
+                                {{-- validation用 --}}
+                                @if($key == old('minutes_increments'))
+                                    selected="selected"
+                                @endif
+                            >{{ $value }}</option>
+                        @endforeach
+                    </select>
+                @endif
+                
                 {{-- まとめ数 ※データ型が「まとめ行」のみ表示 --}}
                 @if ($column->column_type == FormColumnType::group)
                     <label class="control-label">まとめ数 <label class="badge badge-danger">必須</label></label>
