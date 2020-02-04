@@ -802,7 +802,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
         $column->required = $request->required ? \Required::on : \Required::off;
-        $column->frame_col = $request->frame_col;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を更新しました。';
 
