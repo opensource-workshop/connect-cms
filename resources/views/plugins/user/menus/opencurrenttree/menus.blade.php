@@ -28,7 +28,7 @@
                 @endif
                     {{-- 各ページの深さをもとにインデントの表現 --}}
                     @for ($i = 0; $i < $page->depth; $i++)
-                        @if ($i+1==$children->depth) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
+                        @if ($i+1==$children->depth && $menu) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
                     @endfor
                     {{$page->page_name}}
 
@@ -61,7 +61,7 @@
                 @endif
                     {{-- 各ページの深さをもとにインデントの表現 --}}
                     @for ($i = 0; $i < $page->depth; $i++)
-                        @if ($i+1==$children->depth) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
+                        @if ($i+1==$children->depth && $menu) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
                     @endfor
                     {{$page->page_name}}
                 </a>
