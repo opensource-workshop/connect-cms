@@ -31,8 +31,8 @@
         <th class="d-block d-sm-table-cell">prefix</th>
         <th class="d-block d-sm-table-cell">type_name</th>
         <th class="d-block d-sm-table-cell">type_code1</th>
-        <th class="d-block d-sm-table-cell">type_code2</th>
 {{--
+        <th class="d-block d-sm-table-cell">type_code2</th>
         <th class="d-block d-sm-table-cell">type_code3</th>
         <th class="d-block d-sm-table-cell">type_code4</th>
         <th class="d-block d-sm-table-cell">type_code5</th>
@@ -57,9 +57,8 @@
         <td class="d-block d-sm-table-cell"><span class="d-sm-none">prefix：</span>{{$code->prefix}}</td>
         <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_name：</span>{{$code->type_name}}</td>
         <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code1：</span>{{$code->type_code1}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code2：</span>{{$code->type_code2}}</td>
-
 {{--
+        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code2：</span>{{$code->type_code2}}</td>
         <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code3：</span>{{$code->type_code3}}</td>
         <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code4：</span>{{$code->type_code4}}</td>
         <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code5：</span>{{$code->type_code5}}</td>
