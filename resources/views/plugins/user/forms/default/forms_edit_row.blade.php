@@ -103,7 +103,7 @@
         @endif
         @if ($column->caption)
             {{-- キャプションが設定されている場合、キャプションを表示する --}}
-            <div class="small"><i class="fas fa-pen"></i> {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}</div>
+            <div class="small {{ $column->caption_color }}"><i class="fas fa-pen"></i> {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}</div>
         @endif
         @if ($column->column_type == FormColumnType::group && !isset($column->frame_col))
             {{-- まとめ行でまとめ数の設定がない場合はツールチップ分、余白として改行する --}}

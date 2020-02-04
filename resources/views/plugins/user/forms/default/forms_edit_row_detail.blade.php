@@ -201,6 +201,23 @@
                 {{-- キャプション --}}
                 <label class="control-label">キャプション </label>
                 <textarea name="caption" class="form-control">{{old('caption', $column->caption)}}</textarea>
+
+                {{-- キャプション文字色 --}}
+                <label class="control-label">キャプション文字色 </label>
+                <select class="form-control" name="caption_color">
+                    @foreach (Bs4TextColor::getMembers() as $key=>$value)
+                        <option value="{{$key}}" class="{{ $key }}"
+                            {{-- 初期表示用 --}}
+                            @if($key == $column->caption_color)
+                                selected="selected"
+                            @endif
+                            {{-- validation用 --}}
+                            @if($key == old('caption_color'))
+                                selected="selected"
+                            @endif
+                        >{{ $value }}</option>
+                    @endforeach
+                </select>
             </div>
 
             {{-- ボタンエリア --}}

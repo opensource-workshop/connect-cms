@@ -623,6 +623,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->column_type = $request->column_type;
         $column->required = $request->required ? \Required::on : \Required::off;
         $column->display_sequence = $max_display_sequence;
+        $column->caption_color = \Bs4TextColor::dark;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を追加しました。';
         
@@ -703,6 +704,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.required',
                 'forms_columns.frame_col',
                 'forms_columns.caption',
+                'forms_columns.caption_color',
                 'forms_columns.display_sequence',
                 DB::raw('count(forms_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(forms_columns_selects.value order by forms_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
@@ -720,6 +722,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.required',
                 'forms_columns.frame_col',
                 'forms_columns.caption',
+                'forms_columns.caption_color',
                 'forms_columns.display_sequence',
             )
             ->orderby('forms_columns.display_sequence')
@@ -868,6 +871,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
 
         $column->caption = $request->caption;
+        $column->caption_color = $request->caption_color;
         $column->frame_col = $request->frame_col;
         $column->save();
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
