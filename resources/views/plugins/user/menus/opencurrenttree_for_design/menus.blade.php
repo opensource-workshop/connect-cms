@@ -46,12 +46,10 @@
 
                     {{-- カレントもしくは自分のルート筋なら表示する --}}
                     @if ($page->isAncestorOf($current_page) || $current_page->id == $page->id)
-                        <ul>
-                            {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
-                            @foreach($page->children as $children)
-                                @include('plugins.user.menus.opencurrenttree_for_design.menu_children',['children' => $children, 'page_id' => $page_id])
-                            @endforeach
-                        </ul>
+                        {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
+                        @foreach($page->children as $children)
+                            @include('plugins.user.menus.opencurrenttree_for_design.menu_children',['children' => $children, 'page_id' => $page_id])
+                        @endforeach
                     @endif
                 @else
 

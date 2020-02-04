@@ -52,17 +52,17 @@
             {{$children->page_name}}
         @endif
         </a>
-    </li>
 
-    @if ($children->children && count($children->children) > 0)
+        @if ($children->children && count($children->children) > 0)
 
-        {{-- カレントもしくは自分のルート筋なら子ページを再帰的に表示する --}}
-        @if ($children->isAncestorOf($current_page) || $current_page->id == $children->id)
-            <ul>
-                @foreach($children->children as $grandchild)
-                    @include('plugins.user.menus.opencurrenttree_for_design.menu_children',['children' => $grandchild])
-                @endforeach
-            </ul>
+            {{-- カレントもしくは自分のルート筋なら子ページを再帰的に表示する --}}
+            @if ($children->isAncestorOf($current_page) || $current_page->id == $children->id)
+                <ul>
+                    @foreach($children->children as $grandchild)
+                        @include('plugins.user.menus.opencurrenttree_for_design.menu_children',['children' => $grandchild])
+                    @endforeach
+                </ul>
+            @endif
         @endif
-    @endif
+    </li>
 @endif
