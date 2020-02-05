@@ -117,6 +117,7 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
                         try {
                             echo $plugin_instances[$frame->frame_id]->invoke($plugin_instances[$frame->frame_id], app('request'), $action, $page->id, $frame->frame_id, $id);
                         } catch (\Throwable $e) {
+                            $plugin_instances[$frame->frame_id]->putLog($e);
                     @endphp
                         @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
                     @php
@@ -130,6 +131,7 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
                         try {
                             echo $plugin_instances[$frame->frame_id]->index(app('request'), $page->id, $frame->frame_id);
                         } catch (\Throwable $e) {
+                            $plugin_instances[$frame->frame_id]->putLog($e);
                     @endphp
                         @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
                     @php

@@ -658,4 +658,12 @@ class ConnectController extends Controller
 
         return view($blade_path, $args);
     }
+
+    /**
+     *  ログ出力
+     */
+    public function putLog($e)
+    {
+        Log::error($e);
+    }
 }
