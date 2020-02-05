@@ -97,8 +97,9 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メールフォーマット</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="mail_format" class="form-control" rows=5>{{old('mail_format', $form->mail_format)}}</textarea>
-            <small class="text-muted">[[body]] の部分に登録内容が入ります。</small>
+            <textarea name="mail_format" class="form-control" rows=5 placeholder="（例）受付内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('mail_format', $form->mail_format)}}</textarea>
+            <small class="text-muted">※ [[body]] を記述すると該当部分に登録内容が入ります。</small><br>
+            <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
         </div>
     </div>
 
@@ -115,7 +116,30 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">登録後のメッセージ</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="after_message" class="form-control">{{old('after_message', $form->after_message)}}</textarea>
+            <textarea name="after_message" class="form-control" rows=5 placeholder="（例）お申込みありがとうございます。&#13;&#10;受付番号は[[number]]になります。">{{old('after_message', $form->after_message)}}</textarea>
+            <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">採番</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="numbering_use_flag" value="1" class="custom-control-input" id="numbering_use_flag" @if(old('numbering_use_flag', $form->numbering_use_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="numbering_use_flag">採番機能を使用する</label>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">採番プレフィックス</label>
+            <input type="text" name="numbering_prefix" value="{{old('numbering_prefix', $form->numbering_prefix)}}" class="form-control" v-model="numbering_prefix">
+            <small class="text-muted">※ 採番イメージ：@{{ numbering_prefix + '000001' }}</small><br>
+            <small class="text-muted">※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。</small>
         </div>
     </div>
 
@@ -167,5 +191,13 @@
         </div>
     </div>
 </div>
+<script>
+    new Vue({
+      el: "#app",
+      data: {
+        numbering_prefix: ''
+      }
+    })
+</script>
 @endif
 @endsection

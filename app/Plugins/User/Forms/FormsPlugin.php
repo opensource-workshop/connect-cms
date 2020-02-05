@@ -363,12 +363,21 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 最後の改行を除去
         $contents_text = trim($contents_text);
 
+        // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
+        $number = $form->numbering_use_flag ? $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix)) : null;
+
+        // 登録後メッセージ内の採番文字列を置換
+        $after_message = str_replace('[[number]]', $number, $form->after_message);
+
         // メール送信
         if ($form->mail_send_flag) {
 
             // メール本文の組み立て
             $mail_format = $form->mail_format;
             $mail_text = str_replace( '[[body]]', $contents_text, $mail_format);
+
+            // メール本文内の採番文字列を置換
+            $mail_text = str_replace( '[[number]]', $number, $mail_text);
 
             // メール送信（管理者側）
             $mail_addresses = explode(',', $form->mail_send_address);
@@ -387,7 +396,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 表示テンプレートを呼び出す。
         return $this->view(
             'forms_thanks', [
-            'after_message' => $form->after_message
+            'after_message' => $after_message
         ]);
     }
 
@@ -537,6 +546,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->mail_format         = $request->mail_format;
         $forms->data_save_flag      = (empty($request->data_save_flag))      ? 0 : $request->data_save_flag;
         $forms->after_message       = $request->after_message;
+        $forms->numbering_use_flag  = (empty($request->numbering_use_flag))      ? 0 : $request->numbering_use_flag;
+        $forms->numbering_prefix   = $request->numbering_prefix;
 
         // データ保存
         $forms->save();

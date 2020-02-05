@@ -8,5 +8,5 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-{!!$after_message!!}
+{!! nl2br(e($after_message)) !!}
 @endsection
