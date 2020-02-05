@@ -883,7 +883,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
         $column->frame_col = $request->frame_col;
-        $column->minutes_increments = $request->minutes_increments;
+        if($column->column_type == \FormColumnType::time){
+            $column->minutes_increments = $request->minutes_increments;
+        }
         $column->save();
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 
