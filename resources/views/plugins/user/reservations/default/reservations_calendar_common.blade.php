@@ -121,7 +121,7 @@
             </li>
         </ul>
 
-        <div id="app">
+        <div>
 
             @if ($view_format == ReservationCalendarDisplayType::month)
 
