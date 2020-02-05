@@ -597,7 +597,12 @@ trait ConnectCommonTrait
             if (array_key_exists('child', $level1_page)) {
                 $sp_menu .= '<ul' . $active_class . '>' . "\n";
                 foreach ($level1_page['child'] as $child) {
-                    $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . '>' . $child->page_name . '</a></li>' . "\n";
+                    if ($child->base_display_flag == 0) {
+                        continue;
+                    }
+                    else {
+                        $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . '>' . $child->page_name . '</a></li>' . "\n";
+                    }
                 }
                 $sp_menu .= '</ul>' . "\n";
             }
