@@ -12,8 +12,9 @@
     /**
      * 登録ボタン押下
      */
-     function submit_booking_store() {
+     function submit_booking_store(btn) {
         form_save_booking{{$frame_id}}.action = "{{URL::to('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        btn.disabled = true;
         form_save_booking{{$frame_id}}.submit();
     }
     /**
@@ -209,7 +210,7 @@
         {{-- キャンセルボタン --}}
         <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_booking_cancel();"><i class="fas fa-times"></i> キャンセル</button>
         {{-- 登録ボタン --}}
-        <button type="submit" class="btn btn-primary" onclick="javascript:submit_booking_store();"><i class="fas fa-check"></i> {{ $booking ? '更新' : '登録' }} </button>
+        <button type="submit" class="btn btn-primary" onclick="javascript:submit_booking_store(this);"><i class="fas fa-check"></i> {{ $booking ? '更新' : '登録' }} </button>
     </div>
 </form>
 @endsection
