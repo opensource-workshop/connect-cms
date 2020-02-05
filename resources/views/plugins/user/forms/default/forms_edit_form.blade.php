@@ -133,7 +133,7 @@
         </div>
     </div>
 
-    <div id="app" class="form-group row">
+    <div id="app_{{ $form->id }}" class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">採番プレフィックス</label>
@@ -193,7 +193,7 @@
 </div>
 <script>
     new Vue({
-      el: "#app",
+      el: "#app_{{ $form->id }}",
       data: {
         numbering_prefix: ''
       }
