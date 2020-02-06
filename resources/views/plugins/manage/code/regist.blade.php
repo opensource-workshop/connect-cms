@@ -64,7 +64,7 @@
                 <select name="plugin_name" id="plugin_name" class="form-control">
                     <option value=""@if($code->plugin_name == "") selected @endif>設定なし</option>
                     @foreach ($plugins as $plugin)
-                        <option value="{{$plugin->plugin_name}}"@if($code->plugin_name == $plugin->plugin_name) selected @endif>{{$plugin->plugin_name_full}}</option>
+                        <option value="{{$plugin->plugin_name}}"@if(old('plugin_name', $code->plugin_name) == $plugin->plugin_name) selected @endif>{{$plugin->plugin_name_full}}</option>
                     @endforeach
                 </select>
             </div>
@@ -73,71 +73,71 @@
         <div class="form-group row">
             <label for="buckets_id" class="col-md-3 col-form-label text-md-right">buckets_id</label>
             <div class="col-md-9">
-                <input type="text" name="buckets_id" id="buckets_id" value="{{$code->buckets_id}}" class="form-control">
+                <input type="text" name="buckets_id" id="buckets_id" value="{{old('buckets_id', $code->buckets_id)}}" class="form-control">
             </div>
         </div>
         <div class="form-group row">
             <label for="prefix" class="col-md-3 col-form-label text-md-right">prefix</label>
             <div class="col-md-9">
-                <input type="text" name="prefix" id="prefix" value="{{$code->prefix}}" class="form-control">
+                <input type="text" name="prefix" id="prefix" value="{{old('prefix', $code->prefix)}}" class="form-control">
             </div>
         </div>
 
         <div class="form-group row">
             <label for="type_name" class="col-md-3 col-form-label text-md-right">type_name</label>
             <div class="col-md-9">
-                <input type="text" name="type_name" id="type_name" value="{{$code->type_name}}" class="form-control">
+                <input type="text" name="type_name" id="type_name" value="{{old('type_name', $code->type_name)}}" class="form-control">
             </div>
         </div>
         <div class="form-group row">
             <label for="type_code1" class="col-md-3 col-form-label text-md-right">type_code1</label>
             <div class="col-md-9">
-                <input type="text" name="type_code1" id="type_code1" value="{{$code->type_code1}}" class="form-control">
+                <input type="text" name="type_code1" id="type_code1" value="{{old('type_code1', $code->type_code1)}}" class="form-control">
             </div>
         </div>
         <div class="form-group row">
             <label for="type_code2" class="col-md-3 col-form-label text-md-right">type_code2</label>
             <div class="col-md-9">
-                <input type="text" name="type_code2" id="type_code2" value="{{$code->type_code2}}" class="form-control">
+                <input type="text" name="type_code2" id="type_code2" value="{{old('type_code2', $code->type_code2)}}" class="form-control">
             </div>
         </div>
         <div class="form-group row">
             <label for="type_code3" class="col-md-3 col-form-label text-md-right">type_code3</label>
             <div class="col-md-9">
-                <input type="text" name="type_code3" id="type_code3" value="{{$code->type_code3}}" class="form-control">
+                <input type="text" name="type_code3" id="type_code3" value="{{old('type_code3', $code->type_code3)}}" class="form-control">
             </div>
         </div>
         <div class="form-group row">
             <label for="type_code4" class="col-md-3 col-form-label text-md-right">type_code4</label>
             <div class="col-md-9">
-                <input type="text" name="type_code4" id="type_code4" value="{{$code->type_code4}}" class="form-control">
+                <input type="text" name="type_code4" id="type_code4" value="{{old('type_code4', $code->type_code4)}}" class="form-control">
             </div>
         </div>
         <div class="form-group row">
             <label for="type_code5" class="col-md-3 col-form-label text-md-right">type_code5</label>
             <div class="col-md-9">
-                <input type="text" name="type_code5" id="type_code5" value="{{$code->type_code5}}" class="form-control">
+                <input type="text" name="type_code5" id="type_code5" value="{{old('type_code5', $code->type_code5)}}" class="form-control">
             </div>
         </div>
 
         <div class="form-group row">
             <label for="code" class="col-md-3 col-form-label text-md-right">コード <label class="badge badge-danger">必須</label></label>
             <div class="col-md-9">
-                <input type="text" name="code" id="code" value="{{$code->code}}" class="form-control">
+                <input type="text" name="code" id="code" value="{{{old('code', $code->code)}}}" class="form-control">
                 @if ($errors && $errors->has('code')) <div class="text-danger">{{$errors->first('code')}}</div> @endif
             </div>
         </div>
         <div class="form-group row">
             <label for="value" class="col-md-3 col-form-label text-md-right">値 <label class="badge badge-danger">必須</label></label>
             <div class="col-md-9">
-                <input type="text" name="value" id="value" value="{{$code->value}}" class="form-control">
+                <input type="text" name="value" id="value" value="{{old('value', $code->value)}}" class="form-control">
                 @if ($errors && $errors->has('value')) <div class="text-danger">{{$errors->first('value')}}</div> @endif
             </div>
         </div>
         <div class="form-group row">
             <label for="display_sequence" class="col-md-3 col-form-label text-md-right">並び順</label>
             <div class="col-md-9">
-                <input type="text" name="display_sequence" id="display_sequence" value="{{$code->display_sequence}}" class="form-control">
+                <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $code->display_sequence)}}" class="form-control">
             </div>
         </div>
 
