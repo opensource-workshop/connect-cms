@@ -178,7 +178,7 @@
 <div id="collapse{{$form_frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">フォームを削除します。<br>このフームに登録された内容も削除され、元に戻すことはできないため、よく確認して実行してください。</span>
+            <span class="text-danger">フォームを削除します。<br>このフォームに登録された内容も削除され、元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
