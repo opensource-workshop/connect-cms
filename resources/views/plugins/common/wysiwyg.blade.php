@@ -89,7 +89,7 @@
         image_caption: true,
         image_title: true,
         image_class_list: [
-            {title: 'Responcie', value: 'img-fluid'},
+            {title: 'Responsive', value: 'img-fluid'},
             {title: 'None', value: 'none'},
         ],
         invalid_styles: {
