@@ -20,6 +20,7 @@
 </div>
 <div class="card-body">
 
+<div class="text-right"><span class="badge badge-pill badge-light">全 {{ $codes->total() }} 件</span></div>
 <table class="table table-bordered table_border_radius table-hover">
 <tbody>
     <tr class="bg-light d-none d-sm-table-row">
