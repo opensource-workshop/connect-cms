@@ -662,8 +662,8 @@ class ConnectController extends Controller
     /**
      *  ログ出力
      */
-    public function putLog($e)
-    {
-        Log::error($e);
-    }
+//    public function putLog($e)
+//    {
+//        Log::error($e);
+//    }
 }

@@ -86,6 +86,7 @@ class PluginBase
 
         return $numbers->serial_number;
     }
+
     /**
      * invoke（プラグインのフレーム用メソッドをコア（cms_frame.blade.php）から呼ぶ）
      *

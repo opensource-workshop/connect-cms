@@ -52,19 +52,19 @@
             <a href="/manage/system" class="list-group-item">システム管理</a>
         @endif
     @endif
-    <div class="list-group-item text-secondary">データ管理系</div>
+    <div class="list-group-item text-secondary bg-light">データ管理系</div>
     @if (Auth::user()->can('admin_site'))
         @if (isset($plugin_name) && $plugin_name == 'number')
-            <a href="/manage/number" class="list-group-item active"><i class="fas fa-chevron-right"></i> 連番管理</a>
+            <a href="/manage/number" class="list-group-item active">連番管理</a>
         @else
-            <a href="/manage/number" class="list-group-item"><i class="fas fa-chevron-right"></i> 連番管理</a>
+            <a href="/manage/number" class="list-group-item">連番管理</a>
         @endif
     @endif
     @if (Auth::user()->can('admin_site'))
         @if (isset($plugin_name) && $plugin_name == 'code')
-            <a href="/manage/code" class="list-group-item active"><i class="fas fa-chevron-right"></i> コード管理</a>
+            <a href="/manage/code" class="list-group-item active">コード管理</a>
         @else
-            <a href="/manage/code" class="list-group-item"><i class="fas fa-chevron-right"></i> コード管理</a>
+            <a href="/manage/code" class="list-group-item">コード管理</a>
         @endif
     @endif
 </div>

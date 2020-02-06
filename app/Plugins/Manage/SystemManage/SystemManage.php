@@ -35,6 +35,8 @@ class SystemManage extends ManagePluginBase
         $role_ckeck_table["updateDebugmode"] = array('admin_system');
         $role_ckeck_table["auth"]            = array('admin_system');
         $role_ckeck_table["updateAuth"]      = array('admin_system');
+        $role_ckeck_table["log"]             = array('admin_system');
+        $role_ckeck_table["updateLog"]       = array('admin_system');
         return $role_ckeck_table;
     }
 
@@ -138,4 +140,57 @@ class SystemManage extends ManagePluginBase
         return redirect("/manage/system/auth");
     }
 
+    /**
+     *  ログ設定画面表示
+     *
+     * @return view
+     */
+    public function log($request, $page_id = null)
+    {
+        // Config データの取得
+        $categories_configs = Configs::where('category', 'log')->get();
+
+        // 管理画面プラグインの戻り値の返し方
+        // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
+        return view('plugins.manage.system.log',[
+            "function"           => __FUNCTION__,
+            "plugin_name"        => "system",
+            "categories_configs" => $categories_configs,
+        ]);
+    }
+
+    /**
+     *  ログ設定更新
+     */
+    public function updateLog($request, $page_id = null, $errors = array())
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // ログファイルの形式
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'log_handler'],
+            ['category' => 'log',
+             'value'    => $request->log_handler]
+        );
+
+        // ログファイル名の指定の有無
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'log_filename_choice'],
+            ['category' => 'log',
+             'value'    => $request->log_filename_choice]
+        );
+
+        // ログファイル名
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'log_filename'],
+            ['category' => 'log',
+             'value'    => $request->log_filename]
+        );
+
+        // ページ管理画面に戻る
+        return redirect("/manage/system/log");
+    }
 }

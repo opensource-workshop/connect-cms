@@ -5,6 +5,11 @@ namespace App\Plugins\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+use Monolog\Logger;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
+
 use DB;
 use File;
 
@@ -532,6 +537,52 @@ class UserPluginBase extends PluginBase
             }
         }
         return $languages;
+    }
+
+    /**
+     *  ログ出力
+     */
+    public function putLog($e)
+    {
+        // Config データの取得
+        $configs = Configs::where('category', 'log')->get();
+
+        // ログファイル名
+        $log_filename = 'Laravel';
+
+        $config_log_filename_choice = $configs->where('name', 'log_filename_choice')->first()->value;
+        $config_log_filename = $configs->where('name', 'log_filename')->first()->value;
+
+        if ($config_log_filename_choice == '1' && isset($config_log_filename)) {
+            $log_filename = $config_log_filename;
+        }
+        $log_path =  storage_path() .'/logs/' . $log_filename . '.log';
+
+        // ログレベル
+        $log_level =  config('app.log_level');
+
+        // 以降のハンドラに処理を続行させるかどうかのフラグ、デフォルトは、true
+        $bubble = true;
+
+        // ログを生成
+        $log = new Logger('connect_error_log');
+
+        // ハンドラー（単一 or 日付毎）
+        $log_handler = $configs->where('name', 'log_handler')->first()->value;
+        if ($log_handler == '1') {
+            $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
+        }
+        else {
+            $handler = new StreamHandler($log_path, $log_level , $bubble);
+        }
+
+        // StackTrace用フォーマッタで整形
+        $formatter = new LineFormatter();
+        $formatter->includeStacktraces(true);
+
+        // ログ出力
+        $log->pushHandler($handler->setFormatter($formatter));
+        $log->error($e);
     }
 
     /**
