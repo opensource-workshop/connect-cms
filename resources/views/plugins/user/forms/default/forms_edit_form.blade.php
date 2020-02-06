@@ -133,11 +133,11 @@
         </div>
     </div>
 
-    <div id="app" class="form-group row">
+    <div id="app_{{ $frame->id }}" class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">採番プレフィックス</label>
-            <input type="text" name="numbering_prefix" value="{{old('numbering_prefix', $form->numbering_prefix)}}" class="form-control" v-model="numbering_prefix">
+            <input type="text" id="numbering_prefix" name="numbering_prefix" value="{{old('numbering_prefix', $form->numbering_prefix)}}" class="form-control" v-model="numbering_prefix">
             <small class="text-muted">※ 採番イメージ：@{{ numbering_prefix + '000001' }}</small><br>
             <small class="text-muted">※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。</small>
         </div>
@@ -178,7 +178,7 @@
 <div id="collapse{{$form_frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">フォームを削除します。<br>このフームに登録された内容も削除され、元に戻すことはできないため、よく確認して実行してください。</span>
+            <span class="text-danger">フォームを削除します。<br>このフォームに登録された内容も削除され、元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
@@ -193,9 +193,9 @@
 </div>
 <script>
     new Vue({
-      el: "#app",
+      el: "#app_{{ $frame->id }}",
       data: {
-        numbering_prefix: ''
+        numbering_prefix: document.getElementById('numbering_prefix').value
       }
     })
 </script>
