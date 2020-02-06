@@ -289,6 +289,23 @@ class ConnectController extends Controller
     }
 
     /**
+     *  言語をセッションに保持
+     *  コンストラクタではセッションの保持ができなかったので、各ルートから呼び出し
+     */
+    protected function setSession()
+    {
+        // 多言語設定されていたら、セッションに言語定数を設定
+        if ($this->isLanguageMultiOn() && $this->page) {
+            $view_language = $this->getPageLanguage($this->page, $this->getLanguages());
+            if (empty($view_language)) {
+                $view_language = 'jp';
+            }
+            //$request->session()->put('applocale', $view_language);
+            session()->put('applocale', $view_language);
+        }
+    }
+
+    /**
      *  ページのレイアウト情報
      */
     protected function getLayoutsInfo()
