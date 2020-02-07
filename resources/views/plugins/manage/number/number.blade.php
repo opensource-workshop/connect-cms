@@ -34,7 +34,7 @@
 </div>
 <div class="card-body">
 
-<table class="table table-bordered table_border_radius table-hover">
+<table class="table table-bordered table_border_radius table-hover cc-font-90">
 <tbody>
     <tr class="bg-light d-none d-sm-table-row">
         <th class="d-block d-sm-table-cell">プラグイン</th>
