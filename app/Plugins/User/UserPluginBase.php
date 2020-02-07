@@ -550,10 +550,17 @@ class UserPluginBase extends PluginBase
         // ログファイル名
         $log_filename = 'Laravel';
 
-        $config_log_filename_choice = $configs->where('name', 'log_filename_choice')->first()->value;
-        $config_log_filename = $configs->where('name', 'log_filename')->first()->value;
+        $config_log_filename_choice_obj = $configs->where('name', 'log_filename_choice')->first();
 
-        if ($config_log_filename_choice == '1' && isset($config_log_filename)) {
+        $config_log_filename_obj = $configs->where('name', 'log_filename')->first();
+        if (empty($config_log_filename_obj)) {
+            $config_log_filename = "";
+        }
+        else {
+            $config_log_filename = $config_log_filename_obj->value;
+        }
+
+        if (!empty($config_log_filename_choice_obj) && $config_log_filename_choice_obj->value == '1' && isset($config_log_filename)) {
             $log_filename = $config_log_filename;
         }
         $log_path =  storage_path() .'/logs/' . $log_filename . '.log';
@@ -568,8 +575,8 @@ class UserPluginBase extends PluginBase
         $log = new Logger('connect_error_log');
 
         // ハンドラー（単一 or 日付毎）
-        $log_handler = $configs->where('name', 'log_handler')->first()->value;
-        if ($log_handler == '1') {
+        $log_handler_obj = $configs->where('name', 'log_handler')->first();
+        if (!empty($log_handler_obj) && $log_handler_obj->value == '1') {
             $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
         }
         else {

@@ -26,7 +26,7 @@
                     </a>
                     {{-- 当月表示 --}}
                     <a class="list-group-item h5 d-flex align-items-center">
-                        {{ $carbon_target_date->year }}年 {{ $carbon_target_date->month }}月
+                        {{ App::getLocale() == Locale::ja ? $carbon_target_date->format('Y年n月') : $carbon_target_date->format('M Y') }}
                     </a>
                     {{-- 翌週ボタン --}}
                     <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addDay(7)->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
@@ -37,7 +37,7 @@
             <div class="float-right col-sm-5 to_current">
                 {{-- 当日へボタン --}}
                 <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
-                    今日へ<br>({{ Carbon::today()->format('Y年n月j日') }})
+                    {{__('messages.to_today')}}<br>({{ App::getLocale() == Locale::ja ? Carbon::today()->format('Y年n月j日') : Carbon::today()->format('j M Y') }})
                 </a>
             </div>
         </div>
@@ -107,7 +107,12 @@
                                             {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
                                             data-booking_id="{{ $booking['booking_header']->id }}" 
                                             data-facility_name="{{ $facility_name }}" 
-                                            data-reservation_date_display="{{ $booking['booking_header']->start_datetime->format('Y年n月j日') . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')' }}" 
+                                            data-reservation_date_display="{{
+                                                (App::getLocale() == Locale::en ? 
+                                                    $booking['booking_header']->start_datetime->format('j M Y') :
+                                                    $booking['booking_header']->start_datetime->format('Y年n月j日')
+                                                ) . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')' 
+                                            }}" 
                                             data-reservation_time="{{ substr($booking['booking_header']->start_datetime, 11, 5) . ' ~ ' . substr($booking['booking_header']->end_datetime, 11, 5) }}" 
                                             {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
                                             @foreach ($booking['booking_details'] as $bookingDetail)

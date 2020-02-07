@@ -237,6 +237,7 @@ return [
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
         'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
+        'Locale' => \App\Enums\Locale::class,
     ],
 
 ];
