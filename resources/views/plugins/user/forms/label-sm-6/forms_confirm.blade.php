@@ -26,9 +26,9 @@
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">
         {{-- ラベル --}}
-        <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+        <label class="col-sm-6 control-label text-nowrap">{{$form_column->column_name}}</label>
         {{-- 項目 --}}
-        <div class="col-sm-10">
+        <div class="col-sm-6">
 
         @switch($form_column->column_type)
 
@@ -76,7 +76,7 @@
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
-        @case("date")
+        @case(FormColumnType::date)
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
