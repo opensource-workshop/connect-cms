@@ -35,12 +35,12 @@
                         <form>
                             {{-- 利用日 --}}
                             <div class="form-group row">
-                                <label for="reservation_date_display" class="col-3 col-form-label">利用日</label>
+                                <label for="reservation_date_display" class="col-3 col-form-label">{{ __('messages.day_of_use')}}</label>
                                 <input type="text" class="col-9 form-control-plaintext" id="reservation_date_display" readonly>
                             </div>
                             {{-- 利用時間 --}}
                             <div class="form-group row">
-                                <label for="reservation_time" class="col-3 col-form-label">利用時間</label>
+                                <label for="reservation_time" class="col-3 col-form-label">{{ __('messages.time_of_use')}}</label>
                                 <input type="text" class="col-9 form-control-plaintext" id="reservation_time" readonly>
                             </div>
                             {{-- 予約可変項目 --}}
@@ -57,7 +57,7 @@
                     <div class="modal-footer" style="justify-content : left;">
                         {{-- 閉じるボタン --}}
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                            <i class="fas fa-times"></i> 閉じる
+                            <i class="fas fa-times"></i> {{ __('messages.close') }}
                         </button>
                         {{-- 予約編集ボタン（ログイン時のみ表示） --}}
                         @auth
@@ -69,7 +69,7 @@
                                 {{-- ＋ボタンクリックでformサブミット --}}
                                 <a href="javascript:form_edit_booking.submit()">
                                     <button type="button" class="btn btn-primary">
-                                        <i class="far fa-edit bg-default small cc-font-color"></i> 予約修正
+                                        <i class="far fa-edit bg-default small cc-font-color"></i> {{ __('messages.edit') }}
                                     </button>
                                 </a>
                             </form>
@@ -81,7 +81,7 @@
                                 {{-- ＋ボタンクリックでformサブミット --}}
                                 <a href="javascript:form_destroy_booking.submit()">
                                     <button type="button" class="btn btn-danger" onclick="javascript:return confirm('予約を削除します。\nよろしいですか？')">
-                                        <i class="fas fa-trash-alt"></i> 予約削除
+                                        <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
                                     </button>
                                 </a>
                             </form>
@@ -97,7 +97,7 @@
                 var button = $(event.relatedTarget)
                 var modal = $(this)
                 // モーダルタイトル
-                modal.find('.modal-title').text('予約詳細（' + button.data('facility_name') + '）')
+                modal.find('.modal-title').text('{{ __('messages.reservation_details') }}（' + button.data('facility_name') + '）')
                 // 予約項目（固定）
                 modal.find('[name=booking_id]').val(button.data('booking_id'))
                 modal.find('#reservation_date_display').val(button.data('reservation_date_display'))
@@ -113,11 +113,19 @@
         <ul class="nav nav-tabs">
             <li class="nav-item">
                 {{-- 月タブ --}}
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}" class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}">月</a>
+                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}" 
+                    class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}"
+                >
+                    {{ __('messages.month') }}
+                </a>
             </li>
             <li class="nav-item">
                 {{-- 週タブ --}}
-                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}">週</a>
+                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" 
+                    class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}"
+                >
+                    {{ __('messages.week') }}
+                </a>
             </li>
         </ul>
 
