@@ -1,7 +1,7 @@
 {{--
  * 確認画面テンプレート。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  --}}
@@ -25,36 +25,38 @@
     {{ csrf_field() }}
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">
+        {{-- ラベル --}}
         <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+        {{-- 項目 --}}
         <div class="col-sm-10">
 
         @switch($form_column->column_type)
 
-            @case("group")
-                <div class="form-inline">
-                    @foreach($form_column->group as $group_row)
-                        <label class="control-label" style="vertical-align: top; margin-right: 10px;@if (!$loop->first) margin-left: 30px;@endif">{{$group_row->column_name}}</label>
-                        {{$request->forms_columns_value[$group_row->id]}}
-                        <input name="forms_columns_value[{{$group_row->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$group_row->id]}}" />
-                    @endforeach
-                </div>
+        @case(FormColumnType::group)
+            <div class="form-inline">
+                @foreach($form_column->group as $group_row)
+                    <label class="control-label" style="vertical-align: top; margin-right: 10px;@if (!$loop->first) margin-left: 30px;@endif">{{$group_row->column_name}}</label>
+                    {{$request->forms_columns_value[$group_row->id]}}
+                    <input name="forms_columns_value[{{$group_row->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$group_row->id]}}" />
+                @endforeach
+            </div>
             @break
-        @case("text")
+        @case(FormColumnType::text)
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
-        @case("textarea")
+        @case(FormColumnType::textarea)
             {!!nl2br(e($request->forms_columns_value[$form_column->id]))!!}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
-        @case("radio")
+        @case(FormColumnType::radio)
             @if (array_key_exists($form_column->id, $request->forms_columns_value))
                 <input name="forms_columns_value[{{$form_column->id}}]" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">{{$request->forms_columns_value[$form_column->id]}}
             @else
                 <input name="forms_columns_value[{{$form_column->id}}]" type="hidden">
             @endif
             @break
-        @case("checkbox")
+        @case(FormColumnType::checkbox)
             @if (array_key_exists($form_column->id, $request->forms_columns_value))
                 @foreach($request->forms_columns_value[$form_column->id] as $checkbox_item)
                     <input name="forms_columns_value[{{$form_column->id}}][]" type="hidden" value="{{$checkbox_item}}">{{$checkbox_item}}@if (!$loop->last), @endif
@@ -63,14 +65,14 @@
                 <input name="forms_columns_value[{{$form_column->id}}][]" type="hidden">
             @endif
             @break
-        @case("select")
+        @case(FormColumnType::select)
             @if (array_key_exists($form_column->id, $request->forms_columns_value))
                 <input name="forms_columns_value[{{$form_column->id}}]" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">{{$request->forms_columns_value[$form_column->id]}}
             @else
                 <input name="forms_columns_value[{{$form_column->id}}]" type="hidden">
             @endif
             @break
-        @case("mail")
+        @case(FormColumnType::mail)
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
@@ -78,7 +80,7 @@
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
-        @case("time")
+        @case(FormColumnType::time)
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
@@ -86,6 +88,7 @@
         </div>
     </div>
     @endforeach
+    {{-- ボタンエリア --}}
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_forms_cancel();"><i class="fas fa-times"></i> キャンセル</button>
         <button type="submit" class="btn btn-primary" onclick="javascript:submit_forms_store();"><i class="fas fa-check"></i> 送信</button>
