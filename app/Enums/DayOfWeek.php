@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Enums;
+use Illuminate\Support\Facades\App;
 
 /**
  * 曜日
@@ -16,8 +17,8 @@ final class DayOfWeek
     const fri = 5;
     const sat = 6;
 
-    // key/valueの連想配列
-    const enum = [
+    // key/valueの連想配列 日本語版
+    const enum_ja = [
         self::sun=>'日',
         self::mon=>'月',
         self::tue=>'火',
@@ -27,18 +28,29 @@ final class DayOfWeek
         self::sat=>'土',
     ];
 
+    // key/valueの連想配列 英語版
+    const enum_en = [
+        self::sun=>'sun',
+        self::mon=>'mon',
+        self::tue=>'tue',
+        self::wed=>'wed',
+        self::thu=>'thu',
+        self::fri=>'fri',
+        self::sat=>'sat',
+    ];
+
     /*
     * 対応した和名を返す
     */
     public static function getDescription($key): string
     {
-        return self::enum[$key];
+        return App::getLocale() == \Locale::en ? self::enum_en[$key] : self::enum_ja[$key];
     }
 
     /*
     * key/valueの連想配列を返す
     */
     public static function getMembers(){
-        return self::enum;
+        return App::getLocale() == \Locale::en ? self::enum_en : self::enum_ja;
     }
 }
