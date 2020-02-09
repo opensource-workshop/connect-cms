@@ -21,7 +21,7 @@
 <div class="card-body">
 
 <div class="text-right"><span class="badge badge-pill badge-light">全 {{ $codes->total() }} 件</span></div>
-<table class="table table-bordered table_border_radius table-hover">
+<table class="table table-bordered table_border_radius table-hover cc-font-90">
 <tbody>
     <tr class="bg-light d-none d-sm-table-row">
         <th class="d-block d-sm-table-cell">プラグイン</th>

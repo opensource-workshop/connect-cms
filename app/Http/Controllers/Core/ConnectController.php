@@ -7,6 +7,8 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\App;
 
 use App\Http\Controllers\Controller;
 
@@ -298,10 +300,15 @@ class ConnectController extends Controller
         if ($this->isLanguageMultiOn() && $this->page) {
             $view_language = $this->getPageLanguage($this->page, $this->getLanguages());
             if (empty($view_language)) {
-                $view_language = 'jp';
+                $view_language = 'ja';
             }
             //$request->session()->put('applocale', $view_language);
-            session()->put('applocale', $view_language);
+            if (array_key_exists($view_language, Config::get('languages'))) {
+                App::setLocale($view_language);
+            }
+            else {
+                App::setLocale(Config::get('app.fallback_locale'));
+            }
         }
     }
 
