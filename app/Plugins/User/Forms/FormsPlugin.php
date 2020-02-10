@@ -859,19 +859,27 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
-        // 項目の更新処理
         $column = FormsColumns::query()->where('id', $request->column_id)->first();
+
+        $validator_values = null;
+        $validator_attributes = null;
 
         // データ型が「まとめ行」の場合はまとめ数について必須チェック
         if($column->column_type == \FormColumnType::group){
-            $errors = null;
-            // エラーチェック
-            $validator = Validator::make($request->all(), [
+            $validator_values = [
                 'frame_col'  => ['required'],
-            ]);
-            $validator->setAttributeNames([
+            ];
+            $validator_attributes = [
                 'frame_col'  => 'まとめ数',
-            ]);
+            ];
+        }
+
+        // エラーチェック
+        if($validator_values){
+            $validator = Validator::make($request->all(), $validator_values);
+            $validator->setAttributeNames($validator_attributes);
+
+            $errors = null;
             if ($validator->fails()) {
 
                 // エラーと共に編集画面を呼び出す
@@ -880,6 +888,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             }
         }
 
+        // 項目の更新処理
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
         $column->frame_col = $request->frame_col;
