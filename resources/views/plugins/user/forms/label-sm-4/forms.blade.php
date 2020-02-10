@@ -48,18 +48,18 @@
 
                     {{-- 項目 ※まとめ設定行 --}}
                     @include('plugins.user.forms.default.forms_input_' . $group_row->column_type,['form_obj' => $group_row])
-                    <div class="{{ $group_row->caption_color }}">{!! nl2br($group_row->caption) !!}</div>
+                    <div class="small {{ $group_row->caption_color }}">{!! nl2br($group_row->caption) !!}</div>
                         </div>
                 @endforeach
                     </div>
-                    <div class="{{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
+                    <div class="small {{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
                 </div>
                 @break
             {{-- 項目 ※まとめ未設定行 --}}
             @default
                 <div class="col-sm-8">
                     @include('plugins.user.forms.default.forms_input_' . $form_column->column_type,['form_obj' => $form_column])
-                    <div class="{{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
+                    <div class="small {{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
                 </div>
             @endswitch
         </div>
