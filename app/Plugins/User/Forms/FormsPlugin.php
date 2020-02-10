@@ -268,6 +268,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_column->required) {
             $validator_rule[] = 'required';
         }
+        // メールアドレスチェック
+        if ($forms_column->column_type == \FormColumnType::mail) {
+            $validator_rule[] = 'email';
+        }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
             $validator_rule[] = 'numeric';
