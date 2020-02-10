@@ -180,63 +180,90 @@
     <br>
     @endif
 
-    {{-- その他の設定 --}}
-    <div class="card">
-        <h5 class="card-header">その他の設定</h5>
-        <div class="card-body">
-            {{-- 入力項目エリア --}}
-            <div class="form-group">
-
+    @if ($column->column_type == FormColumnType::time || $column->column_type == FormColumnType::group)
+        {{-- 項目毎の固有設定 --}}
+        <div class="card">
+            <h5 class="card-header">項目毎の固有設定</h5>
+            <div class="card-body">
                 {{-- 分刻み指定 ※データ型が「時間型」のみ表示 --}}
                 @if ($column->column_type == FormColumnType::time)
-                    <label class="control-label">分刻み指定 </label>
-                    <select class="form-control" name="minutes_increments">
-                        @foreach (MinutesIncrements::getMembers() as $key=>$value)
-                            <option value="{{$key}}"
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">分刻み指定 </label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <select class="form-control" name="minutes_increments">
+                                @foreach (MinutesIncrements::getMembers() as $key=>$value)
+                                    <option value="{{$key}}"
+                                        {{-- 初期表示用 --}}
+                                        @if($key == $column->minutes_increments)
+                                            selected="selected"
+                                        @endif
+                                        {{-- validation用 --}}
+                                        @if($key == old('minutes_increments'))
+                                            selected="selected"
+                                        @endif
+                                    >{{ $value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                @endif
+                    
+                {{-- まとめ数 ※データ型が「まとめ行」のみ表示 --}}
+                @if ($column->column_type == FormColumnType::group)
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">まとめ数 <label class="badge badge-danger">必須</label></label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <select class="form-control" name="frame_col">
+                                <option value=""></option>
+                                @for ($i = 1; $i < 5; $i++)
+                                    <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>{{$i}}</option>
+                                @endfor
+                            </select>
+                        </div>
+                    </div>
+                @endif
+    
+                {{-- ボタンエリア --}}
+                <div class="form-group text-center">
+                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                </div>
+            </div>
+        </div>
+    <br>
+    @endif
+
+    {{-- キャプション設定 --}}
+    <div class="card">
+        <h5 class="card-header">キャプション</h5>
+        <div class="card-body">
+
+            {{-- キャプション内容 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">内容 </label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <textarea name="caption" class="form-control" rows="3">{{old('caption', $column->caption)}}</textarea>
+                </div>
+            </div>
+
+            {{-- キャプション文字色 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">文字色 </label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <select class="form-control" name="caption_color">
+                        @foreach (Bs4TextColor::getMembers() as $key=>$value)
+                            <option value="{{$key}}" class="{{ $key }}"
                                 {{-- 初期表示用 --}}
-                                @if($key == $column->minutes_increments)
+                                @if($key == $column->caption_color)
                                     selected="selected"
                                 @endif
                                 {{-- validation用 --}}
-                                @if($key == old('minutes_increments'))
+                                @if($key == old('caption_color'))
                                     selected="selected"
                                 @endif
                             >{{ $value }}</option>
                         @endforeach
                     </select>
-                @endif
-                
-                {{-- まとめ数 ※データ型が「まとめ行」のみ表示 --}}
-                @if ($column->column_type == FormColumnType::group)
-                    <label class="control-label">まとめ数 <label class="badge badge-danger">必須</label></label>
-                    <select class="form-control" name="frame_col">
-                        <option value=""></option>
-                        @for ($i = 1; $i < 5; $i++)
-                            <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>{{$i}}</option>
-                        @endfor
-                    </select>
-                @endif
-
-                {{-- キャプション --}}
-                <label class="control-label">キャプション </label>
-                <textarea name="caption" class="form-control">{{old('caption', $column->caption)}}</textarea>
-
-                {{-- キャプション文字色 --}}
-                <label class="control-label">キャプション文字色 </label>
-                <select class="form-control" name="caption_color">
-                    @foreach (Bs4TextColor::getMembers() as $key=>$value)
-                        <option value="{{$key}}" class="{{ $key }}"
-                            {{-- 初期表示用 --}}
-                            @if($key == $column->caption_color)
-                                selected="selected"
-                            @endif
-                            {{-- validation用 --}}
-                            @if($key == old('caption_color'))
-                                selected="selected"
-                            @endif
-                        >{{ $value }}</option>
-                    @endforeach
-                </select>
+                </div>
             </div>
 
             {{-- ボタンエリア --}}
