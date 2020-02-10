@@ -44,6 +44,7 @@
 
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
+        <input name="page" value="{{$paginate_page}}" type="hidden">
 
         <!-- Code form  -->
         @if ($code->id)
@@ -132,6 +133,41 @@
             <div class="col-md-9">
                 <input type="text" name="value" id="value" value="{{old('value', $code->value)}}" class="form-control">
                 @if ($errors && $errors->has('value')) <div class="text-danger">{{$errors->first('value')}}</div> @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="additional1" class="col-md-3 col-form-label text-md-right">additional1</label>
+            <div class="col-md-9">
+                <input type="text" name="additional1" id="additional1" value="{{old('additional1', $code->additional1)}}" class="form-control">
+                @if ($errors && $errors->has('additional1')) <div class="text-danger">{{$errors->first('additional1')}}</div> @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="additional2" class="col-md-3 col-form-label text-md-right">additional2</label>
+            <div class="col-md-9">
+                <input type="text" name="additional2" id="additional2" value="{{old('additional2', $code->additional2)}}" class="form-control">
+                @if ($errors && $errors->has('additional2')) <div class="text-danger">{{$errors->first('additional2')}}</div> @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="additional3" class="col-md-3 col-form-label text-md-right">additional3</label>
+            <div class="col-md-9">
+                <input type="text" name="additional3" id="additional3" value="{{old('additional3', $code->additional3)}}" class="form-control">
+                @if ($errors && $errors->has('additional3')) <div class="text-danger">{{$errors->first('additional3')}}</div> @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="additional4" class="col-md-3 col-form-label text-md-right">additional4</label>
+            <div class="col-md-9">
+                <input type="text" name="additional4" id="additional4" value="{{old('additional4', $code->additional4)}}" class="form-control">
+                @if ($errors && $errors->has('additional4')) <div class="text-danger">{{$errors->first('additional4')}}</div> @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="additional5" class="col-md-3 col-form-label text-md-right">additional5</label>
+            <div class="col-md-9">
+                <input type="text" name="additional5" id="additional5" value="{{old('additional5', $code->additional5)}}" class="form-control">
+                @if ($errors && $errors->has('additional5')) <div class="text-danger">{{$errors->first('additional5')}}</div> @endif
             </div>
         </div>
         <div class="form-group row">
