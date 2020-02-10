@@ -78,7 +78,11 @@
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+        {{-- キャンセル --}}
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link) . '#frame-' . $frame->id}}'">
+            <i class="fas fa-times"></i> キャンセル
+        </button>
+        {{-- 変更確定 --}}
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示する施設予約を変更</button>
     </div>
 </form>
