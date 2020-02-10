@@ -79,21 +79,19 @@
         <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '項目【' . $column->column_name . ' 】の詳細設定を行います。' }}
     </div>
 
-    {{-- エラーメッセージエリア --}}
-    @if ($errors && $errors->any())
-        <div class="alert alert-danger mt-2">
-            @foreach ($errors->all() as $error)
-            <i class="fas fa-exclamation-circle"></i>
-                {{ $error }}<br>
-            @endforeach
-        </div>
-    @endif
 
     @if ($column->column_type == FormColumnType::radio || $column->column_type == FormColumnType::checkbox || $column->column_type == FormColumnType::select)
     {{-- 選択肢の設定 --}}
     <div class="card">
         <h5 class="card-header">選択肢の設定</h5>
         <div class="card-body">
+            {{-- エラーメッセージエリア --}}
+            @if ($errors && $errors->has('select_name'))
+                <div class="alert alert-danger mt-2">
+                    <i class="fas fa-exclamation-circle"></i>{{ $errors->first('select_name') }}
+                </div>
+            @endif
+
             <div class="table-responsive">
 
                 {{-- 選択項目の一覧 --}}
@@ -219,6 +217,7 @@
                                     <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>{{$i}}</option>
                                 @endfor
                             </select>
+                            @if ($errors && $errors->has('frame_col')) <div class="text-danger">{{$errors->first('frame_col')}}</div> @endif
                         </div>
                     </div>
                 @endif
@@ -231,6 +230,76 @@
         </div>
     <br>
     @endif
+
+    @if ($column->column_type == FormColumnType::text || $column->column_type == FormColumnType::textarea)
+        {{-- チェック処理の設定 --}}
+        <div class="card">
+            <h5 class="card-header">チェック処理の設定</h5>
+            <div class="card-body">
+                {{-- 数値のみ許容 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">入力制御</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" name="rule_allowed_numeric" id="rule_allowed_numeric" value="1" class="custom-control-input" @if(old('rule_allowed_numeric', $column->rule_allowed_numeric)) checked @endif>
+                            <label class="custom-control-label" for="rule_allowed_numeric">半角数値のみ許容</label>
+                        </div>
+                    </div>
+                </div>
+                {{-- 英数値のみ許容 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}"></label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" name="rule_allowed_alpha_numeric" id="rule_allowed_alpha_numeric" value="1" class="custom-control-input" @if(old('rule_allowed_alpha_numeric', $column->rule_allowed_alpha_numeric)) checked @endif>
+                            <label class="custom-control-label" for="rule_allowed_alpha_numeric">半角英数値のみ許容</label>
+                        </div>
+                    </div>
+                </div>
+                {{-- 指定桁数（数値）以下を許容 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">入力桁数</label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <input type="text" name="rule_digits_or_less" value="{{old('rule_digits_or_less', $column->rule_digits_or_less)}}" class="form-control">
+                        <small class="text-muted">※ 入力桁数の指定時は「半角数値のみ許容」も適用されます。</small><br>
+                        @if ($errors && $errors->has('rule_digits_or_less')) <div class="text-danger">{{$errors->first('rule_digits_or_less')}}</div> @endif
+                    </div>
+                </div>
+                {{-- 指定文字数以下を許容 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">入力最大文字数</label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <input type="text" name="rule_word_count" value="{{old('rule_word_count', $column->rule_word_count)}}" class="form-control">
+                        <small class="text-muted">※ 全角は2文字、半角は1文字として換算します。</small><br>
+                        @if ($errors && $errors->has('rule_word_count')) <div class="text-danger">{{$errors->first('rule_word_count')}}</div> @endif
+                    </div>
+                </div>
+                {{-- 最大値設定 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">最大値</label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <input type="text" name="rule_max" value="{{old('rule_max', $column->rule_max)}}" class="form-control">
+                        @if ($errors && $errors->has('rule_max')) <div class="text-danger">{{$errors->first('rule_max')}}</div> @endif
+                    </div>
+                </div>
+                {{-- 最小値設定 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">最小値</label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <input type="text" name="rule_min" value="{{old('rule_min', $column->rule_min)}}" class="form-control">
+                        @if ($errors && $errors->has('rule_min')) <div class="text-danger">{{$errors->first('rule_min')}}</div> @endif
+                    </div>
+                </div>
+        
+                {{-- ボタンエリア --}}
+                <div class="form-group text-center">
+                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                </div>
+            </div>
+        </div>
+    <br>
+    @endif
+
 
     {{-- キャプション設定 --}}
     <div class="card">
