@@ -1,0 +1,6 @@
+style_formats : [
+    {title : 'バッジ(primary)', inline : 'span', classes : 'badge badge-primary'},
+    {title : 'バッジ(danger)', inline : 'span', classes : 'badge badge-danger'},
+    {title : '丸みバッジ(primary)', inline : 'span', classes : 'badge badge-pill badge-primary'},
+    {title : '丸みバッジ(danger)', inline : 'span', classes : 'badge badge-pill badge-danger'},
+],

@@ -137,8 +137,8 @@
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">採番プレフィックス</label>
-            <input type="text" id="numbering_prefix" name="numbering_prefix" value="{{old('numbering_prefix', $form->numbering_prefix)}}" class="form-control" v-model="numbering_prefix">
-            <small class="text-muted">※ 採番イメージ：@{{ numbering_prefix + '000001' }}</small><br>
+            <input type="text" id="numbering_prefix" name="numbering_prefix" value="{{old('numbering_prefix', $form->numbering_prefix)}}" class="form-control" v-model="v_numbering_prefix">
+            <small class="text-muted">※ 採番イメージ：@{{ v_numbering_prefix + '000001' }}</small><br>
             <small class="text-muted">※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。</small>
         </div>
     </div>
@@ -195,7 +195,7 @@
     new Vue({
       el: "#app_{{ $frame->id }}",
       data: {
-        numbering_prefix: document.getElementById('numbering_prefix').value
+        v_numbering_prefix: document.getElementById('numbering_prefix').value
       }
     })
 </script>

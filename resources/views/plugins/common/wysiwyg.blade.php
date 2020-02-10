@@ -73,11 +73,14 @@
         height: 300,
         branding: false,
         //forced_root_block : false,
-        valid_children : "+body[style],+a[div|p],",
-        extended_valid_elements : "script[type|charset|async|src]"
-                                 +",div[*]"
-                                 +",cc[*]",
+        valid_children : "+body[style|input],+a[div|p],",
+        //extended_valid_elements : "script[type|charset|async|src]"
+        //                         +",div[id|class|align|style|clear]"
+        //                         +",input[*]"
+        //                         +",cc[*]",
         //extended_valid_elements : "script[type|charset|async|src],cc[value]",
+        valid_elements : '*[*]',
+        extended_valid_elements : '*[*]',
 
         {{-- CSS --}}
         {!!$content_css_file!!}

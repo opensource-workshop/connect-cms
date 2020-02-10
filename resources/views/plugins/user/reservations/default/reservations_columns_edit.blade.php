@@ -54,11 +54,6 @@
     })
 </script>
 
-{{-- キャンセル用のフォーム。キャンセル時はセッションをクリアするため、トークン付きでPOST でsubmit したい。 --}}
-<form action="/redirect/plugin/reservations/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="reservations_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
-    {{ csrf_field() }}
-</form>
-
 <div class="form-group">
     <form action="/plugin/reservations/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
         {{ csrf_field() }}
@@ -113,7 +108,9 @@
         @endif
         {{-- ボタンエリア --}}
         <div class="text-center">
-            <button type="button" class="btn btn-secondary mr-2" onclick="javascript:reservations_cancel.submit();"><i class="fas fa-times"></i> キャンセル</button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link) . '#frame-' . $frame->id}}'">
+                <i class="fas fa-times"></i> キャンセル
+            </button>
         </div>
     </form>
 </div>
