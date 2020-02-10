@@ -70,7 +70,8 @@ class CodeManage extends ManagePluginBase
                           //->orderBy('code')
                           ->paginate(10);
 
-        // $paginate_page = $request->get('page', 1);
+        // [TODO] ページネーションの表示ページ数を保持するための暫定対応
+        $paginate_page = $request->get('page', 1);
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
@@ -78,7 +79,8 @@ class CodeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "code",
             "codes"       => $codes,
-            // "paginate_page" => $paginate_page,
+            "paginate_page" => $paginate_page,
+            // "page" => 1,
         ]);
     }
 
@@ -144,11 +146,18 @@ class CodeManage extends ManagePluginBase
         $codes->type_code5           = $request->type_code5;
         $codes->code                 = $request->code;
         $codes->value                = $request->value;
+        $codes->additional1          = $request->additional1;
+        $codes->additional2          = $request->additional2;
+        $codes->additional3          = $request->additional3;
+        $codes->additional4          = $request->additional4;
+        $codes->additional5          = $request->additional5;
         $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
         $codes->save();
 
         // 一覧画面に戻る
-        return redirect("/manage/code");
+        // return redirect("/manage/code");
+        $page = $request->get('page', 1);
+        return redirect("/manage/code?page=$page");
     }
 
     /**
@@ -166,12 +175,16 @@ class CodeManage extends ManagePluginBase
         $plugins = Plugins::orderBy('display_sequence')->get();
         // var_dump($plugins);
 
+        // [TODO] ページネーションの表示ページ数を保持するための暫定対応
+        $paginate_page = $request->get('page', 1);
+
         return view('plugins.manage.code.regist',[
             "function" => __FUNCTION__,
             "plugin_name" => "code",
             "plugins" => $plugins,
             "code" => $code,
             'errors' => $errors,
+            "paginate_page" => $paginate_page,
         ]);
     }
 
@@ -217,13 +230,18 @@ class CodeManage extends ManagePluginBase
         $codes->type_code5           = $request->type_code5;
         $codes->code                 = $request->code;
         $codes->value                = $request->value;
+        $codes->additional1          = $request->additional1;
+        $codes->additional2          = $request->additional2;
+        $codes->additional3          = $request->additional3;
+        $codes->additional4          = $request->additional4;
+        $codes->additional5          = $request->additional5;
         $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
         $codes->save();
 
         // 一覧画面に戻る
-        return redirect("/manage/code");
-        // $page = $request->get('page', 1);
-        // return redirect("/manage/code?page=$page");
+        // return redirect("/manage/code");
+        $page = $request->get('page', 1);
+        return redirect("/manage/code?page=$page");
     }
 
     /**
@@ -234,6 +252,8 @@ class CodeManage extends ManagePluginBase
         Codes::destroy($id);
 
         // コード一覧画面に戻る
-        return redirect("/manage/code");
+        // return redirect("/manage/code");
+        $page = $request->get('page', 1);
+        return redirect("/manage/code?page=$page");
     }
 }
