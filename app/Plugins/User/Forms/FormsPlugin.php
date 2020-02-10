@@ -267,7 +267,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_array = array( 'column' => array(), 'message' => array());
 
         foreach($forms_columns as $forms_column) {
-            // グループ内
+            // まとめ行であれば、ネストされた配列をさらに展開
             if ($forms_column->group) {
                 foreach($forms_column->group as $group_item) {
 
@@ -277,7 +277,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                     }
                 }
             }
-            // グループではないもの
+            // まとめ行以外
             if ($forms_column->required) {
                 $validator_array['column']['forms_columns_value.' . $forms_column->id] = ['required'];
                 $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
