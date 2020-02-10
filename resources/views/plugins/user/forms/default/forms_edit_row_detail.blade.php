@@ -234,7 +234,7 @@
 
     {{-- キャプション設定 --}}
     <div class="card">
-        <h5 class="card-header">キャプション</h5>
+        <h5 class="card-header">キャプションの設定</h5>
         <div class="card-body">
 
             {{-- キャプション内容 --}}
