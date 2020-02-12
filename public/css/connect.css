@@ -203,6 +203,24 @@ a.cc-cursor-text:hover {
     min-width: 200px;
 }
 
+/* 幅
+------------------------------------- */
+.cc-w20pct {
+    width: 20%;
+}
+.cc-w25pct {
+    width: 25%;
+}
+.cc-w30pct {
+    width: 30%;
+}
+.cc-w40pct {
+    width: 40%;
+}
+.cc-w50pct {
+    width: 50%;
+}
+
 
 /*  Connect-CMS add CSS Bootstrap3
 ------------------------------------- */
