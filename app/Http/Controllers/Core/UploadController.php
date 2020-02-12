@@ -65,12 +65,21 @@ class UploadController extends ConnectController
         $content_disposition = '';
         if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
             return response()
-                     ->file( storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension);
+                     ->file( storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                             ['Content-Disposition' =>
+                                  'inline; filename="'. $uploads['client_original_name'] .'"' . 
+                                  "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
+                             ]
+                           );
         } else {
             return response()
                      ->download( storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                                 $uploads['client_original_name']
-                       );
+                                 $uploads['client_original_name'],
+                                 ['Content-Disposition' =>
+                                      'inline; filename="'. $uploads['client_original_name'] .'"' . 
+                                      "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
+                                 ]
+                               );
         }
 
     }

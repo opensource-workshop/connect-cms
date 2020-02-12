@@ -18,6 +18,9 @@ use App\Models\User\Forms\FormsColumnsSelects;
 use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Forms\FormsInputCols;
 
+use App\Rules\CustomVali_AlphaNumForMultiByte;
+use App\Rules\CustomVali_CheckWidthForString;
+
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
@@ -251,6 +254,56 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         return $value;
     }
 
+    /**
+     * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
+     *
+     * @param [array] $validator_array 二次元配列
+     * @param [App\Models\User\Forms\FormsColumns] $forms_column
+     * @return void
+     */
+    private function getValidatorRule($validator_array, $forms_column){
+
+        $validator_rule = null;
+        // 必須チェック
+        if ($forms_column->required) {
+            $validator_rule[] = 'required';
+        }
+        // メールアドレスチェック
+        if ($forms_column->column_type == \FormColumnType::mail) {
+            $validator_rule[] = 'email';
+        }
+        // 数値チェック
+        if ($forms_column->rule_allowed_numeric) {
+            $validator_rule[] = 'numeric';
+        }
+        // 英数値チェック
+        if ($forms_column->rule_allowed_alpha_numeric) {
+            $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
+        }
+        // 最大文字数チェック
+        if ($forms_column->rule_word_count) {
+            $validator_rule[] = new CustomVali_CheckWidthForString($forms_column->column_name, $forms_column->rule_word_count);
+        }
+        // 指定桁数チェック
+        if ($forms_column->rule_digits_or_less) {
+            $validator_rule[] = 'digits:' . $forms_column->rule_digits_or_less;
+        }
+        // 最大値チェック
+        if ($forms_column->rule_max) {
+            $validator_rule[] = 'max:' . $forms_column->rule_max;
+        }
+        // 最小値チェック
+        if ($forms_column->rule_min) {
+            $validator_rule[] = 'min:' . $forms_column->rule_min;
+        }
+        // バリデータールールをセット
+        if($validator_rule){
+            $validator_array['column']['forms_columns_value.' . $forms_column->id] = $validator_rule;
+            $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
+        }
+
+        return $validator_array;
+    }
 
     /**
      * 登録時の確認
@@ -267,21 +320,15 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_array = array( 'column' => array(), 'message' => array());
 
         foreach($forms_columns as $forms_column) {
-            // グループ内
+            // まとめ行であれば、ネストされた配列をさらに展開
             if ($forms_column->group) {
                 foreach($forms_column->group as $group_item) {
-
-                    if ($group_item->required) {
-                        $validator_array['column']['forms_columns_value.' . $group_item->id] = ['required'];
-                        $validator_array['message']['forms_columns_value.' . $group_item->id] = $group_item->column_name;
-                    }
+                    // まとめ行で指定している項目について、バリデータールールをセット
+                    $validator_array = self::getValidatorRule($validator_array, $group_item);
                 }
             }
-            // グループではないもの
-            if ($forms_column->required) {
-                $validator_array['column']['forms_columns_value.' . $forms_column->id] = ['required'];
-                $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
-            }
+            // まとめ行以外の項目について、バリデータールールをセット
+            $validator_array = self::getValidatorRule($validator_array, $forms_column);
         }
 
         // 入力値をトリム
@@ -859,19 +906,53 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
-        // 項目の更新処理
         $column = FormsColumns::query()->where('id', $request->column_id)->first();
+
+        $validator_values = null;
+        $validator_attributes = null;
 
         // データ型が「まとめ行」の場合はまとめ数について必須チェック
         if($column->column_type == \FormColumnType::group){
+            $validator_values['frame_col'] = [
+                'required'
+            ];
+            $validator_attributes['frame_col'] = 'まとめ数';
+        }
+        // 桁数チェックの指定時、入力値が数値であるかチェック
+        if($request->rule_digits_or_less){
+            $validator_values['rule_digits_or_less'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_digits_or_less'] = '入力桁数';
+        }
+        // 最大値の指定時、入力値が数値であるかチェック
+        if($request->rule_max){
+            $validator_values['rule_max'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_max'] = '最大値';
+        }
+        // 最小値の指定時、入力値が数値であるかチェック
+        if($request->rule_min){
+            $validator_values['rule_min'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_min'] = '最小値';
+        }
+        // 入力文字数の指定時、入力値が数値であるかチェック
+        if($request->rule_word_count){
+            $validator_values['rule_word_count'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_word_count'] = '入力文字数';
+        }
+
+        // エラーチェック
+        if($validator_values){
+            $validator = Validator::make($request->all(), $validator_values);
+            $validator->setAttributeNames($validator_attributes);
+
             $errors = null;
-            // エラーチェック
-            $validator = Validator::make($request->all(), [
-                'frame_col'  => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'frame_col'  => 'まとめ数',
-            ]);
             if ($validator->fails()) {
 
                 // エラーと共に編集画面を呼び出す
@@ -880,12 +961,27 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             }
         }
 
+        // 項目の更新処理
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
         $column->frame_col = $request->frame_col;
+        // 分刻み指定
         if($column->column_type == \FormColumnType::time){
             $column->minutes_increments = $request->minutes_increments;
         }
+        // 数値のみ許容
+        $column->rule_allowed_numeric = (empty($request->rule_allowed_numeric)) ? 0 : $request->rule_allowed_numeric;
+        // 英数値のみ許容
+        $column->rule_allowed_alpha_numeric = (empty($request->rule_allowed_alpha_numeric)) ? 0 : $request->rule_allowed_alpha_numeric;
+        // 入力桁数
+        $column->rule_digits_or_less = $request->rule_digits_or_less;
+        // 入力文字数
+        $column->rule_word_count = $request->rule_word_count;
+        // 最大値
+        $column->rule_max = $request->rule_max;
+        // 最小値
+        $column->rule_min = $request->rule_min;
+
         $column->save();
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 
