@@ -19,7 +19,7 @@ return [
     'after_or_equal'       => ':attributeには:dateかそれ以降の日付を指定してください。',
     'alpha'                => ':attributeには英字のみからなる文字列を指定してください。',
     'alpha_dash'           => ':attributeには英数字・ハイフン・アンダースコアのみからなる文字列を指定してください。',
-    'alpha_num'            => ':attributeには英数字のみからなる文字列を指定してください。',
+    'alpha_num'            => ':attributeには英数字のみを指定してください。',
     'array'                => ':attributeには配列を指定してください。',
     'before'               => ':attributeには:date以前の日付を指定してください。',
     'before_or_equal'      => ':attributeには:dateかそれ以前の日付を指定してください。',

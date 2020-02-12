@@ -30,14 +30,6 @@
         }
     }
 </script>
-<style>
-/* collapseのアニメーション停止 */
-.collapsing {
-    -webkit-transition: none;
-    transition: none;
-    display: none;
-}
-</style>
 
 </div>
 <div class="card-body">
@@ -49,12 +41,11 @@
         <!-- Code form  -->
         @if ($code->id)
         <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">コピーして登録</label>
+            <label class="col-md-3 col-form-label text-md-right">コピーして登録画面へ</label>
             <div class="col-md-9 d-sm-flex align-items-center">
-                <div class="custom-control custom-checkbox">
-                    <input name="is_copy_store" value="1" type="checkbox" class="custom-control-input" id="is_copy_store" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="multiCollapse1 multiCollapse2">
-                    <label class="custom-control-label" for="is_copy_store">する</label>
-                </div>
+                <button type="button" class="btn btn-outline-primary form-horizontal" onclick="submitAction('{{url('/manage/code/regist')}}')">
+                    <i class="fas fa-copy "></i> コピー
+                </button>
             </div>
         </div>
         @endif
@@ -182,11 +173,8 @@
             <div class="offset-sm-3 col-sm-6">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/code')}}'"><i class="fas fa-times"></i> キャンセル</button>
                 @if ($code->id)
-                <button type="button" class="btn btn-primary form-horizontal mr-2 collapse show multi-collapse" id="multiCollapse1" onclick="submitAction('{{url('/manage/code/update')}}/{{$code->id}}')">
+                <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/manage/code/update')}}/{{$code->id}}')">
                     <i class="fas fa-check"></i> 更新
-                </button>
-                <button type="button" class="btn btn-primary form-horizontal collapse multi-collapse" id="multiCollapse2" onclick="submitAction('{{url('/manage/code/store')}}')">
-                    <i class="fas fa-copy "></i> コピーして登録
                 </button>
                 @else
                 <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/manage/code/store')}}')">

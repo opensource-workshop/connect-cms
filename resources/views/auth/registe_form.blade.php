@@ -88,7 +88,7 @@
     {{-- 記事関連の権限 --}}
     <div class="form-group row">
         <label for="password-confirm" class="col-md-4 text-md-right">記事関連の権限</label>
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="custom-control custom-checkbox">
                 @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_article_admin"]) && $users_roles["base"]["role_article_admin"] == 1)
                     <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin" checked="checked">
@@ -129,13 +129,14 @@
                 @endif
                 <label class="custom-control-label" for="role_article">モデレータ（他ユーザの記事も更新）</label>
             </div>
+            <small class="text-muted">※「記事追加」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。</small>
         </div>
     </div>
 
     {{-- 管理権限 --}}
     <div class="form-group row">
         <label for="password-confirm" class="col-md-4 text-md-right">管理権限</label>
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="custom-control custom-checkbox">
                 @if(isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_system"]) && $users_roles["manage"]["admin_system"] == 1)
                     <input name="manage[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system" checked="checked">

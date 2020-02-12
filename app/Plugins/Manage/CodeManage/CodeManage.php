@@ -91,11 +91,13 @@ class CodeManage extends ManagePluginBase
      */
     public function regist($request, $id = null, $errors = array())
     {
+        // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
+        $request->flash();
+
         // ユーザデータの空枠
         $code = new Codes();
 
         // プラグイン一覧の取得
-        // $plugins = $this->getPlugins();
         $plugins = Plugins::orderBy('display_sequence')->get();
         // var_dump($plugins);
 
@@ -167,11 +169,13 @@ class CodeManage extends ManagePluginBase
      */
     public function edit($request, $id = null, $errors = array())
     {
+        // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
+        $request->flash();
+
         // ID で1件取得
         $code = Codes::where('id', $id)->first();
 
         // プラグイン一覧の取得
-        // $plugins = $this->getPlugins();
         $plugins = Plugins::orderBy('display_sequence')->get();
         // var_dump($plugins);
 
@@ -210,7 +214,7 @@ class CodeManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->regist($request, $id, $validator->errors()) );
+            return ( $this->edit($request, $id, $validator->errors()) );
         }
 
         // 更新
