@@ -43,7 +43,7 @@ class DefaultController extends ConnectController
     public function __invoke(Request $request)
     {
         // セッション処理
-        $this->setSession();
+        $this->setAppLocale();
 
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         $this->checkPageForbidden();
@@ -285,7 +285,7 @@ class DefaultController extends ConnectController
     public function invokePost(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
         // セッション処理
-        $this->setSession();
+        $this->setAppLocale();
 
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         $this->checkPageForbidden();
@@ -418,7 +418,7 @@ class DefaultController extends ConnectController
     public function invokePostRedirect(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
         // セッション処理
-        $this->setSession();
+        $this->setAppLocale();
 
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         $http_status_code = $this->checkPageForbidden();

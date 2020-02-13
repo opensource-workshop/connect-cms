@@ -291,22 +291,23 @@ class ConnectController extends Controller
     }
 
     /**
-     *  言語をセッションに保持
+     *  アプリのロケールを変更
      *  コンストラクタではセッションの保持ができなかったので、各ルートから呼び出し
      */
-    protected function setSession()
+    protected function setAppLocale()
     {
-        // 多言語設定されていたら、セッションに言語定数を設定
+        // 多言語設定されていたら、ロケールに言語定数を設定
         if ($this->isLanguageMultiOn() && $this->page) {
             $view_language = $this->getPageLanguage($this->page, $this->getLanguages());
             if (empty($view_language)) {
                 $view_language = 'ja';
             }
-            //$request->session()->put('applocale', $view_language);
             if (array_key_exists($view_language, Config::get('languages'))) {
+                // URLから取得した言語定数が言語定義にあれば、アプリのロケールをURL値で上書き
                 App::setLocale($view_language);
             }
             else {
+                // なければデフォルト値でロケールを上書き
                 App::setLocale(Config::get('app.fallback_locale'));
             }
         }
