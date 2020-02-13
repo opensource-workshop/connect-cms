@@ -100,11 +100,11 @@
                 <label class="custom-control-label" for="scope_all">全て</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input" @if ($blog->scope == 'year') checked @endif>
+                <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input" @if (old('scope', $blog->scope) == 'year') checked @endif>
                 <label class="custom-control-label" for="scope_year">年</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input" @if ($blog->scope == 'fiscal') checked @endif>
+                <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input" @if (old('scope', $blog->scope) == 'fiscal') checked @endif>
                 <label class="custom-control-label" for="scope_fiscal">年度</label>
             </div>
         </div>
