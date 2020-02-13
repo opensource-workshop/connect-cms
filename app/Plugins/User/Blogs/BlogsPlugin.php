@@ -813,20 +813,21 @@ class BlogsPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $blogs_id = null)
     {
+
+        // デフォルトでチェック
+        $validator_values['blog_name'] = ['required'];
+        $validator_values['view_count'] = ['required', 'numeric'];
+        $validator_values['rss_count'] = ['nullable', 'numeric'];
+        $validator_values['scope_value'] = ['nullable', 'digits:4'];
+        
+        $validator_attributes['blog_name'] = 'ブログ名';
+        $validator_attributes['view_count'] = '表示件数';
+        $validator_attributes['rss_count'] = 'RSS件数';
+        $validator_attributes['scope_value'] = '指定年';
+        
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'blog_name'   => ['required'],
-            'view_count'  => ['required'],
-            'view_count'  => ['numeric'],
-            'rss_count'   => ['nullable', 'numeric'],
-            'scope_value' => ['nullable', 'numeric'],
-        ]);
-        $validator->setAttributeNames([
-            'blog_name'   => 'ブログ名',
-            'view_count'  => '表示件数',
-            'rss_count'   => 'RSS件数',
-            'scope_value' => '指定年',
-        ]);
+        $validator = Validator::make($request->all(), $validator_values);
+        $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
