@@ -103,6 +103,7 @@ class FormsPlugin extends UserPluginBase
     /**
      *  カラムデータ取得
      *  ※まとめ行の設定が不正な場合はリテラル「frame_setting_error」を返す
+     *  ※フォーム設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合はリテラル「mail_setting_error」を返す
      */
     private function getFormsColumns($form)
     {
@@ -110,6 +111,9 @@ class FormsPlugin extends UserPluginBase
         $form_columns = [];
         if ( !empty($form) ) {
             $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
+            if($form->user_mail_send_flag == '1' && empty($forms_columns->where('column_type', \FormColumnType::mail)->first())){
+                return 'mail_setting_error';
+            }
         }
 
         // カラムデータがない場合
@@ -228,11 +232,19 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $setting_error_messages[] = 'フレームの設定画面から、項目データ（まとめ行のまとめ数）を設定してください。';
             }
 
-            // フォームのカラムデータ ※ まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
+            /**
+             * フォームのカラムデータを取得
+             * ※まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
+             * ※フォーム設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合はリテラル「mail_setting_error」が返る
+             */
             $forms_columns = $this->getFormsColumns($form);
+
             if($forms_columns == 'frame_setting_error'){
                 // 項目データはあるが、まとめ行の設定（まとめ行の位置とまとめ数の設定）が不正な場合
                 $setting_error_messages[] = 'まとめ行の設定が不正です。フレームの設定画面からまとめ行の位置、又は、まとめ数の設定を見直してください。';
+            }elseif($forms_columns == 'mail_setting_error'){
+                // フォーム設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合
+                $setting_error_messages[] = 'メールアドレス型の項目を設定してください。（フォームの設定「登録者にメール送信する」と関連）';
             }elseif(!$forms_columns){
                 // 項目データがない場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
