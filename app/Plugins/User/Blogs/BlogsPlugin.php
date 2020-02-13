@@ -819,6 +819,9 @@ class BlogsPlugin extends UserPluginBase
         $validator_values['view_count'] = ['required', 'numeric'];
         $validator_values['rss_count'] = ['required', 'numeric'];
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
+        if($request->scope == 'year' || $request->scope == 'fiscal'){
+            $validator_values['scope_value'][] = ['required'];
+        }
         
         $validator_attributes['blog_name'] = 'ブログ名';
         $validator_attributes['view_count'] = '表示件数';
