@@ -116,7 +116,8 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="scope_value" value="{{old('scope_value', $blog->scope_value)}}" class="form-control col-sm-3" v-model="v_scope_value">
                 @if ($errors && $errors->has('scope_value')) <div class="text-danger">{{$errors->first('scope_value')}}</div> @endif
-                <small class="text-muted">※ 表示範囲：@{{ showTargetYmd }}</small><br>
+                <small class="text-muted">※ 表示条件と指定年の組み合わせで投稿日時を参照し、ブログ一覧に表示します。</small><br>
+                <small class="text-muted">※ 表示範囲：@{{ showTargetYmd }}</small>
             </div>
         </div>
 
