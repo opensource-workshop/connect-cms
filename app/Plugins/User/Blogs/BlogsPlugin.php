@@ -817,7 +817,7 @@ class BlogsPlugin extends UserPluginBase
         // デフォルトでチェック
         $validator_values['blog_name'] = ['required'];
         $validator_values['view_count'] = ['required', 'numeric'];
-        $validator_values['rss_count'] = ['nullable', 'numeric'];
+        $validator_values['rss_count'] = ['required', 'numeric'];
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
         
         $validator_attributes['blog_name'] = 'ブログ名';

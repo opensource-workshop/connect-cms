@@ -85,7 +85,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">RSS件数</label>
+        <label class="{{$frame->getSettingLabelClass()}}">RSS件数 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3">
             @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
