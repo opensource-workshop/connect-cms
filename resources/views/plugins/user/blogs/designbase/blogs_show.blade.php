@@ -10,7 +10,7 @@
 @section("plugin_contents_$frame->id")
 {{-- 投稿日時 --}}
 <p>
-{{$post->posted_at->format('Y/n/j')}}
+{{$post->posted_at->format('Y/m/d')}}
 </p>
 
 {{-- 重要 --}}
