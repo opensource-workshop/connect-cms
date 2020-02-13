@@ -132,7 +132,7 @@ class WhatsnewsPlugin extends UserPluginBase
         list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
 
         // 件数を返却
-        return count($whatsnews);
+        return $whatsnews ? count($whatsnews) : 0;
     }
 
     /**
