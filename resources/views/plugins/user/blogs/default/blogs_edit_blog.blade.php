@@ -112,7 +112,7 @@
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">指定年</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
+        <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="scope_value" value="{{old('scope_value', $blog->scope_value)}}" class="form-control col-sm-3">
             @if ($errors && $errors->has('scope_value')) <div class="text-danger">{{$errors->first('scope_value')}}</div> @endif
         </div>
