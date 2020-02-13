@@ -212,16 +212,34 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
-        // フォームのカラムデータ ※ まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
-        $forms_columns = $this->getFormsColumns($form);
 
-        // カラムの選択肢用データ
+        $setting_error_messages = null;
+        $forms_columns = null;
         $forms_columns_id_select = null;
-        $forms_columns_errors = null;
         if ($form) {
             $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
-            // データ型が「まとめ行」、且つ、まとめ数の設定がないデータを取得
-            $forms_columns_errors = FormsColumns::query()->where('forms_id', $form->id)->where('column_type', \FormColumnType::group)->whereNull('frame_col')->get();
+            if(FormsColumns::query()
+                ->where('forms_id', $form->id)
+                ->where('column_type', \FormColumnType::group)
+                ->whereNull('frame_col')
+                ->get()
+                ->count() > 0){
+                // データ型が「まとめ行」で、まとめ数の設定がないデータが存在する場合
+                $setting_error_messages[] = 'フレームの設定画面から、項目データ（まとめ行のまとめ数）を設定してください。';
+            }
+
+            // フォームのカラムデータ ※ まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
+            $forms_columns = $this->getFormsColumns($form);
+            if($forms_columns == 'frame_setting_error'){
+                // 項目データはあるが、まとめ行の設定（まとめ行の位置とまとめ数の設定）が不正な場合
+                $setting_error_messages[] = 'まとめ行の設定が不正です。フレームの設定画面からまとめ行の位置、又は、まとめ数の設定を見直してください。';
+            }elseif(!$forms_columns){
+                // 項目データがない場合
+                $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
+            }
+        }else{
+            // フレームに紐づくフォーム親データがない場合
+            $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
         }
 
         // 表示テンプレートを呼び出す。
@@ -232,8 +250,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'form' => $form,
             'forms_columns' => $forms_columns,
             'forms_columns_id_select' => $forms_columns_id_select,
-            'forms_columns_errors' => $forms_columns_errors,
-            'errors'      => $errors,
+            'errors' => $errors,
+            'setting_error_messages' => $setting_error_messages,
         ])->withInput($request->all);
     }
 

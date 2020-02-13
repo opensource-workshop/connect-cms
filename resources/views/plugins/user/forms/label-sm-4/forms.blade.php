@@ -8,7 +8,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-@if ($form && $forms_columns != 'frame_setting_error' && $forms_columns_errors->count() == 0)
+@if (empty($setting_error_messages))
 
     <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
         {{ csrf_field() }}
@@ -71,24 +71,12 @@
     </form>
 
 @else
-    {{-- フレームに紐づくコンテンツがない場合、データ登録を促すメッセージを表示 --}}
+    {{-- フレームに紐づくコンテンツがない場合等、表示に支障がある場合は、データ登録を促す等のメッセージを表示 --}}
     <div class="card border-danger">
         <div class="card-body">
-            {{-- フレームに紐づく親データがない場合 --}}
-            @if (!$form)
-                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するフォームを選択するか、作成してください。</p>
-            @endif
-            {{-- 項目データがない場合 --}}
-            @if (!$forms_columns)
-                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、項目データを作成してください。</p>
-            {{-- 項目データはあるが、まとめ行の設定（まとめ行の位置とまとめ数の設定）が不正な場合 --}}
-            @elseif($forms_columns == 'frame_setting_error')
-                <p class="text-center cc_margin_bottom_0">まとめ行の設定が不正です。フレームの設定画面からまとめ行の位置、又は、まとめ数の設定を見直してください。</p>
-            @endif
-            {{-- データ型が「まとめ行」で、まとめ数の設定がないデータが存在する場合 --}}
-            @if (isset($forms_columns_errors) && $forms_columns_errors->count() > 0)
-                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、項目データ（まとめ行のまとめ数）を設定してください。</p>
-            @endif
+            @foreach ($setting_error_messages as $setting_error_message)
+                <p class="text-center cc_margin_bottom_0">{{ $setting_error_message }}</p>
+            @endforeach
         </div>
     </div>
 @endif
