@@ -553,13 +553,22 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function saveBuckets($request, $page_id, $frame_id, $forms_id = null)
     {
+
+        // デフォルトで必須
+        $validator_values['forms_name'] = ['required'];
+        $validator_attributes['forms_name'] = 'フォーム名';
+
+        // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
+        if($request->mail_send_flag){
+            $validator_values['mail_send_address'] = [
+                'required'
+            ];
+            $validator_attributes['mail_send_address'] = '送信するメールアドレス';
+        }
+
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'forms_name'  => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'forms_name'  => 'フォーム名',
-        ]);
+        $validator = Validator::make($request->all(), $validator_values);
+        $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;

@@ -69,6 +69,7 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
             <input type="text" name="mail_send_address" value="{{old('mail_send_address', $form->mail_send_address)}}" class="form-control">
+            @if ($errors && $errors->has('mail_send_address')) <div class="text-danger">{{$errors->first('mail_send_address')}}</div> @endif
         </div>
     </div>
 
