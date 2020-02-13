@@ -109,7 +109,7 @@
                         ・予約値（更新時）
                         ・初期表示値（新規登録時）
                     --}}
-                    <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->hour : Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime">
+                    <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime">
                     <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                     </div>
@@ -121,7 +121,7 @@
                         ・予約値（更新時）
                         ・初期表示値（新規登録時）
                     --}}
-                    <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->hour : Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime">
+                    <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime">
                     <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                     </div>
