@@ -38,7 +38,7 @@
     @foreach($blogs_posts as $post)
         {{-- 投稿日時 --}}
         <dt>
-            {{$post->posted_at->format('Y/n/d')}}
+            {{$post->posted_at->format('Y/n/j')}}
             {{-- 重要記事 --}}
             @if($post->important == 1)
                 <span class="badge badge-danger">重要</span>
