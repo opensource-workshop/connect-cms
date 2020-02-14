@@ -57,7 +57,7 @@
         </tr>
         @foreach($edit_days as $key => $edit_day)
         <tr class="border-bottom">
-            <td class="px-1"><label class="my-1">{{$key}}日({{$week_names[$key]}})</label></td>
+            <td class="px-1" nowrap><label class="my-1">{{$key}}日({{$week_names[$key]}})</label></td>
                 @foreach($patterns as $pattern)
             <td class="px-1" nowrap>
                 <label class="my-1">
