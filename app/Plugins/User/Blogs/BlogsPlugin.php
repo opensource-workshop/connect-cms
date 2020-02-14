@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
+use Session;
 
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
@@ -16,6 +17,7 @@ use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsCategories;
+use App\Models\User\Blogs\BlogsFrames;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Blogs\BlogsPostsTags;
 
@@ -48,8 +50,8 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles'];
+        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'settingBlogFrame'];
+        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveBlogFrame'];
         return $functions;
     }
 
@@ -106,8 +108,9 @@ class BlogsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.rss', 'blogs.rss_count', 'blogs.scope', 'blogs.scope_value')
+                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.rss', 'blogs.rss_count', 'blogs_frames.scope', 'blogs_frames.scope_value')
                  ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
+                 ->leftJoin('blogs_frames', 'blogs_frames.frames_id', '=', 'frames.id')
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
@@ -813,21 +816,15 @@ class BlogsPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $blogs_id = null)
     {
-
         // デフォルトでチェック
         $validator_values['blog_name'] = ['required'];
         $validator_values['view_count'] = ['required', 'numeric'];
         $validator_values['rss_count'] = ['required', 'numeric'];
-        $validator_values['scope_value'] = ['nullable', 'digits:4'];
-        if($request->scope == 'year' || $request->scope == 'fiscal'){
-            $validator_values['scope_value'][] = ['required'];
-        }
-        
+
         $validator_attributes['blog_name'] = 'ブログ名';
         $validator_attributes['view_count'] = '表示件数';
         $validator_attributes['rss_count'] = 'RSS件数';
-        $validator_attributes['scope_value'] = '指定年';
-        
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_values);
         $validator->setAttributeNames($validator_attributes);
@@ -889,8 +886,6 @@ class BlogsPlugin extends UserPluginBase
         $blogs->view_count    = $request->view_count;
         $blogs->rss           = $request->rss;
         $blogs->rss_count     = $request->rss_count;
-        $blogs->scope         = $request->scope;
-        $blogs->scope_value   = $request->scope_value;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
@@ -1235,5 +1230,70 @@ echo <<<EOD
 EOD;
 
 exit;
+    }
+
+    /**
+     *  Blogフレーム設定表示画面
+     */
+    public function settingBlogFrame($request, $page_id, $frame_id)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // Blog設定取得
+        $blog_frame = $this->getBlogFrame($frame_id);
+        if (empty($blog_frame)) {
+            return;
+        }
+
+        // Blogフレーム設定
+        $blog_frame_setting = BlogsFrames::where('frames_id', $frame_id)->first();
+        if (empty($blog_frame_setting)) {
+            $blog_frame_setting = new BlogsFrames();
+        }
+
+        // Blogフレーム設定画面を呼び出す。
+        return $this->view(
+            'blogs_setting_frame', [
+            'blog_frame'         => $blog_frame,
+            'blog_frame_setting' => $blog_frame_setting,
+        ]);
+    }
+
+    /**
+     *  Blogフレーム設定保存処理
+     */
+    public function saveBlogFrame($request, $page_id, $frame_id)
+    {
+        // Blog設定取得
+        $blog_frame = $this->getBlogFrame($frame_id);
+
+        // 項目のエラーチェック
+        $validator_values['scope_value'] = ['nullable', 'digits:4'];
+        if($request->scope == 'year' || $request->scope == 'fiscal'){
+            $validator_values['scope_value'][] = ['required'];
+        }
+        $validator_attributes['scope_value'] = '指定年';
+
+        $validator = Validator::make($request->all(), $validator_values);
+        $validator->setAttributeNames($validator_attributes);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            Session::flash('flash_errors', $validator->errors());
+            return $this->settingBlogFrame($request, $page_id, $frame_id);
+        }
+
+        // プラグインのフレームやBlogのID が設定されていない場合は空振りさせる。
+        if (empty($blog_frame) || empty($blog_frame->blogs_id)) {
+            return;
+        }
+
+        BlogsFrames::updateOrCreate(
+            ['frames_id' => $frame_id],
+            ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value ],
+        );
+
+        return $this->settingBlogFrame($request, $page_id, $frame_id);
     }
 }
