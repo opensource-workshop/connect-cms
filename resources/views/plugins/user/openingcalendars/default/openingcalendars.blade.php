@@ -161,7 +161,8 @@
                         class="bg-secondary p-0"
                     @else
                         @if(isset($view_days[$date->format("Y-m")]) &&
-                            isset($view_days[$date->format("Y-m")][$date->format("d")]))
+                            isset($view_days[$date->format("Y-m")][$date->format("d")]) &&
+                            isset($patterns[$view_days[$date->format("Y-m")][$date->format("d")]]))
                            class="p-0" style="background-color:{{$patterns[$view_days[$date->format("Y-m")][$date->format("d")]]}}"
                         @endif
                     @endif

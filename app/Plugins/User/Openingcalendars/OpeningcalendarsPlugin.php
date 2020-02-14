@@ -202,6 +202,10 @@ class OpeningcalendarsPlugin extends UserPluginBase
                                                    ->where('opening_date', '<=', $view_after_ym_t)
                                                    ->orderBy('opening_date', 'asc')
                                                    ->get();
+
+        // 使用中のパターンを消した場合などの初期値用のパターン
+        $default_pattern = new OpeningcalendarsPatterns();
+
         // 配列に詰めなおし[年-月][日][プラン] ＆ 月の配列も生成[年-月]
         $view_days = array();
         $view_months = array();
@@ -209,7 +213,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
         foreach($opening_date_ym_rec as $opening_date_ym) {
             $view_days[substr($opening_date_ym->opening_date, 0, 7)][substr($opening_date_ym->opening_date, 8, 2)] = $opening_date_ym->openingcalendars_patterns_id;
             $view_months[substr($opening_date_ym->opening_date, 0, 7)] = array("data-prev" => null, "data-next" => null);
-            $view_months_patterns[substr($opening_date_ym->opening_date, 0, 7)][$opening_date_ym->openingcalendars_patterns_id] = $patterns_array[$opening_date_ym->openingcalendars_patterns_id];
+
+            // パターンがない場合の対応（消したなどの場合は、エラー回避のためにデフォルトのオブジェクトをセットしておく）
+            if (isset($patterns_array[$opening_date_ym->openingcalendars_patterns_id])) {
+                $view_months_patterns[substr($opening_date_ym->opening_date, 0, 7)][$opening_date_ym->openingcalendars_patterns_id] = $patterns_array[$opening_date_ym->openingcalendars_patterns_id];
+            }
+            else {
+                $view_months_patterns[substr($opening_date_ym->opening_date, 0, 7)][$opening_date_ym->openingcalendars_patterns_id] = $default_pattern;
+            }
         }
 
         // 月ごとのパターンをソート
