@@ -299,7 +299,7 @@
                 @if ($column->column_type == FormColumnType::date)
                     {{-- 指定日以降（指定日含む）の入力を許容 --}}
                     <div class="form-group row">
-                        <label class="{{$frame->getSettingLabelClass()}}">～日以降を許容</label>
+                        <label class="{{$frame->getSettingLabelClass()}}">指定日数以降を許容</label>
                         <div class="{{$frame->getSettingInputClass()}}">
                             <input type="text" name="rule_date_after_equal" value="{{old('rule_date_after_equal', $column->rule_date_after_equal)}}" class="form-control">
                             <small class="text-muted">※ 整数（･･･,-1,0,1,･･･）で入力します。</small><br>
