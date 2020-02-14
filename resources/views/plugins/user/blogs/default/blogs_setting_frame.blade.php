@@ -20,6 +20,12 @@
         Blog の設定を行ってからBlog フレームの設定を行います。
     </div>
 @else
+
+    <div class="alert alert-info">
+        <i class="fas fa-exclamation-circle"></i>
+        フレーム毎の表示条件が設定できます。
+    </div>
+
     <form action="/plugin/blogs/saveBlogFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
         {{ csrf_field() }}
 
