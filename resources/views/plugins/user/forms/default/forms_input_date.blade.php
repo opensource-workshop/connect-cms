@@ -11,6 +11,7 @@
      */
      $(function () {
         $('#{{ $form_obj->id }}').datetimepicker({
+            dayViewHeaderFormat: 'YYYY年 M月',
             format: 'YYYY/MM/DD',
             timepicker:false
         });
