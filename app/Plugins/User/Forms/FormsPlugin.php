@@ -326,6 +326,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_column->rule_min) {
             $validator_rule[] = 'min:' . $forms_column->rule_min;
         }
+        // ～日以降を許容
+        if ($forms_column->rule_date_after_equal) {
+            $comparison_date = \Carbon::now()->addDay($forms_column->rule_date_after_equal)->format('Y/m/d');
+            $validator_rule[] = 'after_or_equal:' . $comparison_date;
+        }
         // バリデータールールをセット
         if($validator_rule){
             $validator_array['column']['forms_columns_value.' . $forms_column->id] = $validator_rule;
@@ -985,6 +990,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             ];
             $validator_attributes['rule_word_count'] = '入力文字数';
         }
+        // ～日以降許容を指定時、入力値が数値であるかチェック
+        if($request->rule_date_after_equal){
+            $validator_values['rule_date_after_equal'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_date_after_equal'] = '～日以降を許容';
+        }
 
         // エラーチェック
         if($validator_values){
@@ -1020,6 +1032,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->rule_max = $request->rule_max;
         // 最小値
         $column->rule_min = $request->rule_min;
+        // ～日以降を許容
+        $column->rule_date_after_equal = $request->rule_date_after_equal;
 
         $column->save();
         $message = '項目【 '. $column->column_name .' 】を更新しました。';

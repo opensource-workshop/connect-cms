@@ -231,66 +231,85 @@
     <br>
     @endif
 
-    @if ($column->column_type == FormColumnType::text || $column->column_type == FormColumnType::textarea)
+    @if ($column->column_type == FormColumnType::text || $column->column_type == FormColumnType::textarea || $column->column_type == FormColumnType::date)
         {{-- チェック処理の設定 --}}
         <div class="card">
             <h5 class="card-header">チェック処理の設定</h5>
             <div class="card-body">
-                {{-- 数値のみ許容 --}}
-                <div class="form-group row">
-                    <label class="{{$frame->getSettingLabelClass()}}">入力制御</label>
-                    <div class="{{$frame->getSettingInputClass(true)}}">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" name="rule_allowed_numeric" id="rule_allowed_numeric" value="1" class="custom-control-input" @if(old('rule_allowed_numeric', $column->rule_allowed_numeric)) checked @endif>
-                            <label class="custom-control-label" for="rule_allowed_numeric">半角数値のみ許容</label>
+
+                {{-- 1行文字列型／複数行文字列型のチェック群 --}}
+                @if ($column->column_type == FormColumnType::text || $column->column_type == FormColumnType::textarea)
+                    {{-- 数値のみ許容 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">入力制御</label>
+                        <div class="{{$frame->getSettingInputClass(true)}}">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="rule_allowed_numeric" id="rule_allowed_numeric" value="1" class="custom-control-input" @if(old('rule_allowed_numeric', $column->rule_allowed_numeric)) checked @endif>
+                                <label class="custom-control-label" for="rule_allowed_numeric">半角数値のみ許容</label>
+                            </div>
                         </div>
                     </div>
-                </div>
-                {{-- 英数値のみ許容 --}}
-                <div class="form-group row">
-                    <label class="{{$frame->getSettingLabelClass()}}"></label>
-                    <div class="{{$frame->getSettingInputClass(true)}}">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" name="rule_allowed_alpha_numeric" id="rule_allowed_alpha_numeric" value="1" class="custom-control-input" @if(old('rule_allowed_alpha_numeric', $column->rule_allowed_alpha_numeric)) checked @endif>
-                            <label class="custom-control-label" for="rule_allowed_alpha_numeric">半角英数値のみ許容</label>
+                    {{-- 英数値のみ許容 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}"></label>
+                        <div class="{{$frame->getSettingInputClass(true)}}">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="rule_allowed_alpha_numeric" id="rule_allowed_alpha_numeric" value="1" class="custom-control-input" @if(old('rule_allowed_alpha_numeric', $column->rule_allowed_alpha_numeric)) checked @endif>
+                                <label class="custom-control-label" for="rule_allowed_alpha_numeric">半角英数値のみ許容</label>
+                            </div>
                         </div>
                     </div>
-                </div>
-                {{-- 指定桁数（数値）以下を許容 --}}
-                <div class="form-group row">
-                    <label class="{{$frame->getSettingLabelClass()}}">入力桁数</label>
-                    <div class="{{$frame->getSettingInputClass()}}">
-                        <input type="text" name="rule_digits_or_less" value="{{old('rule_digits_or_less', $column->rule_digits_or_less)}}" class="form-control">
-                        <small class="text-muted">※ 入力桁数の指定時は「半角数値のみ許容」も適用されます。</small><br>
-                        @if ($errors && $errors->has('rule_digits_or_less')) <div class="text-danger">{{$errors->first('rule_digits_or_less')}}</div> @endif
+                    {{-- 指定桁数（数値）以下を許容 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">入力桁数</label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <input type="text" name="rule_digits_or_less" value="{{old('rule_digits_or_less', $column->rule_digits_or_less)}}" class="form-control">
+                            <small class="text-muted">※ 入力桁数の指定時は「半角数値のみ許容」も適用されます。</small><br>
+                            @if ($errors && $errors->has('rule_digits_or_less')) <div class="text-danger">{{$errors->first('rule_digits_or_less')}}</div> @endif
+                        </div>
                     </div>
-                </div>
-                {{-- 指定文字数以下を許容 --}}
-                <div class="form-group row">
-                    <label class="{{$frame->getSettingLabelClass()}}">入力最大文字数</label>
-                    <div class="{{$frame->getSettingInputClass()}}">
-                        <input type="text" name="rule_word_count" value="{{old('rule_word_count', $column->rule_word_count)}}" class="form-control">
-                        <small class="text-muted">※ 全角は2文字、半角は1文字として換算します。</small><br>
-                        @if ($errors && $errors->has('rule_word_count')) <div class="text-danger">{{$errors->first('rule_word_count')}}</div> @endif
+                    {{-- 指定文字数以下を許容 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">入力最大文字数</label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <input type="text" name="rule_word_count" value="{{old('rule_word_count', $column->rule_word_count)}}" class="form-control">
+                            <small class="text-muted">※ 全角は2文字、半角は1文字として換算します。</small><br>
+                            @if ($errors && $errors->has('rule_word_count')) <div class="text-danger">{{$errors->first('rule_word_count')}}</div> @endif
+                        </div>
                     </div>
-                </div>
-                {{-- 最大値設定 --}}
-                <div class="form-group row">
-                    <label class="{{$frame->getSettingLabelClass()}}">最大値</label>
-                    <div class="{{$frame->getSettingInputClass()}}">
-                        <input type="text" name="rule_max" value="{{old('rule_max', $column->rule_max)}}" class="form-control">
-                        @if ($errors && $errors->has('rule_max')) <div class="text-danger">{{$errors->first('rule_max')}}</div> @endif
+                    {{-- 最大値設定 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">最大値</label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <input type="text" name="rule_max" value="{{old('rule_max', $column->rule_max)}}" class="form-control">
+                            @if ($errors && $errors->has('rule_max')) <div class="text-danger">{{$errors->first('rule_max')}}</div> @endif
+                        </div>
                     </div>
-                </div>
-                {{-- 最小値設定 --}}
-                <div class="form-group row">
-                    <label class="{{$frame->getSettingLabelClass()}}">最小値</label>
-                    <div class="{{$frame->getSettingInputClass()}}">
-                        <input type="text" name="rule_min" value="{{old('rule_min', $column->rule_min)}}" class="form-control">
-                        @if ($errors && $errors->has('rule_min')) <div class="text-danger">{{$errors->first('rule_min')}}</div> @endif
+                    {{-- 最小値設定 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">最小値</label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <input type="text" name="rule_min" value="{{old('rule_min', $column->rule_min)}}" class="form-control">
+                            @if ($errors && $errors->has('rule_min')) <div class="text-danger">{{$errors->first('rule_min')}}</div> @endif
+                        </div>
                     </div>
-                </div>
-        
+                @endif
+
+                {{-- 日付型のチェック群 --}}
+                @if ($column->column_type == FormColumnType::date)
+                    {{-- 指定日以降（指定日含む）の入力を許容 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">～日以降を許容</label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <input type="text" name="rule_date_after_equal" value="{{old('rule_date_after_equal', $column->rule_date_after_equal)}}" class="form-control">
+                            <small class="text-muted">※ 整数（･･･,-1,0,1,･･･）で入力します。</small><br>
+                            <small class="text-muted">※ 当日を含みます。</small><br>
+                            <small class="text-muted">&nbsp;&nbsp;&nbsp;&nbsp;(例)&nbsp;設定値「2」、フォーム入力日「2020/2/16」の場合、「2020/2/18」以降の日付を入力できます。</small>
+                            @if ($errors && $errors->has('rule_date_after_equal')) <div class="text-danger">{{$errors->first('rule_date_after_equal')}}</div> @endif
+                        </div>
+                    </div>
+                @endif
+
                 {{-- ボタンエリア --}}
                 <div class="form-group text-center">
                     <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
