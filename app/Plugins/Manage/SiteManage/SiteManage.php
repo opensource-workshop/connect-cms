@@ -4,9 +4,11 @@ namespace App\Plugins\Manage\SiteManage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
+use File;
 
 use App\Models\Core\Configs;
 use App\Models\Common\Categories;
@@ -66,13 +68,44 @@ class SiteManage extends ManagePluginBase
             $configs_array[$config->name] = $config->value;
         }
 
+        // 設定済みのテーマ
+        $base_theme_obj = $configs->where('name', 'base_theme')->first();
+        $current_base_theme = '';
+        if (!empty($base_theme_obj)) {
+            $current_base_theme = $base_theme_obj->value;
+        }
+
+        // テーマディレクトリ
+        $dirs = File::directories(public_path() . '/themes/');
+        //print_r($dirs);
+
+        $themes = array();
+        foreach($dirs as $dir) {
+            if (File::exists($dir."/themes.ini")) {
+                // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
+                $theme_inis = parse_ini_file($dir."/themes.ini");
+                $theme_name = $theme_inis['theme_name'];
+                if (empty($theme_name)) {
+                    $themes[] = array('name' => basename($dir), 'dir' => basename($dir));
+                }
+                else {
+                    $themes[] = array('name' => $theme_name, 'dir' => basename($dir));
+                }
+            }
+            else {
+                $themes[] = array('name' => basename($dir), 'dir' => basename($dir));
+            }
+        }
+
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.site.site',[
-            "function"    => __FUNCTION__,
-            "plugin_name" => "site",
-            "errors"      => $errors,
-            "configs"     => $configs_array,
+            "function"           => __FUNCTION__,
+            "plugin_name"        => "site",
+            "errors"             => $errors,
+            "configs"            => $configs_array,
+            "current_base_theme" => $current_base_theme,
+            "themes"             => $themes,
         ]);
     }
 
