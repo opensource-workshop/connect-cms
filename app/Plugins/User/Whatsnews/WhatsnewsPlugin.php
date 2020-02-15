@@ -140,6 +140,7 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getWhatsnews($whatsnews_frame, $method = null)
     {
+//DB::enableQueryLog();
         // 新着情報がまだできていない場合
         if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
             return array(null, null, null);
@@ -278,6 +279,9 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 取得
         $whatsnews = $whatsnews_sql->get();
+//Log::debug(DB::getQueryLog());
+
+//Log::debug($whatsnews);
 
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
         $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
