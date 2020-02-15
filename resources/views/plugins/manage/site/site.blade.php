@@ -33,9 +33,14 @@
         {{-- テーマ --}}
         <div class="form-group">
             <label class="col-form-label">テーマ</label>
-            <input type="text" name="base_theme" value="{{$configs["base_theme"]}}" class="form-control">
-            <small class="form-text text-muted">画面の基本のテーマ（各ページで上書き可能）</small>
+            <select name="base_theme" class="form-control">
+                <option value="">テーマなし</option>
+                @foreach($themes as $theme)
+                    <option value="{{$theme['dir']}}"@if($theme['dir'] == $current_base_theme) selected @endif>{{$theme['name']}}</option>
+                @endforeach
+            </select>
         </div>
+
 
         {{-- 背景色 --}}
         <div class="form-group">
