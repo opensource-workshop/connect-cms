@@ -330,6 +330,7 @@ class BlogsPlugin extends UserPluginBase
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
                       ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                       ->where('status', 0)
+                      ->where('posted_at', '<=', Carbon::now())
                       ->where('disable_whatsnews', 0)
                       ->whereNull('blogs_posts.deleted_at');
 
