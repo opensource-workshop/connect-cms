@@ -328,12 +328,45 @@ class BlogsPlugin extends UserPluginBase
                               )
                       ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
+/*
+                      ->leftJoin('blogs_frames', function ($join) {
+                          $join->on('blogs_frames.blogs_id', '=', 'blogs.id')
+                          ->where('blogs_frames.frames_id', '=', 'frames.id');
+                      })
+*/
                       ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                       ->where('status', 0)
                       ->where('posted_at', '<=', Carbon::now())
                       ->where('disable_whatsnews', 0)
+/*
+                      ->whereRaw('CASE
+                                  WHEN blogs_frames.scope IS NULL
+                                      THEN blogs_frames.scope IS NULL
+                                  WHEN blogs_frames.scope = "year" AND blogs_frames.scope_value IS NOT NULL
+                                      THEN posted_at >= CONCAT(blogs_frames.scope_value, "-01-01") AND posted_at <= CONCAT(blogs_frames.scope_value, "-12-31 23:59:59")
+                                  WHEN blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL
+                                      THEN posted_at >= CONCAT(blogs_frames.scope_value, "-04-01") AND posted_at <= CONCAT((blogs_frames.scope_value + 1), "-03-31 23:59:59")
+                                  END')
+*/
                       ->whereNull('blogs_posts.deleted_at');
-
+/*
+SELECT blogs_frames.scope, blogs_frames.scope_value, blogs_posts.*
+FROM blogs_posts
+	INNER JOIN blogs ON blogs.id = blogs_posts.blogs_id
+	INNER JOIN frames ON frames.bucket_id = blogs.bucket_id
+	LEFT JOIN blogs_frames ON blogs_frames.frames_id AND blogs_frames.blogs_id = blogs.id
+WHERE status = 0
+	AND disable_whatsnews = 0
+	AND
+		CASE
+		WHEN blogs_frames.scope IS NULL
+			THEN blogs_frames.scope IS NULL
+		WHEN blogs_frames.scope = 'year' AND blogs_frames.scope_value IS NOT NULL
+			THEN posted_at >= CONCAT(blogs_frames.scope_value, '-01-01') AND posted_at <= CONCAT(blogs_frames.scope_value, '-12-31 23:59:59')
+		WHEN blogs_frames.scope = 'fiscal' AND blogs_frames.scope_value IS NOT NULL
+			THEN posted_at >= CONCAT(blogs_frames.scope_value, '-04-01') AND posted_at <= CONCAT((blogs_frames.scope_value + 1), '-03-31 23:59:59')
+		END
+*/
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
 
