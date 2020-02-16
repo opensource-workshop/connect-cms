@@ -86,7 +86,8 @@ class ManagePluginBase extends PluginBase
                     $sub_themes = array();  // ディレクトリ管理のサブテーマ配列
 
                     // テーマの第2階層ディレクトリ
-                    $group_dirs = File::directories(public_path() . '/' . '/themes/' . basename($dir));
+                    $group_dirs = File::directories(public_path() . '/themes/' . basename($dir));
+
                     foreach($group_dirs as $group_dir) {
 
                         if (File::exists($group_dir."/themes.ini")) {
