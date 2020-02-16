@@ -80,13 +80,14 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <select class="form-control" name="frame_design" id="frame_design">
                     <option value="">Choose...</option>
-                    <option value="none"    @if($frame->frame_design=="none")    selected @endif>None</option>
-                    <option value="default" @if($frame->frame_design=="default") selected @endif>Default</option>
-                    <option value="primary" @if($frame->frame_design=="primary") selected @endif>Primary</option>
-                    <option value="success" @if($frame->frame_design=="success") selected @endif>Success</option>
-                    <option value="info"    @if($frame->frame_design=="info")    selected @endif>Info</option>
-                    <option value="warning" @if($frame->frame_design=="warning") selected @endif>Warning</option>
-                    <option value="danger"  @if($frame->frame_design=="danger")  selected @endif>Danger</option>
+                    <option value="none"      @if($frame->frame_design=="none")      selected @endif>None</option>
+                    <option value="default"   @if($frame->frame_design=="default")   selected @endif>Default</option>
+                    <option value="primary"   @if($frame->frame_design=="primary")   selected @endif>Primary</option>
+                    <option value="secondary" @if($frame->frame_design=="secondary") selected @endif>Secondary</option>
+                    <option value="success"   @if($frame->frame_design=="success")   selected @endif>Success</option>
+                    <option value="info"      @if($frame->frame_design=="info")      selected @endif>Info</option>
+                    <option value="warning"   @if($frame->frame_design=="warning")   selected @endif>Warning</option>
+                    <option value="danger"    @if($frame->frame_design=="danger")    selected @endif>Danger</option>
                 </select>
             </div>
         </div>
