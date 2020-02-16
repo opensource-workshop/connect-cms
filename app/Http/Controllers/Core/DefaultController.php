@@ -63,7 +63,7 @@ class DefaultController extends ConnectController
         $layouts_info = $this->getLayoutsInfo();
 
         // テーマ取得
-        $themes = $this->getThemes();
+        $themes = $this->getThemes($request);
 
         // プラグインのインスタンス生成（メインエリア以外の共通エリア）
         $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);
@@ -328,7 +328,7 @@ class DefaultController extends ConnectController
         $layouts_info = $this->getLayoutsInfo();
 
         // テーマ取得
-        $themes = $this->getThemes();
+        $themes = $this->getThemes($request);
 
         // プラグインのインスタンス生成（メインエリア以外の共通エリア）
         $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);

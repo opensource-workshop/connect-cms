@@ -584,10 +584,15 @@ class ConnectController extends Controller
      *  配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
      *  値がなければキーのみで値は空
      */
-    protected function getThemes()
+    protected function getThemes($request = null)
     {
         // 戻り値
         $return_array = array('css' => '', 'js' => '');
+
+        // セッションにテーマの選択がある場合（テーマ・チェンジャーで選択時の動き）
+        if ($request && $request->session()->get('session_theme')) {
+            return  $this->checkAsset($request->session()->get('session_theme'), $return_array);
+        }
 
         // ページ固有の設定がある場合
         $theme = $this->getPagesColum('theme');
