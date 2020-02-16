@@ -176,7 +176,7 @@ trait ConnectCommonTrait
         foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
 
             // ユーザの保持しているロールをループ
-            foreach ($user->user_roles as $target) {
+            foreach ((array)$user->user_roles as $target) {
 
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
