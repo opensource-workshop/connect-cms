@@ -51,12 +51,28 @@
                     <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control">
                 </div>
             </div>
+
+            {{-- テーマ --}}
             <div class="form-group row">
                 <label for="permanent_link" class="col-md-3 col-form-label text-md-right">テーマ</label>
                 <div class="col-md-9">
-                    <input type="text" name="theme" id="theme" value="{{$page->theme}}" class="form-control">
+                    <select name="theme" class="form-control">
+                        <option value="">設定なし</option>
+                        @foreach($themes as $theme)
+                            @isset($theme['themes'])
+                                <optgroup label="{{$theme['dir']}}">
+                                @foreach($theme['themes'] as $sub_theme)
+                                    <option value="{{$sub_theme['dir']}}"@if($sub_theme['dir'] == $page->theme) selected @endif>{{$sub_theme['name']}}</option>
+                                @endforeach
+                                </optgroup>
+                            @else
+                                <option value="{{$theme['dir']}}"@if($theme['dir'] == $page->theme) selected @endif>{{$theme['name']}}</option>
+                            @endisset
+                        @endforeach
+                    </select>
                 </div>
             </div>
+
             <div class="form-group row">
                 <label for="permanent_link" class="col-md-3 col-form-label text-md-right">レイアウト</label>
                 <div class="col-md-9">

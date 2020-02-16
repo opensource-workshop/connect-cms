@@ -75,27 +75,8 @@ class SiteManage extends ManagePluginBase
             $current_base_theme = $base_theme_obj->value;
         }
 
-        // テーマディレクトリ
-        $dirs = File::directories(public_path() . '/themes/');
-        //print_r($dirs);
-
-        $themes = array();
-        foreach($dirs as $dir) {
-            if (File::exists($dir."/themes.ini")) {
-                // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
-                $theme_inis = parse_ini_file($dir."/themes.ini");
-                $theme_name = $theme_inis['theme_name'];
-                if (empty($theme_name)) {
-                    $themes[] = array('name' => basename($dir), 'dir' => basename($dir));
-                }
-                else {
-                    $themes[] = array('name' => $theme_name, 'dir' => basename($dir));
-                }
-            }
-            else {
-                $themes[] = array('name' => basename($dir), 'dir' => basename($dir));
-            }
-        }
+        // テーマの取得
+        $themes = $this->getThemes();
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。

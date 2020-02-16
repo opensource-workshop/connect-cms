@@ -36,11 +36,18 @@
             <select name="base_theme" class="form-control">
                 <option value="">テーマなし</option>
                 @foreach($themes as $theme)
-                    <option value="{{$theme['dir']}}"@if($theme['dir'] == $current_base_theme) selected @endif>{{$theme['name']}}</option>
+                    @isset($theme['themes'])
+                        <optgroup label="{{$theme['dir']}}">
+                        @foreach($theme['themes'] as $sub_theme)
+                            <option value="{{$sub_theme['dir']}}"@if($sub_theme['dir'] == $current_base_theme) selected @endif>{{$sub_theme['name']}}</option>
+                        @endforeach
+                        </optgroup>
+                    @else
+                        <option value="{{$theme['dir']}}"@if($theme['dir'] == $current_base_theme) selected @endif>{{$theme['name']}}</option>
+                    @endisset
                 @endforeach
             </select>
         </div>
-
 
         {{-- 背景色 --}}
         <div class="form-group">

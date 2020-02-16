@@ -69,6 +69,9 @@ class PageManage extends ManagePluginBase
         // 移動先用にコピー
         $pages_select = $pages;
 
+        // テーマの取得
+        $themes = $this->getThemes();
+
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.page.page',[
@@ -77,6 +80,7 @@ class PageManage extends ManagePluginBase
             "page"         => new Page(),
             "pages"        => $pages,
             "pages_select" => $pages_select,
+            "themes"       => $themes,
             "errors"       => $errors,
         ]);
 
@@ -95,11 +99,15 @@ class PageManage extends ManagePluginBase
         // ページデータの取得(laravel-nestedset 使用)
         $pages = Page::defaultOrderWithDepth();
 
+        // テーマの取得
+        $themes = $this->getThemes();
+
         // 画面呼び出し
         return view('plugins.manage.page.page_edit',[
             "plugin_name" => "page",
             "page"        => $page,
             "pages"       => $pages,
+            "themes"      => $themes,
         ]);
     }
 
