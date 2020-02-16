@@ -71,6 +71,7 @@ class ManagePluginBase extends PluginBase
     {
         // テーマディレクトリ
         $dirs = File::directories(public_path() . '/themes/');
+        asort($dirs);  // ディレクトリが名前に対して逆順になることがあるのでソートしておく。
         //print_r($dirs);
 
         $themes = array();  // 画面に渡すテーマ配列
@@ -87,7 +88,7 @@ class ManagePluginBase extends PluginBase
 
                     // テーマの第2階層ディレクトリ
                     $group_dirs = File::directories(public_path() . '/themes/' . basename($dir));
-
+                    asort($group_dirs);  // ディレクトリが名前に対して逆順になることがあるのでソートしておく。
                     foreach($group_dirs as $group_dir) {
 
                         if (File::exists($group_dir."/themes.ini")) {
