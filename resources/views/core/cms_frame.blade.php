@@ -16,7 +16,7 @@ else {
     $frame_classname = 'frame-' . $frame->frame_id;
 }
 if ($frame_id == $frame->frame_id) {
-    $frame_classname = $frame_classname . '-' . $action;
+    $frame_classname .= ' ' . $frame_classname . '-' . $action;
 }
 
 $plugin_name = ' plugin-' . $frame->plugin_name . ' ';
