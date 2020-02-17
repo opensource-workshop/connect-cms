@@ -114,11 +114,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $dateStr = $view_ym . "-01";
         $date = new Carbon($dateStr);
 
+        $daysInMonth = $date->daysInMonth;  // 右下をずらす際の計算で使用。月の日数
+        $add_day = $date->dayOfWeek;        // 右下をずらす際の計算で使用。月の最初の日付番号
+
         // カレンダーの前月分となる左上の隙間用のデータを入れるためずらす
         $date->subDay($date->dayOfWeek);
 
         // 同上。右下の隙間のための計算。
-        $count = 31 + $date->dayOfWeek;
+        $count = $daysInMonth + $date->dayOfWeek + $add_day;
         $count = ceil($count / 7) * 7;
         $dates = [];
 
