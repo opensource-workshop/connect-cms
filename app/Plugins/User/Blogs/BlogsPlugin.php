@@ -230,18 +230,20 @@ class BlogsPlugin extends UserPluginBase
                                            ->from('blogs_posts')
                                            ->where('blogs_id', $blog_frame->blogs_id)
 
-                                           // 設定を見てWhere を付与する。
-                                           ->where(function($query_setting) use($blog_frame) {
-                                               $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
-                                           })
-
                                            ->where('deleted_at', null)
                                            // 権限を見てWhere を付与する。
                                            ->where(function($query_auth){
                                                $query_auth = $this->appendAuthWhere($query_auth);
                                            })
                                            ->groupBy('contents_id');
-                                     })->orderBy('posted_at', 'desc')
+                                     })
+
+                                           // 設定を見てWhere を付与する。
+                                           ->where(function($query_setting) use($blog_frame) {
+                                               $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                                           })
+
+->orderBy('posted_at', 'desc')
                                  ->paginate($count);
         return $blogs_posts;
     }
@@ -311,7 +313,6 @@ class BlogsPlugin extends UserPluginBase
      */
     public static function getWhatsnewArgs()
     {
-
         // 戻り値('sql_method'、'link_pattern'、'link_base')
 
         $return[] = DB::table('blogs_posts')
@@ -328,17 +329,27 @@ class BlogsPlugin extends UserPluginBase
                               )
                       ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
-/*
+
                       ->leftJoin('blogs_frames', function ($join) {
                           $join->on('blogs_frames.blogs_id', '=', 'blogs.id')
-                          ->where('blogs_frames.frames_id', '=', 'frames.id');
+                          // frames.id がDB::Raw しなければ、バインドの値としてSQL が生成されて、"frames.id" というframes.id は存在せず、left join がレコードが取れなかった。
+                          ->where('blogs_frames.frames_id', '=', DB::Raw("frames.id"));
                       })
-*/
                       ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                       ->where('status', 0)
                       ->where('posted_at', '<=', Carbon::now())
                       ->where('disable_whatsnews', 0)
-/*
+
+/* if で書いたもの。CASE を疑っていた際のテスト用
+                      ->whereRaw('(
+                                  (blogs_frames.scope IS NULL) OR
+                                  (blogs_frames.scope = "year" AND blogs_frames.scope_value IS NOT NULL AND 
+                                      posted_at >= CONCAT(blogs_frames.scope_value, "-01-01") AND posted_at <= CONCAT(blogs_frames.scope_value, "-12-31 23:59:59")) OR
+                                  (blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL AND 
+                                      posted_at >= CONCAT(blogs_frames.scope_value, "-04-01") AND posted_at <= CONCAT((blogs_frames.scope_value + 1), "-03-31 23:59:59"))
+                                  )')
+*/
+
                       ->whereRaw('CASE
                                   WHEN blogs_frames.scope IS NULL
                                       THEN blogs_frames.scope IS NULL
@@ -347,7 +358,6 @@ class BlogsPlugin extends UserPluginBase
                                   WHEN blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL
                                       THEN posted_at >= CONCAT(blogs_frames.scope_value, "-04-01") AND posted_at <= CONCAT((blogs_frames.scope_value + 1), "-03-31 23:59:59")
                                   END')
-*/
                       ->whereNull('blogs_posts.deleted_at');
 /*
 SELECT blogs_frames.scope, blogs_frames.scope_value, blogs_posts.*
