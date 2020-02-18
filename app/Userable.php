@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
- * ƒ‚ƒfƒ‹‚Ì•Û‘¶‚É©“®“I‚Éƒ†[ƒU[ID ‚âƒ†[ƒU[–¼‚ğ•Û‚·‚é‚½‚ß‚Ìtrait
- * g—p‚·‚é‚É‚ÍAƒ‚ƒfƒ‹‚Åcreated_idAcreated_nameAupdated_idAupdated_name‚ğ’è‹`‚µ‚Äuse‚·‚éB
+ * ãƒ¢ãƒ‡ãƒ«ã®ä¿å­˜æ™‚ã«è‡ªå‹•çš„ã«ãƒ¦ãƒ¼ã‚¶ãƒ¼IDã‚„ãƒ¦ãƒ¼ã‚¶ãƒ¼åã‚’ä¿æŒã™ã‚‹ãŸã‚ã®trait
+ * ä½¿ç”¨ã™ã‚‹ã«ã¯ã€ãƒ¢ãƒ‡ãƒ«ã§created_idã€created_nameã€updated_idã€updated_nameã‚’å®šç¾©ã—ã¦useã™ã‚‹ã€‚
  *
- * @author ‰iŒ´@“Ä <nagahara@opensource-workshop.jp>
+ * @author æ°¸åŸã€€ç¯¤ <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Core
  * @package App
@@ -21,16 +21,16 @@ trait Userable
     public static function bootUserable()
     {
         /**
-         *  ƒIƒuƒWƒFƒNƒgcreate ‚ÌƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰
+         *  ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆcreate æ™‚ã®ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ©
          */
         static::creating(function (Model $model) {
-            // created_id‚Íƒf[ƒ^XVŒ ŒÀ‚Ìƒ`ƒFƒbƒN‚Ì‚½‚ßAÅ‰‚É‹L–‚ğ‘‚¢‚½ƒ†[ƒU‚Ì‚à‚Ì‚ğˆø‚«Œp‚®•K—v‚ª‚ ‚é‚Ì‚ÅA©“®“o˜^‚Í‚µ‚È‚¢B
+            // created_idã¯ãƒ‡ãƒ¼ã‚¿æ›´æ–°æ¨©é™ã®ãƒã‚§ãƒƒã‚¯ã®ãŸã‚ã€æœ€åˆã«è¨˜äº‹ã‚’æ›¸ã„ãŸãƒ¦ãƒ¼ã‚¶ã®ã‚‚ã®ã‚’å¼•ãç¶™ãå¿…è¦ãŒã‚ã‚‹ã®ã§ã€è‡ªå‹•ç™»éŒ²ã¯ã—ãªã„ã€‚
             // $model->created_id   = Auth::user()->id;
             $model->created_name = Auth::user()->name;
         });
 
         /**
-         *  ƒIƒuƒWƒFƒNƒgupdate ‚ÌƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰
+         *  ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆupdate æ™‚ã®ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ©
          */
         static::updating(function (Model $model) {
             $model->updated_id   = Auth::user()->id;
@@ -38,7 +38,7 @@ trait Userable
         });
 
         /**
-         *  ƒIƒuƒWƒFƒNƒgdelete ‚ÌƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰
+         *  ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆdelete æ™‚ã®ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ©
          */
         static::deleting(function (Model $model) {
             $model->deleted_id   = Auth::user()->id;
