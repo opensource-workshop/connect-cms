@@ -112,8 +112,9 @@ trait ConnectCommonTrait
         foreach ($check_roles as $role) {
 
             // ユーザの保持しているロールをループ
+            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
             //foreach ($user['user_roles'] as $target) {
-            foreach ($user->user_roles as $target) {
+            foreach ((array)$user->user_roles as $target) {
 
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
@@ -176,6 +177,7 @@ trait ConnectCommonTrait
         foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
 
             // ユーザの保持しているロールをループ
+            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
             foreach ((array)$user->user_roles as $target) {
 
                 // ターゲット処理をループ
