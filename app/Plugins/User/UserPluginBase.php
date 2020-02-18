@@ -185,10 +185,44 @@ class UserPluginBase extends PluginBase
         }
 
         // 定数 CC_METHOD_AUTHORITY に設定があるものはここでチェックする。
-        if (array_key_exists($this->action, config('cc_role.CC_METHOD_AUTHORITY'))) {
+        $ret = $this->checkFunctionAuthority(config('cc_role.CC_METHOD_AUTHORITY'), $post);
+        // 権限チェック結果。値があれば、エラーメッセージ用HTML
+        if (!empty($ret)) {
+            return $ret;
+        }
+
+        // 関数定義メソッドの有無確認
+        if (method_exists($obj, 'declareRole')) {
+
+            // 関数リスト取得
+            $role_ckeck_table = $obj->declareRole();
+
+            // 記載されているメソッドすべての権限を有することをチェック
+            $ret = $this->checkFunctionAuthority($role_ckeck_table, $post);
+
+            // 権限チェック結果。値があれば、エラーメッセージ用HTML
+            if (!empty($ret)) {
+                return $ret;
+            }
+        }
+
+        // 画面(コアの cms_frame)で指定されたクラスのアクションのメソッドを呼び出す。
+        // 戻り値は各アクションでのメソッドでview 関数などで生成したHTML なので、そのままreturn して元の画面に戻す。
+        return $obj->$action($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * 記載されているメソッドすべての権限を有することをチェック
+     *
+     * @return view 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
+     */
+    private function checkFunctionAuthority($role_ckeck_table, $post = null)
+    {
+        // 設定があるものはここでチェックする。
+        if (array_key_exists($this->action, $role_ckeck_table)) {
 
             // 記載されているメソッドすべての権限を有すること。
-            foreach (config('cc_role.CC_METHOD_AUTHORITY')[$this->action] as $function_authority) {
+            foreach ($role_ckeck_table[$this->action] as $function_authority) {
 
                 // 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
                 $ret = null;
@@ -210,9 +244,7 @@ class UserPluginBase extends PluginBase
             }
         }
 
-        // 画面(コアの cms_frame)で指定されたクラスのアクションのメソッドを呼び出す。
-        // 戻り値は各アクションでのメソッドでview 関数などで生成したHTML なので、そのままreturn して元の画面に戻す。
-        return $obj->$action($request, $page_id, $frame_id, $id);
+        return null;
     }
 
     /**
