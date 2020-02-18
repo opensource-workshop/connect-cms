@@ -132,7 +132,7 @@ class CodeManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->regist($request, null, $validator->errors()) );
+            return $this->regist($request, null, $validator->errors());
         }
 
         // 登録
@@ -214,7 +214,7 @@ class CodeManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->edit($request, $id, $validator->errors()) );
+            return $this->edit($request, $id, $validator->errors());
         }
 
         // 更新
