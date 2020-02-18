@@ -533,19 +533,31 @@ WHERE status = 0
         $before_post = null;
         $after_post = null;
         if ($blogs_post) {
-            $before_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)
-                                     ->where('posted_at', '<', $blogs_post->posted_at)
+            $before_post = BlogsPosts::select('contents_id')
+                                     ->where('blogs_id', $blogs_post->blogs_id)
+                                    //  投稿日時を同値以上とした為、自分以外の条件を追加
+                                     ->whereNotIn('contents_id', [$blogs_post->contents_id])
+                                     ->where('posted_at', '<=', $blogs_post->posted_at)
                                      ->where(function($query){
                                          $query = $this->appendAuthWhere($query);
                                      })
                                      ->orderBy('posted_at', 'desc')
+                                     ->groupBy('contents_id')
+                                    //  before/after間で同一の投稿日時を見分ける為、OFFSETを追加
+                                     ->offset(1)
                                      ->first();
-            $after_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)
-                                     ->where('posted_at', '>', $blogs_post->posted_at)
+            $after_post = BlogsPosts::select('contents_id')
+                                     ->where('blogs_id', $blogs_post->blogs_id)
+                                    //  投稿日時を同値以下とした為、自分以外の条件を追加
+                                    ->whereNotIn('contents_id', [$blogs_post->contents_id])
+                                     ->where('posted_at', '>=', $blogs_post->posted_at)
                                      ->where(function($query){
                                          $query = $this->appendAuthWhere($query);
                                      })
                                      ->orderBy('posted_at', 'asc')
+                                     ->groupBy('contents_id')
+                                    //  before/after間で同一の投稿日時を見分ける為、OFFSETを追加
+                                    ->offset(1)
                                      ->first();
         }
 

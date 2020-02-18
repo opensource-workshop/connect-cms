@@ -66,7 +66,7 @@
 <div class="row">
     <div class="col-12 text-center mt-3">
         @if (isset($before_post))
-        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}" class="mr-1">
+        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->contents_id}}" class="mr-1">
             <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="hidden-xs">前へ</span></span>
         </a>
         @endif
@@ -74,7 +74,7 @@
             <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">一覧へ</span></span>
         </a>
         @if (isset($after_post))
-        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$after_post->id}}" class="mr-1">
+        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$after_post->contents_id}}" class="mr-1">
             <span class="btn btn-info"><i class="fas fa-chevron-right"></i> <span class="hidden-xs">次へ</span></span>
         </a>
         @endif
