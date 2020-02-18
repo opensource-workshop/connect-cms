@@ -242,8 +242,8 @@ class BlogsPlugin extends UserPluginBase
                                            ->where(function($query_setting) use($blog_frame) {
                                                $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
                                            })
-
-->orderBy('posted_at', 'desc')
+                                 ->orderBy('posted_at', 'desc')
+                                 ->orderBy('contents_id', 'desc')
                                  ->paginate($count);
         return $blogs_posts;
     }
@@ -362,20 +362,20 @@ class BlogsPlugin extends UserPluginBase
 /*
 SELECT blogs_frames.scope, blogs_frames.scope_value, blogs_posts.*
 FROM blogs_posts
-	INNER JOIN blogs ON blogs.id = blogs_posts.blogs_id
-	INNER JOIN frames ON frames.bucket_id = blogs.bucket_id
-	LEFT JOIN blogs_frames ON blogs_frames.frames_id AND blogs_frames.blogs_id = blogs.id
+    INNER JOIN blogs ON blogs.id = blogs_posts.blogs_id
+    INNER JOIN frames ON frames.bucket_id = blogs.bucket_id
+    LEFT JOIN blogs_frames ON blogs_frames.frames_id AND blogs_frames.blogs_id = blogs.id
 WHERE status = 0
-	AND disable_whatsnews = 0
-	AND
-		CASE
-		WHEN blogs_frames.scope IS NULL
-			THEN blogs_frames.scope IS NULL
-		WHEN blogs_frames.scope = 'year' AND blogs_frames.scope_value IS NOT NULL
-			THEN posted_at >= CONCAT(blogs_frames.scope_value, '-01-01') AND posted_at <= CONCAT(blogs_frames.scope_value, '-12-31 23:59:59')
-		WHEN blogs_frames.scope = 'fiscal' AND blogs_frames.scope_value IS NOT NULL
-			THEN posted_at >= CONCAT(blogs_frames.scope_value, '-04-01') AND posted_at <= CONCAT((blogs_frames.scope_value + 1), '-03-31 23:59:59')
-		END
+    AND disable_whatsnews = 0
+    AND
+        CASE
+        WHEN blogs_frames.scope IS NULL
+            THEN blogs_frames.scope IS NULL
+        WHEN blogs_frames.scope = 'year' AND blogs_frames.scope_value IS NOT NULL
+            THEN posted_at >= CONCAT(blogs_frames.scope_value, '-01-01') AND posted_at <= CONCAT(blogs_frames.scope_value, '-12-31 23:59:59')
+        WHEN blogs_frames.scope = 'fiscal' AND blogs_frames.scope_value IS NOT NULL
+            THEN posted_at >= CONCAT(blogs_frames.scope_value, '-04-01') AND posted_at <= CONCAT((blogs_frames.scope_value + 1), '-03-31 23:59:59')
+        END
 */
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
@@ -533,20 +533,54 @@ WHERE status = 0
         $before_post = null;
         $after_post = null;
         if ($blogs_post) {
-            $before_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)
-                                     ->where('posted_at', '<', $blogs_post->posted_at)
-                                     ->where(function($query){
-                                         $query = $this->appendAuthWhere($query);
-                                     })
-                                     ->orderBy('posted_at', 'desc')
-                                     ->first();
-            $after_post = BlogsPosts::where('blogs_id', $blogs_post->blogs_id)
-                                     ->where('posted_at', '>', $blogs_post->posted_at)
-                                     ->where(function($query){
-                                         $query = $this->appendAuthWhere($query);
-                                     })
-                                     ->orderBy('posted_at', 'asc')
-                                     ->first();
+
+            // 1件前
+            $before_post = BlogsPosts::whereIn('id', function($query1) use($blogs_post) {
+                                           // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
+                                           $query1->select(DB::raw('MAX(id) as id'))
+                                                  ->from('blogs_posts')
+                                                  ->where('blogs_id', $blogs_post->blogs_id)
+                                                  ->where(function($query2){
+                                                      $query2 = $this->appendAuthWhere($query2);
+                                                  })
+                                                  ->groupBy('contents_id');
+                                           })
+                                       // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が小さい)で1件目)
+                                       // 一覧は 日付(desc), contents_id(desc) で表示するため
+                                       ->where(function($query3) use($blogs_post) {
+                                           $query3->where('posted_at', '<', $blogs_post->posted_at)
+                                                  ->orWhere(function($query4) use($blogs_post) {
+                                                      $query4->where('posted_at', '=', $blogs_post->posted_at)
+                                                             ->where('contents_id', '<', $blogs_post->contents_id);
+                                                  });
+                                       })
+                                       ->orderBy('posted_at', 'desc')
+                                       ->orderBy('contents_id', 'desc')
+                                       ->first();
+
+            // 1件後
+            $after_post = BlogsPosts::whereIn('id', function($query1) use($blogs_post) {
+                                           // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
+                                           $query1->select(DB::raw('MAX(id) as id'))
+                                                  ->from('blogs_posts')
+                                                  ->where('blogs_id', $blogs_post->blogs_id)
+                                                  ->where(function($query2){
+                                                      $query2 = $this->appendAuthWhere($query2);
+                                                  })
+                                                  ->groupBy('contents_id');
+                                           })
+                                       // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が大きい)で1件目)
+                                       // 一覧は 日付(desc), contents_id(desc) で表示するため
+                                       ->where(function($query3) use($blogs_post) {
+                                           $query3->where('posted_at', '>', $blogs_post->posted_at)
+                                                  ->orWhere(function($query4) use($blogs_post) {
+                                                      $query4->where('posted_at', '=', $blogs_post->posted_at)
+                                                             ->where('contents_id', '>', $blogs_post->contents_id);
+                                                  });
+                                       })
+                                       ->orderBy('posted_at', 'asc')
+                                       ->orderBy('contents_id', 'asc')
+                                       ->first();
         }
 
         // 詳細画面を呼び出す。
