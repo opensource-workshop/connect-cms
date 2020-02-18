@@ -1335,7 +1335,7 @@ exit;
 
         BlogsFrames::updateOrCreate(
             ['frames_id' => $frame_id],
-            ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value ],
+            ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value ]
         );
 
         return $this->settingBlogFrame($request, $page_id, $frame_id);
