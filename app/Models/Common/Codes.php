@@ -36,4 +36,18 @@ class Codes extends Model
         'value',
         'display_sequence',
     ];
+
+    /**
+     *  コードから値を取り出し
+     */
+    public static function getCodeToValue($codes, $target_code, $return_colum = 'value')
+    {
+        foreach($codes as $code){
+            if ($code->code == $target_code){
+                // return $code->value;
+                return $code->$return_colum;
+            }
+        }
+        return null;
+    }
 }
