@@ -4,7 +4,7 @@ namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
 
-use App\Userable;
+use App\UserableNohistory;
 
 /**
  * コードテーブルのモデル
@@ -16,8 +16,8 @@ use App\Userable;
  */
 class Codes extends Model
 {
-    // 保存時のユーザー関連データの保持
-    use Userable;
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト

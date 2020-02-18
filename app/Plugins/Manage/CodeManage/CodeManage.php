@@ -91,23 +91,7 @@ class CodeManage extends ManagePluginBase
      */
     public function regist($request, $id = null, $errors = array())
     {
-        // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
-        $request->flash();
-
-        // ユーザデータの空枠
-        $code = new Codes();
-
-        // プラグイン一覧の取得
-        $plugins = Plugins::orderBy('display_sequence')->get();
-        // var_dump($plugins);
-
-        return view('plugins.manage.code.regist',[
-            "function" => __FUNCTION__,
-            "plugin_name" => "code",
-            "plugins" => $plugins,
-            "code" => $code,
-            'errors' => $errors,
-        ]);
+        return $this->edit($request, $id, 'regist', $errors);
     }
 
     /**
@@ -115,65 +99,26 @@ class CodeManage extends ManagePluginBase
      */
     public function store($request)
     {
-        // httpメソッド確認
-        if (!$request->isMethod('post')) {
-            abort(403, '権限がありません。');
-        }
-
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'code' => ['required'],
-            'value' => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'code' => 'コード',
-            'value' => '値',
-        ]);
-
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return $this->regist($request, null, $validator->errors());
-        }
-
-        // 登録
-        $codes = new Codes();
-        $codes->plugin_name          = $request->plugin_name;
-        $codes->buckets_id           = $request->buckets_id;
-        $codes->prefix               = $request->prefix;
-        $codes->type_name            = $request->type_name;
-        $codes->type_code1           = $request->type_code1;
-        $codes->type_code2           = $request->type_code2;
-        $codes->type_code3           = $request->type_code3;
-        $codes->type_code4           = $request->type_code4;
-        $codes->type_code5           = $request->type_code5;
-        $codes->code                 = $request->code;
-        $codes->value                = $request->value;
-        $codes->additional1          = $request->additional1;
-        $codes->additional2          = $request->additional2;
-        $codes->additional3          = $request->additional3;
-        $codes->additional4          = $request->additional4;
-        $codes->additional5          = $request->additional5;
-        $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
-        $codes->save();
-
-        // 一覧画面に戻る
-        // return redirect("/manage/code");
-        $page = $request->get('page', 1);
-        return redirect("/manage/code?page=$page");
+        return $this->update($request, null, 'regist');
     }
 
     /**
-     *  コード登録画面表示
+     *  コード変更画面表示
      *
      * @return view
      */
-    public function edit($request, $id = null, $errors = array())
+    public function edit($request, $id = null, $function = 'edit', $errors = array())
     {
         // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
         $request->flash();
 
-        // ID で1件取得
-        $code = Codes::where('id', $id)->first();
+        if ($id) {
+            // ID で1件取得
+            $code = Codes::where('id', $id)->first();
+        } else {
+            // ユーザデータの空枠
+            $code = new Codes();
+        }
 
         // プラグイン一覧の取得
         $plugins = Plugins::orderBy('display_sequence')->get();
@@ -183,7 +128,8 @@ class CodeManage extends ManagePluginBase
         $paginate_page = $request->get('page', 1);
 
         return view('plugins.manage.code.regist',[
-            "function" => __FUNCTION__,
+            // "function" => __FUNCTION__,
+            "function" => $function,
             "plugin_name" => "code",
             "plugins" => $plugins,
             "code" => $code,
@@ -195,13 +141,8 @@ class CodeManage extends ManagePluginBase
     /**
      *  コード更新処理
      */
-    public function update($request, $id)
+    public function update($request, $id, $function = 'edit')
     {
-        // httpメソッド確認
-        if (!$request->isMethod('post')) {
-            abort(403, '権限がありません。');
-        }
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'code' => ['required'],
@@ -214,15 +155,16 @@ class CodeManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return $this->edit($request, $id, $validator->errors());
+            return $this->edit($request, $id, $function, $validator->errors());
         }
 
-        // 更新
-        $codes = Codes::find($id);
-        // Codes::where('id', $id)
-        //     ->update(['name' => 'xxxx']);
-        // $codes = new Codes();
-        // $codes->id                   = $id;
+        if ($id) {
+            // 更新
+            $codes = Codes::find($id);
+        } else {
+            // 登録
+            $codes = new Codes();
+        }
         $codes->plugin_name          = $request->plugin_name;
         $codes->buckets_id           = $request->buckets_id;
         $codes->prefix               = $request->prefix;

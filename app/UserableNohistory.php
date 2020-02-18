@@ -8,27 +8,27 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
- * 履歴ありUserable
+ * 履歴なしUserable
  * モデルの保存時に自動的にユーザーID やユーザー名を保持するためのtrait
- * 承認などの履歴ありmodelに適用するtraitため、created_idを自動登録しない
+ * コード管理などの履歴なしmodelに適用するtraitため、created_idを自動登録する
  * 
  * 使用するには、モデルでcreated_id、created_name、updated_id、updated_nameを定義してuseする。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Core
  * @package App
  */
-trait Userable
+trait UserableNohistory
 {
-    public static function bootUserable()
+    public static function bootUserableNohistory()
     {
         /**
          *  オブジェクトcreate 時のイベントハンドラ
          */
         static::creating(function (Model $model) {
-            // created_idはデータ更新権限のチェックのため、最初に記事を書いたユーザのものを引き継ぐ必要があるので、自動登録はしない。
-            // $model->created_id   = Auth::user()->id;
+            $model->created_id   = Auth::user()->id;
             $model->created_name = Auth::user()->name;
         });
 
