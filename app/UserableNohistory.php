@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Log;
  */
 trait UserableNohistory
 {
-    public static function bootUserable()
+    public static function bootUserableNohistory()
     {
         /**
          *  オブジェクトcreate 時のイベントハンドラ
