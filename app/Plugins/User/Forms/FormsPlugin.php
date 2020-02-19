@@ -300,14 +300,17 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // メールアドレスチェック
         if ($forms_column->column_type == \FormColumnType::mail) {
+            $validator_rule[] = 'nullable';
             $validator_rule[] = 'email';
         }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
+            $validator_rule[] = 'nullable';
             $validator_rule[] = 'numeric';
         }
         // 英数値チェック
         if ($forms_column->rule_allowed_alpha_numeric) {
+            $validator_rule[] = 'nullable';
             $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
         }
         // 最大文字数チェック
