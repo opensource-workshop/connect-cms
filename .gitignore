@@ -2,6 +2,8 @@
 /public/debug
 /public/hot
 /public/storage
+/public/themes/Users/*
+!/public/themes/Users/themes.ini
 /public/uploads/*
 /storage/*.key
 /vendor

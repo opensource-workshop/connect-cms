@@ -147,7 +147,10 @@ class PluginBase
                             $sub_themes[] = $this->getThemeName($group_dir, null, basename($dir));
                         }
                     }
-                    $themes[] = array('name' => basename($dir), 'dir' => basename($dir), 'themes' => $sub_themes);
+                    // 第2階層テーマがある場合は選択肢に追加する。
+                    if (!empty($sub_themes)) {
+                        $themes[] = array('name' => basename($dir), 'dir' => basename($dir), 'themes' => $sub_themes);
+                    }
                 }
                 else {
                     // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
