@@ -459,7 +459,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $after_message = str_replace('[[number]]', $number, $form->after_message);
 
         // メール送信
-        if ($form->mail_send_flag) {
+        if ($form->mail_send_flag || $form->user_mail_send_flag) {
 
             // メール本文の組み立て
             $mail_format = $form->mail_format;
@@ -469,15 +469,19 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $mail_text = str_replace( '[[number]]', $number, $mail_text);
 
             // メール送信（管理者側）
-            $mail_addresses = explode(',', $form->mail_send_address);
-            foreach($mail_addresses as $mail_address) {
-                Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+            if($form->mail_send_flag){
+                $mail_addresses = explode(',', $form->mail_send_address);
+                foreach($mail_addresses as $mail_address) {
+                    Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                }
             }
 
             // メール送信（ユーザー側）
-            foreach($user_mailaddresses as $user_mailaddress) {
-                if (!empty($user_mailaddress)) {
-                    Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+            if($form->user_mail_send_flag){
+                foreach($user_mailaddresses as $user_mailaddress) {
+                    if (!empty($user_mailaddress)) {
+                        Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    }
                 }
             }
         }
