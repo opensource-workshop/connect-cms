@@ -20,7 +20,7 @@
 
         @foreach($forms_columns as $form_column)
         <div class="form-group row">
-            <label class="col-sm-4 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="badge badge-danger">必須</label> @endif</label>
+            <label class="col-sm-4 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == Locale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</label> @endif</label>
             @switch($form_column->column_type)
             @case("group")
                 @php
@@ -44,7 +44,7 @@
                     @endif
 
                     {{-- 必須 --}}
-                    @if ($group_row->required)<label class="badge badge-danger">必須</label> @endif
+                    @if ($group_row->required)<label class="{{ App::getLocale() == Locale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</label> @endif
 
                     {{-- 項目 ※まとめ設定行 --}}
                     @include('plugins.user.forms.default.forms_input_' . $group_row->column_type,['form_obj' => $group_row])
@@ -66,7 +66,7 @@
         @endforeach
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
-            <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> 確認画面へ</button>
+            <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> {{__('messages.to_confirm')}}</button>
         </div>
     </form>
 

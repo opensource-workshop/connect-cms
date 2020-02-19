@@ -17,4 +17,8 @@ return [
     'close' => 'Close',
     'edit' => 'Edit',
     'delete' => 'Delete',
+    'to_confirm' => 'Confirm',
+    'cancel' => 'Cancel',
+    'submit' => 'Submit',
+    'required' => '*',
 ];

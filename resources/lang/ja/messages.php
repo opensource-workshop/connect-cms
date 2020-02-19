@@ -17,4 +17,8 @@ return [
     'close' => '閉じる',
     'edit' => '編集',
     'delete' => '削除',
+    'to_confirm' => '確認画面へ',
+    'cancel' => 'キャンセル',
+    'submit' => '送信',
+    'required' => '必須',
 ];

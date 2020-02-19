@@ -90,8 +90,8 @@
     @endforeach
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_forms_cancel();"><i class="fas fa-times"></i> キャンセル</button>
-        <button type="submit" class="btn btn-primary" onclick="javascript:submit_forms_store();"><i class="fas fa-check"></i> 送信</button>
+        <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_forms_cancel();"><i class="fas fa-times"></i> {{__('messages.cancel')}}</button>
+        <button type="submit" class="btn btn-primary" onclick="javascript:submit_forms_store();"><i class="fas fa-check"></i> {{__('messages.submit')}}</button>
     </div>
 </form>
 @endsection
