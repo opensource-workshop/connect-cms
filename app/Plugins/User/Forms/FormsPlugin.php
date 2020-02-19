@@ -323,10 +323,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // 最大値チェック
         if ($forms_column->rule_max) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'numeric';
             $validator_rule[] = 'max:' . $forms_column->rule_max;
         }
         // 最小値チェック
         if ($forms_column->rule_min) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'numeric';
             $validator_rule[] = 'min:' . $forms_column->rule_min;
         }
         // ～日以降を許容
