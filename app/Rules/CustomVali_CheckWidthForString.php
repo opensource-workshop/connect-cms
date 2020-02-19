@@ -45,6 +45,8 @@ class CustomVali_CheckWidthForString implements Rule
      */
     public function message()
     {
-        return $this->attr . 'は全角' . floor($this->comparison_digits/2) . '文字（半角' . $this->comparison_digits . '文字）以内で入力してください。(半角換算した文字数：' . $this->target_digits . ')';
+        return \App::getLocale() == \Locale::ja ? 
+            $this->attr . 'は全角' . floor($this->comparison_digits/2) . '文字（半角' . $this->comparison_digits . '文字）以内で入力してください。(半角換算した文字数：' . $this->target_digits . ')' :
+            'Enter ' . $this->attr . ' within ' . floor($this->comparison_digits/2) . ' full-width (' . $this->comparison_digits . ' half-width) characters. (Number of half-width characters converted: ' . $this->target_digits . ')';
     }
 }
