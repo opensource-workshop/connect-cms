@@ -8,6 +8,15 @@ use App\Models\Common\BucketsRoles;
 
 class Buckets extends Model
 {
+    /**
+     * create()やupdate()で入力を受け付ける ホワイトリスト
+     */
+    protected $fillable = [
+        'id',
+        'bucket_name',
+        'plugin_name',
+    ];
+
     // Buckets のrole
     private $buckets_roles = null;
 
