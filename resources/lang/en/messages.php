@@ -21,4 +21,7 @@ return [
     'cancel' => 'Cancel',
     'submit' => 'Submit',
     'required' => '*',
+    'to_list' => 'All',
+    'next' => 'Next',
+    'previous' => 'Prev',
 ];

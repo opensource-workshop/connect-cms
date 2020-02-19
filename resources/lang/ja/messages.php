@@ -21,4 +21,7 @@ return [
     'cancel' => 'キャンセル',
     'submit' => '送信',
     'required' => '必須',
+    'to_list' => '一覧へ',
+    'next' => '次へ',
+    'previous' => '前へ',
 ];
