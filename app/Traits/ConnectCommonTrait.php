@@ -591,12 +591,7 @@ trait ConnectCommonTrait
             // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
             if (is_array($classes) && in_array('smp_a_link', $classes)) {
                 $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
-                if ($page_id == $level1_page['parent']->id) {
-                    $sp_menu .= '<u>' . $level1_page['parent']->page_name . '</u>';
-                }
-                else {
-                    $sp_menu .= $level1_page['parent']->page_name;
-                }
+                $sp_menu .= $level1_page['parent']->page_name;
                 $sp_menu .= '</a>' . "\n";
             }
             else {
