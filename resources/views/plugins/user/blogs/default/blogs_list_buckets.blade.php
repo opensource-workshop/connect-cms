@@ -40,7 +40,7 @@
         </table>
     </div>
 
-    <div class="text-center">
+    <div class="form-group text-center">
         {{ $blogs->links() }}
     </div>
 
