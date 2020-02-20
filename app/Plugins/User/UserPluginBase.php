@@ -476,27 +476,22 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
-        // buckets がまだない場合
-        $frame_update = false;
-        if (empty($buckets)) {
-            $frame_update = true;
+        // buckets がまだない & 固定記事プラグインの場合
+        if (empty($buckets) && $this->frame->plugin_name == 'contents') {
             $buckets = new Buckets;
             $buckets->bucket_name = '無題';
             $buckets->plugin_name = 'contents';
-        }
+            // Buckets の更新
+            $buckets->save();
 
-        // Buckets の更新
-        $buckets->save();
+            // Frame にbuckets_id を登録
+            Frame::where('id', $frame_id)
+                 ->update(['bucket_id' => $buckets->id]);
+        }
 
         // BucketsRoles の更新
         $this->saveRequestRole($request, $buckets, 'role_reporter');
         $this->saveRequestRole($request, $buckets, 'role_article');
-
-        // Frame にbuckets_id を登録
-        if ($frame_update) {
-            Frame::where('id', $frame_id)
-                 ->update(['bucket_id' => $buckets->id]);
-        }
 
         // 画面の呼び出し
         return $this->commonView(
