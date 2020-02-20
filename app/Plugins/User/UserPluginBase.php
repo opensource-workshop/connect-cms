@@ -454,17 +454,17 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * 設定変更画面
+     * 権限設定 変更画面
      */
-    public function editBucketsRoles($request, $page_id, $frame_id, $id = null)
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
     {
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
-        return $this->commonView(
-            'frame_edit_buckets', [
-            'buckets'     => $buckets,
-            'plugin_name' => $this->frame->plugin_name,
+        return $this->commonView('frame_edit_buckets', [
+            'buckets'      => $buckets,
+            'plugin_name'  => $this->frame->plugin_name,
+            'use_approval' => $use_approval,
         ]);
     }
 
@@ -510,9 +510,9 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * 設定保存処理
+     * 権限設定 保存処理
      */
-    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null)
+    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
     {
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
@@ -535,10 +535,10 @@ class UserPluginBase extends PluginBase
         $this->saveRequestRole($request, $buckets, 'role_article');
 
         // 画面の呼び出し
-        return $this->commonView(
-            'frame_edit_buckets', [
-            'buckets'     => $buckets,
-            'plugin_name' => $this->frame->plugin_name,
+        return $this->commonView('frame_edit_buckets', [
+            'buckets'      => $buckets,
+            'plugin_name'  => $this->frame->plugin_name,
+            'use_approval' => $use_approval,
         ]);
     }
 
