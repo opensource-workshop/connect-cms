@@ -3,6 +3,7 @@
 namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\BucketsRoles;
 
@@ -43,9 +44,10 @@ class Buckets extends Model
     {
 //echo $this->id;
         // すでに読み込み済みならば、読み込み済みデータを返す
-        if ($this->buckets_roles) {
-            return $this->editArrayBucketsRoles();
-        }
+        // 権限更新の際に、更新前データを保持 ＞ 更新でデータ変わる ＞ 古い状態を使用になるので、毎回、読む形に変更
+        //if ($this->buckets_roles) {
+        //    return $this->editArrayBucketsRoles();
+        //}
 
         $this->buckets_roles = BucketsRoles::where('buckets_id', $this->id)
                                            ->get();
@@ -57,10 +59,14 @@ class Buckets extends Model
      */
     public function canPost($role)
     {
+        // すでに読み込み済みならば、読み込み済みデータを返す
+        // 権限更新の際に、更新前データを保持 ＞ 更新でデータ変わる ＞ 古い状態を使用になるので、毎回、読む形に変更
+        //if ($this->buckets_roles == null) {
+        //    $this->getBucketsRoles();
+        //}
+
         // Buckets に対するrole の取得
-        if ($this->buckets_roles == null) {
-            $this->getBucketsRoles();
-        }
+        $this->getBucketsRoles();
 
         // 渡された権限がバケツに投稿できる権限かどうかのチェック
         foreach($this->buckets_roles as $buckets_role) {
@@ -116,9 +122,14 @@ class Buckets extends Model
     public function needApproval($role)
     {
         // Buckets に対するrole の取得
-        if ($this->buckets_roles == null) {
-            $this->getBucketsRoles();
-        }
+        // 権限更新の際に、更新前データを保持 ＞ 更新でデータ変わる ＞ 古い状態を使用になるので、毎回、読む形に変更
+        //if ($this->buckets_roles == null) {
+        //    $this->getBucketsRoles();
+        //}
+
+        // Buckets に対するrole の取得
+        $this->getBucketsRoles();
+
         // 渡された権限が承認が必要かどうかのチェック
         foreach($this->buckets_roles as $buckets_role) {
             if ($buckets_role->role == $role && $buckets_role->approval_flag == 1) {
