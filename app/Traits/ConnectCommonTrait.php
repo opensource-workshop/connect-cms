@@ -562,7 +562,7 @@ trait ConnectCommonTrait
     /**
      *  固定記事からスマホメニューを出すためのタグ生成
      */
-    public function getSmpMenu($level1_pages)
+    public function getSmpMenu($level1_pages, $page_id = null)
     {
         $sp_menu  = '' . "\n";
         $sp_menu .= '<nav class="sp_menu">' . "\n";
@@ -590,10 +590,19 @@ trait ConnectCommonTrait
 
             // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
             if (is_array($classes) && in_array('smp_a_link', $classes)) {
-                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>' . $level1_page['parent']->page_name . '</a>' . "\n";
+                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
+                if ($page_id == $level1_page['parent']->id) {
+                    $sp_menu .= '<u>' . $level1_page['parent']->page_name . '</u>';
+                }
+                else {
+                    $sp_menu .= $level1_page['parent']->page_name;
+                }
+                $sp_menu .= '</a>' . "\n";
             }
             else {
-                $sp_menu .= '<p' . $active_class . '>' . $level1_page['parent']->page_name . '</p>' . "\n";
+                $sp_menu .= '<p' . $active_class . '>';
+                $sp_menu .= $level1_page['parent']->page_name;
+                $sp_menu .= '</p>' . "\n";
             }
 
             if (array_key_exists('child', $level1_page)) {
@@ -603,7 +612,16 @@ trait ConnectCommonTrait
                         continue;
                     }
                     else {
-                        $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . '>' . $child->page_name . '</a></li>' . "\n";
+                        $child_depth = intval($child->depth) - 1;
+                        $child_margin_left = ($child_depth > 0) ? $child_depth * 20 : 0;
+                        $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . ' style="margin-left:' . $child_margin_left . 'px"' . '>';
+                        if ($page_id == $child->id) {
+                            $sp_menu .= '<u>' . $child->page_name . '</u>';
+                        }
+                        else {
+                            $sp_menu .= $child->page_name;
+                        }
+                        $sp_menu .= '</a></li>' . "\n";
                     }
                 }
                 $sp_menu .= '</ul>' . "\n";

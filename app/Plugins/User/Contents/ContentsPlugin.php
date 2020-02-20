@@ -278,7 +278,7 @@ class ContentsPlugin extends UserPluginBase
         $level1_pages = $this->getPages($format);
 
         // スマホメニュー用タグ生成とコンテンツ変換
-        $sp_menu = $this->getSmpMenu($level1_pages);
+        $sp_menu = $this->getSmpMenu($level1_pages, $page_id);
         if ($contents && $sp_menu) {
             $contents->content_text = str_replace('<cc value="cc:menu"></cc>', $sp_menu, $contents->content_text);
         }
