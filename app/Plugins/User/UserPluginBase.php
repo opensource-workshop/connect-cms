@@ -401,6 +401,47 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     * 画面からのソート指定があれば取得
+     */
+    protected function getRequestOrderBy($request_sort, $request_order_by)
+    {
+        // 画面からのソート指定があれば使用
+        if ( !empty( $request_sort ) ) {
+            $request_order_by = explode('|', $request_sort);
+        }
+        return $request_order_by;
+    }
+
+    /**
+     * 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの) 取得
+     */
+    protected function getSortOrderLink($request_sort, $sort_inits, $request_order_by)
+    {
+        // 画面からのソート指定があれば使用(ソート指定があった項目は、ソート設定の内容を入れ替える)
+        if ( !empty( $request_sort ) ) {
+            //$request_order_by = explode('|', $request_sort);
+            if ($request_order_by[1] == "asc") {
+                $sort_inits[$request_order_by[0]]=["asc", "desc"];
+            }
+            else {
+                $sort_inits[$request_order_by[0]]=["desc", "asc"];
+            }
+        }
+
+        // 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの)
+        $order_link = array();
+        foreach ( $sort_inits as $order_by_key => $order_by ) {
+            if ( $request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
+                $order_link[$order_by_key] = array_reverse($order_by);
+            }
+            else {
+                $order_link[$order_by_key] = $order_by;
+            }
+        }
+        return $order_link;
+    }
+
+    /**
      *  フレームとBuckets 取得
      */
     protected function getBuckets($frame_id)
@@ -476,27 +517,22 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
-        // buckets がまだない場合
-        $frame_update = false;
-        if (empty($buckets)) {
-            $frame_update = true;
+        // buckets がまだない & 固定記事プラグインの場合
+        if (empty($buckets) && $this->frame->plugin_name == 'contents') {
             $buckets = new Buckets;
             $buckets->bucket_name = '無題';
             $buckets->plugin_name = 'contents';
-        }
+            // Buckets の更新
+            $buckets->save();
 
-        // Buckets の更新
-        $buckets->save();
+            // Frame にbuckets_id を登録
+            Frame::where('id', $frame_id)
+                 ->update(['bucket_id' => $buckets->id]);
+        }
 
         // BucketsRoles の更新
         $this->saveRequestRole($request, $buckets, 'role_reporter');
         $this->saveRequestRole($request, $buckets, 'role_article');
-
-        // Frame にbuckets_id を登録
-        if ($frame_update) {
-            Frame::where('id', $frame_id)
-                 ->update(['bucket_id' => $buckets->id]);
-        }
 
         // 画面の呼び出し
         return $this->commonView(

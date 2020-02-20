@@ -13,6 +13,11 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+@if($plugin_name == 'contents' || $buckets)
+{{-- 固定記事プラグイン(=コンテンツプラグイン)はバケツありなし、どちらでも表示する。 --}}
+{{-- 固定記事プラグイン(=コンテンツプラグイン)以外はバケツありのみ、表示する。 --}}
+
 <form action="/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST" class="mt-3">
     {{ csrf_field() }}
 
@@ -82,4 +87,13 @@
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 更新</button>
     </div>
 </form>
+
+@else
+{{-- 表示しない。 --}}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-circle"></i>
+    設定画面から、使用する設定を選択するか、作成してください。
+</div>
+@endif
+
 @endsection

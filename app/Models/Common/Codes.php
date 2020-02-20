@@ -34,6 +34,11 @@ class Codes extends Model
         'type_code5',
         'code',
         'value',
+        'additional1',
+        'additional2',
+        'additional3',
+        'additional4',
+        'additional5',
         'display_sequence',
     ];
 

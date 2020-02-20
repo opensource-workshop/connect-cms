@@ -140,7 +140,9 @@ return [
         'saveBuckets'         => ['frames.create'],
         'destroyBuckets'      => ['frames.delete'],
         'changeBuckets'       => ['frames.change'],
-
+        'editBucketsRoles'    => ['frames.edit'],
+        'saveBucketsRoles'    => ['frames.edit'],
+        
         'addColumn'           => ['buckets.addColumn'],
         'editColumn'          => ['buckets.editColumn'],
         'deleteColumn'        => ['buckets.deleteColumn'],
@@ -174,9 +176,11 @@ return [
         'listBuckets'         => ['get'],
         'createBuckets'       => ['get'],
         'editBuckets'         => ['get'],
+        'editBucketsRoles'    => ['get'],
         'saveBuckets'         => ['post'],
         'destroyBuckets'      => ['post'],
         'changeBuckets'       => ['post'],
+        'saveBucketsRoles'    => ['post'],
 
         'addColumn'           => ['post'],
         'editColumn'          => ['get'],
