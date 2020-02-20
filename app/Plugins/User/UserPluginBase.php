@@ -401,6 +401,47 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     * 画面からのソート指定があれば取得
+     */
+    protected function getRequestOrderBy($request_sort, $request_order_by)
+    {
+        // 画面からのソート指定があれば使用
+        if ( !empty( $request_sort ) ) {
+            $request_order_by = explode('|', $request_sort);
+        }
+        return $request_order_by;
+    }
+
+    /**
+     * 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの) 取得
+     */
+    protected function getSortOrderLink($request_sort, $sort_inits, $request_order_by)
+    {
+        // 画面からのソート指定があれば使用(ソート指定があった項目は、ソート設定の内容を入れ替える)
+        if ( !empty( $request_sort ) ) {
+            //$request_order_by = explode('|', $request_sort);
+            if ($request_order_by[1] == "asc") {
+                $sort_inits[$request_order_by[0]]=["asc", "desc"];
+            }
+            else {
+                $sort_inits[$request_order_by[0]]=["desc", "asc"];
+            }
+        }
+
+        // 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの)
+        $order_link = array();
+        foreach ( $sort_inits as $order_by_key => $order_by ) {
+            if ( $request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
+                $order_link[$order_by_key] = array_reverse($order_by);
+            }
+            else {
+                $order_link[$order_by_key] = $order_by;
+            }
+        }
+        return $order_link;
+    }
+
+    /**
      *  フレームとBuckets 取得
      */
     protected function getBuckets($frame_id)
