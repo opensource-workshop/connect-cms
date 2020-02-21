@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * 履歴ありUserable
@@ -44,10 +45,13 @@ trait Userable
          *  オブジェクトdelete 時のイベントハンドラ
          */
         static::deleting(function (Model $model) {
-            $model->deleted_id   = Auth::user()->id;
-            $model->deleted_name = Auth::user()->name;
-            // delete時はsave走らないため、値をセットしても保存されない。そのため明示的にsaveする。
-            $model->save();
+            // カラムあるか
+            if (Schema::hasColumn($model->getTable(), 'deleted_id') && Schema::hasColumn($model->getTable(), 'deleted_name')) {
+                $model->deleted_id   = Auth::user()->id;
+                $model->deleted_name = Auth::user()->name;
+                // delete時はsave走らないため、値をセットしても保存されない。そのため明示的にsaveする。
+                $model->save();
+            }
         });
     }
 }
