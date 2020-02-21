@@ -18,7 +18,7 @@
 {{-- 固定記事プラグイン(=コンテンツプラグイン)はバケツありなし、どちらでも表示する。 --}}
 {{-- 固定記事プラグイン(=コンテンツプラグイン)以外はバケツありのみ、表示する。 --}}
 
-<form action="/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST" class="mt-3">
+<form action="/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST" class="mt-3">
     {{ csrf_field() }}
 
     <div class="form-group">
