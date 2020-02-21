@@ -27,7 +27,9 @@
             <tr>
                 <th class="border-top-0"></th>
                 <th class="border-top-0">投稿</th>
+                @if($use_approval)
                 <th class="border-top-0">承認</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -43,6 +45,8 @@
                         <label class="custom-control-label" for="role_reporter_post">投稿できる</label>
                     </div>
                 </td>
+
+                @if($use_approval)
                 <td>
                     <div class="custom-control custom-checkbox custom-control-inline">
                         @if($buckets && $buckets->needApproval("role_reporter"))
@@ -53,6 +57,7 @@
                         <label class="custom-control-label" for="role_reporter_approval">承認が必要</label>
                     </div>
                 </td>
+                @endif
             </tr>
             <tr>
                 <th>モデレータ</th>
@@ -66,6 +71,8 @@
                         <label class="custom-control-label" for="role_article_post">投稿できる</label>
                     </div>
                 </td>
+
+                @if($use_approval)
                 <td>
                     <div class="custom-control custom-checkbox custom-control-inline">
                         @if($buckets && $buckets->needApproval("role_article"))
@@ -76,6 +83,7 @@
                         <label class="custom-control-label" for="role_article_approval">承認が必要</label>
                     </div>
                 </td>
+                @endif
             </tr>
             </tr>
         </tbody>
