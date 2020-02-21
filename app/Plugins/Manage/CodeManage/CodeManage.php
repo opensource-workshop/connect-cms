@@ -52,7 +52,7 @@ class CodeManage extends ManagePluginBase
      */
     public function index($request, $page_id = null, $errors = array())
     {
-        // 現在の連番管理データの取得
+        // コード管理データの取得
         $codes = Codes::select('codes.*',
                                    'buckets.bucket_name',
                                    'plugins.plugin_name_full')
