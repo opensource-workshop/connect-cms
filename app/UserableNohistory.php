@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Log;
  * 
  * 使用するには、モデルでcreated_id、created_name、updated_id、updated_nameを定義してuseする。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Core
@@ -46,6 +45,8 @@ trait UserableNohistory
         static::deleting(function (Model $model) {
             $model->deleted_id   = Auth::user()->id;
             $model->deleted_name = Auth::user()->name;
+            // delete時はsave走らないため、値をセットしても保存されない。そのため明示的にsaveする。
+            $model->save();
         });
     }
 }
