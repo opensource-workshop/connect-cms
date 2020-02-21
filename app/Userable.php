@@ -46,6 +46,8 @@ trait Userable
         static::deleting(function (Model $model) {
             $model->deleted_id   = Auth::user()->id;
             $model->deleted_name = Auth::user()->name;
+            // delete時はsave走らないため、値をセットしても保存されない。そのため明示的にsaveする。
+            $model->save();
         });
     }
 }
