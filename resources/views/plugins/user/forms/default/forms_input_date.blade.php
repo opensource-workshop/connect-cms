@@ -11,7 +11,10 @@
      */
      $(function () {
         $('#{{ $form_obj->id }}').datetimepicker({
-            dayViewHeaderFormat: 'YYYY年 M月',
+            @if (App::getLocale() == Locale::ja)
+                dayViewHeaderFormat: 'YYYY年 M月',
+            @endif
+            locale: '{{ App::getLocale() }}',
             format: 'YYYY/MM/DD',
             timepicker:false
         });
