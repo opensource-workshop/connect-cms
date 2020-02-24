@@ -41,7 +41,7 @@
     {{ csrf_field() }}
     <input type="hidden" name="target_ym" value="{{$edit_ym}}">
 
-    <table>
+    <table style="background-color: #ffffff;">
         <tr>
             <th>日</th>
             <th>パターン</th>
