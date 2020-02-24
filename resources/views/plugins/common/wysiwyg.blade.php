@@ -51,16 +51,33 @@
     elseif ($frame->area_id == 4) {
         $body_class = 'ccFooterArea';
     }
+
+    // plugins
+    $plugins = 'file image link autolink preview textcolor code table lists';
+    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
+        $plugins .= ' translate';
+    }
+    $plugins = "plugins  : '" . $plugins . "',";
+
+    // toolbar
+    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file | preview | code ';
+    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
+        $toolbar .= '| translate ';
+    }
+    $toolbar = "toolbar  : '" . $toolbar . "',";
+
 @endphp
 <script type="text/javascript" src="/js/tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
     tinymce.init({
         selector : 'textarea',
         language : 'ja',
-        plugins  : 'file image link autolink preview textcolor code table lists',
+
+        {{-- plugins --}}
+        {!!$plugins!!}
 
         {{-- formatselect = スタイル, styleselect = 書式 --}}
-        toolbar  : 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file | preview | code ',
+        {!!$toolbar!!}
 
         {{-- テーマ固有書式 --}}
         {!!$style_formats_file!!}
