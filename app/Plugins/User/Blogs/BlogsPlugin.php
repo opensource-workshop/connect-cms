@@ -404,6 +404,11 @@ WHERE status = 0
                               )
                       ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
+                      ->leftJoin('blogs_frames', function ($join) {
+                          $join->on('blogs_frames.blogs_id', '=', 'blogs.id')
+                          // frames.id がDB::Raw しなければ、バインドの値としてSQL が生成されて、"frames.id" というframes.id は存在せず、left join がレコードが取れなかった。
+                          ->where('blogs_frames.frames_id', '=', DB::Raw("frames.id"));
+                      })
                       ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                       ->join('pages', 'pages.id', '=', 'frames.page_id')
                       ->whereIn('pages.id', $page_ids)
@@ -412,8 +417,15 @@ WHERE status = 0
                           $plugin_query->where('blogs_posts.post_title', 'like', '?')
                                        ->orWhere('blogs_posts.post_text', 'like', '?');
                       })
+                      ->whereRaw('CASE
+                                  WHEN blogs_frames.scope IS NULL
+                                      THEN blogs_frames.scope IS NULL
+                                  WHEN blogs_frames.scope = "year" AND blogs_frames.scope_value IS NOT NULL
+                                      THEN posted_at >= CONCAT(blogs_frames.scope_value, "-01-01") AND posted_at <= CONCAT(blogs_frames.scope_value, "-12-31 23:59:59")
+                                  WHEN blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL
+                                      THEN posted_at >= CONCAT(blogs_frames.scope_value, "-04-01") AND posted_at <= CONCAT((blogs_frames.scope_value + 1), "-03-31 23:59:59")
+                                  END')
                       ->whereNull('blogs_posts.deleted_at');
-
 
         $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
         $return[] = $bind;
