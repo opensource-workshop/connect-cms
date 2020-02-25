@@ -9,7 +9,17 @@
 --}}
 {{-- フレーム(削除) --}}
 {{-- <table class="table"><tr><td> --}}
- 
+
+{{-- 設定系メニューがデザインに引きずられて画面が不完全になるのを防ぐための措置 --}}
+<style type="text/css">
+<!--
+#frame-{{$frame->id}} {
+    background: #fff;
+    color: #000000;
+    max-height: 100%;
+}
+-->
+</style>
 <div class="frame-setting">
 <div class="frame-setting-menu">
     <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
