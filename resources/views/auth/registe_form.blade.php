@@ -1,6 +1,12 @@
 
 @include('common.errors_form_line')
 
+@if ($errors->has('undelete'))
+    <div class="alert alert-danger">
+        <strong>{{ $errors->first('undelete') }}</strong>
+    </div>
+@endif
+
 @if (isset($function) && $function == 'edit')
     <form class="form-horizontal" method="POST" action="{{url('/manage/user/update/')}}/{{$id}}">
 @else
