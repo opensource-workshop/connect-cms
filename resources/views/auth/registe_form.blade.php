@@ -211,8 +211,8 @@
                 @endif
             </button>
         </div>
-        {{-- 既存ユーザの場合は削除処理のボタンも表示 --}}
-        @if (isset($id) && $id)
+        {{-- 既存ユーザの場合は削除処理のボタンも表示(自分自身の場合は表示しない) --}}
+        @if (isset($id) && $id && $id != Auth::user()->id)
             <div class="col-sm-3 pull-right text-right">
                 <a data-toggle="collapse" href="#collapse{{$id}}">
                     <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
@@ -222,7 +222,7 @@
     </div>
 </form>
 
-@if (isset($id) && $id)
+@if (isset($id) && $id && $id != Auth::user()->id)
 <div id="collapse{{$id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
