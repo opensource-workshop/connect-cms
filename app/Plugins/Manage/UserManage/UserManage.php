@@ -3,6 +3,7 @@
 namespace App\Plugins\Manage\UserManage;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -267,11 +268,28 @@ class UserManage extends ManagePluginBase
      */
     public function destroy($request, $id = null)
     {
+
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // ユーザID 取得
+        $user_id = Auth::user()->id;
+
+        // 自分自身は削除できない。
+        if ($user_id == User::find($id)->id) {
+            $validator = Validator::make($request->all(), []);
+            $validator->errors()->add('undelete', '自分は削除できません。');
+            return $this->edit($request, $id)->withErrors($validator);
+        }
+
         // id がある場合、データを削除
         if ( $id ) {
 
             // データを削除する。
             User::destroy($id);
+
+            // 権限データを削除する。
+            UsersRoles::where('users_id', $id)->delete();
         }
         // 削除後はユーザ一覧を呼ぶ。
         return redirect('manage/user');
