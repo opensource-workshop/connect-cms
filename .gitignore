@@ -4,6 +4,8 @@
 /public/storage
 /public/themes/Users/*
 !/public/themes/Users/themes.ini
+/public/themes/Originals/*
+!/public/themes/Originals/themes.ini
 /public/uploads/*
 /storage/*.key
 /vendor
