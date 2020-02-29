@@ -23,7 +23,17 @@
     <input type="hidden" name="dir_name" value="">
 </form>
 
+<form action="{{url('/')}}/manage/theme/editJs" method="post" name="form_js" class="d-inline">
+    {{ csrf_field() }}
+    <input type="hidden" name="dir_name" value="">
+</form>
+
 <form action="{{url('/')}}/manage/theme/editName" method="post" name="form_name" class="d-inline">
+    {{ csrf_field() }}
+    <input type="hidden" name="dir_name" value="">
+</form>
+
+<form action="{{url('/')}}/manage/theme/listImages" method="post" name="form_images" class="d-inline">
     {{ csrf_field() }}
     <input type="hidden" name="dir_name" value="">
 </form>
@@ -35,11 +45,23 @@
         form_css.dir_name.value = dir_name;
         form_css.submit();
     }
+    // Javascript 編集画面へ
+    function view_js_edit(dir_name)
+    {
+        form_js.dir_name.value = dir_name;
+        form_js.submit();
+    }
     // テーマ名編集画面へ
     function view_name_edit(dir_name)
     {
         form_name.dir_name.value = dir_name;
         form_name.submit();
+    }
+    // 画像一覧画面へ
+    function view_list_images(dir_name)
+    {
+        form_images.dir_name.value = dir_name;
+        form_images.submit();
     }
 </script>
 
@@ -47,7 +69,11 @@
     <li class="list-group-item bg-light">ユーザ・テーマ一覧</li>
     @foreach($dirs as $dir)
         <li class="list-group-item">
-            {{$dir}}　 <a href="javascript:view_css_edit('{{$dir}}');">［CSS編集］</a> <a href="javascript:view_name_edit('{{$dir}}');">［テーマ名編集］</a>
+            {{$dir['dir']}}（{{$dir['theme_name']}}）　
+               <a href="javascript:view_css_edit('{{$dir['dir']}}');">［CSS編集］</a>
+               <a href="javascript:view_js_edit('{{$dir['dir']}}');">［JavaScript編集］</a>
+               <a href="javascript:view_list_images('{{$dir['dir']}}');">［画像管理］</a>
+               <a href="javascript:view_name_edit('{{$dir['dir']}}');">［テーマ編集］</a>
         </li>
     @endforeach
 </ul>
@@ -60,7 +86,7 @@
         <form action="/manage/theme/create" method="POST">
             {{csrf_field()}}
 
-            {{-- テーマ名 --}}
+            {{-- ディレクトリ名 --}}
             <div class="form-group row">
                 <label for="dir_name" class="col-md-3 col-form-label text-md-right">ディレクトリ名</label>
                 <div class="col-md-9">
@@ -68,6 +94,7 @@
                     @if ($errors && $errors->has('dir_name')) <div class="text-danger">{{$errors->first('dir_name')}}</div> @endif
                 </div>
             </div>
+            {{-- テーマ名 --}}
             <div class="form-group row">
                 <label for="theme_name" class="col-md-3 col-form-label text-md-right">テーマ名</label>
                 <div class="col-md-9">
