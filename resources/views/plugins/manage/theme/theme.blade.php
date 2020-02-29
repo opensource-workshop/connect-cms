@@ -90,7 +90,11 @@
             <div class="form-group row">
                 <label for="dir_name" class="col-md-3 col-form-label text-md-right">ディレクトリ名</label>
                 <div class="col-md-9">
+                    @if ($errors)
                     <input type="text" name="dir_name" id="dir_name" value="{{old('dir_name', '')}}" class="form-control">
+                    @else
+                    <input type="text" name="dir_name" id="dir_name" value="" class="form-control">
+                    @endif
                     @if ($errors && $errors->has('dir_name')) <div class="text-danger">{{$errors->first('dir_name')}}</div> @endif
                 </div>
             </div>
@@ -98,7 +102,11 @@
             <div class="form-group row">
                 <label for="theme_name" class="col-md-3 col-form-label text-md-right">テーマ名</label>
                 <div class="col-md-9">
+                    @if ($errors)
                     <input type="text" name="theme_name" id="theme_name" value="{{old('theme_name', '')}}" class="form-control">
+                    @else
+                    <input type="text" name="theme_name" id="theme_name" value="" class="form-control">
+                    @endif
                     @if ($errors && $errors->has('theme_name')) <div class="text-danger">{{$errors->first('theme_name')}}</div> @endif
                 </div>
             </div>
