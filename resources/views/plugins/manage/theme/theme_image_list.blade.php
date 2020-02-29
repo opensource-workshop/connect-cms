@@ -45,7 +45,7 @@
         @foreach($files as $file)
         <li class="list-group-item">
             {{$file}} <a href="javascript:delete_image('{{$file}}')">[削除]</a><br />
-            <img src="/themes/Users/{{$dir_name}}/images/{{$file}}" class="img-fluid">
+            <a href="{{url('/')}}/themes/Users/{{$dir_name}}/images/{{$file}}" target="_blank"><img src="{{url('/')}}/themes/Users/{{$dir_name}}/images/{{$file}}" class="img-fluid"></a>
         </li>
         @endforeach
     </ul>
