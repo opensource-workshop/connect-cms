@@ -136,19 +136,22 @@ class UploadController extends ConnectController
             $header_color = $base_header_color->value;
         }
 
-        // ヘッダー固定設定
-        if (empty($header_color)) {
-            $base_header_color = Configs::where('name', '=', 'base_header_color')->first();
-            $header_color = $base_header_color->value;
+        // セッションにヘッダーの背景色がある場合（テーマ・チェンジャーで選択時の動き）
+        if ($request && $request->session()->get('session_header_black') == true) {
+            $header_color = '#000000';
         }
 
         header('Content-Type: text/css');
 
         // 背景色
-        echo "body {background-color: " . $background_color . "; }\n";
+        if ($background_color) {
+            echo "body {background-color: " . $background_color . "; }\n";
+        }
 
         // ヘッダーの背景色
-        echo ".navbar-default { background-color: " . $header_color . "; }\n";
+        if ($header_color) {
+            echo ".bg-dark  { background-color: " . $header_color . " !important; }\n";
+        }
 
         // 画像の保存機能の無効化(スマホ長押し禁止)
         if ($config_generals['base_touch_callout']['value'] == '1') {

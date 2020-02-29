@@ -112,10 +112,19 @@ class ThemechangersPlugin extends UserPluginBase
         // テーマ選択肢の取得
         $themes = $this->getThemes();
 
+        // セッションに背景を黒の指定があるか
+        if ($request->session()->get('session_header_black') == true) {
+            $session_header_black = true;
+        }
+        else {
+            $session_header_black = false;
+        }
+
         // 画面へ
         return $this->view('themechangers', [
-            'page_theme' => $page_theme,
-            'themes'     => $themes,
+            'page_theme'           => $page_theme,
+            'themes'               => $themes,
+            'session_header_black' => $session_header_black,
         ]);
     }
 
@@ -132,6 +141,14 @@ class ThemechangersPlugin extends UserPluginBase
 
         // 選択したテーマをセッションに保持する。
         $request->session()->put('session_theme', $request->session_theme);
+
+        // 背景の黒チェックをセッションに保持する。
+        if ($request->has('session_header_black') && $request->session_header_black == '1') {
+            $request->session()->put('session_header_black', true);
+        }
+        else {
+            $request->session()->put('session_header_black', false);
+        }
 
         // /redirect/plugin/themechangers で呼ばれる想定なので、この後、リダイレクトされる。
     }

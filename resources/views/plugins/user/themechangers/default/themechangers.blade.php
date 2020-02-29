@@ -12,7 +12,7 @@
 
 <form action="/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}" method="POST">
     {{csrf_field()}}
-    <div class="form-group">
+    <div class="form-group mb-0">
         <select class="form-control" name="session_theme" class="form-control" onchange="javascript:submit(this.form);">
             <option value="session:clear">元に戻す</option>
             @foreach($themes as $theme)
@@ -27,6 +27,12 @@
                 @endisset
             @endforeach
         </select>
+
+        <div class="custom-control custom-checkbox mt-2">
+            <input type="checkbox" name="session_header_black" value="1" class="custom-control-input" id="session_header_black" @if(old('session_header_black', $session_header_black)) checked=checked @endif onchange="javascript:submit(this.form);">
+            <label class="custom-control-label" for="session_header_black">ヘッダーは黒にする</label>
+        </div>
+
     </div>
 </form>
 

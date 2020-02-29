@@ -75,11 +75,8 @@
     --}}
     <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
 
-    <!-- Connect-CMS CSS -->
+    <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
-@if (isset($page))
-    <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
-@endif
 
     <!-- Themes CSS -->
 @if (isset($themes['css']) && $themes['css'] != '')
@@ -89,6 +86,11 @@
     <!-- Themes JS -->
 @if (isset($themes['js']) && $themes['js'] != '')
     <script src="/themes/{{$themes['js']}}/themes.js"></script>
+@endif
+
+    <!-- Connect-CMS Page CSS -->
+@if (isset($page))
+    <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
 @endif
 
     <!-- Context -->
