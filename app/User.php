@@ -47,4 +47,15 @@ class User extends Authenticatable
     {
         $this->notify(new PasswordResetNotification($token));
     }
+
+    /**
+     * ユーザーのロールを取得
+     * bugfix: ログイン時、「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると例外が発生するバグに対応
+     *         アクセサを定義して、user_rolesがnullの場合、arrayを返す
+     *         アクセサ定義の参考 https://readouble.com/laravel/5.5/ja/eloquent-mutators.html#accessors-and-mutators
+     */
+    public function getUserRolesAttribute($value)
+    {
+        return is_null($value) ? [] : $value;
+    }
 }
