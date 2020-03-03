@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -52,6 +53,15 @@ class UploadController extends ConnectController
         // データベースがない場合は空で返す
         if (empty($uploads)) {
             return response()->download( storage_path(config('connect.no_image_path')));
+        }
+
+        // 一時保存ファイルの場合は所有者を確認して、所有者ならOK
+        // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
+        if ($uploads->temporary_flag == 1) {
+            $user_id = Auth::id();
+            if ($uploads->created_id != $user_id) {
+                return response()->download( storage_path(config('connect.no_image_path')));
+            }
         }
 
         // カウントアップの対象拡張子ならカウントアップ
