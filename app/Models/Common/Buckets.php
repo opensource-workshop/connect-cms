@@ -90,7 +90,7 @@ class Buckets extends Model
             return false;
         }
 
-        if (!array_key_exists('base', $user->user_roles)) {
+        if (!array_key_exists('base', (array)$user->user_roles)) {
             return false;
         }
 
