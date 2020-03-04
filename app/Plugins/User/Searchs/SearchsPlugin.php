@@ -71,7 +71,7 @@ class SearchsPlugin extends UserPluginBase
         $frame = Frame::select('searchs.*',
                               'frames.id as frames_id',
                               'frames.bucket_id',
-                              'frames.disable_searchs',
+                              'frames.disable_searchs'
                           )
                         ->leftJoin('searchs', 'frames.bucket_id', '=', 'searchs.bucket_id')
                         ->where('frames.id', $frame_id)
