@@ -303,6 +303,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         if (empty($database)) {
             $databases = null;
+            $columns = null;
+            $inputs = null;
+            $input_cols = null;
         }
         else {
 
