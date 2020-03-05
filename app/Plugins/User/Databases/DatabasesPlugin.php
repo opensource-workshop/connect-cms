@@ -1311,7 +1311,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'databases_columns.caption_color',
                 'databases_columns.display_sequence',
                 DB::raw('count(databases_columns_selects.id) as select_count'),
-                DB::raw('GROUP_CONCAT(databases_columns_selects.value order by databases_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
+                DB::raw('GROUP_CONCAT(databases_columns_selects.value order by databases_columns_selects.display_sequence SEPARATOR \',\') as select_names')
             )
             ->where('databases_columns.databases_id', $databases_id)
             // 予約項目の子データ（選択肢）
@@ -1327,7 +1327,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'databases_columns.frame_col',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
-                'databases_columns.display_sequence',
+                'databases_columns.display_sequence'
             )
             ->orderby('databases_columns.display_sequence')
             ->get();
