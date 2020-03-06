@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RedirectsUsers;
 
 // Connect-CMS 用設定データ
+use App\User;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Traits\ConnectCommonTrait;
@@ -27,11 +28,12 @@ trait RegistersUsers
     {
 
         // ユーザー登録関連設定の取得
-        $configs = Configs::where('category', 'user_register')->get();
+        $configs = Configs::where('category', 'general')->orWhere('category', 'user_register')->get();
         $configs_array = array();
         foreach ($configs as $config) {
             $configs_array[$config['name']] = $config['value'];
         }
+        $configs = $configs_array;
 
         // ログインしているユーザー情報を取得
         //$user = Auth::user();
@@ -48,7 +50,8 @@ trait RegistersUsers
 
         // フォームの初期値として空のユーザオブジェクトを渡す。
         return view('auth.register',[
-            "user" => new User(),
+            "user"    => new User(),
+            "configs" => $configs,
         ]);
     }
 
@@ -84,27 +87,31 @@ trait RegistersUsers
         // ユーザーデータ登録
         event(new Registered($user = $this->create($request->all())));
 
-        // ユーザ権限の登録
-        if (!empty($request->base)) {
-            foreach($request->base as $role_name => $value) {
-                UsersRoles::create([
-                    'users_id'   => $user->id,
-                    'target'     => 'base',
-                    'role_name'  => $role_name,
-                    'role_value' => 1
-                ]);
-            }
-        }
+        // ユーザー管理権限がある場合は、各権限の付与
+        if ($this->isCan('admin_user')) {
 
-        // 管理権限の登録
-        if (!empty($request->manage)) {
-            foreach($request->manage as $role_name => $value) {
-                UsersRoles::create([
-                    'users_id'   => $user->id,
-                    'target'     => 'manage',
-                    'role_name'  => $role_name,
-                    'role_value' => 1
-                ]);
+            // ユーザ権限の登録
+            if (!empty($request->base)) {
+                foreach($request->base as $role_name => $value) {
+                    UsersRoles::create([
+                        'users_id'   => $user->id,
+                        'target'     => 'base',
+                        'role_name'  => $role_name,
+                        'role_value' => 1
+                    ]);
+                }
+            }
+
+            // 管理権限の登録
+            if (!empty($request->manage)) {
+                foreach($request->manage as $role_name => $value) {
+                    UsersRoles::create([
+                        'users_id'   => $user->id,
+                        'target'     => 'manage',
+                        'role_name'  => $role_name,
+                        'role_value' => 1
+                    ]);
+                }
             }
         }
 
