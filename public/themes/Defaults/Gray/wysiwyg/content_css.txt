@@ -1,0 +1,1 @@
+        content_css: "/css/app.css, /css/connect.css, /themes/Defaults/Gray/themes.css, /fontawesome/css/all.min.css", // スタイル
