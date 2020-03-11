@@ -5,6 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  --}}
+@php
+    // value 値の取得
+    $value_obj = (empty($input_cols)) ? null : $input_cols->where('databases_inputs_id', $id)->where('databases_columns_id', $database_obj->id)->first();
+    $value = '';
+    if (!empty($value_obj)) {
+        $value = $value_obj->value;
+    }
+@endphp
 <script>
     /**
      * カレンダーボタン押下
@@ -13,6 +21,7 @@
         $('#{{ $database_obj->id }}').datetimepicker({
             dayViewHeaderDatabaseat: 'YYYY年 M月',
             databaseat: 'YYYY/MM/DD',
+            format: 'YYYY/MM/DD',
             timepicker:false
         });
     });
@@ -22,7 +31,7 @@
         <input 
             type="text" 
             name="databases_columns_value[{{ $database_obj->id }}]" 
-            value="{{old('databases_columns_value.'.$database_obj->id)}}"
+            value="{{old('databases_columns_value.'.$database_obj->id, $value)}}"
             class="form-control datetimepicker-input" 
             data-target="#{{ $database_obj->id }}"
         >

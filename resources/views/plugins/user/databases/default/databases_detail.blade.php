@@ -11,12 +11,14 @@
 
 <table class="table table-bordered">
     @foreach($columns as $column)
+    @if($column->detail_hide_flag == 0)
     <tr>
         <th style="background-color: #e9ecef;">{{$column->column_name}}</th>
         <td>
-            {!!nl2br(e($input_cols->where('databases_columns_id', $column->id)->first()->value))!!}
+            @include('plugins.user.databases.default.databases_include_detail_value')
         </td>
     </tr>
+    @endif
     @endforeach
 </table>
 
@@ -28,16 +30,6 @@
         </a>
     </div>
 </div>
-
-{{--
-@foreach($input_cols as $input_col)
-    @if ($input_col->column_type == 'file')
-        <a href="{{url('/')}}/file/{{$input_col->value}}" target="_blank">{{$input_col->client_original_name}}</a>
-    @else
-        {!!nl2br(e($input_col->value))!!}<br />
-    @endif
-@endforeach
---}}
 
 <br />
 @can("role_article")

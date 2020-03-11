@@ -1,7 +1,7 @@
 {{--
  * データベース項目の詳細設定画面
  *
- * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com> 永原 篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  --}}
@@ -351,6 +351,142 @@
                             >{{ $value }}</option>
                         @endforeach
                     </select>
+                </div>
+            </div>
+
+            {{-- ボタンエリア --}}
+            <div class="form-group text-center">
+                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal"><i class="fas fa-check"></i> 更新</button>
+            </div>
+        </div>
+    </div>
+
+    <br>
+    {{-- DBカラム設定 --}}
+    <div class="card">
+        <h5 class="card-header">DBカラム設定</h5>
+        <div class="card-body">
+
+            {{-- 一覧から非表示にする指定 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">一覧への表示指定</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->list_hide_flag == 0)
+                            <input type="radio" value="0" id="list_hide_flag_0" name="list_hide_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="list_hide_flag_0" name="list_hide_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="list_hide_flag_0">一覧に表示する</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->list_hide_flag == 1)
+                            <input type="radio" value="1" id="list_hide_flag_1" name="list_hide_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="list_hide_flag_1" name="list_hide_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="list_hide_flag_1">一覧に表示しない</label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 詳細から非表示にする指定 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">詳細への表示指定</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->detail_hide_flag == 0)
+                            <input type="radio" value="0" id="detail_hide_flag_0" name="detail_hide_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="detail_hide_flag_0" name="detail_hide_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="detail_hide_flag_0">詳細に表示する</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->detail_hide_flag == 1)
+                            <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="detail_hide_flag_1">詳細に表示しない</label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 並べ替え指定 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">並べ替え指定</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->sort_flag == 0)
+                            <input type="radio" value="0" id="sort_flag_0" name="sort_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="sort_flag_0" name="sort_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="sort_flag_0">使用しない</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->sort_flag == 1)
+                            <input type="radio" value="1" id="sort_flag_1" name="sort_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="sort_flag_1" name="sort_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="sort_flag_1">昇順</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->sort_flag == 2)
+                            <input type="radio" value="2" id="sort_flag_2" name="sort_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="2" id="sort_flag_2" name="sort_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="sort_flag_2">降順</label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 検索対象指定 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">検索対象指定</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->search_flag == 0)
+                            <input type="radio" value="0" id="search_flag_0" name="search_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="search_flag_0" name="search_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="search_flag_0">検索対象にしない</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->search_flag == 1)
+                            <input type="radio" value="1" id="search_flag_1" name="search_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="search_flag_1" name="search_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="search_flag_1">検索対象とする</label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 絞り込み対象指定 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">絞り込み対象指定</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->select_flag == 0)
+                            <input type="radio" value="0" id="select_flag_0" name="select_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="select_flag_0" name="select_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="select_flag_0">絞り込み対象にしない</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->select_flag == 1)
+                            <input type="radio" value="1" id="select_flag_1" name="select_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="select_flag_1" name="select_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="select_flag_1">絞り込み対象とする</label>
+                    </div>
                 </div>
             </div>
 

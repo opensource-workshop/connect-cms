@@ -37,7 +37,9 @@
         <thead class="thead-light">
         <tr>
         @foreach($columns as $column)
+            @if($column->list_hide_flag == 0)
             <th>{{$column->column_name}}</th>
+            @endif
         @endforeach
         </tr>
         </thead>
@@ -46,14 +48,18 @@
         @foreach($inputs as $input)
         <tr>
             @foreach($columns as $column)
-                @if($loop->first)
-                <td>
-                    <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
-                        {!!nl2br(e($input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $column->id)->first()->value))!!}
-                    </a>
-                </td>
-                @else
-                <td>{!!nl2br(e($input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $column->id)->first()->value))!!}</td>
+                @if($column->list_hide_flag == 0)
+                    @if($loop->first)
+                    <td>
+                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
+                            @include('plugins.user.databases.default.databases_include_value')
+                        </a>
+                    </td>
+                    @else
+                    <td>
+                        @include('plugins.user.databases.default.databases_include_value')
+                    </td>
+                    @endif
                 @endif
             @endforeach
         </tr>

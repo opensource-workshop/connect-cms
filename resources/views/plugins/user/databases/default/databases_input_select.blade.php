@@ -5,6 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  --}}
+@php
+    // value 値の取得
+    $value_obj = (empty($input_cols)) ? null : $input_cols->where('databases_inputs_id', $id)->where('databases_columns_id', $database_obj->id)->first();
+    $value = '';
+    if (!empty($value_obj)) {
+        $value = $value_obj->value;
+    }
+@endphp
 @if (array_key_exists($database_obj->id, $databases_columns_id_select))
     @php
         // グループカラムの幅の計算
@@ -18,6 +26,7 @@
         @foreach($databases_columns_id_select[$database_obj->id] as $select)
 
             @if (old('databases_columns_value.'.$database_obj->id) == $select['value'] ||
+                 ($select['value'] == $value) ||
                  (isset($request->databases_columns_value) &&
                   array_key_exists($database_obj->id, $request->databases_columns_value) &&
                   $request->databases_columns_value[$database_obj->id] == $select['value'])

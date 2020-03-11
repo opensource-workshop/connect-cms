@@ -102,6 +102,38 @@
                 <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
             @endif
             @break
+        @case(DatabaseColumnType::image)
+            @php
+                // value 値の取得
+                if ($uploads && $uploads->where('columns_id', $database_column->id)) {
+                    $value_obj = $uploads->where('columns_id', $database_column->id)->first();
+                }
+            @endphp
+            @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
+                <img src="{{url('/')}}/file/{{$value_obj->id}}" />
+            @else
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
+            @endif
+            @break
+        @case(DatabaseColumnType::video)
+            @php
+                // value 値の取得
+                if ($uploads && $uploads->where('columns_id', $database_column->id)) {
+                    $value_obj = $uploads->where('columns_id', $database_column->id)->first();
+                }
+            @endphp
+            @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
+                <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
+            @else
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
+            @endif
+            @break
+        @case(DatabaseColumnType::wysiwyg)
+            {!!$request->databases_columns_value[$database_column->id]!!}
+            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+            @break
         @endswitch
         </div>
     </div>

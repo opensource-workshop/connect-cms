@@ -224,7 +224,7 @@ class DatabasesPlugin extends UserPluginBase
                                      ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                      ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                      ->where('databases_inputs_id', $inputs_id)
-                                     ->whereIn('databases_columns.column_type', ['file','image','movie'])
+                                     ->whereIn('databases_columns.column_type', ['file','image','video'])
                                      ->orderBy('databases_inputs_id', 'asc')
                                      ->orderBy('databases_columns_id', 'asc')
                                      ->get();
@@ -319,9 +319,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $inputs = DatabasesInputs::where('databases_id', $database->id)->orderBy('id', 'asc')->get();
 
             // 登録データ詳細の取得
-            $input_cols = DatabasesInputCols::whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $database->id))
-                                          ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
-                                          ->get();
+            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
+                                            ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
+                                            ->whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $database->id))
+                                            ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
+                                            ->get();
 
             // 表示用に配列に詰める
             
@@ -575,7 +577,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // ファイル項目を探して保存
         foreach($databases_columns as $databases_column) {
-            if ($databases_column->column_type == 'file') {
+            if (($databases_column->column_type == 'file')  ||
+                ($databases_column->column_type == 'image') ||
+                ($databases_column->column_type == 'video')) {
 
                 // ファイル系の処理パターン
                 // 新規登録   ＞ アップロードされたことを hasFile で検知
@@ -738,7 +742,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $databases_input_cols->save();
 
                 // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if ($databases_column->column_type == "file") {
+                if (($databases_column->column_type == "file")  ||
+                    ($databases_column->column_type == "image") ||
+                    ($databases_column->column_type == "video")) {
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
@@ -817,7 +823,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // ファイル型のファイル、uploads テーブルを削除
         foreach($input_cols as $input_col) {
-            if ($input_col->column_type == 'file') {
+            if (($input_col->column_type == 'file') ||
+                ($input_col->column_type == 'image') ||
+                ($input_col->column_type == 'video')) {
 
                 // 削除するファイルデータ
                 $delete_upload = Uploads::find($input_col->value);
@@ -1542,6 +1550,20 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // ～日以降を許容
         $column->rule_date_after_equal = $request->rule_date_after_equal;
 
+        // DBカラム設定
+
+        // 一覧から非表示にする指定
+        $column->list_hide_flag = (empty($request->list_hide_flag)) ? 0 : $request->list_hide_flag;
+        // 詳細から非表示にする指定
+        $column->detail_hide_flag = (empty($request->detail_hide_flag)) ? 0 : $request->detail_hide_flag;
+        // 並べ替え指定
+        $column->sort_flag = (empty($request->sort_flag)) ? 0 : $request->sort_flag;
+        // 検索対象指定
+        $column->search_flag = (empty($request->search_flag)) ? 0 : $request->search_flag;
+        // 絞り込み対象指定
+        $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
+
+        // 保存
         $column->save();
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 

@@ -1,5 +1,5 @@
 {{--
- * 登録画面(input mail)テンプレート。
+ * 登録画面(input wysiwyg)テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -13,7 +13,11 @@
         $value = $value_obj->value;
     }
 @endphp
-<input name="databases_columns_value[{{$database_obj->id}}]" class="form-control" type="{{$database_obj->column_type}}" value="@if ($frame_id == $request->frame_id){{old('databases_columns_value.'.$database_obj->id, $value)}}@endif">
+
+{{-- WYSIWYG 呼び出し --}}
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg'])
+
+<textarea name="databases_columns_value[{{$database_obj->id}}]" class="form-control wysiwyg">{{old('databases_columns_value.'.$database_obj->id, $value)}}</textarea>
 @if ($errors && $errors->has("databases_columns_value.$database_obj->id"))
     <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("databases_columns_value.$database_obj->id")}}</div>
 @endif

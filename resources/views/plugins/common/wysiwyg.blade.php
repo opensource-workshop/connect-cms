@@ -97,7 +97,12 @@
 <script type="text/javascript" src="/js/tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
     tinymce.init({
-        selector : 'textarea',
+        @if($target_class)
+            selector : 'textarea.{{$target_class}}',
+        @else
+            selector : 'textarea',
+        @endif
+
         language : 'ja',
 
         {{-- plugins --}}

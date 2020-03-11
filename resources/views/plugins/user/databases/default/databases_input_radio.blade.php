@@ -5,6 +5,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  --}}
+@php
+    // value 値の取得
+    $value_obj = (empty($input_cols)) ? null : $input_cols->where('databases_inputs_id', $id)->where('databases_columns_id', $database_obj->id)->first();
+    $value = '';
+    if (!empty($value_obj)) {
+        $value = $value_obj->value;
+    }
+@endphp
 @if (array_key_exists($database_obj->id, $databases_columns_id_select))
     @php
         // グループカラムの幅の計算
@@ -18,6 +26,7 @@
 
             <div class="custom-control custom-radio custom-control-inline">
                 @if (old('databases_columns_value.'.$database_obj->id) == $select['value'] ||
+                     ($select['value'] == $value) ||
                      (isset($request->databases_columns_value) &&
                       array_key_exists($database_obj->id, $request->databases_columns_value) &&
                       $request->databases_columns_value[$database_obj->id] == $select['value'])
@@ -28,27 +37,6 @@
             @endif
                 <label class="custom-control-label" for="databases_columns_value[{{$database_obj->id}}]_{{$loop->iteration}}">{{$select['value']}}</label>
             </div>
-
-{{--
-        <div class="col-sm-{{$col_count}}">
-            <label class="cc_label_input_group">
-                <div class="input-group">
-                    <span class="input-group-addon">
-                        @if (old('databases_columns_value.'.$database_obj->id) == $select['value'] ||
-                                 (isset($request->databases_columns_value) &&
-                                  array_key_exists($database_obj->id, $request->databases_columns_value) &&
-                                  $request->databases_columns_value[$database_obj->id] == $select['value'])
-                            )
-                            <input name="databases_columns_value[{{$database_obj->id}}]" value="{{$select['value']}}" type="{{$database_obj->column_type}}" checked>
-                        @else
-                            <input name="databases_columns_value[{{$database_obj->id}}]" value="{{$select['value']}}" type="{{$database_obj->column_type}}">
-                        @endif
-                    </span>
-                    <span class="form-control" style="height: auto;"> {{$select['value']}}</span>
-                </div>
-            </label>
-        </div>
---}}
         @endforeach
     </div>
     @if ($errors && $errors->has("databases_columns_value.$database_obj->id"))

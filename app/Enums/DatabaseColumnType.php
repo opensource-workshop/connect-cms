@@ -19,6 +19,9 @@ final class DatabaseColumnType
     const date = 'date';
     const time = 'time';
     const file = 'file';
+    const image = 'image';
+    const video = 'video';
+    const wysiwyg = 'wysiwyg';
     const group = 'group';
 
     // key/valueの連想配列
@@ -34,6 +37,9 @@ final class DatabaseColumnType
         self::date=>'日付型',
         self::time=>'時間型',
         self::file=>'ファイル型',
+        self::image=>'画像型',
+        self::video=>'動画型',
+        self::wysiwyg=>'ウィジウィグ',
         self::group=>'まとめ行',
     ];
 
