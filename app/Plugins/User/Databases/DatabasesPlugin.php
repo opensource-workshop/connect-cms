@@ -327,7 +327,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             
         }
 //---
-
+//print_r($inputs);
+//print_r($columns);
+//print_r($input_cols);
         // 表示テンプレートを呼び出す。
         return $this->view(
             'databases', [

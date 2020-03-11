@@ -9,17 +9,35 @@
 
 @section("plugin_contents_$frame->id")
 
+<table class="table table-bordered">
+    @foreach($columns as $column)
+    <tr>
+        <th style="background-color: #e9ecef;">{{$column->column_name}}</th>
+        <td>
+            {!!nl2br(e($input_cols->where('databases_columns_id', $column->id)->first()->value))!!}
+        </td>
+    </tr>
+    @endforeach
+</table>
+
+{{-- 一覧へ戻る --}}
+<div class="row">
+    <div class="col-12 text-center mt-3">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}">
+            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
+        </a>
+    </div>
+</div>
+
+{{--
 @foreach($input_cols as $input_col)
     @if ($input_col->column_type == 'file')
         <a href="{{url('/')}}/file/{{$input_col->value}}" target="_blank">{{$input_col->client_original_name}}</a>
     @else
-        {{$input_col->value}}<br />
+        {!!nl2br(e($input_col->value))!!}<br />
     @endif
 @endforeach
-
-<hr />
-{{$input_cols->where('column_name', 'タイトル')->first()->value}}<br />
-{{$input_cols->where('column_name', '項目２')->first()->value}}<br />
+--}}
 
 <br />
 @can("role_article")

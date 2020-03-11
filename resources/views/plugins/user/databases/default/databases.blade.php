@@ -22,33 +22,73 @@
         </div>
     @endcan
 
+    {{-- 検索 --}}
+    <div class="input-group mb-3">
+        <input type="text" name="search_keyword" class="form-control" value="" placeholder="検索はキーワードを入力してください。">
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+
+    {{-- データのループ --}}
+    <table class="table table-bordered">
+        <thead class="thead-light">
+        <tr>
+        @foreach($columns as $column)
+            <th>{{$column->column_name}}</th>
+        @endforeach
+        </tr>
+        </thead>
+
+        <tbody>
+        @foreach($inputs as $input)
+        <tr>
+            @foreach($columns as $column)
+                @if($loop->first)
+                <td>
+                    <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
+                        {!!nl2br(e($input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $column->id)->first()->value))!!}
+                    </a>
+                </td>
+                @else
+                <td>{!!nl2br(e($input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $column->id)->first()->value))!!}</td>
+                @endif
+            @endforeach
+        </tr>
+        @endforeach
+        </tbody>
+    </table>
+
     {{-- データのループ --}}
     <ul>
     @foreach($inputs as $input)
 
         @php
 
-        // タイトル
-        $title_value = '［無題］';
-
-        // タイトルカラム（display_sequence = 1 のものをタイトルとする）
-        $title_columns_id = 0;
-        $title_columns = $columns->where('display_sequence', 1)->first();
-        if (!empty($title_columns)) {
-            $title_columns_id = $title_columns->id;
-        }
-
-        // タイトルを探す
-        $title_col = $input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $title_columns_id)->first();
-        if (!empty($title_col)) {
-            $title_value = $title_col->value;
-        }
-
+//        // タイトル
+//        $title_value = '［無題］';
+//
+//        // タイトルカラム（display_sequence = 1 のものをタイトルとする）
+//        $title_columns_id = 0;
+//        $title_columns = $columns->where('display_sequence', 1)->first();
+//        if (!empty($title_columns)) {
+//            $title_columns_id = $title_columns->id;
+//        }
+//
+//        // タイトルを探す
+//        $title_col = $input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $title_columns_id)->first();
+//        if (!empty($title_col)) {
+//            $title_value = $title_col->value;
+//        }
+//
         @endphp
 
         {{-- タイトルの一覧表示 --}}
+{{--
         <li><a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">{{$title_value}}</a></li>
-
+--}}
     @endforeach
     </ul>
 
