@@ -7,13 +7,25 @@ body {
     background-color: #ffffff;
 }
 
+/*  WYSIWYG
+------------------------------------- */
+/* 追加選択肢の背景色が微妙なので打ち消す設定（TableのClassなど） */
+.mce-text {
+    color: #000 !important;
+    background-color: transparent !important;
+}
+
+.mce-active .mce-text {
+    color: #fff !important;
+}
+
 /*  プラグイン追加
 ------------------------------------- */
 #pluginAddModal {
     z-index: 9999;
 }
 
-/*  ナビバー
+/*  Navbar
 ------------------------------------- */
 .nav-tabs .nav-link.active {
     background-color: #f0f0f0;

@@ -17,7 +17,7 @@
             <option value="session:clear">元に戻す</option>
             @foreach($themes as $theme)
                 @isset($theme['themes'])
-                    <optgroup label="{{$theme['dir']}}">
+                    <optgroup label="{{$theme['name']}}">
                     @foreach($theme['themes'] as $sub_theme)
                         <option value="{{$sub_theme['dir']}}"@if($sub_theme['dir'] == $page_theme['css']) selected @endif>{{$sub_theme['name']}}</option>
                     @endforeach

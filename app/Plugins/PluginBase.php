@@ -149,7 +149,7 @@ class PluginBase
                     }
                     // 第2階層テーマがある場合は選択肢に追加する。
                     if (!empty($sub_themes)) {
-                        $themes[] = array('name' => basename($dir), 'dir' => basename($dir), 'themes' => $sub_themes);
+                        $themes[] = array('name' => $theme_inis['theme_name'], 'dir' => basename($dir), 'themes' => $sub_themes);
                     }
                 }
                 else {

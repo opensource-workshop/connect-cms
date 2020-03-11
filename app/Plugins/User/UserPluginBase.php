@@ -345,6 +345,16 @@ class UserPluginBase extends PluginBase
         // 表示しているテーマ
         $arg['theme'] = $this->getThemeName();
 
+        // テーマ Default ディレクトリの確認（テーマがグループテーマなら、グループ内のDefault）
+        if (strpos($arg['theme'], '/') !== false) {
+            $arg['theme_group'] = mb_substr($arg['theme'], 0, strpos($arg['theme'], '/'));
+            $arg['theme_group_default'] = mb_substr($arg['theme'], 0, strpos($arg['theme'], '/')) . '/Default';
+        }
+        else {
+            $arg['theme_group'] = '';
+            $arg['theme_group_default'] = '';
+        }
+
         return $arg;
     }
     /**

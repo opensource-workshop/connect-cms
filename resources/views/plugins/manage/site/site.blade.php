@@ -37,7 +37,7 @@
                 <option value="">テーマなし</option>
                 @foreach($themes as $theme)
                     @isset($theme['themes'])
-                        <optgroup label="{{$theme['dir']}}">
+                        <optgroup label="{{$theme['name']}}">
                         @foreach($theme['themes'] as $sub_theme)
                             <option value="{{$sub_theme['dir']}}"@if($sub_theme['dir'] == $current_base_theme) selected @endif>{{$sub_theme['name']}}</option>
                         @endforeach
