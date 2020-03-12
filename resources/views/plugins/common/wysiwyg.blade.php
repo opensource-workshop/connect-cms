@@ -97,7 +97,7 @@
 <script type="text/javascript" src="/js/tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
     tinymce.init({
-        @if($target_class)
+        @if(isset($target_class) && $target_class)
             selector : 'textarea.{{$target_class}}',
         @else
             selector : 'textarea',
