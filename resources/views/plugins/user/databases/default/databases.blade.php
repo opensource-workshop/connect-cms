@@ -22,16 +22,59 @@
         </div>
     @endcan
 
-    {{-- 検索 --}}
-    <div class="input-group mb-3">
-        <input type="text" name="search_keyword" class="form-control" value="" placeholder="検索はキーワードを入力してください。">
-        <div class="input-group-append">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
-    </div>
+    <form action="/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+        {{ csrf_field() }}
 
+        {{-- 検索 --}}
+        @if($database_frame && $database_frame->use_search_flag == 1)
+        <div class="input-group mb-3">
+            <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword')}}" placeholder="検索はキーワードを入力してください。">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        @endif
+
+        {{-- 絞り込み --}}
+        @php
+            $select_columns = $columns->where('select_flag', 1);
+            $select_column_count = $select_columns->count();
+            $col_no = ($select_column_count == 0) ? 0 : intdiv(12, $select_column_count);
+        @endphp
+        @if($select_columns)
+            <div class="form-group row mb-3">
+            @foreach($select_columns as $select_column)
+                @php
+                    $session_culumn_name = "search_column." . $loop->index . ".value";
+                @endphp
+                <div class="col-sm-{{$col_no}}">
+                    <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
+                    <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
+                    @if($select_column->column_type == 'checkbox')
+                    <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART">
+                    @else
+                    <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
+                    @endif
+                    <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);">
+                        <option value="">{{$select_column->column_name}}</option>
+                        @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
+                            @if($columns_select->value == Session::get($session_culumn_name))
+                            <option value="{{$columns_select->value}}" selected>{{$columns_select->value}}</option>
+                            @else
+                            <option value="{{$columns_select->value}}">{{$columns_select->value}}</option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+            @endforeach
+            </div>
+        @endif
+    </form>
+
+    @if ($default_hide_list)
+    @else
     {{-- データのループ --}}
     <table class="table table-bordered">
         <thead class="thead-light">
@@ -67,36 +110,11 @@
         </tbody>
     </table>
 
-    {{-- データのループ --}}
-    <ul>
-    @foreach($inputs as $input)
-
-        @php
-
-//        // タイトル
-//        $title_value = '［無題］';
-//
-//        // タイトルカラム（display_sequence = 1 のものをタイトルとする）
-//        $title_columns_id = 0;
-//        $title_columns = $columns->where('display_sequence', 1)->first();
-//        if (!empty($title_columns)) {
-//            $title_columns_id = $title_columns->id;
-//        }
-//
-//        // タイトルを探す
-//        $title_col = $input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $title_columns_id)->first();
-//        if (!empty($title_col)) {
-//            $title_value = $title_col->value;
-//        }
-//
-        @endphp
-
-        {{-- タイトルの一覧表示 --}}
-{{--
-        <li><a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">{{$title_value}}</a></li>
---}}
-    @endforeach
-    </ul>
+    {{-- ページング処理 --}}
+    <div class="text-center">
+        {{ $inputs->links() }}
+    </div>
+    @endif
 
 @else
     {{-- フレームに紐づくコンテンツがない場合等、表示に支障がある場合は、データ登録を促す等のメッセージを表示 --}}

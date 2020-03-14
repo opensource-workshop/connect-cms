@@ -17,6 +17,7 @@ use App\Models\Common\Uploads;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesColumnsSelects;
+use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databases\DatabasesInputCols;
 
@@ -53,6 +54,8 @@ class DatabasesPlugin extends UserPluginBase
             'editColumnDetail',
             'detail',
             'input',
+            'editView',
+            'search',
         ];
         $functions['post'] = [
             'index', 
@@ -66,6 +69,8 @@ class DatabasesPlugin extends UserPluginBase
             'updateSelect',
             'updateSelectSequence',
             'deleteSelect',
+            'saveView',
+            'search',
         ];
         return $functions;
     }
@@ -192,8 +197,9 @@ class DatabasesPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'databases.id as databases_id')
+                 ->select('frames.*', 'databases.id as databases_id', 'databases_frames.id as databases_frames_id', 'use_search_flag', 'use_select_flag', 'use_sort_flag', 'view_count', 'default_hide')
                  ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
+                 ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
@@ -247,12 +253,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-/*
-$content = array();
-$content["value1"] = "値その1-1";
-$content["value2"] = "値その2";
-Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
-*/
 
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -312,30 +312,85 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // データベースの取得
             $databases = Databases::where('id', $database->id)->first();
 
+            // フレーム毎のデータベース設定の取得
+            $databases_frames = DatabasesFrames::where('frames_id', $frame_id)->where('databases_id', $database->id)->first();
+
             // カラムの取得
             $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence', 'asc')->get();
 
-            // 登録データ行の取得
-            $inputs = DatabasesInputs::where('databases_id', $database->id)->orderBy('id', 'asc')->get();
+            // 登録データ行の取得 --->
+            $inputs_query = DatabasesInputs::where('databases_id', $database->id);
+
+            // キーワード指定の追加
+            if (!empty(session('search_keyword'))) {
+                $inputs_query->whereIn('id', function($query) {
+                               // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+                               $query->select('databases_inputs_id')
+                                     ->from('databases_input_cols')
+                                     ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                     ->where('databases_columns.search_flag', 1)
+                                     ->where('value', 'like', '%' . session('search_keyword') . '%')
+                                     ->groupBy('databases_inputs_id');
+                               });
+            }
+            // 絞り込み指定の追加
+            if (!empty(session('search_column'))) {
+                foreach(session('search_column') as $search_column) {
+                    if ($search_column && $search_column['columns_id'] && $search_column['value']) {
+
+                        $inputs_query->whereIn('id', function($query) use($search_column) {
+                               // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。
+                               $query->select('databases_inputs_id')
+                                     ->from('databases_input_cols')
+                                     ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                     ->where('databases_columns_id', $search_column['columns_id']);
+
+                               if ($search_column['where'] == 'PART') {
+                                   $query->where('value', 'LIKE', '%' . $search_column['value'] . '%');
+                               }
+                               else {
+                                   $query->where('value', $search_column['value']);
+                               }
+                               $query->groupBy('databases_inputs_id');
+                       });
+                    }
+                }
+            }
+            // 取得
+            $get_count = 10;
+            if ($databases_frames) {
+                $get_count = $databases_frames->view_count;
+            }
+            $inputs = $inputs_query->orderBy('id', 'asc')->paginate($get_count);
+            // <--- 登録データ行の取得
+
 
             // 登録データ詳細の取得
             $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
                                             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
-                                            ->whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $database->id))
+                                            ->whereIn('databases_inputs_id', $inputs->pluck('id'))
                                             ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
                                             ->get();
 
-            // 表示用に配列に詰める
-            
+            // カラム選択肢の取得
+            $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
         }
-//---
-//print_r($inputs);
-//print_r($columns);
-//print_r($input_cols);
+
+//--- 表示設定（フレーム設定）データ
+
+        // データベース＆フレームデータ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        // 初期表示を隠す判定
+        $default_hide_list = false;
+        if (($database_frame && $database_frame->default_hide == 1 && $request->isMethod('get') && !$request->page)) {
+            $default_hide_list = true;
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'databases', [
-            'request' => $request,
+            'request'  => $request,
             'frame_id' => $frame_id,
             'database' => $database,
             'databases_columns' => $databases_columns,
@@ -343,11 +398,34 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'errors' => $errors,
             'setting_error_messages' => $setting_error_messages,
 
-            'databases'  => $databases,
-            'columns'    => $columns,
-            'inputs'     => $inputs,
-            'input_cols' => $input_cols,
+            'databases'       => $databases,
+            'database_frame'  => $database_frame,
+            'columns'         => $columns,
+            'inputs'          => $inputs,
+            'input_cols'      => $input_cols,
+            'columns_selects' => $columns_selects,
+            'default_hide_list' => $default_hide_list,
+
         ])->withInput($request->all);
+    }
+
+    /**
+     *  データ検索関数
+     *  コアがページ表示の際に呼び出す関数
+     */
+    public function search($request, $page_id, $frame_id)
+    {
+        // POST されたときは、新しい絞り込み条件が設定された。ということになるので、セッションの書き換え
+        if ($request->isMethod('post')) {
+
+            // キーワード
+            session(['search_keyword' => $request->search_keyword]);
+
+            // 絞り込み
+            session(['search_column' => $request->search_column]);
+        }
+
+        return $this->index($request, $page_id, $frame_id);
     }
 
     /**
@@ -1797,5 +1875,76 @@ ORDER BY databases_inputs_id, databases_columns_id
         $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
 
         return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
+     * 表示設定変更画面の表示
+     */
+    public function editView($request, $page_id, $frame_id)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // データベース＆フレームデータ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        // Frames > Buckets > Database で特定
+        if (empty($database_frame->bucket_id)) {
+            $database = null;
+        }
+        else {
+            $database = Databases::where('bucket_id', $database_frame->bucket_id)->first();
+        }
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'databases_edit_view', [
+            'database_frame' => $database_frame,
+            'database'       => $database,
+        ])->withInput($request->all);
+    }
+
+    /**
+     *  表示設定保存処理
+     */
+    public function saveView($request, $page_id, $frame_id)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // デフォルトで必須
+        $validator_values['view_count'] = ['required'];
+        $validator_attributes['view_count'] = '表示件数';
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $validator_values);
+        $validator->setAttributeNames($validator_attributes);
+
+        // エラーがあった場合は入力画面に戻る。
+        $message = null;
+        if ($validator->fails()) {
+            return $this->editView($request, $page_id, $frame_id)->withErrors($validator);
+        }
+
+        // 更新後のメッセージ
+        $message = null;
+
+        // データベース＆フレームデータ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        // 表示設定の保存
+        $databases_frames = DatabasesFrames::updateOrCreate(
+            ['databases_id'    => $database_frame->databases_id,
+             'frames_id'       => $frame_id],
+            ['databases_id'    => $database_frame->databases_id,
+             'frames_id'       => $frame_id,
+             'use_search_flag' => $request->use_search_flag,
+             'use_select_flag' => $request->use_select_flag,
+             'use_sort_flag'   => $request->use_sort_flag,
+             'view_count'      => $request->view_count,
+             'default_hide'    => $request->default_hide],
+        );
+
+        return $this->editView($request, $page_id, $frame_id);
     }
 }

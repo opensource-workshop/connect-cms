@@ -24,7 +24,7 @@
 
         @foreach($databases_columns as $database_column)
         <div class="form-group row">
-            <label class="col-sm-2 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
+            <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
             @switch($database_column->column_type)
             @case("group")
                 @php
@@ -34,7 +34,7 @@
                         $col_count = 3;
                     }
                 @endphp
-                <div class="col-sm-10 pr-0">
+                <div class="col-sm-9 pr-0">
                 <div class="container-fluid row" style="padding: 0;">
                 @foreach($database_column->group as $group_row)
 
@@ -61,7 +61,7 @@
                 @break
             {{-- 項目 ※まとめ未設定行 --}}
             @default
-                <div class="col-sm-10">
+                <div class="col-sm-9">
                     @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
                     <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
                 </div>

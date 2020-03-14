@@ -10,7 +10,7 @@
 
     // ファイル型
     if ($column->column_type == 'file') {
-        if (empty($obj)) {
+        if (empty($obj) || empty($obj->value)) {
             $value = '';
         }
         else {
@@ -19,7 +19,7 @@
     }
     // 画像型
     else if ($column->column_type == 'image') {
-        if (empty($obj)) {
+        if (empty($obj) || empty($obj->value)) {
             $value = '';
         }
         else {
@@ -28,7 +28,7 @@
     }
     // 動画型
     else if ($column->column_type == 'video') {
-        if (empty($obj)) {
+        if (empty($obj) || empty($obj->value)) {
             $value = '';
         }
         else {
@@ -41,15 +41,17 @@
     }
 @endphp
 
-{{-- ファイル型 --}}
-@if ($column->column_type == 'file')
-    {!!$value!!}
-@elseif ($column->column_type == 'image')
-    {!!$value!!}
-@elseif ($column->column_type == 'video')
-    {!!$value!!}
-@elseif ($column->column_type == 'wysiwyg')
-    {!!$value!!}
-@else
-    {!!nl2br(e($value))!!}
+@if ($value)
+    {{-- ファイル型 --}}
+    @if ($column->column_type == 'file')
+        {!!$value!!}
+    @elseif ($column->column_type == 'image')
+        {!!$value!!}
+    @elseif ($column->column_type == 'video')
+        {!!$value!!}
+    @elseif ($column->column_type == 'wysiwyg')
+        {!!$value!!}
+    @else
+        {!!nl2br(e($value))!!}
+    @endif
 @endif
