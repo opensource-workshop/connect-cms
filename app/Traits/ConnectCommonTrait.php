@@ -569,6 +569,11 @@ trait ConnectCommonTrait
         $sp_menu .= '<ul>' . "\n";
         foreach ($level1_pages as $level1_page) {
 
+            // ページの表示条件の反映（IP制限など）
+            if (!$level1_page['parent']->isView(Auth::user())) {
+                continue;
+            }
+
             // コンストラクタで全体作業用として取得したページを使用する想定
             // そのため、ページの基本の表示設定を反映する。
             if ($level1_page['parent']->base_display_flag == 0) {
@@ -603,6 +608,12 @@ trait ConnectCommonTrait
             if (array_key_exists('child', $level1_page)) {
                 $sp_menu .= '<ul' . $active_class . '>' . "\n";
                 foreach ($level1_page['child'] as $child) {
+
+                    // ページの表示条件の反映（IP制限など）
+                    if (!$child->isView(Auth::user())) {
+                        continue;
+                    }
+
                     if ($child->base_display_flag == 0) {
                         continue;
                     }
