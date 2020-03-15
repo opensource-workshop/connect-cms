@@ -16,7 +16,12 @@ body {
 }
 
 .mce-active .mce-text {
-    color: #fff !important;
+/*    color: #fff !important;*/
+    background-color: transparent !important;
+}
+
+.mce-active {
+    background-color: #ededee !important;
 }
 
 /*  プラグイン追加
