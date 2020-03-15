@@ -54,6 +54,7 @@
         </div>
     </div>
 
+{{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
@@ -63,7 +64,10 @@
             </div>
         </div>
     </div>
+--}}
+    <input type="hidden" name="mail_send_flag" value="0">
 
+{{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -71,7 +75,10 @@
             <input type="text" name="mail_send_address" value="{{old('mail_send_address', $database->mail_send_address)}}" class="form-control">
         </div>
     </div>
+--}}
+    <input type="hidden" name="mail_send_address" value="">
 
+{{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -81,19 +88,27 @@
             </div>
         </div>
     </div>
+--}}
+    <input type="hidden" name="user_mail_send_flag" value="">
+
 {{--
     <div class="form-group">
         <label class="control-label">From メール送信者名</label>
         <input type="text" name="from_mail_name" value="{{old('from_mail_name', $database->from_mail_name)}}" class="form-control">
     </div>
 --}}
+
+{{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メール件名</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="mail_subject" value="{{old('mail_subject', $database->mail_subject)}}" class="form-control">
         </div>
     </div>
+--}}
+    <input type="hidden" name="mail_subject" value="">
 
+{{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メールフォーマット</label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -102,7 +117,10 @@
             <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
         </div>
     </div>
+--}}
+    <input type="hidden" name="mail_databaseat" value="">
 
+{{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">データ保存</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
@@ -112,7 +130,10 @@
             </div>
         </div>
     </div>
+--}}
+    <input type="hidden" name="data_save_flag" value="1">
 
+{{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">登録後のメッセージ</label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -120,7 +141,10 @@
             <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
         </div>
     </div>
+--}}
+    <input type="hidden" name="after_message" value="1">
 
+{{--
     <hr>
 
     <div class="form-group row">
@@ -142,6 +166,9 @@
             <small class="text-muted">※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。</small>
         </div>
     </div>
+--}}
+    <input type="hidden" name="numbering_use_flag" value="">
+    <input type="hidden" name="numbering_prefix" value="">
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">
