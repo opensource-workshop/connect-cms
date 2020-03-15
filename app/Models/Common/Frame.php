@@ -11,6 +11,13 @@ class Frame extends Model
 {
 
     /**
+     * create()やupdate()で入力を受け付ける ホワイトリスト
+     */
+    protected $fillable = [
+        'bucket_id',
+    ];
+
+    /**
      *  テンプレート
      */
     public $templates = null;
