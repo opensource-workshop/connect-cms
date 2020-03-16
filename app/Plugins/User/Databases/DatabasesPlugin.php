@@ -2042,7 +2042,7 @@ ORDER BY databases_inputs_id, databases_columns_id
              'use_select_flag' => $request->use_select_flag,
              'use_sort_flag'   => $request->use_sort_flag,
              'view_count'      => $request->view_count,
-             'default_hide'    => $request->default_hide],
+             'default_hide'    => $request->default_hide]
         );
 
         return $this->editView($request, $page_id, $frame_id);
