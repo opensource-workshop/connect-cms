@@ -66,6 +66,7 @@ class DatabasesPlugin extends UserPluginBase
             'updateColumnSequence',
             'updateColumnDetail',
             'addSelect',
+            'addPref',
             'updateSelect',
             'updateSelectSequence',
             'deleteSelect',
@@ -101,6 +102,7 @@ class DatabasesPlugin extends UserPluginBase
         $role_ckeck_table["updateColumnSequence"] = array('role_arrangement');
         $role_ckeck_table["updateColumnDetail"]   = array('role_arrangement');
         $role_ckeck_table["addSelect"]            = array('role_arrangement');
+        $role_ckeck_table["addPref"]              = array('role_arrangement');
         $role_ckeck_table["updateSelect"]         = array('role_arrangement');
         $role_ckeck_table["updateSelectSequence"] = array('role_arrangement');
         $role_ckeck_table["deleteSelect"]         = array('role_arrangement');
@@ -1722,7 +1724,6 @@ class DatabasesPlugin extends UserPluginBase
         return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
     }
 
-
     /**
      * 項目に紐づく選択肢の登録
      */
@@ -1758,6 +1759,32 @@ class DatabasesPlugin extends UserPluginBase
 
         // 編集画面を呼び出す
         return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, $errors);
+    }
+
+    /**
+     * 項目に紐づく都道府県選択肢の登録
+     */
+    public function addPref($request, $page_id, $frame_id)
+    {
+        // 新規登録時の表示順を設定
+        $max_display_sequence = DatabasesColumnsSelects::query()->where('databases_columns_id', $request->column_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        foreach($this->getPrefList() as $pref) {
+
+            // uploads テーブルに情報追加、ファイルのid を取得する
+            DatabasesColumnsSelects::create([
+                'databases_columns_id' => $request->column_id,
+                'value'                => $pref,
+                'display_sequence'     => $max_display_sequence,
+             ]);
+            $max_display_sequence++;
+        }
+        $message = '選択肢【 '. $request->select_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message);
     }
 
     /**

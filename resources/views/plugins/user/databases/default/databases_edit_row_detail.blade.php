@@ -57,6 +57,15 @@
     }
 
     /**
+     * 選択肢に都道府県追加ボタン押下
+     */
+    function submit_add_pref(btn) {
+        database_column_detail.action = "/plugin/databases/addPref/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        btn.disabled = true;
+        database_column_detail.submit();
+    }
+
+    /**
      * その他の設定の更新ボタン押下
      */
      function submit_update_column_detail() {
@@ -167,6 +176,13 @@
                             </td>
                             <td>
                                 {{-- 余白 --}}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="4" class="text-center">
+                                {{-- ＋ボタン --}}
+                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_pref(this);"><i class="fas fa-plus"></i> 都道府県を追加</button>
                             </td>
                         </tr>
                     </tbody>
