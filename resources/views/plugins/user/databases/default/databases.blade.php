@@ -41,6 +41,13 @@
         @php
             $select_columns = $columns->where('select_flag', 1);
             $select_column_count = $select_columns->count();
+
+            // 並べ替えが有効なら、カウントに +1 する。
+            $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();
+            if ($sort_count > 0) {
+                $select_column_count++;
+            }
+
             $col_no = ($select_column_count == 0) ? 0 : intdiv(12, $select_column_count);
         @endphp
         @if($select_columns)
@@ -69,6 +76,34 @@
                     </select>
                 </div>
             @endforeach
+            {{-- 絞り込み --}}
+            @if($sort_count > 0)
+                <div class="col-sm-{{$col_no}}">
+                    <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);">
+                        <option value="">並べ替え</option>
+                        {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
+                        @foreach($columns->whereIn('sort_flag', [1, 2, 3]) as $sort_column)
+
+                            @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
+                                @if($sort_column->id == Session::get('sort_column_id') && Session::get('sort_column_order') == 'asc')
+                                <option value="{{$sort_column->id}}_asc" selected>{{$sort_column->column_name}}(昇順)</option>
+                                @else
+                                <option value="{{$sort_column->id}}_asc">{{$sort_column->column_name}}(昇順)</option>
+                                @endif
+                            @endif
+
+                            @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 3)
+
+                                @if($sort_column->id == Session::get('sort_column_id') && Session::get('sort_column_order') == 'desc')
+                                <option value="{{$sort_column->id}}_desc" selected>{{$sort_column->column_name}}(降順)</option>
+                                @else
+                                <option value="{{$sort_column->id}}_desc">{{$sort_column->column_name}}(降順)</option>
+                                @endif
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             </div>
         @endif
     </form>

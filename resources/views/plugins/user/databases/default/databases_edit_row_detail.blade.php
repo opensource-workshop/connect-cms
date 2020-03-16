@@ -431,7 +431,7 @@
                         @else
                             <input type="radio" value="1" id="sort_flag_1" name="sort_flag" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="sort_flag_1">昇順</label>
+                        <label class="custom-control-label" for="sort_flag_1">昇順＆降順</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
                         @if($column->sort_flag == 2)
@@ -439,7 +439,15 @@
                         @else
                             <input type="radio" value="2" id="sort_flag_2" name="sort_flag" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="sort_flag_2">降順</label>
+                        <label class="custom-control-label" for="sort_flag_2">昇順のみ</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($column->sort_flag == 3)
+                            <input type="radio" value="3" id="sort_flag_3" name="sort_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="3" id="sort_flag_3" name="sort_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="sort_flag_3">降順のみ</label>
                     </div>
                 </div>
             </div>
@@ -468,6 +476,7 @@
             </div>
 
             {{-- 絞り込み対象指定 --}}
+            @if ($column->column_type == DatabaseColumnType::radio || $column->column_type == DatabaseColumnType::checkbox || $column->column_type == DatabaseColumnType::select)
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">絞り込み対象指定</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
@@ -489,6 +498,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             {{-- ボタンエリア --}}
             <div class="form-group text-center">

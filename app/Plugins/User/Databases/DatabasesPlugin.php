@@ -76,6 +76,42 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
+     *  権限定義
+     */
+    public function declareRole()
+    {
+        // 権限チェックテーブル
+        $role_ckeck_table = array();
+        $role_ckeck_table["input"]                = array('role_article');
+        $role_ckeck_table["publicConfirm"]        = array('role_article');
+        $role_ckeck_table["publicStore"]          = array('role_article');
+        $role_ckeck_table["delete"]               = array('role_article');
+
+        $role_ckeck_table["listBuckets"]          = array('role_arrangement');
+        $role_ckeck_table["createBuckets"]        = array('role_arrangement');
+        $role_ckeck_table["editBuckets"]          = array('role_arrangement');
+        $role_ckeck_table["saveBuckets"]          = array('role_arrangement');
+        $role_ckeck_table["destroyBuckets"]       = array('role_arrangement');
+        $role_ckeck_table["changeBuckets"]        = array('role_arrangement');
+        $role_ckeck_table["addColumn"]            = array('role_arrangement');
+        $role_ckeck_table["editColumnDetail"]     = array('role_arrangement');
+        $role_ckeck_table["editColumn"]           = array('role_arrangement');
+        $role_ckeck_table["deleteColumn"]         = array('role_arrangement');
+        $role_ckeck_table["updateColumn"]         = array('role_arrangement');
+        $role_ckeck_table["updateColumnSequence"] = array('role_arrangement');
+        $role_ckeck_table["updateColumnDetail"]   = array('role_arrangement');
+        $role_ckeck_table["addSelect"]            = array('role_arrangement');
+        $role_ckeck_table["updateSelect"]         = array('role_arrangement');
+        $role_ckeck_table["updateSelectSequence"] = array('role_arrangement');
+        $role_ckeck_table["deleteSelect"]         = array('role_arrangement');
+        $role_ckeck_table["deleteColumnsSelects"] = array('role_arrangement');
+        $role_ckeck_table["downloadCsv"]          = array('role_arrangement');
+        $role_ckeck_table["editView"]             = array('role_arrangement');
+        $role_ckeck_table["saveView"]             = array('role_arrangement');
+        return $role_ckeck_table;
+    }
+
+    /**
      *  編集画面の最初のタブ
      *
      *  スーパークラスをオーバーライド
@@ -319,11 +355,23 @@ class DatabasesPlugin extends UserPluginBase
             $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence', 'asc')->get();
 
             // 登録データ行の取得 --->
-            $inputs_query = DatabasesInputs::where('databases_id', $database->id);
 
+            // 並べ替え指定があれば、並べ替えする項目をSELECT する。
+            if (empty(session('sort_column_id'))) {
+                $inputs_query = DatabasesInputs::where('databases_id', $database->id);
+            }
+            else {
+                $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
+
+                                                ->leftjoin('databases_input_cols',function($join) {
+                                                    $join->on('databases_input_cols.databases_inputs_id','=','databases_inputs.id')
+                                                         ->where('databases_input_cols.databases_columns_id','=',session('sort_column_id'));
+                                                })
+                                               ->where('databases_id', $database->id);
+            }
             // キーワード指定の追加
             if (!empty(session('search_keyword'))) {
-                $inputs_query->whereIn('id', function($query) {
+                $inputs_query->whereIn('databases_inputs.id', function($query) {
                                // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
                                $query->select('databases_inputs_id')
                                      ->from('databases_input_cols')
@@ -338,7 +386,7 @@ class DatabasesPlugin extends UserPluginBase
                 foreach(session('search_column') as $search_column) {
                     if ($search_column && $search_column['columns_id'] && $search_column['value']) {
 
-                        $inputs_query->whereIn('id', function($query) use($search_column) {
+                        $inputs_query->whereIn('databases_inputs.id', function($query) use($search_column) {
                                // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。
                                $query->select('databases_inputs_id')
                                      ->from('databases_input_cols')
@@ -356,14 +404,23 @@ class DatabasesPlugin extends UserPluginBase
                     }
                 }
             }
-            // 取得
+
+            // ソート
+            if (session('sort_column_id') && session('sort_column_order') == 'asc') {
+                $inputs_query->orderBy('databases_input_cols.value', 'asc');
+            }
+            else if (session('sort_column_id') && session('sort_column_order') == 'desc') {
+                $inputs_query->orderBy('databases_input_cols.value', 'desc');
+            }
+            $inputs_query->orderBy('databases_inputs.id', 'asc');
+
+            // データ取得
             $get_count = 10;
             if ($databases_frames) {
                 $get_count = $databases_frames->view_count;
             }
-            $inputs = $inputs_query->orderBy('id', 'asc')->paginate($get_count);
+            $inputs = $inputs_query->paginate($get_count);
             // <--- 登録データ行の取得
-
 
             // 登録データ詳細の取得
             $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
@@ -423,6 +480,17 @@ class DatabasesPlugin extends UserPluginBase
 
             // 絞り込み
             session(['search_column' => $request->search_column]);
+
+            // 並べ替え
+            $sort_column_parts = explode('_', $request->sort_column);
+            if (count($sort_column_parts) == 2) {
+                session(['sort_column_id'    => $sort_column_parts[0]]);
+                session(['sort_column_order' => $sort_column_parts[1]]);
+            }
+            else {
+                session(['sort_column_id'    => '']);
+                session(['sort_column_order' => '']);
+            }
         }
 
         return $this->index($request, $page_id, $frame_id);
@@ -533,7 +601,7 @@ class DatabasesPlugin extends UserPluginBase
      * @param $request
      * @return void
      */
-    public static function trimInput($value){
+    private static function trimInput($value){
         if (is_array($value)){
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
             $value = array_map(['self', 'trimInput'], $value);
