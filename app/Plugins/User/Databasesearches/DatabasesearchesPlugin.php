@@ -54,6 +54,21 @@ class DatabasesearchesPlugin extends UserPluginBase
     }
 
     /**
+     *  権限定義
+     */
+    public function declareRole()
+    {
+        // 権限チェックテーブル
+        $role_ckeck_table = array();
+        $role_ckeck_table["input"]       = array('role_article');
+
+        $role_ckeck_table["editBuckets"] = array('role_arrangement');
+        $role_ckeck_table["saveBuckets"] = array('role_arrangement');
+        $role_ckeck_table["change"]      = array('role_arrangement');
+        return $role_ckeck_table;
+    }
+
+    /**
      *  初期表示取得関数
      *
      *  条件が複数あれば、条件毎にSQL 発行
@@ -118,77 +133,77 @@ class DatabasesearchesPlugin extends UserPluginBase
         // 条件毎にループ
         foreach($conditions as $condition){
 
-	        // 検索Query 組み立て
-	        $inputs_query
-	            = DatabasesInputCols::select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id')
-	                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-	                                ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
-	                                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id');
+            // 検索Query 組み立て
+            $inputs_query
+                = DatabasesInputCols::select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id')
+                                    ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                    ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
+                                    ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id');
 
-	        // フレーム（データベース指定）
-	        if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
-	            $inputs_query->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
-	        }
+            // フレーム（データベース指定）
+            if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
+                $inputs_query->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
+            }
 
-	        // カラム指定
-	        if (property_exists($condition, 'name') && $condition->name) {
-	            $inputs_query->where('databases_columns.column_name', $condition->name);
-	        }
+            // カラム指定
+            if (property_exists($condition, 'name') && $condition->name) {
+                $inputs_query->where('databases_columns.column_name', $condition->name);
+            }
 
-	        // 検索キーワードの取得
-	        $request_keyword = '';
-	        if (property_exists($condition, 'request') && $request->has($condition->request)) {
-	            $request_keyword = $request->get($condition->request);
-	        }
+            // 検索キーワードの取得
+            $request_keyword = '';
+            if (property_exists($condition, 'request') && $request->has($condition->request)) {
+                $request_keyword = $request->get($condition->request);
+            }
 
-	        // 検索キーワードのデフォルト(検索キーワードが空だった場合に使用する)
-	        if (empty($request_keyword) && property_exists($condition, 'request_default')) {
-	            if ($condition->request_default == 'TODAY-MD') {
-	                $request_keyword = date('md');
-	            }
-	            else {
-	                $request_keyword = $condition->request_default;
-	            }
-	        }
+            // 検索キーワードのデフォルト(検索キーワードが空だった場合に使用する)
+            if (empty($request_keyword) && property_exists($condition, 'request_default')) {
+                if ($condition->request_default == 'TODAY-MD') {
+                    $request_keyword = date('md');
+                }
+                else {
+                    $request_keyword = $condition->request_default;
+                }
+            }
 
-	        // 検索方法
-	        if (!property_exists($condition, 'where') || empty($condition->where)) {
-	            // where が空なら、条件指定しない
-	        }
-	        else if ($condition->where == 'ALL') {
-	            $inputs_query->where('value', $request_keyword);
-	        }
-	        else if ($condition->where == 'PART') {
-	            $inputs_query->where('value', 'like', '%' . $request_keyword . '%');
-	        }
-	        else if ($condition->where == 'FRONT') {
-	            $inputs_query->where('value', 'like', $request_keyword . '%');
-	        }
-	        else if ($condition->where == 'REAR') {
-	            $inputs_query->where('value', 'like', '%' . $request_keyword);
-	        }
-	        else if ($condition->where == 'GT') {
-	            $inputs_query->where('value', '>', $request_keyword);
-	        }
-	        else if ($condition->where == 'LT') {
-	            $inputs_query->where('value', '<', $request_keyword);
-	        }
-	        else if ($condition->where == 'GE') {
-	            $inputs_query->where('value', '>=', $request_keyword);
-	        }
-	        else if ($condition->where == 'LE') {
-	            $inputs_query->where('value', '<=', $request_keyword);
-	        }
+            // 検索方法
+            if (!property_exists($condition, 'where') || empty($condition->where)) {
+                // where が空なら、条件指定しない
+            }
+            else if ($condition->where == 'ALL') {
+                $inputs_query->where('value', $request_keyword);
+            }
+            else if ($condition->where == 'PART') {
+                $inputs_query->where('value', 'like', '%' . $request_keyword . '%');
+            }
+            else if ($condition->where == 'FRONT') {
+                $inputs_query->where('value', 'like', $request_keyword . '%');
+            }
+            else if ($condition->where == 'REAR') {
+                $inputs_query->where('value', 'like', '%' . $request_keyword);
+            }
+            else if ($condition->where == 'GT') {
+                $inputs_query->where('value', '>', $request_keyword);
+            }
+            else if ($condition->where == 'LT') {
+                $inputs_query->where('value', '<', $request_keyword);
+            }
+            else if ($condition->where == 'GE') {
+                $inputs_query->where('value', '>=', $request_keyword);
+            }
+            else if ($condition->where == 'LE') {
+                $inputs_query->where('value', '<=', $request_keyword);
+            }
 
-	        // 行ID 取得のためのグルーピング
-	        $inputs_query->groupBy('databases_inputs_id')
-	                     ->groupBy('frames.id')
-	                     ->groupBy('frames.page_id')
-	                     ->orderBy('databases_input_cols.updated_at', 'desc');
+            // 行ID 取得のためのグルーピング
+            $inputs_query->groupBy('databases_inputs_id')
+                         ->groupBy('frames.id')
+                         ->groupBy('frames.page_id')
+                         ->orderBy('databases_input_cols.updated_at', 'desc');
 
-	        // データ取得
-	        //$inputs_ids_array[] = $inputs_query->get();
-	        $inputs_ids_array[] = $inputs_query->get()->pluck('databases_inputs_id')->all();
+            // データ取得
+            //$inputs_ids_array[] = $inputs_query->get();
+            $inputs_ids_array[] = $inputs_query->get()->pluck('databases_inputs_id')->all();
         }
 
         // 条件毎の結果の結合
@@ -331,6 +346,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
-        return;
+
+        return $this->listBuckets($request, $page_id, $frame_id);
     }
 }

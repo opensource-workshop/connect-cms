@@ -45,6 +45,11 @@
     @endforeach
     </tbody>
 </table>
+
+{{-- ページング処理 --}}
+<div class="text-center">
+    {{ $inputs_ids->links() }}
+</div>
 @else
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
