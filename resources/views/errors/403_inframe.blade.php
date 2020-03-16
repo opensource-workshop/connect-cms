@@ -6,7 +6,7 @@
  * @category コア
  --}}
 <div class="container">
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-danger mt-3" role="alert">
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
         403 Forbidden. （権限がありません）<br />
