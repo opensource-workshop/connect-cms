@@ -14,11 +14,17 @@
 </p>
 
 {{-- 重要 --}}
+{{--
 @if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
+--}}
 {{-- カテゴリ --}}
 @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
 {{-- タイトル --}}
-<h2>{{$post->post_title}}</h2>
+@if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+    <h2><p class="exclamation mb-0">{{$post->post_title}}</p></h2>
+@else
+    <h2>{{$post->post_title}}</h2>
+@endif
 
 <article>
 

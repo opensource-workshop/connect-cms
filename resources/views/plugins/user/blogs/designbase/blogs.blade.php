@@ -41,14 +41,22 @@
             {{$post->posted_at->format('Y/m/d')}}
             {{-- 重要記事 --}}
             @if($post->important == 1)
+{{--
                 <span class="badge badge-danger">重要</span>
+--}}
             @endif
             @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
         </dt>
 
         <dd>
             {{-- タイトル --}}
-            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
+            @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+                <p class="exclamation">
+                    <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
+                </p>
+            @else
+                <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
+            @endif
         </dd>
     @endforeach
 
