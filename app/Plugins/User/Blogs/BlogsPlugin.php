@@ -108,7 +108,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.rss', 'blogs.rss_count', 'blogs_frames.scope', 'blogs_frames.scope_value')
+                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.rss', 'blogs.rss_count', 'blogs_frames.scope', 'blogs_frames.scope_value', 'blogs_frames.important_view')
                  ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
                  ->leftJoin('blogs_frames', 'blogs_frames.frames_id', '=', 'frames.id')
                  ->where('frames.id', $frame_id)
@@ -223,7 +223,7 @@ class BlogsPlugin extends UserPluginBase
         }
 
         // 削除されていないデータでグルーピングして、最新のIDで全件
-        $blogs_posts = BlogsPosts::select('blogs_posts.*',
+        $blogs_query = BlogsPosts::select('blogs_posts.*',
                                           'categories.color as category_color',
                                           'categories.background_color as category_background_color',
                                           'categories.category as category')
@@ -244,10 +244,24 @@ class BlogsPlugin extends UserPluginBase
                                            // 設定を見てWhere を付与する。
                                            ->where(function($query_setting) use($blog_frame) {
                                                $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
-                                           })
-                                 ->orderBy('posted_at', 'desc')
-                                 ->orderBy('contents_id', 'desc')
-                                 ->paginate($count);
+                                           });
+        // フレームの重要記事の条件参照
+        if ($blog_frame->important_view == 'important_only') {
+            $blogs_query->where('blogs_posts.important', 1);
+        }
+        else if ($blog_frame->important_view == 'not_important') {
+            $blogs_query->whereNull('blogs_posts.important');
+        }
+
+        // フレームの重要記事のソート条件参照
+        if ($blog_frame->important_view == 'top') {
+            $blogs_query->orderBy('important', 'desc');
+        }
+
+        // 続き
+        $blogs_posts = $blogs_query->orderBy('posted_at', 'desc')
+                                   ->orderBy('contents_id', 'desc')
+                                   ->paginate($count);
         return $blogs_posts;
     }
 
@@ -361,6 +375,22 @@ class BlogsPlugin extends UserPluginBase
                                   WHEN blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL
                                       THEN posted_at >= CONCAT(blogs_frames.scope_value, "-04-01") AND posted_at <= CONCAT((blogs_frames.scope_value + 1), "-03-31 23:59:59")
                                   END')
+
+                      // blogs_frames テーブルがない(null)場合は全て or blogs_frames で重要
+                      ->where(function($important_query){
+                          $important_query->whereNull('blogs_frames.important_view')
+                                          ->orWhere('blogs_frames.important_view', '')
+                                          ->orWhere('blogs_frames.important_view', 'top')
+                                          ->orWhere(function($important_query2){
+                                               $important_query2->where('blogs_frames.important_view', 'not_important')
+                                                                ->whereNull('blogs_posts.important');
+                                          })
+                                          ->orWhere(function($important_query3){
+                                               $important_query3->where('blogs_frames.important_view', 'important_only')
+                                                                ->where('blogs_posts.important', 1);
+                                          });
+                      })
+
                       ->whereNull('blogs_posts.deleted_at');
 /*
 SELECT blogs_frames.scope, blogs_frames.scope_value, blogs_posts.*
@@ -428,9 +458,26 @@ WHERE status = 0
                                   WHEN blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL
                                       THEN posted_at >= CONCAT(blogs_frames.scope_value, "-04-01") AND posted_at <= CONCAT((blogs_frames.scope_value + 1), "-03-31 23:59:59")
                                   END')
+
+                      // blogs_frames テーブルがない(null)場合は全て or blogs_frames で重要
+                      ->where(function($important_query){
+                          $important_query->whereNull('blogs_frames.important_view')
+                                          ->orWhere('blogs_frames.important_view', '')
+                                          ->orWhere('blogs_frames.important_view', 'top')
+                                          ->orWhere(function($important_query2){
+                                               $important_query2->where('blogs_frames.important_view', 'not_important')
+                                                                ->whereNull('blogs_posts.important');
+                                          })
+                                          ->orWhere(function($important_query3){
+                                               $important_query3->where('blogs_frames.important_view', 'important_only')
+                                                                ->where('blogs_posts.important', 1);
+                                          });
+                      })
+
                       ->whereNull('blogs_posts.deleted_at');
 
-        $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%', '', 'top', 'not_important', 'important_only', 1);
         $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
@@ -1384,7 +1431,7 @@ exit;
 
         BlogsFrames::updateOrCreate(
             ['frames_id' => $frame_id],
-            ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value ]
+            ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value, 'important_view' => $request->important_view ]
         );
 
         return $this->settingBlogFrame($request, $page_id, $frame_id);

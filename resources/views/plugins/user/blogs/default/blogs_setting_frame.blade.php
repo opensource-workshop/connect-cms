@@ -63,6 +63,44 @@
                 </div>
             </div>
 
+		    <div class="form-group row">
+		        <label class="{{$frame->getSettingLabelClass()}}">重要記事の扱い</label><br />
+		        <div class="{{$frame->getSettingInputClass()}}">
+		            <div class="custom-control custom-radio custom-control-inline">
+		                @if($blog_frame_setting->important_view == "")
+		                    <input type="radio" value="" id="important_view_0" name="important_view" class="custom-control-input" checked="checked">
+		                @else
+		                    <input type="radio" value="" id="important_view_0" name="important_view" class="custom-control-input">
+		                @endif
+		                <label class="custom-control-label text-nowrap" for="important_view_0">区別しない</label>
+		            </div>
+		            <div class="custom-control custom-radio custom-control-inline">
+		                @if($blog_frame_setting->important_view == "top")
+		                    <input type="radio" value="top" id="important_view_1" name="important_view" class="custom-control-input" checked="checked">
+		                @else
+		                    <input type="radio" value="top" id="important_view_1" name="important_view" class="custom-control-input">
+		                @endif
+		                <label class="custom-control-label text-nowrap" for="important_view_1">上に表示する</label>
+		            </div>
+		            <div class="custom-control custom-radio custom-control-inline">
+		                @if($blog_frame_setting->important_view == "important_only")
+		                    <input type="radio" value="important_only" id="important_view_2" name="important_view" class="custom-control-input" checked="checked">
+		                @else
+		                    <input type="radio" value="important_only" id="important_view_2" name="important_view" class="custom-control-input">
+		                @endif
+		                <label class="custom-control-label text-nowrap" for="important_view_2">重要記事のみ表示する</label>
+		            </div>
+		            <div class="custom-control custom-radio custom-control-inline">
+		                @if($blog_frame_setting->important_view == "not_important")
+		                    <input type="radio" value="not_important" id="important_view_3" name="important_view" class="custom-control-input" checked="checked">
+		                @else
+		                    <input type="radio" value="not_important" id="important_view_3" name="important_view" class="custom-control-input">
+		                @endif
+		                <label class="custom-control-label text-nowrap" for="important_view_3">重要記事を表示しない</label>
+		            </div>
+		        </div>
+		    </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center mt-3">
                 <div class="row">
