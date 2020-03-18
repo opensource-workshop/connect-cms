@@ -446,6 +446,7 @@ WHERE status = 0
                       ->join('pages', 'pages.id', '=', 'frames.page_id')
                       ->whereIn('pages.id', $page_ids)
                       ->where('status', '?')
+                      ->where('posted_at', '<=', Carbon::now())
                       ->where(function($plugin_query) use($search_keyword) {
                           $plugin_query->where('blogs_posts.post_title', 'like', '?')
                                        ->orWhere('blogs_posts.post_text', 'like', '?');
@@ -477,7 +478,7 @@ WHERE status = 0
                       ->whereNull('blogs_posts.deleted_at');
 
         //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%', '', 'top', 'not_important', 'important_only', 1);
+        $bind = array($page_ids, 0, Carbon::now(), '%'.$search_keyword.'%', '%'.$search_keyword.'%', '', 'top', 'not_important', 'important_only', 1);
         $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
