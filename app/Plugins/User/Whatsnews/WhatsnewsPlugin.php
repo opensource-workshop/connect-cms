@@ -460,8 +460,8 @@ class WhatsnewsPlugin extends UserPluginBase
         // 新着情報設定
         $whatsnews->whatsnew_name     = $request->whatsnew_name;
         $whatsnews->view_pattern      = $request->view_pattern;
-        $whatsnews->count             = intval($request->count);
-        $whatsnews->days              = intval($request->days);
+        $whatsnews->count             = (intval($request->count) < 0) ? 0 : intval($request->count);
+        $whatsnews->days              = (intval($request->days) < 0) ? 0 : intval($request->days);
         $whatsnews->rss               = $request->rss;
         $whatsnews->rss_count         = intval($request->rss_count);
         $whatsnews->view_posted_name  = $request->view_posted_name;
