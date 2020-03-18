@@ -218,6 +218,9 @@ class BlogsPlugin extends UserPluginBase
         if ($option_count != null) {
             $count = $option_count;
         }
+        if ($count < 0) {
+            $count = 0;
+        }
 
         // 削除されていないデータでグルーピングして、最新のIDで全件
         $blogs_posts = BlogsPosts::select('blogs_posts.*',
@@ -973,7 +976,7 @@ WHERE status = 0
 
         // ブログ設定
         $blogs->blog_name     = $request->blog_name;
-        $blogs->view_count    = $request->view_count;
+        $blogs->view_count    = (intval($request->view_count) < 0) ? 0 : intval($request->view_count);
         $blogs->rss           = $request->rss;
         $blogs->rss_count     = $request->rss_count;
         //$blogs->approval_flag = $request->approval_flag;
