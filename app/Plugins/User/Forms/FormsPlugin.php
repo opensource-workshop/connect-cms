@@ -338,6 +338,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $comparison_date = \Carbon::now()->addDay($forms_column->rule_date_after_equal)->format('Y/m/d');
             $validator_rule[] = 'after_or_equal:' . $comparison_date;
         }
+        // 日付チェック
+        if ($forms_column->column_type == \FormColumnType::date) {
+            $validator_rule[] = 'date';
+        }
         // バリデータールールをセット
         if($validator_rule){
             $validator_array['column']['forms_columns_value.' . $forms_column->id] = $validator_rule;
