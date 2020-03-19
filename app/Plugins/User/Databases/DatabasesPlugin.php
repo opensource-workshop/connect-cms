@@ -371,6 +371,7 @@ class DatabasesPlugin extends UserPluginBase
                                                 })
                                                ->where('databases_id', $database->id);
             }
+
             // キーワード指定の追加
             if (!empty(session('search_keyword'))) {
                 $inputs_query->whereIn('databases_inputs.id', function($query) {
@@ -383,6 +384,68 @@ class DatabasesPlugin extends UserPluginBase
                                      ->groupBy('databases_inputs_id');
                                });
             }
+
+            // オプション検索指定の追加
+            if ($request->has('search_options') && is_array($request->search_options)) {
+
+                // 指定をばらす
+                foreach($request->search_options as $search_option) {
+                    $search_option_parts = explode('|', $search_option);
+                    if (count($search_option_parts) != 3) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    $option_search_column_obj = $columns->where('column_name', $search_option_parts[0]);
+                    if (empty($option_search_column_obj)) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    $option_search_column = $option_search_column_obj->first();
+                    if (empty($option_search_column)) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    if (empty($search_option_parts[1]) || !in_array($search_option_parts[1], ['ALL', 'PART', 'FRONT', 'REAR', 'GT', 'LT', 'GE', 'LE'])) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    if (empty($search_option_parts[2])) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+
+                    // 検索方法
+                    $inputs_query->whereIn('databases_inputs.id', function($query) use($option_search_column, $search_option_parts) {
+                                   // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+                                   $query->select('databases_inputs_id')
+                                         ->from('databases_input_cols')
+                                         ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                         ->where('databases_input_cols.databases_columns_id', $option_search_column->id);
+                                         if ($search_option_parts[1] == 'ALL') {
+                                             $query->where('value', $search_option_parts[2]);
+                                         }
+                                         else if ($search_option_parts[1] == 'PART') {
+                                             $query->where('value', 'like', '%' . $search_option_parts[2] . '%');
+                                         }
+                                         else if ($search_option_parts[1] == 'FRONT') {
+                                             $query->where('value', 'like', $search_option_parts[2] . '%');
+                                         }
+                                         else if ($search_option_parts[1] == 'REAR') {
+                                             $query->where('value', 'like', '%' . $search_option_parts[2]);
+                                         }
+                                         else if ($search_option_parts[1] == 'GT') {
+                                             $query->where('value', '>', $search_option_parts[2]);
+                                         }
+                                         else if ($search_option_parts[1] == 'LT') {
+                                             $query->where('value', '<', $search_option_parts[2]);
+                                         }
+                                         else if ($search_option_parts[1] == 'GE') {
+                                             $query->where('value', '>=', $search_option_parts[2]);
+                                         }
+                                         else if ($search_option_parts[1] == 'LE') {
+                                             $query->where('value', '<=', $search_option_parts[2]);
+                                         }
+
+                                         $query->groupBy('databases_inputs_id');
+                                   });
+                }
+            }
+
             // 絞り込み指定の追加
             if (!empty(session('search_column'))) {
                 foreach(session('search_column') as $search_column) {
@@ -408,8 +471,11 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // ソート
-            if (session('sort_column_id') == 'random') {
+            if (session('sort_column_id') == 'random' && session('sort_column_order') == 'session') {
                 $inputs_query->inRandomOrder(session('sort_seed'));
+            }
+            else if (session('sort_column_id') == 'random' && session('sort_column_order') == 'every') {
+                $inputs_query->inRandomOrder();
             }
             else if (session('sort_column_id') == 'created' && session('sort_column_order') == 'asc') {
                 $inputs_query->orderBy('databases_inputs.created_at', 'asc');

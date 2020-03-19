@@ -24,11 +24,12 @@ final class DatabaseColumnType
     const wysiwyg = 'wysiwyg';
     const group = 'group';
 
-    const created_asc  = 'created_asc';
-    const created_desc = 'created_desc';
-    const updated_asc  = 'updated_asc';
-    const updated_desc = 'updated_desc';
-    const random       = 'random';
+    const created_asc    = 'created_asc';
+    const created_desc   = 'created_desc';
+    const updated_asc    = 'updated_asc';
+    const updated_desc   = 'updated_desc';
+    const random_session = 'random_session';
+    const random_every   = 'random_every';
 
     // key/valueの連想配列
     const enum = [
@@ -48,11 +49,12 @@ final class DatabaseColumnType
         self::wysiwyg=>'ウィジウィグ',
         self::group=>'まとめ行',
 
-        self::created_asc  => '登録日（古い順）',
-        self::created_desc => '登録日（新しい順）',
-        self::updated_asc  => '更新日（古い順）',
-        self::updated_desc => '更新日（新しい順）',
-        self::random       => 'ランダム',
+        self::created_asc    => '登録日（古い順）',
+        self::created_desc   => '登録日（新しい順）',
+        self::updated_asc    => '更新日（古い順）',
+        self::updated_desc   => '更新日（新しい順）',
+        self::random_session => 'ランダム（セッション）',
+        self::random_every   => 'ランダム（毎回）',
     ];
 
     /*

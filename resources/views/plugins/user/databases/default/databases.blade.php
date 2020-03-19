@@ -86,8 +86,7 @@
                         <option value="">並べ替え</option>
                         <optgroup label="基本設定">
                             @foreach($databases_frames->getBasicUseSortFlag() as $sort_basic)
-                                @if(($sort_basic == 'random' && Session::get('sort_column_id') == 'random') ||
-                                    ($sort_basic == (Session::get('sort_column_id') . '_' . Session::get('sort_column_order'))))
+                                @if($sort_basic == (Session::get('sort_column_id') . '_' . Session::get('sort_column_order')))
                                     <option value="{{$sort_basic}}" selected>{{DatabaseColumnType::getDescription($sort_basic)}}</option>
                                 @else
                                     <option value="{{$sort_basic}}">{{DatabaseColumnType::getDescription($sort_basic)}}</option>

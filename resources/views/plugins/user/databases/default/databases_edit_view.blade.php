@@ -121,8 +121,13 @@
             </div>
 
             <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[random]" value="random" class="custom-control-input" id="use_sort_flag_random" @if(old('use_sort_flag.random', $view_frame->isUseSortFlag('random'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_random">ランダム</label>
+                <input type="checkbox" name="use_sort_flag[random_session]" value="random_session" class="custom-control-input" id="use_sort_flag_random_session" @if(old('use_sort_flag.random_session', $view_frame->isUseSortFlag('random_session'))) checked=checked @endif>
+                <label class="custom-control-label" for="use_sort_flag_random_session">ランダム（セッション）</label>
+            </div>
+
+            <div class="custom-control custom-checkbox custom-control-inline">
+                <input type="checkbox" name="use_sort_flag[random_every]" value="random_every" class="custom-control-input" id="use_sort_flag_random_every" @if(old('use_sort_flag.random_every', $view_frame->isUseSortFlag('random_every'))) checked=checked @endif>
+                <label class="custom-control-label" for="use_sort_flag_random_every">ランダム（毎回）</label>
             </div>
 
             <div class="custom-control custom-checkbox custom-control-inline">
@@ -165,10 +170,16 @@
                     <option value="updated_desc">更新日（新しい順）</option>
                 @endif
 
-                @if($view_frame->default_sort_flag == 'random')
-                    <option value="random" selected>ランダム</option>
+                @if($view_frame->default_sort_flag == 'random_session')
+                    <option value="random_session" selected>ランダム（セッション）</option>
                 @else
-                    <option value="random">ランダム</option>
+                    <option value="random_session">ランダム（セッション）</option>
+                @endif
+
+                @if($view_frame->default_sort_flag == 'random_every')
+                    <option value="random_every" selected>ランダム（毎回）</option>
+                @else
+                    <option value="random_every">ランダム（毎回）</option>
                 @endif
             </optgroup>
             <optgroup label="各カラム設定">
