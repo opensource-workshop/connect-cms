@@ -24,4 +24,6 @@ return [
     'to_list' => 'All',
     'next' => 'Next',
     'previous' => 'Prev',
+    'enter_same_email' => 'Enter the same email address',
+    'not_match_confirmation_value' => ' does not match the confirmation value.',
 ];

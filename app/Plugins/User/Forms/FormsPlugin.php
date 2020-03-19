@@ -20,6 +20,7 @@ use App\Models\User\Forms\FormsInputCols;
 
 use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
+use App\Rules\CustomVali_Confirmed;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
@@ -289,9 +290,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      *
      * @param [array] $validator_array 二次元配列
      * @param [App\Models\User\Forms\FormsColumns] $forms_column
+     * @param Request $request
      * @return void
      */
-    private function getValidatorRule($validator_array, $forms_column){
+    private function getValidatorRule($validator_array, $forms_column, $request){
 
         $validator_rule = null;
         // 必須チェック
@@ -302,6 +304,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_column->column_type == \FormColumnType::mail) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'email';
+            // 同値チェック
+            $validator_rule[] = new CustomVali_Confirmed($forms_column->column_name, $request->forms_columns_value_confirmation[$forms_column->id]);
         }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
@@ -338,6 +342,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $comparison_date = \Carbon::now()->addDay($forms_column->rule_date_after_equal)->format('Y/m/d');
             $validator_rule[] = 'after_or_equal:' . $comparison_date;
         }
+        // 日付チェック
+        if ($forms_column->column_type == \FormColumnType::date) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'date';
+        }
         // バリデータールールをセット
         if($validator_rule){
             $validator_array['column']['forms_columns_value.' . $forms_column->id] = $validator_rule;
@@ -366,11 +375,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($forms_column->group) {
                 foreach($forms_column->group as $group_item) {
                     // まとめ行で指定している項目について、バリデータールールをセット
-                    $validator_array = self::getValidatorRule($validator_array, $group_item);
+                    $validator_array = self::getValidatorRule($validator_array, $group_item, $request);
                 }
             }
             // まとめ行以外の項目について、バリデータールールをセット
-            $validator_array = self::getValidatorRule($validator_array, $forms_column);
+            $validator_array = self::getValidatorRule($validator_array, $forms_column, $request);
         }
 
         // 入力値をトリム
