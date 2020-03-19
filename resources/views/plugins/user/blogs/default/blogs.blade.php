@@ -10,7 +10,7 @@
 @section("plugin_contents_$frame->id")
 {{-- 新規登録 --}}
 @can('posts.create',[[null, 'blogs', $buckets]])
-    @if (isset($frame) && $frame->bucket_id)
+    @if (isset($buckets) && isset($frame) && $frame->bucket_id)
         <div class="row">
             <p class="text-left col-6">
                 @if (isset($blog_frame->rss) && $blog_frame->rss == 1)

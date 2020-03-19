@@ -13,7 +13,7 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-@if (!$blog->id)
+@if (!$blog || !$blog->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用するブログを選択するか、作成してください。
@@ -34,7 +34,7 @@
     </div>
 @endif
 
-@if (!$blog->id && !$create_flag)
+@if (!$blog || (!$blog->id && !$create_flag))
 @else
 <form action="/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
