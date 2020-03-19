@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 
+use Session;
+
 use App\User;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
@@ -637,6 +639,18 @@ trait ConnectCommonTrait
         $sp_menu .= '</ul>' . "\n";
         $sp_menu .= '</nav>' . "\n";
         return $sp_menu;
+    }
+
+    /**
+     *  CSRF用トークンの取得
+     */
+    public function getToken($arg)
+    {
+        if ($arg == 'hidden') {
+            return '<input type="hidden" name="_token" value="' . Session::get('_token') . '">';
+        }
+
+        return Session::get('_token');
     }
 
     /**

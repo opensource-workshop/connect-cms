@@ -283,6 +283,11 @@ class ContentsPlugin extends UserPluginBase
             $contents->content_text = str_replace('<cc value="cc:menu"></cc>', $sp_menu, $contents->content_text);
         }
 
+        // CSRF用トークンの埋め込み指示がある場合
+        if ($contents && mb_strpos($contents->content_text, '<cc value="cc:hidden_token"></cc>') !== false) {
+            $contents->content_text = str_replace('<cc value="cc:hidden_token"></cc>', $this->getToken('hidden'), $contents->content_text);
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'contents', [
