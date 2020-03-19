@@ -470,29 +470,43 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
-            // ソート
-            if (session('sort_column_id') == 'random' && session('sort_column_order') == 'session') {
+            // ソート(セッションがあれば優先。なければ初期値を使用)
+            $sort_column_id = '';
+            $sort_column_order = '';
+            if (session('sort_column_id') && session('sort_column_order')) {
+                $sort_column_id = session('sort_column_id');
+                $sort_column_order = session('sort_column_order');
+            }
+            else if ($databases_frames && $databases_frames->default_sort_flag) {
+                $sort_flag = explode('_', $databases_frames->default_sort_flag);
+                if (count($sort_flag) == 2) {
+                    $sort_column_id = $sort_flag[0];
+                    $sort_column_order = $sort_flag[1];
+                }
+            }
+
+            if ($sort_column_id == 'random' && $sort_column_order == 'session') {
                 $inputs_query->inRandomOrder(session('sort_seed'));
             }
-            else if (session('sort_column_id') == 'random' && session('sort_column_order') == 'every') {
+            else if ($sort_column_id == 'random' && $sort_column_order == 'every') {
                 $inputs_query->inRandomOrder();
             }
-            else if (session('sort_column_id') == 'created' && session('sort_column_order') == 'asc') {
+            else if ($sort_column_id == 'created' && $sort_column_order == 'asc') {
                 $inputs_query->orderBy('databases_inputs.created_at', 'asc');
             }
-            else if (session('sort_column_id') == 'created' && session('sort_column_order') == 'desc') {
+            else if ($sort_column_id == 'created' && $sort_column_order == 'desc') {
                 $inputs_query->orderBy('databases_inputs.created_at', 'desc');
             }
-            else if (session('sort_column_id') == 'updated' && session('sort_column_order') == 'asc') {
+            else if ($sort_column_id == 'updated' && $sort_column_order == 'asc') {
                 $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
             }
-            else if (session('sort_column_id') == 'updated' && session('sort_column_order') == 'desc') {
+            else if ($sort_column_id == 'updated' && $sort_column_order == 'desc') {
                 $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
             }
-            else if (session('sort_column_id') && ctype_digit(session('sort_column_id')) && session('sort_column_order') == 'asc') {
+            else if ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'asc') {
                 $inputs_query->orderBy('databases_inputs.value', 'asc');
             }
-            else if (session('sort_column_id') && ctype_digit(session('sort_column_id')) && session('sort_column_order') == 'desc') {
+            else if ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'desc') {
                 $inputs_query->orderBy('databases_inputs.value', 'desc');
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
