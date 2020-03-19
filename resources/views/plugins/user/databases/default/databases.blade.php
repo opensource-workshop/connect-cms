@@ -54,7 +54,7 @@
             <div class="form-group row mb-3">
             @foreach($select_columns as $select_column)
                 @php
-                    $session_culumn_name = "search_column." . $loop->index . ".value";
+                    $session_column_name = "search_column." . $loop->index . ".value";
                 @endphp
                 <div class="col-sm-{{$col_no}}">
                     <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
@@ -67,7 +67,7 @@
                     <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);">
                         <option value="">{{$select_column->column_name}}</option>
                         @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
-                            @if($columns_select->value == Session::get($session_culumn_name))
+                            @if($columns_select->value == Session::get($session_column_name))
                             <option value="{{$columns_select->value}}" selected>{{$columns_select->value}}</option>
                             @else
                             <option value="{{$columns_select->value}}">{{$columns_select->value}}</option>
@@ -79,6 +79,22 @@
 
             {{-- 並び順 --}}
             @if($sort_count > 0 || $databases_frames->isBasicUseSortFlag())
+
+                @php
+                  // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
+                  if (Session::get('sort_column_id') && Session::get('sort_column_order')) {
+                      $sort_column_id = Session::get('sort_column_id');
+                      $sort_column_order = Session::get('sort_column_order');
+                  }
+                  else if ($databases_frames && $databases_frames->default_sort_flag) {
+                      $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
+                      if (count($default_sort_flag_part) == 2) {
+                          $sort_column_id = $default_sort_flag_part[0];
+                          $sort_column_order = $default_sort_flag_part[1];
+                      }
+                  }
+                @endphp
+
                 <div class="col-sm-{{$col_no}}">
                     <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);">
 
@@ -86,7 +102,7 @@
                         <option value="">並べ替え</option>
                         <optgroup label="基本設定">
                             @foreach($databases_frames->getBasicUseSortFlag() as $sort_basic)
-                                @if($sort_basic == (Session::get('sort_column_id') . '_' . Session::get('sort_column_order')))
+                                @if($sort_basic == ($sort_column_id . '_' . $sort_column_order))
                                     <option value="{{$sort_basic}}" selected>{{DatabaseColumnType::getDescription($sort_basic)}}</option>
                                 @else
                                     <option value="{{$sort_basic}}">{{DatabaseColumnType::getDescription($sort_basic)}}</option>
@@ -101,7 +117,7 @@
                             @foreach($columns->whereIn('sort_flag', [1, 2, 3]) as $sort_column)
 
                                 @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
-                                    @if($sort_column->id == Session::get('sort_column_id') && Session::get('sort_column_order') == 'asc')
+                                    @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc')
                                     <option value="{{$sort_column->id}}_asc" selected>{{$sort_column->column_name}}(昇順)</option>
                                     @else
                                     <option value="{{$sort_column->id}}_asc">{{$sort_column->column_name}}(昇順)</option>
@@ -109,8 +125,7 @@
                                 @endif
 
                                 @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 3)
-
-                                    @if($sort_column->id == Session::get('sort_column_id') && Session::get('sort_column_order') == 'desc')
+                                    @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc')
                                     <option value="{{$sort_column->id}}_desc" selected>{{$sort_column->column_name}}(降順)</option>
                                     @else
                                     <option value="{{$sort_column->id}}_desc">{{$sort_column->column_name}}(降順)</option>

@@ -358,16 +358,30 @@ class DatabasesPlugin extends UserPluginBase
 
             // 登録データ行の取得 --->
 
-            // 並べ替え指定があれば、並べ替えする項目をSELECT する。
-            if (empty(session('sort_column_id')) || !ctype_digit(session('sort_column_id'))) {
+            // ソート(セッションがあれば優先。なければ初期値を使用)
+            $sort_column_id = '';
+            $sort_column_order = '';
+            if (session('sort_column_id') && session('sort_column_order')) {
+                $sort_column_id = session('sort_column_id');
+                $sort_column_order = session('sort_column_order');
+            }
+            else if ($databases_frames && $databases_frames->default_sort_flag) {
+                $sort_flag = explode('_', $databases_frames->default_sort_flag);
+                if (count($sort_flag) == 2) {
+                    $sort_column_id = $sort_flag[0];
+                    $sort_column_order = $sort_flag[1];
+                }
+            }
+
+            if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
                 $inputs_query = DatabasesInputs::where('databases_id', $database->id);
             }
             else {
                 $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
 
-                                                ->leftjoin('databases_input_cols',function($join) {
+                                                ->leftjoin('databases_input_cols',function($join) use($sort_column_id) {
                                                     $join->on('databases_input_cols.databases_inputs_id','=','databases_inputs.id')
-                                                         ->where('databases_input_cols.databases_columns_id','=',session('sort_column_id'));
+                                                         ->where('databases_input_cols.databases_columns_id','=',$sort_column_id);
                                                 })
                                                ->where('databases_id', $database->id);
             }
@@ -470,21 +484,7 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
-            // ソート(セッションがあれば優先。なければ初期値を使用)
-            $sort_column_id = '';
-            $sort_column_order = '';
-            if (session('sort_column_id') && session('sort_column_order')) {
-                $sort_column_id = session('sort_column_id');
-                $sort_column_order = session('sort_column_order');
-            }
-            else if ($databases_frames && $databases_frames->default_sort_flag) {
-                $sort_flag = explode('_', $databases_frames->default_sort_flag);
-                if (count($sort_flag) == 2) {
-                    $sort_column_id = $sort_flag[0];
-                    $sort_column_order = $sort_flag[1];
-                }
-            }
-
+            // 並べ替え指定があれば、並べ替えする項目をSELECT する。
             if ($sort_column_id == 'random' && $sort_column_order == 'session') {
                 $inputs_query->inRandomOrder(session('sort_seed'));
             }
@@ -504,10 +504,10 @@ class DatabasesPlugin extends UserPluginBase
                 $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
             }
             else if ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'asc') {
-                $inputs_query->orderBy('databases_inputs.value', 'asc');
+                $inputs_query->orderBy('databases_input_cols.value', 'asc');
             }
             else if ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'desc') {
-                $inputs_query->orderBy('databases_inputs.value', 'desc');
+                $inputs_query->orderBy('databases_input_cols.value', 'desc');
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
 
