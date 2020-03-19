@@ -24,6 +24,12 @@ final class DatabaseColumnType
     const wysiwyg = 'wysiwyg';
     const group = 'group';
 
+    const created_asc  = 'created_asc';
+    const created_desc = 'created_desc';
+    const updated_asc  = 'updated_asc';
+    const updated_desc = 'updated_desc';
+    const random       = 'random';
+
     // key/valueの連想配列
     const enum = [
         self::text=>'1行文字列型',
@@ -41,6 +47,12 @@ final class DatabaseColumnType
         self::video=>'動画型',
         self::wysiwyg=>'ウィジウィグ',
         self::group=>'まとめ行',
+
+        self::created_asc  => '登録日（古い順）',
+        self::created_desc => '登録日（新しい順）',
+        self::updated_asc  => '更新日（古い順）',
+        self::updated_desc => '更新日（新しい順）',
+        self::random       => 'ランダム',
     ];
 
     /*

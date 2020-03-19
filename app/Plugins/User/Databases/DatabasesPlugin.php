@@ -359,7 +359,7 @@ class DatabasesPlugin extends UserPluginBase
             // 登録データ行の取得 --->
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
-            if (empty(session('sort_column_id'))) {
+            if (empty(session('sort_column_id')) || !ctype_digit(session('sort_column_id'))) {
                 $inputs_query = DatabasesInputs::where('databases_id', $database->id);
             }
             else {
@@ -408,11 +408,26 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // ソート
-            if (session('sort_column_id') && session('sort_column_order') == 'asc') {
-                $inputs_query->orderBy('databases_input_cols.value', 'asc');
+            if (session('sort_column_id') == 'random') {
+                $inputs_query->inRandomOrder(session('sort_seed'));
             }
-            else if (session('sort_column_id') && session('sort_column_order') == 'desc') {
-                $inputs_query->orderBy('databases_input_cols.value', 'desc');
+            else if (session('sort_column_id') == 'created' && session('sort_column_order') == 'asc') {
+                $inputs_query->orderBy('databases_inputs.created_at', 'asc');
+            }
+            else if (session('sort_column_id') == 'created' && session('sort_column_order') == 'desc') {
+                $inputs_query->orderBy('databases_inputs.created_at', 'desc');
+            }
+            else if (session('sort_column_id') == 'updated' && session('sort_column_order') == 'asc') {
+                $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
+            }
+            else if (session('sort_column_id') == 'updated' && session('sort_column_order') == 'desc') {
+                $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
+            }
+            else if (session('sort_column_id') && ctype_digit(session('sort_column_id')) && session('sort_column_order') == 'asc') {
+                $inputs_query->orderBy('databases_inputs.value', 'asc');
+            }
+            else if (session('sort_column_id') && ctype_digit(session('sort_column_id')) && session('sort_column_order') == 'desc') {
+                $inputs_query->orderBy('databases_inputs.value', 'desc');
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
 
@@ -457,12 +472,13 @@ class DatabasesPlugin extends UserPluginBase
             'errors' => $errors,
             'setting_error_messages' => $setting_error_messages,
 
-            'databases'       => $databases,
-            'database_frame'  => $database_frame,
-            'columns'         => $columns,
-            'inputs'          => $inputs,
-            'input_cols'      => $input_cols,
-            'columns_selects' => isset($columns_selects) ? $columns_selects : null,
+            'databases'        => $databases,
+            'database_frame'   => $database_frame,
+            'databases_frames' => $databases_frames,
+            'columns'          => $columns,
+            'inputs'           => $inputs,
+            'input_cols'       => $input_cols,
+            'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
             'default_hide_list' => $default_hide_list,
 
         ])->withInput($request->all);
@@ -483,9 +499,18 @@ class DatabasesPlugin extends UserPluginBase
             // 絞り込み
             session(['search_column' => $request->search_column]);
 
+            // ランダム読み込みのための Seed をセッション中に作っておく
+            if (empty(session('sort_seed'))) {
+                session(['sort_seed' => rand()]);
+            }
+
             // 並べ替え
             $sort_column_parts = explode('_', $request->sort_column);
-            if (count($sort_column_parts) == 2) {
+            if (count($sort_column_parts) == 1) {
+                session(['sort_column_id'    => $sort_column_parts[0]]);
+                session(['sort_column_order' => '']);
+            }
+            else if (count($sort_column_parts) == 2) {
                 session(['sort_column_id'    => $sort_column_parts[0]]);
                 session(['sort_column_order' => $sort_column_parts[1]]);
             }
@@ -494,7 +519,6 @@ class DatabasesPlugin extends UserPluginBase
                 session(['sort_column_order' => '']);
             }
         }
-
         return $this->index($request, $page_id, $frame_id);
     }
 
@@ -823,6 +847,9 @@ class DatabasesPlugin extends UserPluginBase
         }
         else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
+            // 更新されたら、行レコードの updated_at を更新したいので、update()
+            $databases_inputs->updated_at = now();
+            $databases_inputs->update();
         }
 
         // ファイル（uploadsテーブル＆実ファイル）の削除。データ登録前に削除する。（後からだと内容が変わっていてまずい）
@@ -1988,19 +2015,31 @@ ORDER BY databases_inputs_id, databases_columns_id
         // データベース＆フレームデータ
         $database_frame = $this->getDatabaseFrame($frame_id);
 
+        // フレームデータ
+        $view_frame = DatabasesFrames::where('frames_id', $frame_id)->first();
+        if (empty($view_frame)) {
+            $view_frame = new DatabasesFrames();
+        }
+
         // Frames > Buckets > Database で特定
         if (empty($database_frame->bucket_id)) {
             $database = null;
+            $columns = null;
         }
         else {
             $database = Databases::where('bucket_id', $database_frame->bucket_id)->first();
+
+            // カラムの取得
+            $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence', 'asc')->get();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'databases_edit_view', [
             'database_frame' => $database_frame,
+            'view_frame'     => $view_frame,
             'database'       => $database,
+            'columns'        => $columns,
         ])->withInput($request->all);
     }
 
@@ -2034,15 +2073,16 @@ ORDER BY databases_inputs_id, databases_columns_id
 
         // 表示設定の保存
         $databases_frames = DatabasesFrames::updateOrCreate(
-            ['databases_id'    => $database_frame->databases_id,
-             'frames_id'       => $frame_id],
-            ['databases_id'    => $database_frame->databases_id,
-             'frames_id'       => $frame_id,
-             'use_search_flag' => $request->use_search_flag,
-             'use_select_flag' => $request->use_select_flag,
-             'use_sort_flag'   => $request->use_sort_flag,
-             'view_count'      => $request->view_count,
-             'default_hide'    => $request->default_hide]
+            ['databases_id'      => $database_frame->databases_id,
+             'frames_id'         => $frame_id],
+            ['databases_id'      => $database_frame->databases_id,
+             'frames_id'         => $frame_id,
+             'use_search_flag'   => $request->use_search_flag,
+             'use_select_flag'   => $request->use_select_flag,
+             'use_sort_flag'     => implode(',', $request->use_sort_flag),
+             'default_sort_flag' => $request->default_sort_flag,
+             'view_count'        => $request->view_count,
+             'default_hide'      => $request->default_hide]
         );
 
         return $this->editView($request, $page_id, $frame_id);
