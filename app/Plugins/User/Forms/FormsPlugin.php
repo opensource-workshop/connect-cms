@@ -340,6 +340,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // 日付チェック
         if ($forms_column->column_type == \FormColumnType::date) {
+            $validator_rule[] = 'nullable';
             $validator_rule[] = 'date';
         }
         // バリデータールールをセット
