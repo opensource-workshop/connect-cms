@@ -81,6 +81,9 @@
             @if($sort_count > 0 || $databases_frames->isBasicUseSortFlag())
 
                 @php
+                  $sort_column_id = '';
+                  $sort_column_order = '';
+
                   // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
                   if (Session::get('sort_column_id') && Session::get('sort_column_order')) {
                       $sort_column_id = Session::get('sort_column_id');
