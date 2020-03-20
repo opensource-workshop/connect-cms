@@ -43,9 +43,14 @@
             $select_column_count = $select_columns->count();
 
             // 並べ替えが有効なら、選択項目のカウントに +1 して、並べ替え用セレクトボックスの位置を確保する。
-            $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();
-            if ($sort_count > 0) {
-                $select_column_count++;
+            if ($databases_frames && $databases_frames->isUseSortFlag()) {
+                $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();
+                if ($sort_count > 0) {
+                    $select_column_count++;
+                }
+            }
+            else {
+                $sort_count = 0;
             }
 
             $col_no = ($select_column_count == 0) ? 0 : intdiv(12, $select_column_count);

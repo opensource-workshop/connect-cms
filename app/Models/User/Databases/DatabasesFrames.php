@@ -20,16 +20,26 @@ class DatabasesFrames extends Model
                            'updated_at'];
 
     /**
-     *  指定された並べ替えが設定されているか判断
+     *  並べ替えが設定されているか判断
      */
-    public function isUseSortFlag($flag) {
+    public function isUseSortFlag($flag = null) {
 
-        // データベース上はカンマ区切りで入っている
-        $use_sort_flags = explode(',', $this->use_sort_flag);
+        // データベース上はカンマ区切りで入っている(nullをexplodeすると配列が一つ返ってくるのでチェック)
+        if ($this->use_sort_flag) {
+            $use_sort_flags = explode(',', $this->use_sort_flag);
+        }
+        else {
+            $use_sort_flags = null;
+        }
 
         // 空の場合
         if (empty($use_sort_flags)) {
             return false;
+        }
+
+        // 項目指定なしなら、並べ替え設定されていると判断
+        if ($flag == null) {
+            return true;
         }
 
         // 配列にマッチ
@@ -44,8 +54,13 @@ class DatabasesFrames extends Model
      */
     public function isBasicUseSortFlag() {
 
-        // データベース上はカンマ区切りで入っている
-        $use_sort_flags = explode(',', $this->use_sort_flag);
+        // データベース上はカンマ区切りで入っている(nullをexplodeすると配列が一つ返ってくるのでチェック)
+        if ($this->use_sort_flag) {
+            $use_sort_flags = explode(',', $this->use_sort_flag);
+        }
+        else {
+            $use_sort_flags = null;
+        }
 
         // 空の場合
         if (empty($use_sort_flags)) {
@@ -64,8 +79,13 @@ class DatabasesFrames extends Model
      */
     public function getBasicUseSortFlag() {
 
-        // データベース上はカンマ区切りで入っている
-        $use_sort_flags = explode(',', $this->use_sort_flag);
+        // データベース上はカンマ区切りで入っている(nullをexplodeすると配列が一つ返ってくるのでチェック)
+        if ($this->use_sort_flag) {
+            $use_sort_flags = explode(',', $this->use_sort_flag);
+        }
+        else {
+            $use_sort_flags = null;
+        }
 
         // 空の場合
         if (empty($use_sort_flags)) {
