@@ -36,7 +36,7 @@
 
 @if (!$openingcalendar->id && !$create_flag)
 @else
-<form action="/plugin/openingcalendars/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/openingcalendars/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにopeningcalendars_id を空にする --}}

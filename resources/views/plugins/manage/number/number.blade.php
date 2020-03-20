@@ -81,7 +81,7 @@
 </table>
 
 
-    <form action="/manage/number/update" method="POST">
+    <form action="{{url('/')}}/manage/number/update" method="POST">
         {{csrf_field()}}
 
         {{-- サイト名 --}}

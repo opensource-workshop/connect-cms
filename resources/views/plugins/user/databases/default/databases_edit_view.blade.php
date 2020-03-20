@@ -37,7 +37,7 @@
 
 @if (!$database->id)
 @else
-<form action="/plugin/databases/saveView/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/databases/saveView/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- 表示件数 --}}

@@ -55,7 +55,7 @@
 </script>
 
 <div class="form-group">
-    <form action="/plugin/reservations/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
+    <form action="{{url('/')}}/plugin/reservations/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_columns" name="form_columns" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="reservations_id" value="{{$reservation->id}}">
         <input type="hidden" name="column_id" value="">

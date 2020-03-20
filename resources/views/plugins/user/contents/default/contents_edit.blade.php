@@ -21,7 +21,7 @@
 
 {{-- 更新用フォーム --}}
 <div class="text-center">
-    <form action="/redirect/plugin/contents/update/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="" name="form_update">
+    <form action="{{url('/')}}/redirect/plugin/contents/update/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="" name="form_update">
         {{ csrf_field() }}
         <input type="hidden" name="action" value="edit">
 

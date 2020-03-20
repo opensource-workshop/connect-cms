@@ -50,7 +50,7 @@
         @endforeach
     </ul>
 
-    <form action="/manage/theme/uploadImage" method="POST" enctype="multipart/form-data">
+    <form action="{{url('/')}}/manage/theme/uploadImage" method="POST" enctype="multipart/form-data">
         {{csrf_field()}}
         <input name="dir_name" type="hidden" value="{{$dir_name}}" />
 

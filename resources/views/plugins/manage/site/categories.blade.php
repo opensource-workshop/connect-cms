@@ -52,7 +52,7 @@
         {{ csrf_field() }}
     </form>
 
-    <form action="/manage/site/saveCategories" method="POST" class="">
+    <form action="{{url('/')}}/manage/site/saveCategories" method="POST" class="">
         {{ csrf_field() }}
 
         <div class="form-group table-responsive">

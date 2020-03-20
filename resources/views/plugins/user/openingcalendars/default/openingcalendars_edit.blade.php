@@ -27,7 +27,7 @@
 
 【編集年月】：{{$edit_ym}}
 
-<form action="/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="chenge_ym">
+<form action="{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="chenge_ym">
     {{csrf_field()}}
     <select name="edit_ym" onchange="javascript:submit(this.form);">
         @foreach($select_ym as $option_ym => $data_on)
@@ -37,7 +37,7 @@
 </form>
 <br />
 
-<form action="/plugin/openingcalendars/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="chenge_plan">
+<form action="{{url('/')}}/plugin/openingcalendars/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="chenge_plan">
     {{ csrf_field() }}
     <input type="hidden" name="target_ym" value="{{$edit_ym}}">
 

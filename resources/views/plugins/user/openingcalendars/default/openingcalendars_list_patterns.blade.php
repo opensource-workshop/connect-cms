@@ -42,7 +42,7 @@
 <script type="text/javascript">
     function form_delete(id) {
         if (confirm('時間設定を削除します。\nよろしいですか？')) {
-            form_delete_pattern.action = "/plugin/openingcalendars/deletePatterns/{{$page->id}}/{{$frame_id}}/" + id;
+            form_delete_pattern.action = "{{url('/')}}/plugin/openingcalendars/deletePatterns/{{$page->id}}/{{$frame_id}}/" + id;
             form_delete_pattern.submit();
         }
     }
@@ -52,7 +52,7 @@
     {{ csrf_field() }}
 </form>
 
-<form action="/plugin/openingcalendars/savePatterns/{{$page->id}}/{{$frame_id}}/{{$openingcalendar->id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/openingcalendars/savePatterns/{{$page->id}}/{{$frame_id}}/{{$openingcalendar->id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group table-responsive">

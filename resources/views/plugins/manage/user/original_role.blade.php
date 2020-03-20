@@ -52,7 +52,7 @@
         {{ csrf_field() }}
     </form>
 
-    <form action="/manage/user/saveOriginalRoles" method="POST" class="">
+    <form action="{{url('/')}}/manage/user/saveOriginalRoles" method="POST" class="">
         {{ csrf_field() }}
 
         <div class="form-group table-responsive">

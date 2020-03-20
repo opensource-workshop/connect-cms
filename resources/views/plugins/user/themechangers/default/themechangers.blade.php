@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 
-<form action="/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}" method="POST">
+<form action="{{url('/')}}/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}" method="POST">
     {{csrf_field()}}
     <div class="form-group mb-0">
         <select class="form-control" name="session_theme" class="form-control" onchange="javascript:submit(this.form);">

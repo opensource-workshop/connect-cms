@@ -54,7 +54,7 @@
         {{ csrf_field() }}
     </form>
 
-    <form action="/manage/site/saveLanguages" method="POST" class="">
+    <form action="{{url('/')}}/manage/site/saveLanguages" method="POST" class="">
         {{ csrf_field() }}
 
         {{-- ヘッダーの表示指定 --}}

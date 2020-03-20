@@ -25,9 +25,9 @@
 
 {{-- 投稿用フォーム --}}
 @if (empty($faqs_posts->id))
-    <form action="/plugin/faqs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_faqs_posts">
+    <form action="{{url('/')}}/plugin/faqs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_faqs_posts">
 @else
-    <form action="/plugin/faqs/save/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}" method="POST" class="" name="form_faqs_posts">
+    <form action="{{url('/')}}/plugin/faqs/save/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}" method="POST" class="" name="form_faqs_posts">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="faqs_id" value="{{$faq_frame->faqs_id}}">

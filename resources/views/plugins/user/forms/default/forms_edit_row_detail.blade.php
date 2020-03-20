@@ -19,7 +19,7 @@
      * 選択肢の追加ボタン押下
      */
     function submit_add_select(btn) {
-        form_column_detail.action = "/plugin/forms/addSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_column_detail.action = "{{url('/')}}/plugin/forms/addSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         btn.disabled = true;
         form_column_detail.submit();
     }
@@ -28,7 +28,7 @@
      * 選択肢の表示順操作ボタン押下
      */
     function submit_display_sequence(select_id, display_sequence, display_sequence_operation) {
-        form_column_detail.action = "/plugin/forms/updateSelectSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_column_detail.action = "{{url('/')}}/plugin/forms/updateSelectSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_column_detail.select_id.value = select_id;
         form_column_detail.display_sequence.value = display_sequence;
         form_column_detail.display_sequence_operation.value = display_sequence_operation;
@@ -39,7 +39,7 @@
      * 選択肢の更新ボタン押下
      */
     function submit_update_select(select_id) {
-        form_column_detail.action = "/plugin/forms/updateSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_column_detail.action = "{{url('/')}}/plugin/forms/updateSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_column_detail.select_id.value = select_id;
         form_column_detail.submit();
     }
@@ -49,7 +49,7 @@
      */
      function submit_delete_select(select_id) {
         if(confirm('選択肢を削除します。\nよろしいですか？')){
-            form_column_detail.action = "/plugin/forms/deleteSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+            form_column_detail.action = "{{url('/')}}/plugin/forms/deleteSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
             form_column_detail.select_id.value = select_id;
             form_column_detail.submit();
         }
@@ -60,7 +60,7 @@
      * その他の設定の更新ボタン押下
      */
      function submit_update_column_detail() {
-        form_column_detail.action = "/plugin/forms/updateColumnDetail/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_column_detail.action = "{{url('/')}}/plugin/forms/updateColumnDetail/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_column_detail.submit();
     }
 </script>

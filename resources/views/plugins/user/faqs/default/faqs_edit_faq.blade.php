@@ -36,7 +36,7 @@
 
 @if (empty($faq) || (!$faq->id && !$create_flag))
 @else
-<form action="/plugin/faqs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/faqs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにfaqs_id を空にする --}}

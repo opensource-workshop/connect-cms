@@ -18,7 +18,7 @@
 @include('plugins.manage.plugin.plugin_tab')
 
 </div>
-<form name="form_plugins" id="form_plugins" class="form-horizontal" method="post" action="/manage/plugin/update">
+<form name="form_plugins" id="form_plugins" class="form-horizontal" method="post" action="{{url('/')}}/manage/plugin/update">
     {{ csrf_field() }}
     <div class="table-responsive">
         <table class="card-body table">

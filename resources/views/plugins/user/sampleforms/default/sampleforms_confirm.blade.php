@@ -26,9 +26,9 @@
 
 {{-- フォームの作成。フレームID を指定して、フレームを特定する --}}
 @if (empty($id))
-<form action="/redirect/plugin/sampleforms/save/{{$page->id}}/{{$frame_id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
+<form action="{{url('/')}}/redirect/plugin/sampleforms/save/{{$page->id}}/{{$frame_id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
 @else
-<form action="/redirect/plugin/sampleforms/update/{{$page->id}}/{{$frame_id}}/{{$id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
+<form action="{{url('/')}}/redirect/plugin/sampleforms/update/{{$page->id}}/{{$frame_id}}/{{$id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
 @endif
 
     {{csrf_field()}}

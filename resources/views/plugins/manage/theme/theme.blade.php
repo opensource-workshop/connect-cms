@@ -83,7 +83,7 @@
         新規作成
     </div>
     <div class="card-body">
-        <form action="/manage/theme/create" method="POST">
+        <form action="{{url('/')}}/manage/theme/create" method="POST">
             {{csrf_field()}}
 
             {{-- ディレクトリ名 --}}

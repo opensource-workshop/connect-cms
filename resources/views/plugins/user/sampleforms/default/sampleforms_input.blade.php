@@ -7,10 +7,10 @@
  --}}
 {{-- フォームの作成。フレームID を指定して、フレームを特定する --}}
 @if (empty($id))
-<form action="/plugin/sampleforms/confirm/{{$page->id}}/{{$frame_id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
+<form action="{{url('/')}}/plugin/sampleforms/confirm/{{$page->id}}/{{$frame_id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
     <input name="id" type="hidden" value="">
 @else
-<form action="/plugin/sampleforms/confirm/{{$page->id}}/{{$frame_id}}/{{$id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
+<form action="{{url('/')}}/plugin/sampleforms/confirm/{{$page->id}}/{{$frame_id}}/{{$id}}" name="sampleforms_form" method="POST" accept-charset="UTF-8" enctype="multipart/form-data">
     <input name="id" type="hidden" value="{{$id}}">
 @endif
 

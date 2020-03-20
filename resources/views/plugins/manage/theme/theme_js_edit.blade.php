@@ -18,7 +18,7 @@
     </div>
     <div class="card-body">
 
-        <form action="/manage/theme/saveJs" method="POST">
+        <form action="{{url('/')}}/manage/theme/saveJs" method="POST">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
             <textarea name="js" class="form-control" rows=20>{{$js}}</textarea>

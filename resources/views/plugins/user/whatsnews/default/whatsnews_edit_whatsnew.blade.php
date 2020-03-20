@@ -42,7 +42,7 @@
 @if (isset($whatsnew))
 @if (!$whatsnew->id && !$create_flag)
 @else
-<form action="/plugin/whatsnews/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/whatsnews/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにwhatsnews_id を空にする --}}

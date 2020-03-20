@@ -45,13 +45,13 @@
 <script type="text/javascript">
     function form_delete(id) {
         if (confirm('カテゴリを削除します。\nよろしいですか？')) {
-            form_delete_category.action = "/plugin/learningtasks/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id;
+            form_delete_category.action = "{{url('/')}}/plugin/learningtasks/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id;
             form_delete_category.submit();
         }
     }
 </script>
 
-<form action="/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group table-responsive">

@@ -26,11 +26,11 @@
 
 {{-- 登録用フォーム --}}
 @if (empty($opacs_books->id))
-{{--    <form action="/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="" onsubmit="return false;"> --}}
-    <form action="/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="">
+{{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="" onsubmit="return false;"> --}}
+    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="">
 @else
-{{--    <form action="/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="" onsubmit="return false;"> --}}
-    <form action="/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="">
+{{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="" onsubmit="return false;"> --}}
+    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="opacs_id" value="{{$opac_frame->opacs_id}}">

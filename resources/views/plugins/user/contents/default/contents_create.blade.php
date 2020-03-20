@@ -21,7 +21,7 @@
 
 {{-- 新規登録用フォーム --}}
 <div class="text-center">
-    <form action="/redirect/plugin/contents/store/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_update">
+    <form action="{{url('/')}}/redirect/plugin/contents/store/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_update">
         {{ csrf_field() }}
         <input type="hidden" name="action" value="edit">
 

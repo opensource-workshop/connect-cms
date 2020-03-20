@@ -54,7 +54,7 @@
 
 <!-- Add or Update Form Button -->
 <div class="form-group">
-    <form action="/plugin/reservations/addFacility/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_facilities" name="form_facilities" method="POST">
+    <form action="{{url('/')}}/plugin/reservations/addFacility/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_facilities" name="form_facilities" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="reservations_id" value="{{$reservation->id}}">
         <input type="hidden" name="facility_id" value="">

@@ -27,7 +27,7 @@
      * 項目の追加ボタン押下
      */
      function submit_add_column() {
-        form_columns.action = "/plugin/forms/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.action = "{{url('/')}}/plugin/forms/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.submit();
     }
 
@@ -36,7 +36,7 @@
      */
      function submit_delete_column(column_id) {
         if(confirm('項目を削除します。\nよろしいですか？')){
-            form_columns.action = "/plugin/forms/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+            form_columns.action = "{{url('/')}}/plugin/forms/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
             form_columns.column_id.value = column_id;
             form_columns.submit();
         }
@@ -47,7 +47,7 @@
      * 項目の更新ボタン押下
      */
      function submit_update_column(column_id) {
-        form_columns.action = "/plugin/forms/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.action = "{{url('/')}}/plugin/forms/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.column_id.value = column_id;
         form_columns.submit();
     }
@@ -56,7 +56,7 @@
      * 項目の表示順操作ボタン押下
      */
      function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
-        form_columns.action = "/plugin/forms/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.action = "{{url('/')}}/plugin/forms/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.column_id.value = column_id;
         form_columns.display_sequence.value = display_sequence;
         form_columns.display_sequence_operation.value = display_sequence_operation;
@@ -76,7 +76,7 @@
 </script>
 
         {{-- キャンセル用のフォーム。キャンセル時はセッションをクリアするため、トークン付きでPOST でsubmit したい。 --}}
-        <form action="/redirect/plugin/forms/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="forms_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
+        <form action="{{url('/')}}/redirect/plugin/forms/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="forms_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
             {{ csrf_field() }}
         </form>
 

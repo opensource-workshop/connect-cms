@@ -19,7 +19,7 @@
 
 </div>
 <div class="card-body">
-<form name="form_auth" id="form_auth" class="form-horizontal" method="post" action="/manage/system/updateAuth">
+<form name="form_auth" id="form_auth" class="form-horizontal" method="post" action="{{url('/')}}/manage/system/updateAuth">
     {{ csrf_field() }}
 
     <div class="form-group">

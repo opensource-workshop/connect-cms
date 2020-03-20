@@ -36,7 +36,7 @@
 
 @if (!$blog || (!$blog->id && !$create_flag))
 @else
-<form action="/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
     <div id="app_{{ $frame->id }}">
 

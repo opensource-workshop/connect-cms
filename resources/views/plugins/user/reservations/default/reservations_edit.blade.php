@@ -37,7 +37,7 @@
 
 @if (!$reservation->id && !$create_flag)
 @else
-<form action="/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにreservations_id を空にする --}}

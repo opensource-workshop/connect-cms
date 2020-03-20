@@ -26,7 +26,7 @@
         フレーム毎の表示条件が設定できます。
     </div>
 
-    <form action="/plugin/blogs/saveBlogFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
+    <form action="{{url('/')}}/plugin/blogs/saveBlogFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
         {{ csrf_field() }}
 
         <div id="app_{{ $frame->id }}">

@@ -20,7 +20,7 @@
 </div>
 <div class="card-body">
 
-    <form action="/manage/site/saveMeta" method="POST">
+    <form action="{{url('/')}}/manage/site/saveMeta" method="POST">
     {{csrf_field()}}
 
         {{-- サイト概要 --}}

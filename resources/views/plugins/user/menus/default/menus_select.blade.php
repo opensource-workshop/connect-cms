@@ -13,7 +13,7 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-<form action="/plugin/menus/saveSelect/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->id}}" name="contents_buckets_form" method="POST" class="mt-3">
+<form action="{{url('/')}}/plugin/menus/saveSelect/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->id}}" name="contents_buckets_form" method="POST" class="mt-3">
     {{ csrf_field() }}
 
     <div class="form-group">

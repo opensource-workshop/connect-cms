@@ -34,7 +34,7 @@
         {{ csrf_field() }}
     </form>
 
-    <form action="/manage/security/saveLoginPermit" method="POST" class="">
+    <form action="{{url('/')}}/manage/security/saveLoginPermit" method="POST" class="">
         {{ csrf_field() }}
 
         <div class="card mb-3">

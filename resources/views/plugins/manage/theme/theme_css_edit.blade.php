@@ -18,7 +18,7 @@
     </div>
     <div class="card-body">
 
-        <form action="/manage/theme/saveCss" method="POST">
+        <form action="{{url('/')}}/manage/theme/saveCss" method="POST">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
             <textarea name="css" class="form-control" rows=20>{{$css}}</textarea>

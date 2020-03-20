@@ -19,7 +19,7 @@
 
 </div>
 <div class="card-body">
-    <form name="form_debug" id="form_debug" class="form-horizontal" method="post" action="/manage/system/updateDebugmode">
+    <form name="form_debug" id="form_debug" class="form-horizontal" method="post" action="{{url('/')}}/manage/system/updateDebugmode">
         {{ csrf_field() }}
 
         現在のモード：@if($now_debug_mode == '1') デバックモード On @else デバックモード Off @endif <br /><br />

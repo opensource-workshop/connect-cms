@@ -20,7 +20,7 @@
 </div>
 <div class="card-body">
 
-    <form action="/manage/site/saveLayout" method="POST" class="">
+    <form action="{{url('/')}}/manage/site/saveLayout" method="POST" class="">
         {{ csrf_field() }}
 
         {{-- 各 大エリアのブラウザ幅 --}}

@@ -13,7 +13,7 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-<form action="/plugin/tabs/saveSelect/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->id}}" name="tabs_form" method="POST">
+<form action="{{url('/')}}/plugin/tabs/saveSelect/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->id}}" name="tabs_form" method="POST">
     {{ csrf_field() }}
 
     @if ($frames)

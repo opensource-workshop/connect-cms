@@ -20,7 +20,7 @@
 </div>
 <div class="card-body">
 
-    <form action="/manage/system/updateLog" method="POST">
+    <form action="{{url('/')}}/manage/system/updateLog" method="POST">
     {{csrf_field()}}
 
         {{-- ログ形式 --}}

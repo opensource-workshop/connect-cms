@@ -35,7 +35,7 @@
         </div>
     @endif
 
-    <form action="/plugin/{{$frame->plugin_name}}/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
         {{ csrf_field() }}
         <div class="form-group">
             <table class="table table-hover" style="margin-bottom: 0;">

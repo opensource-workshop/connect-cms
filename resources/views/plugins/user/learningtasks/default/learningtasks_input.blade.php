@@ -15,9 +15,9 @@
 <script type="text/javascript">
     function save_action() {
         @if (empty($learningtasks_posts->id))
-            form_learningtasks_posts.action = "/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}";
+            form_learningtasks_posts.action = "{{url('/')}}/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}";
         @else
-            form_learningtasks_posts.action = "/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}";
+            form_learningtasks_posts.action = "{{url('/')}}/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}";
         @endif
         form_learningtasks_posts.submit();
     }
@@ -25,9 +25,9 @@
 
 {{-- 投稿用フォーム --}}
 @if (empty($learningtasks_posts->id))
-    <form action="/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
+    <form action="{{url('/')}}/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
 @else
-    <form action="/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
+    <form action="{{url('/')}}/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="learningtasks_id" value="{{$learningtasks_frame->learningtasks_id}}">

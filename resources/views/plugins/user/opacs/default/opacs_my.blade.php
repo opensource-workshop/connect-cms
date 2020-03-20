@@ -27,7 +27,7 @@
     <div class="card-header">ログインしているユーザーID:{{$user->userid}}</div>
 </div>
 
-<form action="/plugin/opacs/lent/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
+<form action="{{url('/')}}/plugin/opacs/lent/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
     {{ csrf_field() }}
 
     {{-- <h4><label class="badge badge-primary mb-0">借りる</label></h4> --}}
@@ -108,7 +108,7 @@
     </div>
 </form>
 
-<form action="/plugin/opacs/returnLent/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
+<form action="{{url('/')}}/plugin/opacs/returnLent/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
     {{ csrf_field() }}
     {{-- <h4><label class="badge badge-primary mb-0">返す</label></h4> --}}
     <div class="card mb-3">

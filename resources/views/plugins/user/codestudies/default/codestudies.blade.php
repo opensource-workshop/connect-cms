@@ -53,9 +53,9 @@
 @endif
 
 @if ($codestudy->id)
-    <form action="/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}" method="POST" name="form_codestudies" class="">
+    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}" method="POST" name="form_codestudies" class="">
 @else
-    <form action="/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}" method="POST" name="form_codestudies" class="">
+    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}" method="POST" name="form_codestudies" class="">
 @endif
 
     {{ csrf_field() }}

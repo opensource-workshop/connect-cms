@@ -27,7 +27,7 @@
      * 項目の追加ボタン押下
      */
      function submit_add_column() {
-        database_columns.action = "/plugin/databases/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        database_columns.action = "{{url('/')}}/plugin/databases/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         database_columns.submit();
     }
 
@@ -36,7 +36,7 @@
      */
      function submit_delete_column(column_id) {
         if(confirm('項目を削除します。\nよろしいですか？')){
-            database_columns.action = "/plugin/databases/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+            database_columns.action = "{{url('/')}}/plugin/databases/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
             database_columns.column_id.value = column_id;
             database_columns.submit();
         }
@@ -47,7 +47,7 @@
      * 項目の更新ボタン押下
      */
      function submit_update_column(column_id) {
-        database_columns.action = "/plugin/databases/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        database_columns.action = "{{url('/')}}/plugin/databases/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         database_columns.column_id.value = column_id;
         database_columns.submit();
     }
@@ -56,7 +56,7 @@
      * 項目の表示順操作ボタン押下
      */
      function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
-        database_columns.action = "/plugin/databases/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        database_columns.action = "{{url('/')}}/plugin/databases/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         database_columns.column_id.value = column_id;
         database_columns.display_sequence.value = display_sequence;
         database_columns.display_sequence_operation.value = display_sequence_operation;
@@ -76,7 +76,7 @@
 </script>
 
         {{-- キャンセル用のフォーム。キャンセル時はセッションをクリアするため、トークン付きでPOST でsubmit したい。 --}}
-        <form action="/redirect/plugin/databases/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="databases_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
+        <form action="{{url('/')}}/redirect/plugin/databases/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="databases_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
             {{ csrf_field() }}
         </form>
 

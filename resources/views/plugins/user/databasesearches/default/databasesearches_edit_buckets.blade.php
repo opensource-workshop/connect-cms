@@ -24,9 +24,9 @@
 @else
 
     @if($databasesearches->id)
-    <form action="/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}" method="POST" class="">
     @else
-    <form action="/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     @endif
         {{ csrf_field() }}
 

@@ -36,7 +36,7 @@
 
 @if (!$database->id && !$create_flag)
 @else
-<form action="/plugin/databases/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/databases/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにdatabases_id を空にする --}}

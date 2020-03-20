@@ -18,7 +18,7 @@
 </div>
 @endif
 
-<form action="/plugin/openingcalendars/saveYearschedule/{{$page->id}}/{{$frame_id}}/{{$openingcalendar_frame->openingcalendars_id}}" method="POST" class="" name="chenge_yearschedule" enctype="multipart/form-data">
+<form action="{{url('/')}}/plugin/openingcalendars/saveYearschedule/{{$page->id}}/{{$frame_id}}/{{$openingcalendar_frame->openingcalendars_id}}" method="POST" class="" name="chenge_yearschedule" enctype="multipart/form-data">
     {{ csrf_field() }}
 
     <div class="form-group row">

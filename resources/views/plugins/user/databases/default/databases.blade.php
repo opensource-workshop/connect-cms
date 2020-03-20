@@ -22,7 +22,7 @@
         </div>
     @endcan
 
-    <form action="/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST" class="">
         {{ csrf_field() }}
 
         {{-- 検索 --}}

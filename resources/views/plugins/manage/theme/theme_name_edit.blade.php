@@ -34,7 +34,7 @@
 
     <div class="card-body">
 
-        <form action="/manage/theme/saveName" method="POST">
+        <form action="{{url('/')}}/manage/theme/saveName" method="POST">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
 
@@ -56,7 +56,7 @@
             </div>
         </form>
 
-        <form action="/manage/theme/deleteTheme" method="POST" class="mt-5" name="foem_delete_theme">
+        <form action="{{url('/')}}/manage/theme/deleteTheme" method="POST" class="mt-5" name="foem_delete_theme">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
 

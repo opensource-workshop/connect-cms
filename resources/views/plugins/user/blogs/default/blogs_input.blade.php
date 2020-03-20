@@ -25,9 +25,9 @@
 
 {{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))
-    <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_blogs_posts">
+    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_blogs_posts">
 @else
-    <form action="/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="" name="form_blogs_posts">
+    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="" name="form_blogs_posts">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">

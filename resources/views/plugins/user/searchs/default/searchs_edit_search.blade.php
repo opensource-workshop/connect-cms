@@ -42,7 +42,7 @@
 @if (isset($searchs))
     @if (!$searchs->id && !$create_flag)
     @else
-        <form action="/plugin/searchs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+        <form action="{{url('/')}}/plugin/searchs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
             {{ csrf_field() }}
 
             {{-- create_flag がtrue の場合、新規作成するためにsearchs_id を空にする --}}

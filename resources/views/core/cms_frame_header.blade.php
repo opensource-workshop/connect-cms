@@ -54,13 +54,13 @@
         <div class="float-right">
 
             {{-- 上移動。POSTのためのフォーム --}}
-            <form action="/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
+            <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
                 <a href="javascript:form_{{ $frame->frame_id }}_up.submit();"><i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a> 
             </form>
 
             {{-- 下移動。POSTのためのフォーム --}}
-            <form action="/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_down" method="POST" class="form-inline d-inline">
+            <form action="{{url('/')}}/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_down" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
                 <a href="javascript:form_{{ $frame->frame_id }}_down.submit();"><i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a> 
             </form>

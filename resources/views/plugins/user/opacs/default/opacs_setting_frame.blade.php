@@ -20,7 +20,7 @@
         Opac の設定を行ってからOpac フレームの設定を行います。
     </div>
 @else
-    <form action="/redirect/plugin/opacs/saveOpacFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
+    <form action="{{url('/')}}/redirect/plugin/opacs/saveOpacFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="opacs_id" value="{{$opac_frame->opacs_id}}">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/opacs/settingOpacFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">

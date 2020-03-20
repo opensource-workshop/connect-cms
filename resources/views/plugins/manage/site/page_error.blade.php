@@ -20,7 +20,7 @@
 </div>
 <div class="card-body">
 
-    <form action="/manage/site/savePageError" method="POST">
+    <form action="{{url('/')}}/manage/site/savePageError" method="POST">
     {{csrf_field()}}
 
         {{-- 403 --}}

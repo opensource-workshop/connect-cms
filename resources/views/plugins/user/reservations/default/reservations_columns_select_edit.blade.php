@@ -18,7 +18,7 @@
      * 選択肢追加ボタン押下
      */
     function submit_add_select(btn) {
-        form_selects.action = "/plugin/reservations/addSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_selects.action = "{{url('/')}}/plugin/reservations/addSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         btn.disabled = true;
         form_selects.submit();
     }
@@ -27,7 +27,7 @@
      * 表示順操作ボタン押下
      */
     function submit_display_sequence(select_id, display_sequence, display_sequence_operation) {
-        form_selects.action = "/plugin/reservations/updateSelectSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_selects.action = "{{url('/')}}/plugin/reservations/updateSelectSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_selects.select_id.value = select_id;
         form_selects.display_sequence.value = display_sequence;
         form_selects.display_sequence_operation.value = display_sequence_operation;
@@ -38,7 +38,7 @@
      * 選択肢の更新ボタン押下
      */
     function submit_update_select(select_id) {
-        form_selects.action = "/plugin/reservations/updateSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_selects.action = "{{url('/')}}/plugin/reservations/updateSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_selects.select_id.value = select_id;
         form_selects.submit();
     }
