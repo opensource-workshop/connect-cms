@@ -21,7 +21,7 @@
     </tr>
     <tr>
         <th>ファイル</th>
-        <td><img src="/file/{{$sampleform->column_file}}" class="img-responsive"></td>
+        <td><img src="{{url('/')}}/file/{{$sampleform->column_file}}" class="img-responsive"></td>
     </tr>
     <tr>
         <th>パスワード</th>
