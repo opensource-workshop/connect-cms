@@ -554,7 +554,7 @@ class DatabasesPlugin extends UserPluginBase
 
             'databases'        => $databases,
             'database_frame'   => $database_frame,
-            'databases_frames' => $databases_frames,
+            'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
             'columns'          => $columns,
             'inputs'           => $inputs,
             'input_cols'       => $input_cols,
