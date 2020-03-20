@@ -68,6 +68,16 @@ class UserPluginBase extends PluginBase
     public $action = null;
 
     /**
+     *  リクエスト
+     */
+    public $request = null;
+
+    /**
+     *  id
+     */
+    public $id = null;
+
+    /**
      *  コンストラクタ
      */
     function __construct($page = null, $frame = null, $pages = null)
@@ -146,6 +156,12 @@ class UserPluginBase extends PluginBase
     {
         // アクションを保持しておく
         $this->action = $action;
+
+        // リクエストを保持しておく(Hookで必要になった)
+        $this->request = $request;
+
+        // idを保持しておく(Hookで必要になった)
+        $this->id = $id;
 
         // 関数定義メソッドの有無確認
         if (!method_exists($obj, $action)) {
@@ -363,8 +379,26 @@ class UserPluginBase extends PluginBase
      */
     public function view($blade_name, $arg = null)
     {
+
         // view の共通引数のセット
         $arg = $this->addArg($arg);
+
+        // action があること（indexは一旦、対象外）
+        if (!empty($this->action)) {
+            // クラス名をnamespace 毎取得
+            $instance_name = explode('\\', get_class($this));
+            if (is_array($instance_name) && $instance_name[0] == 'App' && $instance_name[1] == 'Plugins' && $instance_name[2] == 'User' && !empty($instance_name[3])) {
+
+                // 引数のアクションと同じメソッドを呼び出す。
+                $class_name = "App\Plugins\Hook\User\\" . $instance_name[3] . "\\" . $instance_name[3] . ucfirst($this->action) . "Hook";
+
+                // クラスの存在チェック後、呼び出し
+                if (class_exists($class_name)) {
+                    $hookPlugin = new $class_name();
+                    $arg['hook'] = $hookPlugin->hook($this->request, $this->page->id, $this->frame->id, $this->id);
+                }
+            }
+        }
 
         // 表示テンプレートを呼び出す。
         return view($this->getViewPath($blade_name), $arg);
