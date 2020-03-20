@@ -63,7 +63,7 @@
     <script src="{{asset('js/app.js')}}"></script>
 
     <!-- tempusdominus-bootstrap-4 -->
-    <link rel="stylesheet" href="/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" />
+    <link rel="stylesheet" href="{{asset('/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')}}" />
     {{--
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/locale/ja.js"></script>
@@ -80,17 +80,17 @@
 
     <!-- Themes CSS -->
 @if (isset($themes['css']) && $themes['css'] != '')
-    <link href="/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
+    <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
 @endif
 
     <!-- Themes JS -->
 @if (isset($themes['js']) && $themes['js'] != '')
-    <script src="/themes/{{$themes['js']}}/themes.js"></script>
+    <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js"></script>
 @endif
 
     <!-- Connect-CMS Page CSS -->
 @if (isset($page))
-    <link href="/file/css/{{$page->id}}.css" rel="stylesheet">
+    <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
 @endif
 
     <!-- Context -->
