@@ -94,7 +94,7 @@
     $toolbar = "toolbar  : '" . $toolbar . "',";
 
 @endphp
-<script type="text/javascript" src="/js/tinymce/tinymce.min.js"></script>
+<script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
     tinymce.init({
         @if(isset($target_class) && $target_class)
@@ -166,7 +166,7 @@
             var xhr, formData;
             xhr = new XMLHttpRequest();
             xhr.withCredentials = false;
-            xhr.open('POST', '/upload');
+            xhr.open('POST', '{{url('/')}}/upload');
 
             xhr.onload = function() {
                 var json;
