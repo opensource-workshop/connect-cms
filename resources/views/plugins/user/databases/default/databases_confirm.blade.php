@@ -12,9 +12,9 @@
     {{-- 保存のsubmit JavaScript --}}
     function submit_databases_store() {
         @if (isset($id))
-        databases_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
+        databases_store{{$frame_id}}.action = "{{URL::to('/')}}/redirect/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
         @else
-        databases_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        databases_store{{$frame_id}}.action = "{{URL::to('/')}}/redirect/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         @endif
         databases_store{{$frame_id}}.submit();
     }

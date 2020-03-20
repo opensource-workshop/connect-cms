@@ -1051,8 +1051,10 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
+        // 登録時のAction を/redirect/plugin にしたため、ここでreturn しなくてよい。
+
         // 表示テンプレートを呼び出す。
-        return $this->index($request, $page_id, $frame_id);
+        //return $this->index($request, $page_id, $frame_id);
 /*
         return $this->view(
             'databases_thanks', [
@@ -1247,8 +1249,10 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
+        // 削除時のAction を/redirect/plugin にしたため、ここでreturn しなくてよい。
+
         // 表示テンプレートを呼び出す。
-        return $this->index($request, $page_id, $frame_id);
+        //return $this->index($request, $page_id, $frame_id);
 /*
         return $this->view(
             'databases_thanks', [
