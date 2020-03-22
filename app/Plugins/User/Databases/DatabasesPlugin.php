@@ -295,6 +295,15 @@ class DatabasesPlugin extends UserPluginBase
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
+        // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
+        if ($request->has('page')) {
+            $request->session()->put('page_no.'.$frame_id, $request->page);
+        }
+        else {
+            // 指定がなければセッションから削除
+            $request->session()->forget('page_no.'.$frame_id);
+        }
+
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
@@ -607,6 +616,7 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function detail($request, $page_id, $frame_id, $id, $mode = null)
     {
+
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 

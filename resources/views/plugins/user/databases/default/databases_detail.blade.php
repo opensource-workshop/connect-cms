@@ -25,7 +25,11 @@
 {{-- 一覧へ戻る --}}
 <div class="row">
     <div class="col-12 text-center mt-3">
+        @if(Session::has('page_no.'.$frame_id))
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}?page={{Session::get('page_no.'.$frame_id)}}">
+        @else
         <a href="{{url('/')}}{{$page->getLinkUrl()}}">
+        @endif
             <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
         </a>
     </div>

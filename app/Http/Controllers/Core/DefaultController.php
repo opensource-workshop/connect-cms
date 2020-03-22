@@ -446,6 +446,11 @@ class DefaultController extends ConnectController
 
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";
+        // セッションにあれば使用する。
+        if ( $request->session()->has('page_no.'.$frame_id) ) {
+            $page_no_link = "page=" . $request->session()->get('page_no.'.$frame_id);
+        }
+        // リクエストにあれば優先で使用する。
         if ( $request->page ) {
             $page_no_link = "page=" . $request->page;
         }
