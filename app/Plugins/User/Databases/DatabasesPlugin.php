@@ -745,6 +745,9 @@ class DatabasesPlugin extends UserPluginBase
         // メールアドレスチェック
         if ($databases_column->column_type == \DatabaseColumnType::mail) {
             $validator_rule[] = 'email';
+            if ($databases_column->required == 0) {
+                $validator_rule[] = 'nullable';
+            }
         }
         // 数値チェック
         if ($databases_column->rule_allowed_numeric) {
@@ -820,7 +823,7 @@ class DatabasesPlugin extends UserPluginBase
             // まとめ行以外の項目について、バリデータールールをセット
             $validator_array = self::getValidatorRule($validator_array, $databases_column);
         }
-
+Log::debug($validator_array);
         // 入力値をトリム
         $request->merge(self::trimInput($request->all()));
 
