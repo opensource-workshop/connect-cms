@@ -8,19 +8,40 @@
         @endif
 
         {{-- Pagination Elements --}}
-        @foreach ($elements as $element)
+        @foreach ($elements as $parent_index => $element)
             {{-- "Three Dots" Separator --}}
             @if (is_string($element))
-                <li class="page-item disabled"><span class="page-link">{{ $element }}</span></li>
+                <li class="page-item disabled d-none d-sm-block"><span class="page-link">{{ $element }}</span></li>
             @endif
 
             {{-- Array Of Links --}}
             @if (is_array($element))
                 @foreach ($element as $page => $url)
+
+                    @php
+                        // スマホの場合、最初と最後、カレントは表示
+                        if ($page == 1 || $page == $paginator->lastPage() || $page == $paginator->currentPage()) {
+                            $sm_class = '';
+                        }
+                        else {
+                            $sm_class = ' d-none d-sm-block';
+                        }
+                    @endphp
+
+                    {{-- 1ページ目と2ページ目以外は、カレントの前に「...」表示 --}}
+                    @if ($page == $paginator->currentPage() && $page != 1 && $page != 2)
+                        <li class="page-item disabled d-block d-md-none"><span class="page-link">...</span></li>
+                    @endif
+
                     @if ($page == $paginator->currentPage())
-                        <li class="page-item active d-none d-sm-block"><span class="page-link">{{ $page }}</span></li>
+                        <li class="page-item active{{$sm_class}}"><span class="page-link">{{ $page }}</span></li>
                     @else
-                        <li class="page-item d-none d-sm-block"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                        <li class="page-item{{$sm_class}}"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                    @endif
+
+                    {{-- 最終ページと最終ページの1ページ前以外は、カレントの後に「...」表示 --}}
+                    @if ($page == $paginator->currentPage() && $page != $paginator->lastPage() && $page != (intval($paginator->lastPage()) - 1))
+                        <li class="page-item disabled d-block d-md-none"><span class="page-link">...</span></li>
                     @endif
                 @endforeach
             @endif
