@@ -212,6 +212,7 @@ class DatabasesearchesPlugin extends UserPluginBase
             $inputs_query->groupBy('databases_inputs_id')
                          ->groupBy('frames.id')
                          ->groupBy('frames.page_id')
+                         ->groupBy('databases_input_cols.updated_at')
                          ->orderBy('databases_input_cols.updated_at', 'desc');
 
             // データ取得
@@ -238,6 +239,7 @@ class DatabasesearchesPlugin extends UserPluginBase
                                 ->groupBy('frames.id')
                                 ->groupBy('frames.page_id')
                                 ->groupBy('databases.databases_name')
+                                ->groupBy('databases_input_cols.updated_at')
                                 ->orderBy('databases_input_cols.updated_at', 'desc')
                                 ->paginate($databasesearches->view_count);
 
