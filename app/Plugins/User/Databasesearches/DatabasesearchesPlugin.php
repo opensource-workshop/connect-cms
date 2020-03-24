@@ -48,7 +48,7 @@ class DatabasesearchesPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
+        $functions['get']  = ['index'];
         $functions['post'] = ['index', 'change'];
         return $functions;
     }
@@ -147,13 +147,26 @@ class DatabasesearchesPlugin extends UserPluginBase
 
             // カラム指定
             if (property_exists($condition, 'name') && $condition->name) {
-                $inputs_query->where('databases_columns.column_name', $condition->name);
+                if ($condition->name == 'ALL') {
+                    // name が ALL を指定されていたら、カラムを特定しない。
+                }
+                else {
+                    $inputs_query->where('databases_columns.column_name', $condition->name);
+                }
             }
 
             // 検索キーワードの取得
             $request_keyword = '';
             if (property_exists($condition, 'request') && $request->has($condition->request)) {
                 $request_keyword = $request->get($condition->request);
+
+                // リクエスト項目に検索キーワードが含まれていたら、セッションに保持する。（空でも保持＝クリアの意味）
+                $request->session()->put('request_keyword', $request_keyword);
+            }
+            elseif ($request->session()->get('request_keyword')) {
+
+                // セッションに検索キーワードが含まれていたら使用する。
+                $request_keyword = $request->session()->get('request_keyword');
             }
 
             // 検索キーワードのデフォルト(検索キーワードが空だった場合に使用する)
