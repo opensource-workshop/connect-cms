@@ -588,6 +588,9 @@ class DatabasesPlugin extends UserPluginBase
             // 絞り込み
             session(['search_column' => $request->search_column]);
 
+            // オプション検索
+            session(['search_options' => $request->search_options]);
+
             // ランダム読み込みのための Seed をセッション中に作っておく
             if (empty(session('sort_seed'))) {
                 session(['sort_seed' => rand()]);
