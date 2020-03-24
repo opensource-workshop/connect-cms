@@ -64,7 +64,7 @@
                 <textarea class="form-control" name="condition" rows=5>{!!old('condition', $databasesearches->condition)!!}</textarea>
                 @if ($errors && $errors->has('condition')) <div class="text-danger">{{$errors->first('condition')}}</div> @endif
                 <small class="form-text text-muted">
-                    name：カラム名称、where：(ALL | PART | FRONT | REAR | GT | LT | GE | LE)、request：リクエスト項目、request_default：リクエストが空の場合の値<br />ex. {"name":"エリア","where":"ALL","request":"area","request_default":"北海道"}<br />
+                    name：(カラム名称 | ALL)、where：(ALL | PART | FRONT | REAR | GT | LT | GE | LE)、request：リクエスト項目、request_default：リクエストが空の場合の値<br />ex. {"name":"エリア","where":"ALL","request":"area","request_default":"北海道"}<br />
                     複数条件(AND)は配列で指定 ex. [{"name":"エリア"...},{"name":"エリア"...}]
                 </small>
             </div>
