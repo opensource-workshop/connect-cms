@@ -11,7 +11,7 @@
 @if (empty($setting_error_messages))
 
     {{-- 新規登録 --}}
-    @can('posts.create',[[null, 'databases', $buckets]])
+    @can("role_article")
         <div class="row">
             <p class="text-right col-12">
                 {{-- 新規登録ボタン --}}
