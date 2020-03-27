@@ -301,4 +301,127 @@ class Page extends Model
 
         return $return_str;
     }
+
+    /**
+     *  レイアウト判定
+     *
+     */
+    public function isArea($area)
+    {
+        // レイアウトの数値詰めを取得
+        $simple_layout = $this->getSimpleLayout();
+
+        // レイアウト設定があれば、4文字あるはず
+        if (mb_strlen($simple_layout) != 4) {
+            return false;
+        }
+
+        // ヘッダーの確認
+        if (mb_strtolower($area) == 'header') {
+            if (mb_substr($simple_layout, 0, 1) == '1') {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        // 左の確認
+        if (mb_strtolower($area) == 'left') {
+            if (mb_substr($simple_layout, 1, 1) == '1') {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        // 右の確認
+        if (mb_strtolower($area) == 'right') {
+            if (mb_substr($simple_layout, 2, 1) == '1') {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        // フッターの確認
+        if (mb_strtolower($area) == 'footer') {
+            if (mb_substr($simple_layout, 3, 1) == '1') {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     *  レイアウト取得
+     *
+     */
+    public function getSimpleLayout()
+    {
+        return str_replace('|', '', $this->layout);
+    }
+
+    /**
+     *  レイアウト取得
+     *
+     */
+    public function getLayoutTitle()
+    {
+        if ($this->getSimpleLayout() == '0000') {
+            return "メインのみ";
+        }
+        if ($this->getSimpleLayout() == '0001') {
+            return "フッター";
+        }
+        if ($this->getSimpleLayout() == '0010') {
+            return "右";
+        }
+        if ($this->getSimpleLayout() == '0011') {
+            return "右、フッター";
+        }
+        if ($this->getSimpleLayout() == '0100') {
+            return "左";
+        }
+        if ($this->getSimpleLayout() == '0101') {
+            return "左、フッター";
+        }
+        if ($this->getSimpleLayout() == '0110') {
+            return "左、右";
+        }
+        if ($this->getSimpleLayout() == '0111') {
+            return "左、右、フッター";
+        }
+        if ($this->getSimpleLayout() == '1000') {
+            return "ヘッダー";
+        }
+        if ($this->getSimpleLayout() == '1001') {
+            return "ヘッダー、フッター";
+        }
+        if ($this->getSimpleLayout() == '1010') {
+            return "ヘッダー、右";
+        }
+        if ($this->getSimpleLayout() == '1011') {
+            return "ヘッダー、右、フッター";
+        }
+        if ($this->getSimpleLayout() == '1100') {
+            return "ヘッダー、左";
+        }
+        if ($this->getSimpleLayout() == '1101') {
+            return "ヘッダー、左、フッター";
+        }
+        if ($this->getSimpleLayout() == '1110') {
+            return "ヘッダー、左、右";
+        }
+        if ($this->getSimpleLayout() == '1111') {
+            return "ヘッダー、左、右、フッター";
+        }
+    }
+
 }

@@ -238,6 +238,12 @@ a.cc-cursor-text:hover {
     width: 50%;
 }
 
+/* 管理プラグイン（ページ管理）
+------------------------------------- */
+.cc-page-layout-icon {
+    width: 20px;
+}
+
 
 /*  Connect-CMS add CSS Bootstrap3
 ------------------------------------- */

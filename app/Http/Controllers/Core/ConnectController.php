@@ -333,6 +333,11 @@ class ConnectController extends Controller
         // ページのレイアウト取得
         $layout_array = explode('|',$this->getLayout($page_tree));
 
+        // ページのレイアウトがおかしな値の場合は、初期値として全カラムを設定しておく。
+        if (count($layout_array) != 4) {
+            $layout_array = array(1,1,1,1);
+        }
+
         // 現ページの表示エリアの有無と幅の設定
         $layouts_info = array();
         $layouts_info[0]['exists'] = $layout_array[0];

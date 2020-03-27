@@ -91,7 +91,7 @@
 --}}
                 <th nowrap>背</th>
                 <th nowrap>ヘ</th>
-                <th nowrap>レ</th>
+                <th nowrap><img src="{{asset('/images/core/layout/1111.png')}}" class="cc-page-layout-icon" title="レイアウト" alt="レイアウト"></th>
                 <th nowrap>新</th>
                 <th nowrap>IP</th>
                 <th nowrap>外</th>
@@ -157,8 +157,12 @@
                         {{-- <div>{{ $page_item->header_color }}</div> --}}
                         <div>@if($page_item->header_color)<i class="fas fa-exclamation-circle"></i>@endif</div>
                     </td>
-                    <td class="table-text p-1">
-                        <div>{{ $page_item->layout }}</div>
+                    <td class="table-text p-1 text-center">
+                        @if ($page_item->getSimpleLayout())
+                            <div><img src="{{asset('/images/core/layout/' . $page_item->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$page_item->getLayoutTitle()}}" alt="{{$page_item->getLayoutTitle()}}"></div>
+                        @else
+                            <div></div>
+                        @endif
                     </td>
                     <td class="table-text p-1">
                         <div>@if($page_item->othersite_url_target)<i class="fas fa-check"></i>@endif</div>
