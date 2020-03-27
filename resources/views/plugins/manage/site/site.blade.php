@@ -20,7 +20,7 @@
 </div>
 <div class="card-body">
 
-    <form action="/manage/site/update" method="POST">
+    <form action="{{url('/')}}/manage/site/update" method="POST">
     {{csrf_field()}}
 
         {{-- サイト名 --}}
