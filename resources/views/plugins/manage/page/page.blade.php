@@ -84,18 +84,13 @@
                 <th nowrap>ページ名</th>
                 <th nowrap class="pl-1"><i class="far fa-eye"></i></th>
                 <th nowrap>固定リンク</th>
-{{--
-                <th nowrap>背景色</th>
-                <th nowrap>ヘッダー</th>
-                <th nowrap>レイアウト</th>
---}}
-                <th nowrap>背</th>
-                <th nowrap>ヘ</th>
+                <th nowrap><i class="fas fa-paint-roller" title="背景色"></i></th>
+                <th nowrap><img src="{{asset('/images/core/layout/header_icon.png')}}" title="ヘッダー色" class="cc-page-layout-icon" alt="ヘッダー色"></th>
                 <th nowrap><img src="{{asset('/images/core/layout/1111.png')}}" class="cc-page-layout-icon" title="レイアウト" alt="レイアウト"></th>
-                <th nowrap>新</th>
-                <th nowrap>IP</th>
-                <th nowrap>外</th>
-                <th nowrap>ク</th>
+                <th nowrap><i class="fas fa-window-restore" title="新ウィンドウ"></i></th>
+                <th nowrap><i class="fas fa-network-wired" title="IPアドレス制限"></i></th>
+                <th nowrap><i class="fas fa-external-link-alt" title="外部リンク"></i></th>
+                <th nowrap><i class="fas fa-swatchbook" title="クラス名"></i></th>
             </thead>
             <tbody>
                 @foreach($pages as $page_item)
@@ -149,13 +144,15 @@
                     <td class="table-text p-1" nowrap>
                         <div><a href="{{url($page_item->permanent_link)}}">{{ $page_item->permanent_link }}</a></div>
                     </td>
-                    <td class="table-text p-1">
-                        {{-- <div>{{ $page_item->background_color }}</div> --}}
-                        <div>@if($page_item->background_color)<i class="fas fa-exclamation-circle"></i>@endif</div>
+                    <td class="table-text p-1 text-center">
+                        @if($page_item->background_color)
+                            <span class="border border-utils align-middle cc-page-layout-background" style="background-color:{{$page_item->background_color}};" title="{{$page_item->background_color}}"></span>
+                        @endif
                     </td>
-                    <td class="table-text p-1">
-                        {{-- <div>{{ $page_item->header_color }}</div> --}}
-                        <div>@if($page_item->header_color)<i class="fas fa-exclamation-circle"></i>@endif</div>
+                    <td class="table-text p-1 text-center">
+                        @if($page_item->header_color)
+                            <span class="border border-utils align-middle cc-page-layout-background" style="background-color:{{$page_item->header_color}};" title="{{$page_item->header_color}}"></span>
+                        @endif
                     </td>
                     <td class="table-text p-1 text-center">
                         @if ($page_item->getSimpleLayout())
@@ -164,17 +161,17 @@
                             <div></div>
                         @endif
                     </td>
-                    <td class="table-text p-1">
-                        <div>@if($page_item->othersite_url_target)<i class="fas fa-check"></i>@endif</div>
+                    <td class="table-text p-1 text-center">
+                        <div>@if($page_item->othersite_url_target)<i class="fas fa-window-restore" title="新ウィンドウ"></i>@endif</div>
                     </td>
-                    <td class="table-text p-1">
-                        <div>@if($page_item->ip_address)<i class="fas fa-exclamation-circle"></i>@endif</div>
+                    <td class="table-text p-1 text-center">
+                        <div>@if($page_item->ip_address)<i class="fas fa-network-wired" title="{{$page_item->ip_address}}"></i>@endif</div>
                     </td>
-                    <td class="table-text p-1">
-                        <div>@if($page_item->othersite_url)<i class="fas fa-exclamation-circle"></i>@endif</div>
+                    <td class="table-text p-1 text-center">
+                        <div>@if($page_item->othersite_url)<i class="fas fa-external-link-alt" title="{{$page_item->othersite_url}}"></i>@endif</div>
                     </td>
-                    <td class="table-text p-1">
-                        <div>{{$page_item->class}}</div>
+                    <td class="table-text p-1 text-center">
+                        <div>@if($page_item->class)<i class="fas fa-swatchbook" title="{{$page_item->class}}"></i>@endif</div>
                     </td>
                 </tr>
                 @endforeach

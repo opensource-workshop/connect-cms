@@ -243,6 +243,11 @@ a.cc-cursor-text:hover {
 .cc-page-layout-icon {
     width: 20px;
 }
+.cc-page-layout-background {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+}
 
 
 /*  Connect-CMS add CSS Bootstrap3
