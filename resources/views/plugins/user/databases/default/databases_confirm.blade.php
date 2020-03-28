@@ -12,15 +12,19 @@
     {{-- 保存のsubmit JavaScript --}}
     function submit_databases_store() {
         @if (isset($id))
-        databases_store{{$frame_id}}.action = "{{URL::to('/')}}/redirect/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
+            databases_store{{$frame_id}}.action = "{{URL::to('/')}}/redirect/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
         @else
-        databases_store{{$frame_id}}.action = "{{URL::to('/')}}/redirect/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+            databases_store{{$frame_id}}.action = "{{URL::to('/')}}/redirect/plugin/databases/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         @endif
         databases_store{{$frame_id}}.submit();
     }
     {{-- 保存のキャンセル JavaScript --}}
     function submit_databases_cancel() {
-        databases_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/databases/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        @if($id)
+            databases_store{{$frame_id}}.action = "{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
+        @else
+            databases_store{{$frame_id}}.action = "{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        @endif
         databases_store{{$frame_id}}.submit();
     }
 </script>
@@ -147,7 +151,11 @@
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_databases_cancel();"><i class="fas fa-times"></i> キャンセル</button>
-        <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 送信</button>
+        @if($id)
+            <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 変更確定</button>
+        @else
+            <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 登録確定</button>
+        @endif
     </div>
 </form>
 @endsection

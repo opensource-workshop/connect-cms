@@ -59,6 +59,8 @@ class DatabasesPlugin extends UserPluginBase
         ];
         $functions['post'] = [
             'index', 
+            'detail',
+            'input',
             'publicConfirm', 
             'publicStore', 
             'cancel', 

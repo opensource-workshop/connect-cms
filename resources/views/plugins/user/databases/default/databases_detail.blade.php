@@ -22,6 +22,16 @@
     @endforeach
 </table>
 
+@can("role_article")
+<div class="row">
+    <div class="col-12 text-right mb-1">
+        <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}'">
+            <i class="far fa-edit"></i> 編集
+        </button>
+    </div>
+</div>
+@endcan
+
 {{-- 一覧へ戻る --}}
 <div class="row">
     <div class="col-12 text-center mt-3">
@@ -34,33 +44,5 @@
         </a>
     </div>
 </div>
-
-<br />
-@can("role_article")
-<button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}'">
-    <i class="far fa-edit"></i> 変更
-</button>
-
-<a data-toggle="collapse" href="#collapse{{$inputs->id}}" class="ml-3">
-    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
-</a>
-
-<div id="collapse{{$inputs->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="card border-danger">
-        <div class="card-body">
-            <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
-
-            <div class="text-center">
-                {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/databases/delete/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}" method="POST">
-                    {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
-                </form>
-            </div>
-
-        </div>
-    </div>
-</div>
-@endcan
 
 @endsection
