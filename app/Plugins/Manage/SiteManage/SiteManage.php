@@ -48,6 +48,8 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveMeta"]         = array('admin_site');
         $role_ckeck_table["pageError"]        = array('admin_site');
         $role_ckeck_table["savePageError"]    = array('admin_site');
+        $role_ckeck_table["analytics"]        = array('admin_site');
+        $role_ckeck_table["saveAnalytics"]    = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -562,5 +564,45 @@ class SiteManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/site/pageError");
+    }
+
+    /**
+     *  Analytics 設定　表示画面
+     */
+    public function analytics($request, $id, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // 設定されているページエラー設定のリスト取得
+        $analytics = $this->getConfigs('tracking_code');
+
+        return view('plugins.manage.site.analytics',[
+            "function"    => __FUNCTION__,
+            "plugin_name" => "site",
+            "id"          => $id,
+            "analytics"   => $analytics,
+        ]);
+    }
+
+    /**
+     *  ページエラー設定　更新
+     */
+    public function saveAnalytics($request, $page_id = null, $errors = array())
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // トラッキングコード
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'tracking_code'],
+            ['category' => 'analytics',
+             'value'    => $request->tracking_code]
+        );
+
+        // ページ管理画面に戻る
+        return redirect("/manage/site/analytics");
     }
 }

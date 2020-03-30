@@ -60,6 +60,14 @@
                     <a href="{{url('/manage/site/pageError')}}" class="nav-link">エラー設定</a></li>
                 @endif
                 </li>
+
+                <li role="presentation" class="nav-item">
+                @if ($function == "analytics")
+                    <span class="nav-link"><span class="active">アクセス解析</span></span>
+                @else
+                    <a href="{{url('/manage/site/analytics')}}" class="nav-link">アクセス解析</a></li>
+                @endif
+                </li>
             </ul>
         </div>
     </nav>
