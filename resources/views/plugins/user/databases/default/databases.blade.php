@@ -28,7 +28,7 @@
         {{-- 検索 --}}
         @if($database_frame && $database_frame->use_search_flag == 1)
         <div class="input-group mb-3">
-            <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword')}}" placeholder="検索はキーワードを入力してください。">
+            <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="検索はキーワードを入力してください。">
             <div class="input-group-append">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-search"></i>
@@ -59,7 +59,7 @@
             <div class="form-group row mb-3">
             @foreach($select_columns as $select_column)
                 @php
-                    $session_column_name = "search_column." . $loop->index . ".value";
+                    $session_column_name = "search_column." . $frame->id . '.' . $loop->index . ".value";
                 @endphp
                 <div class="col-sm-{{$col_no}}">
                     <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
@@ -90,9 +90,9 @@
                   $sort_column_order = '';
 
                   // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
-                  if (Session::get('sort_column_id') && Session::get('sort_column_order')) {
-                      $sort_column_id = Session::get('sort_column_id');
-                      $sort_column_order = Session::get('sort_column_order');
+                  if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
+                      $sort_column_id = Session::get('sort_column_id.'.$frame_id);
+                      $sort_column_order = Session::get('sort_column_order.'.$frame_id);
                   }
                   else if ($databases_frames && $databases_frames->default_sort_flag) {
                       $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);

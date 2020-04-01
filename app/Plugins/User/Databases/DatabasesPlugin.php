@@ -372,9 +372,9 @@ class DatabasesPlugin extends UserPluginBase
             // ソート(セッションがあれば優先。なければ初期値を使用)
             $sort_column_id = '';
             $sort_column_order = '';
-            if (session('sort_column_id') && session('sort_column_order')) {
-                $sort_column_id = session('sort_column_id');
-                $sort_column_order = session('sort_column_order');
+            if (session('sort_column_id.'.$frame_id) && session('sort_column_order.'.$frame_id)) {
+                $sort_column_id = session('sort_column_id.'.$frame_id);
+                $sort_column_order = session('sort_column_order.'.$frame_id);
             }
             else if ($databases_frames && $databases_frames->default_sort_flag) {
                 $sort_flag = explode('_', $databases_frames->default_sort_flag);
@@ -398,14 +398,14 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // キーワード指定の追加
-            if (!empty(session('search_keyword'))) {
+            if (!empty(session('search_keyword.'.$frame_id))) {
                 $inputs_query->whereIn('databases_inputs.id', function($query) {
                                // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
                                $query->select('databases_inputs_id')
                                      ->from('databases_input_cols')
                                      ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                      ->where('databases_columns.search_flag', 1)
-                                     ->where('value', 'like', '%' . session('search_keyword') . '%')
+                                     ->where('value', 'like', '%' . session('search_keyword.'.$frame_id) . '%')
                                      ->groupBy('databases_inputs_id');
                                });
             }
@@ -472,8 +472,8 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 絞り込み指定の追加
-            if (!empty(session('search_column'))) {
-                foreach(session('search_column') as $search_column) {
+            if (!empty(session('search_column.'.$frame_id))) {
+                foreach(session('search_column.'.$frame_id) as $search_column) {
                     if ($search_column && $search_column['columns_id'] && $search_column['value']) {
 
                         $inputs_query->whereIn('databases_inputs.id', function($query) use($search_column) {
@@ -497,7 +497,7 @@ class DatabasesPlugin extends UserPluginBase
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
             if ($sort_column_id == 'random' && $sort_column_order == 'session') {
-                $inputs_query->inRandomOrder(session('sort_seed'));
+                $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
             }
             else if ($sort_column_id == 'random' && $sort_column_order == 'every') {
                 $inputs_query->inRandomOrder();
@@ -585,32 +585,32 @@ class DatabasesPlugin extends UserPluginBase
         if ($request->isMethod('post')) {
 
             // キーワード
-            session(['search_keyword' => $request->search_keyword]);
+            session(['search_keyword.'.$frame_id => $request->search_keyword]);
 
             // 絞り込み
-            session(['search_column' => $request->search_column]);
+            session(['search_column.'.$frame_id => $request->search_column]);
 
             // オプション検索
-            session(['search_options' => $request->search_options]);
+            session(['search_options.'.$frame_id => $request->search_options]);
 
             // ランダム読み込みのための Seed をセッション中に作っておく
-            if (empty(session('sort_seed'))) {
-                session(['sort_seed' => rand()]);
+            if (empty(session('sort_seed.'.$frame_id))) {
+                session(['sort_seed.'.$frame_id => rand()]);
             }
 
             // 並べ替え
             $sort_column_parts = explode('_', $request->sort_column);
             if (count($sort_column_parts) == 1) {
-                session(['sort_column_id'    => $sort_column_parts[0]]);
-                session(['sort_column_order' => '']);
+                session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
+                session(['sort_column_order.'.$frame_id => '']);
             }
             else if (count($sort_column_parts) == 2) {
-                session(['sort_column_id'    => $sort_column_parts[0]]);
-                session(['sort_column_order' => $sort_column_parts[1]]);
+                session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
+                session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
             }
             else {
-                session(['sort_column_id'    => '']);
-                session(['sort_column_order' => '']);
+                session(['sort_column_id.'.$frame_id    => '']);
+                session(['sort_column_order.'.$frame_id => '']);
             }
         }
         return $this->index($request, $page_id, $frame_id);
@@ -1482,7 +1482,7 @@ Log::debug($validator_array);
                ->update(['bucket_id' => $request->select_bucket]);
 
         // 関連するセッションクリア
-        $request->session()->forget('databases');
+        $request->session()->forget('databases.'.$frame_id);
 
         // 表示ブログ選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
