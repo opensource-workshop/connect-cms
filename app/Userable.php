@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Schema;
  * 使用するには、モデルでcreated_id、created_name、updated_id、updated_nameを定義してuseする。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Core
  * @package App
@@ -28,6 +29,11 @@ trait Userable
          *  オブジェクトcreate 時のイベントハンドラ
          */
         static::creating(function (Model $model) {
+            // 未ログインなら処理しない。（未ログインで登録する処理、フォーム等に対応）
+            if (! Auth::user()) {
+                return;
+            }
+
             // created_idはデータ更新権限のチェックのため、最初に記事を書いたユーザのものを引き継ぐ必要があるので、自動登録はしない。
             // $model->created_id   = Auth::user()->id;
             $model->created_name = Auth::user()->name;
@@ -37,6 +43,11 @@ trait Userable
          *  オブジェクトupdate 時のイベントハンドラ
          */
         static::updating(function (Model $model) {
+            // 未ログインなら処理しない
+            if (! Auth::user()) {
+                return;
+            }
+
             $model->updated_id   = Auth::user()->id;
             $model->updated_name = Auth::user()->name;
         });
@@ -45,6 +56,11 @@ trait Userable
          *  オブジェクトdelete 時のイベントハンドラ
          */
         static::deleting(function (Model $model) {
+            // 未ログインなら処理しない
+            if (! Auth::user()) {
+                return;
+            }
+
             // カラムあるか
             if (Schema::hasColumn($model->getTable(), 'deleted_id') && Schema::hasColumn($model->getTable(), 'deleted_name')) {
                 $model->deleted_id   = Auth::user()->id;
