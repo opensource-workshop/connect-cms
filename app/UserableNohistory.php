@@ -28,6 +28,11 @@ trait UserableNohistory
          *  オブジェクトcreate 時のイベントハンドラ
          */
         static::creating(function (Model $model) {
+            // 未ログインなら処理しない。（未ログインで登録する処理、フォーム等に対応）
+            if (! Auth::user()) {
+                return;
+            }
+
             $model->created_id   = Auth::user()->id;
             $model->created_name = Auth::user()->name;
         });
@@ -36,6 +41,11 @@ trait UserableNohistory
          *  オブジェクトupdate 時のイベントハンドラ
          */
         static::updating(function (Model $model) {
+            // 未ログインなら処理しない
+            if (! Auth::user()) {
+                return;
+            }
+
             $model->updated_id   = Auth::user()->id;
             $model->updated_name = Auth::user()->name;
         });
@@ -44,6 +54,11 @@ trait UserableNohistory
          *  オブジェクトdelete 時のイベントハンドラ
          */
         static::deleting(function (Model $model) {
+            // 未ログインなら処理しない
+            if (! Auth::user()) {
+                return;
+            }
+
             // カラムあるか
             if (Schema::hasColumn($model->getTable(), 'deleted_id') && Schema::hasColumn($model->getTable(), 'deleted_name')) {
                 $model->deleted_id   = Auth::user()->id;
