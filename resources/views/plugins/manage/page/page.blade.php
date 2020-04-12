@@ -11,23 +11,14 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
-<div class="card mb-1">
-<div class="card-header p-0">
+<div class="card">
+    <div class="card-header p-0">
+        {{-- 機能選択タブ --}}
+        @include('plugins.manage.page.page_manage_tab')
+    </div>
 
-{{-- 機能選択タブ --}}
-@include('plugins.manage.page.page_manage_tab')
-
-</div>
-</div>
-
-{{-- 入力フォーム --}}
-@include('plugins.manage.page.page_form')
-
-<!-- Pages list -->
-@if (count($pages) > 0)
-    <div class="card mt-3">
-        <div class="card-header">ページ一覧</div>
-
+    <!-- Pages list -->
+    @if (count($pages) > 0)
         <script type="text/javascript">
             {{-- ページの上移動用フォームのsubmit JavaScript --}}
             function submit_sequence_up( id ) {
@@ -72,11 +63,10 @@
         {{-- ページの指定場所移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
         <form action="{{url('/manage/page/move_page')}}" method="POST" name="form_move_page" id="form_move_page" class="form-horizontal">
             {{ csrf_field() }}
-{{--            <input type="hidden" name="source_id" value=""> --}}
             <input type="hidden" name="destination_id" value="">
         </form>
 
-        <div class="card table-responsive">
+        <div class="table-responsive">
             <table class="table table-striped cc-font-90">
             <thead>
                 <th></th>
@@ -178,6 +168,5 @@
             </tbody>
             </table>
         </div>
-    </div>
-@endif
+    @endif
 @endsection

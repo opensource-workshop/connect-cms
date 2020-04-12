@@ -254,7 +254,7 @@ class Page extends Model
         }
 
         // ゲスト（ログインしていない状態）
-        // プラグイン配置権限を持たない場合
+        // プラグイン管理者権限を持たない場合
         // 上記条件の場合のみ、IPアドレスチェックを行う
         if (empty($user) || !$user->can('role_arrangement')) {
 

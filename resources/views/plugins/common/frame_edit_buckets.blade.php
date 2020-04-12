@@ -34,7 +34,7 @@
         </thead>
         <tbody>
             <tr>
-                <th>記事追加権限</th>
+                <th>編集者権限</th>
                 <td>
                     <div class="custom-control custom-checkbox custom-control-inline">
                         @if($buckets && $buckets->canPost("role_reporter"))

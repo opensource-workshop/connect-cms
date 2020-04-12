@@ -228,7 +228,7 @@ class ConnectController extends Controller
      */
     protected function checkPageForbidden()
     {
-        // プラグイン配置権限以上ならOK
+        // プラグイン管理者権限以上ならOK
         //$user = Auth::user();//ログインしたユーザーを取得
         //if (isset($user) && $user->can('role_arrangement')) {
         //    return;

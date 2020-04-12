@@ -47,4 +47,12 @@ class User extends Authenticatable
     {
         $this->notify(new PasswordResetNotification($token));
     }
+
+    /**
+     * hasMany 設定
+     */
+    public function group_user()
+    {
+        return $this->hasMany('App\User');
+    }
 }

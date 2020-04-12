@@ -91,10 +91,17 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function edit($request, $page_id)
+    public function edit($request, $page_id = null)
     {
-        // ページID で1件取得
-        $page = Page::where('id', $page_id)->first();
+
+        // 編集時と新規で処理を分ける
+        if (empty($page_id)) {
+            $page = new Page();
+        }
+        else {
+            // ページID で1件取得
+            $page = Page::where('id', $page_id)->first();
+        }
 
         // ページデータの取得(laravel-nestedset 使用)
         $pages = Page::defaultOrderWithDepth();
@@ -104,6 +111,7 @@ class PageManage extends ManagePluginBase
 
         // 画面呼び出し
         return view('plugins.manage.page.page_edit',[
+            "function"    => __FUNCTION__,
             "plugin_name" => "page",
             "page"        => $page,
             "pages"       => $pages,

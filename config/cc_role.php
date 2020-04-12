@@ -76,15 +76,15 @@ return [
 
     'CC_ROLE_LIST' => [
 
-        'role_article_admin' => '記事管理者',
-        'role_arrangement'   => 'プラグイン配置',
-        'role_reporter'      => '記事追加',
-        'role_approval'      => '記事承認',
+        'role_article_admin' => 'コンテンツ管理者',
+        'role_arrangement'   => 'プラグイン管理者',
         'role_article'       => 'モデレータ',
+        'role_approval'      => '承認者',
+        'role_reporter'      => '編集者',
 
         'admin_system'       => 'システム管理者',
-        'admin_page'         => 'ページ管理者',
         'admin_site'         => 'サイト管理者',
+        'admin_page'         => 'ページ管理者',
         'admin_user'         => 'ユーザ管理者',
     ],
 

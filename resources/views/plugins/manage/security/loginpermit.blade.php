@@ -103,7 +103,7 @@
                     <td nowrap>
                         <select name="role[{{$login_permit->id}}]" class="form-control">
                             <option value="">全権限対象</option>
-                            <optgroup label="記事関連の権限">
+                            <optgroup label="コンテンツ権限">
                             @foreach(Config::get('cc_role.CC_ROLE_LIST') as $cc_role => $cc_role_name)
                                 @if ($cc_role == 'admin_system')
                                     </optgroup>
@@ -150,7 +150,7 @@
                     <td nowrap>
                         <select name="add_role" class="form-control">
                             <option value="">全権限対象</option>
-                            <optgroup label="記事関連の権限">
+                            <optgroup label="コンテンツ権限">
                             @foreach(Config::get('cc_role.CC_ROLE_LIST') as $cc_role => $cc_role_name)
                                 @if ($cc_role == 'admin_system')
                                     </optgroup>

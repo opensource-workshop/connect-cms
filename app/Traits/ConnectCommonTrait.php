@@ -175,7 +175,7 @@ trait ConnectCommonTrait
         }
 
         // 指定された権限を含むロールをループする。
-        // 記事追加は記事管理者でもOKのような処理のため。
+        // 記事追加はコンテンツ管理者でもOKのような処理のため。
         foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
 
             // ユーザの保持しているロールをループ

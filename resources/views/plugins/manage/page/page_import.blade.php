@@ -11,28 +11,24 @@
 {{-- 管理画面メイン部分への挿入 --}}
 @section('manage_content')
 
-<div class="card mb-1">
-<div class="card-header p-0">
-
-{{-- 機能選択タブ --}}
-@include('plugins.manage.page.page_manage_tab')
-
-</div>
-</div>
-
-{{-- エラー表示 --}}
-@if ($errors)
-<div class="alert alert-danger my-3">
-    @foreach($errors as $error)
-        <i class="fas fa-exclamation-circle"></i>
-        {{$error}}<br />
-    @endforeach
-</div>
-@endif
-
-{{-- インポート画面(入力フォーム) --}}
 <div class="card">
+    <div class="card-header p-0">
+        {{-- 機能選択タブ --}}
+        @include('plugins.manage.page.page_manage_tab')
+    </div>
     <div class="card-body">
+
+        {{-- エラー表示 --}}
+        @if ($errors)
+        <div class="alert alert-danger my-3">
+            @foreach($errors as $error)
+                <i class="fas fa-exclamation-circle"></i>
+                {{$error}}<br />
+            @endforeach
+        </div>
+        @endif
+
+        {{-- インポート画面(入力フォーム) --}}
         <form action="{{url('/manage/page/upload')}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
             {{csrf_field()}}
 

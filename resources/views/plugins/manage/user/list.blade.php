@@ -26,6 +26,7 @@
             <tr>
                 <th nowrap>ユーザID</th>
                 <th nowrap>ユーザー名</th>
+                <th nowrap><i class="fas fa-users" title="グループ参加"></i></th>
                 <th nowrap>eメール</th>
                 <th nowrap>役割設定</th>
 {{--                <th nowrap>権限</th> --}}
@@ -36,13 +37,14 @@
         <tbody>
         @foreach($users as $user)
             <tr>
-                <td>
+                <td nowrap>
                     <a href="{{url('/')}}/manage/user/edit/{{$user->id}}">
                         <i class="far fa-edit"></i>
                     </a>
                     {{$user->userid}}
                 </td>
                 <td>{{$user->name}}</td>
+                <td nowrap><a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="fas fa-users"></i></a></th>
                 <td>{{$user->email}}</td>
                 <td>
                     @isset($user->user_original_roles)

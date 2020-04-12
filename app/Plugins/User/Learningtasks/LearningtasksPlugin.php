@@ -159,7 +159,7 @@ class LearningtasksPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、記事管理者の場合、全記事の取得
+        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
         }
@@ -168,7 +168,7 @@ class LearningtasksPlugin extends UserPluginBase
             $query->Where('status',   '=', 0)
                   ->orWhere('status', '=', 2);
         }
-        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
+        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
         elseif ($this->isCan('role_reporter')) {
             $query->Where('status', '=', 0)
                   ->orWhere('learningtasks_posts.created_id', '=', Auth::user()->id);
@@ -271,7 +271,7 @@ class LearningtasksPlugin extends UserPluginBase
 //        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
 //        if ($learningtasks_frame->approval_flag == 1) {
 //
-//            // 記事修正、記事管理者権限がない場合は要承認
+//            // 記事修正、コンテンツ管理者権限がない場合は要承認
 //            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
 //                return true;
 //            }
