@@ -29,6 +29,10 @@
                 <li class="nav-item"><span class="nav-link"><span class="active">ページ変更</span></span></li>
             @endif
 
+            @if ($function == "role" && $page->id)
+                <li class="nav-item"><span class="nav-link"><span class="active">ページ権限設定</span></span></li>
+            @endif
+
             @if ($function == "import")
                 <li class="nav-item"><span class="nav-link"><span class="active">CSVインポート</span></span></li>
             @else

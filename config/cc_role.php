@@ -81,6 +81,7 @@ return [
         'role_article'       => 'モデレータ',
         'role_approval'      => '承認者',
         'role_reporter'      => '編集者',
+        'role_guest'         => 'ゲスト',
 
         'admin_system'       => 'システム管理者',
         'admin_site'         => 'サイト管理者',

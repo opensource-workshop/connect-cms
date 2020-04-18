@@ -18,6 +18,10 @@
     </div>
     <div class="card-body">
 
+        <div class="alert alert-info">
+            <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する権限を設定します。
+        </div>
+
         <form action="{{url('/')}}/manage/user/saveGroups/{{$user->id}}" method="POST" class="">
             {{ csrf_field() }}
             <div class="form-group table-responsive">

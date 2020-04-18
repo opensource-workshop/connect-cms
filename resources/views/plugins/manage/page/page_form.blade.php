@@ -29,6 +29,37 @@
             <input type="text" name="permanent_link" id="permanent_link" value="{{$page->permanent_link}}" class="form-control">
         </div>
     </div>
+
+    <div class="form-group row">
+        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">公開設定</label>
+        <div class="col-md-9 d-sm-flex align-items-center">
+
+            <div class="custom-control custom-radio custom-control-inline">
+                @if ($page->membership_flag == 0)
+                    <input type="radio" value="0" id="membership_flag_0" name="membership_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="membership_flag_0" name="membership_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="membership_flag_0">公開</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if ($page->membership_flag == 1)
+                    <input type="radio" value="1" id="membership_flag_1" name="membership_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="membership_flag_1" name="membership_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="membership_flag_1">メンバーシップページ</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ページ権限設定</label>
+        <div class="col-md-9 d-sm-flex align-items-center">
+            <a href="{{url('/manage/page/role')}}/{{$page->id}}" class="btn btn-primary" target="_blank"><i class="fas fa-external-link-alt"></i> <span>権限設定画面へ</span></a>
+        </div>
+    </div>
+
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">背景色</label>
         <div class="col-md-9">

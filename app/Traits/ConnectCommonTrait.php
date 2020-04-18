@@ -421,7 +421,7 @@ trait ConnectCommonTrait
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    private function invokeManage($request, $plugin_name, $action = 'index', $id = null)
+    private function invokeManage($request, $plugin_name, $action = 'index', $id = null, $sub_id = null)
     {
         // ログインしているユーザー情報を取得
         $user = Auth::user();
@@ -461,7 +461,7 @@ trait ConnectCommonTrait
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
         // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
-        return $plugin_instance->$action($request, $id);
+        return $plugin_instance->$action($request, $id, $sub_id);
     }
 
     /**
