@@ -3,9 +3,9 @@
 namespace App\Enums;
 
 /**
- * ロケール
+ * コネクト用ロケール
  */
-final class Locale
+final class ConnectLocale
 {
     // 定数メンバ
     const ja = 'ja';

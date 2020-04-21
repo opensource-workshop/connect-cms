@@ -44,13 +44,13 @@ final class DayOfWeek
     */
     public static function getDescription($key): string
     {
-        return App::getLocale() == \Locale::en ? self::enum_en[$key] : self::enum_ja[$key];
+        return App::getLocale() == \ConnectLocale::en ? self::enum_en[$key] : self::enum_ja[$key];
     }
 
     /*
     * key/valueの連想配列を返す
     */
     public static function getMembers(){
-        return App::getLocale() == \Locale::en ? self::enum_en : self::enum_ja;
+        return App::getLocale() == \ConnectLocale::en ? self::enum_en : self::enum_ja;
     }
 }

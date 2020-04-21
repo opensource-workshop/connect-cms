@@ -2,4 +2,4 @@
 /**
  * 言語切替
  */
-return \App\Enums\Locale::getMembers();
+return \App\Enums\ConnectLocale::getMembers();

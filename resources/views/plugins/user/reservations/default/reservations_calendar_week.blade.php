@@ -26,7 +26,7 @@
                     </a>
                     {{-- 当月表示 --}}
                     <a class="list-group-item h5 d-flex align-items-center">
-                        {{ App::getLocale() == Locale::ja ? $carbon_target_date->format('Y年n月') : $carbon_target_date->format('M Y') }}
+                        {{ App::getLocale() == ConnectLocale::ja ? $carbon_target_date->format('Y年n月') : $carbon_target_date->format('M Y') }}
                     </a>
                     {{-- 翌週ボタン --}}
                     <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addDay(7)->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
@@ -37,7 +37,7 @@
             <div class="float-right col-sm-5">
                 {{-- 当日へボタン --}}
                 <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
-                    {{__('messages.to_today')}}<br>({{ App::getLocale() == Locale::ja ? Carbon::today()->format('Y年n月j日') : Carbon::today()->format('j M Y') }})
+                    {{__('messages.to_today')}}<br>({{ App::getLocale() == ConnectLocale::ja ? Carbon::today()->format('Y年n月j日') : Carbon::today()->format('j M Y') }})
                 </a>
             </div>
         </div>
@@ -108,7 +108,7 @@
                                             data-booking_id="{{ $booking['booking_header']->id }}" 
                                             data-facility_name="{{ $facility_name }}" 
                                             data-reservation_date_display="{{ 
-                                                (App::getLocale() == Locale::en ? 
+                                                (App::getLocale() == ConnectLocale::en ? 
                                                     $booking['booking_header']->start_datetime->format('j M Y') :
                                                     $booking['booking_header']->start_datetime->format('Y年n月j日')
                                                 ) . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')' 
