@@ -48,6 +48,12 @@
 @if(isset($configs_array['description']))
     <meta name="description" content="{{$configs_array['description']->getNobrValue()}}">
 @endif
+    {{-- Page --}}
+@if(isset($page))
+    <meta name="_page_id" content="{{$page->id}}">
+@else
+    <meta name="_page_id" content="0">
+@endif
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
 @if(isset($configs))

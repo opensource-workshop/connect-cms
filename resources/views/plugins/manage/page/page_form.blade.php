@@ -30,7 +30,7 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row mb-0">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">公開設定</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
@@ -51,6 +51,11 @@
                 <label class="custom-control-label" for="membership_flag_1">メンバーシップページ</label>
             </div>
         </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3"></div>
+        <div class="col-md-9 text-danger">メンバーシップページの下層のページもメンバーシップページになります。</div>
     </div>
 
     <div class="form-group row">
