@@ -8,7 +8,7 @@
 --}}
 <ul>
     @foreach($children as $page_obj)
-        @if ($page_obj->isView(Auth::user()))
+        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
             <li>
                 <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>{{$page_obj->page_name}}</a>
                 @if (isset($page_obj->children))

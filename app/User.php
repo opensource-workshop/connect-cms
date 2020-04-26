@@ -51,8 +51,10 @@ class User extends Authenticatable
     /**
      * hasMany 設定
      */
+/*
     public function group_user()
     {
         return $this->hasMany('App\User');
     }
+*/
 }

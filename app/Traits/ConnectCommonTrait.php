@@ -12,6 +12,7 @@ use Session;
 use App\User;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
@@ -860,4 +861,51 @@ trait ConnectCommonTrait
                      '徳島県','香川県','愛媛県','高知県',
                      '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県');
     }
+
+    /**
+     *  ページの系統取得
+     */
+    protected function getPageRoles($page_ids = null)
+    {
+        // ページID、ユーザID は必須
+        //if (empty($page_ids) || !is_array($page_ids)) {
+        //    return null;
+        //}
+
+        // シングルトン
+        //if ($this->page_roles) {
+        //    return $this->page_roles;
+        //}
+
+        $user = Auth::user();
+        if (empty($user)) {
+            return null;
+        }
+
+        // ページ、ユーザでpage_roles を検索
+        // ページは階層分、取得する。
+        // グループは複数、含まれている状態で保持しておく。
+        // ページやグループでデータを抜き出す場合は、Laravel のCollection メソッドでwhere を使用。
+        //$this->page_role = PageRole::select('page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
+        $page_role_query = PageRole::select('page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
+                                            'group_users.user_id', 'groups.name AS groups_name', 'group_users.group_role')
+                                    ->join('groups', function ($group_join) {
+                                        $group_join->on('groups.id', '=', 'page_roles.group_id')
+                                                   ->whereNull('groups.deleted_at');
+                                    })
+                                    ->join('group_users', function ($group_users_join) use($user) {
+                                        $group_users_join->on('group_users.group_id', '=', 'page_roles.group_id')
+                                                         ->where('group_users.user_id', $user->id)
+                                                         ->whereNull('group_users.deleted_at');
+                                    });
+        if ($page_ids) {
+            $page_role_query->whereIn('page_roles.page_id', $page_ids);
+        }
+        $page_role = $page_role_query->whereNull('page_roles.deleted_at')
+                                     ->get();
+
+        //return $this->page_role;
+        return $page_role;
+    }
+
 }

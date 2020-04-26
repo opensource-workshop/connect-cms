@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
     @foreach($children as $page_obj)
-        @if ($page_obj->isView(Auth::user()))
+        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
             @if ($page_obj->id == $page_id)
             <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item active">
