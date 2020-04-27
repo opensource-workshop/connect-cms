@@ -239,7 +239,6 @@ return [
         'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
         'ConnectLocale' => \App\Enums\ConnectLocale::class,
-        'GroupType' => \App\Enums\GroupType::class,
     ],
 
 ];
