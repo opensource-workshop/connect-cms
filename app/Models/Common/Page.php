@@ -6,6 +6,7 @@ use RecursiveIteratorIterator;
 use RecursiveArrayIterator;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use DB;
 
@@ -19,7 +20,7 @@ class Page extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'membership_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class'];
 
     use NodeTrait;
     use ConnectCommonTrait;
@@ -139,7 +140,6 @@ class Page extends Model
      */
     public static function defaultOrderWithDepth($format = null, $current_page_obj = null, $menu = null, $setting_mode = false)
     {
-
         // ページデータを全て取得
         // 表示順は入れ子集合モデルの順番
         // メニューの表示チェックは、読むデータを絞るものではなく、表示のON/OFF に使用する。（本来の階層は維持する）
@@ -236,25 +236,22 @@ class Page extends Model
      *  表示可否の判断
      *
      */
-    public function isView($user = null, $check_ip_only = false)
+    public function isView($user = null, $check_no_display_flag = false, $view_default = null, $check_page_roles = null)
     {
-        // displayフラグ（ページの継承を加味した値）が 0 なら非表示
-        //if ($check_ip_only == false && $this->display_flag === 0) {
-        //    return false;
-        //}
-
-        // ip アドレスのみのチェックをしたい場合はdisplay_flag を考慮しない。
-        if ($check_ip_only == false) {
-            if ($this->display_flag == 1) {
-                // 以下のipチェックに進む
+        // $check_no_display_flag がtrue なら、display_flag を考慮しない。
+        if ($this->display_flag == 1) {
+            // 以下のip以降のチェックに進む
+        }
+        else {
+            if ($check_no_display_flag) {
+                // 以下のip以降のチェックに進む
             }
             else {
                 return false;
             }
         }
 
-        // ゲスト（ログインしていない状態）
-        // プラグイン配置権限を持たない場合
+        // 認証情報が空（ログインしていない状態）or プラグイン管理者権限を持たない場合
         // 上記条件の場合のみ、IPアドレスチェックを行う
         if (empty($user) || !$user->can('role_arrangement')) {
 
@@ -263,16 +260,43 @@ class Page extends Model
 
                 // IP アドレスをループしてチェック。
                 // 一つでもOKなら、OK とする。
+                $ip_address_check = false;
                 $ip_addresses = explode(',', $this->ip_address);
                 foreach($ip_addresses as $ip_address) {
                     if ($this->isRangeIp(\Request::ip(), trim($ip_address))) {
-                        return true;
+                        $ip_address_check = true;
                     }
                 }
                 // 設定されたIPアドレスのどれにも合致しなかったため、参照NG
+                if (!$ip_address_check) {
+                    return false;
+                }
+            }
+        }
+
+        // メンバーシップページの場合は、参加条件をチェックする。
+        if ($this->membership_flag) {
+            if ($check_page_roles && $check_page_roles->where('user_id', $user->id)->where('page_id', $this->id)->count() > 0 ) {
+                return true;
+            }
+            else {
                 return false;
             }
         }
+
+        // view_default を加味する。
+        // Top       IP制限なし
+        //    2nd    IP制限ありでNG  <--- この場合、ここが有効
+        //       3rd IP制限なし      <--- ここでview_default(false が渡される)を返す。
+        // ---
+        // Top       IP制限なし
+        //    2nd    IP制限ありでNG
+        //       3rd IP制限ありでOK  <--- この場合、ここが有効(true を返す)
+        if ($view_default !== null) {
+            return $view_default;
+        }
+
+        // 制限にかからなっかったのでOK
         return true;
     }
 

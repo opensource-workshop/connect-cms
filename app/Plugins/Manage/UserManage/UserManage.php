@@ -11,6 +11,8 @@ use DB;
 
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\Common\Group;
+use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
 use App\User;
 
@@ -41,6 +43,8 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["originalRole"]       = array('admin_user');
         $role_ckeck_table["saveOriginalRoles"]  = array('admin_user');
         $role_ckeck_table["deleteOriginalRole"] = array('admin_user');
+        $role_ckeck_table["groups"]             = array('admin_user');
+        $role_ckeck_table["saveGroups"]         = array('admin_user');
 /*
         $role_ckeck_table = array();
         $role_ckeck_table["index"]   = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
@@ -404,5 +408,65 @@ class UserManage extends ManagePluginBase
         Configs::where('id', $id)->delete();
 
         return $this->originalRole($request, $id, null);
+    }
+
+    /**
+     *  参加グループ編集画面
+     */
+    public function groups($request, $id)
+    {
+        // ユーザデータ取得
+        $user = User::find($id);
+
+        // グループ取得
+        $group_users = Group::select('groups.*', 'group_users.user_id', 'group_users.group_role')
+                            ->leftJoin('group_users', function ($join) use($id) {
+                                $join->on('groups.id', '=', 'group_users.group_id')
+                                     ->where('group_users.user_id', '=', $id)
+                                     ->whereNull('group_users.deleted_at');
+                            })
+                            ->orderBy('groups.name', 'asc')
+                            ->paginate(10);
+
+        // 画面呼び出し
+        return view('plugins.manage.user.groups',[
+            "function"              => __FUNCTION__,
+            "plugin_name"           => "user",
+            "user"                  => $user,
+            "group_users"           => $group_users,
+        ]);
+    }
+
+    /**
+     *  参加グループ保存処理
+     */
+    public function saveGroups($request, $id)
+    {
+        // 画面項目のチェック
+        if ($request->has('group_roles')) {
+
+            foreach($request->group_roles as $group_id => $group_role) {
+
+                // 権限の解除
+                if (empty($group_role)) {
+                    GroupUser::where('group_id', $group_id)->where('user_id', $id)->delete();
+                }
+                else {
+                    // 登録 or 更新
+                    $group_user = GroupUser::updateOrCreate(
+                        ['group_id'   => $group_id, 'user_id' => $id],
+                        ['group_id'   => $group_id,
+                         'user_id'    => $id,
+                         'group_role' => $group_role,
+                         'deleted_id' => null,
+                         'deleted_name' => null,
+                         'deleted_at' => null]
+                    );
+                }
+            }
+        }
+
+        // 削除後は一覧画面へ
+        return redirect('manage/user/groups/' . $id);
     }
 }

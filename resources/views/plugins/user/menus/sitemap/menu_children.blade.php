@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->isView(Auth::user()))
+@if ($children->isView(Auth::user(), false, true, $page_roles))
 <ul>
 <li>
     @if ($children->id == $page_id)

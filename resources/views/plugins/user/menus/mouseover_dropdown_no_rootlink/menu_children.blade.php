@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->isView(Auth::user()))
+@if ($children->isView(Auth::user(), false, true, $page_roles))
 
     @if ($children->id == $page_id)
     <a class="dropdown-item active" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>

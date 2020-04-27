@@ -17,7 +17,7 @@
         @if (count($page->children) > 0)
 <ul>
             {{-- 非表示のページは対象外(非表示の判断はこのページのみで、子のページはそのページでの判断を行う) --}}
-            @if ($page->isView(Auth::user()))
+            @if ($page->isView(Auth::user(), false, true, $page_roles))
 <li>
                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                 <h3>
@@ -38,7 +38,7 @@
         @else
 <ul>
             {{-- 非表示のページは対象外 --}}
-            @if ($page->isView(Auth::user()))
+            @if ($page->isView(Auth::user(), false, true, $page_roles))
 <li>
 
                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}

@@ -152,7 +152,7 @@ class ContentsPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、記事管理者の場合、全記事の取得
+        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
         }
@@ -161,7 +161,7 @@ class ContentsPlugin extends UserPluginBase
             $query->Where('status',   '=', 0)
                   ->orWhere('status', '=', 2);
         }
-        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
+        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
         elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
             $query->Where('status', '=', 0)
                   ->orWhere('contents.created_id', '=', Auth::user()->id);

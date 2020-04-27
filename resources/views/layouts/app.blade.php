@@ -48,6 +48,12 @@
 @if(isset($configs_array['description']))
     <meta name="description" content="{{$configs_array['description']->getNobrValue()}}">
 @endif
+    {{-- Page --}}
+@if(isset($page))
+    <meta name="_page_id" content="{{$page->id}}">
+@else
+    <meta name="_page_id" content="0">
+@endif
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
 @if(isset($configs))
@@ -201,7 +207,7 @@
         </ul>
 
         <ul class="navbar-nav">
-            {{-- 管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）--}}
+            {{-- 管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
             @if (Auth::check() && Auth::user()->can('role_manage_or_post'))
                 <li class="nav-item dropdown">
                     {{-- ページリストがある場合は、コンテンツ画面 --}}
@@ -239,7 +245,7 @@
                         <a class="nav-link" href="{{ url('/') }}">コンテンツ画面へ</a>
                     @endif
                 </li>
-            {{-- /管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）--}}
+            {{-- /管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
             @endif
 
             @guest

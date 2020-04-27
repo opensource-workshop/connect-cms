@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
+use App\Models\Common\Group;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -40,6 +42,8 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["move_page"]     = array('admin_page');
         $role_ckeck_table["import"]        = array('admin_page');
         $role_ckeck_table["upload"]        = array('admin_page');
+        $role_ckeck_table["role"]          = array('admin_page');
+        $role_ckeck_table["saveRole"]      = array('admin_page');
 
 /*
         $role_ckeck_table = array();
@@ -60,8 +64,8 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-	public function index($request, $page_id = null, $errors = array())
-	{
+    public function index($request, $page_id = null, $errors = array())
+    {
         // ページデータの取得(laravel-nestedset 使用)
         $return_obj = 'flat';
         $pages = Page::defaultOrderWithDepth($return_obj);
@@ -91,10 +95,17 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function edit($request, $page_id)
+    public function edit($request, $page_id = null)
     {
-        // ページID で1件取得
-        $page = Page::where('id', $page_id)->first();
+
+        // 編集時と新規で処理を分ける
+        if (empty($page_id)) {
+            $page = new Page();
+        }
+        else {
+            // ページID で1件取得
+            $page = Page::where('id', $page_id)->first();
+        }
 
         // ページデータの取得(laravel-nestedset 使用)
         $pages = Page::defaultOrderWithDepth();
@@ -104,6 +115,7 @@ class PageManage extends ManagePluginBase
 
         // 画面呼び出し
         return view('plugins.manage.page.page_edit',[
+            "function"    => __FUNCTION__,
             "plugin_name" => "page",
             "page"        => $page,
             "pages"       => $pages,
@@ -143,6 +155,7 @@ class PageManage extends ManagePluginBase
         $page->theme                = $request->theme;
         $page->layout               = $request->layout;
         $page->base_display_flag    = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
+        $page->membership_flag      = (isset($request->membership_flag) ? $request->membership_flag : 0);
         $page->ip_address           = $request->ip_address;
         $page->othersite_url        = $request->othersite_url;
         $page->othersite_url_target = (isset($request->othersite_url_target) ? $request->othersite_url_target : 0);
@@ -174,6 +187,7 @@ class PageManage extends ManagePluginBase
                 'theme'                => $request->theme,
                 'layout'               => $request->layout,
                 'base_display_flag'    => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
+                'membership_flag'      => (isset($request->membership_flag) ? $request->membership_flag : 0),
                 'ip_address'           => $request->ip_address,
                 'othersite_url'        => $request->othersite_url,
                 'othersite_url_target' => (isset($request->othersite_url_target) ? $request->othersite_url_target : 0),
@@ -425,5 +439,87 @@ class PageManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/page/import");
+    }
+
+    /**
+     *  グループ権限設定画面表示
+     *
+     * @return view
+     */
+    public function role($request, $page_id, $group_id)
+    {
+        // ページID で1件取得
+        $page = Page::find($page_id);
+
+        // ページデータ取得
+        if (empty($page)) {
+
+            // 画面呼び出し
+            return view('plugins.manage.page.error',[
+                "function"     => __FUNCTION__,
+                "plugin_name"  => "page",
+                "message"      => "指定されたページID が存在しません。",
+            ]);
+        }
+
+        // グループの取得
+        $groups = Group::orderBy('name', 'asc')->get();
+
+        // ページ権限を取得してGroup オブジェクトに保持する。
+        $page_roles = PageRole::where('role_value', 1)->orderBy('group_id', 'asc')->get();
+        foreach($groups as $group) {
+            $group->page_roles = $page_roles->where('group_id', $group->id);
+        }
+
+        // 画面呼び出し
+        return view('plugins.manage.page.role',[
+            "function"     => __FUNCTION__,
+            "plugin_name"  => "page",
+            "page"         => $page,
+            "group_id"     => $group_id,
+            "groups"       => $groups,
+        ]);
+    }
+
+    /**
+     * page_roles テーブルの更新
+     */
+    private function updatePageRoles($page_id, $group_id, $role_name, $role_value)
+    {
+        // role_value が空の場合は、チェックされていないということなので、delete
+        // この時、もともとレコードがない場合は 0件削除されるだけなので、delete 処理する。
+        if (empty($role_value)) {
+            PageRole::where('page_id', $page_id)->where('group_id', $group_id)->where('role_name', $role_name)->delete();
+        }
+        // 更新もしくは追加	
+        else {
+            PageRole::updateOrCreate(
+                ['page_id' => $page_id, 'group_id' => $group_id, 'target' => 'base', 'role_name' => $role_name,],
+                ['page_id' => $page_id, 'group_id' => $group_id, 'target' => 'base', 'role_name' => $role_name, 'role_value' => 1]
+            );
+        }
+        return;
+    }
+
+    /**
+     *  グループ権限保存
+     *
+     * @return view
+     */
+    public function saveRole($request, $page_id)
+    {
+        // Role をループ
+        foreach(config('cc_role.CC_ROLE_LIST') as $role_name => $cc_role_name) {
+
+            // 管理権限は対象外
+            if (stripos($role_name, 'admin_') === 0) {
+                continue;
+            }
+            // page_roles 更新
+            $this->updatePageRoles($page_id, $request->group_id, $role_name, $request->input($role_name));
+        }
+
+        // 更新後は一覧画面へ
+        return redirect('manage/page/role/' . $page_id . '/' . $request->group_id);
     }
 }

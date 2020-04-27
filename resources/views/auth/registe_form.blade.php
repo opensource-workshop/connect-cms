@@ -91,10 +91,10 @@
     </div>
 
 
-    {{-- 記事関連の権限 --}}
+    {{-- コンテンツ権限 --}}
     @if (Auth::user() && Auth::user()->can('admin_page'))
         <div class="form-group row">
-            <label for="password-confirm" class="col-md-4 text-md-right">記事関連の権限</label>
+            <label for="password-confirm" class="col-md-4 text-md-right">コンテンツ権限</label>
             <div class="col-md-8">
                 <div class="custom-control custom-checkbox">
                     @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_article_admin"]) && $users_roles["base"]["role_article_admin"] == 1)
@@ -102,7 +102,7 @@
                     @else
                         <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin">
                     @endif
-                    <label class="custom-control-label" for="role_article_admin">記事管理者</label>
+                    <label class="custom-control-label" for="role_article_admin">コンテンツ管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_arrangement"]) && $users_roles["base"]["role_arrangement"] == 1)
@@ -110,23 +110,7 @@
                     @else
                         <input name="base[role_arrangement]" value="1" type="checkbox" class="custom-control-input" id="role_arrangement">
                     @endif
-                    <label class="custom-control-label" for="role_arrangement">プラグイン配置</label>
-                </div>
-                <div class="custom-control custom-checkbox">
-                    @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_reporter"]) && $users_roles["base"]["role_reporter"] == 1)
-                        <input name="base[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter" checked="checked">
-                    @else
-                        <input name="base[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter">
-                    @endif
-                    <label class="custom-control-label" for="role_reporter">記事追加</label>
-                </div>
-                <div class="custom-control custom-checkbox">
-                    @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_approval"]) && $users_roles["base"]["role_approval"] == 1)
-                        <input name="base[role_approval]" value="1" type="checkbox" class="custom-control-input" id="role_approval" checked="checked">
-                    @else
-                        <input name="base[role_approval]" value="1" type="checkbox" class="custom-control-input" id="role_approval">
-                    @endif
-                    <label class="custom-control-label" for="role_approval">記事承認</label>
+                    <label class="custom-control-label" for="role_arrangement">プラグイン管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_article"]) && $users_roles["base"]["role_article"] == 1)
@@ -136,7 +120,23 @@
                     @endif
                     <label class="custom-control-label" for="role_article">モデレータ（他ユーザの記事も更新）</label>
                 </div>
-                <small class="text-muted">※「記事追加」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。</small>
+                <div class="custom-control custom-checkbox">
+                    @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_approval"]) && $users_roles["base"]["role_approval"] == 1)
+                        <input name="base[role_approval]" value="1" type="checkbox" class="custom-control-input" id="role_approval" checked="checked">
+                    @else
+                        <input name="base[role_approval]" value="1" type="checkbox" class="custom-control-input" id="role_approval">
+                    @endif
+                    <label class="custom-control-label" for="role_approval">承認者</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    @if(isset($users_roles["base"]) && isset($users_roles["base"]["role_reporter"]) && $users_roles["base"]["role_reporter"] == 1)
+                        <input name="base[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter" checked="checked">
+                    @else
+                        <input name="base[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter">
+                    @endif
+                    <label class="custom-control-label" for="role_reporter">編集者</label>
+                </div>
+                <small class="text-muted">※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。</small>
             </div>
         </div>
 
@@ -153,20 +153,20 @@
                     <label class="custom-control-label" for="admin_system">システム管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
-                    @if(isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_page"]) && $users_roles["manage"]["admin_page"] == 1)
-                        <input name="manage[admin_page]" value="1" type="checkbox" class="custom-control-input" id="admin_page" checked="checked">
-                    @else
-                        <input name="manage[admin_page]" value="1" type="checkbox" class="custom-control-input" id="admin_page">
-                    @endif
-                    <label class="custom-control-label" for="admin_page">ページ管理者</label>
-                </div>
-                <div class="custom-control custom-checkbox">
                     @if(isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_site"]) && $users_roles["manage"]["admin_site"] == 1)
                         <input name="manage[admin_site]" value="1" type="checkbox" class="custom-control-input" id="admin_site" checked="checked">
                     @else
                         <input name="manage[admin_site]" value="1" type="checkbox" class="custom-control-input" id="admin_site">
                     @endif
                     <label class="custom-control-label" for="admin_site">サイト管理者</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    @if(isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_page"]) && $users_roles["manage"]["admin_page"] == 1)
+                        <input name="manage[admin_page]" value="1" type="checkbox" class="custom-control-input" id="admin_page" checked="checked">
+                    @else
+                        <input name="manage[admin_page]" value="1" type="checkbox" class="custom-control-input" id="admin_page">
+                    @endif
+                    <label class="custom-control-label" for="admin_page">ページ管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if(isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_user"]) && $users_roles["manage"]["admin_user"] == 1)

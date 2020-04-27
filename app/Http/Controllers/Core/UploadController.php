@@ -64,6 +64,15 @@ class UploadController extends ConnectController
             }
         }
 
+        // 画像に閲覧権限がない場合
+        if ($uploads->page_id) {
+            $page = Page::find($uploads->page_id);
+            $page_roles = $this->getPageRoles(array($page->id));
+            if (!$page->isView(Auth::user(), true, true, $page_roles)) {
+                 return response()->download( storage_path(config('connect.forbidden_image_path')));
+            }
+        }
+
         // カウントアップの対象拡張子ならカウントアップ
         $cc_count_extension = config('connect.CC_COUNT_EXTENSION');
         if (isset($uploads['extension']) && is_array($cc_count_extension) && in_array(strtolower($uploads['extension']), $cc_count_extension)) {
@@ -249,6 +258,7 @@ EOD;
                    'mimetype'             => $request->file('file')->getClientMimeType(),
                    'extension'            => $request->file('file')->getClientOriginalExtension(),
                    'size'                 => $request->file('file')->getClientSize(),
+                   'page_id'              => $request->page_id,
                 ]);
 
                 $directory = $this->getDirectory($id);
@@ -290,6 +300,7 @@ EOD;
                        'mimetype'             => $request->file($input_name)->getClientMimeType(),
                        'extension'            => $request->file($input_name)->getClientOriginalExtension(),
                        'size'                 => $request->file($input_name)->getClientSize(),
+                       'page_id'              => $request->page_id,
                     ]);
 
                     $directory = $this->getDirectory($id);

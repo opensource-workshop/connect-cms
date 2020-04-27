@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\Configs;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 
 use File;
 use Storage;
@@ -58,6 +59,16 @@ class ConnectController extends Controller
      *  ページ一覧
      */
     public $pages = null;
+
+    /**
+     *  ページ系統
+     */
+    public $page_tree = null;
+
+    /**
+     *  ページ＆ユーザの役割（Role）
+     */
+    public $page_roles = null;
 
     /**
      *  config 設定
@@ -128,24 +139,6 @@ class ConnectController extends Controller
             // Page データ
             $this->pages = Page::defaultOrder()->get();
         }
-
-        // 使用していない部分なのでコメントアウト（$frame_id はここでは存在しないので実質無効になっていた）2020-01-07
-        // Frame データがあれば、画面のテンプレート情報をセット
-        //if (!empty($frame_id)) {
-        //    $frame = Frame::where('id', $frame_id)->first();
-        //    $finder = View::getFinder();
-        //    $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name;
-
-        //    $file_list = scandir($plugin_view_path);
-        //    foreach ($file_list as $file) {
-        //        if (in_array($file, array('.', '..', 'default'))) {
-        //            continue;
-        //        }
-        //        if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $frame->plugin_name . '/' . $file))) {
-        //            $this->target_frame_templates[] = $file;
-        //        }
-        //    }
-        //}
     }
 
     /**
@@ -223,43 +216,10 @@ class ConnectController extends Controller
     }
 
     /**
-     *  403 判定
-     *  403 にする場合は、戻り先で処理の無効化を行う可能性もあるので、HTTPステータスコードを返す。
+     *  403 処理
      */
-    protected function checkPageForbidden()
+    protected function doForbidden()
     {
-        // プラグイン配置権限以上ならOK
-        //$user = Auth::user();//ログインしたユーザーを取得
-        //if (isset($user) && $user->can('role_arrangement')) {
-        //    return;
-        //}
-
-        // 対象となる処理は、画面を持つルートの処理とする。
-        $route_name = $this->router->current()->getName();
-        if ($route_name == 'get_plugin'    ||
-            $route_name == 'post_plugin'   ||
-            $route_name == 'post_redirect' ||
-            $route_name == 'get_redirect'  ||
-            $route_name == 'get_all'       ||
-            $route_name == 'post_all') {
-            // 対象として次へ
-        }
-        else {
-            // 対象外の処理なので、戻る
-            return;
-        }
-
-        // 参照できない場合
-        $user = Auth::user();  // 権限チェックをpage のisView で行うためにユーザを渡す。
-        $check_ip_only = true; // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
-        if ($this->page && get_class($this->page) == 'App\Models\Common\Page' && !$this->page->isView($user, $check_ip_only)) {
-            // 403 対象として次へ
-        }
-        else {
-            // 参照可能
-            return;
-        }
-
         // 表示中の他言語を取得（設定がない場合は空が返る）
         $view_language = $this->getPageLanguage4url($this->getLanguages());
 
@@ -288,6 +248,69 @@ class ConnectController extends Controller
             abort(403, 'ページ参照権限がありません。');
         }
         return $this->http_status_code;
+    }
+
+    /**
+     *  403 判定
+     *  403 にする場合は、戻り先で処理の無効化を行う可能性もあるので、HTTPステータスコードを返す。
+     */
+    protected function checkPageForbidden()
+    {
+        // プラグイン管理者権限以上ならOK
+        //$user = Auth::user();//ログインしたユーザーを取得
+        //if (isset($user) && $user->can('role_arrangement')) {
+        //    return;
+        //}
+
+        // 対象となる処理は、画面を持つルートの処理とする。
+        $route_name = $this->router->current()->getName();
+        if ($route_name == 'get_plugin'    ||
+            $route_name == 'post_plugin'   ||
+            $route_name == 'post_redirect' ||
+            $route_name == 'get_redirect'  ||
+            $route_name == 'get_all'       ||
+            $route_name == 'post_all') {
+            // 対象として次へ
+        }
+        else {
+            // 対象外の処理なので、戻る
+            return;
+        }
+
+        // 参照できない場合
+        $user = Auth::user();  // 権限チェックをpage のisView で行うためにユーザを渡す。
+        $check_no_display_flag = true; // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
+
+        if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
+
+            // 自分のページから親を遡って取得
+            $page_tree = $this->getAncestorsAndSelf($this->page->id);
+
+            // 自分のページ＋先祖ページのpage_roles を取得
+            $ids = null;
+            $ids_collection = $this->page_tree->pluck('id');
+            if ($ids_collection) {
+                $ids = $ids_collection->all();
+            }
+            $page_roles = $this->getPageRoles($ids);
+
+            // ページをループして表示可否をチェック
+            // 継承関係を加味するために is_view 変数を使用。
+            $is_view = true;
+            foreach($page_tree as $page_obj) {
+                $check_page_roles = null;
+                if ($page_roles) {
+                    $check_page_roles = $page_roles->where('page_id', $page_obj->id);
+                }
+                $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view, $check_page_roles);
+            }
+            if (!$is_view) {
+                // 403 対象
+                return $this->doForbidden();
+            }
+        }
+        // 参照可能
+        return;
     }
 
     /**
@@ -516,10 +539,26 @@ class ConnectController extends Controller
     /**
      *  ページの系統取得
      */
+    private function getAncestorsAndSelf($page_id)
+    {
+        // シングルトン
+        if ($this->page_tree) {
+            return $this->page_tree;
+        }
+
+        // 自分のページから親を遡って取得
+        $this->page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+
+        return $this->page_tree;
+    }
+
+    /**
+     *  ページの系統取得
+     */
     private function getPageTree($page_id)
     {
         // 自分のページから親を遡って取得
-        $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+        $page_tree = $this->getAncestorsAndSelf($page_id);
 
         // トップページを取得
         $top_page = Page::orderBy('_lft', 'asc')->first();
@@ -619,7 +658,7 @@ class ConnectController extends Controller
     private function getPagesColum($col_name)
     {
         // 自分のページから親を遡って取得
-        $page_tree = Page::reversed()->ancestorsAndSelf($this->page->id);
+        $page_tree = $this->getAncestorsAndSelf($this->page->id);
         foreach($page_tree as $page){
             if(isset($page[$col_name])) {
                 return $page[$col_name];
