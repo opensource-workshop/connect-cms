@@ -321,7 +321,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  課題ファイルの保存
      */
-    private function saveTaskFile($request, $learningtasks_post, $old_learningtasks_post)
+    private function saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post)
     {
         // 旧データがある場合は、履歴のためにコピーする。
         if (!empty($old_learningtasks_post) && !empty($old_learningtasks_post->id)) {
@@ -359,6 +359,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'extension'            => $request->file('add_task_file')->getClientOriginalExtension(),
                 'size'                 => $request->file('add_task_file')->getClientSize(),
                 'plugin_name'          => 'learningtasks',
+                'page_id'              => $page_id,
              ]);
 
             // learningtasks_posts_files テーブルに情報追加
@@ -832,7 +833,7 @@ class LearningtasksPlugin extends UserPluginBase
         $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
 
         // 課題ファイルの保存
-        $this->saveTaskFile($request, $learningtasks_post, $old_learningtasks_post);
+        $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -891,7 +892,7 @@ class LearningtasksPlugin extends UserPluginBase
         $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
 
         // 課題ファイルの保存
-        $this->saveTaskFile($request, $learningtasks_post, $old_learningtasks_post);
+        $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
