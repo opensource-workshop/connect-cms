@@ -178,7 +178,7 @@
     <br>
     @endif
 
-    @if ($column->column_type == FormColumnType::time || $column->column_type == FormColumnType::group)
+    @if ($column->column_type == FormColumnType::time || $column->column_type == FormColumnType::time_from_to || $column->column_type == FormColumnType::group)
         {{-- 項目毎の固有設定 --}}
         <div class="card">
             <h5 class="card-header">項目毎の固有設定</h5>
@@ -206,6 +206,50 @@
                     </div>
                 @endif
                     
+                {{-- 分刻み指定（From/To） ※データ型が「時間型（From/To）」のみ表示 --}}
+                @if ($column->column_type == FormColumnType::time_from_to)
+                    {{-- From --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">分刻み指定（From） </label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <select class="form-control" name="minutes_increments_from">
+                                @foreach (MinutesIncrements::getMembers() as $key=>$value)
+                                    <option value="{{$key}}"
+                                        {{-- 初期表示用 --}}
+                                        @if($key == $column->minutes_increments_from)
+                                            selected="selected"
+                                        @endif
+                                        {{-- validation用 --}}
+                                        @if($key == old('minutes_increments_from'))
+                                            selected="selected"
+                                        @endif
+                                    >{{ $value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    {{-- To --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">分刻み指定（To） </label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <select class="form-control" name="minutes_increments_to">
+                                @foreach (MinutesIncrements::getMembers() as $key=>$value)
+                                    <option value="{{$key}}"
+                                        {{-- 初期表示用 --}}
+                                        @if($key == $column->minutes_increments_to)
+                                            selected="selected"
+                                        @endif
+                                        {{-- validation用 --}}
+                                        @if($key == old('minutes_increments_to'))
+                                            selected="selected"
+                                        @endif
+                                    >{{ $value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- まとめ数 ※データ型が「まとめ行」のみ表示 --}}
                 @if ($column->column_type == FormColumnType::group)
                     <div class="form-group row">
