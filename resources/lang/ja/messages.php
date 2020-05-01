@@ -26,4 +26,5 @@ return [
     'previous' => '前へ',
     'enter_same_email' => '同じメールアドレスを入力',
     'not_match_confirmation_value' => 'が確認用の値と一致しません。',
+    'entered_time_is_invalid' => '入力した時間の前後関係が不正です。'
 ];

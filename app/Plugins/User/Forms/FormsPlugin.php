@@ -21,6 +21,7 @@ use App\Models\User\Forms\FormsInputCols;
 use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
 use App\Rules\CustomVali_Confirmed;
+use App\Rules\CustomVali_TimeFromTo;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
@@ -346,6 +347,26 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_column->column_type == \FormColumnType::date) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'date';
+        }
+        // 「時間From~To型」の前後チェック
+        if ($forms_column->column_type == \FormColumnType::time_from_to &&
+            $request->forms_columns_value_for_time_from[$forms_column->id] &&
+            $request->forms_columns_value_for_time_to[$forms_column->id]
+        ) {
+
+            $time_from = $request->forms_columns_value_for_time_from[$forms_column->id];
+            $time_to = $request->forms_columns_value_for_time_to[$forms_column->id];
+            // request内の入力値（配列）を一旦取り出して、時間型（From~To）の入力値をセットする
+            $tmp_array = $request->forms_columns_value;
+            $tmp_array[$forms_column->id] = $time_from . '~' . $time_to;
+            $request->merge([
+                "forms_columns_value" => $tmp_array,
+            ]);
+            // 時間の前後チェックルールを追加
+            $validator_rule[] = new CustomVali_TimeFromTo(
+                \Carbon::createFromTimeString($time_from . ':00'),
+                \Carbon::createFromTimeString($time_to . ':00')
+            );
         }
         // バリデータールールをセット
         if($validator_rule){
@@ -966,7 +987,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     }
 
     /**
-     * 項目に紐づく選択肢の更新
+     * 項目に紐づく詳細情報の更新
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
@@ -1039,6 +1060,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 分刻み指定
         if($column->column_type == \FormColumnType::time){
             $column->minutes_increments = $request->minutes_increments;
+        }
+        // 分刻み指定（FromTo）
+        if($column->column_type == \FormColumnType::time_from_to){
+            $column->minutes_increments_from = $request->minutes_increments_from;
+            $column->minutes_increments_to = $request->minutes_increments_to;
         }
         // 数値のみ許容
         $column->rule_allowed_numeric = (empty($request->rule_allowed_numeric)) ? 0 : $request->rule_allowed_numeric;
