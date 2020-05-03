@@ -8,7 +8,7 @@
  * @category コア
 --}}
 @if ($frame->frame_design == 'none')
-<div class="card-body" style="padding: 0; clear: both;">
+<div class="card-body clearfix" style="padding: 0; clear: both;">
 @else
 <div class="card-body">
 @endif
