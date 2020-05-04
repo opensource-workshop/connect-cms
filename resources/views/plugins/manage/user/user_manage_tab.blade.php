@@ -42,6 +42,12 @@
                     <span class="nav-link"><span class="active">ユーザ変更</span></span>
                 @endif
                 </li>
+
+                <li role="presentation" class="nav-item">
+                @if ($function == "groups")
+                    <span class="nav-link"><span class="active">グループ参加</span></span>
+                @endif
+                </li>
             </ul>
         </div>
     </nav>

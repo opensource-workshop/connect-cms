@@ -94,6 +94,7 @@
     $toolbar = "toolbar  : '" . $toolbar . "',";
 
 @endphp
+<input type="hidden" name="page_id" value="{{$page_id}}">
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
     tinymce.init({
@@ -193,6 +194,7 @@
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);
             formData.append('file', blobInfo.blob(), fileName);
+            formData.append('page_id', {{$page_id}});
             xhr.send(formData);
         }
     });

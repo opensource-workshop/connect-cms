@@ -25,7 +25,7 @@
     };
 @endphp
 
-@if ($children->isView(Auth::user()))
+@if ($children->isView(Auth::user(), false, true, $page_roles))
     <li>
         @if ($children->id == $page_id)
         <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item active">

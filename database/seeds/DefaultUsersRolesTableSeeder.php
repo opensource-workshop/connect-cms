@@ -14,7 +14,7 @@ class DefaultUsersRolesTableSeeder extends Seeder
         if (DB::table('users_roles')->count() == 0) {
             DB::table('users_roles')->insert(
                 [
-                    /** 初期管理者用（記事関連の権限） */
+                    /** 初期管理者用（コンテンツ権限） */
                     ['users_id'=>'1','target'=>'base','role_name'=>'role_article_admin','role_value'=>'1','created_at' => date('Y-m-d H:i:s'),'updated_at' => date('Y-m-d H:i:s')],
                     ['users_id'=>'1','target'=>'base','role_name'=>'role_arrangement','role_value'=>'1','created_at' => date('Y-m-d H:i:s'),'updated_at' => date('Y-m-d H:i:s')],
                     ['users_id'=>'1','target'=>'base','role_name'=>'role_reporter','role_value'=>'1','created_at' => date('Y-m-d H:i:s'),'updated_at' => date('Y-m-d H:i:s')],

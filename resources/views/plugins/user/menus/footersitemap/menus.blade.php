@@ -15,7 +15,7 @@
     @foreach($pages as $page_obj)
         @if($page_obj->parent_id == null)
             {{-- 非表示のページは対象外 --}}
-            @if ($page_obj->isView(Auth::user()))
+            @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
                 <li class="nav-item">
                     <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>{{$page_obj->page_name}}</a>
                     @if (isset($page_obj->children))

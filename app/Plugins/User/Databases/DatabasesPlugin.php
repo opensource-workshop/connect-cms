@@ -828,7 +828,7 @@ class DatabasesPlugin extends UserPluginBase
             // まとめ行以外の項目について、バリデータールールをセット
             $validator_array = self::getValidatorRule($validator_array, $databases_column);
         }
-Log::debug($validator_array);
+
         // 入力値をトリム
         $request->merge(self::trimInput($request->all()));
 
@@ -878,6 +878,7 @@ Log::debug($validator_array);
                         'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
                         'size'                 => $request->file($req_filename)->getClientSize(),
                         'plugin_name'          => 'databasess',
+                        'page_id'              => $page_id,
                         'temporary_flag'       => 1,
                         'created_id'           => Auth::user()->id,
                      ]);
@@ -2181,7 +2182,7 @@ ORDER BY databases_inputs_id, databases_columns_id
              'frames_id'         => $frame_id,
              'use_search_flag'   => $request->use_search_flag,
              'use_select_flag'   => $request->use_select_flag,
-             'use_sort_flag'     => implode(',', $request->use_sort_flag),
+             'use_sort_flag'     => $request->use_sort_flag ? implode(',', $request->use_sort_flag) : null,
              'default_sort_flag' => $request->default_sort_flag,
              'view_count'        => $request->view_count,
              'default_hide'      => $request->default_hide]

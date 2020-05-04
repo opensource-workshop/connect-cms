@@ -71,7 +71,7 @@
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
             <div class="row">
-                <div class="col-3 d-none d-xl-block"></div>
+                <div class="col-xl-3"></div>
                 <div class="col-9 col-xl-6">
                     @if($id)
                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>

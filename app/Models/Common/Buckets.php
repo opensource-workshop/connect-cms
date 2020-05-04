@@ -100,7 +100,7 @@ class Buckets extends Model
         }
 
         foreach($user_roles_base as $user_role => $value) {
-            // 記事管理者権限、プラグイン配置権限があれば、投稿可能
+            // コンテンツ管理者権限、プラグイン管理者権限があれば、投稿可能
             if ($user_role == 'role_article_admin' || $user_role == 'role_arrangement') {
                 return true;
             }
@@ -156,7 +156,7 @@ class Buckets extends Model
         }
 
         foreach($user_roles_base as $user_role => $value) {
-            // 記事管理者権限、プラグイン配置権限、記事承認権限があれば、承認不要
+            // コンテンツ管理者権限、プラグイン管理者権限、承認者権限があれば、承認不要
             if ($user_role == 'role_article_admin' || $user_role == 'role_arrangement' || $user_role == 'role_approval') {
                 return false;
             }

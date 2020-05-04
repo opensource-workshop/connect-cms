@@ -61,6 +61,9 @@ class MenusPlugin extends UserPluginBase
         $menu = Menu::where('frame_id', $frame_id)->first();
         //Log::debug(json_encode( $menu, JSON_UNESCAPED_UNICODE));
 
+        // ページに対する権限
+        $page_roles = $this->getPageRoles();
+
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
         $format = null;
@@ -72,6 +75,9 @@ class MenusPlugin extends UserPluginBase
         // パンくずリスト用に自分と上位階層のページを取得
         $ancestors = Page::ancestorsAndSelf($page_id);
 
+        // パンくずリスト用ページに対する権限
+        $ancestors_page_roles = $this->getPageRoles($ancestors->pluck('id'));
+
         // 画面へ
         return $this->view('menus', [
             'page_id'      => $page_id,
@@ -79,6 +85,8 @@ class MenusPlugin extends UserPluginBase
             'ancestors'    => $ancestors,
             'current_page' => $this->page,
             'menu'         => $menu,
+            'page_roles'   => $page_roles,
+            'ancestors_page_roles' => $ancestors_page_roles,
 //            'page'      => $this->page,
         ]);
     }

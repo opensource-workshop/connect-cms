@@ -18,6 +18,7 @@ final class FormColumnType
     // const datetime = 'datetime';
     const date = 'date';
     const time = 'time';
+    const time_from_to = 'time_from_to';
     // const file = 'file';
     const group = 'group';
 
@@ -33,6 +34,7 @@ final class FormColumnType
         // self::datetime=>'日付＆時間型',
         self::date=>'日付型',
         self::time=>'時間型',
+        self::time_from_to=>'時間型(FromTo)',
         // self::file=>'ファイル型',
         self::group=>'まとめ行',
     ];

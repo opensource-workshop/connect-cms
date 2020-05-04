@@ -14,10 +14,25 @@
         <div class="navbar-collapse collapse" id="collapsingNavbarLg">
             <ul class="navbar-nav">
             @if ($function == "index")
-                <li class="nav-item"><span class="nav-link"><span class="active">ページ追加・一覧</span></span></li>
+                <li class="nav-item"><span class="nav-link"><span class="active">ページ一覧</span></span></li>
             @else
-                <li class="nav-item"><a href="{{url('/manage/page')}}" class="nav-link">ページ追加・一覧</a></li>
+                <li class="nav-item"><a href="{{url('/manage/page')}}" class="nav-link">ページ一覧</a></li>
             @endif
+
+            @if ($function == "edit" && empty($page->id))
+                <li class="nav-item"><span class="nav-link"><span class="active">ページ登録</span></span></li>
+            @else
+                <li class="nav-item"><a href="{{url('/manage/page/edit')}}" class="nav-link">ページ登録</a></li>
+            @endif
+
+            @if ($function == "edit" && $page->id)
+                <li class="nav-item"><span class="nav-link"><span class="active">ページ変更</span></span></li>
+            @endif
+
+            @if ($function == "role" && $page->id)
+                <li class="nav-item"><span class="nav-link"><span class="active">ページ権限設定</span></span></li>
+            @endif
+
             @if ($function == "import")
                 <li class="nav-item"><span class="nav-link"><span class="active">CSVインポート</span></span></li>
             @else

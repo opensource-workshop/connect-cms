@@ -52,7 +52,7 @@ Route::get('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}'
 Route::post('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi')->name('get_api');
 
 // 管理画面getアクション：管理画面用のクラスをURL をもとに、ClassController で呼び出す。
-Route::get('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokeGetManage')->name('get_manage');
+Route::get('/manage/{plugin_name}/{action?}/{id?}/{sub_id?}', 'Core\ClassController@invokeGetManage')->name('get_manage');
 
 // 管理画面postアクション
 Route::post('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokePostManage')->name('post_manage');

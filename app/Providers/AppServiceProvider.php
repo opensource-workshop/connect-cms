@@ -47,17 +47,17 @@ class AppServiceProvider extends AuthServiceProvider
 
         // *** ロールから確認（一般）
 
-        // 記事追加
+        // 編集者
         Gate::define('role_reporter', function ($user, $args = null) {
             return $this->check_role($user, 'role_reporter');
         });
 
-        // プラグイン配置
+        // プラグイン管理者
         Gate::define('role_arrangement', function ($user, $args = null) {
             return $this->check_role($user, 'role_arrangement');
         });
 
-        // 承認
+        // 承認者
         Gate::define('role_approval', function ($user, $args = null) {
             return $this->check_role($user, 'role_approval');
         });
@@ -67,7 +67,7 @@ class AppServiceProvider extends AuthServiceProvider
             return $this->check_role($user, 'role_article');
         });
 
-        // 記事管理者
+        // コンテンツ管理者
         Gate::define('role_article_admin', function ($user, $args = null) {
             return $this->check_role($user, 'role_article_admin');
         });
@@ -264,7 +264,7 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         });
 
-        // 管理メニュー表示判定（管理機能 or 記事関連の権限に付与がある場合）
+        // 管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）
         Gate::define('role_manage_or_post', function ($user, $args = null) {
 
             // ページ管理
@@ -283,19 +283,19 @@ class AppServiceProvider extends AuthServiceProvider
             if ($this->check_role($user, 'admin_system')) {
                 return true;
             }
-            // 配置
+            // プラグイン管理者
             if ($this->check_role($user, 'role_arrangement')) {
                 return true;
             }
-            // 記事追加
+            // 編集者
             if ($this->check_role($user, 'role_reporter')) {
                 return true;
             }
-            // 記事追加
+            // モデレータ
             if ($this->check_role($user, 'role_article')) {
                 return true;
             }
-            // 記事管理者
+            // コンテンツ管理者
             if ($this->check_role($user, 'role_article_admin')) {
                 return true;
             }

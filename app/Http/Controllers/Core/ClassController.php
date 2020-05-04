@@ -34,9 +34,9 @@ class ClassController extends ConnectController
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
      */
-    public function invokeGetManage(Request $request, $plugin_name, $action = 'index', $id = null)
+    public function invokeGetManage(Request $request, $plugin_name, $action = 'index', $id = null, $sub_id = null)
     {
-        return $this->invokeManage($request, $plugin_name, $action, $id);
+        return $this->invokeManage($request, $plugin_name, $action, $id, $sub_id);
     }
 
     /**

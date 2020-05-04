@@ -76,11 +76,15 @@
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
-        @case("date")
+        @case(FormColumnType::date)
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break
         @case(FormColumnType::time)
+            {{$request->forms_columns_value[$form_column->id]}}
+            <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
+            @break
+        @case(FormColumnType::time_from_to)
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
             @break

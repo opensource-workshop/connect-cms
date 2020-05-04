@@ -159,7 +159,7 @@ class LearningtasksPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、記事管理者の場合、全記事の取得
+        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
         }
@@ -168,7 +168,7 @@ class LearningtasksPlugin extends UserPluginBase
             $query->Where('status',   '=', 0)
                   ->orWhere('status', '=', 2);
         }
-        // 記事追加権限の場合、Active ＋ 自分の全ステータス記事の取得
+        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
         elseif ($this->isCan('role_reporter')) {
             $query->Where('status', '=', 0)
                   ->orWhere('learningtasks_posts.created_id', '=', Auth::user()->id);
@@ -271,7 +271,7 @@ class LearningtasksPlugin extends UserPluginBase
 //        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
 //        if ($learningtasks_frame->approval_flag == 1) {
 //
-//            // 記事修正、記事管理者権限がない場合は要承認
+//            // 記事修正、コンテンツ管理者権限がない場合は要承認
 //            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
 //                return true;
 //            }
@@ -321,7 +321,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  課題ファイルの保存
      */
-    private function saveTaskFile($request, $learningtasks_post, $old_learningtasks_post)
+    private function saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post)
     {
         // 旧データがある場合は、履歴のためにコピーする。
         if (!empty($old_learningtasks_post) && !empty($old_learningtasks_post->id)) {
@@ -359,6 +359,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'extension'            => $request->file('add_task_file')->getClientOriginalExtension(),
                 'size'                 => $request->file('add_task_file')->getClientSize(),
                 'plugin_name'          => 'learningtasks',
+                'page_id'              => $page_id,
              ]);
 
             // learningtasks_posts_files テーブルに情報追加
@@ -832,7 +833,7 @@ class LearningtasksPlugin extends UserPluginBase
         $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
 
         // 課題ファイルの保存
-        $this->saveTaskFile($request, $learningtasks_post, $old_learningtasks_post);
+        $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -891,7 +892,7 @@ class LearningtasksPlugin extends UserPluginBase
         $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
 
         // 課題ファイルの保存
-        $this->saveTaskFile($request, $learningtasks_post, $old_learningtasks_post);
+        $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
