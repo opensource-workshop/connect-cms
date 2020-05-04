@@ -206,7 +206,7 @@
             @endif
         </ul>
 
-        <ul class="navbar-nav">
+        <ul class="navbar-nav text-nowrap">
             {{-- 管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
             @if (Auth::check() && Auth::user()->can('role_manage_or_post'))
                 <li class="nav-item dropdown">
