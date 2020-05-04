@@ -50,7 +50,9 @@
          app('request')->input('mode') != 'preview')
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
+{{--
         @if ($frame->page_id == $page->id)
+--}}
         <div class="float-right">
 
             {{-- 上移動。POSTのためのフォーム --}}
@@ -76,6 +78,7 @@
 
             {{-- 削除。POSTのためのフォーム --}}
         </div>
+{{--
         @else
         <div class="float-right">
             <i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom text-secondary cc-font-color"></i>
@@ -83,6 +86,7 @@
             <i class="fas fa-cog bg-{{$frame->frame_design}} small text-secondary cc-font-color"></i>
         </div>
         @endif
+--}}
     @endif
     </h1>
 @endif

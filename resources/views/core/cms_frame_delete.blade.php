@@ -20,6 +20,19 @@
 }
 -->
 </style>
+{{-- フレームが配置ページでない場合の注意 --}}
+@if($frame->page_id != $page_id)
+<script type="text/javascript">
+    // ツールチップ
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+<div class="card-header bg-warning">
+    配置されたページと異なるページです。<span class="fas fa-info-circle" data-toggle="tooltip" title="" data-original-title="設定を変更すると、配置されたページ以下のページに影響があります。"></span>
+</div>
+@endif
 <div class="frame-setting">
 <div class="frame-setting-menu">
     <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
