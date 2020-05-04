@@ -66,7 +66,7 @@ $(function () {
         @endif
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
-        <div id="ccLeftArea" class="ccLeftArea p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
+        <div id="ccLeftArea" class="ccLeftArea p-0 mb-3 mb-md-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
             {{-- サービス取得 --}}
             {{-- Todo：実際には、ページ内で使用されているプラグインを動的に定義する必要がある --}}
             @isset($layouts_info[1]['frames'])
@@ -82,7 +82,7 @@ $(function () {
         @endif
 
         {{-- メインエリア --}}
-        <div id="ccMainArea" class="ccMainArea row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
+        <div id="ccMainArea" class="ccMainArea row mx-0 mb-3 mb-md-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
             {{-- ページ内のフレームのループ --}}
             @foreach($frames as $frame)
                 @if ($frame->area_id == 2)
@@ -93,7 +93,7 @@ $(function () {
 
         {{-- 右エリア --}}
         @if ($layouts_info[3]['exists'])
-        <div id="ccRightArea" class="ccRightArea p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
+        <div id="ccRightArea" class="ccRightArea p-0 mb-3 mb-md-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
             {{-- ページ内のフレームのループ --}}
             @isset($layouts_info[3]['frames'])
                 @foreach($layouts_info[3]['frames'] as $frame)
