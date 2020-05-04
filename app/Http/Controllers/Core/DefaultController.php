@@ -366,6 +366,7 @@ class DefaultController extends ConnectController
             'action'            => $action,
             'frame_id'          => $frame_id,
             'id'                => $id,
+            'page_id'           => $page_id,
             'page'              => $this->page,
             'frames'            => $frames,
             'pages'             => $this->pages,
