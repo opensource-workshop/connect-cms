@@ -80,7 +80,7 @@
     }
 
     // plugins
-    $plugins = 'file image link autolink preview textcolor code table lists';
+    $plugins = 'file image link autolink preview textcolor code table lists advlist';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
