@@ -43,9 +43,9 @@
 
         {{-- カレントもしくは自分のルート筋なら表示する --}}
         @if ($children->isAncestorOf($current_page) || $current_page->id == $children->id)
-            {{$children->page_name}} {!!$menu->getFolderCloseFont()!!}
+            {{$children->page_name}} @if ($menu) {!!$menu->getFolderCloseFont()!!} @endif
         @else
-            {{$children->page_name}} {!!$menu->getFolderOpenFont()!!}
+            {{$children->page_name}} @if ($menu) {!!$menu->getFolderOpenFont()!!} @endif
         @endif
 
     @else
