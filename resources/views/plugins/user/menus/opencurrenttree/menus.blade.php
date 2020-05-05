@@ -32,11 +32,13 @@
                     @endfor
                     {{$page->page_name}}
 
-                    {{-- カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
-                    @if ($page->isAncestorOf($current_page) || $current_page->id == $page->id)
-                        {!!$menu->getFolderCloseFont()!!}
-                    @else
-                        {!!$menu->getFolderOpenFont()!!}
+                    {{-- メニュー設定が生成されていて、カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
+                    @if ($menu)
+                        @if ($page->isAncestorOf($current_page) || $current_page->id == $page->id)
+                            {!!$menu->getFolderCloseFont()!!}
+                        @else
+                            {!!$menu->getFolderOpenFont()!!}
+                        @endif
                     @endif
                 </a>
             @endif
