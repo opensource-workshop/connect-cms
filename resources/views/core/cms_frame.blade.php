@@ -45,9 +45,9 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
 @endif
 
     @if ($frame->frame_design == 'none')
-    <div class="card mb-md-3 border-0" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;" id="frame-card-{{ $frame->frame_id }}">
+    <div class="card mb-3 border-0" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;" id="frame-card-{{ $frame->frame_id }}">
     @else
-    <div class="card mb-md-3" id="frame-card-{{ $frame->frame_id }}">
+    <div class="card mb-3" id="frame-card-{{ $frame->frame_id }}">
     @endif
 
         {{-- フレームヘッダー(表示) --}}
