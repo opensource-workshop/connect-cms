@@ -251,7 +251,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesInputCols($id)
     {
         // データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'uploads.client_original_name')
+        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name','databases_columns.classname', 'uploads.client_original_name')
                                         ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                         ->where('databases_inputs_id', $id)
@@ -1498,10 +1498,12 @@ class DatabasesPlugin extends UserPluginBase
         $validator = Validator::make($request->all(), [
             'column_name'  => ['required'],
             'column_type'  => ['required'],
+            'classname' => ['required'],
         ]);
         $validator->setAttributeNames([
             'column_name'  => '項目名',
             'column_type'  => '型',
+            'classname' => 'クラス名',
         ]);
 
         $errors = null;
@@ -1521,6 +1523,7 @@ class DatabasesPlugin extends UserPluginBase
         $column->databases_id = $request->databases_id;
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
+        $column->classname = $request->classname;
         $column->required = $request->required ? \Required::on : \Required::off;
         $column->display_sequence = $max_display_sequence;
         $column->caption_color = \Bs4TextColor::dark;
@@ -1601,6 +1604,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.databases_id',
                 'databases_columns.column_type',
                 'databases_columns.column_name',
+                'databases_columns.classname',
                 'databases_columns.required',
                 'databases_columns.frame_col',
                 'databases_columns.caption',
@@ -1619,6 +1623,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.databases_id',
                 'databases_columns.column_type',
                 'databases_columns.column_name',
+                'databases_columns.classname',
                 'databases_columns.required',
                 'databases_columns.frame_col',
                 'databases_columns.caption',
@@ -1666,23 +1671,27 @@ class DatabasesPlugin extends UserPluginBase
         // 明細行から更新対象を抽出する為のnameを取得
         $str_column_name = "column_name_"."$request->column_id";
         $str_column_type = "column_type_"."$request->column_id";
+        $str_classname = "classname_"."$request->column_id";
         $str_required = "required_"."$request->column_id";
 
         // エラーチェック用に値を詰める
         $request->merge([
             "column_name" => $request->$str_column_name,
             "column_type" => $request->$str_column_type,
+            "classname" => $request->$str_classname,
             "required" => $request->$str_required,
         ]);
 
         $validate_value = [
             'column_name'  => ['required'],
             'column_type'  => ['required'],
+            'classname'  => ['required'],
         ];
 
         $validate_attribute = [
             'column_name'  => '項目名',
             'column_type'  => '型',
+            'classname'  => 'クラス名',
         ];
 
         // エラーチェック
@@ -1701,6 +1710,7 @@ class DatabasesPlugin extends UserPluginBase
         $column = DatabasesColumns::query()->where('id', $request->column_id)->first();
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
+        $column->classname = $request->classname;
         $column->required = $request->required ? \Required::on : \Required::off;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を更新しました。';

@@ -7,24 +7,25 @@
  --}}
 <tr>
     {{-- 表示順 --}}
-    <td nowrap>
+    <td class="p-1 text-center">
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $column->id }}, {{ $column->display_sequence }}, 'up')">
             <i class="fas fa-arrow-up"></i>
         </button>
-
         {{-- 下移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $column->id }}, {{ $column->display_sequence }}, 'down')">
             <i class="fas fa-arrow-down"></i>
         </button>
     </td>
+
     {{-- 項目名 --}}
-    <td>
+    <td class="p-1">
         <input class="form-control" type="text" name="column_name_{{ $column->id }}" value="{{ old('column_name_'.$column->id, $column->column_name)}}">
     </td>
+
     {{-- 型 --}}
-    <td>
-        <select class="form-control" name="column_type_{{ $column->id }}" style="min-width: 140px;">
+    <td class="p-1">
+        <select class="form-control" name="column_type_{{ $column->id }}">
             <option value="" disabled>型を指定</option>
             @foreach (DatabaseColumnType::getMembers() as $key=>$value)
                 <option value="{{$key}}"
@@ -40,12 +41,19 @@
             @endforeach
         </select>
     </td>
+
+    {{-- クラス名 --}}
+    <td class="p-1">
+        <input class="form-control" type="text" name="classname_{{ $column->id }}" value="{{ old('classname_'.$column->id, $column->classname)}}">
+    </td>
+
     {{-- 必須 --}}
-    <td class="align-middle text-center">
+    <td class="p-1 align-middle text-center">
         <input type="checkbox" name="required_{{ $column->id }}" value="1" @if ($column->required == Required::on) checked="checked" @endif>
     </td>
+
     {{-- 詳細設定 --}}
-    <td class="text-center">
+    <td class="p-1 text-center">
         {{-- 詳細ボタン --}}
         <button 
             type="button" 
@@ -65,21 +73,23 @@
             @endif
             onclick="location.href='{{url('/')}}/plugin/databases/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
         >
-            <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
+            <i class="far fa-window-restore"></i> <span class="d-none">詳細</span>
         </button>
     </td>
+
     {{-- 更新ボタン --}}
-    <td class="text-center">
+    <td class="p-1 text-center">
         <button 
             class="btn btn-primary cc-font-90 text-nowrap" 
             onclick="javascript:submit_update_column({{ $column->id }});"
         >
-            <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
+            <i class="fas fa-save"></i> <span class="d-none">更新</span>
         </button>
     </td>
+
     {{-- 削除ボタン --}}
-    <td class="text-center">
-        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
+    <td class="p-1 text-center">
+        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> <span class="d-none">削除</span></button>
     </td>
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
