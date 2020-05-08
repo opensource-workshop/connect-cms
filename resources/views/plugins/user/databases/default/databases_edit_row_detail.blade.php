@@ -8,13 +8,12 @@
  @extends('core.cms_frame_base_setting')
 
  @section("core.cms_frame_edit_tab_$frame->id")
-      {{-- プラグイン側のフレームメニュー --}}
-     @include('plugins.user.databases.databases_frame_edit_tab')
- @endsection
+	{{-- プラグイン側のフレームメニュー --}}
+	@include('plugins.user.databases.databases_frame_edit_tab')
+@endsection
  
- @section("plugin_setting_$frame->id")
+@section("plugin_setting_$frame->id")
 <script type="text/javascript">
-
     /**
      * 選択肢の追加ボタン押下
      */
@@ -38,40 +37,40 @@
     /**
      * 選択肢の更新ボタン押下
      */
-    function submit_update_select(select_id) {
-        database_column_detail.action = "{{url('/')}}/plugin/databases/updateSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-        database_column_detail.select_id.value = select_id;
-        database_column_detail.submit();
-    }
+	function submit_update_select(select_id) {
+		database_column_detail.action = "{{url('/')}}/plugin/databases/updateSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+		database_column_detail.select_id.value = select_id;
+		database_column_detail.submit();
+	}
 
     /**
      * 選択肢の削除ボタン押下
      */
-     function submit_delete_select(select_id) {
-        if(confirm('選択肢を削除します。\nよろしいですか？')){
-            database_column_detail.action = "{{url('/')}}/plugin/databases/deleteSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-            database_column_detail.select_id.value = select_id;
-            database_column_detail.submit();
-        }
-        return false;
-    }
+	function submit_delete_select(select_id) {
+		if(confirm('選択肢を削除します。\nよろしいですか？')){
+			database_column_detail.action = "{{url('/')}}/plugin/databases/deleteSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+			database_column_detail.select_id.value = select_id;
+			database_column_detail.submit();
+		}
+		return false;
+	}
 
     /**
      * 選択肢に都道府県追加ボタン押下
      */
-    function submit_add_pref(btn) {
-        database_column_detail.action = "{{url('/')}}/plugin/databases/addPref/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-        btn.disabled = true;
-        database_column_detail.submit();
-    }
+	function submit_add_pref(btn) {
+		database_column_detail.action = "{{url('/')}}/plugin/databases/addPref/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+		btn.disabled = true;
+		database_column_detail.submit();
+	}
 
     /**
      * その他の設定の更新ボタン押下
      */
-     function submit_update_column_detail() {
-        database_column_detail.action = "{{url('/')}}/plugin/databases/updateColumnDetail/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-        database_column_detail.submit();
-    }
+	function submit_update_column_detail() {
+		database_column_detail.action = "{{url('/')}}/plugin/databases/updateColumnDetail/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+		database_column_detail.submit();
+	}
 </script>
 
 <form action="" id="database_column_detail" name="database_column_detail" method="POST" class="form-horizontal">
@@ -88,115 +87,106 @@
         <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '項目【' . $column->column_name . ' 】の詳細設定を行います。' }}
     </div>
 
-
     @if ($column->column_type == DatabaseColumnType::radio || $column->column_type == DatabaseColumnType::checkbox || $column->column_type == DatabaseColumnType::select)
-    {{-- 選択肢の設定 --}}
-    <div class="card">
-        <h5 class="card-header">選択肢の設定</h5>
-        <div class="card-body">
-            {{-- エラーメッセージエリア --}}
-            @if ($errors && $errors->has('select_name'))
-                <div class="alert alert-danger mt-2">
-                    <i class="fas fa-exclamation-circle"></i>{{ $errors->first('select_name') }}
-                </div>
-            @endif
+		{{-- 選択肢の設定 --}}
+		<div class="card mb-4">
+			<h5 class="card-header">選択肢の設定</h5>
+			<div class="card-body">
+				{{-- エラーメッセージエリア --}}
+				@if ($errors && $errors->has('select_name'))
+					<div class="alert alert-danger mt-2">
+					<i class="fas fa-exclamation-circle"></i>{{ $errors->first('select_name') }}
+					</div>
+				@endif
 
-            <div class="table-responsive">
+				<div class="table-responsive">
+					<table class="table table-hover">{{-- 選択項目の一覧 --}}
+						<thead class="thead-light">
+							<tr>
+								@if (count($selects) > 0)
+									<th class="text-center" nowrap>表示順</th>
+									<th class="text-center" nowrap>選択肢名</th>
+									<th class="text-center" nowrap>更新</th>
+									<th class="text-center" nowrap>削除</th>
+								@endif
+							</tr>
+						</thead>
+						<tbody>
+							{{-- 更新用の行 --}}
+							@foreach($selects as $select)
+								<tr  @if (isset($select->hide_flag)) class="table-secondary" @endif>
+								
+									<td class="text-center" nowrap>{{-- 表示順操作 --}}
+										{{-- 上移動 --}}
+										<button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
+											<i class="fas fa-arrow-up"></i>
+										</button>
 
-                {{-- 選択項目の一覧 --}}
-                <table class="table table-hover">
-                    <thead class="thead-light">
-                        <tr>
-                            @if (count($selects) > 0)
-                                <th class="text-center" nowrap>表示順</th>
-                                <th class="text-center" nowrap>選択肢名</th>
-                                <th class="text-center" nowrap>更新</th>
-                                <th class="text-center" nowrap>削除</th>
-                            @endif
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{-- 更新用の行 --}}
-                        @foreach($selects as $select)
-                            <tr  @if (isset($select->hide_flag)) class="table-secondary" @endif>
-                                {{-- 表示順操作 --}}
-                                <td class="text-center" nowrap>
-                                    {{-- 上移動 --}}
-                                    <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
-                                        <i class="fas fa-arrow-up"></i>
-                                    </button>
-                            
-                                    {{-- 下移動 --}}
-                                    <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
-                                        <i class="fas fa-arrow-down"></i>
-                                    </button>
-                                </td>
+										{{-- 下移動 --}}
+										<button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
+											<i class="fas fa-arrow-down"></i>
+										</button>
+									</td>
 
-                                {{-- 選択肢名 --}}
-                                <td>
-                                    <input class="form-control" type="text" name="select_name_{{ $select->id }}" value="{{ old('select_name_'.$select->id, $select->value)}}">
-                                </td>
+									<td>{{-- 選択肢名 --}}
+										<input class="form-control" type="text" name="select_name_{{ $select->id }}" value="{{ old('select_name_'.$select->id, $select->value)}}">
+									</td>
+									<td class="align-middle text-center">{{-- 更新ボタン --}}
+										<button 
+											class="btn btn-primary cc-font-90 text-nowrap" 
+											onclick="javascript:submit_update_select({{ $select->id }});"
+										>
+											<i class="fas fa-save"></i>
+										</button>
+									</td>
+									<td class="text-center">{{-- 削除ボタン --}}
+										<button 
+											class="btn btn-danger cc-font-90 text-nowrap" 
+											onclick="javascript:return submit_delete_select({{ $select->id }});"
+										>
+											<i class="fas fa-trash-alt"></i>
+										</button>
+									</td>
+								</tr>
+							@endforeach
 
-                                {{-- 更新ボタン --}}
-                                <td class="align-middle text-center">
-                                    <button 
-                                        class="btn btn-primary cc-font-90 text-nowrap" 
-                                        onclick="javascript:submit_update_select({{ $select->id }});"
-                                    >
-                                        <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
-                                    </button>
-                                </td>
-                                {{-- 削除ボタン --}}
-                                <td class="text-center">
-                                        <button 
-                                        class="btn btn-danger cc-font-90 text-nowrap" 
-                                        onclick="javascript:return submit_delete_select({{ $select->id }});"
-                                    >
-                                        <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
-                                    </button>
-                                </td>
-                            </tr>
-                        @endforeach
-                        <tr class="thead-light">
-                            <th colspan="7">【選択肢の追加行】</th>
-                        </tr>
+							<tr class="thead-light">
+								<th colspan="7">【選択肢の追加行】</th>
+							</tr>
 
-                       {{-- 新規登録用の行 --}}
-                        <tr>
-                            <td>
-                                {{-- 余白 --}}
-                            </td>
-                            <td>
-                                {{-- 選択肢名 --}}
-                                <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
-                            </td>
-                            <td class="text-center">
-                                {{-- ＋ボタン --}}
-                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
-                            </td>
-                            <td>
-                                {{-- 余白 --}}
-                            </td>
-                        </tr>
+							<tr>{{-- 新規登録用の行 --}}
+								<td></td>{{-- 余白 --}}
 
-                        <tr>
-                            <td colspan="4" class="text-center">
-                                {{-- ＋ボタン --}}
-                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_pref(this);"><i class="fas fa-plus"></i> 都道府県を追加</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+								<td>{{-- 選択肢名 --}}
+									<input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
+								</td>
 
-    <br>
+								<td class="text-center">{{-- ＋ボタン --}}
+									<button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);">
+										<i class="fas fa-plus"></i>
+									</button>
+								</td>
+
+								<td></td>{{-- 余白 --}}
+							</tr>
+
+							<tr>{{-- ＋ボタン --}}
+								<td colspan="4" class="text-center">
+									<button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_pref(this);">
+										<i class="fas fa-plus"></i> 都道府県を追加
+									</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
     @endif
 
     @if ($column->column_type == DatabaseColumnType::time || $column->column_type == DatabaseColumnType::group)
         {{-- 項目毎の固有設定 --}}
-        <div class="card">
+        <div class="card mb-4">
             <h5 class="card-header">項目毎の固有設定</h5>
             <div class="card-body">
                 {{-- 分刻み指定 ※データ型が「時間型」のみ表示 --}}
@@ -244,12 +234,11 @@
                 </div>
             </div>
         </div>
-    <br>
     @endif
 
     @if ($column->column_type == DatabaseColumnType::text || $column->column_type == DatabaseColumnType::textarea || $column->column_type == DatabaseColumnType::date)
         {{-- チェック処理の設定 --}}
-        <div class="card">
+        <div class="card mb-4">
             <h5 class="card-header">チェック処理の設定</h5>
             <div class="card-body">
 
@@ -332,12 +321,10 @@
                 </div>
             </div>
         </div>
-    <br>
     @endif
 
-
     {{-- キャプション設定 --}}
-    <div class="card">
+    <div class="card mb-4">
         <h5 class="card-header">キャプションの設定</h5>
         <div class="card-body">
 
@@ -372,14 +359,15 @@
 
             {{-- ボタンエリア --}}
             <div class="form-group text-center">
-                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal"><i class="fas fa-check"></i> 更新</button>
+                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal">
+                	<i class="fas fa-check"></i> 更新
+                </button>
             </div>
         </div>
     </div>
 
-    <br>
     {{-- DBカラム設定 --}}
-    <div class="card">
+    <div class="card mb-4">
         <h5 class="card-header">DBカラム設定</h5>
         <div class="card-body">
 
@@ -523,7 +511,27 @@
         </div>
     </div>
 
-    <br>
+    {{-- デザイン設定 --}}
+    <div class="card mb-4">
+        <h5 class="card-header">デザインの設定</h5>
+        <div class="card-body">
+
+            {{-- クラス名 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">クラス名</label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                	<input type="text" name="classname" value="{{old('classname', $column->classname)}}" class="form-control" />
+                </div>
+            </div>
+
+            {{-- ボタンエリア --}}
+            <div class="form-group text-center">
+                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal">
+                	<i class="fas fa-check"></i> 更新
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">

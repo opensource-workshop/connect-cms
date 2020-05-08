@@ -11,12 +11,12 @@
     </td>
 
     {{-- 項目名 --}}
-    <td class="p-1">
+    <td>
         <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}">
     </td>
 
     {{-- 型 --}}
-    <td class="p-1">
+    <td>
         <select class="form-control" name="column_type">
             <option value="" disabled>型を指定</option>
             @foreach (DatabaseColumnType::getMembers() as $key=>$value)
@@ -30,13 +30,8 @@
         </select>
     </td>
 
-    {{-- クラス名 --}}
-    <td class="p-1">
-        <input class="form-control" type="text" name="classname" value="{{ old('classname') }}">
-    </td>
-
     {{-- 必須 --}}
-    <td class="p-1 align-middle text-center">
+    <td class="align-middle text-center">
         <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
     </td>
 
@@ -45,8 +40,8 @@
     </td>
 
     {{-- ＋ボタン --}}
-    <td class="p-1 text-center">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();"><i class="fas fa-plus"></i> <span class="d-none">追加</span></button>
+    <td class="text-center">
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();"><i class="fas fa-plus"></i></button>
     </td>
 
     {{-- 余白 --}}

@@ -109,16 +109,19 @@
 
                     {{-- 項目の一覧 --}}
                     <table class="table table-hover">
-                    <thead>
+                    <thead class="thead-light">
                         <tr>
-                            <th class="text-center" nowrap>表示順</th>
-                            <th class="text-center w-30" nowrap>項目名</th>
-                            <th class="text-center w-25" nowrap>型</th>
-                            <th class="text-center w-20" nowrap>クラス名</th>
-                            <th class="text-center" nowrap>必須</th>
-                            <th class="text-center" nowrap>詳細 <a href="https://connect-cms.jp/manual/user/database#frame-125" target="_brank"><i class="fas fa-info-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a></th>
-                            <th class="text-center" nowrap>更新</th>
-                            <th class="text-center" nowrap>削除</th>
+                            <th class="text-center w-10 text-nowrap">表示順</th>
+                            <th class="text-center w-35 text-nowrap">項目名</th>
+                            <th class="text-center w-30 text-nowrap">型</th>
+                            <th class="text-center text-nowrap">必須</th>
+                            <th class="text-center text-nowrap">詳細
+                                <a href="https://connect-cms.jp/manual/user/database#frame-125" target="_brank">
+                                    <i class="fas fa-info-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i>
+                                </a>
+                            </th>
+                            <th class="text-center text-nowrap">更新</th>
+                            <th class="text-center text-nowrap">削除</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -127,8 +130,8 @@
                             @include('plugins.user.databases.default.databases_edit_row')
                         @endforeach
                         {{-- 新規登録用の行 --}}
-                        <tr>
-                            <th colspan="8">【項目の追加行】</th>
+                        <tr class="thead-light">
+                            <th colspan="7">【項目の追加行】</th>
                         </tr>
                         @include('plugins.user.databases.default.databases_edit_row_add')
                     </tbody>
