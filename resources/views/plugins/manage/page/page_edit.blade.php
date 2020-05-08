@@ -25,7 +25,8 @@
     </div>
 </div>
 
-@if ($page->id)
+{{-- 編集モード＆ページがトップページではない --}}
+@if ($page->id && $pages && $pages->first()->id != $page->id)
 <div id="collapse{{$page->id}}" class="collapse mt-3">
     <div class="card border-danger">
         <div class="card-body">
