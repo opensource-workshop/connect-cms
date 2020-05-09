@@ -251,7 +251,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesInputCols($id)
     {
         // データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'uploads.client_original_name')
+        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name','databases_columns.classname', 'uploads.client_original_name')
                                         ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                         ->where('databases_inputs_id', $id)
@@ -348,7 +348,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
 
-//--- 初期表示データ
+        //--- 初期表示データ
 
         if (empty($database)) {
             $databases = null;
@@ -541,7 +541,7 @@ class DatabasesPlugin extends UserPluginBase
             $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
         }
 
-//--- 表示設定（フレーム設定）データ
+        //--- 表示設定（フレーム設定）データ
 
         // データベース＆フレームデータ
         $database_frame = $this->getDatabaseFrame($frame_id);
@@ -722,7 +722,8 @@ class DatabasesPlugin extends UserPluginBase
      * @param $request
      * @return void
      */
-    private static function trimInput($value){
+    private static function trimInput($value)
+    {
         if (is_array($value)){
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
             $value = array_map(['self', 'trimInput'], $value);
@@ -740,7 +741,8 @@ class DatabasesPlugin extends UserPluginBase
      * @param [App\Models\User\Databases\DatabasesColumns] $databases_column
      * @return void
      */
-    private function getValidatorRule($validator_array, $databases_column){
+    private function getValidatorRule($validator_array, $databases_column)
+    {
 
         $validator_rule = null;
         // 必須チェック
@@ -909,8 +911,8 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
         }
-//print_r($delete_upload_column_ids);
-//print_r($uploads);
+        //print_r($delete_upload_column_ids);
+        //print_r($uploads);
         // 表示テンプレートを呼び出す。
         return $this->view(
             'databases_confirm', [
@@ -1003,14 +1005,11 @@ class DatabasesPlugin extends UserPluginBase
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
                 $value = implode(',', $request->databases_columns_value[$databases_column->id]);
-            }
-            else {
+            }else {
                 $value = $request->databases_columns_value[$databases_column->id];
             }
 
-// ファイル系で削除指示があるものは、
-
-
+            // ファイル系で削除指示があるものは、
 
             // データ登録フラグを見て登録
             if ($database->data_save_flag) {
@@ -1074,12 +1073,12 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         //return $this->index($request, $page_id, $frame_id);
-/*
+        /*
         return $this->view(
             'databases_thanks', [
             'after_message' => $after_message
         ]);
-*/
+        */
     }
 
     /**
@@ -1131,11 +1130,6 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
-
-
-
-
-
 
 
         // Databases、Frame データ
@@ -1208,10 +1202,7 @@ class DatabasesPlugin extends UserPluginBase
                 $value = $request->databases_columns_value[$databases_column->id];
             }
 
-// ファイル系で削除指示があるものは、
-
-
-
+            // ファイル系で削除指示があるものは、
             // データ登録フラグを見て登録
             if ($database->data_save_flag) {
                 $databases_input_cols = new DatabasesInputCols();
@@ -1272,12 +1263,12 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         //return $this->index($request, $page_id, $frame_id);
-/*
+        /*
         return $this->view(
             'databases_thanks', [
             'after_message' => $after_message
         ]);
-*/
+        */
     }
 
     /**
@@ -1605,6 +1596,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.frame_col',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
+                'databases_columns.classname',
                 'databases_columns.display_sequence',
                 DB::raw('count(databases_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(databases_columns_selects.value order by databases_columns_selects.display_sequence SEPARATOR \',\') as select_names')
@@ -1623,6 +1615,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.frame_col',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
+                'databases_columns.classname',
                 'databases_columns.display_sequence'
             )
             ->orderby('databases_columns.display_sequence')
@@ -1814,6 +1807,7 @@ class DatabasesPlugin extends UserPluginBase
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
         $column->frame_col = $request->frame_col;
+        $column->classname = $request->classname;
         // 分刻み指定
         if($column->column_type == \DatabaseColumnType::time){
             $column->minutes_increments = $request->minutes_increments;
@@ -2035,36 +2029,36 @@ class DatabasesPlugin extends UserPluginBase
                                       ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
                                       ->get();
 
-/*
-ダウンロード前の配列イメージ。
-0行目をDatabasesColumns から生成して、1行目以降は0行目の キーのみのコピーを作成し、データを入れ込んでいく。
-1行目以降の行番号は databases_inputs_id の値を使用
+        /*
+        ダウンロード前の配列イメージ。
+        0行目をDatabasesColumns から生成して、1行目以降は0行目の キーのみのコピーを作成し、データを入れ込んでいく。
+        1行目以降の行番号は databases_inputs_id の値を使用
 
-0 [
-    37 => 姓
-    40 => 名
-    45 => テキスト
-]
-1 [
-    37 => 永原
-    40 => 篤
-    45 => テストです。
-]
-2 [
-    37 => 田中
-    40 => 
-    45 => 
-]
+        0 [
+            37 => 姓
+            40 => 名
+            45 => テキスト
+        ]
+        1 [
+            37 => 永原
+            40 => 篤
+            45 => テストです。
+        ]
+        2 [
+            37 => 田中
+            40 => 
+            45 => 
+        ]
 
--- DatabasesInputCols のSQL
-SELECT *
-FROM databases_input_cols
-WHERE databases_inputs_id IN (
-    SELECT id FROM databases_inputs WHERE databases_id = 17
-)
-ORDER BY databases_inputs_id, databases_columns_id
+        -- DatabasesInputCols のSQL
+        SELECT *
+        FROM databases_input_cols
+        WHERE databases_inputs_id IN (
+            SELECT id FROM databases_inputs WHERE databases_id = 17
+        )
+        ORDER BY databases_inputs_id, databases_columns_id
 
-*/
+        */
         // 返却用配列
         $csv_array = array();
 
@@ -2218,7 +2212,7 @@ ORDER BY databases_inputs_id, databases_columns_id
                    ->join('pages', 'pages.id', '=', 'frames.page_id')
                    ->whereIn('pages.id', $page_ids);
 
-//        $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
         $bind = array($page_ids);
 
         $return[] = $query;
@@ -2226,7 +2220,7 @@ ORDER BY databases_inputs_id, databases_columns_id
         $return[] = 'show_page';
         $return[] = '/page';
 
-/*
+        /*
         $return[] = DB::table('contents')
                       ->select('contents.id                 as post_id',
                                'frames.id                   as frame_id',
@@ -2257,7 +2251,7 @@ ORDER BY databases_inputs_id, databases_columns_id
         $return[] = $bind;
         $return[] = 'show_page';
         $return[] = '/page';
-*/
+        */
         return $return;
     }
 }
