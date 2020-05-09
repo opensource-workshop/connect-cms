@@ -64,10 +64,17 @@ class UploadController extends ConnectController
             }
         }
 
-        // 画像に閲覧権限がない場合
+        // 画像にページ情報がある場合
         if ($uploads->page_id) {
             $page = Page::find($uploads->page_id);
             $page_roles = $this->getPageRoles(array($page->id));
+
+            // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
+            if ($page->isRequestPassword($request)) {
+                 return response()->download( storage_path(config('connect.forbidden_image_path')));
+            }
+
+            // 画像に閲覧権限がない場合
             if (!$page->isView(Auth::user(), true, true, $page_roles)) {
                  return response()->download( storage_path(config('connect.forbidden_image_path')));
             }

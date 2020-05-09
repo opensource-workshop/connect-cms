@@ -20,7 +20,7 @@ class Page extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'membership_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'membership_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class', 'passowrd'];
 
     use NodeTrait;
     use ConnectCommonTrait;
@@ -448,4 +448,34 @@ class Page extends Model
         }
     }
 
+    /**
+     *  パスワードを要求するかの判断
+     */
+    public function isRequestPassword($request)
+    {
+        // ページに閲覧パスワードが設定されていなければ戻る
+        if (empty($this->password)) {
+            return false;
+        }
+       // セッション中に該当ページの認証情報があるかチェック
+        if ( $request->session()->has('page_auth.'.$this->id) && $request->session()->get('page_auth.'.$this->id) == 'authed') {
+            // すでに認証されているので、問題なし
+            return false;
+        }
+
+        // 認証を要求
+        return true;
+    }
+
+    /**
+     *  パスワードチェックの判定
+     */
+    public function checkPassword($password)
+    {
+        // パスワードチェック
+        if ($this->password == $password) {
+            return true;
+        }
+        return false;
+    }
 }

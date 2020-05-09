@@ -82,6 +82,9 @@ Route::get('/file/{id?}', 'Core\UploadController@getFile')->name('get_file');
 // 言語切り替えアクション
 Route::get('/language/{language_or_1stdir?}/{link_or_after2nd?}', 'Core\DefaultController@changeLanguage')->where('link_or_after2nd', '.*')->name('get_language');
 
+// パスワード付きページのアクション
+Route::match(['get', 'post'], '/password/{action}/{page_id?}', 'Core\PasswordController@invoke')->name('password_input');
+
 // 基本のアクション
 // コアの画面処理や各プラグインの処理はここから呼び出す。
 Route::get( '{all}', 'Core\DefaultController')->where('all', '.*')->name('get_all');

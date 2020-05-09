@@ -66,6 +66,13 @@
     </div>
 
     <div class="form-group row">
+        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">パスワード</label>
+        <div class="col-md-9">
+            <input type="text" name="password" id="password" value="{{$page->password}}" class="form-control">
+            <small class="form-text text-muted">ページにパスワードで閲覧制限を設ける場合に使用します。</small>
+        </div>
+    </div>
+    <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">背景色</label>
         <div class="col-md-9">
             <input type="text" name="background_color" id="background_color" value="{{$page->background_color}}" class="form-control">

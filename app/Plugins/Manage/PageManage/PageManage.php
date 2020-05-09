@@ -150,6 +150,7 @@ class PageManage extends ManagePluginBase
         $page = new Page;
         $page->page_name            = $request->page_name;
         $page->permanent_link       = $request->permanent_link;
+        $page->password             = $request->password;
         $page->background_color     = $request->background_color;
         $page->header_color         = $request->header_color;
         $page->theme                = $request->theme;
@@ -182,6 +183,7 @@ class PageManage extends ManagePluginBase
             ->update([
                 'page_name'            => $request->page_name,
                 'permanent_link'       => $request->permanent_link,
+                'password'             => $request->password,
                 'background_color'     => $request->background_color,
                 'header_color'         => $request->header_color,
                 'theme'                => $request->theme,

@@ -74,6 +74,7 @@
                 <th nowrap>ページ名</th>
                 <th nowrap class="pl-1"><i class="far fa-eye" title="メニュー表示"></i></th>
                 <th nowrap>固定リンク</th>
+                <th nowrap class="pl-1"><i class="fas fa-key" title="閲覧パスワードあり"></i></th>
                 <th nowrap class="pl-1"><i class="fas fa-lock" title="メンバーシップページ"></i></th>
                 <th nowrap class="pl-1"><i class="fas fa-users" title="ページ権限設定"></i></th>
                 <th nowrap><i class="fas fa-paint-roller" title="背景色"></i></th>
@@ -135,6 +136,11 @@
                     </td>
                     <td class="table-text p-1" nowrap>
                         <div><a href="{{url($page_item->permanent_link)}}">{{ $page_item->permanent_link }}</a></div>
+                    </td>
+                    <td class="table-text p-1">
+                        @if($page_item->password)
+                            <i class="fas fa-key" title="閲覧パスワードあり"></i>
+                        @endif
                     </td>
                     <td class="table-text p-1">
                         @if($page_item->membership_flag == 1)
