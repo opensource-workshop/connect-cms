@@ -42,8 +42,14 @@ class DefaultController extends ConnectController
      */
     public function __invoke(Request $request)
     {
-        // セッション処理
+        // アプリのロケールを変更
         $this->setAppLocale();
+
+        // パスワード付きページのチェック（パスワードを要求するか確認）
+        if ($this->page && $this->page->isRequestPassword($request)) {
+            // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
+            return redirect("/password/input/" . $this->page->id);
+        }
 
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         $this->checkPageForbidden();
@@ -284,7 +290,7 @@ class DefaultController extends ConnectController
      */
     public function invokePost(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
-        // セッション処理
+        // アプリのロケールを変更
         $this->setAppLocale();
 
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
@@ -418,7 +424,7 @@ class DefaultController extends ConnectController
      */
     public function invokePostRedirect(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
-        // セッション処理
+        // アプリのロケールを変更
         $this->setAppLocale();
 
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
