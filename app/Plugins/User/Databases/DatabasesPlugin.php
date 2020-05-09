@@ -722,7 +722,8 @@ class DatabasesPlugin extends UserPluginBase
      * @param $request
      * @return void
      */
-    private static function trimInput($value){
+    private static function trimInput($value)
+    {
         if (is_array($value)){
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
             $value = array_map(['self', 'trimInput'], $value);
@@ -740,7 +741,8 @@ class DatabasesPlugin extends UserPluginBase
      * @param [App\Models\User\Databases\DatabasesColumns] $databases_column
      * @return void
      */
-    private function getValidatorRule($validator_array, $databases_column){
+    private function getValidatorRule($validator_array, $databases_column)
+    {
 
         $validator_rule = null;
         // 必須チェック
@@ -1003,8 +1005,7 @@ class DatabasesPlugin extends UserPluginBase
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
                 $value = implode(',', $request->databases_columns_value[$databases_column->id]);
-            }
-            else {
+            }else {
                 $value = $request->databases_columns_value[$databases_column->id];
             }
 
@@ -1202,9 +1203,6 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // ファイル系で削除指示があるものは、
-
-
-
             // データ登録フラグを見て登録
             if ($database->data_save_flag) {
                 $databases_input_cols = new DatabasesInputCols();

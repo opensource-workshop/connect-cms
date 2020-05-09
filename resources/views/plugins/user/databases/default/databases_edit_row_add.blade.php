@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  --}}
-    <tr id="column_add_tr">
+<tr id="column_add_tr">
     {{-- 余白 --}}
     <td>
     </td>
@@ -22,10 +22,9 @@
             @foreach (DatabaseColumnType::getMembers() as $key=>$value)
                 <option value="{{$key}}"
                     {{-- validation用 --}}
-                    @if($key == old('column_type'))
-                        selected="selected"
-                    @endif
-                >{{ $value }}</option>
+                    @if($key == old('column_type')) selected="selected" @endif
+                    >{{ $value }}
+                </option>
             @endforeach
         </select>
     </td>
@@ -41,7 +40,9 @@
 
     {{-- ＋ボタン --}}
     <td class="text-center">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();"><i class="fas fa-plus"></i></button>
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();">
+            <i class="fas fa-plus"></i>
+        </button>
     </td>
 
     {{-- 余白 --}}
