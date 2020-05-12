@@ -13,6 +13,9 @@
     <!-- オプション p:進捗表示  s:エラー表示時にルールを表示 -->
     <arg value="ps" />
 
+    <!-- オプション code:指摘箇所のコードも表示  summary:コード毎の要約レポート  source:ルール毎の要約レポート -->
+    <arg name="report" value="code,summary,source"/>
+
     <!-- 除外ディレクトリ -->
     <exclude-pattern>/bootstrap/</exclude-pattern>
     <!-- 除外ディレクトリ:要検討 /config/cc_xxxx.phpは CMS独自。phpcs対象とする？それ以外を除外として列挙するのがよさそう -->
@@ -21,7 +24,6 @@
     <exclude-pattern>/node_modules/</exclude-pattern>
     <exclude-pattern>/public/</exclude-pattern>
     <exclude-pattern>/routes/</exclude-pattern>
-    <!-- 除外ディレクトリ:要検討 /resources/viewsをphpcs対象とする？viewsそこまでする必要ないかも -->
     <exclude-pattern>/resources/</exclude-pattern>
     <exclude-pattern>/storage/</exclude-pattern>
     <exclude-pattern>/vendor/</exclude-pattern>
