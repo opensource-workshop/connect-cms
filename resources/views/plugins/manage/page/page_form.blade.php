@@ -61,7 +61,7 @@
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ページ権限設定</label>
         <div class="col-md-9 d-sm-flex align-items-center">
-            <a href="{{url('/manage/page/role')}}/{{$page->id}}" class="btn btn-primary" target="_blank"><i class="fas fa-external-link-alt"></i> <span>権限設定画面へ</span></a>
+            <a href="{{url('/manage/page/role')}}/{{$page->id}}" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> <span>権限設定画面へ</span></a>
         </div>
     </div>
 
