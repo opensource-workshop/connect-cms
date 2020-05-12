@@ -106,7 +106,7 @@ trait MigrationTrait
 
             // [image_names] の画像を登録
             if (array_key_exists('image_names', $ini_array)) {
-                foreach ($ini_array['image_names'] as $filename => $image_name) {
+                foreach ($ini_array['image_names'] as $filename => $client_original_name) {
 
                     // ファイルサイズ
                     if (File::exists(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename)) {
@@ -119,7 +119,7 @@ trait MigrationTrait
 
                     // Uploads テーブル
                     $upload = Uploads::create([
-                                  'client_original_name' => $image_name,
+                                  'client_original_name' => $client_original_name,
                                   'mimetype'             => $this->getMimetypeFromFilename($filename),
                                   'extension'            => $this->getExtension($filename),
                                   'size'                 => $file_size,
@@ -134,6 +134,40 @@ trait MigrationTrait
                     Storage::copy($source_file_path, $destination_file_path);
 
                     // 画像のパスの修正
+                    $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
+                }
+            }
+
+            // [file_names] の画像を登録
+            if (array_key_exists('file_names', $ini_array)) {
+                foreach ($ini_array['file_names'] as $filename => $client_original_name) {
+
+                    // ファイルサイズ
+                    if (File::exists(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename)) {
+                        $file_size = File::size(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename);
+                    }
+                    else {
+                        $file_size = 0;
+                    }
+                    //echo "ファイルサイズ = " . $file_size . "\n";
+
+                    // Uploads テーブル
+                    $upload = Uploads::create([
+                                  'client_original_name' => $client_original_name,
+                                  'mimetype'             => $this->getMimetypeFromFilename($filename),
+                                  'extension'            => $this->getExtension($filename),
+                                  'size'                 => $file_size,
+                                  'plugin_name'          => 'contents',
+                                  'page_id'              => $page_id,
+                                  'temporary_flag'       => 0,
+                              ]);
+
+                    // ファイルのコピー
+                    $source_file_path = 'migration\\' . $page_id . "\\" . $filename;
+                    $destination_file_path = $this->getDirectory($upload->id) . '\\' . $upload->id . '.' . $this->getExtension($filename);
+                    Storage::copy($source_file_path, $destination_file_path);
+
+                    // ファイルのパスの修正
                     $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
                 }
             }
@@ -183,7 +217,58 @@ trait MigrationTrait
      */
     private function getMimetypeFromFilename($filename)
     {
-        return $this->getExtension($filename);
+        $extension = $this->getExtension($filename);
+
+        // jpg
+        if ($extension == 'jpg') {
+            return IMAGETYPE_JPEG;
+        }
+        // png
+        if ($extension == 'png') {
+            return IMAGETYPE_PNG;
+        }
+        // gif
+        if ($extension == 'gif') {
+            return IMAGETYPE_GIF;
+        }
+        // pdf
+        if ($extension == 'pdf') {
+            return 'application/pdf';
+        }
+        // excel
+        if ($extension == 'xls') {
+            return 'application/vnd.ms-excel';
+        }
+        // excel
+        if ($extension == 'xlsx') {
+            return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        }
+        // word
+        if ($extension == 'doc') {
+            return 'application/msword';
+        }
+        // word
+        if ($extension == 'docx') {
+            return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        }
+        // power point
+        if ($extension == 'ppt') {
+            return 'application/vnd.ms-powerpoint';
+        }
+        // power point
+        if ($extension == 'pptx') {
+            return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        }
+        // mp3
+        if ($extension == 'mp3') {
+            return 'audio/mpeg';
+        }
+        // mp4
+        if ($extension == 'mp4') {
+            return 'video/mp4';
+        }
+
+        return "application/octet-stream";
     }
 
     /**
@@ -256,13 +341,13 @@ trait MigrationTrait
             //Log::debug($this->getInnerHtml($content));
 
             // HTML の保存用変数
-            $content_html =$this->getInnerHtml($content);
+            $content_html = $this->getInnerHtml($content);
 
             // 本文から画像(img src)を抜き出す
-            $images = $this->get_content_image($this->getInnerHtml($content));
+            $images = $this->get_content_image($content_html);
             //var_dump($images);
 
-            // 画像の取得と保存（連番で保存しておき、）
+            // 画像の取得と保存
             // ・取得して連番で保存（拡張子ナシ）
             // ・mime_type から拡張子決定
             if ($images) {
@@ -271,6 +356,7 @@ trait MigrationTrait
                 $frame_ini .= "\n[image_names]\n";
                 $image_index = 0;
                 foreach($images as $image_url) {
+
                     // 保存する画像のパス
                     $image_index++;
                     $downloadPath = $image_url;
@@ -329,6 +415,63 @@ trait MigrationTrait
                 }
             }
 
+            // 本文からアンカー(a href)を抜き出す
+            $anchors = $this->get_content_anchor($content_html);
+            //var_dump($anchors);
+
+            // 添付ファイルの取得と保存
+            // ・取得して連番で保存（拡張子ナシ）
+            // ・mime_type から拡張子決定
+            if ($anchors) {
+
+                // HTML 中のアップロードファイルをループで処理
+                $frame_ini .= "\n[file_names]\n";
+                $file_index = 0;
+                foreach($anchors as $anchor_href) {
+
+                    // アップロードファイルの場合
+                    if (stripos($anchor_href, 'cabinet_files/download') !== false || stripos($anchor_href, 'wysiwyg/file/download') !== false) {
+
+                        // 保存するファイルのパス
+                        $file_index++;
+                        $downloadPath = $anchor_href;
+
+                        $file_name = "frame_" . $frame_index . '_file_' . $file_index;
+                        $savePath = 'migration\\' . $page_id . "\\" . $file_name;
+                        $saveStragePath = storage_path() . '\app\\' . $savePath;
+
+                        // CURL 設定、ファイル取得
+                        $ch = curl_init($downloadPath);
+                        $fp = fopen($saveStragePath, 'w');
+                        curl_setopt($ch, CURLOPT_FILE, $fp);
+                        curl_setopt($ch, CURLOPT_HEADER, FALSE);
+                        curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'header_callback'));
+                        $result = curl_exec($ch);
+                        curl_close($ch);
+                        fclose($fp);
+
+                        //echo $this->content_disposition;
+
+                        // ファイルの拡張子の取得
+                        $file_extension = $this->getExtension($this->search_file_name($this->content_disposition));
+
+                        // 拡張子の変更
+                        Storage::delete($savePath . '.' . $file_extension);
+                        Storage::move($savePath, $savePath . '.' . $file_extension);
+
+                        // ファイルの設定情報の記載
+                        $frame_ini .= $file_name . '.' . $file_extension . ' = "' . $this->search_file_name($this->content_disposition) . "\"\n";
+
+                        // content 内の保存したファイルのパスを修正
+                        $content_html = str_replace($anchor_href, $file_name . '.' . $file_extension, $content_html);
+
+                        //拡張子の出力
+                        //echo $file_extension;
+                        //echo "\n";
+                    }
+                }
+            }
+
             // フレーム設定ファイルの出力
             Storage::put('migration\\' . $page_id . "\\frame_" . $frame_index . '.ini', $frame_ini);
 
@@ -372,7 +515,18 @@ trait MigrationTrait
      */
     function search_file_name($content_disposition)
     {
-        return trim(str_replace("Content-Disposition: attachment;filename*=UTF-8''", '', $content_disposition));
+        // attachment ＆ filename*=UTF-8 形式
+        if (stripos($content_disposition, "Content-Disposition: attachment;filename*=UTF-8''") !== false) {
+            return trim(str_replace("Content-Disposition: attachment;filename*=UTF-8''", '', $content_disposition));
+        }
+
+        // inline ＆ filename= ＆ filename*=UTF-8 併用形式
+        if (stripos($content_disposition, "Content-Disposition: inline; filename=") !== false &&
+            stripos($content_disposition, "filename*=UTF-8''") !== false) {
+            return trim(mb_substr($content_disposition, stripos($content_disposition, "filename*=UTF-8''") + 17 , mb_strlen($content_disposition) - 1));
+        }
+
+        return "";
     }
 
     /**
@@ -392,7 +546,7 @@ trait MigrationTrait
     }
 
     /**
-     * ページのHTML取得
+     * HTML からimg タグの src 属性を取得
      */
     private function get_content_image($content) {
         $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
@@ -400,6 +554,23 @@ trait MigrationTrait
         if (preg_match_all($pattern, $content, $images)){
             if (is_array($images) && isset($images[1])) {
                 return $images[1];
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * HTML からa タグの href 属性を取得
+     */
+    private function get_content_anchor($content) {
+
+        $pattern = "|<a href=\"(.*?)\".*?>(.*?)</a>|mis";
+        if (preg_match_all($pattern, $content, $anchors)){
+            if (is_array($anchors) && isset($anchors[1])) {
+                return $anchors[1];
             } else {
                 return false;
             }
