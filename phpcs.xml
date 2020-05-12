@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ruleset name="PSR2/Laravel">
+    <description>PSR2 compliant rules and settings for Laravel</description>
+
+    <arg name="extensions" value="php" />
+
+    <!-- 適用コーディング規約の指定 -->
+    <rule ref="PSR2" />
+
+    <!-- 出力に色を適用 -->
+    <arg name="colors" />
+
+    <!-- オプション p:進捗表示  s:エラー表示時にルールを表示 -->
+    <arg value="ps" />
+
+    <!-- 除外ディレクトリ -->
+    <exclude-pattern>/bootstrap/</exclude-pattern>
+    <!-- 除外ディレクトリ:要検討 /config/cc_xxxx.phpは CMS独自。phpcs対象とする？それ以外を除外として列挙するのがよさそう -->
+    <exclude-pattern>/config/</exclude-pattern>
+    <exclude-pattern>/database/</exclude-pattern>
+    <exclude-pattern>/node_modules/</exclude-pattern>
+    <exclude-pattern>/public/</exclude-pattern>
+    <exclude-pattern>/routes/</exclude-pattern>
+    <!-- 除外ディレクトリ:要検討 /resources/viewsをphpcs対象とする？viewsそこまでする必要ないかも -->
+    <exclude-pattern>/resources/</exclude-pattern>
+    <exclude-pattern>/storage/</exclude-pattern>
+    <exclude-pattern>/vendor/</exclude-pattern>
+    <exclude-pattern>/server.php</exclude-pattern>
+    <exclude-pattern>/app/Console/Kernel.php</exclude-pattern>
+    <exclude-pattern>/tests/CreatesApplication.php</exclude-pattern>
+</ruleset>
