@@ -33,8 +33,8 @@ class Page extends Model
     {
         $page_ids = array();
         $pages = self::getPages($current_page_obj, $menu, $setting_mode);
-        foreach($pages as $page) {
-            $page_ids[] = $page->id; 
+        foreach ($pages as $page) {
+            $page_ids[] = $page->id;
         }
         return $page_ids;
     }
@@ -63,13 +63,12 @@ class Page extends Model
 
         // 多言語モードでない場合 or 設定モードの場合 は表示設定されているページデータを全て取得
         if (!$language_multi_on || $setting_mode) {
-
             return self::defaultOrder()->where(function ($query_menu) use ($where_page_ids) {
                              // メニューによるページ選択
-                             if (!empty($where_page_ids)) {
-                                 $query_menu->whereIn('id', $where_page_ids);
-                             }
-                         })->get();
+                if (!empty($where_page_ids)) {
+                    $query_menu->whereIn('id', $where_page_ids);
+                }
+            })->get();
         }
 
         // 使用する言語リストの取得
@@ -81,7 +80,7 @@ class Page extends Model
         // 今、表示しているページの言語を判定
         $current_page_paths = explode('/', $current_page_obj['permanent_link']);
         if ($current_page_paths && is_array($current_page_paths) && array_key_exists(1, $current_page_paths)) {
-            foreach($languages as $language) {
+            foreach ($languages as $language) {
                 if (trim($language->additional1, '/') == $current_page_paths[1]) {
                     $current_language = $current_page_paths[1];
                     break;
@@ -95,27 +94,26 @@ class Page extends Model
         if (empty($current_language)) {
             $ret = self::defaultOrder()
                        ->where(function ($query) use ($languages) {
-                           foreach($languages as $language) {
-                               if ($language->additional1 == '/') {
-                                   // デフォルト言語 "/" は表示するので、除外の対象外
-                                   continue;
-                               }
-                               $query->where('permanent_link', 'not like', $language->additional1 . '%');
-                           }
+                        foreach ($languages as $language) {
+                            if ($language->additional1 == '/') {
+                                // デフォルト言語 "/" は表示するので、除外の対象外
+                                continue;
+                            }
+                            $query->where('permanent_link', 'not like', $language->additional1 . '%');
+                        }
                        })
                        ->where(function ($query_menu) use ($where_page_ids) {
                            // メニューによるページ選択
-                           if (!empty($where_page_ids)) {
-                               $query_menu->whereIn('id', $where_page_ids);
-                           }
+                        if (!empty($where_page_ids)) {
+                            $query_menu->whereIn('id', $where_page_ids);
+                        }
                        })
                        ->get();
 
 //Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
 
             return $ret;
-        }
-        else {
+        } else {
             return self::defaultOrder()
                        ->where(function ($query_lang) use ($current_language) {
                            // 多言語トップページは /en のように後ろに / がない。 /en* だと、/env なども拾ってしまう。
@@ -124,9 +122,9 @@ class Page extends Model
                        })
                        ->where(function ($query_menu) use ($where_page_ids) {
                            // メニューによるページ選択
-                           if (!empty($where_page_ids)) {
-                               $query_menu->whereIn('id', $where_page_ids);
-                           }
+                        if (!empty($where_page_ids)) {
+                            $query_menu->whereIn('id', $where_page_ids);
+                        }
                        })
                        ->get();
         }
@@ -173,8 +171,7 @@ class Page extends Model
                 // メニュー設定を見ない or メニュー設定でページ設定の条件を使用するとなっている場合は、基本表示フラグを反映
                 if (empty($menu) || $menu->select_flag === 0) {
                     $page_display_flag = ($page->base_display_flag == 0 || $display_flag == 0 ? 0 : 1);
-                }
-                else {
+                } else {
                     $page_display_flag = ($display_flag == 0 ? 0 : 1);
                 }
                 $page->display_flag = $page_display_flag;
@@ -190,7 +187,7 @@ class Page extends Model
         };
         $traverse($tree);
 
-        if ( $format == 'flat' ) {
+        if ($format == 'flat') {
             return $pages;
         }
 
@@ -241,12 +238,10 @@ class Page extends Model
         // $check_no_display_flag がtrue なら、display_flag を考慮しない。
         if ($this->display_flag == 1) {
             // 以下のip以降のチェックに進む
-        }
-        else {
+        } else {
             if ($check_no_display_flag) {
                 // 以下のip以降のチェックに進む
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -254,15 +249,13 @@ class Page extends Model
         // 認証情報が空（ログインしていない状態）or プラグイン管理者権限を持たない場合
         // 上記条件の場合のみ、IPアドレスチェックを行う
         if (empty($user) || !$user->can('role_arrangement')) {
-
             // IP アドレス制限があれば、IP アドレスチェック
             if (!empty($this->ip_address)) {
-
                 // IP アドレスをループしてチェック。
                 // 一つでもOKなら、OK とする。
                 $ip_address_check = false;
                 $ip_addresses = explode(',', $this->ip_address);
-                foreach($ip_addresses as $ip_address) {
+                foreach ($ip_addresses as $ip_address) {
                     if ($this->isRangeIp(\Request::ip(), trim($ip_address))) {
                         $ip_address_check = true;
                     }
@@ -276,10 +269,9 @@ class Page extends Model
 
         // メンバーシップページの場合は、参加条件をチェックする。
         if ($this->membership_flag) {
-            if ($check_page_roles && $check_page_roles->where('user_id', $user->id)->where('page_id', $this->id)->count() > 0 ) {
+            if ($check_page_roles && $check_page_roles->where('user_id', $user->id)->where('page_id', $this->id)->count() > 0) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -344,8 +336,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'header') {
             if (mb_substr($simple_layout, 0, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -354,8 +345,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'left') {
             if (mb_substr($simple_layout, 1, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -364,8 +354,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'right') {
             if (mb_substr($simple_layout, 2, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -374,8 +363,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'footer') {
             if (mb_substr($simple_layout, 3, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -458,7 +446,7 @@ class Page extends Model
             return false;
         }
        // セッション中に該当ページの認証情報があるかチェック
-        if ( $request->session()->has('page_auth.'.$this->id) && $request->session()->get('page_auth.'.$this->id) == 'authed') {
+        if ($request->session()->has('page_auth.'.$this->id) && $request->session()->get('page_auth.'.$this->id) == 'authed') {
             // すでに認証されているので、問題なし
             return false;
         }

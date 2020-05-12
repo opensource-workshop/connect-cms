@@ -52,13 +52,12 @@ class PluginManage extends ManagePluginBase
         $directories = File::directories(app_path().'/Plugins/User');
 
         // プラグインのini ファイルの取得
-        foreach($directories as $dirkey => $directorie) {
-
+        foreach ($directories as $dirkey => $directorie) {
             // ini ファイルがあれば、プラグインの日本語名を取得、プラグインの一覧に設定
             $is_plugin_record = false; // DB に登録されているかのフラグ
             if (File::exists($directorie."/plugin.ini")) {
                 $plugin_inis = parse_ini_file($directorie."/plugin.ini");
-                foreach($plugins as $plugin) {
+                foreach ($plugins as $plugin) {
                     if (mb_strtolower($plugin->plugin_name) == mb_strtolower(basename($directorie))) {
                         //echo $plugin->plugin_name_full . "<br />";
                         $plugin->plugin_name_full = $plugin_inis['plugin_name_full'];
@@ -79,15 +78,15 @@ class PluginManage extends ManagePluginBase
         }
 
         // 強制的に非表示にするプラグインを除外
-        foreach($plugins as $plugin_loop_key => $plugin) {
-            if ( in_array(mb_strtolower($plugin->plugin_name), config('connect.PLUGIN_FORCE_HIDDEN'))) {
+        foreach ($plugins as $plugin_loop_key => $plugin) {
+            if (in_array(mb_strtolower($plugin->plugin_name), config('connect.PLUGIN_FORCE_HIDDEN'))) {
                 $plugins->forget($plugin_loop_key);
             }
         }
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.plugin.plugin',[
+        return view('plugins.manage.plugin.plugin', [
             "function"    => __FUNCTION__,
             "plugin_name" => "plugin",
             "plugins"     => $plugins,
@@ -107,7 +106,7 @@ class PluginManage extends ManagePluginBase
         $max_display_sequence = 0;
 
         if ($request->plugins) {
-            foreach($request->plugins as $req_plugin) {
+            foreach ($request->plugins as $req_plugin) {
                 $plugin = new Plugins();
                 if ($req_plugin['id']) {
                     $plugin = Plugins::where('id', $req_plugin['id'])->first();
@@ -122,8 +121,7 @@ class PluginManage extends ManagePluginBase
                         $max_display_sequence = intval($display_sequence);
                     }
                     $display_sequence = intval($display_sequence);
-                }
-                else {
+                } else {
                     $max_display_sequence++;
                     $display_sequence = $max_display_sequence;
                 }
@@ -131,8 +129,7 @@ class PluginManage extends ManagePluginBase
 
                 if (array_key_exists('display_flag', $req_plugin) && $req_plugin['display_flag'] == '1') {
                     $plugin->display_flag = $req_plugin['display_flag'];
-                }
-                else {
+                } else {
                     $plugin->display_flag = 0;
                 }
                 $plugin->save();

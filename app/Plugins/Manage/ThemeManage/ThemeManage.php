@@ -53,8 +53,7 @@ class ThemeManage extends ManagePluginBase
         // Users テーマディレクトリの取得
         $tmp_dirs = File::directories(public_path() . '/themes/Users/');
         $dirs = array();
-        foreach($tmp_dirs as $tmp_dir) {
-
+        foreach ($tmp_dirs as $tmp_dir) {
             // テーマ設定ファイル取得
             $theme_inis = parse_ini_file(public_path() . '/themes/Users/' . basename($tmp_dir) . '/themes.ini');
             $theme_name = '';
@@ -68,7 +67,7 @@ class ThemeManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.theme.theme',[
+        return view('plugins.manage.theme.theme', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dirs"        => $dirs,
@@ -142,7 +141,7 @@ class ThemeManage extends ManagePluginBase
         // CSS ファイル取得
         $css = File::get(public_path() . '/themes/Users/' . $dir_name . '/themes.css');
 
-        return view('plugins.manage.theme.theme_css_edit',[
+        return view('plugins.manage.theme.theme_css_edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
@@ -169,7 +168,7 @@ class ThemeManage extends ManagePluginBase
         // themes.css ファイルの保存
         $result = File::put(public_path() . '/themes/Users/' . $dir_name . '/themes.css', $css);
 
-        return view('plugins.manage.theme.theme_css_edit',[
+        return view('plugins.manage.theme.theme_css_edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
@@ -201,7 +200,7 @@ class ThemeManage extends ManagePluginBase
         // JavaScript ファイル取得
         $js = File::get($js_path);
 
-        return view('plugins.manage.theme.theme_js_edit',[
+        return view('plugins.manage.theme.theme_js_edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
@@ -228,7 +227,7 @@ class ThemeManage extends ManagePluginBase
         // themes.css ファイルの保存
         $result = File::put(public_path() . '/themes/Users/' . $dir_name . '/themes.js', $js);
 
-        return view('plugins.manage.theme.theme_js_edit',[
+        return view('plugins.manage.theme.theme_js_edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
@@ -256,7 +255,7 @@ class ThemeManage extends ManagePluginBase
             $theme_name = $theme_inis['theme_name'];
         }
 
-        return view('plugins.manage.theme.theme_name_edit',[
+        return view('plugins.manage.theme.theme_name_edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
@@ -301,7 +300,7 @@ class ThemeManage extends ManagePluginBase
         $themes_ini = '[base]' . "\n" . 'theme_name = ' . $theme_name;
         $result = File::put(public_path() . '/themes/Users/' . $dir_name . '/themes.ini', $themes_ini);
 
-        return view('plugins.manage.theme.theme_name_edit',[
+        return view('plugins.manage.theme.theme_name_edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
@@ -327,9 +326,8 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリの存在チェック
         if (!File::isDirectory($images_dir)) {
-
             // ディレクトリがなければ空のリストを画面に渡す。
-            return view('plugins.manage.theme.theme_image_list',[
+            return view('plugins.manage.theme.theme_image_list', [
                 "function"    => __FUNCTION__,
                 "plugin_name" => "theme",
                 "dir_name"    => $dir_name,
@@ -341,14 +339,13 @@ class ThemeManage extends ManagePluginBase
         // 画像ファイルの一覧取得
         $tmp_files = File::files($images_dir);
         $files = array();
-        foreach($tmp_files as $tmp_file) {
-
+        foreach ($tmp_files as $tmp_file) {
             $files[] = basename($tmp_file);
         }
         asort($files);  // 名前に対して逆順になることがあるのでソートしておく。
 
         // 画像のリストを画面に渡す。
-        return view('plugins.manage.theme.theme_image_list',[
+        return view('plugins.manage.theme.theme_image_list', [
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
@@ -375,7 +372,6 @@ class ThemeManage extends ManagePluginBase
 
         // ファイルがアップロードされた。
         if ($request->hasFile('image')) {
-
             // ファイルの基礎情報
             $client_original_name = $request->file('image')->getClientOriginalName();
             $mimetype             = $request->file('image')->getClientMimeType();
@@ -393,7 +389,7 @@ class ThemeManage extends ManagePluginBase
             $filename = preg_replace('/[^a-zA-Z0-9._-]/', '', $tmp_filename);
 
             // ファイルの保存
-            $request->file('image')->storeAs('tmp',$filename);
+            $request->file('image')->storeAs('tmp', $filename);
 
             // ファイルパス
             $src_file = storage_path() . '/app/tmp/' . $filename;
@@ -461,12 +457,10 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリの存在チェック
         if (File::isDirectory(public_path() . '/themes/Users/' . $dir_name)) {
-
             // テーマの削除
             $success = File::deleteDirectory($theme_dir);
         }
 
         return redirect("/manage/theme");
     }
-
 }

@@ -26,7 +26,7 @@ class Codes extends Model
         'plugin_name',
         'buckets_id',
         'prefix',
-        'type_name', 
+        'type_name',
         'type_code1',
         'type_code2',
         'type_code3',
@@ -47,8 +47,8 @@ class Codes extends Model
      */
     public static function getCodeToValue($codes, $target_code, $return_colum = 'value')
     {
-        foreach($codes as $code){
-            if ($code->code == $target_code){
+        foreach ($codes as $code) {
+            if ($code->code == $target_code) {
                 // return $code->value;
                 return $code->$return_colum;
             }

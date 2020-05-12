@@ -60,8 +60,7 @@ trait MigrationTrait
 
         // フレームのループ
         $display_sequence = 0;
-        foreach($ini_files as $ini_file) {
-
+        foreach ($ini_files as $ini_file) {
             // echo $ini_file . "\n";
 
             $display_sequence++;
@@ -107,12 +106,10 @@ trait MigrationTrait
             // [image_names] の画像を登録
             if (array_key_exists('image_names', $ini_array)) {
                 foreach ($ini_array['image_names'] as $filename => $image_name) {
-
                     // ファイルサイズ
                     if (File::exists(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename)) {
                         $file_size = File::size(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename);
-                    }
-                    else {
+                    } else {
                         $file_size = 0;
                     }
                     //echo "ファイルサイズ = " . $file_size . "\n";
@@ -232,7 +229,6 @@ trait MigrationTrait
         $expression = './/section';
         $frame_index = 0; // フレームの連番
         foreach ($xpath->query($expression, $container_main) as $section) {
-
             $frame_index++;
 
             // フレームタイトル(panel-heading)を抜き出します。
@@ -266,11 +262,10 @@ trait MigrationTrait
             // ・取得して連番で保存（拡張子ナシ）
             // ・mime_type から拡張子決定
             if ($images) {
-
                 // HTML 中の画像ファイルをループで処理
                 $frame_ini .= "\n[image_names]\n";
                 $image_index = 0;
-                foreach($images as $image_url) {
+                foreach ($images as $image_url) {
                     // 保存する画像のパス
                     $image_index++;
                     $downloadPath = $image_url;
@@ -283,7 +278,7 @@ trait MigrationTrait
                     $ch = curl_init($downloadPath);
                     $fp = fopen($saveStragePath, 'w');
                     curl_setopt($ch, CURLOPT_FILE, $fp);
-                    curl_setopt($ch, CURLOPT_HEADER, FALSE);
+                    curl_setopt($ch, CURLOPT_HEADER, false);
                     curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'header_callback'));
                     $result = curl_exec($ch);
                     curl_close($ch);
@@ -295,7 +290,7 @@ trait MigrationTrait
                     list($img_width, $img_height, $mime_type, $attr) = getimagesize($saveStragePath);
 
                     //list関数の第3引数にはgetimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
-                    switch($mime_type){
+                    switch ($mime_type) {
                         //jpegの場合
                         case IMAGETYPE_JPEG:
                             //拡張子の設定
@@ -349,9 +344,9 @@ trait MigrationTrait
         $content_html = $this->replaceCss('img-responsive', 'img-fluid', $content_html);
 
         // NC3 用画像CSS（削除）
-        $content_html = $this->replaceCss('nc3-img-block', ''             , $content_html);
-        $content_html = $this->replaceCss('nc3-img',       ''             , $content_html);
-        $content_html = $this->replaceCss('thumbnail',     'img-thumbnail', $content_html);
+        $content_html = $this->replaceCss('nc3-img-block', '', $content_html);
+        $content_html = $this->replaceCss('nc3-img', '', $content_html);
+        $content_html = $this->replaceCss('thumbnail', 'img-thumbnail', $content_html);
 
         return $content_html;
     }
@@ -394,10 +389,11 @@ trait MigrationTrait
     /**
      * ページのHTML取得
      */
-    private function get_content_image($content) {
+    private function get_content_image($content)
+    {
         $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
 
-        if (preg_match_all($pattern, $content, $images)){
+        if (preg_match_all($pattern, $content, $images)) {
             if (is_array($images) && isset($images[1])) {
                 return $images[1];
             } else {
@@ -418,7 +414,7 @@ trait MigrationTrait
         $ch = curl_init();
 
         //オプション
-        curl_setopt($ch, CURLOPT_URL, $url); 
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $html =  curl_exec($ch);
 
@@ -431,11 +427,12 @@ trait MigrationTrait
     /**
      * nodeをHTMLとして取り出す
      */
-    private function getInnerHtml($node){
+    private function getInnerHtml($node)
+    {
 
         $children = $node->childNodes;
         $html = '';
-        foreach($children as $child){
+        foreach ($children as $child) {
             $html .= $node->ownerDocument->saveHTML($child);
         }
         return $html;
@@ -444,7 +441,8 @@ trait MigrationTrait
     /**
      * フレームデザインの取得
      */
-    private function getFrameDesign($classes){
+    private function getFrameDesign($classes)
+    {
 
         // none
         if (stripos($classes, 'panel-none') !== false) {

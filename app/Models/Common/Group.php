@@ -72,8 +72,7 @@ class Group extends Model
         $role_names = array();
 
         // Role をループして名称を結合
-        foreach(config('cc_role.CC_ROLE_LIST') as $role_name => $cc_role_name) {
-
+        foreach (config('cc_role.CC_ROLE_LIST') as $role_name => $cc_role_name) {
             // 管理権限は対象外
             if (stripos($role_name, 'admin_') === 0) {
                 cntinue;

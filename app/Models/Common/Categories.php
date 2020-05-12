@@ -19,5 +19,4 @@ class Categories extends Model
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
     protected $fillable = ['classname', 'category', 'color', 'background_color', 'target', 'plugin_id', 'display_sequence'];
-
 }

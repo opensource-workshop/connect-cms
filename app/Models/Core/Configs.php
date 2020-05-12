@@ -23,17 +23,16 @@ class Configs extends Model
     /**
      * name をキーにした配列で返す。
      */
-    static public function getValues($name = null)
+    public static function getValues($name = null)
     {
         if (empty($name)) {
             $configs = Configs::get();
-        }
-        else {
+        } else {
             $configs = Configs::where('name', $name)->get();
         }
 
         // Config データの変換
-        foreach ( $configs as $config ) {
+        foreach ($configs as $config) {
             $configs_array[$config->name] = $config->value;
         }
         return $configs_array;

@@ -24,7 +24,8 @@ class LoginController extends Controller
     */
 
     //use AuthenticatesUsers;
-    use AuthenticatesUsers { login as laravelLogin; }
+    use AuthenticatesUsers { login as laravelLogin;
+    }
     use ConnectCommonTrait;
 
     /**
@@ -52,7 +53,7 @@ class LoginController extends Controller
      */
     public function username()
     {
-    	return 'userid';
+        return 'userid';
     }
 
     /**

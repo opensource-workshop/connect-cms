@@ -37,16 +37,14 @@ class UsersRoles extends Model
         // target、role_name が指定された場合は絞り込んで値を返す。(後で実装予定)
         if ($target) {
             $users_roles = self::where('users_id', $users_id)->where('target', $target)->get();
-        }
-        else {
+        } else {
             $users_roles = self::where('users_id', $users_id)->get();
         }
 
         // 配列の形式は[target][role_name] = value{1|0}
         $this->user_roles = array();
-        foreach($users_roles as $users_role) {
+        foreach ($users_roles as $users_role) {
             $this->user_roles[$users_role->target][$users_role->role_name] = $users_role->role_value;
-
         }
 
         return $this->user_roles;
@@ -111,8 +109,7 @@ class UsersRoles extends Model
             foreach ($roles as $role => $value) {
                 if ($role == $target_role) {
                     $target_check = true;
-                }
-                else {
+                } else {
                     return false;
                 }
             }

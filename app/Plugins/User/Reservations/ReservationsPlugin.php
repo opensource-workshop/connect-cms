@@ -48,27 +48,27 @@ class ReservationsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = [
-            'week', 
-            'month', 
-            'editBucketsRoles', 
-            'editFacilities', 
+            'week',
+            'month',
+            'editBucketsRoles',
+            'editFacilities',
             'editColumns',
             'editColumnDetail',
         ];
         $functions['post'] = [
-            'saveBucketsRoles', 
-            'addFacility', 
-            'updateFacility', 
-            'updateFacilitySequence', 
-            'addColumn', 
+            'saveBucketsRoles',
+            'addFacility',
+            'updateFacility',
+            'updateFacilitySequence',
+            'addColumn',
             'updateColumn',
-            'updateColumnSequence', 
-            'addSelect', 
+            'updateColumnSequence',
+            'addSelect',
             'updateSelect',
-            'updateSelectSequence', 
-            'editBooking', 
-            'saveBooking', 
-            'destroyBooking', 
+            'updateSelectSequence',
+            'editBooking',
+            'saveBooking',
+            'destroyBooking',
         ];
         return $functions;
     }
@@ -87,7 +87,8 @@ class ReservationsPlugin extends UserPluginBase
      *  POST取得関数（コアから呼び出す）
      *  コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id) {
+    public function getPost($id)
+    {
 
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
@@ -180,8 +181,8 @@ class ReservationsPlugin extends UserPluginBase
     public function saveBooking($request, $page_id, $frame_id, $target_ymd)
     {
         // 認証チェック
-        if(!Auth::check()){
-            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。' );
+        if (!Auth::check()) {
+            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。');
         }
 
         $target_ymd = $request->target_date;
@@ -189,18 +190,18 @@ class ReservationsPlugin extends UserPluginBase
         $year = substr($target_ymd, 0, 4);
         $month = substr($target_ymd, 4, 2);
         $day = substr($target_ymd, 6, 2);
-        if(!checkdate($month, $day, $year)){
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
+        if (!checkdate($month, $day, $year)) {
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
 
         // バリデーション用の配列を生成（基本項目）
-        $validationArray = 
+        $validationArray =
             [
                 'start_datetime'  => ['required'],
                 'end_datetime'  => ['required', 'after:start_datetime'],
             ]
         ;
-        $attributeArray = 
+        $attributeArray =
             [
                 'start_datetime'  => '開始時間',
                 'end_datetime'  => '終了時間',
@@ -209,7 +210,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // バリデーション用の配列を生成（可変項目）
         $required_columns = reservations_columns::query()->where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->where('required', \Required::on)->get();
-        foreach($required_columns as $column){
+        foreach ($required_columns as $column) {
             $key_str = 'columns_value.' . $column->id;
             $validationArray[$key_str] = ['required'];
             $attributeArray[$key_str] = $column->column_name;
@@ -217,7 +218,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // バリデーション定義
         $validator = Validator::make(
-            $request->all(), 
+            $request->all(),
             $validationArray
         );
         $validator->setAttributeNames($attributeArray);
@@ -231,11 +232,11 @@ class ReservationsPlugin extends UserPluginBase
         $facility = reservations_facilities::query()->where('id', $request->facility_id)->first();
 
         // 予約ヘッダ 登録 ※予約IDがある場合は更新
-        $reservations_inputs = $request->booking_id ? 
-            reservations_inputs::query()->where('id', $request->booking_id)->first() : 
+        $reservations_inputs = $request->booking_id ?
+            reservations_inputs::query()->where('id', $request->booking_id)->first() :
             new reservations_inputs();
         // 新規登録時のみの登録項目
-        if(!$request->booking_id){
+        if (!$request->booking_id) {
             $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
             $reservations_inputs->input_user_id = Auth::user()->userid;
@@ -247,8 +248,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // 項目IDを取得
         $keys = array_keys($request->columns_value);
-        foreach($keys as $key){
-
+        foreach ($keys as $key) {
             // 予約明細 更新レコード取得
             $reservations_inputs_columns = reservations_inputs_columns::query()
                     ->where('reservations_id', $request->reservations_id)
@@ -257,14 +257,15 @@ class ReservationsPlugin extends UserPluginBase
                     ->first();
 
             // 更新レコードが取得できなかったらnew
-            if(!$reservations_inputs_columns){
+            if (!$reservations_inputs_columns) {
                 $reservations_inputs_columns = new reservations_inputs_columns();
                 // 新規登録時のみの登録項目
                 $reservations_inputs_columns->reservations_id = $request->reservations_id;
                 $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
                 $reservations_inputs_columns->column_id = $key;
             }
-            $reservations_inputs_columns->value = $request->columns_value[$key];;
+            $reservations_inputs_columns->value = $request->columns_value[$key];
+            ;
             $reservations_inputs_columns->save();
         }
         $str_mode = $request->booking_id ? '更新' : '登録';
@@ -279,22 +280,22 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function editBooking($request, $page_id, $frame_id, $errors = null)
     {
-        if($errors){
+        if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else{
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
 
         // 認証チェック
-        if(!Auth::check()){
-            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。' );
+        if (!Auth::check()) {
+            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。');
         }
 
         $booking = null;
 
-        if($request->booking_id){
+        if ($request->booking_id) {
 
             /**
              * 予約の更新モード
@@ -315,7 +316,7 @@ class ReservationsPlugin extends UserPluginBase
                         'reservations_columns.*',
                         'reservations_inputs_columns.value',
                     )
-                    ->leftjoin('reservations_inputs_columns',function($join) use($booking) {
+                    ->leftjoin('reservations_inputs_columns', function ($join) use ($booking) {
                         $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
                         $join->where('reservations_inputs_columns.inputs_id', '=', $booking->id);
                     })
@@ -329,8 +330,7 @@ class ReservationsPlugin extends UserPluginBase
             $selects = reservations_columns_selects::query()->where('reservations_id', $booking->reservations_id)->whereNull('hide_flag')->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
 
             $target_date = new Carbon($booking->start_datetime);
-
-        }else{
+        } else {
             /**
              * 予約の新規登録モード
              */
@@ -339,8 +339,8 @@ class ReservationsPlugin extends UserPluginBase
             $year = substr($target_ymd, 0, 4);
             $month = substr($target_ymd, 4, 2);
             $day = substr($target_ymd, 6, 2);
-            if(!checkdate($month, $day, $year)){
-                return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
+            if (!checkdate($month, $day, $year)) {
+                return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
             }
 
             // 施設予約データ
@@ -359,7 +359,8 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         return $this->view(
-            'reservations_calendar_edit_booking', [
+            'reservations_calendar_edit_booking',
+            [
                 'target_date' => $target_date,
                 'reservation' => $reservation,
                 'facility' => $facility,
@@ -384,7 +385,7 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // カレンダー表示タイプの指定がない場合はフレームに紐づくコンテンツの初期表示設定で表示する
-        if(empty($view_format)){
+        if (empty($view_format)) {
             $view_format = $reservations_frame->calendar_initial_display_type;
         }
 
@@ -402,21 +403,21 @@ class ReservationsPlugin extends UserPluginBase
 
         // 予約項目データの内、選択肢が指定されていた場合に選択肢データが登録済みかチェック
         $isExistSelect = true;
-        $filtered_columns = $columns->filter(function($column) {
+        $filtered_columns = $columns->filter(function ($column) {
             // 選択肢が設定可能なデータ型のみ抽出
             return $column->column_type == \ReservationColumnType::radio;
         });
-        foreach($filtered_columns as $column){
-            $filtered_selects = $selects->filter(function($select) use($column) {
+        foreach ($filtered_columns as $column) {
+            $filtered_selects = $selects->filter(function ($select) use ($column) {
                 return $column->id == $select->column_id;
             });
-            if($filtered_selects->isEmpty()){
+            if ($filtered_selects->isEmpty()) {
                 $isExistSelect = false;
             }
         }
 
         // 対象日時未設定（初期表示）の場合は現在日時をセット
-        if(empty($carbon_target_date)){
+        if (empty($carbon_target_date)) {
             $carbon_target_date = Carbon::today();
         }
 
@@ -427,7 +428,7 @@ class ReservationsPlugin extends UserPluginBase
         $search_start_date = null;
         $search_end_date = null;
 
-        if($view_format == \ReservationCalendarDisplayType::month){
+        if ($view_format == \ReservationCalendarDisplayType::month) {
 
             /**
              * 月表示用のデータ
@@ -436,7 +437,7 @@ class ReservationsPlugin extends UserPluginBase
             // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
             $firstDay->subDay($firstDay->dayOfWeek);
             // 35マス（7列×5行）で収まらない場合の加算日数の算出
-            $addDay = 
+            $addDay =
                 // 当月の日数が31日、且つ、前の月末日が木曜か金曜の場合
                 $carbon_target_date->copy()->endOfmonth()->day == 31 && ($firstDay->copy()->endOfmonth()->isThursday() || $firstDay->copy()->endOfmonth()->isFriday()) ||
                 // 当月の日数が30日、且つ、前の月末日が金曜の場合
@@ -447,17 +448,16 @@ class ReservationsPlugin extends UserPluginBase
             $count =  ceil($count / 7) * 7;
             // dd("addDay：$addDay","カレンダー1日目：$firstDay","カレンダー1日目の曜日：$firstDay->dayOfWeek","count:$count");
     
-            for($i = 0; $i < $count; $i++, $firstDay->addDay()){
+            for ($i = 0; $i < $count; $i++, $firstDay->addDay()) {
                 $dates[] = $firstDay->copy();
             }
-    
-        }else{
+        } else {
 
             /**
              * 週表示用のデータ
              */
             $firstDay = $carbon_target_date->copy();
-            for($i = 0; $i < 7; $i++, $firstDay->addDay()){
+            for ($i = 0; $i < 7; $i++, $firstDay->addDay()) {
                 $dates[] = $firstDay->copy();
             }
         }
@@ -478,8 +478,7 @@ class ReservationsPlugin extends UserPluginBase
         $calendars = null;
         // 施設毎に予約情報を付加したカレンダーデータを生成
         // $time_start = microtime(true); //debug用
-        foreach($facilities as $facility){
-
+        foreach ($facilities as $facility) {
             $calendar = null;
             $calendar_cells = null;
             $calendar['facility'] = $facility;
@@ -492,19 +491,19 @@ class ReservationsPlugin extends UserPluginBase
                 ->orderBy('start_datetime')
                 ->get();
 
-            foreach($dates as $date){
+            foreach ($dates as $date) {
                 $calendar_cell = null;
                 // セルの日付に日付データを追加
                 $calendar_cell['date'] = $date;
                 // 日付データと予約データを突き合わせて該当日に予約データを付加
-                foreach($bookingHeaders as $bookingHeader){
-                    if($date->format('Ymd') == $bookingHeader->start_datetime->format('Ymd')){
+                foreach ($bookingHeaders as $bookingHeader) {
+                    if ($date->format('Ymd') == $bookingHeader->start_datetime->format('Ymd')) {
                         // セルの予約配列に予約データを追加
                         $booking = null;
                         $booking['booking_header'] = $bookingHeader;
                         $booking['booking_details'] = reservations_inputs_columns::query()
-                            ->leftjoin('reservations_columns',function($join) {
-                                $join->on('reservations_inputs_columns.column_id','=','reservations_columns.id');
+                            ->leftjoin('reservations_columns', function ($join) {
+                                $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
                             })
                             ->where('reservations_inputs_columns.reservations_id', $reservations->id)
                             ->where('inputs_id', $bookingHeader->id)
@@ -529,7 +528,8 @@ class ReservationsPlugin extends UserPluginBase
         // dd($time . '秒');  //debug用
         // dd($calendars);  //debug用
         return $this->view(
-            'reservations_calendar_common', [
+            'reservations_calendar_common',
+            [
             'view_format' => $view_format,
             'carbon_target_date' => $carbon_target_date,
             'reservations' => $reservations,
@@ -539,7 +539,8 @@ class ReservationsPlugin extends UserPluginBase
             'isExistSelect' => $isExistSelect,
             'calendars' => $calendars,
             'message' => $message,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -550,8 +551,8 @@ class ReservationsPlugin extends UserPluginBase
         $year = substr($target_ymd, 0, 4);
         $month = substr($target_ymd, 4, 2);
         $day = substr($target_ymd, 6, 2);
-        if(!checkdate($month, $day, $year)){
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')' );
+        if (!checkdate($month, $day, $year)) {
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
         $carbon_target_date = new Carbon("$target_ymd");
         return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::week, $carbon_target_date, null);
@@ -564,8 +565,8 @@ class ReservationsPlugin extends UserPluginBase
     {
         $year = substr($target_ym, 0, 4);
         $month = substr($target_ym, 4, 2);
-        if(!checkdate($month, '01', $year)){
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')' );
+        if (!checkdate($month, '01', $year)) {
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')');
         }
         $carbon_target_date = new Carbon("$year-$month-01");
         return $this->index($request, $page_id, $frame_id, \ReservationCalendarDisplayType::month, $carbon_target_date, null);
@@ -588,10 +589,12 @@ class ReservationsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
-            'reservations_input', [
+            'reservations_input',
+            [
             'reservation_frame' => $reservation_frame,
             'errors'            => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -610,10 +613,12 @@ class ReservationsPlugin extends UserPluginBase
 
         // 詳細画面を呼び出す。
         return $this->view(
-            'reservations_show', [
+            'reservations_show',
+            [
             'reservations_frame'  => $reservations_frame,
             'reservation'         => $reservation,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -635,10 +640,12 @@ class ReservationsPlugin extends UserPluginBase
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
-            'reservations_edit', [
+            'reservations_edit',
+            [
             'reservations_frame'  => $reservations_frame,
             'reservation'         => $reservation,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -690,8 +697,7 @@ class ReservationsPlugin extends UserPluginBase
     public function delete($request, $page_id, $frame_id, $id)
     {
         // id がある場合、データを削除
-        if ( $id ) {
-
+        if ($id) {
             // データを削除する。
             //Reservations::where('id', $id)->delete();
         }
@@ -732,8 +738,8 @@ class ReservationsPlugin extends UserPluginBase
             'reservations.created_at',
             DB::raw('GROUP_CONCAT(reservations_facilities.facility_name SEPARATOR \'\n\') as facility_names'),
         );
-        $query->leftjoin('reservations_facilities',function($join) {
-            $join->on('reservations.id','=','reservations_facilities.reservations_id');
+        $query->leftjoin('reservations_facilities', function ($join) {
+            $join->on('reservations.id', '=', 'reservations_facilities.reservations_id');
         });
         $query->groupBy(
             'reservations.id',
@@ -747,10 +753,12 @@ class ReservationsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'reservations_list_buckets', [
+            'reservations_list_buckets',
+            [
             'reservation_frame' => $reservation_frame,
             'reservations'      => $reservations,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -782,19 +790,21 @@ class ReservationsPlugin extends UserPluginBase
             $reservation = Reservations::where('id', $reservations_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($reservation_frame->bucket_id) && $create_flag == false) {
+        elseif (!empty($reservation_frame->bucket_id) && $create_flag == false) {
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'reservations_edit', [
+            'reservations_edit',
+            [
             'reservation_frame'  => $reservation_frame,
             'reservation'        => $reservation,
             'create_flag'        => $create_flag,
             'message'            => $message,
             'errors'             => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -815,12 +825,10 @@ class ReservationsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-
             if (empty($reservations_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $reservations_id, $create_flag, $message, $validator->errors());
-            }
-            else  {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $reservations_id, $create_flag, $message, $validator->errors());
             }
@@ -831,7 +839,6 @@ class ReservationsPlugin extends UserPluginBase
 
         // 画面から渡ってくるid が空ならバケツと施設を新規登録
         if (empty($request->reservations_id)) {
-
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => $request->reservation_name,
@@ -848,7 +855,6 @@ class ReservationsPlugin extends UserPluginBase
             // （表示施設予約選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
-
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
@@ -857,7 +863,6 @@ class ReservationsPlugin extends UserPluginBase
         }
         // id があれば、施設予約を更新
         else {
-
             // 施設予約データ取得
             $reservations = Reservations::where('id', $request->reservations_id)->first();
 
@@ -871,10 +876,10 @@ class ReservationsPlugin extends UserPluginBase
         // データ保存
         $reservations->save();
 
-        if(empty($request->reservations_id)){
+        if (empty($request->reservations_id)) {
             // 新規登録後は、施設予約選択画面を呼び出す
             return $this->listBuckets($request, $page_id, $frame_id, null);
-        }else{
+        } else {
             // 更新後は、設定変更画面を更新モードで呼び出す
             $create_flag = false;
             return $this->editBuckets($request, $page_id, $frame_id, $request->reservations_id, $create_flag, $message);
@@ -888,7 +893,6 @@ class ReservationsPlugin extends UserPluginBase
     {
         // id がある場合、データを削除
         if ($reservations_id) {
-
             // TODO 子テーブルの削除
 
             // 施設予約を削除する。
@@ -914,10 +918,9 @@ class ReservationsPlugin extends UserPluginBase
         $message = null;
         // id がある場合、データを削除
         if ($request->booking_id) {
-
             // 予約（子）を削除
             $input_columns = reservations_inputs_columns::query()->where('inputs_id', $request->booking_id)->get();
-            foreach($input_columns as $input_column){
+            foreach ($input_columns as $input_column) {
                 $input_column->delete();
             }
 
@@ -962,7 +965,7 @@ class ReservationsPlugin extends UserPluginBase
             $reservation = Reservations::where('id', $reservations_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から施設データ取得
-        else if (!empty($reservation_frame->bucket_id)) {
+        elseif (!empty($reservation_frame->bucket_id)) {
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
@@ -974,13 +977,15 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
-            'reservations_facilities_edit', [
+            'reservations_facilities_edit',
+            [
             'reservations_id' => $reservations_id,
             'reservation'     => $reservation,
             'facilities'     => $facilities,
             'message'     => $message,
             'errors'     => $errors,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -988,10 +993,10 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function editColumnDetail($request, $page_id, $frame_id, $reservations_columns_id = null, $message = null, $errors = null)
     {
-        if($errors){
+        if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else{
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -1017,14 +1022,16 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
-            'reservations_columns_select_edit', [
+            'reservations_columns_select_edit',
+            [
             'reservations_id' => $reservations_id,
             'reservation'     => $reservation,
             'column'     => $column,
             'selects'     => $selects,
             'message'     => $message,
             'errors'     => $errors,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -1032,10 +1039,10 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function editColumns($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
     {
-        if($errors){
+        if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else{
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -1052,7 +1059,7 @@ class ReservationsPlugin extends UserPluginBase
             $reservation = Reservations::where('id', $reservations_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から施設データ取得
-        else if (!empty($reservation_frame->bucket_id)) {
+        elseif (!empty($reservation_frame->bucket_id)) {
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
@@ -1074,8 +1081,8 @@ class ReservationsPlugin extends UserPluginBase
             )
             ->where('reservations_columns.reservations_id', $reservations_id)
             // 予約項目の子データ（選択肢）
-            ->leftjoin('reservations_columns_selects',function($join) {
-                $join->on('reservations_columns.id','=','reservations_columns_selects.column_id');
+            ->leftjoin('reservations_columns_selects', function ($join) {
+                $join->on('reservations_columns.id', '=', 'reservations_columns_selects.column_id');
             })
             ->groupby(
                 'reservations_columns.id',
@@ -1091,13 +1098,15 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
-            'reservations_columns_edit', [
+            'reservations_columns_edit',
+            [
             'reservations_id' => $reservations_id,
             'reservation'     => $reservation,
             'columns'     => $columns,
             'message'     => $message,
             'errors'     => $errors,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -1115,7 +1124,6 @@ class ReservationsPlugin extends UserPluginBase
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
@@ -1166,7 +1174,6 @@ class ReservationsPlugin extends UserPluginBase
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumnDetail($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
@@ -1206,7 +1213,6 @@ class ReservationsPlugin extends UserPluginBase
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
@@ -1255,7 +1261,6 @@ class ReservationsPlugin extends UserPluginBase
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
@@ -1297,7 +1302,6 @@ class ReservationsPlugin extends UserPluginBase
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
@@ -1345,7 +1349,6 @@ class ReservationsPlugin extends UserPluginBase
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
@@ -1465,5 +1468,4 @@ class ReservationsPlugin extends UserPluginBase
         // 編集画面を呼び出す
         return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
     }
-
 }

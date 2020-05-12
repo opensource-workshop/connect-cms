@@ -48,9 +48,11 @@ class CodeManage extends ManagePluginBase
     public function index($request, $page_id = null, $errors = array())
     {
         // コード管理データの取得
-        $codes = Codes::select('codes.*',
-                                   'buckets.bucket_name',
-                                   'plugins.plugin_name_full')
+        $codes = Codes::select(
+            'codes.*',
+            'buckets.bucket_name',
+            'plugins.plugin_name_full'
+        )
                           ->leftJoin('buckets', 'buckets.id', '=', 'codes.buckets_id')
                           ->leftJoin('plugins', 'plugins.plugin_name', '=', 'codes.plugin_name')
                           ->orderBy('plugin_name')
@@ -73,7 +75,7 @@ class CodeManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.code.code',[
+        return view('plugins.manage.code.code', [
             "function"    => __FUNCTION__,
             "plugin_name" => "code",
             "codes"       => $codes,
@@ -126,7 +128,7 @@ class CodeManage extends ManagePluginBase
         // [TODO] ページネーションの表示ページ数を保持するための暫定対応
         $paginate_page = $request->get('page', 1);
 
-        return view('plugins.manage.code.regist',[
+        return view('plugins.manage.code.regist', [
             // "function" => __FUNCTION__,
             "function" => $function,
             "plugin_name" => "code",
@@ -214,7 +216,7 @@ class CodeManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.code.display',[
+        return view('plugins.manage.code.display', [
             "function"    => __FUNCTION__,
             "plugin_name" => "code",
             "config"      => $config,
@@ -254,8 +256,7 @@ class CodeManage extends ManagePluginBase
                 Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . '):更新時にデータなしは、基本ありえない。id=' . $id);
                 // 一覧画面に戻る
                 return redirect("/manage/code?page=1");
-
-            } elseif ($configs->name != 'code_list_display_colums')  {
+            } elseif ($configs->name != 'code_list_display_colums') {
                 // code_list_display_colums以外のデータは、基本ありえない
                 Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . '):更新時に取得したデータがcode_list_display_colums以外は、基本ありえない。id=' . $configs->id . ' name=' . $configs->name);
                 // 一覧画面に戻る
@@ -297,5 +298,4 @@ class CodeManage extends ManagePluginBase
         // return redirect("/manage/code");
         return redirect("/manage/code?page=1");
     }
-
 }

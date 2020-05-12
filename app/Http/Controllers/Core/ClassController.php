@@ -78,14 +78,13 @@ class ClassController extends ConnectController
         $role_check = false;
         $role_ckeck_tables = $plugin_instance->declareRole();
         if (array_key_exists($action, $role_ckeck_tables)) {
-            foreach($role_ckeck_tables[$action] as $role) {
+            foreach ($role_ckeck_tables[$action] as $role) {
                 // プラグインで定義された権限が自分にあるかチェック
                 if ($this->isCan($role)) {
                     $role_check = true;
                 }
             }
-        }
-        else {
+        } else {
             abort(403, 'メソッドに権限が設定されていません。');
         }
 

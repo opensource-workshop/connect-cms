@@ -103,7 +103,7 @@ trait ConnectCommonTrait
             $buckets_roles = $this->getBucketsRoles($buckets_obj);
 //Log::debug($buckets_roles);
             // Buckets に設定されたrole から、関連role を取得してチェック。
-            foreach($buckets_roles as $buckets_role) {
+            foreach ($buckets_roles as $buckets_role) {
                 $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$buckets_role]);
             }
             // 配列は添字型になるので、array_merge で結合してから重複を取り除く
@@ -113,15 +113,12 @@ trait ConnectCommonTrait
         // 指定された権限を含むロールをループする。
 //        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
         foreach ($check_roles as $role) {
-
             // ユーザの保持しているロールをループ
             // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
             //foreach ($user['user_roles'] as $target) {
             foreach ((array)$user->user_roles as $target) {
-
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
-
                     // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
                     if ($authority == 'posts.approval' && $user_role == 'role_approval') {
                         return true;
@@ -129,7 +126,6 @@ trait ConnectCommonTrait
 
                     // 必要なロールを保持している
                     if ($role == $user_role && $user_role_value) {
-
                         // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
                         if (($user_role == 'role_article_admin') ||
                             ($user_role == 'role_article') ||
@@ -140,16 +136,14 @@ trait ConnectCommonTrait
                         // 自分のオブジェクトチェックが必要ならチェックする
                         if (empty($post)) {
                             return true;
-                        }
-                        else {
+                        } else {
                             if ((($authority == 'buckets.delete') ||
                                  ($authority == 'posts.create') ||
                                  ($authority == 'posts.update') ||
                                  ($authority == 'posts.delete')) &&
                                 ($user->id == $post->created_id)) {
                                 return true;
-                            }
-                            else {
+                            } else {
                                 // 複数ロールをチェックするため、ここではreturn しない。
                                 // return false;
                             }
@@ -178,14 +172,11 @@ trait ConnectCommonTrait
         // 指定された権限を含むロールをループする。
         // 記事追加はコンテンツ管理者でもOKのような処理のため。
         foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
-
             // ユーザの保持しているロールをループ
             // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
             foreach ((array)$user->user_roles as $target) {
-
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
-
                     // 必要なロールを保持している場合は、権限ありとして true を返す。
                     if ($checck_role == $user_role && $user_role_value) {
                         return true;
@@ -203,7 +194,7 @@ trait ConnectCommonTrait
     public function can($roll_or_auth, $post = null, $plugin_name = null, $buckets = null)
     {
         $args = null;
-        if ( $post != null || $plugin_name != null || $buckets != null ) {
+        if ($post != null || $plugin_name != null || $buckets != null) {
             $args = [[$post, $plugin_name, $buckets]];
         }
 
@@ -219,7 +210,7 @@ trait ConnectCommonTrait
     public function isCan($roll_or_auth, $post = null, $plugin_name = null)
     {
         $args = null;
-        if ( $post != null || $plugin_name != null ) {
+        if ($post != null || $plugin_name != null) {
             $args = [[$post, $plugin_name]];
         }
 
@@ -250,9 +241,9 @@ trait ConnectCommonTrait
         $plugins = Plugins::where('display_flag', $display_flag)->orderBy('display_sequence')->get();
 
         // 強制的に非表示にするプラグインを除外
-        if ( !$force_get ) {
-            foreach($plugins as $plugin_loop_key => $plugin) {
-                if ( in_array(mb_strtolower($plugin->plugin_name), config('connect.PLUGIN_FORCE_HIDDEN'))) {
+        if (!$force_get) {
+            foreach ($plugins as $plugin_loop_key => $plugin) {
+                if (in_array(mb_strtolower($plugin->plugin_name), config('connect.PLUGIN_FORCE_HIDDEN'))) {
                     $plugins->forget($plugin_loop_key);
                 }
             }
@@ -267,26 +258,26 @@ trait ConnectCommonTrait
     public function getWeekJp($date)
     {
         switch (date('N', strtotime($date))) {
-        case 1:
-            return "月";
+            case 1:
+                return "月";
             break;
-        case 2:
-            return "火";
+            case 2:
+                return "火";
             break;
-        case 3:
-            return "水";
+            case 3:
+                return "水";
             break;
-        case 4:
-            return "木";
+            case 4:
+                return "木";
             break;
-        case 5:
-            return "金";
+            case 5:
+                return "金";
             break;
-        case 6:
-            return "土";
+            case 6:
+                return "土";
             break;
-        case 7:
-            return "日";
+            case 7:
+                return "日";
             break;
         }
     }
@@ -348,11 +339,9 @@ trait ConnectCommonTrait
         }
 
         // ログイン可否の個別設定をループ
-        foreach($configs_login_permits as $configs_login_permit) {
-
+        foreach ($configs_login_permits as $configs_login_permit) {
             // IPアドレスが範囲内か
             if (!$this->isRangeIp($remote_ip, $configs_login_permit->ip_address)) {
-
                 // IPアドレスが範囲外なら、チェック的にはOKなので、次のチェックへ。
                 //Log::debug("IP範囲外：" . $remote_ip . "/" . $configs_login_permit->ip_address);
                 continue;
@@ -365,7 +354,7 @@ trait ConnectCommonTrait
                 $login_reject = $configs_login_permit->reject;
             }
             // 許可/拒否設定が自分のロールに合致すれば、対象の許可/拒否設定を反映
-            else if ($this->check_role($user, $configs_login_permit->role)) {
+            elseif ($this->check_role($user, $configs_login_permit->role)) {
                 //Log::debug("role合致で対象：" . $configs_login_permit->reject);
                 $login_reject = $configs_login_permit->reject;
             }
@@ -444,14 +433,13 @@ trait ConnectCommonTrait
         $role_check = false;
         $role_ckeck_tables = $plugin_instance->declareRole();
         if (array_key_exists($action, $role_ckeck_tables)) {
-            foreach($role_ckeck_tables[$action] as $role) {
+            foreach ($role_ckeck_tables[$action] as $role) {
                 // プラグインで定義された権限が自分にあるかチェック
                 if ($this->isCan($role)) {
                     $role_check = true;
                 }
             }
-        }
-        else {
+        } else {
             abort(403, 'メソッドに権限が設定されていません。');
         }
 
@@ -473,8 +461,7 @@ trait ConnectCommonTrait
         // インスタンスを生成して呼び出す。
         if ($this->isSpecialPath($path) === 1) {
             $cc_special_path = config('connect.CC_SPECIAL_PATH');
-        }
-        else {
+        } else {
             $cc_special_path = config('connect.CC_SPECIAL_PATH_MANAGE');
         }
 
@@ -484,7 +471,6 @@ trait ConnectCommonTrait
         // 一般プラグインの場合、通常はコアでフレーム分、インスタンスを生成してからinvokeするが、SpecialPathの場合はここでインスタンス生成する。
         // 管理プラグインの場合は、この後で呼ぶinvokeManageでインスタンス生成する。
         if ($this->isSpecialPath($path) === 1) {
-
             // Page とFrame の生成
             $page = Page::where('id', $cc_special_path[$path]['page_id'])->first();
             $frame = Frame::where('id', $cc_special_path[$path]['frame_id'])->first();
@@ -501,9 +487,7 @@ trait ConnectCommonTrait
         // 一般プラグインか管理プラグインかで呼び方を変える。
         if ($this->isSpecialPath($path) === 1) {
             return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['frame_id']);
-        }
-        else if ($this->isSpecialPath($path) === 2) {
-
+        } elseif ($this->isSpecialPath($path) === 2) {
             return $this->invokeManage($request, $cc_special_path[$path]['method']);
         }
         return;
@@ -524,7 +508,7 @@ trait ConnectCommonTrait
 
         // 固定リンク(多言語切り替えで使用)
         $config_language_multi_on = null;
-        foreach($configs as $config) {
+        foreach ($configs as $config) {
             if ($config->name == 'language_multi_on') {
                 $config_language_multi_on = $config->value;
             }
@@ -532,7 +516,7 @@ trait ConnectCommonTrait
 
         // 言語設定の取得
         $languages = array();
-        foreach($configs as $config) {
+        foreach ($configs as $config) {
             if ($config->category == 'language') {
                 $languages[$config->additional1] = $config;
             }
@@ -547,12 +531,10 @@ trait ConnectCommonTrait
             $page_language &&
             $permanent_link_array &&
             array_key_exists(1, $permanent_link_array) &&
-            $permanent_link_array[1] == $page_language)
-        {
+            $permanent_link_array[1] == $page_language) {
             $patterns[0] = '/{{cc:permanent_link}}/';
             $replacements[0] = trim(mb_substr($page->permanent_link, mb_strlen('/'.$page_language)), '/');
-        }
-        else {
+        } else {
             $patterns[0] = '/{{cc:permanent_link}}/';
             $replacements[0] = trim($page->permanent_link, '/');
         }
@@ -571,7 +553,6 @@ trait ConnectCommonTrait
         $sp_menu .= '<nav class="sp_menu">' . "\n";
         $sp_menu .= '<ul>' . "\n";
         foreach ($level1_pages as $level1_page) {
-
             // ページの表示条件の反映（IP制限など）
             if (!$level1_page['parent']->isView(Auth::user())) {
                 continue;
@@ -586,8 +567,7 @@ trait ConnectCommonTrait
             // ルーツのチェック
             if ($level1_page['parent']->isAncestorOf($this->page)) {
                 $active_class = ' class="active"';
-            }
-            else {
+            } else {
                 $active_class = '';
             }
             //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
@@ -601,8 +581,7 @@ trait ConnectCommonTrait
                 $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
                 $sp_menu .= $level1_page['parent']->page_name;
                 $sp_menu .= '</a>' . "\n";
-            }
-            else {
+            } else {
                 $sp_menu .= '<p' . $active_class . '>';
                 $sp_menu .= $level1_page['parent']->page_name;
                 $sp_menu .= '</p>' . "\n";
@@ -611,7 +590,6 @@ trait ConnectCommonTrait
             if (array_key_exists('child', $level1_page)) {
                 $sp_menu .= '<ul' . $active_class . '>' . "\n";
                 foreach ($level1_page['child'] as $child) {
-
                     // ページの表示条件の反映（IP制限など）
                     if (!$child->isView(Auth::user())) {
                         continue;
@@ -619,15 +597,13 @@ trait ConnectCommonTrait
 
                     if ($child->base_display_flag == 0) {
                         continue;
-                    }
-                    else {
+                    } else {
                         $child_depth = intval($child->depth) - 1;
                         $child_margin_left = ($child_depth > 0) ? $child_depth * 20 : 0;
                         $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . ' style="margin-left:' . $child_margin_left . 'px"' . '>';
                         if ($page_id == $child->id) {
                             $sp_menu .= '<u>' . $child->page_name . '</u>';
-                        }
-                        else {
+                        } else {
                             $sp_menu .= $child->page_name;
                         }
                         $sp_menu .= '</a></li>' . "\n";
@@ -665,7 +641,7 @@ trait ConnectCommonTrait
         // 今、表示しているページの言語を判定
         $page_paths = explode('/', $page['permanent_link']);
         if ($page_paths && is_array($page_paths) && array_key_exists(1, $page_paths)) {
-            foreach($languages as $language) {
+            foreach ($languages as $language) {
                 if (trim($language->additional1, '/') == $page_paths[1]) {
                     $page_language = $page_paths[1];
                     break;
@@ -685,12 +661,12 @@ trait ConnectCommonTrait
 
         $current_url = url()->current();
         $base_url = url('/');
-        $current_permanent_link = str_replace( $base_url, '', $current_url);
+        $current_permanent_link = str_replace($base_url, '', $current_url);
 
         // 今、表示しているページの言語を判定
         $page_paths = explode('/', $current_permanent_link);
         if ($page_paths && is_array($page_paths) && array_key_exists(1, $page_paths)) {
-            foreach($languages as $language) {
+            foreach ($languages as $language) {
                 if (trim($language->additional1, '/') == $page_paths[1]) {
                     $page_language = $page_paths[1];
                     break;
@@ -751,7 +727,6 @@ trait ConnectCommonTrait
 
         // NetCommons2 認証
         if ($auth_method->value == 'netcommons2') {
-
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
             // Log::debug($request['password']);
@@ -772,13 +747,11 @@ trait ConnectCommonTrait
             // 戻り値のチェック
             if (is_array($check_result) && array_key_exists('check', $check_result) && array_key_exists('ret_value', $check_result)) {
                 if ($check_result['check'] == true && $check_result['ret_value'] == md5($request['userid'] . $auth_method['additional3'])) {
-
                     // ログインするユーザの存在を確認
                     $user = User::where('userid', $request['userid'])->first();
 
                     // ユーザが存在しない
                     if (empty($user)) {
-
                         // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
                         $user           = new User;
                         $user->name     = $request['userid'];
@@ -891,13 +864,19 @@ trait ConnectCommonTrait
         // グループは複数、含まれている状態で保持しておく。
         // ページやグループでデータを抜き出す場合は、Laravel のCollection メソッドでwhere を使用。
         //$this->page_role = PageRole::select('page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
-        $page_role_query = PageRole::select('page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
-                                            'group_users.user_id', 'groups.name AS groups_name', 'group_users.group_role')
+        $page_role_query = PageRole::select(
+            'page_roles.page_id',
+            'page_roles.group_id',
+            'page_roles.role_name',
+            'group_users.user_id',
+            'groups.name AS groups_name',
+            'group_users.group_role'
+        )
                                     ->join('groups', function ($group_join) {
                                         $group_join->on('groups.id', '=', 'page_roles.group_id')
                                                    ->whereNull('groups.deleted_at');
                                     })
-                                    ->join('group_users', function ($group_users_join) use($user) {
+                                    ->join('group_users', function ($group_users_join) use ($user) {
                                         $group_users_join->on('group_users.group_id', '=', 'page_roles.group_id')
                                                          ->where('group_users.user_id', $user->id)
                                                          ->whereNull('group_users.deleted_at');
@@ -911,5 +890,4 @@ trait ConnectCommonTrait
         //return $this->page_role;
         return $page_role;
     }
-
 }

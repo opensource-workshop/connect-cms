@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Enums;
+
 use Illuminate\Support\Facades\App;
 
 /**
@@ -50,7 +51,8 @@ final class DayOfWeek
     /*
     * key/valueの連想配列を返す
     */
-    public static function getMembers(){
+    public static function getMembers()
+    {
         return App::getLocale() == \ConnectLocale::en ? self::enum_en : self::enum_ja;
     }
 }

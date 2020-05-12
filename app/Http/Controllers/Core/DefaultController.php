@@ -132,7 +132,7 @@ class DefaultController extends ConnectController
         $next_language = null;
 
         // 次に表示するページの言語を判定
-        foreach($languages as $language) {
+        foreach ($languages as $language) {
             if (trim($language->additional1, '/') == $language_or_1stdir) {
                 $next_language = trim($language->additional1, '/');
                 break;
@@ -142,45 +142,44 @@ class DefaultController extends ConnectController
 
        // permanent_link の編集
        // 言語がデフォルト(next_language がnull)＆2nd以降がある場合は、language_or_1stdir はpermanent_link の一部なので、結合する。
-       if (empty($next_language) && $link_or_after2nd) {
-           $permanent_link = $language_or_1stdir . '/' . $link_or_after2nd;
-       }
+        if (empty($next_language) && $link_or_after2nd) {
+            $permanent_link = $language_or_1stdir . '/' . $link_or_after2nd;
+        }
        // 言語がデフォルト(next_language がnull)＆2nd以降がない場合は、language_or_1stdir がディレクトリ。
-       else if (empty($next_language)) {
-           $permanent_link = $language_or_1stdir;
-       }
-       else {
-           $permanent_link = $link_or_after2nd;
-       }
+        elseif (empty($next_language)) {
+            $permanent_link = $language_or_1stdir;
+        } else {
+            $permanent_link = $link_or_after2nd;
+        }
 
        // 遷移するページ
-       $next_page = null;
+        $next_page = null;
 
        // 指定されたページがあれば、リダイレクト。
-       $next_path = '/';
-       if ($next_language) {
-           $next_path .= $next_language;
-       }
-       if ($permanent_link) {
-           if (mb_substr($next_path, -1) != '/') {
-               $next_path .= '/';
-           }
-           $next_path .= $permanent_link;
-       }
-       $next_page = Page::where('permanent_link', $next_path)->first();
+        $next_path = '/';
+        if ($next_language) {
+            $next_path .= $next_language;
+        }
+        if ($permanent_link) {
+            if (mb_substr($next_path, -1) != '/') {
+                $next_path .= '/';
+            }
+            $next_path .= $permanent_link;
+        }
+        $next_page = Page::where('permanent_link', $next_path)->first();
 
-       if (!empty($next_page)) {
-           return redirect($next_page->permanent_link);
-       }
+        if (!empty($next_page)) {
+            return redirect($next_page->permanent_link);
+        }
 
        // 指定された言語のルートあれば、リダイレクト。
-       $next_page = Page::where('permanent_link', '/'.$next_language)->first();
-       if (!empty($next_page)) {
-           return redirect($next_page->permanent_link);
-       }
+        $next_page = Page::where('permanent_link', '/'.$next_language)->first();
+        if (!empty($next_page)) {
+            return redirect($next_page->permanent_link);
+        }
 
        // トップに戻る
-       return redirect('/');
+        return redirect('/');
     }
 
     /**
@@ -195,7 +194,6 @@ class DefaultController extends ConnectController
         $target_frame_templates = array();
 
         if (!empty($request->action)) {
- 
             // Frame データ
             $action_core_frame = Frame::where('id', $request->frame_id)->first();
 
@@ -223,10 +221,8 @@ class DefaultController extends ConnectController
                 //if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
                 $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
                 if (is_dir($template_dir)) {
-
                     // テンプレート設定ファイルがある場合
                     if (File::exists($template_dir."/template.ini")) {
-
                         // テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
                         $template_inis = parse_ini_file($template_dir."/template.ini");
                         $template_name = $template_inis['template_name'];
@@ -246,8 +242,7 @@ class DefaultController extends ConnectController
                     // テンプレートソート用配列
                     if (array_key_exists('display_sequence', $template_inis)) {
                         $sort_array[] = $template_inis['display_sequence'];
-                    }
-                    else {
+                    } else {
                         $sort_array[] = $tmp_display_sequence;
                         $tmp_display_sequence++;
                     }
@@ -399,16 +394,13 @@ class DefaultController extends ConnectController
     private function setHiddenFrame($frames, $plugin_instances)
     {
         // フレームをループし、対応するインスタンスの件数取得メソッドを呼んで、条件が合致すれば非表示フラグをon
-        foreach($frames as $key => $frame) {
-
+        foreach ($frames as $key => $frame) {
             // データがない場合にフレームも非表示にする。
             if ($frame->none_hidden) {
-
                 // 表示コンテンツの件数取得メソッドの有無確認と呼び出し
                 if (method_exists($plugin_instances[$frame->frame_id], 'getContentsCount')) {
                     $count = $plugin_instances[$frame->frame_id]->getContentsCount($frame->frame_id);
                     if ($count == 0) {
-
                         // フレームオブジェクトの非表示フラグ
                         $frames[$key]->hidden_flag = true;
 
@@ -466,16 +458,16 @@ class DefaultController extends ConnectController
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";
         // セッションにあれば使用する。
-        if ( $request->session()->has('page_no.'.$frame_id) ) {
+        if ($request->session()->has('page_no.'.$frame_id)) {
             $page_no_link = "page=" . $request->session()->get('page_no.'.$frame_id);
         }
         // リクエストにあれば優先で使用する。
-        if ( $request->page ) {
+        if ($request->page) {
             $page_no_link = "page=" . $request->page;
         }
 
         // return_frame_action があれば、編集中ページに遷移
-        if ( $request->return_frame_action ) {
+        if ($request->return_frame_action) {
             $page = Page::where('id', $page_id)->first();
             $base_url = url('/');
             return redirect($base_url . $page->permanent_link . "?frame_action=" . $request->return_frame_action . "&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
@@ -483,12 +475,12 @@ class DefaultController extends ConnectController
         }
 
         // redirect_path があれば遷移
-        if ( $request->redirect_path ) {
+        if ($request->redirect_path) {
             return redirect($request->redirect_path);
         }
 
         // Page データがあれば、そのページに遷移
-        if ( !empty($page_id) ) {
+        if (!empty($page_id)) {
             $page = Page::where('id', $page_id)->first();
             return redirect($page->permanent_link . ($page_no_link ? "?" . $page_no_link : ""));
         }
@@ -548,11 +540,15 @@ class DefaultController extends ConnectController
     private function getFramesMain($pages_id)
     {
         // フレーム一覧取得（メインエリアのみ）
-        $frames = Frame::select('frames.*', 'frames.id as frame_id',
-                                'pages.page_name', 'pages.id as page_id',
-                                'plugins.plugin_name_full')
+        $frames = Frame::select(
+            'frames.*',
+            'frames.id as frame_id',
+            'pages.page_name',
+            'pages.id as page_id',
+            'plugins.plugin_name_full'
+        )
                        ->join('pages', 'frames.page_id', '=', 'pages.id')
-                       ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
+                       ->leftJoin('plugins', 'plugins.plugin_name', '=', 'frames.plugin_name')
                        ->where('pages.id', $pages_id)
                        ->where('frames.area_id', 2)
                        ->orderBy('frames.display_sequence')->get();
