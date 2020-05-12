@@ -56,7 +56,7 @@ trait MigrationTrait
         */
 
         // フレーム単位のini ファイルの取得
-        $ini_files = File::glob(storage_path() . '\app\migration\\' . $page_id . '\*.ini');
+        $ini_files = File::glob(storage_path() . '/app/migration/' . $page_id . '/*.ini');
 
         // フレームのループ
         $display_sequence = 0;
@@ -109,8 +109,8 @@ trait MigrationTrait
                 foreach ($ini_array['image_names'] as $filename => $client_original_name) {
 
                     // ファイルサイズ
-                    if (File::exists(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename)) {
-                        $file_size = File::size(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename);
+                    if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
+                        $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
                     }
                     else {
                         $file_size = 0;
@@ -129,8 +129,8 @@ trait MigrationTrait
                               ]);
 
                     // ファイルのコピー
-                    $source_file_path = 'migration\\' . $page_id . "\\" . $filename;
-                    $destination_file_path = $this->getDirectory($upload->id) . '\\' . $upload->id . '.' . $this->getExtension($filename);
+                    $source_file_path = 'migration/' . $page_id . "/" . $filename;
+                    $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
                     Storage::copy($source_file_path, $destination_file_path);
 
                     // 画像のパスの修正
@@ -143,8 +143,8 @@ trait MigrationTrait
                 foreach ($ini_array['file_names'] as $filename => $client_original_name) {
 
                     // ファイルサイズ
-                    if (File::exists(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename)) {
-                        $file_size = File::size(storage_path() . '\app\migration\\' . $page_id . "\\" . $filename);
+                    if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
+                        $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
                     }
                     else {
                         $file_size = 0;
@@ -163,8 +163,8 @@ trait MigrationTrait
                               ]);
 
                     // ファイルのコピー
-                    $source_file_path = 'migration\\' . $page_id . "\\" . $filename;
-                    $destination_file_path = $this->getDirectory($upload->id) . '\\' . $upload->id . '.' . $this->getExtension($filename);
+                    $source_file_path = 'migration/' . $page_id . "/" . $filename;
+                    $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
                     Storage::copy($source_file_path, $destination_file_path);
 
                     // ファイルのパスの修正
@@ -294,7 +294,7 @@ trait MigrationTrait
 
         // 画像ファイルや添付ファイルを取得する場合のテンポラリ・ディレクトリ
         //$uniq_tmp_dir = uniqid('migration_');
-        Storage::makeDirectory('migration\\' . $page_id);
+        Storage::makeDirectory('migration/' . $page_id);
 
         // 指定されたページのHTML を取得
         $html = $this->getHTMLPage($url);
@@ -362,8 +362,8 @@ trait MigrationTrait
                     $downloadPath = $image_url;
 
                     $file_name = "frame_" . $frame_index . '_' . $image_index;
-                    $savePath = 'migration\\' . $page_id . "\\" . $file_name;
-                    $saveStragePath = storage_path() . '\app\\' . $savePath;
+                    $savePath = 'migration/' . $page_id . "/" . $file_name;
+                    $saveStragePath = storage_path() . '/app/' . $savePath;
 
                     // CURL 設定、ファイル取得
                     $ch = curl_init($downloadPath);
@@ -437,8 +437,8 @@ trait MigrationTrait
                         $downloadPath = $anchor_href;
 
                         $file_name = "frame_" . $frame_index . '_file_' . $file_index;
-                        $savePath = 'migration\\' . $page_id . "\\" . $file_name;
-                        $saveStragePath = storage_path() . '\app\\' . $savePath;
+                        $savePath = 'migration/' . $page_id . "/" . $file_name;
+                        $saveStragePath = storage_path() . '/app/' . $savePath;
 
                         // CURL 設定、ファイル取得
                         $ch = curl_init($downloadPath);
@@ -473,13 +473,13 @@ trait MigrationTrait
             }
 
             // フレーム設定ファイルの出力
-            Storage::put('migration\\' . $page_id . "\\frame_" . $frame_index . '.ini', $frame_ini);
+            Storage::put('migration/' . $page_id . "/frame_" . $frame_index . '.ini', $frame_ini);
 
             // Contents 変換
             $content_html = $this->migrationHtml($content_html);
 
             // HTML content の保存
-            Storage::put('migration\\' . $page_id . "\\frame_" . $frame_index . '.html', trim($content_html));
+            Storage::put('migration/' . $page_id . "/frame_" . $frame_index . '.html', trim($content_html));
         }
     }
 
