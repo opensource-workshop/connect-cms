@@ -19,3 +19,4 @@ yarn-error.log
 !.gitkeep
 /connect-cms.code-workspace
 .vscode/launch.json
+composer.phar
