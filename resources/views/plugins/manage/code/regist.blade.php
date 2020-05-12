@@ -4,7 +4,7 @@
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コード管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -51,7 +51,7 @@
         @endif
 
         <div class="form-group row">
-            <label for="plugin_name" class="col-md-3 col-form-label text-md-right">plugin_name</label>
+            <label for="plugin_name" class="col-md-3 col-form-label text-md-right">プラグイン</label>
             <div class="col-md-9">
                 <select name="plugin_name" id="plugin_name" class="form-control">
                     <option value=""@if($code->plugin_name == "") selected @endif>設定なし</option>

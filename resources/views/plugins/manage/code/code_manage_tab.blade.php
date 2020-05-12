@@ -34,6 +34,15 @@
                         <span class="nav-link"><span class="active">コード変更</span></span>
                     </li>
                 @endif
+
+                <li role="presentation" class="nav-item">
+                @if ($function == "display")
+                    <span class="nav-link"><span class="active">一覧表示設定</span></span>
+                @else
+                    <a href="{{url('/manage/code/display')}}" class="nav-link">一覧表示設定</a></li>
+                @endif
+                </li>
+
             </ul>
         </div>
     </nav>

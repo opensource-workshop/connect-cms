@@ -2,20 +2,15 @@
 
 namespace App\Plugins\Manage\CodeManage;
 
-//use Illuminate\Http\Request;
-//use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-//use File;
-//use DB;
-
 use App\Models\Common\Codes;
+use App\Models\Core\Configs;
 use App\Models\Core\Plugins;
 
 use App\Plugins\Manage\ManagePluginBase;
 
-// Connect-CMS 用設定データ
-//use App\Traits\ConnectCommonTrait;
+use Log;
 
 /**
  * コード管理クラス
@@ -27,8 +22,6 @@ use App\Plugins\Manage\ManagePluginBase;
  */
 class CodeManage extends ManagePluginBase
 {
-    // use ConnectCommonTrait;
-
     /**
      *  権限定義
      */
@@ -42,6 +35,8 @@ class CodeManage extends ManagePluginBase
         $role_ckeck_table["edit"]               = array('admin_site');
         $role_ckeck_table["update"]             = array('admin_site');
         $role_ckeck_table["destroy"]            = array('admin_site');
+        $role_ckeck_table["display"]            = array('admin_site');
+        $role_ckeck_table["displayUpdate"]      = array('admin_site');
         return $role_ckeck_table;
     }
 
@@ -70,6 +65,9 @@ class CodeManage extends ManagePluginBase
                           //->orderBy('code')
                           ->paginate(10);
 
+        // Configsから一覧表示設定の取得
+        $config = $this->getConfigCodeListDisplayColums();
+
         // [TODO] ページネーションの表示ページ数を保持するための暫定対応
         $paginate_page = $request->get('page', 1);
 
@@ -79,6 +77,7 @@ class CodeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "code",
             "codes"       => $codes,
+            "config"      => $config,
             "paginate_page" => $paginate_page,
             // "page" => 1,
         ]);
@@ -202,4 +201,101 @@ class CodeManage extends ManagePluginBase
         $page = $request->get('page', 1);
         return redirect("/manage/code?page=$page");
     }
+
+    /**
+     *  一覧表示設定画面表示
+     *
+     * @return view
+     */
+    public function display($request)
+    {
+        // Configsから一覧表示設定の取得
+        $config = $this->getConfigCodeListDisplayColums();
+
+        // 管理画面プラグインの戻り値の返し方
+        // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
+        return view('plugins.manage.code.display',[
+            "function"    => __FUNCTION__,
+            "plugin_name" => "code",
+            "config"      => $config,
+        ]);
+    }
+
+    /**
+     *  Configsから一覧表示設定の取得
+     */
+    private function getConfigCodeListDisplayColums()
+    {
+        // 一覧表示設定の取得
+        $config = Configs::where('category', 'code_manage')
+                        ->where('name', 'code_list_display_colums')
+                        ->first();
+
+        if ($config) {
+            // 基本、マイグレーションで初期値を設定するため、データは必ずある想定
+            $config->value_array = explode('|', $config->value);
+        }
+
+        return $config;
+    }
+
+    /**
+     *  一覧表示設定 更新処理
+     */
+    public function displayUpdate($request, $id = null)
+    {
+        if ($id) {
+            // 更新
+
+            $configs = Configs::find($id);
+
+            if (! $configs) {
+                // 更新時にデータなしは、基本ありえない
+                Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . '):更新時にデータなしは、基本ありえない。id=' . $id);
+                // 一覧画面に戻る
+                return redirect("/manage/code?page=1");
+
+            } elseif ($configs->name != 'code_list_display_colums')  {
+                // code_list_display_colums以外のデータは、基本ありえない
+                Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . '):更新時に取得したデータがcode_list_display_colums以外は、基本ありえない。id=' . $configs->id . ' name=' . $configs->name);
+                // 一覧画面に戻る
+                return redirect("/manage/code?page=1");
+            }
+        } else {
+            // 登録（初回登録時のみ）
+
+            // Configsから一覧表示設定の取得
+            $config = $this->getConfigCodeListDisplayColums();
+
+            if ($config) {
+                // 登録時にデータありは、基本ありえない
+                Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . '):登録時にデータありは、基本ありえない');
+                // 一覧画面に戻る
+                return redirect("/manage/code?page=1");
+            }
+
+            $configs = new Configs();
+            $configs->category = 'code_manage';
+            $configs->name = 'code_list_display_colums';
+        }
+
+        // 値があれば配列に直してセット
+        if ($request->code_list_display_colums) {
+            // 必ずplugin_nameをセットするため、ここを通る
+            $value = implode('|', $request->code_list_display_colums);
+        } else {
+            $value = null;
+        }
+        $configs->value = $value;
+        $configs->save();
+
+        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+        // Log::debug(var_export($request->code_list_display_colums, true));
+        // Log::debug(var_export($_POST, true));
+
+        // 一覧画面に戻る
+        // return redirect("/manage/code");
+        return redirect("/manage/code?page=1");
+    }
+
 }
