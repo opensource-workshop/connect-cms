@@ -31,7 +31,7 @@
                 表示する
                 <input type="hidden" name="code_list_display_colums[plugin_name]" value="plugin_name">
                 <div class="text-muted">
-                    plugin_nameの表示は編集マークの表示に必要なため、必ず表示します。
+                    プラグインは編集マークの表示に必要なため、必ず表示します。
                 </div>
             </div>
         </div>
