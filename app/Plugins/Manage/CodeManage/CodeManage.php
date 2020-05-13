@@ -48,22 +48,52 @@ class CodeManage extends ManagePluginBase
     public function index($request, $page_id = null, $errors = array())
     {
         // コード管理データの取得
-        $codes = Codes::select('codes.*',
-                                   'buckets.bucket_name',
-                                   'plugins.plugin_name_full')
-                          ->leftJoin('buckets', 'buckets.id', '=', 'codes.buckets_id')
-                          ->leftJoin('plugins', 'plugins.plugin_name', '=', 'codes.plugin_name')
-                          ->orderBy('plugin_name')
-                          ->orderBy('buckets_id')
-                          ->orderBy('prefix')
-                          ->orderBy('type_code1')
-                          ->orderBy('type_code2')
-                          ->orderBy('type_code3')
-                          ->orderBy('type_code4')
-                          ->orderBy('type_code5')
-                          ->orderBy('display_sequence')
-                          //->orderBy('code')
-                          ->paginate(10);
+        $codes_query = Codes::query();
+        $codes_query->select(
+            'codes.*',
+            'buckets.bucket_name',
+            'plugins.plugin_name_full'
+        );
+        $codes_query->leftJoin('buckets', 'buckets.id', '=', 'codes.buckets_id')
+                    ->leftJoin('plugins', 'plugins.plugin_name', '=', 'codes.plugin_name');
+        $codes_query->orderBy('plugin_name')
+                    ->orderBy('buckets_id')
+                    ->orderBy('prefix')
+                    ->orderBy('type_code1')
+                    ->orderBy('type_code2')
+                    ->orderBy('type_code3')
+                    ->orderBy('type_code4')
+                    ->orderBy('type_code5')
+                    ->orderBy('display_sequence');
+
+        // $q = $request->input('q', '入退室');
+        // q = 入力された検索条件
+        $q = $request->input('q');
+        if ($q) {
+            // $codes_query->where('codes.plugin_name', 'like', '%入退室%');
+            // $codes_query->where('plugins.plugin_name_full', 'like', '%入退室%');
+            $codes_query->orWhere('codes.plugin_name', 'like', '%' . $q . '%');
+            $codes_query->orWhere('plugins.plugin_name_full', 'like', '%' . $q . '%');
+            $codes_query->orWhere('buckets.bucket_name', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.buckets_id', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.prefix', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.type_name', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.type_code1', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.type_code2', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.type_code3', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.type_code4', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.type_code5', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.code', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.value', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.additional1', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.additional2', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.additional3', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.additional4', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.additional5', 'like', '%' . $q . '%');
+            $codes_query->orWhere('codes.display_sequence', 'like', '%' . $q . '%');
+        }
+
+        $codes = $codes_query->paginate(10);
 
         // Configsから一覧表示設定の取得
         $config = $this->getConfigCodeListDisplayColums();
@@ -78,6 +108,7 @@ class CodeManage extends ManagePluginBase
             "plugin_name" => "code",
             "codes"       => $codes,
             "config"      => $config,
+            "q"           => $q,
             "paginate_page" => $paginate_page,
             // "page" => 1,
         ]);
@@ -126,6 +157,9 @@ class CodeManage extends ManagePluginBase
         // [TODO] ページネーションの表示ページ数を保持するための暫定対応
         $paginate_page = $request->get('page', 1);
 
+        // q = 入力された検索条件
+        $q = $request->input('q');
+
         return view('plugins.manage.code.regist',[
             // "function" => __FUNCTION__,
             "function" => $function,
@@ -133,6 +167,7 @@ class CodeManage extends ManagePluginBase
             "plugins" => $plugins,
             "code" => $code,
             'errors' => $errors,
+            'q' => $q,
             "paginate_page" => $paginate_page,
         ]);
     }
@@ -183,10 +218,15 @@ class CodeManage extends ManagePluginBase
         $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
         $codes->save();
 
+
+        $page = $request->get('page', 1);
+
+        // q = 入力された検索条件
+        $q = $request->input('q');
+
         // 一覧画面に戻る
         // return redirect("/manage/code");
-        $page = $request->get('page', 1);
-        return redirect("/manage/code?page=$page");
+        return redirect("/manage/code?page=$page&q=$q");
     }
 
     /**
