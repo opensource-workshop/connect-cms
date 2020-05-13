@@ -137,7 +137,7 @@ class CodeManage extends ManagePluginBase
      *
      * @return view
      */
-    public function edit($request, $id = null, $function = 'edit', $errors = array())
+    public function edit($request, $id = null, $function = null, $errors = array())
     {
         // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
         $request->flash();
@@ -159,6 +159,10 @@ class CodeManage extends ManagePluginBase
 
         // q = 入力された検索条件
         $q = $request->input('q');
+
+        if (is_null($function)) {
+            $function = 'edit';
+        }
 
         return view('plugins.manage.code.regist', [
             // "function" => __FUNCTION__,
