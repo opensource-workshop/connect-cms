@@ -9,9 +9,12 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
+use App\Models\Common\Buckets;
+use App\Models\Common\Frame;
 use App\Models\Common\Group;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
+use App\Models\User\Contents\Contents;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -32,18 +35,22 @@ class PageManage extends ManagePluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["index"]         = array('admin_page');
-        $role_ckeck_table["edit"]          = array('admin_page');
-        $role_ckeck_table["store"]         = array('admin_page');
-        $role_ckeck_table["update"]        = array('admin_page');
-        $role_ckeck_table["destroy"]       = array('admin_page');
-        $role_ckeck_table["sequence_up"]   = array('admin_page');
-        $role_ckeck_table["sequence_down"] = array('admin_page');
-        $role_ckeck_table["move_page"]     = array('admin_page');
-        $role_ckeck_table["import"]        = array('admin_page');
-        $role_ckeck_table["upload"]        = array('admin_page');
-        $role_ckeck_table["role"]          = array('admin_page');
-        $role_ckeck_table["saveRole"]      = array('admin_page');
+        $role_ckeck_table["index"]           = array('admin_page');
+        $role_ckeck_table["edit"]            = array('admin_page');
+        $role_ckeck_table["store"]           = array('admin_page');
+        $role_ckeck_table["update"]          = array('admin_page');
+        $role_ckeck_table["destroy"]         = array('admin_page');
+        $role_ckeck_table["sequence_up"]     = array('admin_page');
+        $role_ckeck_table["sequence_down"]   = array('admin_page');
+        $role_ckeck_table["move_page"]       = array('admin_page');
+        $role_ckeck_table["import"]          = array('admin_page');
+        $role_ckeck_table["upload"]          = array('admin_page');
+        $role_ckeck_table["role"]            = array('admin_page');
+        $role_ckeck_table["saveRole"]        = array('admin_page');
+        $role_ckeck_table["migration_order"] = array('admin_page');
+        $role_ckeck_table["migration_run"]   = array('admin_page');
+        $role_ckeck_table["migration_get"]   = array('admin_page');
+        $role_ckeck_table["migration_imort"] = array('admin_page');
 
 /*
         $role_ckeck_table = array();
@@ -363,6 +370,35 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     *  「固定記事」プラグインを新規で配置
+     *
+     * @return view
+     */
+    public function createContent($page_id)
+    {
+        // Buckets 登録
+        $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
+
+        // フレーム作成
+        $frame = Frame::create(['page_id'          => $page_id,
+                                'area_id'          => 2,
+                                'frame_title'      => '[無題]',
+                                'frame_design'     => 'default',
+                                'plugin_name'      => 'contents',
+                                'frame_col'        => 0,
+                                'template'         => 'default',
+                                'bucket_id'        => $bucket->id,
+                                'display_sequence' => 1,
+                               ]);
+
+        // Contents 登録
+        $content = Contents::create(['bucket_id'    => $bucket->id,
+                                     'status'       => 0]);
+
+        return true;
+    }
+
+    /**
      *  ページインポート処理
      *
      * @return view
@@ -433,6 +469,11 @@ class PageManage extends ManagePluginBase
                 'layout'            => ($csv_columns[5] == 'NULL') ? null : $csv_columns[5],
                 'base_display_flag' => $csv_columns[6]
             ]);
+
+            // 初期配置がある場合
+            if ($request->has('deploy_content_plugin') && $request->deploy_content_plugin == '1') {
+                $this->createContent($page->id);
+            }
         }
 
         // 一時ファイルの削除
@@ -523,5 +564,34 @@ class PageManage extends ManagePluginBase
 
         // 更新後は一覧画面へ
         return redirect('manage/page/role/' . $page_id . '/' . $request->group_id);
+    }
+
+    /**
+     *  外部ページ取り込み指示画面
+     *
+     * @return view
+     */
+    public function migration_order($request, $page_id)
+    {
+        // ページID で1件取得
+        $page = Page::find($page_id);
+
+        // ページデータ取得
+        if (empty($page)) {
+
+            // 画面呼び出し
+            return view('plugins.manage.page.error',[
+                "function"     => __FUNCTION__,
+                "plugin_name"  => "page",
+                "message"      => "指定されたページID が存在しません。",
+            ]);
+        }
+
+        // 画面呼び出し
+        return view('plugins.manage.page.migration_order',[
+            "function"     => __FUNCTION__,
+            "plugin_name"  => "page",
+            "page"         => $page,
+        ]);
     }
 }
