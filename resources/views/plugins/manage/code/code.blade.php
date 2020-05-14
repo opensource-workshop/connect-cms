@@ -20,7 +20,17 @@
 </div>
 <div class="card-body">
 
-<div class="text-right"><span class="badge badge-pill badge-light">全 {{ $codes->total() }} 件</span></div>
+{{-- 検索エリア --}}
+<form action="/manage/code/index/{{$config->id}}" method="GET" class="form-horizontal">
+    <div class="input-group">
+        <input type="text" name="q" value="{{$q}}" class="form-control">
+        <div class="input-group-append">
+            <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i> 検索</button>
+        </div>
+    </div>
+</form>
+
+<div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $codes->total() }} 件</span></div>
 <table class="table table-bordered table_border_radius table-hover cc-font-90">
 <tbody>
     <tr class="bg-light d-none d-sm-table-row">
@@ -56,7 +66,7 @@
     @foreach($codes as $code)
     <tr>
         <th class="d-block d-sm-table-cell bg-light">
-            <a href="{{url('/')}}/manage/code/edit/{{$code->id}}?page={{$paginate_page}}"><i class="far fa-edit"></i></a>
+            <a href="{{url('/')}}/manage/code/edit/{{$code->id}}?page={{$paginate_page}}&q={{$q}}"><i class="far fa-edit"></i></a>
             <span class="d-sm-none">プラグイン：</span>{{$code->plugin_name_full}}
         </th>
         @foreach($colums as $colum_key => $colum_value)
@@ -72,7 +82,7 @@
 </tbody>
 </table>
 
-{{ $codes->links() }}
+{{ $codes->appends(['q' => $q])->links() }}
 
 </div>
 </div>

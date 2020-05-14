@@ -37,6 +37,7 @@
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
         <input name="page" value="{{$paginate_page}}" type="hidden">
+        <input name="q" value="{{$q}}" type="hidden">
 
         <!-- Code form  -->
         @if ($code->id)
@@ -171,7 +172,7 @@
         <!-- Add or Update code Button -->
         <div class="form-group row">
             <div class="offset-sm-3 col-sm-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/code')}}?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/code')}}?page={{$paginate_page}}&q={{$q}}'"><i class="fas fa-times"></i> キャンセル</button>
                 @if ($code->id)
                 <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/manage/code/update')}}/{{$code->id}}')">
                     <i class="fas fa-check"></i> 更新

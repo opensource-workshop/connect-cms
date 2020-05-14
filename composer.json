@@ -53,10 +53,10 @@
             "@php artisan package:discover"
         ],
         "phpcs": [
-            "./vendor/bin/phpcs --standard=phpcs.xml ./"
+            "phpcs --standard=phpcs.xml ./"
         ],
         "phpcbf": [
-            "./vendor/bin/phpcbf --standard=phpcs.xml ./"
+            "phpcbf --standard=phpcs.xml ./"
         ]
     },
     "config": {
