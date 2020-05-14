@@ -37,7 +37,7 @@
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
         <input name="page" value="{{$paginate_page}}" type="hidden">
-        <input name="q" value="{{$q}}" type="hidden">
+        <input name="search_words" value="{{$search_words}}" type="hidden">
 
         <!-- Code form  -->
         @if ($code->id)
@@ -163,16 +163,22 @@
             </div>
         </div>
         <div class="form-group row">
-            <label for="display_sequence" class="col-md-3 col-form-label text-md-right">並び順</label>
+            <label for="display_sequence" class="col-md-3 col-form-label text-md-right">表示順</label>
             <div class="col-md-9">
                 <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $code->display_sequence)}}" class="form-control">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="codes_help_messages_alias_key" class="col-md-3 col-form-label text-md-right">注釈設定</label>
+            <div class="col-md-9">
+                <input type="text" name="codes_help_messages_alias_key" id="codes_help_messages_alias_key" value="{{old('codes_help_messages_alias_key', $code->codes_help_messages_alias_key)}}" class="form-control">
             </div>
         </div>
 
         <!-- Add or Update code Button -->
         <div class="form-group row">
             <div class="offset-sm-3 col-sm-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/code')}}?page={{$paginate_page}}&q={{$q}}'"><i class="fas fa-times"></i> キャンセル</button>
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/code')}}?page={{$paginate_page}}&search_words={{$search_words}}'"><i class="fas fa-times"></i> キャンセル</button>
                 @if ($code->id)
                 <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/manage/code/update')}}/{{$code->id}}')">
                     <i class="fas fa-check"></i> 更新

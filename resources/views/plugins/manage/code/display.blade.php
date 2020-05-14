@@ -213,6 +213,17 @@
             </div>
         </div>
 
+        <div class="form-group row">
+            <div class="col-md-3 text-md-right">注釈設定</div>
+            <div class="col-md-9">
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox" name="code_list_display_colums[codes_help_messages_alias_key]" value="codes_help_messages_alias_key"@if(in_array('codes_help_messages_alias_key', $config->value_array)) == 'codes_help_messages_alias_key') checked @endif>表示する
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <!-- Update code Button -->
         <div class="form-group row">
             <div class="offset-sm-3 col-sm-6">

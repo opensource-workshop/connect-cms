@@ -23,6 +23,7 @@ class Codes extends Model
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
     protected $fillable = [
+        'codes_help_messages_alias_key',
         'plugin_name',
         'buckets_id',
         'prefix',
