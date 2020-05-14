@@ -144,8 +144,8 @@ class CodeManage extends ManagePluginBase
         // Configsから一覧表示設定の取得
         $config = $this->getConfigCodeListDisplayColums();
 
-        // コード管理グループ取得
-        $codes_groups = CodesGroups::all();
+        // コード検索グループ取得
+        $codes_groups = CodesGroups::orderBy('display_sequence')->get();
 
         // [TODO] ページネーションの表示ページ数を保持するための暫定対応
         $paginate_page = $request->get('page', 1);
