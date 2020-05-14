@@ -22,6 +22,7 @@ use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
 use App\Rules\CustomVali_Confirmed;
 use App\Rules\CustomVali_TimeFromTo;
+use App\Rules\CustomVali_BothRequired;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
@@ -348,11 +349,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'date';
         }
-        // 「時間From~To型」の前後チェック
-        if ($forms_column->column_type == \FormColumnType::time_from_to &&
-            $request->forms_columns_value_for_time_from[$forms_column->id] &&
-            $request->forms_columns_value_for_time_to[$forms_column->id]
-        ) {
+        // 「時間From~To型」チェック
+        if ($forms_column->column_type == \FormColumnType::time_from_to) {
 
             $time_from = $request->forms_columns_value_for_time_from[$forms_column->id];
             $time_to = $request->forms_columns_value_for_time_to[$forms_column->id];
@@ -362,11 +360,19 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $request->merge([
                 "forms_columns_value" => $tmp_array,
             ]);
-            // 時間の前後チェックルールを追加
-            $validator_rule[] = new CustomVali_TimeFromTo(
-                \Carbon::createFromTimeString($time_from . ':00'),
-                \Carbon::createFromTimeString($time_to . ':00')
-            );
+            if($time_from && $time_to){
+                // 両方入力時、時間の前後チェック
+                $validator_rule[] = new CustomVali_TimeFromTo(
+                    \Carbon::createFromTimeString($time_from . ':00'),
+                    \Carbon::createFromTimeString($time_to . ':00')
+                );
+            }elseif($time_from || $time_to){
+                // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
+                $validator_rule[] = new CustomVali_BothRequired(
+                    $request->forms_columns_value_for_time_from[$forms_column->id],
+                    $request->forms_columns_value_for_time_to[$forms_column->id]
+                );
+            }
         }
         // バリデータールールをセット
         if($validator_rule){
