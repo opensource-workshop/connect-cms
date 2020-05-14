@@ -46,7 +46,7 @@ class DefaultController extends ConnectController
         $this->setAppLocale();
 
         // パスワード付きページのチェック（パスワードを要求するか確認）
-        if ($this->page && $this->page->isRequestPassword($request)) {
+        if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
             return redirect("/password/input/" . $this->page->id);
         }
@@ -294,7 +294,7 @@ class DefaultController extends ConnectController
         $this->setAppLocale();
 
         // パスワード付きページのチェック（パスワードを要求するか確認）
-        if ($this->page && $this->page->isRequestPassword($request)) {
+        if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
             return redirect("/password/input/" . $this->page->id);
         }
@@ -434,7 +434,7 @@ class DefaultController extends ConnectController
         $this->setAppLocale();
 
         // パスワード付きページのチェック（パスワードを要求するか確認）
-        if ($this->page && $this->page->isRequestPassword($request)) {
+        if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
             return redirect("/password/input/" . $this->page->id);
         }

@@ -70,7 +70,7 @@ class PasswordController extends ConnectController
         }
 
         // パスワードの照合
-        if (!$this->page->checkPassword($request->password)) {
+        if (!$this->page->checkPassword($request->password, $this->page_tree)) {
 
             $validator = Validator::make($request->all(), []);
             $validator->errors()->add('password', 'パスワードが異なります。');
@@ -79,7 +79,15 @@ class PasswordController extends ConnectController
         }
 
         // セッションへの認証情報保持
-        $request->session()->put('page_auth.'.$page_id, 'authed');
+        // 自分から先祖を遡って、最初にパスワードが設定されているページで認証するので、
+        // セッションの保存もそのページで行う。
+        $page_tree = $this->getAncestorsAndSelf($page_id);
+        foreach ($page_tree as $page) {
+            if (!empty($page->password)) {
+                $request->session()->put('page_auth.'.$page->id, 'authed');
+                break;
+            }
+        }
 
         // 本来表示したかったページへリダイレクト
         return redirect($this->page->permanent_link);
