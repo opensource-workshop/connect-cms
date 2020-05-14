@@ -306,6 +306,7 @@ class CodeManage extends ManagePluginBase
             // 登録
             $codes = new Codes();
         }
+        $codes->codes_help_messages_alias_key = $request->codes_help_messages_alias_key;
         $codes->plugin_name          = $request->plugin_name;
         $codes->buckets_id           = $request->buckets_id;
         $codes->prefix               = $request->prefix;
@@ -323,7 +324,6 @@ class CodeManage extends ManagePluginBase
         $codes->additional4          = $request->additional4;
         $codes->additional5          = $request->additional5;
         $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
-        $codes->codes_help_messages_alias_key = (isset($request->codes_help_messages_alias_key) ? (int)$request->codes_help_messages_alias_key : null);
         $codes->save();
 
 
