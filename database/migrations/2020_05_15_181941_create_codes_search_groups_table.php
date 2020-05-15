@@ -12,7 +12,7 @@ use Illuminate\Database\Migrations\Migration;
  * @category コード管理
  * @package Migration
  */
-class CreateCodesGroupsTable extends Migration
+class CreateCodesSearchGroupsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -21,7 +21,7 @@ class CreateCodesGroupsTable extends Migration
      */
     public function up()
     {
-        Schema::create('codes_groups', function (Blueprint $table) {
+        Schema::create('codes_search_groups', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name', 255)->comment('コード検索グループ名')->nullable();
             $table->string('search_words', 255)->comment('検索ワード')->nullable();
@@ -43,6 +43,6 @@ class CreateCodesGroupsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('codes_groups');
+        Schema::dropIfExists('codes_search_groups');
     }
 }

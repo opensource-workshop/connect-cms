@@ -14,7 +14,7 @@ use App\UserableNohistory;
  * @category コード管理
  * @package Model
  */
-class CodesGroups extends Model
+class CodesSearchGroups extends Model
 {
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;

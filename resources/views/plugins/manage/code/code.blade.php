@@ -40,9 +40,9 @@
         場所マスタ <span class="badge badge-light">3</span>
     </button>
     --}}
-    @foreach($codes_groups as $codes_group)
-    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words={{$codes_group->search_words}}'">
-        <i class="fas fa-search"></i> {{$codes_group->name}}
+    @foreach($codes_search_groups as $codes_search_group)
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words={{$codes_search_group->search_words}}'">
+        <i class="fas fa-search"></i> {{$codes_search_group->name}}
     </button>
     @endforeach
 </div>

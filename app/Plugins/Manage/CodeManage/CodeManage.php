@@ -5,7 +5,7 @@ namespace App\Plugins\Manage\CodeManage;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Codes;
-use App\Models\Common\CodesGroups;
+use App\Models\Common\CodesSearchGroups;
 use App\Models\Common\CodesHelpMessages;
 use App\Models\Core\Configs;
 use App\Models\Core\Plugins;
@@ -147,7 +147,7 @@ class CodeManage extends ManagePluginBase
         $config = $this->getConfigCodeListDisplayColums();
 
         // コード検索グループ取得
-        $codes_groups = CodesGroups::orderBy('display_sequence')->get();
+        $codes_search_groups = CodesSearchGroups::orderBy('display_sequence')->get();
 
         // [TODO] ページネーションの表示ページ数を保持するための暫定対応
         $paginate_page = $request->get('page', 1);
@@ -158,7 +158,7 @@ class CodeManage extends ManagePluginBase
             "function"      => __FUNCTION__,
             "plugin_name"   => "code",
             "codes"         => $codes,
-            "codes_groups"  => $codes_groups,
+            "codes_search_groups"  => $codes_search_groups,
             "config"        => $config,
             "search_words"  => $search_words,
             "paginate_page" => $paginate_page,
