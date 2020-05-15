@@ -239,7 +239,7 @@ class CodeManage extends ManagePluginBase
             // ID で1件取得, leftjoinするとcode.idをセットしてくれないので、個別にget
             $code = Codes::where('id', $id)->first();
             // 注釈設定取得
-            $codes_help_message = CodesHelpMessages::where('alias_key', $code->codes_help_messages_alias_key)->get();
+            $codes_help_message = CodesHelpMessages::where('alias_key', $code->codes_help_messages_alias_key)->first();
         } else {
             // ユーザデータの空枠
             $code = new Codes();
@@ -251,10 +251,8 @@ class CodeManage extends ManagePluginBase
         $plugins = Plugins::orderBy('display_sequence')->get();
         // var_dump($plugins);
 
-
-
-
-
+        // 注釈設定一覧の取得
+        $codes_help_messages_all = CodesHelpMessages::orderBy('display_sequence')->get();
 
         // [TODO] ページネーションの表示ページ数を保持するための暫定対応
         $paginate_page = $request->get('page', 1);
@@ -273,6 +271,7 @@ class CodeManage extends ManagePluginBase
             "plugins" => $plugins,
             "code" => $code,
             "codes_help_message" => $codes_help_message,
+            "codes_help_messages_all" => $codes_help_messages_all,
             'errors' => $errors,
             'search_words' => $search_words,
             "paginate_page" => $paginate_page,

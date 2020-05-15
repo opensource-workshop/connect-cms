@@ -21,10 +21,10 @@
 <div class="card-body">
 
 {{-- 検索エリア --}}
-<form action="/manage/code/index/{{$config->id}}" method="GET" class="form-horizontal">
+<form action="{{url('/')}}/manage/code/index/{{$config->id}}" method="GET" class="form-horizontal">
     <div class="input-group">
         <input type="text" name="search_words" value="{{$search_words}}" class="form-control">
-        <button type="button" class="btn text-muted" style="margin-left: -37px; z-index: 100;" onclick="location.href='/manage/code/index/?page=1'">
+        <button type="button" class="btn text-muted" style="margin-left: -37px; z-index: 100;" onclick="location.href='{{url('/')}}/manage/code/index/?page=1'">
             <i class="fa fa-times"></i>
         </button>
         <div class="input-group-append">
@@ -36,12 +36,12 @@
 {{-- ラベル検索エリア --}}
 <div class="mt-3">
     {{--
-    <button type="button" class="btn btn-secondary btn-sm" onclick="location.href='/manage/code/index/?page=1&search_words=type_code1=location'">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words=type_code1=location'">
         場所マスタ <span class="badge badge-light">3</span>
     </button>
     --}}
     @foreach($codes_groups as $codes_group)
-    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='/manage/code/index/?page=1&search_words={{$codes_group->search_words}}'">
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words={{$codes_group->search_words}}'">
         <i class="fas fa-search"></i> {{$codes_group->name}}
     </button>
     @endforeach

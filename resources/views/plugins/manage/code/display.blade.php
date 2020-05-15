@@ -20,7 +20,7 @@
 </div>
 <div class="card-body">
 
-    <form action="/manage/code/displayUpdate/{{$config->id}}" method="POST" class="form-horizontal">
+    <form action="{{url('/')}}/manage/code/displayUpdate/{{$config->id}}" method="POST" class="form-horizontal">
         {{ csrf_field() }}
 
         <!-- Code form  -->
@@ -227,7 +227,7 @@
         <!-- Update code Button -->
         <div class="form-group row">
             <div class="offset-sm-3 col-sm-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/code')}}?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
                 <button type="submit" class="btn btn-primary form-horizontal mr-2">
                     <i class="fas fa-check"></i> 更新
                 </button>

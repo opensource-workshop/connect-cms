@@ -17,7 +17,7 @@
                 @if ($function == "index")
                     <span class="nav-link"><span class="active">コード一覧</span></span>
                 @else
-                    <a href="{{url('/manage/code')}}" class="nav-link">コード一覧</a></li>
+                    <a href="{{url('/')}}/manage/code" class="nav-link">コード一覧</a></li>
                 @endif
                 </li>
 
@@ -25,7 +25,7 @@
                 @if ($function == "regist")
                     <span class="nav-link"><span class="active">コード登録</span></span>
                 @else
-                    <a href="{{url('/manage/code/regist')}}" class="nav-link">コード登録</a></li>
+                    <a href="{{url('/')}}/manage/code/regist" class="nav-link">コード登録</a></li>
                 @endif
                 </li>
 
@@ -39,7 +39,7 @@
                 @if ($function == "display")
                     <span class="nav-link"><span class="active">一覧表示設定</span></span>
                 @else
-                    <a href="{{url('/manage/code/display')}}" class="nav-link">一覧表示設定</a></li>
+                    <a href="{{url('/')}}/manage/code/display" class="nav-link">一覧表示設定</a></li>
                 @endif
                 </li>
 
