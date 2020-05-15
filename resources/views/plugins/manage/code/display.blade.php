@@ -1,5 +1,5 @@
 {{--
- * 一覧表示設定 画面のテンプレート
+ * (コード一覧)表示設定 画面のテンプレート
  *
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -19,6 +19,10 @@
 
 </div>
 <div class="card-body">
+
+    <div class="alert alert-info" role="alert">
+        コード一覧に表示する項目を設定します。
+    </div>
 
     <form action="{{url('/')}}/manage/code/displayUpdate/{{$config->id}}" method="POST" class="form-horizontal">
         {{ csrf_field() }}

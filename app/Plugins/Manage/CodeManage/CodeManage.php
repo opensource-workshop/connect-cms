@@ -5,7 +5,7 @@ namespace App\Plugins\Manage\CodeManage;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Codes;
-use App\Models\Common\CodesSearchGroups;
+use App\Models\Common\CodesSearches;
 use App\Models\Common\CodesHelpMessages;
 use App\Models\Core\Configs;
 use App\Models\Core\Plugins;
@@ -26,29 +26,49 @@ use Log;
 class CodeManage extends ManagePluginBase
 {
     /**
-     *  権限定義
+     * 権限定義
      */
     public function declareRole()
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
+        // コード一覧
         $role_ckeck_table["index"]              = array('admin_site');
         $role_ckeck_table["regist"]             = array('admin_site');
         $role_ckeck_table["store"]              = array('admin_site');
         $role_ckeck_table["edit"]               = array('admin_site');
         $role_ckeck_table["update"]             = array('admin_site');
         $role_ckeck_table["destroy"]            = array('admin_site');
+
+        // (コード一覧)表示設定
         $role_ckeck_table["display"]            = array('admin_site');
         $role_ckeck_table["displayUpdate"]      = array('admin_site');
+
+        // 検索条件
+        $role_ckeck_table["searches"]       = array('admin_site');
+        $role_ckeck_table["searchRegist"]  = array('admin_site');
+        $role_ckeck_table["searchStore"]   = array('admin_site');
+        $role_ckeck_table["searchEdit"]    = array('admin_site');
+        $role_ckeck_table["searchUpdate"]  = array('admin_site');
+        $role_ckeck_table["searchDestroy"] = array('admin_site');
+
+        // 注釈設定
+        $role_ckeck_table["helpMessages"]       = array('admin_site');
+        $role_ckeck_table["helpMessageRegist"]  = array('admin_site');
+        $role_ckeck_table["helpMessageStore"]   = array('admin_site');
+        $role_ckeck_table["helpMessageEdit"]    = array('admin_site');
+        $role_ckeck_table["helpMessageUpdate"]  = array('admin_site');
+        $role_ckeck_table["helpMessageDestroy"] = array('admin_site');
+
         return $role_ckeck_table;
     }
 
     /**
-     *  ページ初期表示
+     * ページ初期表示
      *
      * @return view
      */
-    public function index($request, $page_id = null, $errors = array())
+    public function index($request, $page_id = null)
     {
         // コード管理データの取得
         $codes_query = Codes::query();
@@ -146,8 +166,8 @@ class CodeManage extends ManagePluginBase
         // Configsから一覧表示設定の取得
         $config = $this->getConfigCodeListDisplayColums();
 
-        // コード検索グループ取得
-        $codes_search_groups = CodesSearchGroups::orderBy('display_sequence')->get();
+        // 記録した検索条件取得
+        $codes_searches = CodesSearches::orderBy('display_sequence')->get();
 
         // [TODO] ページネーションの表示ページ数を保持するための暫定対応
         $paginate_page = $request->get('page', 1);
@@ -158,7 +178,7 @@ class CodeManage extends ManagePluginBase
             "function"      => __FUNCTION__,
             "plugin_name"   => "code",
             "codes"         => $codes,
-            "codes_search_groups"  => $codes_search_groups,
+            "codes_searches"  => $codes_searches,
             "config"        => $config,
             "search_words"  => $search_words,
             "paginate_page" => $paginate_page,
@@ -210,7 +230,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  コード登録画面表示
+     * コード登録画面表示
      *
      * @return view
      */
@@ -220,7 +240,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  コード登録処理
+     * コード登録処理
      */
     public function store($request)
     {
@@ -228,7 +248,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  コード変更画面表示
+     * コード変更画面表示
      *
      * @return view
      */
@@ -273,7 +293,7 @@ class CodeManage extends ManagePluginBase
             $function = 'edit';
         }
 
-        return view('plugins.manage.code.regist', [
+        return view('plugins.manage.code.edit', [
             // "function" => __FUNCTION__,
             "function" => $function,
             "plugin_name" => "code",
@@ -288,7 +308,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  コード更新処理
+     * コード更新処理
      */
     public function update($request, $id, $function = 'edit')
     {
@@ -337,7 +357,7 @@ class CodeManage extends ManagePluginBase
 
         $page = $request->get('page', 1);
 
-        // q = 入力された検索条件
+        // 入力された検索条件
         $search_words = $request->input('search_words');
 
         // 一覧画面に戻る
@@ -346,7 +366,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  コード削除関数
+     * コード削除関数
      */
     public function destroy($request, $id)
     {
@@ -359,7 +379,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  一覧表示設定画面表示
+     * (コード一覧)表示設定 画面表示
      *
      * @return view
      */
@@ -378,7 +398,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  Configsから一覧表示設定の取得
+     * Configsから一覧表示設定の取得
      */
     private function getConfigCodeListDisplayColums()
     {
@@ -396,7 +416,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     *  一覧表示設定 更新処理
+     * (コード一覧)表示設定 更新処理
      */
     public function displayUpdate($request, $id = null)
     {
@@ -451,5 +471,120 @@ class CodeManage extends ManagePluginBase
         // 一覧画面に戻る
         // return redirect("/manage/code");
         return redirect("/manage/code?page=1");
+    }
+
+    /**
+     * 検索条件一覧 初期表示
+     *
+     * @return view
+     */
+    public function searches($request, $page_id = null)
+    {
+        // コード検索条件取得
+        $codes_searches = CodesSearches::orderBy('display_sequence')->paginate(10);
+
+        // [TODO] ページネーションの表示ページ数を保持するための暫定対応
+        $paginate_page = $request->get('page', 1);
+
+        // 管理画面プラグインの戻り値の返し方
+        // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
+        return view('plugins.manage.code.code_search', [
+            "function"      => __FUNCTION__,
+            "plugin_name"   => "code",
+            "codes_searches"  => $codes_searches,
+            "paginate_page" => $paginate_page,
+            // "page" => 1,
+        ]);
+    }
+
+    /**
+     * 検索条件登録画面表示
+     *
+     * @return view
+     */
+    public function searchesRegist($request, $id = null, $errors = array())
+    {
+        return $this->searchesEdit($request, $id, 'regist', $errors);
+    }
+
+    /**
+     * 検索条件登録処理
+     */
+    public function searchesStore($request)
+    {
+        return $this->searchesUpdate($request, null);
+    }
+
+    /**
+     * 検索条件変更画面表示
+     *
+     * @return view
+     */
+    public function searchesEdit($request, $id = null, $function = null, $errors = array())
+    {
+        // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
+        $request->flash();
+
+        if ($id) {
+            // ID で1件取得
+            $codes_search = CodesSearches::where('id', $id)->first();
+        } else {
+            // ユーザデータの空枠
+            $codes_search = new CodesSearches();
+        }
+
+        // [TODO] ページネーションの表示ページ数を保持するための暫定対応
+        $paginate_page = $request->get('page', 1);
+
+        if (is_null($function)) {
+            $function = 'edit';
+        }
+
+        return view('plugins.manage.code.code_search_edit', [
+            // "function" => __FUNCTION__,
+            "function" => $function,
+            "plugin_name" => "code",
+            "codes_search" => $codes_search,
+            'errors' => $errors,
+            "paginate_page" => $paginate_page,
+        ]);
+    }
+
+    /**
+     * 検索条件更新処理
+     */
+    public function searchesUpdate($request, $id)
+    {
+        if ($id) {
+            // 更新
+            $codes_searches = CodesSearches::find($id);
+        } else {
+            // 登録
+            $codes_searches = new CodesSearches();
+        }
+        $codes_searches->name                 = $request->name;
+        $codes_searches->search_words         = $request->search_words;
+        $codes_searches->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
+        $codes_searches->save();
+
+
+        $page = $request->get('page', 1);
+
+        // 一覧画面に戻る
+        // return redirect("/manage/code");
+        return redirect("/manage/code/code_search?page=$page");
+    }
+
+    /**
+     * 検索条件削除関数
+     */
+    public function searchesDestroy($request, $id)
+    {
+        CodesSearches::destroy($id);
+
+        // コード一覧画面に戻る
+        // return redirect("/manage/code");
+        $page = $request->get('page', 1);
+        return redirect("/manage/code/searches?page=$page");
     }
 }

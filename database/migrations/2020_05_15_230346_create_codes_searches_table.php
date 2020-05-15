@@ -5,14 +5,14 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 /**
- * コード検索グループテーブル作成
+ * 検索条件テーブル作成
  *
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コード管理
  * @package Migration
  */
-class CreateCodesSearchGroupsTable extends Migration
+class CreateCodesSearchesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -21,10 +21,10 @@ class CreateCodesSearchGroupsTable extends Migration
      */
     public function up()
     {
-        Schema::create('codes_search_groups', function (Blueprint $table) {
+        Schema::create('codes_searches', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 255)->comment('コード検索グループ名')->nullable();
-            $table->string('search_words', 255)->comment('検索ワード')->nullable();
+            $table->string('name', 255)->comment('検索ラベル名')->nullable();
+            $table->string('search_words', 255)->comment('検索条件')->nullable();
             $table->integer('display_sequence')->comment('表示順');
 
             $table->integer('created_id')->nullable();
@@ -43,6 +43,6 @@ class CreateCodesSearchGroupsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('codes_search_groups');
+        Schema::dropIfExists('codes_searches');
     }
 }

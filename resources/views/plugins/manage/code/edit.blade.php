@@ -1,5 +1,5 @@
 {{--
- * コード登録画面のテンプレート
+ * コード登録・更新画面のテンプレート
  *
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved

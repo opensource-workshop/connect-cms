@@ -40,9 +40,9 @@
         場所マスタ <span class="badge badge-light">3</span>
     </button>
     --}}
-    @foreach($codes_search_groups as $codes_search_group)
-    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words={{$codes_search_group->search_words}}'">
-        <i class="fas fa-search"></i> {{$codes_search_group->name}}
+    @foreach($codes_searches as $codes_search)
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words={{$codes_search->search_words}}'">
+        <i class="fas fa-search"></i> {{$codes_search->name}}
     </button>
     @endforeach
 </div>
@@ -72,7 +72,7 @@
             'additional3' => 'additional3',
             'additional4' => 'additional4',
             'additional5' => 'additional5',
-            'display_sequence' => '並び順',
+            'display_sequence' => '表示順',
         ];
         @endphp
         @foreach($colums as $colum_key => $colum_value)
