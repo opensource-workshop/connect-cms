@@ -55,6 +55,7 @@
         <th class="d-block d-sm-table-cell text-break">プラグイン</th>
         @php
         $colums = [
+            'codes_help_messages_name' => '注釈設定',
             'buckets_name' => 'buckets_name',
             'buckets_id' => 'buckets_id',
             'prefix' => 'prefix',
@@ -72,7 +73,6 @@
             'additional4' => 'additional4',
             'additional5' => 'additional5',
             'display_sequence' => '並び順',
-            'codes_help_messages_name' => '注釈設定',
         ];
         @endphp
         @foreach($colums as $colum_key => $colum_value)

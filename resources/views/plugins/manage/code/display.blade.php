@@ -37,6 +37,17 @@
         </div>
 
         <div class="form-group row">
+            <div class="col-md-3 text-md-right">注釈設定</div>
+            <div class="col-md-9">
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox" name="code_list_display_colums[codes_help_messages_name]" value="codes_help_messages_name"@if(in_array('codes_help_messages_name', $config->value_array)) == 'codes_help_messages_name') checked @endif>表示する
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
             <div class="col-md-3 text-md-right">buckets_name</div>
             <div class="col-md-9">
                 <div class="form-check">
@@ -208,17 +219,6 @@
                 <div class="form-check">
                     <label class="form-check-label">
                         <input class="form-check-input" type="checkbox" name="code_list_display_colums[display_sequence]" value="display_sequence"@if(in_array('display_sequence', $config->value_array)) == 'display_sequence') checked @endif>表示する
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <div class="col-md-3 text-md-right">注釈設定</div>
-            <div class="col-md-9">
-                <div class="form-check">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="checkbox" name="code_list_display_colums[codes_help_messages_alias_key]" value="codes_help_messages_alias_key"@if(in_array('codes_help_messages_alias_key', $config->value_array)) == 'codes_help_messages_alias_key') checked @endif>表示する
                     </label>
                 </div>
             </div>

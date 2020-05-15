@@ -55,10 +55,12 @@ class CodeManage extends ManagePluginBase
         $codes_query->select(
             'codes.*',
             'buckets.bucket_name',
-            'plugins.plugin_name_full'
+            'plugins.plugin_name_full',
+            'codes_help_messages.name as codes_help_messages_name'
         );
         $codes_query->leftJoin('buckets', 'buckets.id', '=', 'codes.buckets_id')
-                    ->leftJoin('plugins', 'plugins.plugin_name', '=', 'codes.plugin_name');
+                    ->leftJoin('plugins', 'plugins.plugin_name', '=', 'codes.plugin_name')
+                    ->leftJoin('codes_help_messages', 'codes_help_messages.alias_key', '=', 'codes.codes_help_messages_alias_key');
         $codes_query->orderBy('plugin_name')
                     ->orderBy('buckets_id')
                     ->orderBy('prefix')
