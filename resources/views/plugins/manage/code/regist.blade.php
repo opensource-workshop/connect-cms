@@ -51,10 +51,19 @@
         </div>
         @endif
 
+        @php
+        if ($code->id) {
+            // 更新画面 再表示
+            $view_action_url = url('/') . '/manage/code/edit/' . $code->id;
+        } else {
+            // 登録画面 再表示
+            $view_action_url = url('/') . '/manage/code/regist';
+        }
+        @endphp
         <div class="form-group row">
             <label for="codes_help_messages_alias_key" class="col-md-3 col-form-label text-md-right">注釈設定</label>
             <div class="col-md-9">
-                <select name="codes_help_messages_alias_key" id="codes_help_messages_alias_key" class="form-control">
+                <select name="codes_help_messages_alias_key" id="codes_help_messages_alias_key" class="form-control" onchange="submitAction('{{$view_action_url}}')">
                     <option value=""@if($code->codes_help_messages_alias_key == "") selected @endif>設定なし</option>
                     @foreach ($codes_help_messages_all as $message)
                         <option value="{{$message->alias_key}}"@if(old('codes_help_messages_alias_key', $code->codes_help_messages_alias_key) == $message->alias_key) selected @endif>{{$message->name}}</option>

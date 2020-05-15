@@ -238,11 +238,18 @@ class CodeManage extends ManagePluginBase
         if ($id) {
             // ID で1件取得, leftjoinするとcode.idをセットしてくれないので、個別にget
             $code = Codes::where('id', $id)->first();
-            // 注釈設定取得
-            $codes_help_message = CodesHelpMessages::where('alias_key', $code->codes_help_messages_alias_key)->first();
         } else {
             // ユーザデータの空枠
             $code = new Codes();
+        }
+
+        // 入力の注釈設定キー、なければDBの注釈設定キー（更新時の初期表示）から取得
+        $codes_help_messages_alias_key = $request->input('codes_help_messages_alias_key', $code->codes_help_messages_alias_key);
+        if ($codes_help_messages_alias_key) {
+            // 注釈設定取得
+            $codes_help_message = CodesHelpMessages::where('alias_key', $codes_help_messages_alias_key)->first();
+            // var_dump($codes_help_messages_alias_key, $codes_help_message);
+        } else {
             // 注釈設定の空枠
             $codes_help_message = new CodesHelpMessages();
         }
