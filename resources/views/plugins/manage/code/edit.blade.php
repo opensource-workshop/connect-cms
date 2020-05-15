@@ -41,7 +41,7 @@
 
         <!-- Code form  -->
         @if ($code->id)
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label class="col-md-3 col-form-label text-md-right">コピーして登録画面へ</label>
             <div class="col-md-9 d-sm-flex align-items-center">
                 <button type="button" class="btn btn-outline-primary form-horizontal" onclick="submitAction('{{url('/')}}/manage/code/regist')">
@@ -60,7 +60,7 @@
             $view_action_url = url('/') . '/manage/code/regist';
         }
         @endphp
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="codes_help_messages_alias_key" class="col-md-3 col-form-label text-md-right">注釈設定</label>
             <div class="col-md-9">
                 <select name="codes_help_messages_alias_key" id="codes_help_messages_alias_key" class="form-control" onchange="submitAction('{{$view_action_url}}')">
@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="plugin_name" class="col-md-3 col-form-label text-md-right">プラグイン</label>
             <div class="col-md-9">
                 <select name="plugin_name" id="plugin_name" class="form-control">
@@ -86,14 +86,14 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="buckets_id" class="col-md-3 col-form-label text-md-right">buckets_id</label>
             <div class="col-md-9">
                 <input type="text" name="buckets_id" id="buckets_id" value="{{old('buckets_id', $code->buckets_id)}}" class="form-control">
                 <div class="text-muted">{{$codes_help_message->buckets_id_help_message}}</div>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="prefix" class="col-md-3 col-form-label text-md-right">prefix</label>
             <div class="col-md-9">
                 <input type="text" name="prefix" id="prefix" value="{{old('prefix', $code->prefix)}}" class="form-control">
@@ -101,42 +101,42 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="type_name" class="col-md-3 col-form-label text-md-right">type_name</label>
             <div class="col-md-9">
                 <input type="text" name="type_name" id="type_name" value="{{old('type_name', $code->type_name)}}" class="form-control">
                 <div class="text-muted">{{$codes_help_message->type_name_help_message}}</div>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="type_code1" class="col-md-3 col-form-label text-md-right">type_code1</label>
             <div class="col-md-9">
                 <input type="text" name="type_code1" id="type_code1" value="{{old('type_code1', $code->type_code1)}}" class="form-control">
                 <div class="text-muted">{{$codes_help_message->type_code1_help_message}}</div>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="type_code2" class="col-md-3 col-form-label text-md-right">type_code2</label>
             <div class="col-md-9">
                 <input type="text" name="type_code2" id="type_code2" value="{{old('type_code2', $code->type_code2)}}" class="form-control">
                 <div class="text-muted">{{$codes_help_message->type_code2_help_message}}</div>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="type_code3" class="col-md-3 col-form-label text-md-right">type_code3</label>
             <div class="col-md-9">
                 <input type="text" name="type_code3" id="type_code3" value="{{old('type_code3', $code->type_code3)}}" class="form-control">
                 <div class="text-muted">{{$codes_help_message->type_code3_help_message}}</div>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="type_code4" class="col-md-3 col-form-label text-md-right">type_code4</label>
             <div class="col-md-9">
                 <input type="text" name="type_code4" id="type_code4" value="{{old('type_code4', $code->type_code4)}}" class="form-control">
                 <div class="text-muted">{{$codes_help_message->type_code4_help_message}}</div>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="type_code5" class="col-md-3 col-form-label text-md-right">type_code5</label>
             <div class="col-md-9">
                 <input type="text" name="type_code5" id="type_code5" value="{{old('type_code5', $code->type_code5)}}" class="form-control">
@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="code" class="col-md-3 col-form-label text-md-right">コード <label class="badge badge-danger">必須</label></label>
             <div class="col-md-9">
                 <input type="text" name="code" id="code" value="{{{old('code', $code->code)}}}" class="form-control">
@@ -152,7 +152,7 @@
                 @if ($errors && $errors->has('code')) <div class="text-danger">{{$errors->first('code')}}</div> @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="value" class="col-md-3 col-form-label text-md-right">値 <label class="badge badge-danger">必須</label></label>
             <div class="col-md-9">
                 <input type="text" name="value" id="value" value="{{old('value', $code->value)}}" class="form-control">
@@ -160,7 +160,7 @@
                 @if ($errors && $errors->has('value')) <div class="text-danger">{{$errors->first('value')}}</div> @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="additional1" class="col-md-3 col-form-label text-md-right">additional1</label>
             <div class="col-md-9">
                 <input type="text" name="additional1" id="additional1" value="{{old('additional1', $code->additional1)}}" class="form-control">
@@ -168,7 +168,7 @@
                 @if ($errors && $errors->has('additional1')) <div class="text-danger">{{$errors->first('additional1')}}</div> @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="additional2" class="col-md-3 col-form-label text-md-right">additional2</label>
             <div class="col-md-9">
                 <input type="text" name="additional2" id="additional2" value="{{old('additional2', $code->additional2)}}" class="form-control">
@@ -176,7 +176,7 @@
                 @if ($errors && $errors->has('additional2')) <div class="text-danger">{{$errors->first('additional2')}}</div> @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="additional3" class="col-md-3 col-form-label text-md-right">additional3</label>
             <div class="col-md-9">
                 <input type="text" name="additional3" id="additional3" value="{{old('additional3', $code->additional3)}}" class="form-control">
@@ -184,7 +184,7 @@
                 @if ($errors && $errors->has('additional3')) <div class="text-danger">{{$errors->first('additional3')}}</div> @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="additional4" class="col-md-3 col-form-label text-md-right">additional4</label>
             <div class="col-md-9">
                 <input type="text" name="additional4" id="additional4" value="{{old('additional4', $code->additional4)}}" class="form-control">
@@ -192,7 +192,7 @@
                 @if ($errors && $errors->has('additional4')) <div class="text-danger">{{$errors->first('additional4')}}</div> @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="additional5" class="col-md-3 col-form-label text-md-right">additional5</label>
             <div class="col-md-9">
                 <input type="text" name="additional5" id="additional5" value="{{old('additional5', $code->additional5)}}" class="form-control">
@@ -200,7 +200,7 @@
                 @if ($errors && $errors->has('additional5')) <div class="text-danger">{{$errors->first('additional5')}}</div> @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group form-row">
             <label for="display_sequence" class="col-md-3 col-form-label text-md-right">表示順</label>
             <div class="col-md-9">
                 <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $code->display_sequence)}}" class="form-control">
@@ -209,7 +209,7 @@
         </div>
 
         <!-- Add or Update code Button -->
-        <div class="form-group row">
+        <div class="form-group form-row">
             <div class="offset-sm-3 col-sm-6">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code?page={{$paginate_page}}&search_words={{$search_words}}'"><i class="fas fa-times"></i> キャンセル</button>
                 @if ($code->id)

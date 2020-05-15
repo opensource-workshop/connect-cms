@@ -502,17 +502,17 @@ class CodeManage extends ManagePluginBase
      *
      * @return view
      */
-    public function searchesRegist($request, $id = null, $errors = array())
+    public function searchRegist($request, $id = null, $errors = array())
     {
-        return $this->searchesEdit($request, $id, 'regist', $errors);
+        return $this->searchEdit($request, $id, 'searchRegist', $errors);
     }
 
     /**
      * 検索条件登録処理
      */
-    public function searchesStore($request)
+    public function searchStore($request)
     {
-        return $this->searchesUpdate($request, null);
+        return $this->searchUpdate($request, null, 'searchRegist');
     }
 
     /**
@@ -520,7 +520,7 @@ class CodeManage extends ManagePluginBase
      *
      * @return view
      */
-    public function searchesEdit($request, $id = null, $function = null, $errors = array())
+    public function searchEdit($request, $id = null, $function = null, $errors = array())
     {
         // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
         $request->flash();
@@ -537,7 +537,7 @@ class CodeManage extends ManagePluginBase
         $paginate_page = $request->get('page', 1);
 
         if (is_null($function)) {
-            $function = 'edit';
+            $function = 'searchEdit';
         }
 
         return view('plugins.manage.code.code_search_edit', [
@@ -553,8 +553,23 @@ class CodeManage extends ManagePluginBase
     /**
      * 検索条件更新処理
      */
-    public function searchesUpdate($request, $id)
+    public function searchUpdate($request, $id, $function = 'searchEdit')
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'name' => ['required'],
+            'search_words' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'name' => '検索ラベル名',
+            'search_words' => '検索条件',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return $this->searchEdit($request, $id, $function, $validator->errors());
+        }
+
         if ($id) {
             // 更新
             $codes_searches = CodesSearches::find($id);
@@ -578,7 +593,7 @@ class CodeManage extends ManagePluginBase
     /**
      * 検索条件削除関数
      */
-    public function searchesDestroy($request, $id)
+    public function searchDestroy($request, $id)
     {
         CodesSearches::destroy($id);
 

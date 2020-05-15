@@ -30,8 +30,16 @@
         <div class="input-group-append">
             <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i> 検索</button>
         </div>
+        <div class="ml-2">
+            <a data-toggle="collapse" href="#collapse-search-help">
+                <span class="btn btn-light"><i class="fas fa-question-circle"></i></span>
+            </a>
+        </div>
     </div>
 </form>
+
+{{-- 検索条件の補足 --}}
+@include('plugins.manage.code.search_help')
 
 {{-- ラベル検索エリア --}}
 <div class="mt-3">
