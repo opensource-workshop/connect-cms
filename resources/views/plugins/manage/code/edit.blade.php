@@ -61,7 +61,7 @@
         }
         @endphp
         <div class="form-group form-row">
-            <label for="codes_help_messages_alias_key" class="col-md-3 col-form-label text-md-right">注釈設定</label>
+            <label for="codes_help_messages_alias_key" class="col-md-3 col-form-label text-md-right">注釈名</label>
             <div class="col-md-9">
                 <select name="codes_help_messages_alias_key" id="codes_help_messages_alias_key" class="form-control" onchange="submitAction('{{$view_action_url}}')">
                     <option value=""@if($code->codes_help_messages_alias_key == "") selected @endif>設定なし</option>

@@ -63,7 +63,7 @@
         <th class="d-block d-sm-table-cell text-break">プラグイン</th>
         @php
         $colums = [
-            'codes_help_messages_name' => '注釈設定',
+            'codes_help_messages_name' => '注釈名',
             'buckets_name' => 'buckets_name',
             'buckets_id' => 'buckets_id',
             'prefix' => 'prefix',
