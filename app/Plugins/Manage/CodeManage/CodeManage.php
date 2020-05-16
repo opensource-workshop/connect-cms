@@ -14,6 +14,7 @@ use App\Models\Core\Plugins;
 use App\Plugins\Manage\ManagePluginBase;
 
 use Log;
+
 //use DB;
 
 /**
@@ -126,14 +127,14 @@ class CodeManage extends ManagePluginBase
         // $codes_query->orWhere('plugins.plugin_name_full', 'like', '%入退室%');
 
         // 入力の検索条件ありのみ ループしてくれる
-        foreach($search_words_array as $search_word) {
+        foreach ($search_words_array as $search_word) {
             if (strpos($search_word, '=') === false) {
                 // search_wordのなかに'='が含まれていない場合
 
                 // 複数単語の検索に対応
                 // 部分一致検索 ex) and (`codes.plugin_name` like "%aaa%" or `codes.plugin_name` like "%bbb%" or `codes.plugin_name` like "%ccc%")
                 $codes_query->where(function ($query) use ($search_word, $search_db_colums) {
-                    foreach($search_db_colums as $search_db_colum) {
+                    foreach ($search_db_colums as $search_db_colum) {
                         $query->orwhere($search_db_colum, 'like', '%' . $search_word . '%');
                     }
                 });
