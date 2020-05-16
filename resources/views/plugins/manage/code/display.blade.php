@@ -24,10 +24,8 @@
         コード一覧に表示する項目を設定します。
     </div>
 
-    <form action="{{url('/')}}/manage/code/displayUpdate/{{$config->id}}" method="POST" class="form-horizontal">
+    <form action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
-
-        <!-- Code form  -->
 
         <div class="form-group row">
             <div class="col-md-3 text-md-right">プラグイン</div>
@@ -232,9 +230,15 @@
         <div class="form-group row">
             <div class="offset-sm-3 col-sm-6">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
-                <button type="submit" class="btn btn-primary form-horizontal mr-2">
+                @if ($config->id)
+                <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="this.form.action='{{url('/')}}/manage/code/displayUpdate/{{$config->id}}'; this.form.submit();">
                     <i class="fas fa-check"></i> 更新
                 </button>
+                @else
+                <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="this.form.action='{{url('/')}}/manage/code/displayStore'; this.form.submit();">
+                    <i class="fas fa-check"></i> 登録
+                </button>
+                @endif
             </div>
         </div>
     </form>
