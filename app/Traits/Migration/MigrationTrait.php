@@ -604,6 +604,11 @@ trait MigrationTrait
      */
     private function getInnerHtml($node){
 
+        // node が空の場合
+        if (empty($node)) {
+            return "";
+        }
+
         $children = $node->childNodes;
         $html = '';
         foreach($children as $child){
