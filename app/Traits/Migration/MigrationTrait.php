@@ -75,11 +75,11 @@ trait MigrationTrait
             $content_html = File::get($html_file_path);
 
             // Buckets 登録
-            echo "Buckets 登録\n";
+            // echo "Buckets 登録\n";
             $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
 
             // Frames 登録
-            echo "Frames 登録\n";
+            // echo "Frames 登録\n";
 
             // Frame タイトル
             $frame_title = '[無題]';
@@ -94,14 +94,14 @@ trait MigrationTrait
             }
 
             $frame = Frame::create(['page_id'          => $page_id,
-                                     'area_id'          => 2,
-                                     'frame_title'      => $frame_title,
-                                     'frame_design'     => $frame_design,
-                                     'plugin_name'      => 'contents',
-                                     'frame_col'        => 0,
-                                     'template'         => 'default',
-                                     'bucket_id'        => $bucket->id,
-                                     'display_sequence' => $display_sequence,
+                                    'area_id'          => 2,
+                                    'frame_title'      => $frame_title,
+                                    'frame_design'     => $frame_design,
+                                    'plugin_name'      => 'contents',
+                                    'frame_col'        => 0,
+                                    'template'         => 'default',
+                                    'bucket_id'        => $bucket->id,
+                                    'display_sequence' => $display_sequence,
                                    ]);
 
             // [image_names] の画像を登録
@@ -175,12 +175,12 @@ trait MigrationTrait
             //Log::debug($content_html);
 
             // Contents 登録
-            echo "Contents 登録\n";
+            // echo "Contents 登録\n";
             $content = Contents::create(['bucket_id' => $bucket->id,
                                          'content_text' => $content_html,
                                          'status' => 0]);
         }
-        echo $page_id . ' の移行が完了';
+        // echo $page_id . ' の移行が完了';
     }
 
     /**

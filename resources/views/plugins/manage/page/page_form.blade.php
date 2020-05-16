@@ -53,17 +53,19 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row mx-0 mx-md-3">
         <div class="col-md-3"></div>
-        <div class="col-md-9 text-danger">メンバーシップページの下層のページもメンバーシップページになります。</div>
+        <small class="form-text text-muted">メンバーシップページの下層のページもメンバーシップページになります。<br />ページの権限設定は「その他設定 ＞ 権限設定画面」で設定できます。</small>
     </div>
 
+    {{-- navbar メニューの「その他設定」プルダウン内に移動
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ページ権限設定</label>
         <div class="col-md-9 d-sm-flex align-items-center">
             <a href="{{url('/manage/page/role')}}/{{$page->id}}" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> <span>権限設定画面へ</span></a>
         </div>
     </div>
+    --}}
 
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">パスワード</label>

@@ -16,6 +16,8 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
 
+use App\Traits\Migration\MigrationTrait;
+
 use App\Plugins\Manage\ManagePluginBase;
 
 /**
@@ -28,6 +30,9 @@ use App\Plugins\Manage\ManagePluginBase;
  */
 class PageManage extends ManagePluginBase
 {
+    // 移行用ライブラリ
+    use MigrationTrait;
+
     /**
      *  権限定義
      */
@@ -48,9 +53,9 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["role"]            = array('admin_page');
         $role_ckeck_table["saveRole"]        = array('admin_page');
         $role_ckeck_table["migration_order"] = array('admin_page');
-        $role_ckeck_table["migration_run"]   = array('admin_page');
         $role_ckeck_table["migration_get"]   = array('admin_page');
         $role_ckeck_table["migration_imort"] = array('admin_page');
+        $role_ckeck_table["migration_file_delete"] = array('admin_page');
 
 /*
         $role_ckeck_table = array();
@@ -574,10 +579,10 @@ class PageManage extends ManagePluginBase
     public function migration_order($request, $page_id)
     {
         // ページID で1件取得
-        $page = Page::find($page_id);
+        $current_page = Page::find($page_id);
 
         // ページデータ取得
-        if (empty($page)) {
+        if (empty($current_page)) {
 
             // 画面呼び出し
             return view('plugins.manage.page.error',[
@@ -587,11 +592,113 @@ class PageManage extends ManagePluginBase
             ]);
         }
 
+        // 移行先ページ用ページデータの取得(laravel-nestedset 使用)
+        $return_obj = 'flat';
+        $pages = Page::defaultOrderWithDepth($return_obj);
+
+        // 移行用に取り込んだページ単位ディレクトリの取得
+        $migration_directories = Storage::directories('migration');
+
+        // 移行用に取り込んだページ単位ディレクトリのページ情報
+        $page_in = array();
+        foreach ($migration_directories as $migration_directory) {
+            $page_in[] = str_replace('migration/', '', $migration_directory);
+        }
+        //print_r($page_in);
+
+        // ページ一覧の取得
+        $migration_pages = Page::whereIn('id', $page_in)->get();
+        //var_dump($migration_pages);
+
         // 画面呼び出し
         return view('plugins.manage.page.migration_order',[
-            "function"     => __FUNCTION__,
-            "plugin_name"  => "page",
-            "page"         => $page,
+            "function"        => __FUNCTION__,
+            "plugin_name"     => "page",
+            "current_page"    => $current_page,
+            "pages"           => $pages,
+            "migration_pages" => $migration_pages,
         ]);
+    }
+
+    /**
+     *  取り込み済み移行データ削除
+     *
+     * @return view
+     */
+    public function migration_file_delete($request, $page_id)
+    {
+        // 削除対象のディレクトリが指定されていること。
+        if (!$request->has("delete_file_page_id") && !empty($request->delete_file_page_id)) {
+            // 指示された画面に戻る。
+            return $this->migration_order($request, $page_id);
+        }
+
+        // 指定されたディレクトリを削除
+        Storage::deleteDirectory("migration/" . $request->delete_file_page_id);
+
+        // 指示された画面に戻る。
+        return $this->migration_order($request, $page_id);
+    }
+
+    /**
+     *  移行データ取り込み実行
+     *
+     * @return view
+     */
+    public function migration_get($request, $page_id)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'source_system'       => 'required',
+            'url'                 => 'required',
+            'destination_page_id' => 'required',
+        ]);
+        $validator->setAttributeNames([
+            'source_system'       => '移行元システム',
+            'url'                 => '移行元URL',
+            'destination_page_id' => '移行先ページ',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect('manage/page/migration_order/' . $page_id)
+                       ->withErrors($validator)
+                       ->withInput();
+        }
+
+        // NC3 を画面から移行する
+        $this->migrationNC3Page($request->url, $request->destination_page_id);
+
+        // 指示された画面に戻る。
+        return $this->migration_order($request, $page_id);
+    }
+
+    /**
+     *  移行データインポート実行
+     *
+     * @return view
+     */
+    public function migration_imort($request, $page_id)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'migration_page_id' => 'required',
+        ]);
+        $validator->setAttributeNames([
+            'migration_page_id' => '取り込み済み移行データ',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect('manage/page/migration_order/' . $page_id)
+                       ->withErrors($validator)
+                       ->withInput();
+        }
+
+        // Connect-CMS 移行形式のHTML をインポートする
+        $this->importHtml($request->migration_page_id);
+
+        // 指示された画面に戻る。
+        return $this->migration_order($request, $page_id);
     }
 }
