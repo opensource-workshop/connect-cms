@@ -20,6 +20,13 @@
 </div>
 <div class="card-body">
 
+{{-- 警告メッセージエリア --}}
+@if (! $config)
+    <div class="alert alert-warning" role="alert">
+        表示設定が未設定です。<a href="{{url('/')}}/manage/code/display" class="alert-link">表示設定</a>から設定してください。
+    </div>
+@endif
+
 {{-- 検索エリア --}}
 <form action="{{url('/')}}/manage/code/index/{{$config->id}}" method="GET" class="form-horizontal">
     <div class="input-group">

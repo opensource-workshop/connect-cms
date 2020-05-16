@@ -44,6 +44,7 @@ class CodeManage extends ManagePluginBase
 
         // (コード一覧)表示設定
         $role_ckeck_table["display"]            = array('admin_site');
+        $role_ckeck_table["displayStore"]       = array('admin_site');
         $role_ckeck_table["displayUpdate"]      = array('admin_site');
 
         // 検索条件
@@ -167,6 +168,7 @@ class CodeManage extends ManagePluginBase
 
         // Configsから一覧表示設定の取得
         $config = $this->getConfigCodeListDisplayColums();
+        //var_dump($config);
 
         // 記録した検索条件取得
         $codes_searches = CodesSearches::orderBy('display_sequence')->get();
@@ -418,9 +420,17 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
+     * (コード一覧)表示設定 登録処理
+     */
+    public function displayStore($request)
+    {
+        return $this->displayUpdate($request, null);
+    }
+
+    /**
      * (コード一覧)表示設定 更新処理
      */
-    public function displayUpdate($request, $id = null)
+    public function displayUpdate($request, $id)
     {
         if ($id) {
             // 更新
