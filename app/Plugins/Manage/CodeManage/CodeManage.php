@@ -3,6 +3,7 @@
 namespace App\Plugins\Manage\CodeManage;
 
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use App\Models\Common\Codes;
 use App\Models\Common\CodesSearches;
@@ -45,12 +46,12 @@ class CodeManage extends ManagePluginBase
         $role_ckeck_table["displayUpdate"]      = array('admin_site');
 
         // 検索条件
-        $role_ckeck_table["searches"]       = array('admin_site');
-        $role_ckeck_table["searchRegist"]  = array('admin_site');
-        $role_ckeck_table["searchStore"]   = array('admin_site');
-        $role_ckeck_table["searchEdit"]    = array('admin_site');
-        $role_ckeck_table["searchUpdate"]  = array('admin_site');
-        $role_ckeck_table["searchDestroy"] = array('admin_site');
+        $role_ckeck_table["searches"]           = array('admin_site');
+        $role_ckeck_table["searchRegist"]       = array('admin_site');
+        $role_ckeck_table["searchStore"]        = array('admin_site');
+        $role_ckeck_table["searchEdit"]         = array('admin_site');
+        $role_ckeck_table["searchUpdate"]       = array('admin_site');
+        $role_ckeck_table["searchDestroy"]      = array('admin_site');
 
         // 注釈設定
         $role_ckeck_table["helpMessages"]       = array('admin_site');
@@ -366,7 +367,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     * コード削除関数
+     * コード削除処理
      */
     public function destroy($request, $id)
     {
@@ -498,7 +499,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     * 検索条件登録画面表示
+     * 検索条件 登録画面表示
      *
      * @return view
      */
@@ -508,7 +509,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     * 検索条件登録処理
+     * 検索条件 登録処理
      */
     public function searchStore($request)
     {
@@ -516,7 +517,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     * 検索条件変更画面表示
+     * 検索条件 変更画面表示
      *
      * @return view
      */
@@ -551,7 +552,7 @@ class CodeManage extends ManagePluginBase
     }
 
     /**
-     * 検索条件更新処理
+     * 検索条件 更新処理
      */
     public function searchUpdate($request, $id, $function = 'searchEdit')
     {
@@ -587,11 +588,11 @@ class CodeManage extends ManagePluginBase
 
         // 一覧画面に戻る
         // return redirect("/manage/code");
-        return redirect("/manage/code/code_search?page=$page");
+        return redirect("/manage/code/searches?page=$page");
     }
 
     /**
-     * 検索条件削除関数
+     * 検索条件 削除処理
      */
     public function searchDestroy($request, $id)
     {
@@ -601,5 +602,158 @@ class CodeManage extends ManagePluginBase
         // return redirect("/manage/code");
         $page = $request->get('page', 1);
         return redirect("/manage/code/searches?page=$page");
+    }
+
+    /**
+     * 注釈一覧 初期表示
+     *
+     * @return view
+     */
+    public function helpMessages($request, $page_id = null)
+    {
+        // コード注釈取得
+        $codes_help_messages = CodesHelpMessages::orderBy('display_sequence')->paginate(10);
+
+        // [TODO] ページネーションの表示ページ数を保持するための暫定対応
+        $paginate_page = $request->get('page', 1);
+
+        // 管理画面プラグインの戻り値の返し方
+        // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
+        return view('plugins.manage.code.help_message', [
+            "function"      => __FUNCTION__,
+            "plugin_name"   => "code",
+            "codes_help_messages"  => $codes_help_messages,
+            "paginate_page" => $paginate_page,
+            // "page" => 1,
+        ]);
+    }
+
+    /**
+     * 注釈 登録画面表示
+     *
+     * @return view
+     */
+    public function helpMessageRegist($request, $id = null, $errors = array())
+    {
+        return $this->helpMessageEdit($request, $id, 'helpMessageRegist', $errors);
+    }
+
+    /**
+     * 注釈 登録処理
+     */
+    public function helpMessageStore($request)
+    {
+        return $this->helpMessageUpdate($request, null, 'helpMessageRegist');
+    }
+
+    /**
+     * 注釈 変更画面表示
+     *
+     * @return view
+     */
+    public function helpMessageEdit($request, $id = null, $function = null, $errors = array())
+    {
+        // セッション初期化などのLaravel 処理。これを書かないとold()が機能しなかった。
+        $request->flash();
+
+        if ($id) {
+            // ID で1件取得
+            $codes_help_message = CodesHelpMessages::where('id', $id)->first();
+        } else {
+            // ユーザデータの空枠
+            $codes_help_message = new CodesHelpMessages();
+        }
+
+        // [TODO] ページネーションの表示ページ数を保持するための暫定対応
+        $paginate_page = $request->get('page', 1);
+
+        if (is_null($function)) {
+            $function = 'helpMessageEdit';
+        }
+
+        return view('plugins.manage.code.help_message_edit', [
+            // "function" => __FUNCTION__,
+            "function" => $function,
+            "plugin_name" => "code",
+            "codes_help_message" => $codes_help_message,
+            'errors' => $errors,
+            "paginate_page" => $paginate_page,
+        ]);
+    }
+
+    /**
+     * 注釈 更新処理
+     */
+    public function helpMessageUpdate($request, $id, $function = 'helpMessageEdit')
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'alias_key' => [
+                'required',
+                Rule::unique('codes_help_messages')->ignore($id),
+            ],
+            'name' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'alias_key' => '注釈キー',
+            'name' => '注釈名',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return $this->helpMessageEdit($request, $id, $function, $validator->errors());
+        }
+
+        if ($id) {
+            // 更新
+            $codes_help_messages = CodesHelpMessages::find($id);
+        } else {
+            // 登録
+            $codes_help_messages = new CodesHelpMessages();
+        }
+        $codes_help_messages->alias_key                         = $request->alias_key;
+        $codes_help_messages->name                              = $request->name;
+
+        $codes_help_messages->codes_help_messages_alias_key_help_message = $request->codes_help_messages_alias_key_help_message;
+        $codes_help_messages->plugin_name_help_message          = $request->plugin_name_help_message;
+        $codes_help_messages->buckets_id_help_message           = $request->buckets_id_help_message;
+        $codes_help_messages->prefix_help_message               = $request->prefix_help_message;
+
+        $codes_help_messages->type_name_help_message            = $request->type_name_help_message;
+        $codes_help_messages->type_code1_help_message           = $request->type_code1_help_message;
+        $codes_help_messages->type_code2_help_message           = $request->type_code2_help_message;
+        $codes_help_messages->type_code3_help_message           = $request->type_code3_help_message;
+        $codes_help_messages->type_code4_help_message           = $request->type_code4_help_message;
+        $codes_help_messages->type_code5_help_message           = $request->type_code5_help_message;
+        $codes_help_messages->code_help_message                 = $request->code_help_message;
+        $codes_help_messages->value_help_message                = $request->value_help_message;
+        $codes_help_messages->additional1_help_message          = $request->additional1_help_message;
+        $codes_help_messages->additional2_help_message          = $request->additional2_help_message;
+        $codes_help_messages->additional3_help_message          = $request->additional3_help_message;
+        $codes_help_messages->additional4_help_message          = $request->additional4_help_message;
+        $codes_help_messages->additional5_help_message          = $request->additional5_help_message;
+        $codes_help_messages->display_sequence_help_message     = $request->display_sequence_help_message;
+        $codes_help_messages->display_sequence                  = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
+        $codes_help_messages->save();
+
+
+        $page = $request->get('page', 1);
+
+        // 一覧画面に戻る
+        // return redirect("/manage/code");
+        return redirect("/manage/code/helpMessages?page=$page");
+    }
+
+    /**
+     * 注釈 削除処理
+     */
+    public function helpMessageDestroy($request, $id)
+    {
+        CodesHelpMessages::destroy($id);
+
+        // コード一覧画面に戻る
+        // return redirect("/manage/code");
+        $page = $request->get('page', 1);
+        return redirect("/manage/code/helpMessages?page=$page");
     }
 }

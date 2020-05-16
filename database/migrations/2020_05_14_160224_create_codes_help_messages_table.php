@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 /**
- * 注釈設定テーブル作成
+ * 注釈テーブル作成
  *
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -23,9 +23,10 @@ class CreateCodesHelpMessagesTable extends Migration
     {
         Schema::create('codes_help_messages', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('alias_key', 255)->comment('注釈設定キー');      // 必須
-            $table->string('name', 255)->comment('注釈設定名');             // 必須
+            $table->string('alias_key', 255)->comment('注釈キー');      // 必須
+            $table->string('name', 255)->comment('注釈名');             // 必須
 
+            $table->string('codes_help_messages_alias_key_help_message', 255)->nullable();
             $table->string('plugin_name_help_message', 255)->nullable();
             $table->string('buckets_id_help_message', 255)->nullable();
             $table->string('prefix_help_message', 255)->nullable();
@@ -44,7 +45,6 @@ class CreateCodesHelpMessagesTable extends Migration
             $table->string('additional4_help_message', 255)->nullable();
             $table->string('additional5_help_message', 255)->nullable();
             $table->string('display_sequence_help_message', 255)->nullable();
-            $table->string('codes_help_messages_alias_key_help_message', 255)->nullable();
             $table->integer('display_sequence')->comment('表示順');
 
             $table->integer('created_id')->nullable();

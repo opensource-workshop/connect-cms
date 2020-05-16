@@ -34,6 +34,11 @@
 </div>
 <div class="card-body">
 
+    <div class="alert alert-info" role="alert">
+        コード一覧の検索条件を記録しておけます。<br>
+        記録した検索条件は、コード一覧に検索ボタンとして表示され、押すとその条件で検索します。
+    </div>
+
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
         <input name="page" value="{{$paginate_page}}" type="hidden">
