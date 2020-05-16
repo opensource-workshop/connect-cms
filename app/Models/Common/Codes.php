@@ -3,6 +3,7 @@
 namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\UserableNohistory;
 
@@ -19,6 +20,9 @@ class Codes extends Model
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
 
+    // 論理削除
+    use SoftDeletes;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
@@ -27,7 +31,7 @@ class Codes extends Model
         'plugin_name',
         'buckets_id',
         'prefix',
-        'type_name', 
+        'type_name',
         'type_code1',
         'type_code2',
         'type_code3',

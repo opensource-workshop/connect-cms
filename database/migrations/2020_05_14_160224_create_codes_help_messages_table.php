@@ -53,6 +53,9 @@ class CreateCodesHelpMessagesTable extends Migration
             $table->integer('updated_id')->nullable();
             $table->string('updated_name', 255)->nullable();
             $table->timestamp('updated_at')->nullable();
+            $table->integer('deleted_id')->nullable();
+            $table->string('deleted_name', 255)->nullable();
+            $table->timestamp('deleted_at')->nullable();
 
             $table->index(['alias_key'], 'alias_key_at_index');
         });
