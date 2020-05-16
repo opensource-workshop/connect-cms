@@ -139,6 +139,11 @@ class ConnectController extends Controller
             // Page データ
             $this->pages = Page::defaultOrder()->get();
         }
+
+        // 自分のページから親を遡って取得(getAncestorsAndSelf はシングルトンなのでここで取っておいてもレスポンスは問題ないと判断)
+        if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
+            $this->page_tree = $this->getAncestorsAndSelf($this->page->id);
+        }
     }
 
     /**
@@ -539,7 +544,7 @@ class ConnectController extends Controller
     /**
      *  ページの系統取得
      */
-    private function getAncestorsAndSelf($page_id)
+    protected function getAncestorsAndSelf($page_id)
     {
         // シングルトン
         if ($this->page_tree) {

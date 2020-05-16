@@ -451,14 +451,34 @@ class Page extends Model
     /**
      *  パスワードを要求するかの判断
      */
-    public function isRequestPassword($request)
+    public function isRequestPassword($request, $page_tree)
     {
-        // ページに閲覧パスワードが設定されていなければ戻る
-        if (empty($this->password)) {
+        // 自分のページから親を遡って取得
+        if (empty($page_tree)) {
+            $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
+        }
+//Log::debug(json_encode( $page_tree, JSON_UNESCAPED_UNICODE));
+
+//        // ページに閲覧パスワードが設定されていなければ戻る
+//        if (empty($this->password)) {
+//            return false;
+//        }
+
+        // 自分及び先祖ページに閲覧パスワードが設定されていなければ戻る
+        $check_page = null;
+        foreach ($page_tree as $page) {
+            if (!empty($page->password)) {
+                $check_page = $page;
+                break;
+            }
+        }
+        if (empty($check_page)) {
             return false;
         }
-       // セッション中に該当ページの認証情報があるかチェック
-        if ( $request->session()->has('page_auth.'.$this->id) && $request->session()->get('page_auth.'.$this->id) == 'authed') {
+
+        // セッション中に該当ページの認証情報があるかチェック
+        //if ( $request->session()->has('page_auth.'.$this->id) && $request->session()->get('page_auth.'.$this->id) == 'authed') {
+        if ( $request->session()->has('page_auth.'.$check_page->id) && $request->session()->get('page_auth.'.$check_page->id) == 'authed') {
             // すでに認証されているので、問題なし
             return false;
         }
@@ -470,11 +490,18 @@ class Page extends Model
     /**
      *  パスワードチェックの判定
      */
-    public function checkPassword($password)
+    public function checkPassword($password, $page_tree)
     {
         // パスワードチェック
-        if ($this->password == $password) {
-            return true;
+        //if ($this->password == $password) {
+        //    return true;
+        //}
+
+        // パスワードチェック
+        foreach ($page_tree as $page) {
+            if ($page->password == $password) {
+                return true;
+            }
         }
         return false;
     }
