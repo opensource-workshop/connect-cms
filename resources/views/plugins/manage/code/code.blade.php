@@ -21,15 +21,41 @@
 <div class="card-body">
 
 {{-- 検索エリア --}}
-<form action="/manage/code/index/{{$config->id}}" method="GET" class="form-horizontal">
+<form action="{{url('/')}}/manage/code/index/{{$config->id}}" method="GET" class="form-horizontal">
     <div class="input-group">
-        <input type="text" name="q" value="{{$q}}" class="form-control">
+        <input type="text" name="search_words" value="{{$search_words}}" class="form-control">
+        <button type="button" class="btn text-muted" style="margin-left: -37px; z-index: 100;" onclick="location.href='{{url('/')}}/manage/code/index/?page=1'">
+            <i class="fa fa-times"></i>
+        </button>
         <div class="input-group-append">
             <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i> 検索</button>
+        </div>
+        <div class="ml-2">
+            <a data-toggle="collapse" href="#collapse-search-help">
+                <span class="btn btn-light"><i class="fas fa-question-circle"></i></span>
+            </a>
         </div>
     </div>
 </form>
 
+{{-- 検索条件の補足 --}}
+@include('plugins.manage.code.search_help')
+
+{{-- ラベル検索エリア --}}
+<div class="mt-3">
+    {{--
+    <button type="button" class="btn btn-secondary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words=type_code1=location'">
+        場所マスタ <span class="badge badge-light">3</span>
+    </button>
+    --}}
+    @foreach($codes_searches as $codes_search)
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words={{$codes_search->search_words}}'">
+        <i class="fas fa-search"></i> {{$codes_search->name}}
+    </button>
+    @endforeach
+</div>
+
+{{-- 一覧エリア --}}
 <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $codes->total() }} 件</span></div>
 <table class="table table-bordered table_border_radius table-hover cc-font-90">
 <tbody>
@@ -37,6 +63,7 @@
         <th class="d-block d-sm-table-cell text-break">プラグイン</th>
         @php
         $colums = [
+            'codes_help_messages_name' => '注釈設定',
             'buckets_name' => 'buckets_name',
             'buckets_id' => 'buckets_id',
             'prefix' => 'prefix',
@@ -53,7 +80,7 @@
             'additional3' => 'additional3',
             'additional4' => 'additional4',
             'additional5' => 'additional5',
-            'display_sequence' => '並び順',
+            'display_sequence' => '表示順',
         ];
         @endphp
         @foreach($colums as $colum_key => $colum_value)
@@ -66,7 +93,7 @@
     @foreach($codes as $code)
     <tr>
         <th class="d-block d-sm-table-cell bg-light">
-            <a href="{{url('/')}}/manage/code/edit/{{$code->id}}?page={{$paginate_page}}&q={{$q}}"><i class="far fa-edit"></i></a>
+            <a href="{{url('/')}}/manage/code/edit/{{$code->id}}?page={{$paginate_page}}&search_words={{$search_words}}"><i class="far fa-edit"></i></a>
             <span class="d-sm-none">プラグイン：</span>{{$code->plugin_name_full}}
         </th>
         @foreach($colums as $colum_key => $colum_value)
@@ -82,7 +109,7 @@
 </tbody>
 </table>
 
-{{ $codes->appends(['q' => $q])->links() }}
+{{ $codes->appends(['search_words' => $search_words])->links() }}
 
 </div>
 </div>

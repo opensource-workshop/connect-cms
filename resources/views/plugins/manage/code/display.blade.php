@@ -1,5 +1,5 @@
 {{--
- * 一覧表示設定 画面のテンプレート
+ * (コード一覧)表示設定 画面のテンプレート
  *
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -20,7 +20,11 @@
 </div>
 <div class="card-body">
 
-    <form action="/manage/code/displayUpdate/{{$config->id}}" method="POST" class="form-horizontal">
+    <div class="alert alert-info" role="alert">
+        コード一覧に表示する項目を設定します。
+    </div>
+
+    <form action="{{url('/')}}/manage/code/displayUpdate/{{$config->id}}" method="POST" class="form-horizontal">
         {{ csrf_field() }}
 
         <!-- Code form  -->
@@ -31,7 +35,18 @@
                 表示する
                 <input type="hidden" name="code_list_display_colums[plugin_name]" value="plugin_name">
                 <div class="text-muted">
-                    plugin_nameの表示は編集マークの表示に必要なため、必ず表示します。
+                    プラグインは編集マークの表示に必要なため、必ず表示します。
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <div class="col-md-3 text-md-right">注釈設定</div>
+            <div class="col-md-9">
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox" name="code_list_display_colums[codes_help_messages_name]" value="codes_help_messages_name"@if(in_array('codes_help_messages_name', $config->value_array)) == 'codes_help_messages_name') checked @endif>表示する
+                    </label>
                 </div>
             </div>
         </div>
@@ -216,7 +231,7 @@
         <!-- Update code Button -->
         <div class="form-group row">
             <div class="offset-sm-3 col-sm-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/code')}}?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
                 <button type="submit" class="btn btn-primary form-horizontal mr-2">
                     <i class="fas fa-check"></i> 更新
                 </button>
