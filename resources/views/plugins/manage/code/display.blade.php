@@ -41,7 +41,7 @@
         </div>
 
         <div class="form-group row">
-            <div class="col-md-3 text-md-right">注釈設定</div>
+            <div class="col-md-3 text-md-right">注釈名</div>
             <div class="col-md-9">
                 <div class="form-check">
                     <label class="form-check-label">
