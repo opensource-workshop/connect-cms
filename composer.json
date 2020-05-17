@@ -55,9 +55,17 @@
         "phpcs": [
             "phpcs --standard=phpcs.xml ./"
         ],
+        "phpcs-color": [
+            "@phpcs --colors"
+        ],
         "phpcbf": [
             "phpcbf --standard=phpcs.xml ./"
         ]
+    },
+    "scripts-descriptions": {
+        "phpcs": "Run all phpcs.",
+        "phpcs-color": "Run all phpcs add option colors(Linux Only).",
+        "phpcbf": "Run all phpcbf."
     },
     "config": {
         "preferred-install": "dist",
