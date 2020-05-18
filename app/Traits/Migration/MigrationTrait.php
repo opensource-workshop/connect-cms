@@ -319,6 +319,7 @@ trait MigrationTrait
         foreach ($xpath->query($expression, $container_main) as $section) {
 
             $frame_index++;
+            $frame_index_str = sprintf("%'.04d", $frame_index);
 
             // フレームタイトル(panel-heading)を抜き出します。
             $expression = './/div[contains(@class, "panel-heading")]/span';
@@ -361,7 +362,7 @@ trait MigrationTrait
                     $image_index++;
                     $downloadPath = $image_url;
 
-                    $file_name = "frame_" . $frame_index . '_' . $image_index;
+                    $file_name = "frame_" . $frame_index_str . '_' . $image_index;
                     $savePath = 'migration/' . $page_id . "/" . $file_name;
                     $saveStragePath = storage_path() . '/app/' . $savePath;
 
@@ -436,7 +437,7 @@ trait MigrationTrait
                         $file_index++;
                         $downloadPath = $anchor_href;
 
-                        $file_name = "frame_" . $frame_index . '_file_' . $file_index;
+                        $file_name = "frame_" . $frame_index_str . '_file_' . $file_index;
                         $savePath = 'migration/' . $page_id . "/" . $file_name;
                         $saveStragePath = storage_path() . '/app/' . $savePath;
 
@@ -473,13 +474,13 @@ trait MigrationTrait
             }
 
             // フレーム設定ファイルの出力
-            Storage::put('migration/' . $page_id . "/frame_" . $frame_index . '.ini', $frame_ini);
+            Storage::put('migration/' . $page_id . "/frame_" . $frame_index_str . '.ini', $frame_ini);
 
             // Contents 変換
             $content_html = $this->migrationHtml($content_html);
 
             // HTML content の保存
-            Storage::put('migration/' . $page_id . "/frame_" . $frame_index . '.html', trim($content_html));
+            Storage::put('migration/' . $page_id . "/frame_" . $frame_index_str . '.html', trim($content_html));
         }
     }
 

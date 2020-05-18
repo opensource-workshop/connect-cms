@@ -24,6 +24,7 @@
 
         <form action="{{url('/manage/page/migration_get')}}/{{$current_page->id}}" method="POST" class="form-horizontal">
             {{ csrf_field() }}
+            <input type="hidden" name="destination_page_id" value="{{$current_page->id}}">
 
             <div class="form-group row">
                 <label for="source_system" class="col-md-3 col-form-label text-md-right">移行元システム</label>
@@ -52,6 +53,7 @@
                 </div>
             </div>
 
+            {{-- UI的に、セレクトボックスは不要だったのでとりあえず、コメントアウト
             <div class="form-group row">
                 <label for="page_name" class="col-md-3 col-form-label text-md-right">移行先ページ</label>
                 <div class="col-md-9">
@@ -70,6 +72,7 @@
                     @if ($errors && $errors->has('destination_page_id')) <div class="text-danger">{{$errors->first('destination_page_id')}}</div> @endif
                 </div>
             </div>
+            --}}
 
             <div class="form-group row mt-3 text-center">
                 <div class="col-sm-3"></div>
