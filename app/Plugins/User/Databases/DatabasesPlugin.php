@@ -399,7 +399,7 @@ class DatabasesPlugin extends UserPluginBase
 
             // キーワード指定の追加
             if (!empty(session('search_keyword.'.$frame_id))) {
-                $inputs_query->whereIn('databases_inputs.id', function($query) {
+                $inputs_query->whereIn('databases_inputs.id', function($query) use($frame_id) {
                                // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
                                $query->select('databases_inputs_id')
                                      ->from('databases_input_cols')

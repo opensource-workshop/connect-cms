@@ -14,7 +14,15 @@ class Frame extends Model
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
     protected $fillable = [
+        'page_id',
+        'area_id',
+        'frame_title',
+        'frame_design',
+        'plugin_name',
+        'frame_col',
+        'template',
         'bucket_id',
+        'display_sequence',
     ];
 
     /**

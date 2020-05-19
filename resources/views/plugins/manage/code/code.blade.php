@@ -4,7 +4,7 @@
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コード管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -20,73 +20,103 @@
 </div>
 <div class="card-body">
 
-<div class="text-right"><span class="badge badge-pill badge-light">全 {{ $codes->total() }} 件</span></div>
+{{-- 警告メッセージエリア --}}
+@if (! $config)
+    <div class="alert alert-warning" role="alert">
+        表示設定が未設定です。<a href="{{url('/')}}/manage/code/display" class="alert-link">表示設定</a>から設定してください。
+    </div>
+@endif
+
+{{-- 検索エリア --}}
+<form action="{{url('/')}}/manage/code/index/{{$config->id}}" method="GET" class="form-horizontal">
+    <div class="input-group">
+        <input type="text" name="search_words" value="{{$search_words}}" class="form-control">
+        <button type="button" class="btn text-muted" style="margin-left: -37px; z-index: 100;" onclick="location.href='{{url('/')}}/manage/code/index/?page=1'">
+            <i class="fa fa-times"></i>
+        </button>
+        <div class="input-group-append">
+            <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i> 検索</button>
+        </div>
+        <div class="ml-2">
+            <a data-toggle="collapse" href="#collapse-search-help">
+                <span class="btn btn-light"><i class="fas fa-question-circle"></i></span>
+            </a>
+        </div>
+    </div>
+</form>
+
+{{-- 検索条件の補足 --}}
+@include('plugins.manage.code.search_help')
+
+{{-- ラベル検索エリア --}}
+<div class="mt-3">
+    {{--
+    <button type="button" class="btn btn-secondary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words=type_code1=location'">
+        場所マスタ <span class="badge badge-light">3</span>
+    </button>
+    --}}
+    @foreach($codes_searches as $codes_search)
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index/?page=1&search_words={{$codes_search->search_words}}'">
+        <i class="fas fa-search"></i> {{$codes_search->name}}
+    </button>
+    @endforeach
+</div>
+
+{{-- 一覧エリア --}}
+<div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $codes->total() }} 件</span></div>
 <table class="table table-bordered table_border_radius table-hover cc-font-90">
 <tbody>
     <tr class="bg-light d-none d-sm-table-row">
         <th class="d-block d-sm-table-cell text-break">プラグイン</th>
-{{--
-        <th class="d-block d-sm-table-cell text-break">データ名</th>
-        <th class="d-block d-sm-table-cell text-break">buckets_id</th>
---}}
-        <th class="d-block d-sm-table-cell text-break">prefix</th>
-        <th class="d-block d-sm-table-cell text-break">type_name</th>
-        <th class="d-block d-sm-table-cell text-break">type_code1</th>
-{{--
-        <th class="d-block d-sm-table-cell text-break">type_code2</th>
-        <th class="d-block d-sm-table-cell text-break">type_code3</th>
-        <th class="d-block d-sm-table-cell text-break">type_code4</th>
-        <th class="d-block d-sm-table-cell text-break">type_code5</th>
---}}
-        <th class="d-block d-sm-table-cell text-break">コード</th>
-        <th class="d-block d-sm-table-cell text-break">値</th>
-        <th class="d-block d-sm-table-cell text-break">additional1</th>
-{{--
-        <th class="d-block d-sm-table-cell text-break">additional2</th>
-        <th class="d-block d-sm-table-cell text-break">additional3</th>
-        <th class="d-block d-sm-table-cell text-break">additional4</th>
-        <th class="d-block d-sm-table-cell text-break">additional5</th>
---}}
-        <th class="d-block d-sm-table-cell text-break">並び順</th>
+        @php
+        $colums = [
+            'codes_help_messages_name' => '注釈名',
+            'buckets_name' => 'buckets_name',
+            'buckets_id' => 'buckets_id',
+            'prefix' => 'prefix',
+            'type_name' => 'type_name',
+            'type_code1' => 'type_code1',
+            'type_code2' => 'type_code2',
+            'type_code3' => 'type_code3',
+            'type_code4' => 'type_code4',
+            'type_code5' => 'type_code5',
+            'code' => 'コード',
+            'value' => '値',
+            'additional1' => 'additional1',
+            'additional2' => 'additional2',
+            'additional3' => 'additional3',
+            'additional4' => 'additional4',
+            'additional5' => 'additional5',
+            'display_sequence' => '表示順',
+        ];
+        @endphp
+        @foreach($colums as $colum_key => $colum_value)
+            @if(in_array($colum_key, $config->value_array) == $colum_key)
+                <th class="d-block d-sm-table-cell text-break">{{$colum_value}}</th>
+            @endif
+        @endforeach
     </tr>
+
     @foreach($codes as $code)
     <tr>
         <th class="d-block d-sm-table-cell bg-light">
-{{--
-            <a href="{{url('/')}}/manage/code/edit/{{$code->id}}"><i class="far fa-edit"></i></a>
---}}
-            <a href="{{url('/')}}/manage/code/edit/{{$code->id}}?page={{$paginate_page}}"><i class="far fa-edit"></i></a>
+            <a href="{{url('/')}}/manage/code/edit/{{$code->id}}?page={{$paginate_page}}&search_words={{$search_words}}"><i class="far fa-edit"></i></a>
             <span class="d-sm-none">プラグイン：</span>{{$code->plugin_name_full}}
         </th>
-{{--
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">データ名：</span>{{$code->bucket_name}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">buckets_id：</span>{{$code->buckets_id}}</td>
---}}
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">prefix：</span>{{$code->prefix}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_name：</span>{{$code->type_name}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code1：</span>{{$code->type_code1}}</td>
-{{--
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code2：</span>{{$code->type_code2}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code3：</span>{{$code->type_code3}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code4：</span>{{$code->type_code4}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">type_code5：</span>{{$code->type_code5}}</td>
---}}
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">コード：</span>{{$code->code}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">値：</span>{{$code->value}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">additional1：</span>{{$code->additional1}}</td>
-{{--
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">additional2：</span>{{$code->additional2}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">additional3：</span>{{$code->additional3}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">additional4：</span>{{$code->additional4}}</td>
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">additional5：</span>{{$code->additional5}}</td>
---}}
-        <td class="d-block d-sm-table-cell"><span class="d-sm-none">並び順：</span>{{$code->display_sequence}}</td>
+        @foreach($colums as $colum_key => $colum_value)
+            @if(in_array($colum_key, $config->value_array) == $colum_key)
+            {{-- 表示例
+            <td class="d-block d-sm-table-cell"><span class="d-sm-none">buckets_id：</span>$code->buckets_id</td>
+            --}}
+            <td class="d-block d-sm-table-cell"><span class="d-sm-none">{{$colum_value}}：</span>{{$code->$colum_key}}</td>
+            @endif
+        @endforeach
     </tr>
     @endforeach
 </tbody>
 </table>
 
-{{ $codes->links() }}
+{{ $codes->appends(['search_words' => $search_words])->links() }}
 
 </div>
 </div>

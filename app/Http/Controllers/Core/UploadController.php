@@ -70,7 +70,7 @@ class UploadController extends ConnectController
             $page_roles = $this->getPageRoles(array($page->id));
 
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            if ($page->isRequestPassword($request)) {
+            if ($page->isRequestPassword($request, $this->page_tree)) {
                  return response()->download( storage_path(config('connect.forbidden_image_path')));
             }
 

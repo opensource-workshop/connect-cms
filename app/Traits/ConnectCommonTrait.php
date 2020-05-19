@@ -20,8 +20,8 @@ use App\Models\Core\UsersRoles;
 
 trait ConnectCommonTrait
 {
-    var $directory_base = "uploads/";
-    var $directory_file_limit = 1000;
+    //var $directory_base = "uploads/";
+    //var $directory_file_limit = 1000;
 
     /**
      * Buckets のrole を配列で返却
@@ -713,19 +713,23 @@ trait ConnectCommonTrait
 
     /**
      *  対象ディレクトリの取得
-     *
+     *  uploads/1 のような形で返す。
      */
     public function getDirectory($file_id)
     {
         // ファイルID がなければ0ディレクトリを返す。
         if (empty($file_id)) {
-            return $this->directory_base . '0';
+            //return $this->directory_base . '0';
+            return config('connect.directory_base') . '0';
         }
         // 1000で割った余りがディレクトリ名
-        $quotient = floor($file_id / $this->directory_file_limit);
-        $remainder = $file_id % $this->directory_file_limit;
+        //$quotient = floor($file_id / $this->directory_file_limit);
+        //$remainder = $file_id % $this->directory_file_limit;
+        $quotient = floor($file_id / config('connect.directory_file_limit'));
+        $remainder = $file_id % config('connect.directory_file_limit');
         $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
-        $directory = $this->directory_base . $sub_directory;
+        //$directory = $this->directory_base . $sub_directory;
+        $directory = config('connect.directory_base') . $sub_directory;
 
         return $directory;
     }

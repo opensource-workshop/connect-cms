@@ -55,7 +55,7 @@
     });
 </script>
 <div class="row">
-    <div class="col-sm-3">
+    <div class="col-sm-5">
         {{-- 時間From --}}
         <div class="input-group date" id="{{ $form_obj->id }}_from" data-target-input="nearest">
             <input 
@@ -71,7 +71,7 @@
         </div>
     </div>
     <div class="d-flex align-items-center">~</div>
-    <div class="col-sm-3">
+    <div class="col-sm-5">
         {{-- 時間To --}}
         <div class="input-group date" id="{{ $form_obj->id }}_to" data-target-input="nearest">
             <input 

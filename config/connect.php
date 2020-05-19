@@ -8,6 +8,12 @@ return [
     // 画像に権限がなかった場合の「forbidden」
     'forbidden_image_path' => 'app/public/forbidden.png',
 
+    // uploads ディレクトリのベース・ディレクトリ
+    'directory_base' => "uploads/",
+
+    // uploads ディレクトリの1ディレクトリの最大ファイル数
+    'directory_file_limit' => 1000,
+
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
     'PLUGIN_FORCE_HIDDEN' => ['sampleforms', 'knowledges', 'codestudies'],
 

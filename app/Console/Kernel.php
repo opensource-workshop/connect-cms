@@ -14,6 +14,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         //
+         Commands\Migration\FromHttp::class,
+         Commands\Migration\ImportHtml::class
     ];
 
     /**

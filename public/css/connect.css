@@ -227,6 +227,18 @@ a.cc-cursor-text:hover {
     font-size: 90%;
 }
 
+/* テーブル
+------------------------------------- */
+@media screen and (max-width: 768px) {
+    .cc-table-md-responsive td, .cc-table-md-responsive th {
+        display: block;
+    }
+}
+.cc-th-bg-gray th {
+    background-color: #f0f0f0;
+    font-weight: normal;
+}
+
 /* 擬似テーブル
 ------------------------------------- */
 .cc-table-set {

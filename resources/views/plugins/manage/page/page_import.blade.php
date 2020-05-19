@@ -32,9 +32,21 @@
         <form action="{{url('/manage/page/upload')}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
             {{csrf_field()}}
 
-            <div class="form-group mx-auto mt-2 mb-0">
-                <label for="File">CSVファイル</label>
-                <input type="file" name="page_csv" class="form-control-file" id="File">
+            <div class="form-group row">
+                <label for="page_name" class="col-md-3 col-form-label text-md-right">CSVファイル</label>
+                <div class="col-md-9 d-sm-flex align-items-center">
+                    <input type="file" name="page_csv" class="form-control-file" id="File">
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="page_name" class="col-md-3 col-form-label text-md-right">初期配置</label>
+                <div class="col-md-9 d-sm-flex align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input name="deploy_content_plugin" value="1" type="checkbox" class="custom-control-input" id="deploy_content_plugin">
+                        <label class="custom-control-label" for="deploy_content_plugin">インポートする各ページに1つ、「固定記事プラグイン」を配置する。</label>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group mx-auto col-md-3 mt-2 mb-0">
