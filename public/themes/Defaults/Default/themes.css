@@ -7021,3 +7021,467 @@ a.text-dark:hover, a.text-dark:focus {
   .table .thead-dark th {
     color: inherit;
     border-color: #dee2e6; } }
+
+/*== データベース一覧 ==*/
+.tabel-default-list dl{
+    background-color: #fff;
+    background-clip: border-box;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    background-color: #e9ecef;
+}
+.tabel-default-list dl dt{
+    width: 100%;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+.tabel-default-list dl:first-child dt{
+    border-right: 1px solid #fff;
+}
+.tabel-default-list dl:first-child dt:last-child{
+    border-right: none;
+}
+.tabel-default-list dl dt h2{
+    font-size: 1.25rem;
+    margin-bottom: 0;
+    line-height: 1em;
+    border-left: 0.75em solid #000065;
+    padding-left: 0.5em;
+}
+.tabel-default-list dl dt h2 a{
+    font-size: 1.25rem;
+    line-height: 1em;
+    color: #01014B;
+}
+.tabel-default-list dl dd{
+    width: 100%;
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    margin-bottom: 0;
+}
+.tabel-default-list dl dd h3{
+    font-weight: bold;
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 0 0 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+}
+.tabel-default-list dl dd p{
+    margin-bottom: 0;
+    padding-left: 1rem;
+}
+.tabel-default-list dl dd:last-child{
+    margin-bottom: 0.75rem;
+}
+@media (min-width: 768px) { /*md*/
+    .tabel-default-list dl dt,
+    .tabel-default-list dl dd{ width: auto; }
+    .tabel-default-list dl dd{ border-right: 1px solid rgba(0, 0, 0, 0.125); }
+    .tabel-default-list dl dt h2{
+        font-size: 1rem;
+        line-height: 1.25em;
+        border: none;
+        padding-left: 0;
+    }
+    .tabel-default-list dl dd p{ padding-left: 0; }
+}
+
+/*== データベース：Default ==*/
+    .db-default-detail h2{
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        line-height: 1em;
+        padding:0.25rem 0 0.25rem 0.75em;
+        border-bottom:1px solid rgba(0, 0, 0, 0.125);
+        border-left: 0.75em solid #000065;
+    }
+    .db-default-detail dl dt{
+        font-size: 1.1rem;
+        border-bottom:1px solid rgba(0, 0, 0, 0.125);
+        padding: 0 0 0.25rem 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    .db-default-detail dl dd{
+        margin-bottom: 0;
+        padding: 0 0 0 1rem;
+    }
+    .db-default-detail dl.type-image dt{
+        display: none;
+    }
+    .db-default-detail dl.type-image dd{
+        text-align: center;
+        padding: 1rem;
+    }
+    .db-default-detail dl.type-image dd img{
+        min-width: 50%;
+    }
+    @media (min-width: 768px) { /*md*/
+        .db-default-detail h2{
+            font-size: 1.5rem;
+        }
+        .db-default-detail dl{
+            margin-bottom: 2rem;
+        }
+        .db-default-detail dl dt{
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.25rem;
+        }
+        .db-default-detail dl dd{
+            padding-left: 3rem;
+        }
+        .db-default-detail dl.type-image dd img{
+            min-width: 80%;
+        }
+    } 
+/*== end ==*/
+
+/*== データベース：テーブル ==*/
+    .tabel-default-list{
+        width: 100%;
+        overflow: scroll auto;
+        padding: 0;
+        margin: 0;
+    }
+    .tabel-default-list dl{
+        background-clip: border-box;
+        border-radius: 0.25rem;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        background-color: #e9ecef;
+    }
+    .tabel-default-list dl dt{
+        width: 100%;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    .tabel-default-list dl:first-child dt{
+        border-right: 1px solid #fff;
+    }
+    .tabel-default-list dl:first-child dt:last-child{
+        border-right: none;
+    }
+    .tabel-default-list dl dt h2{
+        font-size: 1.25rem;
+        margin-bottom: 0;
+        line-height: 1em;
+        border-left: 0.75em solid #000065;
+        padding-left: 0.5em;
+    }
+    .tabel-default-list dl dt h2 a{
+        font-size: 1.25rem;
+        line-height: 1em;
+        color: #01014B;
+    }
+    .tabel-default-list dl dd{
+        width: 100%;
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        border-right: 1px solid rgba(0, 0, 0, 0.125);
+        margin-bottom: 0;
+    }
+    .tabel-default-list dl dd h3{
+        font-weight: bold;
+        font-size: 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        padding: 0 0 0.25rem 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    .tabel-default-list dl dd p{
+        margin-bottom: 0;
+        padding-left: 1rem;
+    }
+    .tabel-default-list dl dd:last-child{
+        margin-bottom: 0.75rem;
+    }
+    @media (min-width: 768px) { /*md*/
+        .tabel-default-list dl dt,
+        .tabel-default-list dl dd{ width: auto; }
+        .tabel-default-list dl dd{ border-right: 1px solid rgba(0, 0, 0, 0.125); }
+        .tabel-default-list dl dt h2{
+            font-size: 1rem;
+            line-height: 1.25em;
+            border: none;
+            padding-left: 0;
+        }
+        .tabel-default-list dl dd p{ padding-left: 0; }
+    }
+    @media (min-width: 992px) { /*lg*/
+        .tabel-default-list{
+            width: 100%;
+            overflow: auto auto;
+            padding: 0;
+            margin: 0;
+        }
+    }
+/*== end ==*/
+
+/*== データベース：リスト ==*/
+    .db-list{
+        display: inline-flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    .db-list .db-adata{
+        width: 100%;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0.25rem;
+        padding-bottom: 3rem;
+        margin-bottom: 1rem;
+    }
+    .db-list .db-adata:after{
+        display: block;
+        clear: both;
+        content: "";
+    }
+    .db-list .db-adata .main-image{
+        float:left;
+        display: inline-block;
+        width: 30%;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+        border-top-left-radius: 0.25rem;
+    }
+    .db-list .db-adata .main-image a{}
+    .db-list .db-adata .main-image a img{}
+    .db-list .db-adata h2{
+        float:right;
+        display: inline-block;
+        width: 68%;
+        margin: 0 0 0.5rem 0;
+        padding: 0 0 0 0.5em;
+        font-size: 1.25rem;
+        height: 1.5rem;
+        background-color: #6c757d;
+        border-top-right-radius: 0.25rem;
+    }
+    .db-list .db-adata h2 a{
+        font-size: 1rem;
+        line-height: 1rem;
+        color: #fff;
+        font-weight: bold;
+    }
+    .db-list .db-adata .db-contents{
+        width: 68%;
+        float:right;
+        padding: 0;
+        margin: 0 0 0.5rem;
+    }
+    .db-list .db-adata  .db-contents div{
+        border-bottom: 1px dotted #6c757d;
+    }
+    .db-list .db-adata  .db-contents div h3{
+        white-space: nowrap;
+        font-weight: bold;
+        font-size: 1rem;
+        margin:0;
+        line-height: calc(1.5rem - 1px);
+        background-color: rgba(0, 0, 0, 0.125);
+        padding-left: 0.5rem;
+    }
+    .db-list .db-adata div p{
+        font-size: 1rem;
+        margin:0;
+        line-height: 1.5rem;
+        padding-left: 0.5rem;
+    }
+    .db-list .db-adata button{
+        float:right;
+        margin: 0 0.5rem 0.5rem 0; 
+    }
+
+    .db-list .db-adata.no-image{ 
+        padding-bottom: 0;
+    }
+    .db-list .db-adata.no-image h2{
+        display: block;
+        width: 100%;
+        float: none;
+        line-height: 2rem;
+        height: 2rem;
+    }
+    .db-list .db-adata.no-image .db-contents{
+        display: table;
+        width: calc(100% - 1rem);
+        margin: 0.5rem 0.5rem;
+        padding: 0;
+        float: none;
+    }
+    .db-list .db-adata.no-image .db-contents div{
+        display: table-row;
+        background-color: #dedede;
+        border-bottom: none;
+    }
+    .db-list .db-adata.no-image .db-contents div h3,
+    .db-list .db-adata.no-image .db-contents div p{
+        display: table-cell;
+        padding: 0.5rem;
+        border-bottom: none;
+        width: 100%;
+    }
+    .db-list .db-adata.no-image .db-contents div h3{
+        border-top: 1px solid #fff;
+        width: 10rem;
+    }
+    .db-list .db-adata.no-image .db-contents div p{
+        border-top: 1px solid #6c757d;
+        background-color: #fff;
+    }
+    .db-list .db-adata.no-image .db-contents div:first-child h3,
+    .db-list .db-adata.no-image .db-contents div:first-child p{
+        border-top: none;
+    }
+    .db-list .db-adata.no-image .db-contents div:last-child p{
+        border-bottom: 1px solid #6c757d;
+    }
+    .db-list .db-adata.no-image button{
+
+    }
+
+    @media (max-width: 575px) { /*xs*/
+        .db-list .db-adata .main-image{ width: 40%; }
+        .db-list .db-adata h2,
+        .db-list .db-adata .db-contents{ width: 58%; }
+        .db-list .db-adata.no-image h2,
+        .db-list .db-adata.no-image .db-contents{ width: 100%; }
+    }
+    @media (min-width: 768px) { /*md*/
+        /*.db-list .db-adata{ width: calc(50% - 0.5rem); }：左右二分割用*/
+        /*.db-list .db-adata.no-image{ width: 100%; }：イメージがない時は左右100%*/
+        /*.db-list .db-adata .db-contents div h3{ display: none; } ：PC画面で項目名を非表示*/
+        /*.db-list .db-adata.no-image .db-contents div h3{ display: block; }：イメージがない時は項目名を表示*/
+    }
+/*== end ==*/
+
+/*== データベース：カード ==*/
+    .db-card{
+        display: inline-flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    .db-card .db-adata{
+        position: relative;
+        border: 1px solid #ccc;
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+    }
+    .db-card .db-adata .main-image{
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+        border-top-left-radius: 0.25rem;
+        border-top-right-radius: 0.25rem;
+    }
+    .db-card .db-adata .main-image a{}
+    .db-card .db-adata .main-image a img{}
+    .db-card .db-adata h2{
+        font-size: 1.25rem;
+        margin: 0 0 0.5rem 0;
+        padding: 0.25rem 0 0.25rem 0.5em;
+        background-color: #6c757d;
+    }
+    .db-card .db-adata h2 a{
+        font-weight: bold;
+        padding: 0;
+        margin: 0;
+        color: #fff;
+    }
+    .db-card .db-adata .db-contents{
+        padding: 0;
+        margin: 0 0 0.5rem;
+    }
+    .db-card .db-adata  .db-contents div{
+    }
+    .db-card .db-adata  .db-contents div h3{
+        white-space: nowrap;
+        font-weight: bold;
+        font-size: 1rem;
+        line-height: calc(1.5rem - 1px);
+        margin: 0 0.25rem;
+        padding-left: 0.5rem;
+        border-left: 0.25rem solid #00008b;
+        border-bottom: 1px dotted #6c757d;
+    }
+    .db-card .db-adata div p{
+        font-size: 1rem;
+        margin:0;
+        line-height: 1.5rem;
+        padding-left: 1rem;
+    }
+    .db-card .db-adata button{
+        /*position: absolute;
+        right: 0.5rem;
+        bottom: 0.5rem;*/
+    }
+    @media (min-width: 768px) { /*md*/
+        .db-card .db-adata{ width: calc(50% - 0.5rem); }
+    }
+    @media (min-width: 992px) { /*lg*/
+        .db-card .db-adata{ width: calc(33% - 0.5rem); }
+    }
+    @media (min-width: 1200px) { /*xl*/
+        .db-card .db-adata{ width: calc(25% - 0.5rem); }
+    }
+/*== end ==*/
+
+/*== データベース：メニュー ==*/
+    .db-menu{  display: none; }
+    @media (min-width: 992px) {  /*lg*/
+       .db-menu{
+            display: block;
+       }
+        .db-menu .db-adata{
+            width: 100%;
+            height: 5rem;
+            position: relative;
+            border: 1px solid #6c757d;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+        }
+        .db-menu .db-adata:after{
+            display: block;
+            clear: both;
+            content: "";
+        }
+        .db-menu .db-adata a.main-image{
+            display: block;
+            float: left;
+            width: 35%;
+            height: auto;
+            border-top-left-radius: 0.25rem;
+        }
+        .db-menu .db-adata dl{
+            display: block;
+            float: right;
+            width: 65%;
+            height: 4.5rem;
+            overflow: hidden;
+        }
+        .db-menu .db-adata dl dt{
+            width: 100%;
+        }
+        .db-menu .db-adata dl dt a{
+            display: block;
+            width: 100%;
+            background-color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5rem;
+            padding: 0.125rem 0 0.125rem 0.5rem;
+            color: #fff;
+        }
+        .db-menu .db-adata dl dd{
+            padding-left: 0.5rem;
+        }
+        .db-menu .db-adata dl dd a{
+            color: #212529;
+        }
+        .db-menu .db-adata.no-image {}
+        .db-menu .db-adata.no-image dl {
+            width: 100%;
+        }
+    }
+/*== end ==*/

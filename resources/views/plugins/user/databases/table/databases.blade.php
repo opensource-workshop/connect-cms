@@ -169,54 +169,46 @@
         @if (!$default_hide_list)
 
             {{-- データのループ --}}
-            <div class="d-md-table container tabel-default-list">
-                <dl class="d-none d-md-table-row text-center">
-                    @foreach($columns as $column)
-                        @if($column->list_hide_flag == 0)
-                            <dt class="d-md-table-cell text-nowrap p-2">{{$column->column_name}}</dt>
-                        @endif
-                    @endforeach
-                </dl>
-                @foreach($inputs as $input)
-                    <dl class="d-md-table-row row">
+            <div class="tabel-default-list container">
+                <div class="d-table">
+                    <dl class="d-table-row text-center">
                         @foreach($columns as $column)
                             @if($column->list_hide_flag == 0)
-                                @php
-                                    $tmp_tag = 'dd';
-                                    $tmp_title_name = '';
-                                    $tmp_value_tag = '';
-                                    $tmp_link[0] = 0;
-                                    $tmp_link[1] = '<a href="' . url('/') . '/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/'.$input->id.'">';
-                                    $tmp_link[2] = '</a>';
-                                    $tmp_tag_class = ' class="d-inline d-md-table-cell p-2';
+                                <dt class="d-table-cell text-nowrap p-2">{{$column->column_name}}</dt>
+                            @endif
+                        @endforeach
+                    </dl>
+                    @foreach($inputs as $input)
+                        <dl class="d-table-row">
+                            @foreach($columns as $column)
+                                @if($column->list_hide_flag == 0)
+                                    @php
+                                        $tmp_tag = 'dd';
+                                        $tmp_link[0] = 0;
+                                        $tmp_link[1] = '<a href="' . url('/') . '/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/'.$input->id.'">';
+                                        $tmp_link[2] = '</a>';
+                                        $tmp_tag_class = ' class="d-table-cell p-2';
 
-                                    if($loop->first && $column->column_type == 'text'){
-                                        $tmp_tag = 'dt';
-                                        $tmp_link[0] = 1;
-                                        $tmp_value_tag = 'h2';
+                                        if($loop->first && $column->column_type == 'text'){
+                                            $tmp_tag = 'dt';
+                                            $tmp_link[0] = 1;
 
-                                    }elseif($column->column_type == 'image'){
-                                        $tmp_link[0] = 1;
+                                        }elseif($column->column_type == 'image'){
+                                            $tmp_link[0] = 1;
+                                        }
+                                        $tmp_tag_class.= ($column->classname) ? ' '.$column->classname.'"' : '"';
+                                    @endphp
 
-                                    }else{
-                                        $tmp_title_name = '<h3 class="d-md-none">'.$column->column_name.'</h3>';
-                                        $tmp_value_tag = 'p';
-                                    }
-                                    $tmp_tag_class.= ($column->classname) ? ' '.$column->classname.'"' : '"';
-                                @endphp
-
-                                <{{$tmp_tag}}{!!$tmp_tag_class!!}>
-                                    {!!$tmp_title_name!!}
-                                    @if($tmp_value_tag) <{{$tmp_value_tag}}> @endif
+                                    <{{$tmp_tag}}{!!$tmp_tag_class!!}>
                                         @if($tmp_link[0]) {!!$tmp_link[1]!!} @endif
                                             @include('plugins.user.databases.default.databases_include_value')
                                         @if($tmp_link[0]) {!!$tmp_link[2]!!} @endif
-                                    @if($tmp_value_tag) </{{$tmp_value_tag}}>  @endif
-                                </{{$tmp_tag}}>
-                           @endif
-                        @endforeach
-                    </dl>
-                @endforeach
+                                    </{{$tmp_tag}}>
+                               @endif
+                            @endforeach
+                        </dl>
+                    @endforeach
+                </div>
             </div>
 
             {{-- ページング処理 --}}

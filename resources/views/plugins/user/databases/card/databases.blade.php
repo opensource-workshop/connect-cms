@@ -166,56 +166,113 @@
 
             </div>
         </form>
-        @if (!$default_hide_list)
 
-            {{-- データのループ --}}
-            <div class="d-md-table container tabel-default-list">
-                <dl class="d-none d-md-table-row text-center">
+        @if (!$default_hide_list)
+            <div class="db-card">
+                {{-- データのループ --}}
+                @foreach($inputs as $input)
+                    @php
+                        $adata = array();
+                        $tmp_image='';
+                        $tmp_title='';
+                        $tmp_cont=array();
+                        $img_flag=1;
+                        $title_flag=1;
+                        $tmp_data_url = url('/').'/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/'.$input->id;
+                    @endphp
+
+                    {{-- 項目のループ --}}
                     @foreach($columns as $column)
                         @if($column->list_hide_flag == 0)
-                            <dt class="d-md-table-cell text-nowrap p-2">{{$column->column_name}}</dt>
-                        @endif
+                            @php
+                                $obj = $input_cols->
+                                    where('databases_inputs_id', $input->id)->
+                                    where('databases_columns_id', $column->id)->first();
+                                if (empty($obj)) {
+                                    $value = '';
+                                    $client_original_name = '';
+                                }else{
+                                    $value = $obj->value;
+                                    $client_original_name = $obj->client_original_name;
+                                }
+
+                                if($column->classname){
+                                    $tmp_class = ' class="'.$column->classname.'"';
+                                }else{
+                                    $tmp_class = '';
+                                }
+                                $tmp_type = $column->column_type;
+                                $tmp_tag = array(0=>'<div'.$tmp_class.'>', 1=>'</div>');
+                                $tmp_para = array(0=>'', 1=>'');
+                                $tmp_link = array(0=>'<a href="'.$tmp_data_url.'">', 1=>'</a>' );
+                                $tmp_label = '<h3>'.$column->column_name.'</h3>';
+
+                                switch($tmp_type){
+                                    case 'file':
+                                        $order = 'content';
+                                        $tmp_para = array(0=>'<p>', 1=>'</p>');
+                                        $tmp_link[0] = '<a href="'.url('/').'/file/'.$value.'" target="_blank">';
+                                        $value = $client_original_name;
+                                        break;
+
+                                    case 'video':
+                                        $order = 'content';
+                                        $value = '<video src="'.url('/').'/file/'.$value.'" class="img-fluid" controls />';
+                                        $tmp_link = array(0=>'', 1=>'');
+                                        break;
+
+                                    case 'image':
+                                        $value = '<img src="'.url('/').'/file/'.$value.'" class="img-fluid" />';
+                                        if($img_flag){
+                                            $order = 'image';
+                                            $tmp_tag[0] = '<div class="main-image '.$column->classname.'">';
+                                            $tmp_label = '';
+                                            $img_flag = 0;
+                                        }else{
+                                            $order = 'content';
+                                            $tmp_link = array(0=>'', 1=>'');
+                                        }
+                                        break;
+                                    default:
+                                        if($title_flag){
+                                            $order = 'title';
+                                            $tmp_label = '';
+                                            $tmp_tag = array(0=>'<h2'.$tmp_class.'>', 1=>'</h2>');
+                                            $title_flag = 0;
+                                        }else{
+                                            $order = 'content';
+                                            $tmp_para = array(0=>'<p>', 1=>'</p>');
+                                            $tmp_link = array(0=>'', 1=>'');
+                                        }
+                                        break;
+                                }
+                                $content = $tmp_tag[0].$tmp_label.$tmp_para[0].$tmp_link[0].$value.$tmp_link[1].$tmp_para[1].$tmp_tag[1];
+
+                                if($order=="title"){
+                                    $tmp_title = $content;
+
+                                }elseif($order=="image"){
+                                    $tmp_image = $content;
+
+                                }else{
+                                    $adata[] = $content;
+                                }
+                            @endphp
+                       @endif
                     @endforeach
-                </dl>
-                @foreach($inputs as $input)
-                    <dl class="d-md-table-row row">
-                        @foreach($columns as $column)
-                            @if($column->list_hide_flag == 0)
-                                @php
-                                    $tmp_tag = 'dd';
-                                    $tmp_title_name = '';
-                                    $tmp_value_tag = '';
-                                    $tmp_link[0] = 0;
-                                    $tmp_link[1] = '<a href="' . url('/') . '/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/'.$input->id.'">';
-                                    $tmp_link[2] = '</a>';
-                                    $tmp_tag_class = ' class="d-inline d-md-table-cell p-2';
 
-                                    if($loop->first && $column->column_type == 'text'){
-                                        $tmp_tag = 'dt';
-                                        $tmp_link[0] = 1;
-                                        $tmp_value_tag = 'h2';
-
-                                    }elseif($column->column_type == 'image'){
-                                        $tmp_link[0] = 1;
-
-                                    }else{
-                                        $tmp_title_name = '<h3 class="d-md-none">'.$column->column_name.'</h3>';
-                                        $tmp_value_tag = 'p';
-                                    }
-                                    $tmp_tag_class.= ($column->classname) ? ' '.$column->classname.'"' : '"';
-                                @endphp
-
-                                <{{$tmp_tag}}{!!$tmp_tag_class!!}>
-                                    {!!$tmp_title_name!!}
-                                    @if($tmp_value_tag) <{{$tmp_value_tag}}> @endif
-                                        @if($tmp_link[0]) {!!$tmp_link[1]!!} @endif
-                                            @include('plugins.user.databases.default.databases_include_value')
-                                        @if($tmp_link[0]) {!!$tmp_link[2]!!} @endif
-                                    @if($tmp_value_tag) </{{$tmp_value_tag}}>  @endif
-                                </{{$tmp_tag}}>
-                           @endif
-                        @endforeach
-                    </dl>
+                    <div class="db-adata">
+                        {!!$tmp_image!!}
+                        {!!$tmp_title!!}
+                        <div class="db-contents">
+                            @foreach($adata as $content)
+                                {!!$content!!}
+                            @endforeach
+                        </div>
+                        <button type="button" class="btn btn-success" onclick="location.href={!!$tmp_data_url!!}">
+                            <span>詳細 </span><i class="fas fa-angle-right"></i>
+                        </button>
+                    </div>
                 @endforeach
             </div>
 
