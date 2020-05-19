@@ -49,20 +49,40 @@
             </select>
         </div>
 
-        {{-- 背景色 --}}
-        <div class="form-group">
-            <label class="col-form-label">背景色</label>
-            <input type="text" name="base_background_color" value="{{$configs["base_background_color"]}}" class="form-control">
-            <small class="form-text text-muted">画面の基本の背景色（各ページで上書き可能）</small>
-        </div>
+        <div id="app">
+            @php
+                // IEか判定
+                $ua = $_SERVER['HTTP_USER_AGENT'];
+                $is_ie = false;
+                $placeholder_message = 'HTMLカラーコードを入力';
+                if (strstr($ua, 'Trident') || strstr($ua, 'MSIE')) {
+                    $is_ie = true;
+                }
+            @endphp
+            {{-- 背景色 --}}
+            <div class="form-group">
+                <label class="col-form-label">背景色</label>
+                <input type="text" name="base_background_color" id="base_background_color" value="{{$configs["base_background_color"]}}" class="form-control" v-model="v_base_background_color" placeholder="{{ $placeholder_message }}">
+                <small class="form-text text-muted">画面の基本の背景色（各ページで上書き可能）</small>
+                @if (!$is_ie)
+                    {{-- IEなら表示しない --}}
+                    <input type="color" v-model="v_base_background_color">
+                    <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
+                @endif
+            </div>
 
-        {{-- ヘッダーの背景色 --}}
-        <div class="form-group">
-            <label class="col-form-label">ヘッダーの背景色</label>
-            <input type="text" name="base_header_color" value="{{$configs["base_header_color"]}}" class="form-control">
-            <small class="form-text text-muted">画面の基本のヘッダー背景色（各ページで上書き可能）</small>
+            {{-- ヘッダーの背景色 --}}
+            <div class="form-group">
+                <label class="col-form-label">ヘッダーの背景色</label>
+                <input type="text" name="base_header_color" id="base_header_color" value="{{$configs["base_header_color"]}}" class="form-control" v-model="v_base_header_color" placeholder="{{ $placeholder_message }}">
+                <small class="form-text text-muted">画面の基本のヘッダー背景色（各ページで上書き可能）</small>
+                @if (!$is_ie)
+                    {{-- IEなら表示しない --}}
+                    <input type="color" v-model="v_base_header_color">
+                    <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
+                @endif
+            </div>
         </div>
-
         {{-- ヘッダーの表示指定 --}}
         <div class="form-group">
             <label class="col-form-label">ヘッダーの表示</label>
@@ -229,5 +249,14 @@
     </form>
 </div>
 </div>
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            v_base_background_color: document.getElementById('base_background_color').value,
+            v_base_header_color: document.getElementById('base_header_color').value
+        },
+    })
+</script>
 
 @endsection

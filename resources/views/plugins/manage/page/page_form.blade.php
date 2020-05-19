@@ -74,16 +74,37 @@
             <small class="form-text text-muted">ページにパスワードで閲覧制限を設ける場合に使用します。</small>
         </div>
     </div>
-    <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">背景色</label>
-        <div class="col-md-9">
-            <input type="text" name="background_color" id="background_color" value="{{$page->background_color}}" class="form-control">
+    <div id="app">
+        @php
+            // IEか判定
+            $ua = $_SERVER['HTTP_USER_AGENT'];
+            $is_ie = false;
+            $placeholder_message = 'HTMLカラーコードを入力';
+            if (strstr($ua, 'Trident') || strstr($ua, 'MSIE')) {
+                $is_ie = true;
+            }
+        @endphp
+        <div class="form-group row">
+            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">背景色</label>
+            <div class="col-md-9">
+                <input type="text" name="background_color" id="background_color" value="{{$page->background_color}}" class="form-control" v-model="v_background_color" placeholder="{{ $placeholder_message }}">
+                @if (!$is_ie)
+                    {{-- IEなら表示しない --}}
+                    <input type="color" v-model="v_background_color">
+                    <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
+                @endif
+            </div>
         </div>
-    </div>
-    <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーの背景色</label>
-        <div class="col-md-9">
-            <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control">
+        <div class="form-group row">
+            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーの背景色</label>
+            <div class="col-md-9">
+                <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control" v-model="v_header_color" placeholder="{{ $placeholder_message }}">
+                @if (!$is_ie)
+                    {{-- IEなら表示しない --}}
+                    <input type="color" v-model="v_header_color">
+                    <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -323,3 +344,12 @@
         </div>
     </div>
 </form>
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            v_background_color: document.getElementById('background_color').value,
+            v_header_color: document.getElementById('header_color').value
+        },
+    })
+</script>
