@@ -131,9 +131,9 @@
                                                             $filtered_select = $selects->first(function($select) use($bookingDetail) {
                                                                 return $select->reservations_id == $bookingDetail->reservations_id && $select->column_id == $bookingDetail->id && $select->id == $bookingDetail->value;
                                                             });
-                                                            $filtered_select->toArray();
+                                                            $filtered_select ? $filtered_select->toArray() : null;
                                                         @endphp
-                                                            data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select->select_name }}"
+                                                            data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
                                                             @break
                                                     @default
                                                         

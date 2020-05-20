@@ -107,7 +107,7 @@
                                             {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
                                             data-booking_id="{{ $booking['booking_header']->id }}" 
                                             data-facility_name="{{ $facility_name }}" 
-                                            data-reservation_date_display="{{
+                                            data-reservation_date_display="{{ 
                                                 (App::getLocale() == ConnectLocale::en ? 
                                                     $booking['booking_header']->start_datetime->format('j M Y') :
                                                     $booking['booking_header']->start_datetime->format('Y年n月j日')
@@ -131,9 +131,9 @@
                                                             $filtered_select = $selects->first(function($select) use($bookingDetail) {
                                                                 return $select->reservations_id == $bookingDetail->reservations_id && $select->column_id == $bookingDetail->id && $select->id == $bookingDetail->value;
                                                             });
-                                                            $filtered_select->toArray();
+                                                            $filtered_select ? $filtered_select->toArray() : null;
                                                         @endphp
-                                                            data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select->select_name }}"
+                                                            data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
                                                             @break
                                                     @default
                                                         
