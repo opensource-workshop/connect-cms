@@ -17,6 +17,7 @@
                 @php
                     $select_columns = $columns->where('select_flag', 1);
                     $select_column_count = $select_columns->count();
+
                     // 並べ替えが有効なら、選択項目のカウントに +1 して、並べ替え用セレクトボックスの位置を確保する。
                     if ($databases_frames && $databases_frames->isUseSortFlag()) {
                         $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();
@@ -28,6 +29,7 @@
                     }
                     $slect_full_width = ($select_column_count < 3) ? 6 : 12;
                     $col_no = ($select_column_count == 0) ? 0 : intdiv($slect_full_width, $select_column_count);
+
                     $add_button_width = 0; // 新規ボタンの col width
                 @endphp
 
@@ -43,8 +45,8 @@
                         text-right"
                     >
                         <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
-                            <i class="far fa-plus"></i>
-                            <span class="d-none d-md-inline">新規</apan>
+                            <i class="far fa-edit"></i>
+                            <span class="d-none d-md-inline">新規登録</apan>
                         </button>
                     </div>
                 @endcan
@@ -103,6 +105,7 @@
                         @php
                           $sort_column_id = '';
                           $sort_column_order = '';
+
                           // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
                           if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
                               $sort_column_id = Session::get('sort_column_id.'.$frame_id);
@@ -166,60 +169,54 @@
         @if (!$default_hide_list)
 
             {{-- データのループ --}}
-            <div class="db-default container">
-                <div class="d-md-table">
-                    <dl class="d-none d-md-table-row text-center">
+            <div class="d-md-table container tabel-default-list">
+                <dl class="d-none d-md-table-row text-center">
+                    @foreach($columns as $column)
+                        @if($column->list_hide_flag == 0)
+                            <dt class="d-md-table-cell text-nowrap p-2">{{$column->column_name}}</dt>
+                        @endif
+                    @endforeach
+                </dl>
+                @foreach($inputs as $input)
+                    <dl class="d-md-table-row row">
                         @foreach($columns as $column)
                             @if($column->list_hide_flag == 0)
-                                <dt class="d-md-table-cell text-nowrap p-2">{{$column->column_name}}</dt>
-                            @endif
+                                @php
+                                    $tmp_tag = 'dd';
+                                    $tmp_title_name = '';
+                                    $tmp_value_tag = '';
+                                    $tmp_link[0] = 0;
+                                    $tmp_link[1] = '<a href="' . url('/') . '/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/'.$input->id.'">';
+                                    $tmp_link[2] = '</a>';
+                                    $tmp_tag_class = ' class="d-inline d-md-table-cell p-2';
+
+                                    if($loop->first && $column->column_type == 'text'){
+                                        $tmp_tag = 'dt';
+                                        $tmp_link[0] = 1;
+                                        $tmp_value_tag = 'h2';
+
+                                    }elseif($column->column_type == 'image'){
+                                        $tmp_link[0] = 1;
+
+                                    }else{
+                                        $tmp_title_name = '<h3 class="d-md-none">'.$column->column_name.'</h3>';
+                                        $tmp_value_tag = 'p';
+                                    }
+                                    $tmp_tag_class.= ($column->classname) ? ' '.$column->classname.'"' : '"';
+                                @endphp
+
+                                <{{$tmp_tag}}{!!$tmp_tag_class!!}>
+                                    {!!$tmp_title_name!!}
+                                    @if($tmp_value_tag) <{{$tmp_value_tag}}> @endif
+                                        @if($tmp_link[0]) {!!$tmp_link[1]!!} @endif
+                                            @include('plugins.user.databases.default.databases_include_value')
+                                        @if($tmp_link[0]) {!!$tmp_link[2]!!} @endif
+                                    @if($tmp_value_tag) </{{$tmp_value_tag}}>  @endif
+                                </{{$tmp_tag}}>
+                           @endif
                         @endforeach
                     </dl>
-                    @foreach($inputs as $input)
-                        <dl class="d-md-table-row">
-                            @foreach($columns as $column)
-                                @if($column->list_hide_flag == 0)
-                                    @php
-                                        $tmp_data_url = url('/').'/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/'.$input->id;
-                                        $tmp_tag = 'dd';
-                                        $tmp_title_name = '';
-                                        $tmp_value_tag = '';
-                                        $tmp_link[0] = 0;
-                                        $tmp_link[1] = '<a href="'.$tmp_data_url.'">';
-                                        $tmp_link[2] = '</a>';
-                                        $tmp_tag_class = ' class="d-block d-md-table-cell p-md-2';
-                                        if($loop->first && $column->column_type == 'text'){
-                                            $tmp_tag = 'dt';
-                                            $tmp_link[0] = 1;
-                                            $tmp_value_tag = '';
-                                        }elseif($column->column_type == 'image'){
-                                            $tmp_tag_class = ' class="d-block d-md-table-cell p-md-1 type-image';
-                                            $tmp_link[0] = 1;
-                                        }else{
-                                            $tmp_title_name = '<h3 class="d-md-none">'.$column->column_name.'</h3>';
-                                            $tmp_value_tag = 'p';
-                                        }
-                                        $tmp_tag_class.= ($column->classname) ? ' '.$column->classname.'"' : '"';
-                                    @endphp
-
-                                    <{{$tmp_tag}}{!!$tmp_tag_class!!}>
-                                        {!!$tmp_title_name!!}
-                                        @if($tmp_value_tag) <{{$tmp_value_tag}}> @endif
-                                            @if($tmp_link[0]) {!!$tmp_link[1]!!} @endif
-                                                @include('plugins.user.databases.default.databases_include_value')
-                                            @if($tmp_link[0]) {!!$tmp_link[2]!!} @endif
-                                        @if($tmp_value_tag) </{{$tmp_value_tag}}>  @endif
-                                    </{{$tmp_tag}}>
-                               @endif
-                            @endforeach
-                            <p class="d-md-none text-right">
-                                <button type="button" class="btn btn-success" onclick="location.href='{!!$tmp_data_url!!}'">
-                                    <span>詳細 </span><i class="fas fa-angle-right"></i>
-                                </button>
-                            </p>
-                        </dl>
-                    @endforeach
-                </div>
+                @endforeach
             </div>
 
             {{-- ページング処理 --}}
