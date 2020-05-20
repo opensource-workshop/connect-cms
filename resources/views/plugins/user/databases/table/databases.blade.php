@@ -45,8 +45,8 @@
                         text-right"
                     >
                         <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
-                            <i class="far fa-edit"></i>
-                            <span class="d-none d-md-inline">新規登録</apan>
+                            <i class="far fa-plus"></i>
+                            <span class="d-none d-md-inline">新規</apan>
                         </button>
                     </div>
                 @endcan
@@ -169,7 +169,7 @@
         @if (!$default_hide_list)
 
             {{-- データのループ --}}
-            <div class="tabel-default-list container">
+            <div class="db-tabel container">
                 <div class="d-table">
                     <dl class="d-table-row text-center">
                         @foreach($columns as $column)
