@@ -163,7 +163,7 @@ class DatabasesearchesPlugin extends UserPluginBase
                 // リクエスト項目に検索キーワードが含まれていたら、セッションに保持する。（空でも保持＝クリアの意味）
                 $request->session()->put($condition->request, $request_keyword);
             }
-            elseif ($request->session()->get($condition->request)) {
+            elseif (property_exists($condition, 'request') && $request->session()->get($condition->request)) {
 
                 // セッションに検索キーワードが含まれていたら使用する。
                 $request_keyword = $request->session()->get($condition->request);
