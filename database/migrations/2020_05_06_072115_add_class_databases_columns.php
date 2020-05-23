@@ -26,8 +26,9 @@ class AddClassDatabasesColumns extends Migration
      */
     public function down()
     {
-        Schema::table('classname', function (Blueprint $table) {
+        Schema::table('databases_columns', function (Blueprint $table) {
             //
+            $table->dropColumn('classname');
         });
     }
 }
