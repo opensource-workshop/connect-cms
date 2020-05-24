@@ -44,7 +44,7 @@ class UploadController extends ConnectController
     {
         // id がない場合は空を返す。
         if (empty($id)) {
-            return response()->download( storage_path(config('connect.no_image_path')));
+            return response()->download(storage_path(config('connect.no_image_path')));
         }
 
         // id のファイルを読んでhttp request に返す。
@@ -52,7 +52,7 @@ class UploadController extends ConnectController
 
         // データベースがない場合は空で返す
         if (empty($uploads)) {
-            return response()->download( storage_path(config('connect.no_image_path')));
+            return response()->download(storage_path(config('connect.no_image_path')));
         }
 
         // 一時保存ファイルの場合は所有者を確認して、所有者ならOK
@@ -60,7 +60,7 @@ class UploadController extends ConnectController
         if ($uploads->temporary_flag == 1) {
             $user_id = Auth::id();
             if ($uploads->created_id != $user_id) {
-                return response()->download( storage_path(config('connect.no_image_path')));
+                return response()->download(storage_path(config('connect.no_image_path')));
             }
         }
 
@@ -71,12 +71,12 @@ class UploadController extends ConnectController
 
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
             if ($page->isRequestPassword($request, $this->page_tree)) {
-                 return response()->download( storage_path(config('connect.forbidden_image_path')));
+                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
 
             // 画像に閲覧権限がない場合
             if (!$page->isView(Auth::user(), true, true, $page_roles)) {
-                 return response()->download( storage_path(config('connect.forbidden_image_path')));
+                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
         }
 
@@ -91,23 +91,24 @@ class UploadController extends ConnectController
         $content_disposition = '';
         if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
             return response()
-                     ->file( storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                             ['Content-Disposition' =>
-                                  'inline; filename="'. $uploads['client_original_name'] .'"' . 
+                     ->file(
+                         storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                         ['Content-Disposition' =>
+                                  'inline; filename="'. $uploads['client_original_name'] .'"' .
                                   "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
                              ]
-                           );
+                     );
         } else {
             return response()
-                     ->download( storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                                 $uploads['client_original_name'],
-                                 ['Content-Disposition' =>
-                                      'inline; filename="'. $uploads['client_original_name'] .'"' . 
+                     ->download(
+                         storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                         $uploads['client_original_name'],
+                         ['Content-Disposition' =>
+                                      'inline; filename="'. $uploads['client_original_name'] .'"' .
                                       "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
                                  ]
-                               );
+                     );
         }
-
     }
 
     /**
@@ -135,8 +136,7 @@ class UploadController extends ConnectController
 
         if (!empty($page_id)) {
             $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
-            foreach ( $page_tree as $page ) {
-
+            foreach ($page_tree as $page) {
                 // 背景色
                 if (empty($background_color) && $page->background_color) {
                     $background_color = $page->background_color;
@@ -191,7 +191,7 @@ EOD;
 
         // カテゴリーCSS
         $categories = Categories::orderBy('target', 'asc')->orderBy('display_sequence', 'asc')->get();
-        foreach($categories as $category) {
+        foreach ($categories as $category) {
             echo ".cc_category_" . $category->classname . " {\n";
             echo "    background-color: " . $category->background_color . ";\n";
             echo "    color: "            . $category->color . ";\n";
@@ -250,7 +250,7 @@ EOD;
     {
 
         // ファイルアップロードには、記事の追加、変更の権限が必要
-        if ( !$this->isCan('posts.create') || !$this->isCan('posts.update') ) {
+        if (!$this->isCan('posts.create') || !$this->isCan('posts.update')) {
             echo json_encode(array('location' => 'error'));
             return;
         }
@@ -258,7 +258,6 @@ EOD;
         // 画像アップロードの場合（TinyMCE標準プラグイン）
         if ($request->hasFile('file')) {
             if ($request->file('file')->isValid()) {
-
                 // uploads テーブルに情報追加、ファイルのid を取得する
                 $id = DB::table('uploads')->insertGetId([
                    'client_original_name' => $request->file('file')->getClientOriginalName(),
@@ -300,7 +299,6 @@ EOD;
             // Laravel のアップロード流儀に合わせて、hasFile() とisValid()でチェック
             if ($request->hasFile($input_name)) {
                 if ($request->file($input_name)->isValid()) {
-
                     // uploads テーブルに情報追加、ファイルのid を取得する
                     $id = DB::table('uploads')->insertGetId([
                        'client_original_name' => $request->file($input_name)->getClientOriginalName(),
@@ -335,5 +333,4 @@ EOD;
         $msg_json = json_encode($msg_array);
         echo $msg_json;
     }
-
 }

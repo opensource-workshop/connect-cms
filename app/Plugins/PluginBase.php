@@ -25,7 +25,8 @@ class PluginBase
     /*
         コンストラクタ
      */
-    function __construct() {
+    function __construct()
+    {
 
         // PHP エラー捕捉のためのエラーハンドラを設定する。
         set_error_handler(array($this, 'cc_error_handler'));
@@ -34,7 +35,8 @@ class PluginBase
     /*
         エラーハンドラ
      */
-    protected function cc_error_handler ( $errno, $errstr, $errfile, $errline, $errcontext ) {
+    protected function cc_error_handler($errno, $errstr, $errfile, $errline, $errcontext)
+    {
 
         // 例外を投げる。
         throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
@@ -74,14 +76,16 @@ class PluginBase
         // 連番データは、払いだした最大の数値を保持している状態。
 
         // firstOrCreate で最初の連番に 0 を指定して、取得した値をインクリメント
-        $numbers = Numbers::firstOrCreate([
+        $numbers = Numbers::firstOrCreate(
+            [
                                'plugin_name'   => $plugin_name,
                                'buckets_id'    => $buckets_id,
                                'prefix'        => $prefix
                             ],
-                            [
+            [
                                'serial_number' => 0,
-                            ]);
+            ]
+        );
 
         // インクリメント
         $numbers->increment('serial_number', 1);
@@ -119,24 +123,20 @@ class PluginBase
         //print_r($dirs);
 
         $themes = array();  // 画面に渡すテーマ配列
-        foreach($dirs as $dir) {
+        foreach ($dirs as $dir) {
             if (File::exists($dir."/themes.ini")) {
-
                 // テーマ設定ファイルのパース
                 $theme_inis = parse_ini_file($dir."/themes.ini");
 
                 // ディレクトリがテーマ・グループ用のものなら、その下のディレクトリを探す。
                 if (array_key_exists('theme_dir', $theme_inis) && $theme_inis['theme_dir'] == 'group') {
-
                     $sub_themes = array();  // ディレクトリ管理のサブテーマ配列
 
                     // テーマの第2階層ディレクトリ
                     $group_dirs = File::directories(public_path() . '/themes/' . basename($dir));
                     asort($group_dirs);  // ディレクトリが名前に対して逆順になることがあるのでソートしておく。
-                    foreach($group_dirs as $group_dir) {
-
+                    foreach ($group_dirs as $group_dir) {
                         if (File::exists($group_dir."/themes.ini")) {
-
                             // テーマ設定ファイルのパース
                             $group_theme_inis = parse_ini_file($group_dir."/themes.ini");
 
@@ -205,4 +205,3 @@ class PluginBase
     }
 */
 }
-

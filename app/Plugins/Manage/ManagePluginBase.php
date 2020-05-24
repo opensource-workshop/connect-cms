@@ -38,7 +38,7 @@ class ManagePluginBase extends PluginBase
             $configs = Configs::get();
         }
 
-        foreach($configs as $config) {
+        foreach ($configs as $config) {
             $return_configs[$config->name] = $config;
         }
 

@@ -29,10 +29,10 @@ class ConnectInit
         if ($debug_mode_session == null or $debug_mode_session == '') {
             // 初期値のまま
         }
-        else if ($debug_mode_session === '0') {
+        elseif ($debug_mode_session === '0') {
             config(['app.debug' => false]);
         }
-        else if ($debug_mode_session === '1') {
+        elseif ($debug_mode_session === '1') {
             config(['app.debug' => true]);
         }
 

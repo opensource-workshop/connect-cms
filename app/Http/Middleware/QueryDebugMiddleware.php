@@ -43,7 +43,6 @@ class QueryDebugMiddleware
             return;
         }
         foreach (\Config::get('database.connections') as $db_name => $settings) {
-
             $queries = \DB::connection($db_name)->getQueryLog();
             if (empty($queries)) {
                 continue;

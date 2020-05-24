@@ -63,7 +63,7 @@ class Menu extends Model
         if ($this->indent_font == 1) {
             return '<span class="px-2"></span>';
         }
-        else if ($this->indent_font == 2) {
+        elseif ($this->indent_font == 2) {
             return '<i class="fas fa-minus"></i>';
         }
         else {

@@ -71,19 +71,20 @@ class OpeningcalendarsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*',
-                          'openingcalendars.id as openingcalendars_id',
-                          'openingcalendars.openingcalendar_name',
-                          'openingcalendars.openingcalendar_sub_name',
-                          'openingcalendars.month_format',
-                          'openingcalendars.week_format',
-                          'openingcalendars.view_before_month',
-                          'openingcalendars.view_after_month',
-                          'openingcalendars.yearschedule_uploads_id',
-                          'openingcalendars.yearschedule_link_text',
-                          'openingcalendars.smooth_scroll',
-                          'uploads.client_original_name'
-                         )
+                 ->select(
+                     'frames.*',
+                     'openingcalendars.id as openingcalendars_id',
+                     'openingcalendars.openingcalendar_name',
+                     'openingcalendars.openingcalendar_sub_name',
+                     'openingcalendars.month_format',
+                     'openingcalendars.week_format',
+                     'openingcalendars.view_before_month',
+                     'openingcalendars.view_after_month',
+                     'openingcalendars.yearschedule_uploads_id',
+                     'openingcalendars.yearschedule_link_text',
+                     'openingcalendars.smooth_scroll',
+                     'uploads.client_original_name'
+                 )
                  ->leftJoin('openingcalendars', 'openingcalendars.bucket_id', '=', 'frames.bucket_id')
                  ->leftJoin('uploads', 'uploads.id', '=', 'openingcalendars.yearschedule_uploads_id')
                  ->where('frames.id', $frame_id)
@@ -103,7 +104,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
                  ->join('openingcalendars', 'openingcalendars.bucket_id', '=', 'buckets.id')
                  ->where('frames.id', $frame_id)
                  ->first();
-
     }
 
     /**
@@ -149,7 +149,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         if ($openingcalendar_frame->month_format == 1) {
             $view_ym_str = date("F / Y");
         }
-        else if ($openingcalendar_frame->month_format == 2) {
+        elseif ($openingcalendar_frame->month_format == 2) {
             $view_ym_str = date("F Y");
         }
         else {
@@ -162,7 +162,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                                                              ->get();
         $patterns_array = array();
         $patterns = array();
-        foreach($openingcalendars_patterns as $openingcalendars_pattern) {
+        foreach ($openingcalendars_patterns as $openingcalendars_pattern) {
             $patterns_array[$openingcalendars_pattern->id] = $openingcalendars_pattern;
             $patterns[$openingcalendars_pattern->id] = $openingcalendars_pattern->color;
         }
@@ -213,7 +213,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $view_days = array();
         $view_months = array();
         $view_months_patterns = array();
-        foreach($opening_date_ym_rec as $opening_date_ym) {
+        foreach ($opening_date_ym_rec as $opening_date_ym) {
             $view_days[substr($opening_date_ym->opening_date, 0, 7)][substr($opening_date_ym->opening_date, 8, 2)] = $opening_date_ym->openingcalendars_patterns_id;
             $view_months[substr($opening_date_ym->opening_date, 0, 7)] = array("data-prev" => null, "data-next" => null);
 
@@ -227,7 +227,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         }
 
         // 月ごとのパターンをソート
-        foreach($view_months_patterns as &$view_months_pattern) {
+        foreach ($view_months_patterns as &$view_months_pattern) {
             ksort($view_months_pattern);
             $view_months_pattern = array_chunk($view_months_pattern, 2);
         }
@@ -246,7 +246,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         if (empty($view_months)) {
             $default_disabled = array("prev" => "off", "next" => "off");
         }
-        foreach($view_months as $view_month => $view_month_value) {
+        foreach ($view_months as $view_month => $view_month_value) {
             $i++;
             if ($i == 2) {
                 $view_month_value["data-prev"] = "off";
@@ -260,7 +260,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                 $view_month_value["data-prevmonth"] = date('F / Y', strtotime($view_month . "-01 - 1 month"));
                 $view_month_value["data-nextmonth"] = date('F / Y', strtotime($view_month . "-01 + 1 month"));
             }
-            else if ($openingcalendar_frame->month_format == 2) {
+            elseif ($openingcalendar_frame->month_format == 2) {
                 $view_month_value["data-prevmonth"] = date('F Y', strtotime($view_month . "-01 - 1 month"));
                 $view_month_value["data-nextmonth"] = date('F Y', strtotime($view_month . "-01 + 1 month"));
             }
@@ -283,7 +283,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // カレンダー取得
         $calendars = array();
-        foreach($view_months as $view_month => $value) {
+        foreach ($view_months as $view_month => $value) {
             //$calendars[$view_month]['days'] = $this->getCalendarDates($view_month);
             $calendars[$view_month] = $this->getCalendarDates($view_month);
         }
@@ -298,7 +298,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                                         ->where('month', '<=', $view_after_ym)
                                         ->orderBy('month', 'asc')
                                         ->get();
-        foreach($months as $month) {
+        foreach ($months as $month) {
             $view_months2[$month->month]['comments'] = $month->comments;
         }
         //print_r($view_months2);
@@ -318,8 +318,9 @@ class OpeningcalendarsPlugin extends UserPluginBase
             'view_months'           => $view_months2,
             'view_months_patterns'  => $view_months_patterns,
             'default_disabled'      => $default_disabled,
-//            'months'                => $months,
-        ]);
+            //            'months'                => $months,
+            ]
+        );
     }
 
     /**
@@ -359,8 +360,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             $from_y = $opening_date_y_rec->opening_date_y;
         }
         $select_ym_asc = array();
-        for($i = $from_y; $i <= date('Y', strtotime('+1 year')); $i++) {
-            for($j = 1; $j <= 12; $j++) {
+        for ($i = $from_y; $i <= date('Y', strtotime('+1 year')); $i++) {
+            for ($j = 1; $j <= 12; $j++) {
                 $select_ym_asc[sprintf('%04d', $i) . "-" . sprintf('%02d', $j)] = false;
             }
         }
@@ -373,7 +374,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                                                   ->groupBy(DB::raw('substr(opening_date, 1, 7)'))
                                                   ->orderBy('opening_date_ym', 'asc')
                                                   ->get();
-        foreach($opening_date_yms as $opening_date_ym) {
+        foreach ($opening_date_yms as $opening_date_ym) {
             $select_ym[$opening_date_ym->opening_date_ym] = true;
         }
         //print_r($select_ym);
@@ -388,14 +389,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // 編集する月の配列
         $edit_days = array();
         $week_names = array();
-        for($i = 1; $i <= date('t', strtotime($edit_ym . '-01')); $i++) {
+        for ($i = 1; $i <= date('t', strtotime($edit_ym . '-01')); $i++) {
             $edit_days[$i] = null;
             $week_names[$i] = $this->getWeekJp($edit_ym . '-' . sprintf('%02d', $i));
         }
         //print_r($week_names);
 
         // 月の開館データをマージ
-        foreach($openingcalendars_days as $openingcalendars_day) {
+        foreach ($openingcalendars_days as $openingcalendars_day) {
             $edit_days[date('j', strtotime($openingcalendars_day->opening_date))] = $openingcalendars_day;
         }
 
@@ -417,7 +418,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             'select_ym'             => $select_ym,
             'week_names'            => $week_names,
             'months'                => $months,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -434,16 +436,17 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // あれば更新なければ追加
         if ($request->openingcalendars) {
-            foreach($request->openingcalendars as $day => $patterns_id) {
-
+            foreach ($request->openingcalendars as $day => $patterns_id) {
                 $date = $target_ym . '-' . sprintf('%02d', $day);
 
-                OpeningcalendarsDays::updateOrCreate(['opening_date'                 => $date,
+                OpeningcalendarsDays::updateOrCreate(
+                    ['opening_date'                 => $date,
                                                       'openingcalendars_id'          => $openingcalendar_frame->openingcalendars_id],
-                                                     ['openingcalendars_id'          => $openingcalendar_frame->openingcalendars_id,
+                    ['openingcalendars_id'          => $openingcalendar_frame->openingcalendars_id,
                                                       'opening_date'                 => $date,
                                                       'openingcalendars_patterns_id' => $patterns_id,
-                                                     ]);
+                    ]
+                );
             }
         }
 
@@ -452,10 +455,12 @@ class OpeningcalendarsPlugin extends UserPluginBase
         if ($request->comments) {
             $comments = $request->comments;
         }
-        OpeningcalendarsMonths::updateOrCreate(['month'               => $target_ym,
+        OpeningcalendarsMonths::updateOrCreate(
+            ['month'               => $target_ym,
                                                 'openingcalendars_id' => $openingcalendar_frame->openingcalendars_id],
-                                               ['openingcalendars_id' => $openingcalendar_frame->openingcalendars_id,
-                                                'comments'            => $comments]);
+            ['openingcalendars_id' => $openingcalendar_frame->openingcalendars_id,
+            'comments'            => $comments]
+        );
 
         // 登録後は編集画面を呼ぶ。
         return $this->edit($request, $page_id, $frame_id);
@@ -485,7 +490,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             'openingcalendars_list_buckets', [
             'openingcalendar_frame' => $openingcalendar_frame,
             'openingcalendars'      => $openingcalendars,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -517,7 +523,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
             $openingcalendar = Openingcalendars::where('id', $id)->first();
         }
         // Frame のbucket_id があれば、bucket_id から開館カレンダーデータ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($openingcalendar_frame->bucket_id) && $create_flag == false) {
+        elseif (!empty($openingcalendar_frame->bucket_id) && $create_flag == false) {
             $openingcalendar = Openingcalendars::where('bucket_id', $openingcalendar_frame->bucket_id)->first();
 
             // 開館カレンダーデータ
@@ -534,7 +540,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             'create_flag'           => $create_flag,
             'message'               => $message,
             'errors'                => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -559,12 +566,11 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-
             if (empty($id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }
-            else  {
+            else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }
@@ -575,7 +581,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 画面から渡ってくるopeningcalendars_id が空ならバケツと開館カレンダーを新規登録
         if (empty($request->openingcalendars_id)) {
-
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => '無題',
@@ -592,7 +597,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
             // （表示開館カレンダー選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
-
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
@@ -601,7 +605,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
         }
         // openingcalendars_id があれば、開館カレンダーを更新
         else {
-
             // 開館カレンダーデータ取得
             $openingcalendars = Openingcalendars::where('id', $request->openingcalendars_id)->first();
 
@@ -631,8 +634,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
     public function destroyBuckets($request, $page_id, $frame_id, $openingcalendars_id)
     {
         // openingcalendars_id がある場合、データを削除
-        if ( $openingcalendars_id ) {
-
+        if ($openingcalendars_id) {
             // Bucket_id でフレームを更新するため、削除対象のOpeningcalendars を取得しておく。
             $openingcalendars = Openingcalendars::where('id', $openingcalendars_id)->first();
 
@@ -698,13 +700,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // パターンデータ
         $openingcalendars_patterns = DB::table('frames')
-                 ->select('frames.*',
-                          'openingcalendars_patterns.id as openingcalendars_patterns_id',
-                          'openingcalendars_patterns.caption',
-                          'openingcalendars_patterns.color',
-                          'openingcalendars_patterns.pattern',
-                          'openingcalendars_patterns.display_sequence'
-                         )
+                 ->select(
+                     'frames.*',
+                     'openingcalendars_patterns.id as openingcalendars_patterns_id',
+                     'openingcalendars_patterns.caption',
+                     'openingcalendars_patterns.color',
+                     'openingcalendars_patterns.pattern',
+                     'openingcalendars_patterns.display_sequence'
+                 )
                  ->join('openingcalendars', 'openingcalendars.bucket_id', '=', 'frames.bucket_id')
                  ->join('openingcalendars_patterns', 'openingcalendars_patterns.openingcalendars_id', '=', 'openingcalendars.id')
                  ->where('frames.id', $frame_id)
@@ -718,7 +721,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             'openingcalendar'     => $openingcalendar,
             'errors'              => $errors,
             'create_flag'         => $create_flag,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -733,7 +737,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_pattern) || !empty($request->add_color)) {
-
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_display_sequence' => ['required'],
@@ -753,8 +756,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->openingcalendars_patterns_id)) {
-            foreach($request->openingcalendars_patterns_id as $pattern_id) {
-
+            foreach ($request->openingcalendars_patterns_id as $pattern_id) {
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'display_sequence.'.$pattern_id => ['required'],
@@ -788,9 +790,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 既存項目アリ
         if (!empty($request->openingcalendars_patterns_id)) {
-
-            foreach($request->openingcalendars_patterns_id as $openingcalendars_patterns_id) {
-
+            foreach ($request->openingcalendars_patterns_id as $openingcalendars_patterns_id) {
                 // モデルオブジェクト取得
                 $pattern_obj = OpeningcalendarsPatterns::where('id', $openingcalendars_patterns_id)->first();
 
@@ -843,7 +843,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             'openingcalendars_edit_yearschedule', [
             'openingcalendar_frame' => $openingcalendar_frame,
             'errors'                => $errors,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -863,7 +864,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 年間カレンダーがアップロードされた。
         if ($request->hasFile('yearschedule_pdf')) {
-
             // PDFファイルチェック
             $validator = Validator::make($request->all(), [
                 'yearschedule_pdf' => [
@@ -908,7 +908,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 年間カレンダーの削除。
         if ($request->has('delete_yearschedule_pdf') && $request->delete_yearschedule_pdf == '1') {
-
             // ファイル削除
             $directory = $this->getDirectory($openingcalendar_frame->yearschedule_uploads_id);
             Storage::delete($directory . '/' . $openingcalendar_frame->yearschedule_uploads_id . '.pdf');
@@ -919,7 +918,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
             // DBに情報保存
             Openingcalendars::where('id', $openingcalendar_frame->openingcalendars_id)
                             ->update(['yearschedule_uploads_id'=> null]);
-
         }
 
         // アップロード画面に戻る
@@ -941,7 +939,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         //return response()
         //         ->file( storage_path('app/plugins/openingcalendars/') . $openingcalendar_frame->openingcalendars_id . '.pdf');
 
-        echo response()->file( storage_path('app/plugins/openingcalendars/') . $openingcalendar_frame->openingcalendars_id . '.pdf');
+        echo response()->file(storage_path('app/plugins/openingcalendars/') . $openingcalendar_frame->openingcalendars_id . '.pdf');
         exit;
     }
 }

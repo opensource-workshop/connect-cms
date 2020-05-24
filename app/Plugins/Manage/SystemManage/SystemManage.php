@@ -59,13 +59,13 @@ class SystemManage extends ManagePluginBase
         if ($debug_mode_session == null or $debug_mode_session == '') {
             // 初期値のまま
         }
-        else if ($debug_mode_session === '0' or $debug_mode_session === '1') {
+        elseif ($debug_mode_session === '0' or $debug_mode_session === '1') {
             $now_debug_mode = $debug_mode_session;
         }
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.system.debug',[
+        return view('plugins.manage.system.debug', [
             "function"          => __FUNCTION__,
             "plugin_name"       => "system",
             "now_debug_mode"    => $now_debug_mode,
@@ -109,7 +109,7 @@ class SystemManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.system.auth',[
+        return view('plugins.manage.system.auth', [
             "function"          => __FUNCTION__,
             "plugin_name"       => "system",
             "config"            => $config,
@@ -134,7 +134,8 @@ class SystemManage extends ManagePluginBase
              'additional1' => $request->auth_netcomons2_site_url,
              'additional2' => $request->auth_netcomons2_site_key,
              'additional3' => $request->auth_netcomons2_salt,
-             'additional4' => $request->auth_netcomons2_add_role]);
+            'additional4' => $request->auth_netcomons2_add_role]
+        );
 
         // システム管理画面に戻る
         return redirect("/manage/system/auth");
@@ -152,7 +153,7 @@ class SystemManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.system.log',[
+        return view('plugins.manage.system.log', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "system",
             "categories_configs" => $categories_configs,

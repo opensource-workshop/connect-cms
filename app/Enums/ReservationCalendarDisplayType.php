@@ -28,7 +28,8 @@ final class ReservationCalendarDisplayType
     /*
     * key/valueの連想配列を返す
     */
-    public static function getMembers(){
+    public static function getMembers()
+    {
         return self::enum;
     }
 }

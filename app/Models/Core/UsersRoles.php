@@ -44,9 +44,8 @@ class UsersRoles extends Model
 
         // 配列の形式は[target][role_name] = value{1|0}
         $this->user_roles = array();
-        foreach($users_roles as $users_role) {
+        foreach ($users_roles as $users_role) {
             $this->user_roles[$users_role->target][$users_role->role_name] = $users_role->role_value;
-
         }
 
         return $this->user_roles;

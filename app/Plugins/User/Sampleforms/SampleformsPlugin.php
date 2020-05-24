@@ -15,6 +15,7 @@ use App\Models\Common\Uploads;
 use App\Models\User\Sampleforms\Sampleforms;
 
 use App\Plugins\User\UserPluginBase;
+
 /**
  * フォームのサンプルプラグイン
  *
@@ -45,7 +46,8 @@ class SampleformsPlugin extends UserPluginBase
             'page'        => $page,
             'frame_id'    => $frame_id,
             'sampleforms' => $sampleforms,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -69,7 +71,8 @@ class SampleformsPlugin extends UserPluginBase
             'page' => $page,
             'sampleform' => $sampleform,
             'errors' => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -94,7 +97,8 @@ class SampleformsPlugin extends UserPluginBase
             'page' => $page,
             'sampleform' => $sampleform,
             'errors' => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -134,7 +138,6 @@ class SampleformsPlugin extends UserPluginBase
 
         // アップロードファイルが存在するかの確認
         if ($request->hasFile('column_file')) {
-
             // 確認中の一時ファイルとして保存
             $path = $request->file('column_file')->store('uploads/tmp');
 
@@ -153,7 +156,8 @@ class SampleformsPlugin extends UserPluginBase
             'sampleform'   => $sampleform,
             'upload_files' => $upload_files,
             'base_action'  => $request->base_action,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -166,7 +170,6 @@ class SampleformsPlugin extends UserPluginBase
 
         // bucket の有無を確認して、なければ作成
         if (empty($frame->bucket_id)) {
-
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => '無題',
@@ -175,7 +178,6 @@ class SampleformsPlugin extends UserPluginBase
 
             // FrameのバケツIDの更新
             Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
-
         }
         else {
             $bucket_id = $frame->bucket_id;
@@ -197,7 +199,6 @@ class SampleformsPlugin extends UserPluginBase
         if (!empty($request->upload_files)) {
             $column_file = $request->upload_files['column_file'];
             if (!empty($column_file)) {
-
                 // Uploads テーブルに登録
                 $uploads_id = DB::table('Uploads')->insertGetId([
                       'client_original_name' => $request->upload_files['column_file']['client_original_name'],
@@ -232,7 +233,6 @@ class SampleformsPlugin extends UserPluginBase
         if (!empty($request->upload_files)) {
             $column_file = $request->upload_files['column_file'];
             if (!empty($column_file)) {
-
                 // 先のファイルがあれば、後で削除するためにidを保持しておく。
                 if (!empty($sampleforms->column_file)) {
                     $old_file_id = $sampleforms->column_file;
@@ -269,7 +269,6 @@ class SampleformsPlugin extends UserPluginBase
 
         // 先のファイルがあれば、削除
         if (!empty($old_file_id)) {
-
             // Uploads データ
             $upload = Uploads::where('id', $old_file_id)->first();
             if ($upload) {
@@ -291,14 +290,12 @@ class SampleformsPlugin extends UserPluginBase
     public function destroy($request, $page_id, $frame_id, $id)
     {
         // id がある場合、データを削除
-        if ( $id ) {
-
+        if ($id) {
             // データ取得
             $sampleform = Sampleforms::where('id', $id)->first();
 
             // ファイルがあれば、削除
             if (!empty($sampleform->column_file)) {
-
                 // Uploads データと実ファイルの削除
                 $upload = Uploads::where('id', $sampleform->column_file)->first();
                 if ($upload) {

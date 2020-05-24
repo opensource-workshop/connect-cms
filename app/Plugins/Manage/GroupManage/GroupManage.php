@@ -59,7 +59,7 @@ class GroupManage extends ManagePluginBase
     private function getGroupUsers($id)
     {
         // グループデータ取得
-        $groups = GroupUser::select('group_users.*', 'users.name as user_name' )
+        $groups = GroupUser::select('group_users.*', 'users.name as user_name')
                            ->join('users', 'users.id', '=', 'group_users.user_id')
                            ->where('group_id', $id)
                            ->orderBy('user_id', 'asc')
@@ -78,7 +78,7 @@ class GroupManage extends ManagePluginBase
         // グループデータの取得
         $groups = $this->getGroups();
 
-        return view('plugins.manage.group.index',[
+        return view('plugins.manage.group.index', [
             "function"    => __FUNCTION__,
             "plugin_name" => "group",
             "groups"      => $groups,
@@ -103,7 +103,7 @@ class GroupManage extends ManagePluginBase
         // グループのユーザデータの取得
         $group_users = $this->getGroupUsers($id);
 
-        return view('plugins.manage.group.edit',[
+        return view('plugins.manage.group.edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "group",
             "id"          => $id,
@@ -164,11 +164,10 @@ class GroupManage extends ManagePluginBase
         // グループデータの取得
         $group_users = $this->getGroupUsers($id);
 
-        return view('plugins.manage.group.list',[
+        return view('plugins.manage.group.list', [
             "function"    => __FUNCTION__,
             "plugin_name" => "group",
             "group_users" => $group_users,
         ]);
     }
-
 }

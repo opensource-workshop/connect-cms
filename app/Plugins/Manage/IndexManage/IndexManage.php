@@ -41,10 +41,10 @@ class IndexManage extends ManagePluginBase
 
         // XML取得
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,$path);
-        curl_setopt($ch, CURLOPT_FAILONERROR,1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch, CURLOPT_URL, $path);
+        curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
         $ret_xml = curl_exec($ch);
         curl_close($ch);
@@ -69,7 +69,7 @@ class IndexManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.index.index',[
+        return view('plugins.manage.index.index', [
             "plugin_name"  => "index",
             "rss_xml"      => $rss_xml,
             "errors"       => $errors,

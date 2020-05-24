@@ -69,11 +69,11 @@ class Frame extends Model
     public function isExpandNarrow()
     {
         // 左もしくは右エリアなら狭い
-        if ($this->area_id == 1 || $this->area_id == 3){
+        if ($this->area_id == 1 || $this->area_id == 3) {
             return true;
         }
         // フレーム幅が0(100％)でなく＆設定値以下（標準設定は6）の場合は狭い
-        if ($this->frame_col != 0 && $this->frame_col <= config('connect.CC_SETTING_EXPAND_COL')){
+        if ($this->frame_col != 0 && $this->frame_col <= config('connect.CC_SETTING_EXPAND_COL')) {
             return true;
         }
         // フレーム幅を広いと判断
@@ -193,11 +193,10 @@ class Frame extends Model
         // ゲスト（ログインしていない状態）
         // プラグイン管理者権限を持たない場合
         if (empty($user) || !$user->can('role_arrangement')) {
-
            // フレームがこのページのみ表示しないの場合、表示対象外とする。
-           if ($this->page_id == $page->id && $this->page_only == 2) {
-               return false;
-           }
+            if ($this->page_id == $page->id && $this->page_only == 2) {
+                return false;
+            }
         }
 
         // 上記以外の条件（非表示対象ページではない or プラグイン管理者権限を持つ）

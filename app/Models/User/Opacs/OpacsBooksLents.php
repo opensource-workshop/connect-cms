@@ -25,7 +25,7 @@ class OpacsBooksLents extends Model
         if ($ts_today == $ts_return_scheduled) {
             $ret_return_scheduled = '<span class="cc-color-blue">' . $ret_return_scheduled . '</span>';
         }
-        else if ($ts_today > $ts_return_scheduled) {
+        elseif ($ts_today > $ts_return_scheduled) {
             $ret_return_scheduled = '<span class="cc-color-red">' . $ret_return_scheduled . '</span>';
         }
 

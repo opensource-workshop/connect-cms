@@ -66,7 +66,7 @@ class UserManage extends ManagePluginBase
 
         // ユーザデータからID の配列生成
         $user_ids = array();
-        foreach($users as $user) {
+        foreach ($users as $user) {
             $user_ids[] = $user->id;
         }
 
@@ -86,10 +86,10 @@ class UserManage extends ManagePluginBase
         // ユーザデータへマージ
         if ($original_roles) {
             $user_original_roles = array();
-            foreach($original_roles as $original_role) {
+            foreach ($original_roles as $original_role) {
                 $user_original_roles[$original_role->users_id][] = $original_role;
             }
-            foreach($users as &$user) {
+            foreach ($users as &$user) {
                 if (array_key_exists($user->id, $user_original_roles)) {
                     $user->user_original_roles = $user_original_roles[$user->id];
                 }
@@ -126,7 +126,7 @@ class UserManage extends ManagePluginBase
         // User データの取得
         $users = $this->getUsers();
 
-        return view('plugins.manage.user.list',[
+        return view('plugins.manage.user.list', [
             "function"    => __FUNCTION__,
             "plugin_name" => "user",
             "users"       => $users,
@@ -141,7 +141,7 @@ class UserManage extends ManagePluginBase
         // ユーザデータの空枠
         $user = new User();
 
-        return view('plugins.manage.user.regist',[
+        return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
             "plugin_name" => "user",
             "user"     => $user,
@@ -174,7 +174,7 @@ class UserManage extends ManagePluginBase
                                         ->get();
 
         // 画面呼び出し
-        return view('plugins.manage.user.regist',[
+        return view('plugins.manage.user.regist', [
             "function"              => __FUNCTION__,
             "plugin_name"           => "user",
             "id"                    => $id,
@@ -230,7 +230,7 @@ class UserManage extends ManagePluginBase
 
         // ユーザ権限の登録
         if (!empty($request->base)) {
-            foreach($request->base as $role_name => $value) {
+            foreach ($request->base as $role_name => $value) {
                 UsersRoles::create([
                     'users_id'   => $id,
                     'target'     => 'base',
@@ -242,7 +242,7 @@ class UserManage extends ManagePluginBase
 
         // 管理権限の登録
         if (!empty($request->manage)) {
-            foreach($request->manage as $role_name => $value) {
+            foreach ($request->manage as $role_name => $value) {
                 UsersRoles::create([
                     'users_id'   => $id,
                     'target'     => 'manage',
@@ -254,7 +254,7 @@ class UserManage extends ManagePluginBase
 
         // 役割設定の登録
         if (!empty($request->original_role)) {
-            foreach($request->original_role as $original_role => $value) {
+            foreach ($request->original_role as $original_role => $value) {
                 UsersRoles::create([
                     'users_id'   => $id,
                     'target'     => 'original_role',
@@ -287,8 +287,7 @@ class UserManage extends ManagePluginBase
         }
 
         // id がある場合、データを削除
-        if ( $id ) {
-
+        if ($id) {
             // データを削除する。
             User::destroy($id);
 
@@ -310,7 +309,7 @@ class UserManage extends ManagePluginBase
         // 役割設定取得
         $configs = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
 
-        return view('plugins.manage.user.original_role',[
+        return view('plugins.manage.user.original_role', [
             "function"    => __FUNCTION__,
             "plugin_name" => "user",
             "id"          => $id,
@@ -327,7 +326,6 @@ class UserManage extends ManagePluginBase
     {
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_additional1) || !empty($request->add_name) || !empty($request->add_value)) {
-
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_additional1' => ['required', 'numeric'],
@@ -347,8 +345,7 @@ class UserManage extends ManagePluginBase
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->configs_id)) {
-            foreach($request->configs_id as $config_id) {
-
+            foreach ($request->configs_id as $config_id) {
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'additional1.'.$config_id => ['required', 'numeric'],
@@ -379,9 +376,7 @@ class UserManage extends ManagePluginBase
 
         // 既存項目アリ
         if (!empty($request->configs_id)) {
-
-            foreach($request->configs_id as $config_id) {
-
+            foreach ($request->configs_id as $config_id) {
                 // モデルオブジェクト取得
                 $configs = Configs::where('id', $config_id)->first();
 
@@ -420,7 +415,7 @@ class UserManage extends ManagePluginBase
 
         // グループ取得
         $group_users = Group::select('groups.*', 'group_users.user_id', 'group_users.group_role')
-                            ->leftJoin('group_users', function ($join) use($id) {
+                            ->leftJoin('group_users', function ($join) use ($id) {
                                 $join->on('groups.id', '=', 'group_users.group_id')
                                      ->where('group_users.user_id', '=', $id)
                                      ->whereNull('group_users.deleted_at');
@@ -429,7 +424,7 @@ class UserManage extends ManagePluginBase
                             ->paginate(10);
 
         // 画面呼び出し
-        return view('plugins.manage.user.groups',[
+        return view('plugins.manage.user.groups', [
             "function"              => __FUNCTION__,
             "plugin_name"           => "user",
             "user"                  => $user,
@@ -444,9 +439,7 @@ class UserManage extends ManagePluginBase
     {
         // 画面項目のチェック
         if ($request->has('group_roles')) {
-
-            foreach($request->group_roles as $group_id => $group_role) {
-
+            foreach ($request->group_roles as $group_id => $group_role) {
                 // 権限の解除
                 if (empty($group_role)) {
                     GroupUser::where('group_id', $group_id)->where('user_id', $id)->delete();

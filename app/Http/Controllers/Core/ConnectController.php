@@ -97,12 +97,12 @@ class ConnectController extends Controller
         $allRouteParams = $router->getCurrentRoute()->parameters();
 
         // ページID
-        if ( !empty($allRouteParams) && array_key_exists('page_id', $allRouteParams)) {
+        if (!empty($allRouteParams) && array_key_exists('page_id', $allRouteParams)) {
             $this->page_id = $allRouteParams['page_id'];
         }
 
         // フレームID
-        if ( !empty($allRouteParams) && array_key_exists('frame_id', $allRouteParams)) {
+        if (!empty($allRouteParams) && array_key_exists('frame_id', $allRouteParams)) {
             $this->frame_id = $allRouteParams['frame_id'];
         }
 
@@ -287,7 +287,6 @@ class ConnectController extends Controller
         $check_no_display_flag = true; // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
 
         if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
-
             // 自分のページから親を遡って取得
             $page_tree = $this->getAncestorsAndSelf($this->page->id);
 
@@ -302,7 +301,7 @@ class ConnectController extends Controller
             // ページをループして表示可否をチェック
             // 継承関係を加味するために is_view 変数を使用。
             $is_view = true;
-            foreach($page_tree as $page_obj) {
+            foreach ($page_tree as $page_obj) {
                 $check_page_roles = null;
                 if ($page_roles) {
                     $check_page_roles = $page_roles->where('page_id', $page_obj->id);
@@ -359,7 +358,7 @@ class ConnectController extends Controller
         $page_tree = $this->getPageTree($this->page->id);
 
         // ページのレイアウト取得
-        $layout_array = explode('|',$this->getLayout($page_tree));
+        $layout_array = explode('|', $this->getLayout($page_tree));
 
         // ページのレイアウトがおかしな値の場合は、初期値として全カラムを設定しておく。
         if (count($layout_array) != 4) {
@@ -378,13 +377,13 @@ class ConnectController extends Controller
         if (!$layout_array[1] && !$layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-12';
         }
-        else if ($layout_array[1] && !$layout_array[2]) {
+        elseif ($layout_array[1] && !$layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-9';
         }
-        else if (!$layout_array[1] && $layout_array[2]) {
+        elseif (!$layout_array[1] && $layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-9';
         }
-        else if ($layout_array[1] && $layout_array[2]) {
+        elseif ($layout_array[1] && $layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-6';
         }
 
@@ -398,7 +397,7 @@ class ConnectController extends Controller
 
         // フレームを取得するページID
         $page_ins = array();
-        foreach($page_tree as $page) {
+        foreach ($page_tree as $page) {
             $page_ins[] = $page->id;
         }
 
@@ -408,12 +407,12 @@ class ConnectController extends Controller
 
         $frames = Frame::where('area_id', '!=', 2)
                        ->select('frames.*', 'frames.id as frame_id', 'plugins.plugin_name_full')
-                       ->leftJoin('plugins',  'plugins.plugin_name', '=', 'frames.plugin_name')
+                       ->leftJoin('plugins', 'plugins.plugin_name', '=', 'frames.plugin_name')
                        ->whereIn('page_id', $page_ins)
                        // このページにのみ表示する。の処理用クロージャ。
-                       ->where(function($query) use($this_page_id) {
+                       ->where(function ($query) use ($this_page_id) {
                            $query->Where('page_only', 0)
-                               ->orWhere(function($query2) use($this_page_id) {
+                               ->orWhere(function ($query2) use ($this_page_id) {
                                    $query2->Where('page_only', 1)
                                           ->Where('page_id', $this_page_id);
                                })
@@ -430,11 +429,9 @@ class ConnectController extends Controller
                        ->get();
 
         // 共通エリアの継承処理
-        foreach($frames as $frame) {
-
+        foreach ($frames as $frame) {
             // すでに子の設定で共通エリアにフレームがある場合は、対象外。
-            if (array_key_exists($frame['area_id'], $layouts_info) && array_key_exists('frames', $layouts_info[$frame['area_id']]) && !empty($layouts_info[$frame['area_id']]['frames']) ) {
-
+            if (array_key_exists($frame['area_id'], $layouts_info) && array_key_exists('frames', $layouts_info[$frame['area_id']]) && !empty($layouts_info[$frame['area_id']]['frames'])) {
                 // 同じページの複数フレームは使用する。
                 if ($layouts_info[$frame['area_id']]['frames'][0]['page_id'] == $frame['page_id']) {
                     $layouts_info[$frame['area_id']]['frames'][] = $frame;
@@ -457,7 +454,7 @@ class ConnectController extends Controller
     {
         $return_array = array();
 
-        foreach( $this->configs as $config) {
+        foreach ($this->configs as $config) {
             $return_array[$config->name] = $config;
         }
         return $return_array;
@@ -496,7 +493,7 @@ class ConnectController extends Controller
         }
 
         $languages = array();
-        foreach($configs as $config) {
+        foreach ($configs as $config) {
             if ($config->category == 'language') {
                 $languages[$config->additional1] = $config;
             }
@@ -509,7 +506,7 @@ class ConnectController extends Controller
      */
     private function isLanguageMultiOn()
     {
-        foreach($this->getConfigs() as $config) {
+        foreach ($this->getConfigs() as $config) {
             if ($config->name == 'language_multi_on') {
                 if ($config->value == '1') {
                     return true;
@@ -533,7 +530,7 @@ class ConnectController extends Controller
         }
 
         $config_array = array();
-        foreach($configs as $config) {
+        foreach ($configs as $config) {
             if ($config->category == $category) {
                 $config_array[$config->name] = $config->value;
             }
@@ -596,8 +593,7 @@ class ConnectController extends Controller
         // レイアウト
         $layout = null;
 
-        foreach ( $page_tree as $page ) {
-
+        foreach ($page_tree as $page) {
             // レイアウト
             if (empty($layout) && $page->layout) {
                 $layout = $page->layout;
@@ -646,7 +642,6 @@ class ConnectController extends Controller
         // ページ固有の設定がある場合
         $theme = $this->getPagesColum('theme');
         if ($theme) {
-
             // CSS、JS をチェックして配列にして返却
             return  $this->checkAsset($theme, $return_array);
         }
@@ -664,8 +659,8 @@ class ConnectController extends Controller
     {
         // 自分のページから親を遡って取得
         $page_tree = $this->getAncestorsAndSelf($this->page->id);
-        foreach($page_tree as $page){
-            if(isset($page[$col_name])) {
+        foreach ($page_tree as $page) {
+            if (isset($page[$col_name])) {
                 return $page[$col_name];
             }
         }
@@ -680,7 +675,7 @@ class ConnectController extends Controller
         // ページデータ取得のため、URL から現在のURL パスを判定する。
         $current_url = url()->current();
         $base_url = url('/');
-        $current_permanent_link = str_replace( $base_url, '', $current_url);
+        $current_permanent_link = str_replace($base_url, '', $current_url);
 
         // URLデコード
         $current_permanent_link = urldecode($current_permanent_link);

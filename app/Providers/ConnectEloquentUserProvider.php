@@ -68,7 +68,6 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
         $ret->user_roles = $users_roles->getUsersRoles($identifier);
 
         return $ret;
-
     }
 
     /**

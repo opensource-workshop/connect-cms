@@ -30,7 +30,7 @@ class Buckets extends Model
             return array();
         }
         $return_roles = array();
-        foreach($this->buckets_roles as $buckets_role) {
+        foreach ($this->buckets_roles as $buckets_role) {
             if ($buckets_role->post_flag == 1) {
                 $return_roles[] = $buckets_role->role;
             }
@@ -69,7 +69,7 @@ class Buckets extends Model
         $this->getBucketsRoles();
 
         // 渡された権限がバケツに投稿できる権限かどうかのチェック
-        foreach($this->buckets_roles as $buckets_role) {
+        foreach ($this->buckets_roles as $buckets_role) {
             if ($buckets_role->role == $role && $buckets_role->post_flag == 1) {
                 return true;
             }
@@ -99,7 +99,7 @@ class Buckets extends Model
             return false;
         }
 
-        foreach($user_roles_base as $user_role => $value) {
+        foreach ($user_roles_base as $user_role => $value) {
             // コンテンツ管理者権限、プラグイン管理者権限があれば、投稿可能
             if ($user_role == 'role_article_admin' || $user_role == 'role_arrangement') {
                 return true;
@@ -131,7 +131,7 @@ class Buckets extends Model
         $this->getBucketsRoles();
 
         // 渡された権限が承認が必要かどうかのチェック
-        foreach($this->buckets_roles as $buckets_role) {
+        foreach ($this->buckets_roles as $buckets_role) {
             if ($buckets_role->role == $role && $buckets_role->approval_flag == 1) {
                 return true;
             }
@@ -155,7 +155,7 @@ class Buckets extends Model
             return false;
         }
 
-        foreach($user_roles_base as $user_role => $value) {
+        foreach ($user_roles_base as $user_role => $value) {
             // コンテンツ管理者権限、プラグイン管理者権限、承認者権限があれば、承認不要
             if ($user_role == 'role_article_admin' || $user_role == 'role_arrangement' || $user_role == 'role_approval') {
                 return false;

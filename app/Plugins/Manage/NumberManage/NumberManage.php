@@ -44,9 +44,11 @@ class NumberManage extends ManagePluginBase
     public function index($request, $page_id = null, $errors = array())
     {
         // 現在の連番管理データの取得
-        $numbers = Numbers::select('numbers.*',
-                                   'buckets.bucket_name',
-                                   'plugins.plugin_name_full')
+        $numbers = Numbers::select(
+            'numbers.*',
+            'buckets.bucket_name',
+            'plugins.plugin_name_full'
+        )
                           ->leftJoin('buckets', 'buckets.id', '=', 'numbers.buckets_id')
                           ->leftJoin('plugins', 'plugins.plugin_name', '=', 'numbers.plugin_name')
                           ->orderBy('plugin_name')
@@ -56,7 +58,7 @@ class NumberManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.number.number',[
+        return view('plugins.manage.number.number', [
             "function"    => __FUNCTION__,
             "plugin_name" => "number",
             "numbers"     => $numbers,

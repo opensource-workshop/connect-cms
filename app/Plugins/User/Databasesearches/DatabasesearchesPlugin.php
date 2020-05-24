@@ -131,8 +131,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         // [{"name":"From月日","where":"LE","request_default":"TODAY-MD"},{"name":"To月日","where":"GE","request_default":"TODAY-MD"}]
 
         // 条件毎にループ
-        foreach($conditions as $condition){
-
+        foreach ($conditions as $condition) {
             // 検索Query 組み立て
             $inputs_query
                 = DatabasesInputCols::select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id')
@@ -164,7 +163,6 @@ class DatabasesearchesPlugin extends UserPluginBase
                 $request->session()->put($condition->request, $request_keyword);
             }
             elseif (property_exists($condition, 'request') && $request->session()->get($condition->request)) {
-
                 // セッションに検索キーワードが含まれていたら使用する。
                 $request_keyword = $request->session()->get($condition->request);
             }
@@ -183,28 +181,28 @@ class DatabasesearchesPlugin extends UserPluginBase
             if (!property_exists($condition, 'where') || empty($condition->where)) {
                 // where が空なら、条件指定しない
             }
-            else if ($condition->where == 'ALL') {
+            elseif ($condition->where == 'ALL') {
                 $inputs_query->where('value', $request_keyword);
             }
-            else if ($condition->where == 'PART') {
+            elseif ($condition->where == 'PART') {
                 $inputs_query->where('value', 'like', '%' . $request_keyword . '%');
             }
-            else if ($condition->where == 'FRONT') {
+            elseif ($condition->where == 'FRONT') {
                 $inputs_query->where('value', 'like', $request_keyword . '%');
             }
-            else if ($condition->where == 'REAR') {
+            elseif ($condition->where == 'REAR') {
                 $inputs_query->where('value', 'like', '%' . $request_keyword);
             }
-            else if ($condition->where == 'GT') {
+            elseif ($condition->where == 'GT') {
                 $inputs_query->where('value', '>', $request_keyword);
             }
-            else if ($condition->where == 'LT') {
+            elseif ($condition->where == 'LT') {
                 $inputs_query->where('value', '<', $request_keyword);
             }
-            else if ($condition->where == 'GE') {
+            elseif ($condition->where == 'GE') {
                 $inputs_query->where('value', '>=', $request_keyword);
             }
-            else if ($condition->where == 'LE') {
+            elseif ($condition->where == 'LE') {
                 $inputs_query->where('value', '<=', $request_keyword);
             }
 
@@ -294,7 +292,8 @@ class DatabasesearchesPlugin extends UserPluginBase
             'frames'                     => $frames,
             'databasesearches'           => $databasesearches,
             'target_frames'              => $target_frames,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**

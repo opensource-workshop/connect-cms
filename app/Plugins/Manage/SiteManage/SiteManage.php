@@ -66,7 +66,7 @@ class SiteManage extends ManagePluginBase
 
         // Config データの変換
         $configs_array = array();
-        foreach ( $configs as $config ) {
+        foreach ($configs as $config) {
             $configs_array[$config->name] = $config->value;
         }
 
@@ -82,7 +82,7 @@ class SiteManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.site.site',[
+        return view('plugins.manage.site.site', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "site",
             "errors"             => $errors,
@@ -200,7 +200,7 @@ class SiteManage extends ManagePluginBase
                                 ->orderBy('display_sequence', 'asc')
                                 ->get();
 
-        return view('plugins.manage.site.categories',[
+        return view('plugins.manage.site.categories', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
@@ -217,7 +217,6 @@ class SiteManage extends ManagePluginBase
     {
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color) || !empty($request->add_background_color)) {
-
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_display_sequence' => ['required'],
@@ -241,8 +240,7 @@ class SiteManage extends ManagePluginBase
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->categories_id)) {
-            foreach($request->categories_id as $category_id) {
-
+            foreach ($request->categories_id as $category_id) {
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'display_sequence.'.$category_id => ['required'],
@@ -278,9 +276,7 @@ class SiteManage extends ManagePluginBase
 
         // 既存項目アリ
         if (!empty($request->categories_id)) {
-
-            foreach($request->categories_id as $category_id) {
-
+            foreach ($request->categories_id as $category_id) {
                 // モデルオブジェクト取得
                 $categories = Categories::where('id', $category_id)->first();
 
@@ -325,7 +321,7 @@ class SiteManage extends ManagePluginBase
         // 設定されている多言語のリスト取得
         $languages = Configs::where('category', 'language')->orderBy('additional1')->get();
 
-        return view('plugins.manage.site.languages',[
+        return view('plugins.manage.site.languages', [
             "function"          => __FUNCTION__,
             "plugin_name"       => "site",
             "id"                => $id,
@@ -355,7 +351,6 @@ class SiteManage extends ManagePluginBase
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_language) || !empty($request->add_url)) {
-
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_language' => ['required'],
@@ -373,8 +368,7 @@ class SiteManage extends ManagePluginBase
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->languages_id)) {
-            foreach($request->languages_id as $language_id) {
-
+            foreach ($request->languages_id as $language_id) {
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'language.'.$language_id => ['required'],
@@ -407,9 +401,7 @@ class SiteManage extends ManagePluginBase
 
         // 既存項目アリ
         if (!empty($request->languages_id)) {
-
-            foreach($request->languages_id as $language_id) {
-
+            foreach ($request->languages_id as $language_id) {
                 // モデルオブジェクト取得
                 $configs = Configs::where('id', $language_id)->first();
 
@@ -436,7 +428,7 @@ class SiteManage extends ManagePluginBase
         // 設定されている多言語のリスト取得
         $browser_widths = $this->getConfigs(null, 'browser_width');
 
-        return view('plugins.manage.site.browserwidths',[
+        return view('plugins.manage.site.browserwidths', [
             "function"       => __FUNCTION__,
             "plugin_name"    => "site",
             "id"             => $id,
@@ -490,7 +482,7 @@ class SiteManage extends ManagePluginBase
         // 設定されているmeta情報のリスト取得
         $meta = $this->getConfigs(null, 'meta');
 
-        return view('plugins.manage.site.meta',[
+        return view('plugins.manage.site.meta', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
@@ -530,7 +522,7 @@ class SiteManage extends ManagePluginBase
         // 設定されているページエラー設定のリスト取得
         $page_errors = $this->getConfigs(null, 'page_error');
 
-        return view('plugins.manage.site.page_error',[
+        return view('plugins.manage.site.page_error', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
@@ -577,7 +569,7 @@ class SiteManage extends ManagePluginBase
         // 設定されているページエラー設定のリスト取得
         $analytics = $this->getConfigs('tracking_code');
 
-        return view('plugins.manage.site.analytics',[
+        return view('plugins.manage.site.analytics', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,

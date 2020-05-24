@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * 履歴ありUserable
  * モデルの保存時に自動的にユーザーID やユーザー名を保持するためのtrait
  * 承認などの履歴ありmodelに適用するtraitため、created_idを自動登録しない
- * 
+ *
  * 使用するには、モデルでcreated_id、created_name、updated_id、updated_nameを定義してuseする。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>

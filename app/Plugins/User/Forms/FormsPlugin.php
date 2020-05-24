@@ -54,10 +54,10 @@ class FormsPlugin extends UserPluginBase
             'editColumnDetail',
         ];
         $functions['post'] = [
-            'index', 
-            'publicConfirm', 
-            'publicStore', 
-            'cancel', 
+            'index',
+            'publicConfirm',
+            'publicStore',
+            'cancel',
             'updateColumn',
             'updateColumnSequence',
             'updateColumnDetail',
@@ -112,9 +112,9 @@ class FormsPlugin extends UserPluginBase
     {
         // フォームのカラムデータ
         $form_columns = [];
-        if ( !empty($form) ) {
+        if (!empty($form)) {
             $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
-            if($form->user_mail_send_flag == '1' && empty($forms_columns->where('column_type', \FormColumnType::mail)->first())){
+            if ($form->user_mail_send_flag == '1' && empty($forms_columns->where('column_type', \FormColumnType::mail)->first())) {
                 return 'mail_setting_error';
             }
         }
@@ -128,14 +128,13 @@ class FormsPlugin extends UserPluginBase
         $ret_array = array();
         for ($i = 0; $i < count($forms_columns); $i++) {
             if ($forms_columns[$i]->column_type == "group") {
-
                 $tmp_group = $forms_columns[$i];
                 $group_row = array();
                 for ($j = 1; $j <= $forms_columns[$i]->frame_col; $j++) {
                     // dd(count($forms_columns), $i, $j);
-                    if(count($forms_columns) >= (1 + $i + $j)){
+                    if (count($forms_columns) >= (1 + $i + $j)) {
                         $group_row[] = $forms_columns[$i + $j];
-                    }else{
+                    }else {
                         return 'frame_setting_error';
                     }
                 }
@@ -170,9 +169,8 @@ class FormsPlugin extends UserPluginBase
         $forms_columns_id_select = array();
         $index = 1;
         $before_forms_columns_id = null;
-        foreach($forms_columns_selects as $forms_columns_select) {
-
-            if ( $before_forms_columns_id != $forms_columns_select->forms_columns_id ) {
+        foreach ($forms_columns_selects as $forms_columns_select) {
+            if ($before_forms_columns_id != $forms_columns_select->forms_columns_id) {
                 $index = 1;
                 $before_forms_columns_id = $forms_columns_select->forms_columns_id;
             }
@@ -225,12 +223,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms_columns_id_select = null;
         if ($form) {
             $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
-            if(FormsColumns::query()
+            if (FormsColumns::query()
                 ->where('forms_id', $form->id)
                 ->where('column_type', \FormColumnType::group)
                 ->whereNull('frame_col')
                 ->get()
-                ->count() > 0){
+                ->count() > 0) {
                 // データ型が「まとめ行」で、まとめ数の設定がないデータが存在する場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データ（まとめ行のまとめ数）を設定してください。';
             }
@@ -242,17 +240,17 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
              */
             $forms_columns = $this->getFormsColumns($form);
 
-            if($forms_columns == 'frame_setting_error'){
+            if ($forms_columns == 'frame_setting_error') {
                 // 項目データはあるが、まとめ行の設定（まとめ行の位置とまとめ数の設定）が不正な場合
                 $setting_error_messages[] = 'まとめ行の設定が不正です。フレームの設定画面からまとめ行の位置、又は、まとめ数の設定を見直してください。';
-            }elseif($forms_columns == 'mail_setting_error'){
+            }elseif ($forms_columns == 'mail_setting_error') {
                 // フォーム設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合
                 $setting_error_messages[] = 'メールアドレス型の項目を設定してください。（フォームの設定「登録者にメール送信する」と関連）';
-            }elseif(!$forms_columns){
+            }elseif (!$forms_columns) {
                 // 項目データがない場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
-        }else{
+        }else {
             // フレームに紐づくフォーム親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
         }
@@ -267,7 +265,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'forms_columns_id_select' => $forms_columns_id_select,
             'errors' => $errors,
             'setting_error_messages' => $setting_error_messages,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -276,11 +275,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      * @param $request
      * @return void
      */
-    public static function trimInput($value){
-        if (is_array($value)){
+    public static function trimInput($value)
+    {
+        if (is_array($value)) {
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
             $value = array_map(['self', 'trimInput'], $value);
-        }elseif (is_string($value)){
+        }elseif (is_string($value)) {
             $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
         }
  
@@ -295,7 +295,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      * @param Request $request
      * @return void
      */
-    private function getValidatorRule($validator_array, $forms_column, $request){
+    private function getValidatorRule($validator_array, $forms_column, $request)
+    {
 
         $validator_rule = null;
         // 必須チェック
@@ -351,7 +352,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // 「時間From~To型」チェック
         if ($forms_column->column_type == \FormColumnType::time_from_to) {
-
             $time_from = $request->forms_columns_value_for_time_from[$forms_column->id];
             $time_to = $request->forms_columns_value_for_time_to[$forms_column->id];
             // request内の入力値（配列）を一旦取り出して、時間型（From~To）の入力値をセットする
@@ -360,13 +360,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $request->merge([
                 "forms_columns_value" => $tmp_array,
             ]);
-            if($time_from && $time_to){
+            if ($time_from && $time_to) {
                 // 両方入力時、時間の前後チェック
                 $validator_rule[] = new CustomVali_TimeFromTo(
                     \Carbon::createFromTimeString($time_from . ':00'),
                     \Carbon::createFromTimeString($time_to . ':00')
                 );
-            }elseif($time_from || $time_to){
+            }elseif ($time_from || $time_to) {
                 // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
                 $validator_rule[] = new CustomVali_BothRequired(
                     $request->forms_columns_value_for_time_from[$forms_column->id],
@@ -375,7 +375,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             }
         }
         // バリデータールールをセット
-        if($validator_rule){
+        if ($validator_rule) {
             $validator_array['column']['forms_columns_value.' . $forms_column->id] = $validator_rule;
             $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
         }
@@ -397,10 +397,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // エラーチェック配列
         $validator_array = array( 'column' => array(), 'message' => array());
 
-        foreach($forms_columns as $forms_column) {
+        foreach ($forms_columns as $forms_column) {
             // まとめ行であれば、ネストされた配列をさらに展開
             if ($forms_column->group) {
-                foreach($forms_column->group as $group_item) {
+                foreach ($forms_column->group as $group_item) {
                     // まとめ行で指定している項目について、バリデータールールをセット
                     $validator_array = self::getValidatorRule($validator_array, $group_item, $request);
                 }
@@ -429,7 +429,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'frame_id' => $frame_id,
             'form' => $form,
             'forms_columns' => $forms_columns,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -455,7 +456,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $user_mailaddresses = array();
 
         // forms_input_cols 登録
-        foreach ( $forms_columns as $forms_column ) {
+        foreach ($forms_columns as $forms_column) {
             if ($forms_column->column_type == "group") {
                 continue;
             }
@@ -496,25 +497,24 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // メール送信
         if ($form->mail_send_flag || $form->user_mail_send_flag) {
-
             // メール本文の組み立て
             $mail_format = $form->mail_format;
-            $mail_text = str_replace( '[[body]]', $contents_text, $mail_format);
+            $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
 
             // メール本文内の採番文字列を置換
-            $mail_text = str_replace( '[[number]]', $number, $mail_text);
+            $mail_text = str_replace('[[number]]', $number, $mail_text);
 
             // メール送信（管理者側）
-            if($form->mail_send_flag){
+            if ($form->mail_send_flag) {
                 $mail_addresses = explode(',', $form->mail_send_address);
-                foreach($mail_addresses as $mail_address) {
+                foreach ($mail_addresses as $mail_address) {
                     Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                 }
             }
 
             // メール送信（ユーザー側）
-            if($form->user_mail_send_flag){
-                foreach($user_mailaddresses as $user_mailaddress) {
+            if ($form->user_mail_send_flag) {
+                foreach ($user_mailaddresses as $user_mailaddress) {
                     if (!empty($user_mailaddress)) {
                         Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                     }
@@ -526,7 +526,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         return $this->view(
             'forms_thanks', [
             'after_message' => $after_message
-        ]);
+            ]
+        );
     }
 
     /**
@@ -553,7 +554,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'forms_datalist', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -585,7 +587,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $form = Forms::where('id', $forms_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id からフォームデータ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($form_frame->bucket_id) && $create_flag == false) {
+        elseif (!empty($form_frame->bucket_id) && $create_flag == false) {
             $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
         }
 
@@ -597,7 +599,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             'create_flag' => $create_flag,
             'message'     => $message,
             'errors'      => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -611,7 +614,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_attributes['forms_name'] = 'フォーム名';
 
         // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
-        if($request->mail_send_flag){
+        if ($request->mail_send_flag) {
             $validator_values['mail_send_address'] = [
                 'required'
             ];
@@ -625,12 +628,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-
             if (empty($forms_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
             }
-            else  {
+            else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
             }
@@ -641,7 +643,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 画面から渡ってくるforms_id が空ならバケツとブログを新規登録
         if (empty($request->forms_id)) {
-
             // バケツの登録
             $bucket = new Buckets();
             $bucket->bucket_name = '無題';
@@ -658,7 +659,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // （表示フォーム選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
-
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
@@ -667,7 +667,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // forms_id があれば、フォームを更新
         else {
-
             // フォームデータ取得
             $forms = Forms::where('id', $request->forms_id)->first();
 
@@ -702,8 +701,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     public function destroyBuckets($request, $page_id, $frame_id, $forms_id)
     {
         // forms_id がある場合、データを削除
-        if ( $forms_id ) {
-
+        if ($forms_id) {
             // カラムデータを削除する。
             FormsColumns::where('forms_id', $forms_id)->delete();
 
@@ -755,7 +753,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, null, $errors);
@@ -785,10 +782,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function editColumnDetail($request, $page_id, $frame_id, $column_id, $message = null, $errors = null)
     {
-        if($errors){
+        if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else{
+        }else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -809,7 +806,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
-            'forms_edit_row_detail', 
+            'forms_edit_row_detail',
             [
                 'forms_id' => $forms_id,
                 'column'     => $column,
@@ -825,10 +822,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function editColumn($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
-        if($errors){
+        if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else{
+        }else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -860,8 +857,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             )
             ->where('forms_columns.forms_id', $forms_id)
             // 予約項目の子データ（選択肢）
-            ->leftjoin('forms_columns_selects',function($join) {
-                $join->on('forms_columns.id','=','forms_columns_selects.forms_columns_id');
+            ->leftjoin('forms_columns_selects', function ($join) {
+                $join->on('forms_columns.id', '=', 'forms_columns_selects.forms_columns_id');
             })
             ->groupby(
                 'forms_columns.id',
@@ -879,7 +876,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
-            'forms_edit', 
+            'forms_edit',
             [
                 'forms_id'   => $forms_id,
                 'columns'    => $columns,
@@ -940,7 +937,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, null, $errors);
@@ -1003,42 +999,42 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_attributes = null;
 
         // データ型が「まとめ行」の場合はまとめ数について必須チェック
-        if($column->column_type == \FormColumnType::group){
+        if ($column->column_type == \FormColumnType::group) {
             $validator_values['frame_col'] = [
                 'required'
             ];
             $validator_attributes['frame_col'] = 'まとめ数';
         }
         // 桁数チェックの指定時、入力値が数値であるかチェック
-        if($request->rule_digits_or_less){
+        if ($request->rule_digits_or_less) {
             $validator_values['rule_digits_or_less'] = [
                 'numeric',
             ];
             $validator_attributes['rule_digits_or_less'] = '入力桁数';
         }
         // 最大値の指定時、入力値が数値であるかチェック
-        if($request->rule_max){
+        if ($request->rule_max) {
             $validator_values['rule_max'] = [
                 'numeric',
             ];
             $validator_attributes['rule_max'] = '最大値';
         }
         // 最小値の指定時、入力値が数値であるかチェック
-        if($request->rule_min){
+        if ($request->rule_min) {
             $validator_values['rule_min'] = [
                 'numeric',
             ];
             $validator_attributes['rule_min'] = '最小値';
         }
         // 入力文字数の指定時、入力値が数値であるかチェック
-        if($request->rule_word_count){
+        if ($request->rule_word_count) {
             $validator_values['rule_word_count'] = [
                 'numeric',
             ];
             $validator_attributes['rule_word_count'] = '入力文字数';
         }
         // ～日以降許容を指定時、入力値が数値であるかチェック
-        if($request->rule_date_after_equal){
+        if ($request->rule_date_after_equal) {
             $validator_values['rule_date_after_equal'] = [
                 'numeric',
             ];
@@ -1046,13 +1042,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
 
         // エラーチェック
-        if($validator_values){
+        if ($validator_values) {
             $validator = Validator::make($request->all(), $validator_values);
             $validator->setAttributeNames($validator_attributes);
 
             $errors = null;
             if ($validator->fails()) {
-
                 // エラーと共に編集画面を呼び出す
                 $errors = $validator->errors();
                 return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
@@ -1064,11 +1059,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->caption_color = $request->caption_color;
         $column->frame_col = $request->frame_col;
         // 分刻み指定
-        if($column->column_type == \FormColumnType::time){
+        if ($column->column_type == \FormColumnType::time) {
             $column->minutes_increments = $request->minutes_increments;
         }
         // 分刻み指定（FromTo）
-        if($column->column_type == \FormColumnType::time_from_to){
+        if ($column->column_type == \FormColumnType::time_from_to) {
             $column->minutes_increments_from = $request->minutes_increments_from;
             $column->minutes_increments_to = $request->minutes_increments_to;
         }
@@ -1110,7 +1105,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
@@ -1155,7 +1149,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         $errors = null;
         if ($validator->fails()) {
-
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
             return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
@@ -1267,8 +1260,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 ]
 2 [
     37 => 田中
-    40 => 
-    45 => 
+    40 =>
+    45 =>
 ]
 
 -- FormsInputCols のSQL
@@ -1287,13 +1280,13 @@ ORDER BY forms_inputs_id, forms_columns_id
         $copy_base = array();
 
         // 見出し行
-        foreach($columns as $column) {
+        foreach ($columns as $column) {
             $csv_array[0][$column->id] = $column->column_name;
             $copy_base[$column->id] = '';
         }
 
         // データ
-        foreach($input_cols as $input_col) {
+        foreach ($input_cols as $input_col) {
             if (!array_key_exists($input_col->forms_inputs_id, $csv_array)) {
                 $csv_array[$input_col->forms_inputs_id] = $copy_base;
             }
@@ -1309,8 +1302,8 @@ ORDER BY forms_inputs_id, forms_columns_id
  
         // データ
         $csv_data = '';
-        foreach($csv_array as $csv_line) {
-            foreach($csv_line as $csv_col) {
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
                 $csv_data .= '"' . $csv_col . '",';
             }
             $csv_data .= "\n";

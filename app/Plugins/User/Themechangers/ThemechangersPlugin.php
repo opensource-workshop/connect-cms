@@ -44,8 +44,8 @@ class ThemechangersPlugin extends UserPluginBase
     {
         // 自分のページから親を遡って取得
         $page_tree = Page::reversed()->ancestorsAndSelf($this->page->id);
-        foreach($page_tree as $page){
-            if(isset($page[$col_name])) {
+        foreach ($page_tree as $page) {
+            if (isset($page[$col_name])) {
                 return $page[$col_name];
             }
         }
@@ -88,7 +88,6 @@ class ThemechangersPlugin extends UserPluginBase
         // ページ固有の設定がある場合
         $theme = $this->getPagesColum('theme');
         if ($theme) {
-
             // CSS、JS をチェックして配列にして返却
             return  $this->checkAsset($theme, $return_array);
         }

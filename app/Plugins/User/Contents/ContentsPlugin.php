@@ -103,7 +103,7 @@ class ContentsPlugin extends UserPluginBase
                     ->where('buckets.id', $buckets_id)
                     ->where('contents.deleted_at', null)
                     // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
-                    ->where(function($query){
+                    ->where(function ($query) {
                           $query = $this->appendAuthWhere($query);
                     })
                     ->orderBy('id', 'desc')
@@ -158,7 +158,7 @@ class ContentsPlugin extends UserPluginBase
         }
         // 承認権限の場合、Active ＋ 承認待ちの取得
         elseif ($this->isCan('role_approval')) {
-            $query->Where('status',   '=', 0)
+            $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
         }
         // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
@@ -194,24 +194,25 @@ class ContentsPlugin extends UserPluginBase
         // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
         // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
         $query = DB::table('contents')
-                   ->select('contents.id                 as post_id',
-                            'frames.id                   as frame_id',
-                            'frames.page_id              as page_id',
-                            'pages.permanent_link        as permanent_link',
-                            'frames.frame_title          as post_title',
-                            DB::raw('0 as important'),
-                            'contents.created_at         as posted_at',
-                            'contents.created_name       as posted_name',
-                            DB::raw('null as classname'),
-                            DB::raw('null as categories_id'),
-                            DB::raw('null as category'),
-                            DB::raw('"contents" as plugin_name')
-                           )
+                   ->select(
+                       'contents.id                 as post_id',
+                       'frames.id                   as frame_id',
+                       'frames.page_id              as page_id',
+                       'pages.permanent_link        as permanent_link',
+                       'frames.frame_title          as post_title',
+                       DB::raw('0 as important'),
+                       'contents.created_at         as posted_at',
+                       'contents.created_name       as posted_name',
+                       DB::raw('null as classname'),
+                       DB::raw('null as categories_id'),
+                       DB::raw('null as category'),
+                       DB::raw('"contents" as plugin_name')
+                   )
                    ->join('frames', 'frames.bucket_id', '=', 'contents.bucket_id')
                    ->join('pages', 'pages.id', '=', 'frames.page_id')
                    ->whereIn('pages.id', $page_ids)
                    ->where('status', '?')
-                   ->where(function($plugin_query) use($search_keyword) {
+                   ->where(function ($plugin_query) use ($search_keyword) {
                        $plugin_query->where('contents.content_text', 'like', '?')
                                     ->orWhere('frames.frame_title', 'like', '?');
                    })
@@ -292,7 +293,8 @@ class ContentsPlugin extends UserPluginBase
         return $this->view(
             'contents', [
             'contents'     => $contents,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -309,15 +311,16 @@ class ContentsPlugin extends UserPluginBase
             // 新規登録画面を呼び出す
             return $this->view(
                 'contents_create', [
-            ]);
-
+                ]
+            );
         }
         else {
             // 編集画面テンプレートを呼び出す。
             return $this->view(
                 'contents_edit', [
                 'contents' => $contents,
-            ]);
+                ]
+            );
         }
     }
 
@@ -338,19 +341,20 @@ class ContentsPlugin extends UserPluginBase
 
         // データの存在確認をして、画面を切り替える
         if (empty($contents)) {
-
             // データなしの表示テンプレートを呼び出す。
             return $this->view(
                 'contents_edit_nodata', [
                 'contents' => null,
-            ]);
+                ]
+            );
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'contents_show', [
             'contents' => $contents,
-        ]);
+            ]
+        );
     }
 
    /**
@@ -380,7 +384,7 @@ class ContentsPlugin extends UserPluginBase
             $contents->status = 1;
         }
         // 承認フラグ(要承認の場合はstatus が 2 になる。)
-        else if ($this->isApproval($frame_id)) {
+        elseif ($this->isApproval($frame_id)) {
             $contents->status = 2;
         }
         else {
@@ -439,7 +443,6 @@ class ContentsPlugin extends UserPluginBase
             $this->store($request, $page_id, $frame_id, $id, $status);
         }
         else {
-
             // 旧データ取得
             $oldrow = Contents::find($id);
 
@@ -483,13 +486,12 @@ class ContentsPlugin extends UserPluginBase
     public function delete($request, $page_id = null, $frame_id = null, $id = null)
     {
         // id がある場合、コンテンツを削除
-        if ( $id ) {
-
+        if ($id) {
             // Contents データ
             $content = Contents::where('id', $id)->first();
 
             // フレームも同時に削除するがチェックされていたらフレームを削除する。
-            if ( $request->frame_delete_flag == "1" ) {
+            if ($request->frame_delete_flag == "1") {
                 Frame::destroy($frame_id);
             }
 
@@ -502,7 +504,6 @@ class ContentsPlugin extends UserPluginBase
 
             // 同じbucket_id のものを削除
             Contents::where('bucket_id', $content->bucket_id)->delete();
-
         }
         return;
     }
@@ -525,7 +526,7 @@ class ContentsPlugin extends UserPluginBase
         $request_order_by = ["contents_updated_at", "desc"];
 
         // 画面からのソート指定があれば使用(ソート指定があった項目は、ソート設定の内容を入れ替える)
-        if ( !empty( $request->sort ) ) {
+        if (!empty($request->sort)) {
             $request_order_by = explode('|', $request->sort);
             if ($request_order_by[1] == "asc") {
                 $sort_inits[$request_order_by[0]]=["asc", "desc"];
@@ -537,8 +538,8 @@ class ContentsPlugin extends UserPluginBase
 
         // 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの)
         $order_link = array();
-        foreach ( $sort_inits as $order_by_key => $order_by ) {
-            if ( $request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
+        foreach ($sort_inits as $order_by_key => $order_by) {
+            if ($request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
                 $order_link[$order_by_key] = array_reverse($order_by);
             }
             else {
@@ -549,7 +550,7 @@ class ContentsPlugin extends UserPluginBase
         // データリストの場合の追加処理
         // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
         $buckets_list = DB::table('buckets')
-                          ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
+                          ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
                           ->join('contents', function ($join) {
                               $join->on('contents.bucket_id', '=', 'buckets.id');
                               $join->where('contents.status', '=', 0);
@@ -558,15 +559,16 @@ class ContentsPlugin extends UserPluginBase
                           ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
                           ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
                           ->where('buckets.plugin_name', 'contents')
-                          ->orderBy($request_order_by[0],        $request_order_by[1])
+                          ->orderBy($request_order_by[0], $request_order_by[1])
                           ->paginate(10);
 
         return $this->view(
             'contents_list_buckets', [
             'buckets_list'      => $buckets_list,
             'order_link'        => $order_link,
-            'request_order_str' => implode( '|', $request_order_by )
-        ]);
+            'request_order_str' => implode('|', $request_order_by)
+            ]
+        );
     }
 
    /**

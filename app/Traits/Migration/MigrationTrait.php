@@ -60,8 +60,7 @@ trait MigrationTrait
 
         // フレームのループ
         $display_sequence = 0;
-        foreach($ini_files as $ini_file) {
-
+        foreach ($ini_files as $ini_file) {
             // echo $ini_file . "\n";
 
             $display_sequence++;
@@ -107,7 +106,6 @@ trait MigrationTrait
             // [image_names] の画像を登録
             if (array_key_exists('image_names', $ini_array)) {
                 foreach ($ini_array['image_names'] as $filename => $client_original_name) {
-
                     // ファイルサイズ
                     if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
                         $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
@@ -141,7 +139,6 @@ trait MigrationTrait
             // [file_names] の画像を登録
             if (array_key_exists('file_names', $ini_array)) {
                 foreach ($ini_array['file_names'] as $filename => $client_original_name) {
-
                     // ファイルサイズ
                     if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
                         $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
@@ -317,7 +314,6 @@ trait MigrationTrait
         $expression = './/section';
         $frame_index = 0; // フレームの連番
         foreach ($xpath->query($expression, $container_main) as $section) {
-
             $frame_index++;
             $frame_index_str = sprintf("%'.04d", $frame_index);
 
@@ -352,12 +348,10 @@ trait MigrationTrait
             // ・取得して連番で保存（拡張子ナシ）
             // ・mime_type から拡張子決定
             if ($images) {
-
                 // HTML 中の画像ファイルをループで処理
                 $frame_ini .= "\n[image_names]\n";
                 $image_index = 0;
-                foreach($images as $image_url) {
-
+                foreach ($images as $image_url) {
                     // 保存する画像のパス
                     $image_index++;
                     $downloadPath = $image_url;
@@ -370,7 +364,7 @@ trait MigrationTrait
                     $ch = curl_init($downloadPath);
                     $fp = fopen($saveStragePath, 'w');
                     curl_setopt($ch, CURLOPT_FILE, $fp);
-                    curl_setopt($ch, CURLOPT_HEADER, FALSE);
+                    curl_setopt($ch, CURLOPT_HEADER, false);
                     curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'header_callback'));
                     $result = curl_exec($ch);
                     curl_close($ch);
@@ -382,7 +376,7 @@ trait MigrationTrait
                     list($img_width, $img_height, $mime_type, $attr) = getimagesize($saveStragePath);
 
                     //list関数の第3引数にはgetimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
-                    switch($mime_type){
+                    switch ($mime_type) {
                         //jpegの場合
                         case IMAGETYPE_JPEG:
                             //拡張子の設定
@@ -424,15 +418,12 @@ trait MigrationTrait
             // ・取得して連番で保存（拡張子ナシ）
             // ・mime_type から拡張子決定
             if ($anchors) {
-
                 // HTML 中のアップロードファイルをループで処理
                 $frame_ini .= "\n[file_names]\n";
                 $file_index = 0;
-                foreach($anchors as $anchor_href) {
-
+                foreach ($anchors as $anchor_href) {
                     // アップロードファイルの場合
                     if (stripos($anchor_href, 'cabinet_files/download') !== false || stripos($anchor_href, 'wysiwyg/file/download') !== false) {
-
                         // 保存するファイルのパス
                         $file_index++;
                         $downloadPath = $anchor_href;
@@ -445,7 +436,7 @@ trait MigrationTrait
                         $ch = curl_init($downloadPath);
                         $fp = fopen($saveStragePath, 'w');
                         curl_setopt($ch, CURLOPT_FILE, $fp);
-                        curl_setopt($ch, CURLOPT_HEADER, FALSE);
+                        curl_setopt($ch, CURLOPT_HEADER, false);
                         curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'header_callback'));
                         $result = curl_exec($ch);
                         curl_close($ch);
@@ -493,9 +484,9 @@ trait MigrationTrait
         $content_html = $this->replaceCss('img-responsive', 'img-fluid', $content_html);
 
         // NC3 用画像CSS（削除）
-        $content_html = $this->replaceCss('nc3-img-block', ''             , $content_html);
-        $content_html = $this->replaceCss('nc3-img',       ''             , $content_html);
-        $content_html = $this->replaceCss('thumbnail',     'img-thumbnail', $content_html);
+        $content_html = $this->replaceCss('nc3-img-block', '', $content_html);
+        $content_html = $this->replaceCss('nc3-img', '', $content_html);
+        $content_html = $this->replaceCss('thumbnail', 'img-thumbnail', $content_html);
 
         return $content_html;
     }
@@ -524,7 +515,7 @@ trait MigrationTrait
         // inline ＆ filename= ＆ filename*=UTF-8 併用形式
         if (stripos($content_disposition, "Content-Disposition: inline; filename=") !== false &&
             stripos($content_disposition, "filename*=UTF-8''") !== false) {
-            return trim(mb_substr($content_disposition, stripos($content_disposition, "filename*=UTF-8''") + 17 , mb_strlen($content_disposition) - 1));
+            return trim(mb_substr($content_disposition, stripos($content_disposition, "filename*=UTF-8''") + 17, mb_strlen($content_disposition) - 1));
         }
 
         return "";
@@ -549,10 +540,11 @@ trait MigrationTrait
     /**
      * HTML からimg タグの src 属性を取得
      */
-    private function get_content_image($content) {
+    private function get_content_image($content)
+    {
         $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
 
-        if (preg_match_all($pattern, $content, $images)){
+        if (preg_match_all($pattern, $content, $images)) {
             if (is_array($images) && isset($images[1])) {
                 return $images[1];
             } else {
@@ -566,10 +558,11 @@ trait MigrationTrait
     /**
      * HTML からa タグの href 属性を取得
      */
-    private function get_content_anchor($content) {
+    private function get_content_anchor($content)
+    {
 
         $pattern = "|<a href=\"(.*?)\".*?>(.*?)</a>|mis";
-        if (preg_match_all($pattern, $content, $anchors)){
+        if (preg_match_all($pattern, $content, $anchors)) {
             if (is_array($anchors) && isset($anchors[1])) {
                 return $anchors[1];
             } else {
@@ -590,7 +583,7 @@ trait MigrationTrait
         $ch = curl_init();
 
         //オプション
-        curl_setopt($ch, CURLOPT_URL, $url); 
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $html =  curl_exec($ch);
 
@@ -603,7 +596,8 @@ trait MigrationTrait
     /**
      * nodeをHTMLとして取り出す
      */
-    private function getInnerHtml($node){
+    private function getInnerHtml($node)
+    {
 
         // node が空の場合
         if (empty($node)) {
@@ -612,7 +606,7 @@ trait MigrationTrait
 
         $children = $node->childNodes;
         $html = '';
-        foreach($children as $child){
+        foreach ($children as $child) {
             $html .= $node->ownerDocument->saveHTML($child);
         }
         return $html;
@@ -621,7 +615,8 @@ trait MigrationTrait
     /**
      * フレームデザインの取得
      */
-    private function getFrameDesign($classes){
+    private function getFrameDesign($classes)
+    {
 
         // none
         if (stripos($classes, 'panel-none') !== false) {
