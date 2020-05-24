@@ -5,7 +5,26 @@
     <arg name="extensions" value="php" />
 
     <!-- 適用コーディング規約の指定 -->
-    <rule ref="PSR2" />
+    <rule ref="PSR2">
+        <!-- 外すルール -->
+        <!--   1行が長い => 不要 -->
+        <exclude name="Generic.Files.LineLength.TooLong"/>
+        <!--   constは大文字で定義されてない => constは小文字で定義してる -->
+        <exclude name="Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase"/>
+        <!--   if{}else の } に改行あり ⇒ 改行あってもコード見やすかった -->
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace"/>
+    </rule>
+
+    <!--
+        変更ルール
+        メソッド呼び出しの引数は1行の中に複数記述してOK
+        https://github.com/squizlabs/PHP_CodeSniffer/wiki/Customisable-Sniff-Properties#psr2methodsfunctioncallsignature
+    -->
+    <rule ref="PSR2.Methods.FunctionCallSignature">
+        <properties>
+            <property name="allowMultipleArguments" value="true" />
+        </properties>
+    </rule>
 
     <!-- 出力に色を適用 -->
     <!-- powershellでのファイル出力時に [33m 等の文字列が大量に出力されるので色指定のオプション除去  -->
