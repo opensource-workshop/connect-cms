@@ -18,5 +18,5 @@ class LearningtasksUsersStatuses extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['contents_id', 'user_id', 'task_status'];
+    protected $fillable = ['contents_id', 'user_id', 'task_status', 'canvas_answer_file_id'];
 }

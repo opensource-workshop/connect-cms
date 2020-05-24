@@ -5,6 +5,7 @@ namespace App\Plugins\User\Learningtasks;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -590,6 +591,7 @@ class LearningtasksPlugin extends UserPluginBase
         foreach($learningtasks_posts as &$learningtasks_post) {
             if ($learningtasks_users_statuses && array_key_exists($learningtasks_post->contents_id, $learningtasks_users_statuses)) {
                 $learningtasks_post->user_task_status = $learningtasks_users_statuses[$learningtasks_post->contents_id]->task_status;
+                $learningtasks_post->canvas_answer_file_id = $learningtasks_users_statuses[$learningtasks_post->contents_id]->canvas_answer_file_id;
             }
         }
 
@@ -1378,13 +1380,50 @@ class LearningtasksPlugin extends UserPluginBase
             return $this->view_error("403_inframe", null, "ログインしないとできない処理です。");
         }
 
+        // upload 用変数
+        $upload = null;
+
+        // 「修了」の場合に手書き画像があれば保存する。
+        if ($request->task_status == "1" && $request->has('handwriting') && !empty($request->get('handwriting'))) {
+            $imagedata = base64_decode($request->get('handwriting'));
+
+            // uploads テーブルに情報追加、ファイルのid を取得する
+            $upload = Uploads::create([
+                'client_original_name' => '手書き回答.png',
+                'mimetype'             => 'image/png',
+                'extension'            => 'png',
+                'size'                 => strlen($imagedata),
+                'plugin_name'          => 'learningtasks',
+                'page_id'              => $page_id,
+                'private'              => 1,
+             ]);
+
+            // 課題ファイル保存
+            $directory = $this->getDirectory($upload->id);
+            Storage::put($directory . '/' . $upload->id . ".png", $imagedata);
+        }
+
+        // 「取り消し」の場合に手書き画像があれば削除する。
+        if ($request->task_status == "0") {
+            $learningtasks_users_status = LearningtasksUsersStatuses::where('contents_id', $id)->where('user_id', $user->id)->first();
+            // 手書き画像ファイルの確認
+            if ($learningtasks_users_status->canvas_answer_file_id) {
+                // アップロードテーブルの削除
+                Uploads::destroy($learningtasks_users_status->canvas_answer_file_id);
+                // アップロードファイルの削除
+                $directory = $this->getDirectory($learningtasks_users_status->canvas_answer_file_id);
+                Storage::delete($directory . '/' . $learningtasks_users_status->canvas_answer_file_id . ".png");
+            }
+        }
+
         // ユーザーの進捗ステータス
         LearningtasksUsersStatuses::updateOrCreate(
             ['contents_id' => $id, 'user_id' => $user->id],
             [
              'contents_id' => $id,
-             'user_id' => $user->id,
+             'user_id'     => $user->id,
              'task_status' => $request->task_status,
+             'canvas_answer_file_id' => empty($upload) ? null : $upload->id,
             ]
         );
 

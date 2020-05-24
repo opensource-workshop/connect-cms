@@ -9,6 +9,131 @@
 
 @section("plugin_contents_$frame->id")
 
+<style>
+.option{
+    width: 250px;
+}
+.color > a{
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+}
+.black{
+    background-color: #000000;
+}
+.red{
+    background-color: #ff0000;
+}
+.blue{
+    background-color: #0000ff;
+}
+</style>
+
+<script>
+    // 変数宣言
+    const cnvWidth = 500;
+    const cnvHeight = 200;
+    var cnvColor = "255, 0, 0, 1";  // 線の色
+    var cnvBold = 5;  // 線の太さ
+    var clickFlg = 0;  // クリック中の判定 1:クリック開始 2:クリック中
+    var bgColor = "rgb(255,255,255)";
+    var cnvs = [];
+    var ctx = [];
+
+    // 描画処理
+    function canvas_init(id) {
+        // canvas
+        var canvas_id = "canvas"+id;
+        var clear_id = "clear"+id;
+
+        cnvs[id] = document.getElementById(canvas_id);
+        ctx[id] = cnvs[id].getContext('2d');
+
+        // canvasの背景色を設定(指定がない場合にjpeg保存すると背景が黒になる)
+        setBgColor(id);
+
+        // canvas上でのイベント
+        $("#canvas"+id).mousedown(function(){
+          clickFlg = 1; // マウス押下開始
+        }).mouseup(function(){
+          clickFlg = 0; // マウス押下終了
+        }).mousemove(function(e){
+          // マウス移動処理
+          if(!clickFlg) return false;
+          draw(id, e.offsetX, e.offsetY);
+        });
+
+        // 色の変更
+        $(".color"+id+" a").click(function(){
+          cnvColor = $(this).data("color");
+          return false;
+        });
+
+        // 線の太さ変更
+        $(".bold"+id+" a").click(function(){
+          cnvBold = $(this).data("bold");
+          return false;
+        });
+
+        // 描画クリア
+        $("#clear"+id).click(function(){
+            ctx[id].clearRect(0,0,cnvs[id].width,cnvs[id].height);
+            setBgColor(id);
+        });
+
+        // canvasを画像で保存
+        $("#download"+id).click(function(){
+            var base64 = cnvs[id].toDataURL("image/jpeg");
+            // ダウンロード時は配列のCanvasコンテキストではなく、画面上のオブジェクトを指定する必要がある。
+            document.getElementById("download"+id).href = base64;
+        });
+    }
+
+    // 描画処理
+    function draw(id, x, y) {
+        ctx[id].lineWidth = cnvBold;
+        ctx[id].strokeStyle = 'rgba('+cnvColor+')';
+        // 初回処理の判定
+        if (clickFlg == "1") {
+            clickFlg = "2";
+            ctx[id].beginPath();
+            ctx[id].lineCap = "round";  //　線を角丸にする
+            ctx[id].moveTo(x, y);
+        } else {
+            ctx[id].lineTo(x, y);
+        }
+        ctx[id].stroke();
+    };
+
+    // 背景色の設定
+    function setBgColor(id){
+        // canvasの背景色を設定(指定がない場合にjpeg保存すると背景が黒になる)
+        ctx[id].fillStyle = bgColor;
+        ctx[id].fillRect(0,0,cnvs[id].width,cnvs[id].height);
+    }
+
+    // 終了
+    function submitCompletion(id){
+        if (!confirm('修了しましたか？')) {
+            return false;
+        }
+
+        var canvas = document.getElementById("canvas"+id) ;
+        var image_data = canvas.toDataURL("image/png");
+        image_data = image_data.replace(/^.*,/, '');
+        $('#handwriting'+id).val(image_data);
+        $('#form_status'+id).submit();
+    }
+
+    // 取り消し
+    function submitRevoke(id){
+        if (!confirm('修了を取り消しますか？')) {
+            return false;
+        }
+        $('#form_status'+id).submit();
+    }
+</script>
+
 {{-- RSS --}}
 @if (isset($learningtasks_frame->rss) && $learningtasks_frame->rss == 1)
 <div class="row">
@@ -98,22 +223,48 @@
                 {{-- 修了チェック --}}
                 @auth
                 <div class="card p-3 m-3">
-                    <form action="{{url('/')}}/plugin/learningtasks/changeStatus/{{$page->id}}/{{$frame_id}}/{{$post->contents_id}}" method="post" name="form_status" class="d-inline">
+                    <form action="{{url('/')}}/plugin/learningtasks/changeStatus/{{$page->id}}/{{$frame_id}}/{{$post->contents_id}}" method="post" name="form_status{{$frame_id}}_{{$post->id}}" id="form_status{{$frame_id}}_{{$post->id}}" class="d-inline">
                         {{ csrf_field() }}
+                        <input type="hidden" name="handwriting" id="handwriting{{$frame_id}}_{{$post->id}}" value="">
                         @if ($post->user_task_status == 0)
-                        <p>修了したら下の「修了」ボタンをクリックしてください。</p>
+                            <p>修了したら下の「修了」ボタンをクリックしてください。</p>
 
-                        <input type="hidden" name="task_status" value="1">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('修了しましたか？');">
-                            <i class="fas fa-check"></i> 修了
-                        </button>
+                            {{-- キャンバス --}}
+                            <canvas id="canvas{{$frame_id}}_{{$post->id}}" width="500" height="200" style="border: solid 1px #000;box-sizing: border-box;"></canvas>
+                            <div class="option">
+                                <div class="color color{{$frame_id}}_{{$post->id}}">
+                                    色：
+                                    <a href="#" class="black" data-color="0, 0, 0, 1"></a>
+                                    <a href="#" class="red" data-color="255, 0, 0, 1"></a>
+                                    <a href="#" class="blue" data-color="0, 0, 255, 1"></a>
+                                </div>
+                                <div class="bold bold{{$frame_id}}_{{$post->id}}">
+                                    太さ：
+                                    <a href="#" class="small" data-bold="1">小</a>
+                                    <a href="#" class="middle" data-bold="5">中</a>
+                                    <a href="#" class="large" data-bold="10">大</a>
+                                </div>
+                            </div>
+                            <input type="button" value="clear" id="clear{{$frame_id}}_{{$post->id}}">
+                            <a id="download{{$frame_id}}_{{$post->id}}" href="#" download="canvas.jpg">ダウンロード</a>
+                            <script>canvas_init("{{$frame_id}}_{{$post->id}}");</script>
+
+
+                            <input type="hidden" name="task_status" value="1">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="submitCompletion('{{$frame_id}}_{{$post->id}}');">
+                                <i class="fas fa-check"></i> 修了
+                            </button>
                         @else
-                        <p>修了を取り消す場合は下の「修了取り消し」ボタンをクリックしてください。</p>
+                            <span class="badge badge-primary">回答内容</span><br />
+                            @if ($post->canvas_answer_file_id)
+                                <img src="{{url('/')}}/file/{{$post->canvas_answer_file_id}}">
+                            @endif
+                            <p>修了を取り消す場合は下の「修了取り消し」ボタンをクリックしてください。</p>
 
-                        <input type="hidden" name="task_status" value="0">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('修了を取り消しますか？');">
-                            <i class="fas fa-check"></i> 修了取り消し
-                        </button>
+                            <input type="hidden" name="task_status" value="0">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="submitRevoke('{{$frame_id}}_{{$post->id}}');">
+                                <i class="fas fa-check"></i> 修了取り消し
+                            </button>
                         @endif
                     </form>
                 </div>
