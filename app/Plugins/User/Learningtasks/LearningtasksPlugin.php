@@ -339,8 +339,7 @@ class LearningtasksPlugin extends UserPluginBase
             $extension = $request->file('add_task_file')->getClientOriginalExtension();
             if ($extension == 'sb2' || $extension == 'sb3') {
                 // OK
-            }
-            else {
+            } else {
                 // ファイルチェック
                 $validator = Validator::make($request->all(), [
                     'add_task_file' => 'required|mimes:pdf,doc,docx',
@@ -772,8 +771,7 @@ class LearningtasksPlugin extends UserPluginBase
         if ($validator->fails()) {
             if ($learningtasks_posts_id) {
                 return ( $this->edit($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
-            }
-            else {
+            } else {
                 return ( $this->create($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
             }
         }
@@ -867,8 +865,7 @@ class LearningtasksPlugin extends UserPluginBase
 
             // 登録ユーザ
             $learningtasks_post->created_id  = Auth::user()->id;
-        }
-        else {
+        } else {
             $learningtasks_post = LearningtasksPosts::find($id)->replicate();
  
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
@@ -1054,8 +1051,7 @@ class LearningtasksPlugin extends UserPluginBase
             if (empty($learningtasks_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $learningtasks_id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $learningtasks_id, $create_flag, $message, $validator->errors());
             }
@@ -1465,8 +1461,7 @@ EOD;
                 $description = mb_substr(strip_tags($learningtasks_post->post_text), 0, 100) . "...";
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
-            }
-            else {
+            } else {
                 $description = strip_tags($learningtasks_post->post_text);
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);

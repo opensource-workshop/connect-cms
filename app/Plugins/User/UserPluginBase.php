@@ -243,8 +243,7 @@ class UserPluginBase extends PluginBase
                 // POST があれば、POST の登録者チェックを行う
                 if (empty($post)) {
                     $ret = $this->can($function_authority, null, null, $this->buckets);
-                }
-                else {
+                } else {
 //print_r($post);
                     $ret = $this->can($function_authority, $post, null, $this->buckets);
                 }
@@ -361,8 +360,7 @@ class UserPluginBase extends PluginBase
         if (strpos($arg['theme'], '/') !== false) {
             $arg['theme_group'] = mb_substr($arg['theme'], 0, strpos($arg['theme'], '/'));
             $arg['theme_group_default'] = mb_substr($arg['theme'], 0, strpos($arg['theme'], '/')) . '/Default';
-        }
-        else {
+        } else {
             $arg['theme_group'] = '';
             $arg['theme_group_default'] = '';
         }
@@ -462,8 +460,7 @@ class UserPluginBase extends PluginBase
             //$request_order_by = explode('|', $request_sort);
             if ($request_order_by[1] == "asc") {
                 $sort_inits[$request_order_by[0]]=["asc", "desc"];
-            }
-            else {
+            } else {
                 $sort_inits[$request_order_by[0]]=["desc", "asc"];
             }
         }
@@ -473,8 +470,7 @@ class UserPluginBase extends PluginBase
         foreach ($sort_inits as $order_by_key => $order_by) {
             if ($request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
                 $order_link[$order_by_key] = array_reverse($order_by);
-            }
-            else {
+            } else {
                 $order_link[$order_by_key] = $order_by;
             }
         }
@@ -540,8 +536,7 @@ class UserPluginBase extends PluginBase
             $buckets_role->post_flag     = $this->isRequestRole($request->$role_name, 'post');
             $buckets_role->approval_flag = $this->isRequestRole($request->$role_name, 'approval');
             $buckets_role->save();
-        }
-        else {
+        } else {
             if ($buckets_role) {
                 $buckets_role->delete();
             }
@@ -660,8 +655,7 @@ class UserPluginBase extends PluginBase
         $config_log_filename_obj = $configs->where('name', 'log_filename')->first();
         if (empty($config_log_filename_obj)) {
             $config_log_filename = "";
-        }
-        else {
+        } else {
             $config_log_filename = $config_log_filename_obj->value;
         }
 
@@ -683,8 +677,7 @@ class UserPluginBase extends PluginBase
         $log_handler_obj = $configs->where('name', 'log_handler')->first();
         if (!empty($log_handler_obj) && $log_handler_obj->value == '1') {
             $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
-        }
-        else {
+        } else {
             $handler = new StreamHandler($log_path, $log_level, $bubble);
         }
 

@@ -134,8 +134,7 @@ class ConnectController extends Controller
         if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
             // Page データ
             $this->pages = Page::defaultOrderWithDepth('flat', $this->page);
-        }
-        else {
+        } else {
             // Page データ
             $this->pages = Page::defaultOrder()->get();
         }
@@ -175,8 +174,7 @@ class ConnectController extends Controller
             $route_name == 'get_all'       ||
             $route_name == 'post_all') {
             // 対象として次へ
-        }
-        else {
+        } else {
             // 対象外の処理なので、戻る
             return;
         }
@@ -184,8 +182,7 @@ class ConnectController extends Controller
         // ページがない場合
         if ($this->page === false || empty($this->page) || empty($this->page->id)) {
             // 404 対象として次へ
-        }
-        else {
+        } else {
             // ページありとして、戻る
             return;
         }
@@ -203,18 +200,15 @@ class ConnectController extends Controller
                 if (empty($this->page)) {
                     // Connect-CMS のデフォルト404 ページ
                     abort(404, 'ページがありません。');
-                }
-                else {
+                } else {
                     $this->page_id = $this->page->id;
                     $this->http_status_code = 404;
                 }
-            }
-            else {
+            } else {
                 $this->page_id = $this->page->id;
                 $this->http_status_code = 404;
             }
-        }
-        else {
+        } else {
             abort(404, 'ページがありません。');
         }
         return;
@@ -238,18 +232,15 @@ class ConnectController extends Controller
                 if (empty($this->page)) {
                     // Connect-CMS のデフォルト403 ページ
                     abort(403, 'ページ参照権限がありません。');
-                }
-                else {
+                } else {
                     $this->page_id = $this->page->id;
                     $this->http_status_code = 403;
                 }
-            }
-            else {
+            } else {
                 $this->page_id = $this->page->id;
                 $this->http_status_code = 403;
             }
-        }
-        else {
+        } else {
             abort(403, 'ページ参照権限がありません。');
         }
         return $this->http_status_code;
@@ -276,8 +267,7 @@ class ConnectController extends Controller
             $route_name == 'get_all'       ||
             $route_name == 'post_all') {
             // 対象として次へ
-        }
-        else {
+        } else {
             // 対象外の処理なので、戻る
             return;
         }
@@ -332,8 +322,7 @@ class ConnectController extends Controller
             if (array_key_exists($view_language, Config::get('languages'))) {
                 // URLから取得した言語定数が言語定義にあれば、アプリのロケールをURL値で上書き
                 App::setLocale($view_language);
-            }
-            else {
+            } else {
                 // なければデフォルト値でロケールを上書き
                 App::setLocale(Config::get('app.fallback_locale'));
             }
@@ -376,14 +365,11 @@ class ConnectController extends Controller
         $layouts_info[2]['exists'] = '1';
         if (!$layout_array[1] && !$layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-12';
-        }
-        elseif ($layout_array[1] && !$layout_array[2]) {
+        } elseif ($layout_array[1] && !$layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-9';
-        }
-        elseif (!$layout_array[1] && $layout_array[2]) {
+        } elseif (!$layout_array[1] && $layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-9';
-        }
-        elseif ($layout_array[1] && $layout_array[2]) {
+        } elseif ($layout_array[1] && $layout_array[2]) {
             $layouts_info[2]['col'] = 'col-lg-6';
         }
 
@@ -510,8 +496,7 @@ class ConnectController extends Controller
             if ($config->name == 'language_multi_on') {
                 if ($config->value == '1') {
                     return true;
-                }
-                else {
+                } else {
                     return false;
                 }
             }

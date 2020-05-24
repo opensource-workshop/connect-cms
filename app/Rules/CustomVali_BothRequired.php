@@ -39,11 +39,11 @@ class CustomVali_BothRequired implements Rule
             if ($this->param1 && $this->param2) {
                 // 両方、入力ありならTRUE
                 $result = true;
-            }else {
+            } else {
                 // 片方、未入力ならFALSE
                 $result = false;
             }
-        }else {
+        } else {
             // 両方、未入力ならTRUE
             $result = true;
         }

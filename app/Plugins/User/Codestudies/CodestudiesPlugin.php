@@ -162,8 +162,7 @@ class CodestudiesPlugin extends UserPluginBase
         // id があれば更新、なければ登録
         if (empty($codestudy_id)) {
             $codestudies = new Codestudies();
-        }
-        else {
+        } else {
             $codestudies = Codestudies::where('id', $codestudy_id)->first();
         }
 
@@ -200,8 +199,7 @@ class CodestudiesPlugin extends UserPluginBase
         if ($validator->fails()) {
             if ($codestudy_id) {
                 return $this->edit($request, $page_id, $frame_id, $codestudy_id, null, null, $validator->errors());
-            }
-            else {
+            } else {
                 return $this->index($request, $page_id, $frame_id, $validator->errors());
             }
         }
@@ -294,8 +292,7 @@ class CodestudiesPlugin extends UserPluginBase
         if ($validator->fails()) {
             if ($codestudy_id) {
                 return $this->edit($request, $page_id, $frame_id, $codestudy_id, null, null, $validator->errors());
-            }
-            else {
+            } else {
                 return $this->index($request, $page_id, $frame_id, $validator->errors());
             }
         }
@@ -315,8 +312,7 @@ class CodestudiesPlugin extends UserPluginBase
         // 言語判定
         if ($codestudy->study_lang == 'php') {
             Storage::put('codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $codestudy_id . '.php', $codestudy->code_text);
-        }
-        elseif ($codestudy->study_lang == 'java') {
+        } elseif ($codestudy->study_lang == 'java') {
             $class_name = $this->getClassName($codestudy);
             Storage::put('codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $class_name . '.java', $codestudy->code_text);
         }
@@ -333,8 +329,7 @@ class CodestudiesPlugin extends UserPluginBase
             // エラーメッセージを返す。
             $error_flag = 1;
             $result = $error_msg;
-        }
-        else {
+        } else {
             $cmd = '';
 
             if ($codestudy->study_lang == 'php') {
@@ -345,8 +340,7 @@ class CodestudiesPlugin extends UserPluginBase
                 if (!empty($cmd)) {
                     exec("$cmd 2>&1", $result);
                 }
-            }
-            elseif ($codestudy->study_lang == 'java') {
+            } elseif ($codestudy->study_lang == 'java') {
                 // コンパイル
                 $cmd = 'javac -encoding UTF-8 ' . storage_path('app/codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $class_name . '.java');
                 if (!empty($cmd)) {

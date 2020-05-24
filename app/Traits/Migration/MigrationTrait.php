@@ -109,8 +109,7 @@ trait MigrationTrait
                     // ファイルサイズ
                     if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
                         $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
-                    }
-                    else {
+                    } else {
                         $file_size = 0;
                     }
                     //echo "ファイルサイズ = " . $file_size . "\n";
@@ -142,8 +141,7 @@ trait MigrationTrait
                     // ファイルサイズ
                     if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
                         $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
-                    }
-                    else {
+                    } else {
                         $file_size = 0;
                     }
                     //echo "ファイルサイズ = " . $file_size . "\n";

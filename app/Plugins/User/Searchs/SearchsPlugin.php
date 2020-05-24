@@ -353,8 +353,7 @@ class SearchsPlugin extends UserPluginBase
             if (empty($searchs_frame->searchs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }

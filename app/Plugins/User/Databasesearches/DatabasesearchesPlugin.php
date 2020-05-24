@@ -95,24 +95,21 @@ class DatabasesearchesPlugin extends UserPluginBase
         // データベース検索設定データ
         if ($frames->bucket_id) {
             $databasesearches = Databasesearches::where('bucket_id', $frames->bucket_id)->first();
-        }
-        else {
+        } else {
             $databasesearches = new Databasesearches();
         }
 
         // データベース検索設定がまだの場合の対応
         if (empty($databasesearches->condition)) {
             $condition_str = json_decode('{}'); // 空のJSONオブジェクト
-        }
-        else {
+        } else {
             $condition_str = json_decode($databasesearches->condition);
         }
 
         // 複数条件に対応するため、一旦、条件を配列にする。
         if (is_array($condition_str)) {
             $conditions = $condition_str;
-        }
-        else {
+        } else {
             $conditions = array($condition_str);
         }
 
@@ -148,8 +145,7 @@ class DatabasesearchesPlugin extends UserPluginBase
             if (property_exists($condition, 'name') && $condition->name) {
                 if ($condition->name == 'ALL') {
                     // name が ALL を指定されていたら、カラムを特定しない。
-                }
-                else {
+                } else {
                     $inputs_query->where('databases_columns.column_name', $condition->name);
                 }
             }
@@ -161,8 +157,7 @@ class DatabasesearchesPlugin extends UserPluginBase
 
                 // リクエスト項目に検索キーワードが含まれていたら、セッションに保持する。（空でも保持＝クリアの意味）
                 $request->session()->put($condition->request, $request_keyword);
-            }
-            elseif (property_exists($condition, 'request') && $request->session()->get($condition->request)) {
+            } elseif (property_exists($condition, 'request') && $request->session()->get($condition->request)) {
                 // セッションに検索キーワードが含まれていたら使用する。
                 $request_keyword = $request->session()->get($condition->request);
             }
@@ -171,8 +166,7 @@ class DatabasesearchesPlugin extends UserPluginBase
             if (empty($request_keyword) && property_exists($condition, 'request_default')) {
                 if ($condition->request_default == 'TODAY-MD') {
                     $request_keyword = date('md');
-                }
-                else {
+                } else {
                     $request_keyword = $condition->request_default;
                 }
             }
@@ -180,29 +174,21 @@ class DatabasesearchesPlugin extends UserPluginBase
             // 検索方法
             if (!property_exists($condition, 'where') || empty($condition->where)) {
                 // where が空なら、条件指定しない
-            }
-            elseif ($condition->where == 'ALL') {
+            } elseif ($condition->where == 'ALL') {
                 $inputs_query->where('value', $request_keyword);
-            }
-            elseif ($condition->where == 'PART') {
+            } elseif ($condition->where == 'PART') {
                 $inputs_query->where('value', 'like', '%' . $request_keyword . '%');
-            }
-            elseif ($condition->where == 'FRONT') {
+            } elseif ($condition->where == 'FRONT') {
                 $inputs_query->where('value', 'like', $request_keyword . '%');
-            }
-            elseif ($condition->where == 'REAR') {
+            } elseif ($condition->where == 'REAR') {
                 $inputs_query->where('value', 'like', '%' . $request_keyword);
-            }
-            elseif ($condition->where == 'GT') {
+            } elseif ($condition->where == 'GT') {
                 $inputs_query->where('value', '>', $request_keyword);
-            }
-            elseif ($condition->where == 'LT') {
+            } elseif ($condition->where == 'LT') {
                 $inputs_query->where('value', '<', $request_keyword);
-            }
-            elseif ($condition->where == 'GE') {
+            } elseif ($condition->where == 'GE') {
                 $inputs_query->where('value', '>=', $request_keyword);
-            }
-            elseif ($condition->where == 'LE') {
+            } elseif ($condition->where == 'LE') {
                 $inputs_query->where('value', '<=', $request_keyword);
             }
 
@@ -221,8 +207,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         // 条件毎の結果の結合
         if (count($inputs_ids_array) > 1) {
             $inputs_ids_marge = call_user_func_array("array_intersect", $inputs_ids_array);
-        }
-        else {
+        } else {
             $inputs_ids_marge = $inputs_ids_array[0];
         }
 
@@ -272,8 +257,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         // データベース検索設定データ
         if ($frames->bucket_id) {
             $databasesearches = Databasesearches::where('bucket_id', $frames->bucket_id)->first();
-        }
-        else {
+        } else {
             $databasesearches = new Databasesearches();
         }
 

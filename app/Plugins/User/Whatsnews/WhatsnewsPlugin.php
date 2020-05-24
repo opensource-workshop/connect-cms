@@ -270,11 +270,9 @@ class WhatsnewsPlugin extends UserPluginBase
         // 件数制限
         if ($method == 'rss') {
             $whatsnews_sql->limit($whatsnews_frame->rss_count);
-        }
-        elseif ($whatsnews_frame->view_pattern == 0) {
+        } elseif ($whatsnews_frame->view_pattern == 0) {
             $whatsnews_sql->limit($whatsnews_frame->count);
-        }
-        else {
+        } else {
             $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
         }
 
@@ -416,8 +414,7 @@ class WhatsnewsPlugin extends UserPluginBase
             if (empty($whatsnews_frame->whatsnews_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }

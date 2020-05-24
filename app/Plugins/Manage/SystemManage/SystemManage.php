@@ -58,8 +58,7 @@ class SystemManage extends ManagePluginBase
         // 環境変数のデバックモードの取得(現在の動作モード)
         if ($debug_mode_session == null or $debug_mode_session == '') {
             // 初期値のまま
-        }
-        elseif ($debug_mode_session === '0' or $debug_mode_session === '1') {
+        } elseif ($debug_mode_session === '0' or $debug_mode_session === '1') {
             $now_debug_mode = $debug_mode_session;
         }
 
@@ -86,8 +85,7 @@ class SystemManage extends ManagePluginBase
         if ($request->has('debug_mode')) {
             if ($request->debug_mode == '1') {
                 Session::put('app_debug', '1');
-            }
-            else {
+            } else {
                 Session::put('app_debug', '0');
             }
             Session::save();

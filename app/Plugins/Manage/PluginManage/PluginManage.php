@@ -121,8 +121,7 @@ class PluginManage extends ManagePluginBase
                         $max_display_sequence = intval($display_sequence);
                     }
                     $display_sequence = intval($display_sequence);
-                }
-                else {
+                } else {
                     $max_display_sequence++;
                     $display_sequence = $max_display_sequence;
                 }
@@ -130,8 +129,7 @@ class PluginManage extends ManagePluginBase
 
                 if (array_key_exists('display_flag', $req_plugin) && $req_plugin['display_flag'] == '1') {
                     $plugin->display_flag = $req_plugin['display_flag'];
-                }
-                else {
+                } else {
                     $plugin->display_flag = 0;
                 }
                 $plugin->save();

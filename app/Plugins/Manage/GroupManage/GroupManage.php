@@ -94,8 +94,7 @@ class GroupManage extends ManagePluginBase
         if (empty($id)) {
             // グループデータの空枠
             $group = new Group();
-        }
-        else {
+        } else {
             // グループデータの呼び出し
             $group = Group::find($id);
         }

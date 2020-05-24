@@ -28,11 +28,9 @@ class ConnectInit
         // 環境変数のデバックモードの取得(現在の動作モード)
         if ($debug_mode_session == null or $debug_mode_session == '') {
             // 初期値のまま
-        }
-        elseif ($debug_mode_session === '0') {
+        } elseif ($debug_mode_session === '0') {
             config(['app.debug' => false]);
-        }
-        elseif ($debug_mode_session === '1') {
+        } elseif ($debug_mode_session === '1') {
             config(['app.debug' => true]);
         }
 

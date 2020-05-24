@@ -84,8 +84,7 @@ class ClassController extends ConnectController
                     $role_check = true;
                 }
             }
-        }
-        else {
+        } else {
             abort(403, 'メソッドに権限が設定されていません。');
         }
 

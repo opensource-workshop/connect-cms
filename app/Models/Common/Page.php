@@ -113,8 +113,7 @@ class Page extends Model
 //Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
 
             return $ret;
-        }
-        else {
+        } else {
             return self::defaultOrder()
                        ->where(function ($query_lang) use ($current_language) {
                            // 多言語トップページは /en のように後ろに / がない。 /en* だと、/env なども拾ってしまう。
@@ -172,8 +171,7 @@ class Page extends Model
                 // メニュー設定を見ない or メニュー設定でページ設定の条件を使用するとなっている場合は、基本表示フラグを反映
                 if (empty($menu) || $menu->select_flag === 0) {
                     $page_display_flag = ($page->base_display_flag == 0 || $display_flag == 0 ? 0 : 1);
-                }
-                else {
+                } else {
                     $page_display_flag = ($display_flag == 0 ? 0 : 1);
                 }
                 $page->display_flag = $page_display_flag;
@@ -240,12 +238,10 @@ class Page extends Model
         // $check_no_display_flag がtrue なら、display_flag を考慮しない。
         if ($this->display_flag == 1) {
             // 以下のip以降のチェックに進む
-        }
-        else {
+        } else {
             if ($check_no_display_flag) {
                 // 以下のip以降のチェックに進む
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -275,8 +271,7 @@ class Page extends Model
         if ($this->membership_flag) {
             if ($check_page_roles && $check_page_roles->where('user_id', $user->id)->where('page_id', $this->id)->count() > 0) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -341,8 +336,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'header') {
             if (mb_substr($simple_layout, 0, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -351,8 +345,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'left') {
             if (mb_substr($simple_layout, 1, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -361,8 +354,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'right') {
             if (mb_substr($simple_layout, 2, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -371,8 +363,7 @@ class Page extends Model
         if (mb_strtolower($area) == 'footer') {
             if (mb_substr($simple_layout, 3, 1) == '1') {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }

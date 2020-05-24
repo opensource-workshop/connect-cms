@@ -112,8 +112,7 @@ class PageManage extends ManagePluginBase
         // 編集時と新規で処理を分ける
         if (empty($page_id)) {
             $page = new Page();
-        }
-        else {
+        } else {
             // ページID で1件取得
             $page = Page::where('id', $page_id)->first();
         }
@@ -259,8 +258,7 @@ class PageManage extends ManagePluginBase
             // 移動元のオブジェクトを取得
             $page = Page::find($page_id);
             $page->saveAsRoot();
-        }
-        else {
+        } else {
             // その他の場所へ移動
 
             // 移動元のオブジェクトを取得

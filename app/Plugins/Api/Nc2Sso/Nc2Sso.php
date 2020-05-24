@@ -107,8 +107,7 @@ class Nc2Sso extends ApiPluginBase
 
             // 権限エラー
             abort(403, "SSO 権限エラー。<br />&nbsp;&nbsp;&nbsp;&nbsp;NetCommons2 の権限より高い権限でのログインはできません。");
-        }
-        else {
+        } else {
             // ユーザが存在しない場合、一般権限でユーザを作成して、自動ログイン
             $user           = new User;
             $user->name     = $check_result['handle'];

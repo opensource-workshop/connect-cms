@@ -313,8 +313,7 @@ class ContentsPlugin extends UserPluginBase
                 'contents_create', [
                 ]
             );
-        }
-        else {
+        } else {
             // 編集画面テンプレートを呼び出す。
             return $this->view(
                 'contents_edit', [
@@ -368,8 +367,7 @@ class ContentsPlugin extends UserPluginBase
                   'bucket_name' => '無題',
                   'plugin_name' => 'contents'
             ]);
-        }
-        else {
+        } else {
             $bucket_id = $this->buckets['id'];
         }
 
@@ -386,8 +384,7 @@ class ContentsPlugin extends UserPluginBase
         // 承認フラグ(要承認の場合はstatus が 2 になる。)
         elseif ($this->isApproval($frame_id)) {
             $contents->status = 2;
-        }
-        else {
+        } else {
             $contents->status = 0;
         }
 
@@ -415,8 +412,7 @@ class ContentsPlugin extends UserPluginBase
         // 承認フラグ(要承認の場合はstatus が2 になる。)
         if ($this->isApproval($frame_id)) {
             $newrow->status = 2;
-        }
-        else {
+        } else {
             $newrow->status = 0;
         }
 
@@ -441,8 +437,7 @@ class ContentsPlugin extends UserPluginBase
         if (empty($id)) {
             $status = 1;
             $this->store($request, $page_id, $frame_id, $id, $status);
-        }
-        else {
+        } else {
             // 旧データ取得
             $oldrow = Contents::find($id);
 
@@ -530,8 +525,7 @@ class ContentsPlugin extends UserPluginBase
             $request_order_by = explode('|', $request->sort);
             if ($request_order_by[1] == "asc") {
                 $sort_inits[$request_order_by[0]]=["asc", "desc"];
-            }
-            else {
+            } else {
                 $sort_inits[$request_order_by[0]]=["desc", "asc"];
             }
         }
@@ -541,8 +535,7 @@ class ContentsPlugin extends UserPluginBase
         foreach ($sort_inits as $order_by_key => $order_by) {
             if ($request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
                 $order_link[$order_by_key] = array_reverse($order_by);
-            }
-            else {
+            } else {
                 $order_link[$order_by_key] = $order_by;
             }
         }

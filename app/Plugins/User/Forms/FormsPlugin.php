@@ -134,7 +134,7 @@ class FormsPlugin extends UserPluginBase
                     // dd(count($forms_columns), $i, $j);
                     if (count($forms_columns) >= (1 + $i + $j)) {
                         $group_row[] = $forms_columns[$i + $j];
-                    }else {
+                    } else {
                         return 'frame_setting_error';
                     }
                 }
@@ -142,8 +142,7 @@ class FormsPlugin extends UserPluginBase
 
                 $ret_array[] = $tmp_group;
                 $i = $i + $forms_columns[$i]->frame_col;
-            }
-            else {
+            } else {
                 $ret_array[] = $forms_columns[$i];
             }
         }
@@ -243,14 +242,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($forms_columns == 'frame_setting_error') {
                 // 項目データはあるが、まとめ行の設定（まとめ行の位置とまとめ数の設定）が不正な場合
                 $setting_error_messages[] = 'まとめ行の設定が不正です。フレームの設定画面からまとめ行の位置、又は、まとめ数の設定を見直してください。';
-            }elseif ($forms_columns == 'mail_setting_error') {
+            } elseif ($forms_columns == 'mail_setting_error') {
                 // フォーム設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合
                 $setting_error_messages[] = 'メールアドレス型の項目を設定してください。（フォームの設定「登録者にメール送信する」と関連）';
-            }elseif (!$forms_columns) {
+            } elseif (!$forms_columns) {
                 // 項目データがない場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
-        }else {
+        } else {
             // フレームに紐づくフォーム親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
         }
@@ -280,7 +279,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if (is_array($value)) {
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
             $value = array_map(['self', 'trimInput'], $value);
-        }elseif (is_string($value)) {
+        } elseif (is_string($value)) {
             $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
         }
  
@@ -366,7 +365,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                     \Carbon::createFromTimeString($time_from . ':00'),
                     \Carbon::createFromTimeString($time_to . ':00')
                 );
-            }elseif ($time_from || $time_to) {
+            } elseif ($time_from || $time_to) {
                 // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
                 $validator_rule[] = new CustomVali_BothRequired(
                     $request->forms_columns_value_for_time_from[$forms_column->id],
@@ -464,8 +463,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $value = "";
             if (is_array($request->forms_columns_value[$forms_column->id])) {
                 $value = implode(',', $request->forms_columns_value[$forms_column->id]);
-            }
-            else {
+            } else {
                 $value = $request->forms_columns_value[$forms_column->id];
             }
 
@@ -631,8 +629,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if (empty($forms_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
             }
@@ -785,7 +782,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else {
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -825,7 +822,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else {
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }

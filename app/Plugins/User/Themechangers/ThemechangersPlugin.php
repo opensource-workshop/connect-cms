@@ -114,8 +114,7 @@ class ThemechangersPlugin extends UserPluginBase
         // セッションに背景を黒の指定があるか
         if ($request->session()->get('session_header_black') == true) {
             $session_header_black = true;
-        }
-        else {
+        } else {
             $session_header_black = false;
         }
 
@@ -144,8 +143,7 @@ class ThemechangersPlugin extends UserPluginBase
         // 背景の黒チェックをセッションに保持する。
         if ($request->has('session_header_black') && $request->session_header_black == '1') {
             $request->session()->put('session_header_black', true);
-        }
-        else {
+        } else {
             $request->session()->put('session_header_black', false);
         }
 

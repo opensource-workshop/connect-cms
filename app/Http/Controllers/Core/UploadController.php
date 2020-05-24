@@ -321,8 +321,7 @@ EOD;
                     // ファイルが1つなら<a>のみ、複数あれば<p><a>とする。
                     if ($file_count > 1) {
                         $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
-                    }
-                    else {
+                    } else {
                         $msg_array['link_texts'][] = '<a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a>';
                     }
                 }

@@ -147,8 +147,7 @@ class KnowledgesPlugin extends UserPluginBase
                 'contents_create', [
                 ]
             );
-        }
-        else {
+        } else {
             // 編集画面テンプレートを呼び出す。
             return $this->view(
                 'contents_edit', [
@@ -180,8 +179,7 @@ class KnowledgesPlugin extends UserPluginBase
             $request_order_by = explode('|', $request->sort);
             if ($request_order_by[1] == "asc") {
                 $sort_inits[$request_order_by[0]]=["asc", "desc"];
-            }
-            else {
+            } else {
                 $sort_inits[$request_order_by[0]]=["desc", "asc"];
             }
         }
@@ -191,8 +189,7 @@ class KnowledgesPlugin extends UserPluginBase
         foreach ($sort_inits as $order_by_key => $order_by) {
             if ($request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
                 $order_link[$order_by_key] = array_reverse($order_by);
-            }
-            else {
+            } else {
                 $order_link[$order_by_key] = $order_by;
             }
         }

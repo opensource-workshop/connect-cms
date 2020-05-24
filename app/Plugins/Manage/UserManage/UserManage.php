@@ -443,8 +443,7 @@ class UserManage extends ManagePluginBase
                 // 権限の解除
                 if (empty($group_role)) {
                     GroupUser::where('group_id', $group_id)->where('user_id', $id)->delete();
-                }
-                else {
+                } else {
                     // 登録 or 更新
                     $group_user = GroupUser::updateOrCreate(
                         ['group_id'   => $group_id, 'user_id' => $id],

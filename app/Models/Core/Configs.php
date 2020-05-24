@@ -27,8 +27,7 @@ class Configs extends Model
     {
         if (empty($name)) {
             $configs = Configs::get();
-        }
-        else {
+        } else {
             $configs = Configs::where('name', $name)->get();
         }
 

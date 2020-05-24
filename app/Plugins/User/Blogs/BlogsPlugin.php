@@ -253,8 +253,7 @@ class BlogsPlugin extends UserPluginBase
         // フレームの重要記事の条件参照
         if ($blog_frame->important_view == 'important_only') {
             $blogs_query->where('blogs_posts.important', 1);
-        }
-        elseif ($blog_frame->important_view == 'not_important') {
+        } elseif ($blog_frame->important_view == 'not_important') {
             $blogs_query->whereNull('blogs_posts.important');
         }
 
@@ -803,8 +802,7 @@ WHERE status = 0
 
             // 登録ユーザ
             $blogs_post->created_id  = Auth::user()->id;
-        }
-        else {
+        } else {
             $blogs_post = BlogsPosts::find($id)->replicate();
  
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
@@ -981,8 +979,7 @@ WHERE status = 0
             if (empty($blogs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
             }
@@ -1330,8 +1327,7 @@ EOD;
                 $description = mb_substr(strip_tags($blogs_post->post_text), 0, 100) . "...";
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
-            }
-            else {
+            } else {
                 $description = strip_tags($blogs_post->post_text);
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);

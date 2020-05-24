@@ -37,8 +37,7 @@ class UsersRoles extends Model
         // target、role_name が指定された場合は絞り込んで値を返す。(後で実装予定)
         if ($target) {
             $users_roles = self::where('users_id', $users_id)->where('target', $target)->get();
-        }
-        else {
+        } else {
             $users_roles = self::where('users_id', $users_id)->get();
         }
 
@@ -110,8 +109,7 @@ class UsersRoles extends Model
             foreach ($roles as $role => $value) {
                 if ($role == $target_role) {
                     $target_check = true;
-                }
-                else {
+                } else {
                     return false;
                 }
             }

@@ -180,7 +180,7 @@ class DatabasesPlugin extends UserPluginBase
                     // dd(count($databases_columns), $i, $j);
                     if (count($databases_columns) >= (1 + $i + $j)) {
                         $group_row[] = $databases_columns[$i + $j];
-                    }else {
+                    } else {
                         return 'frame_setting_error';
                     }
                 }
@@ -188,8 +188,7 @@ class DatabasesPlugin extends UserPluginBase
 
                 $ret_array[] = $tmp_group;
                 $i = $i + $databases_columns[$i]->frame_col;
-            }
-            else {
+            } else {
                 $ret_array[] = $databases_columns[$i];
             }
         }
@@ -298,8 +297,7 @@ class DatabasesPlugin extends UserPluginBase
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
         if ($request->has('page')) {
             $request->session()->put('page_no.'.$frame_id, $request->page);
-        }
-        else {
+        } else {
             // 指定がなければセッションから削除
             $request->session()->forget('page_no.'.$frame_id);
         }
@@ -333,14 +331,14 @@ class DatabasesPlugin extends UserPluginBase
             if ($databases_columns == 'frame_setting_error') {
                 // 項目データはあるが、まとめ行の設定（まとめ行の位置とまとめ数の設定）が不正な場合
                 $setting_error_messages[] = 'まとめ行の設定が不正です。フレームの設定画面からまとめ行の位置、又は、まとめ数の設定を見直してください。';
-            }elseif ($databases_columns == 'mail_setting_error') {
+            } elseif ($databases_columns == 'mail_setting_error') {
                 // データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合
                 $setting_error_messages[] = 'メールアドレス型の項目を設定してください。（データベースの設定「登録者にメール送信する」と関連）';
-            }elseif (!$databases_columns) {
+            } elseif (!$databases_columns) {
                 // 項目データがない場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
-        }else {
+        } else {
             // フレームに紐づくデータベース親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するデータベースを選択するか、作成してください。';
         }
@@ -353,8 +351,7 @@ class DatabasesPlugin extends UserPluginBase
             $columns = null;
             $inputs = null;
             $input_cols = null;
-        }
-        else {
+        } else {
             // データベースの取得
             $databases = Databases::where('id', $database->id)->first();
 
@@ -372,8 +369,7 @@ class DatabasesPlugin extends UserPluginBase
             if (session('sort_column_id.'.$frame_id) && session('sort_column_order.'.$frame_id)) {
                 $sort_column_id = session('sort_column_id.'.$frame_id);
                 $sort_column_order = session('sort_column_order.'.$frame_id);
-            }
-            elseif ($databases_frames && $databases_frames->default_sort_flag) {
+            } elseif ($databases_frames && $databases_frames->default_sort_flag) {
                 $sort_flag = explode('_', $databases_frames->default_sort_flag);
                 if (count($sort_flag) == 2) {
                     $sort_column_id = $sort_flag[0];
@@ -383,8 +379,7 @@ class DatabasesPlugin extends UserPluginBase
 
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
                 $inputs_query = DatabasesInputs::where('databases_id', $database->id);
-            }
-            else {
+            } else {
                 $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
 
                                                 ->leftjoin('databases_input_cols', function ($join) use ($sort_column_id) {
@@ -439,26 +434,19 @@ class DatabasesPlugin extends UserPluginBase
                                          ->where('databases_input_cols.databases_columns_id', $option_search_column->id);
                         if ($search_option_parts[1] == 'ALL') {
                             $query->where('value', $search_option_parts[2]);
-                        }
-                        elseif ($search_option_parts[1] == 'PART') {
+                        } elseif ($search_option_parts[1] == 'PART') {
                             $query->where('value', 'like', '%' . $search_option_parts[2] . '%');
-                        }
-                        elseif ($search_option_parts[1] == 'FRONT') {
+                        } elseif ($search_option_parts[1] == 'FRONT') {
                             $query->where('value', 'like', $search_option_parts[2] . '%');
-                        }
-                        elseif ($search_option_parts[1] == 'REAR') {
+                        } elseif ($search_option_parts[1] == 'REAR') {
                             $query->where('value', 'like', '%' . $search_option_parts[2]);
-                        }
-                        elseif ($search_option_parts[1] == 'GT') {
+                        } elseif ($search_option_parts[1] == 'GT') {
                             $query->where('value', '>', $search_option_parts[2]);
-                        }
-                        elseif ($search_option_parts[1] == 'LT') {
+                        } elseif ($search_option_parts[1] == 'LT') {
                             $query->where('value', '<', $search_option_parts[2]);
-                        }
-                        elseif ($search_option_parts[1] == 'GE') {
+                        } elseif ($search_option_parts[1] == 'GE') {
                             $query->where('value', '>=', $search_option_parts[2]);
-                        }
-                        elseif ($search_option_parts[1] == 'LE') {
+                        } elseif ($search_option_parts[1] == 'LE') {
                             $query->where('value', '<=', $search_option_parts[2]);
                         }
 
@@ -480,8 +468,7 @@ class DatabasesPlugin extends UserPluginBase
 
                             if ($search_column['where'] == 'PART') {
                                 $query->where('value', 'LIKE', '%' . $search_column['value'] . '%');
-                            }
-                            else {
+                            } else {
                                 $query->where('value', $search_column['value']);
                             }
                                $query->groupBy('databases_inputs_id');
@@ -493,26 +480,19 @@ class DatabasesPlugin extends UserPluginBase
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
             if ($sort_column_id == 'random' && $sort_column_order == 'session') {
                 $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
-            }
-            elseif ($sort_column_id == 'random' && $sort_column_order == 'every') {
+            } elseif ($sort_column_id == 'random' && $sort_column_order == 'every') {
                 $inputs_query->inRandomOrder();
-            }
-            elseif ($sort_column_id == 'created' && $sort_column_order == 'asc') {
+            } elseif ($sort_column_id == 'created' && $sort_column_order == 'asc') {
                 $inputs_query->orderBy('databases_inputs.created_at', 'asc');
-            }
-            elseif ($sort_column_id == 'created' && $sort_column_order == 'desc') {
+            } elseif ($sort_column_id == 'created' && $sort_column_order == 'desc') {
                 $inputs_query->orderBy('databases_inputs.created_at', 'desc');
-            }
-            elseif ($sort_column_id == 'updated' && $sort_column_order == 'asc') {
+            } elseif ($sort_column_id == 'updated' && $sort_column_order == 'asc') {
                 $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
-            }
-            elseif ($sort_column_id == 'updated' && $sort_column_order == 'desc') {
+            } elseif ($sort_column_id == 'updated' && $sort_column_order == 'desc') {
                 $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
-            }
-            elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'asc') {
+            } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'asc') {
                 $inputs_query->orderBy('databases_input_cols.value', 'asc');
-            }
-            elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'desc') {
+            } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'desc') {
                 $inputs_query->orderBy('databases_input_cols.value', 'desc');
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
@@ -598,12 +578,10 @@ class DatabasesPlugin extends UserPluginBase
             if (count($sort_column_parts) == 1) {
                 session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
                 session(['sort_column_order.'.$frame_id => '']);
-            }
-            elseif (count($sort_column_parts) == 2) {
+            } elseif (count($sort_column_parts) == 2) {
                 session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
                 session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
-            }
-            else {
+            } else {
                 session(['sort_column_id.'.$frame_id    => '']);
                 session(['sort_column_order.'.$frame_id => '']);
             }
@@ -642,8 +620,7 @@ class DatabasesPlugin extends UserPluginBase
         // 表示する画面
         if ($mode == 'edit') {
             $blade = 'databases_edit';
-        }
-        else {
+        } else {
             $blade = 'databases_detail';
         }
 
@@ -691,8 +668,7 @@ class DatabasesPlugin extends UserPluginBase
         // データ詳細の取得
         if (empty($id)) {
             $input_cols = null;
-        }
-        else {
+        } else {
             // データ詳細の取得
             $input_cols = $this->getDatabasesInputCols($id);
         }
@@ -724,7 +700,7 @@ class DatabasesPlugin extends UserPluginBase
         if (is_array($value)) {
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
             $value = array_map(['self', 'trimInput'], $value);
-        }elseif (is_string($value)) {
+        } elseif (is_string($value)) {
             $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
         }
  
@@ -844,8 +820,7 @@ class DatabasesPlugin extends UserPluginBase
         // ファイル関連の変数
         if ($request->has('delete_upload_column_ids')) {
             $delete_upload_column_ids = $request->delete_upload_column_ids;  // 画面で削除のチェックがされたupload_id
-        }
-        else {
+        } else {
             $delete_upload_column_ids = array();  // 削除や変更で後で削除するファイルのupload_id
         }
 
@@ -940,8 +915,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs = new DatabasesInputs();
             $databases_inputs->databases_id = $database->id;
             $databases_inputs->save();
-        }
-        else {
+        } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
             // 更新されたら、行レコードの updated_at を更新したいので、update()
             $databases_inputs->updated_at = now();
@@ -997,7 +971,7 @@ class DatabasesPlugin extends UserPluginBase
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
                 $value = implode(',', $request->databases_columns_value[$databases_column->id]);
-            }else {
+            } else {
                 $value = $request->databases_columns_value[$databases_column->id];
             }
 
@@ -1130,8 +1104,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs = new DatabasesInputs();
             $databases_inputs->databases_id = $database->id;
             $databases_inputs->save();
-        }
-        else {
+        } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
         }
 
@@ -1184,8 +1157,7 @@ class DatabasesPlugin extends UserPluginBase
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
                 $value = implode(',', $request->databases_columns_value[$databases_column->id]);
-            }
-            else {
+            } else {
                 $value = $request->databases_columns_value[$databases_column->id];
             }
 
@@ -1358,8 +1330,7 @@ class DatabasesPlugin extends UserPluginBase
             if (empty($databases_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $databases_id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $databases_id, $create_flag, $message, $validator->errors());
             }
@@ -1512,7 +1483,7 @@ class DatabasesPlugin extends UserPluginBase
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else {
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -1552,7 +1523,7 @@ class DatabasesPlugin extends UserPluginBase
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else {
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -2099,8 +2070,7 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($database_frame->bucket_id)) {
             $database = null;
             $columns = null;
-        }
-        else {
+        } else {
             $database = Databases::where('bucket_id', $database_frame->bucket_id)->first();
 
             // カラムの取得

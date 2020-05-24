@@ -56,8 +56,7 @@ class IndexManage extends ManagePluginBase
         // XML チェック
         if (empty($ret_xml)) {
             $errors[] = "Connect-CMS 更新情報が空で返ってきました。";
-        }
-        else {
+        } else {
             // libxmlエラーを無効にし、エラーを制御します。
             libxml_use_internal_errors(true);
             // XML ロード

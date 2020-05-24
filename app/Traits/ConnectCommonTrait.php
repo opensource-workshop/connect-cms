@@ -136,16 +136,14 @@ trait ConnectCommonTrait
                         // 自分のオブジェクトチェックが必要ならチェックする
                         if (empty($post)) {
                             return true;
-                        }
-                        else {
+                        } else {
                             if ((($authority == 'buckets.delete') ||
                                  ($authority == 'posts.create') ||
                                  ($authority == 'posts.update') ||
                                  ($authority == 'posts.delete')) &&
                                 ($user->id == $post->created_id)) {
                                 return true;
-                            }
-                            else {
+                            } else {
                                 // 複数ロールをチェックするため、ここではreturn しない。
                                 // return false;
                             }
@@ -441,8 +439,7 @@ trait ConnectCommonTrait
                     $role_check = true;
                 }
             }
-        }
-        else {
+        } else {
             abort(403, 'メソッドに権限が設定されていません。');
         }
 
@@ -464,8 +461,7 @@ trait ConnectCommonTrait
         // インスタンスを生成して呼び出す。
         if ($this->isSpecialPath($path) === 1) {
             $cc_special_path = config('connect.CC_SPECIAL_PATH');
-        }
-        else {
+        } else {
             $cc_special_path = config('connect.CC_SPECIAL_PATH_MANAGE');
         }
 
@@ -491,8 +487,7 @@ trait ConnectCommonTrait
         // 一般プラグインか管理プラグインかで呼び方を変える。
         if ($this->isSpecialPath($path) === 1) {
             return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['frame_id']);
-        }
-        elseif ($this->isSpecialPath($path) === 2) {
+        } elseif ($this->isSpecialPath($path) === 2) {
             return $this->invokeManage($request, $cc_special_path[$path]['method']);
         }
         return;
@@ -539,8 +534,7 @@ trait ConnectCommonTrait
             $permanent_link_array[1] == $page_language) {
             $patterns[0] = '/{{cc:permanent_link}}/';
             $replacements[0] = trim(mb_substr($page->permanent_link, mb_strlen('/'.$page_language)), '/');
-        }
-        else {
+        } else {
             $patterns[0] = '/{{cc:permanent_link}}/';
             $replacements[0] = trim($page->permanent_link, '/');
         }
@@ -573,8 +567,7 @@ trait ConnectCommonTrait
             // ルーツのチェック
             if ($level1_page['parent']->isAncestorOf($this->page)) {
                 $active_class = ' class="active"';
-            }
-            else {
+            } else {
                 $active_class = '';
             }
             //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
@@ -588,8 +581,7 @@ trait ConnectCommonTrait
                 $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
                 $sp_menu .= $level1_page['parent']->page_name;
                 $sp_menu .= '</a>' . "\n";
-            }
-            else {
+            } else {
                 $sp_menu .= '<p' . $active_class . '>';
                 $sp_menu .= $level1_page['parent']->page_name;
                 $sp_menu .= '</p>' . "\n";
@@ -605,15 +597,13 @@ trait ConnectCommonTrait
 
                     if ($child->base_display_flag == 0) {
                         continue;
-                    }
-                    else {
+                    } else {
                         $child_depth = intval($child->depth) - 1;
                         $child_margin_left = ($child_depth > 0) ? $child_depth * 20 : 0;
                         $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . ' style="margin-left:' . $child_margin_left . 'px"' . '>';
                         if ($page_id == $child->id) {
                             $sp_menu .= '<u>' . $child->page_name . '</u>';
-                        }
-                        else {
+                        } else {
                             $sp_menu .= $child->page_name;
                         }
                         $sp_menu .= '</a></li>' . "\n";

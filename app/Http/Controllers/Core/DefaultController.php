@@ -148,8 +148,7 @@ class DefaultController extends ConnectController
        // 言語がデフォルト(next_language がnull)＆2nd以降がない場合は、language_or_1stdir がディレクトリ。
         elseif (empty($next_language)) {
             $permanent_link = $language_or_1stdir;
-        }
-        else {
+        } else {
             $permanent_link = $link_or_after2nd;
         }
 
@@ -243,8 +242,7 @@ class DefaultController extends ConnectController
                     // テンプレートソート用配列
                     if (array_key_exists('display_sequence', $template_inis)) {
                         $sort_array[] = $template_inis['display_sequence'];
-                    }
-                    else {
+                    } else {
                         $sort_array[] = $tmp_display_sequence;
                         $tmp_display_sequence++;
                     }

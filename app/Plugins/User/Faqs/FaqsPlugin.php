@@ -669,8 +669,7 @@ class FaqsPlugin extends UserPluginBase
 
             // 登録ユーザ
             $faqs_post->created_id  = Auth::user()->id;
-        }
-        else {
+        } else {
             $faqs_post = FaqsPosts::find($id)->replicate();
  
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
@@ -850,8 +849,7 @@ class FaqsPlugin extends UserPluginBase
             if (empty($faqs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $faqs_id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $faqs_id, $create_flag, $message, $validator->errors());
             }
@@ -1200,8 +1198,7 @@ EOD;
                 $description = mb_substr(strip_tags($faqs_post->post_text), 0, 100) . "...";
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
-            }
-            else {
+            } else {
                 $description = strip_tags($faqs_post->post_text);
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);

@@ -118,8 +118,7 @@ class SampleformsPlugin extends UserPluginBase
         if ($validator->fails()) {
             if (empty($id)) {
                 return ( $this->create($request, $page_id, $frame_id, $validator->errors()) );
-            }
-            else {
+            } else {
                 return ( $this->edit($request, $page_id, $frame_id, $id, $validator->errors()) );
             }
         }
@@ -178,8 +177,7 @@ class SampleformsPlugin extends UserPluginBase
 
             // FrameのバケツIDの更新
             Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
-        }
-        else {
+        } else {
             $bucket_id = $frame->bucket_id;
         }
 

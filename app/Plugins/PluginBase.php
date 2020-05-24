@@ -106,8 +106,7 @@ class PluginBase
         // テーマ設定からテーマ名
         if (array_key_exists('theme_name', $theme_inis)) {
             return array('name' => $theme_inis['theme_name'], 'dir' => ($parent_dir) ? $parent_dir . '/' . basename($dir) : basename($dir));
-        }
-        else {
+        } else {
             return array('name' => basename($dir), 'dir' => ($parent_dir) ? $parent_dir . '/' . basename($dir) : basename($dir));
         }
     }
@@ -142,8 +141,7 @@ class PluginBase
 
                             // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
                             $sub_themes[] = $this->getThemeName($group_dir, $group_theme_inis, basename($dir));
-                        }
-                        else {
+                        } else {
                             $sub_themes[] = $this->getThemeName($group_dir, null, basename($dir));
                         }
                     }
@@ -151,13 +149,11 @@ class PluginBase
                     if (!empty($sub_themes)) {
                         $themes[] = array('name' => $theme_inis['theme_name'], 'dir' => basename($dir), 'themes' => $sub_themes);
                     }
-                }
-                else {
+                } else {
                     // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
                     $themes[] = $this->getThemeName($dir, $theme_inis);
                 }
-            }
-            else {
+            } else {
                 $themes[] = $this->getThemeName($dir);
             }
         }

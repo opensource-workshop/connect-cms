@@ -130,15 +130,13 @@ class OpacsPlugin extends UserPluginBase
         }
         if (!$xml) {
             return array($opacs_books, "取得した書誌データでエラーが発生しました。");
-        }
-        else {
+        } else {
             $target_item = null;
             $channel = get_object_vars($xml->channel);
 
             if (is_array($channel["item"])) {
                 $target_item = end($channel["item"]);
-            }
-            else {
+            } else {
                 $target_item = $channel["item"];
             }
 
@@ -180,8 +178,7 @@ class OpacsPlugin extends UserPluginBase
         // 処理の振り分け
         if ($opacs_frames_setting->view_form == 0) {
             return $this->indexMyOpac($request, $page_id, $frame_id, $errors, $messages);
-        }
-        else {
+        } else {
             return $this->indexSearch($request, $page_id, $frame_id);
         }
     }
@@ -304,12 +301,10 @@ class OpacsPlugin extends UserPluginBase
         // モデレータ以上の場合はOK
         if ($this->isCan('role_article')) {
             $lent_count_ok = true;
-        }
-        else {
+        } else {
             if ($lent_max_count > count($lents)) {
                 $lent_count_ok = true;
-            }
-            else {
+            } else {
                 $lent_count_ok = false;
             }
         }
@@ -317,12 +312,10 @@ class OpacsPlugin extends UserPluginBase
         // 書籍の返却OKの判定
         if ($this->isCan('role_article')) {
             $lent_return_ok = true;
-        }
-        else {
+        } else {
             if (count($lents) > 0) {
                 $lent_return_ok = true;
-            }
-            else {
+            } else {
                 $lent_return_ok = false;
             }
         }
@@ -366,8 +359,7 @@ class OpacsPlugin extends UserPluginBase
         // データ取得（1ページの表示件数指定）
         if (empty($opac_frame->opacs_id)) {
             $opacs_books = null;
-        }
-        elseif (empty($keyword)) {
+        } elseif (empty($keyword)) {
             $opacs_books = null;
 /*
             $opacs_books = DB::table('opacs_books')
@@ -380,8 +372,7 @@ class OpacsPlugin extends UserPluginBase
                           ->orderBy('accept_date', 'desc')
                           ->paginate($opac_frame->view_count);
 */
-        }
-        else {
+        } else {
             $opacs_books = DB::table('opacs_books')
                           ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
                           ->leftJoin('opacs_books_lents', function ($join) {
@@ -543,8 +534,7 @@ class OpacsPlugin extends UserPluginBase
             if (empty($opacs_id) && empty($request->opacs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $opacs_id, $create_flag, $message, $validator->errors());
             }
@@ -674,8 +664,7 @@ class OpacsPlugin extends UserPluginBase
             list($tmp_opacs_books, $search_error_message) = $this->getBook($request, $opacs_books);
             if (empty($tmp_opacs_books)) {
                 $search_error_message = '書誌データが検索できませんでした。';
-            }
-            else {
+            } else {
                 $opacs_books = $tmp_opacs_books;
             }
             //echo $opacs_books->title;
@@ -819,8 +808,7 @@ class OpacsPlugin extends UserPluginBase
         // id があれば更新、なければ登録
         if (empty($opacs_books_id)) {
             $opacs_book = new OpacsBooks();
-        }
-        else {
+        } else {
             $opacs_book = OpacsBooks::where('id', $opacs_books_id)->first();
         }
 
@@ -1014,8 +1002,7 @@ class OpacsPlugin extends UserPluginBase
 
             // バーコードから取得した書籍情報の書籍ID
             $opacs_books_id = $tmp_opacs_books->id;
-        }
-        else {
+        } else {
             // opacs_books_id から書籍情報を取得する。
             $tmp_opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
 
@@ -1154,8 +1141,7 @@ class OpacsPlugin extends UserPluginBase
         $student_no = ($this->isCan('role_article')) ? $request->student_no : $user->userid;
         if ($this->isCan('role_article')) {
             $return_scheduled = $request->return_scheduled;
-        }
-        else {
+        } else {
             $return_scheduled = $lent_max_date;
         }
 

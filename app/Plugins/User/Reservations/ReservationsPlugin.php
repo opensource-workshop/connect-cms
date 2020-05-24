@@ -283,7 +283,7 @@ class ReservationsPlugin extends UserPluginBase
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else {
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -330,7 +330,7 @@ class ReservationsPlugin extends UserPluginBase
             $selects = reservations_columns_selects::query()->where('reservations_id', $booking->reservations_id)->whereNull('hide_flag')->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
 
             $target_date = new Carbon($booking->start_datetime);
-        }else {
+        } else {
             /**
              * 予約の新規登録モード
              */
@@ -450,7 +450,7 @@ class ReservationsPlugin extends UserPluginBase
             for ($i = 0; $i < $count; $i++, $firstDay->addDay()) {
                 $dates[] = $firstDay->copy();
             }
-        }else {
+        } else {
 
             /**
              * 週表示用のデータ
@@ -821,8 +821,7 @@ class ReservationsPlugin extends UserPluginBase
             if (empty($reservations_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $reservations_id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $reservations_id, $create_flag, $message, $validator->errors());
             }
@@ -873,7 +872,7 @@ class ReservationsPlugin extends UserPluginBase
         if (empty($request->reservations_id)) {
             // 新規登録後は、施設予約選択画面を呼び出す
             return $this->listBuckets($request, $page_id, $frame_id, null);
-        }else {
+        } else {
             // 更新後は、設定変更画面を更新モードで呼び出す
             $create_flag = false;
             return $this->editBuckets($request, $page_id, $frame_id, $request->reservations_id, $create_flag, $message);
@@ -989,7 +988,7 @@ class ReservationsPlugin extends UserPluginBase
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else {
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }
@@ -1034,7 +1033,7 @@ class ReservationsPlugin extends UserPluginBase
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
             $request->flash();
-        }else {
+        } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
         }

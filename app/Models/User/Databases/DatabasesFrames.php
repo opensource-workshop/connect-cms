@@ -28,8 +28,7 @@ class DatabasesFrames extends Model
         // データベース上はカンマ区切りで入っている(nullをexplodeすると配列が一つ返ってくるのでチェック)
         if ($this->use_sort_flag) {
             $use_sort_flags = explode(',', $this->use_sort_flag);
-        }
-        else {
+        } else {
             $use_sort_flags = null;
         }
 
@@ -59,8 +58,7 @@ class DatabasesFrames extends Model
         // データベース上はカンマ区切りで入っている(nullをexplodeすると配列が一つ返ってくるのでチェック)
         if ($this->use_sort_flag) {
             $use_sort_flags = explode(',', $this->use_sort_flag);
-        }
-        else {
+        } else {
             $use_sort_flags = null;
         }
 
@@ -85,8 +83,7 @@ class DatabasesFrames extends Model
         // データベース上はカンマ区切りで入っている(nullをexplodeすると配列が一つ返ってくるのでチェック)
         if ($this->use_sort_flag) {
             $use_sort_flags = explode(',', $this->use_sort_flag);
-        }
-        else {
+        } else {
             $use_sort_flags = null;
         }
 

@@ -148,11 +148,9 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $view_ym = date("Y-m");
         if ($openingcalendar_frame->month_format == 1) {
             $view_ym_str = date("F / Y");
-        }
-        elseif ($openingcalendar_frame->month_format == 2) {
+        } elseif ($openingcalendar_frame->month_format == 2) {
             $view_ym_str = date("F Y");
-        }
-        else {
+        } else {
             $view_ym_str = date("F / Y");
         }
 
@@ -220,8 +218,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
             // パターンがない場合の対応（消したなどの場合は、エラー回避のためにデフォルトのオブジェクトをセットしておく）
             if (isset($patterns_array[$opening_date_ym->openingcalendars_patterns_id])) {
                 $view_months_patterns[substr($opening_date_ym->opening_date, 0, 7)][$opening_date_ym->openingcalendars_patterns_id] = $patterns_array[$opening_date_ym->openingcalendars_patterns_id];
-            }
-            else {
+            } else {
                 $view_months_patterns[substr($opening_date_ym->opening_date, 0, 7)][$opening_date_ym->openingcalendars_patterns_id] = $default_pattern;
             }
         }
@@ -259,12 +256,10 @@ class OpeningcalendarsPlugin extends UserPluginBase
             if ($openingcalendar_frame->month_format == 1) {
                 $view_month_value["data-prevmonth"] = date('F / Y', strtotime($view_month . "-01 - 1 month"));
                 $view_month_value["data-nextmonth"] = date('F / Y', strtotime($view_month . "-01 + 1 month"));
-            }
-            elseif ($openingcalendar_frame->month_format == 2) {
+            } elseif ($openingcalendar_frame->month_format == 2) {
                 $view_month_value["data-prevmonth"] = date('F Y', strtotime($view_month . "-01 - 1 month"));
                 $view_month_value["data-nextmonth"] = date('F Y', strtotime($view_month . "-01 + 1 month"));
-            }
-            else {
+            } else {
                 $view_month_value["data-prevmonth"] = date('F / Y', strtotime($view_month . "-01 - 1 month"));
                 $view_month_value["data-nextmonth"] = date('F / Y', strtotime($view_month . "-01 + 1 month"));
             }
@@ -342,8 +337,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // 編集する月
         if ($request->edit_ym) {
             $edit_ym = $request->edit_ym;
-        }
-        else {
+        } else {
             $edit_ym = date('Y-m');
         }
 
@@ -355,8 +349,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                                                     ->first();
         if (empty($opening_date_y_rec)) {
             $from_y = date('Y');
-        }
-        else {
+        } else {
             $from_y = $opening_date_y_rec->opening_date_y;
         }
         $select_ym_asc = array();
@@ -569,8 +562,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
             if (empty($id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
-            else {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }
