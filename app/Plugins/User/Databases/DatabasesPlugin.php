@@ -739,9 +739,10 @@ class DatabasesPlugin extends UserPluginBase
      *
      * @param [array] $validator_array 二次元配列
      * @param [App\Models\User\Databases\DatabasesColumns] $databases_column
+     * @param Request $request
      * @return void
      */
-    private function getValidatorRule($validator_array, $databases_column)
+    private function getValidatorRule($validator_array, $databases_column, $request)
     {
 
         $validator_rule = null;
@@ -758,7 +759,21 @@ class DatabasesPlugin extends UserPluginBase
         }
         // 数値チェック
         if ($databases_column->rule_allowed_numeric) {
-            $validator_rule[] = 'numeric';
+            if($request->databases_columns_value[$databases_column->id]){
+                // 入力値があった場合
+                if(is_numeric(mb_convert_kana($request->databases_columns_value[$databases_column->id], 'n'))){
+                    // 全角→半角変換した結果が数値の場合
+                    $tmp_array = $request->databases_columns_value;
+                    // 全角→半角へ丸める
+                    $tmp_array[$databases_column->id] = mb_convert_kana($request->databases_columns_value[$databases_column->id], 'n');
+                    $request->merge([
+                        "databases_columns_value" => $tmp_array,
+                    ]);
+                }else{
+                    // 全角→半角変換した結果が数値ではない場合
+                    $validator_rule[] = 'numeric';
+                }
+            }
         }
         // 英数値チェック
         if ($databases_column->rule_allowed_alpha_numeric) {
@@ -824,11 +839,11 @@ class DatabasesPlugin extends UserPluginBase
             if ($databases_column->group) {
                 foreach($databases_column->group as $group_item) {
                     // まとめ行で指定している項目について、バリデータールールをセット
-                    $validator_array = self::getValidatorRule($validator_array, $group_item);
+                    $validator_array = self::getValidatorRule($validator_array, $group_item, $request);
                 }
             }
             // まとめ行以外の項目について、バリデータールールをセット
-            $validator_array = self::getValidatorRule($validator_array, $databases_column);
+            $validator_array = self::getValidatorRule($validator_array, $databases_column, $request);
         }
 
         // 入力値をトリム

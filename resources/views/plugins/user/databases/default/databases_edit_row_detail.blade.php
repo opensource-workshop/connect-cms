@@ -275,7 +275,8 @@
                                 <div class="custom-control custom-checkbox">
                                     <input type="checkbox" name="rule_allowed_numeric" id="rule_allowed_numeric" value="1" class="custom-control-input"
                                         @if(old('rule_allowed_numeric', $column->rule_allowed_numeric)) checked @endif >
-                                    <label class="custom-control-label" for="rule_allowed_numeric">半角数値のみ許容</label>
+                                    <label class="custom-control-label" for="rule_allowed_numeric">半角数値のみ許容</label><br>
+                                    <small class="text-muted">※ 全角数値を入力した場合は半角数値に補正します。</small>
                                 </div>
                             </div>
                         </div>
