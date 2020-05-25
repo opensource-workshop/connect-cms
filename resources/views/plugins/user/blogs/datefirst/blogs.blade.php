@@ -38,11 +38,6 @@
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日')}}</b>
 
-        {{-- 重要記事 --}}
-        @if($post->important == 1)
-            <span class="badge badge-danger">重要</span>
-        @endif
-
         {{-- タイトル --}}
         <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
 

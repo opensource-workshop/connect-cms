@@ -39,12 +39,6 @@
         {{-- 投稿日時 --}}
         <dt>
             {{$post->posted_at->format('Y/m/d')}}
-            {{-- 重要記事 --}}
-            @if($post->important == 1)
-{{--
-                <span class="badge badge-danger">重要</span>
---}}
-            @endif
             @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
         </dt>
 
