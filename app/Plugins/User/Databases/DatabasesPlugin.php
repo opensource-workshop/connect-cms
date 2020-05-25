@@ -777,6 +777,7 @@ class DatabasesPlugin extends UserPluginBase
         }
         // 英数値チェック
         if ($databases_column->rule_allowed_alpha_numeric) {
+            $validator_rule[] = 'nullable';
             $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
         }
         // 最大文字数チェック
@@ -789,16 +790,25 @@ class DatabasesPlugin extends UserPluginBase
         }
         // 最大値チェック
         if ($databases_column->rule_max) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'numeric';
             $validator_rule[] = 'max:' . $databases_column->rule_max;
         }
         // 最小値チェック
         if ($databases_column->rule_min) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'numeric';
             $validator_rule[] = 'min:' . $databases_column->rule_min;
         }
         // ～日以降を許容
         if ($databases_column->rule_date_after_equal) {
             $comparison_date = \Carbon::now()->addDay($databases_column->rule_date_after_equal)->databaseat('Y/m/d');
             $validator_rule[] = 'after_or_equal:' . $comparison_date;
+        }
+        // 日付チェック
+        if ($databases_column->column_type == \FormColumnType::date) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'date';
         }
         // バリデータールールをセット
         if($validator_rule){
