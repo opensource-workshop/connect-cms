@@ -162,7 +162,11 @@
             </table>
 
             <div class="card card-body bg-light p-2 m-2">
-                クラス名は cc_category_xxxx で使用できます。
+                <ul>
+                    <li>クラス名は cc_category_xxxx で使用できます。</li>
+                    <li>カテゴリ設定後は、各ブログプラグインのカテゴリ設定で表示設定が必要です。</li>
+                    <li>各ブログプラグインのカテゴリ設定から、ブログ単位で独自カテゴリを設定することも可能です。</li>
+                </ul>
             </div>
         </div>
 
