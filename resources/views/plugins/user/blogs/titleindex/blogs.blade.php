@@ -44,11 +44,16 @@
 
         {{-- カテゴリ --}}
         @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
-            @if ($loop->last)
+        {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
+        @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+            <span class="badge badge-pill badge-danger">重要記事に設定</span>
+        @endif
+
+        @if ($loop->last)
             <article>
-            @else
+        @else
             <article class="cc_article">
-            @endif
+        @endif
             {{-- 記事本文 --}}
 
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}

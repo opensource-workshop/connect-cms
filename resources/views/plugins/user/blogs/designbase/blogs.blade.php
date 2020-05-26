@@ -44,12 +44,10 @@
 
         <dd>
             {{-- タイトル --}}
+            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
+            {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
             @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
-                <p class="exclamation">
-                    <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
-                </p>
-            @else
-                <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
+                <span class="badge badge-pill badge-danger">重要記事に設定</span>
             @endif
         </dd>
     @endforeach
