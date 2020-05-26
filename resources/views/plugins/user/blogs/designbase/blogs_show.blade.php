@@ -16,11 +16,13 @@
 {{-- カテゴリ --}}
 @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
 {{-- タイトル --}}
-@if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
-    <h2><p class="exclamation mb-0">{{$post->post_title}}</p></h2>
-@else
-    <h2>{{$post->post_title}}</h2>
-@endif
+<h2>
+    {{$post->post_title}}
+    {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
+    @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+        <small><span class="badge badge-pill badge-danger">重要記事に設定</span></small>
+    @endif
+</h2>
 
 <article>
 
