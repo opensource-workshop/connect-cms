@@ -90,7 +90,7 @@ class PageManage extends ManagePluginBase
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.page.page',[
+        return view('plugins.manage.page.page', [
             "function"     => __FUNCTION__,
             "plugin_name"  => "page",
             "page"         => new Page(),
@@ -99,7 +99,6 @@ class PageManage extends ManagePluginBase
             "themes"       => $themes,
             "errors"       => $errors,
         ]);
-
     }
 
     /**
@@ -113,8 +112,7 @@ class PageManage extends ManagePluginBase
         // 編集時と新規で処理を分ける
         if (empty($page_id)) {
             $page = new Page();
-        }
-        else {
+        } else {
             // ページID で1件取得
             $page = Page::where('id', $page_id)->first();
         }
@@ -126,7 +124,7 @@ class PageManage extends ManagePluginBase
         $themes = $this->getThemes();
 
         // 画面呼び出し
-        return view('plugins.manage.page.page_edit',[
+        return view('plugins.manage.page.page_edit', [
             "function"    => __FUNCTION__,
             "plugin_name" => "page",
             "page"        => $page,
@@ -257,12 +255,10 @@ class PageManage extends ManagePluginBase
     {
         // ルートへ移動
         if ($request->destination_id == "0") {
-
             // 移動元のオブジェクトを取得
             $page = Page::find($page_id);
             $page->saveAsRoot();
-        }
-        else {
+        } else {
             // その他の場所へ移動
 
             // 移動元のオブジェクトを取得
@@ -287,7 +283,7 @@ class PageManage extends ManagePluginBase
     public function import($request, $page_id, $errors = null)
     {
         // 画面呼び出し
-        return view('plugins.manage.page.page_import',[
+        return view('plugins.manage.page.page_import', [
             "function"     => __FUNCTION__,
             "plugin_name"  => "page",
             'errors'       => $errors,
@@ -327,45 +323,44 @@ class PageManage extends ManagePluginBase
     {
         $line_count = 1;
 
-        while (($csv_columns = fgetcsv($fp, 0, ",")) !== FALSE) {
-            foreach($csv_columns as $column_index => $csv_column) {
-
+        while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+            foreach ($csv_columns as $column_index => $csv_column) {
                 switch ($column_index) {
-                case 0:
-                    if (empty($csv_column)) {
-                        $errors[] = $line_count . "行目の page_name は必須です。";
-                    }
-                    break;
-                case 1:
-                    if (empty($csv_column)) {
-                        $errors[] = $line_count . "行目の permanent_link は必須です。";
-                    }
-                    break;
-                case 2:
-                    if (empty($csv_column)) {
-                        $errors[] = $line_count . "行目の background_color は必須です。";
-                    }
-                    break;
-                case 3:
-                    if (empty($csv_column)) {
-                        $errors[] = $line_count . "行目の header_color は必須です。";
-                    }
-                    break;
-                case 4:
-                    if (empty($csv_column)) {
-                        $errors[] = $line_count . "行目の header_color は必須です。";
-                    }
-                    break;
-                case 5:
-                    if (empty($csv_column)) {
-                        $errors[] = $line_count . "行目の layout は必須です。";
-                    }
-                    break;
-                case 6:
-                    if (!$csv_column == '0' && !$csv_column == '1') {
-                        $errors[] = $line_count . "行目の base_display_flag は 0 もしくは 1 である必要があります。";
-                    }
-                    break;
+                    case 0:
+                        if (empty($csv_column)) {
+                            $errors[] = $line_count . "行目の page_name は必須です。";
+                        }
+                        break;
+                    case 1:
+                        if (empty($csv_column)) {
+                            $errors[] = $line_count . "行目の permanent_link は必須です。";
+                        }
+                        break;
+                    case 2:
+                        if (empty($csv_column)) {
+                            $errors[] = $line_count . "行目の background_color は必須です。";
+                        }
+                        break;
+                    case 3:
+                        if (empty($csv_column)) {
+                            $errors[] = $line_count . "行目の header_color は必須です。";
+                        }
+                        break;
+                    case 4:
+                        if (empty($csv_column)) {
+                            $errors[] = $line_count . "行目の header_color は必須です。";
+                        }
+                        break;
+                    case 5:
+                        if (empty($csv_column)) {
+                            $errors[] = $line_count . "行目の layout は必須です。";
+                        }
+                        break;
+                    case 6:
+                        if (!$csv_column == '0' && !$csv_column == '1') {
+                            $errors[] = $line_count . "行目の base_display_flag は 0 もしくは 1 である必要があります。";
+                        }
+                        break;
                 }
             }
             $line_count++;
@@ -447,15 +442,14 @@ class PageManage extends ManagePluginBase
         }
 
         // ファイルを閉じて、開きなおす
-        fclose ($fp);
+        fclose($fp);
         $fp = fopen(storage_path('app/') . $path, 'r');
 
         // ヘッダー
         $header_columns = fgetcsv($fp);
 
         // データ
-        while (($csv_columns = fgetcsv($fp, 0, ",")) !== FALSE) {
-
+        while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
             // 固定リンクの先頭に / がない場合、追加する。
             if (strncmp($csv_columns[1], '/', 1) !== 0) {
                 $csv_columns[1] = '/' . $csv_columns[1];
@@ -482,7 +476,7 @@ class PageManage extends ManagePluginBase
         }
 
         // 一時ファイルの削除
-        fclose ($fp);
+        fclose($fp);
         Storage::delete($path);
 
         // ページ管理画面に戻る
@@ -501,9 +495,8 @@ class PageManage extends ManagePluginBase
 
         // ページデータ取得
         if (empty($page)) {
-
             // 画面呼び出し
-            return view('plugins.manage.page.error',[
+            return view('plugins.manage.page.error', [
                 "function"     => __FUNCTION__,
                 "plugin_name"  => "page",
                 "message"      => "指定されたページID が存在しません。",
@@ -515,12 +508,12 @@ class PageManage extends ManagePluginBase
 
         // ページ権限を取得してGroup オブジェクトに保持する。
         $page_roles = PageRole::where('role_value', 1)->orderBy('group_id', 'asc')->get();
-        foreach($groups as $group) {
+        foreach ($groups as $group) {
             $group->page_roles = $page_roles->where('group_id', $group->id);
         }
 
         // 画面呼び出し
-        return view('plugins.manage.page.role',[
+        return view('plugins.manage.page.role', [
             "function"     => __FUNCTION__,
             "plugin_name"  => "page",
             "page"         => $page,
@@ -539,7 +532,7 @@ class PageManage extends ManagePluginBase
         if (empty($role_value)) {
             PageRole::where('page_id', $page_id)->where('group_id', $group_id)->where('role_name', $role_name)->delete();
         }
-        // 更新もしくは追加	
+        // 更新もしくは追加
         else {
             PageRole::updateOrCreate(
                 ['page_id' => $page_id, 'group_id' => $group_id, 'target' => 'base', 'role_name' => $role_name,],
@@ -557,8 +550,7 @@ class PageManage extends ManagePluginBase
     public function saveRole($request, $page_id)
     {
         // Role をループ
-        foreach(config('cc_role.CC_ROLE_LIST') as $role_name => $cc_role_name) {
-
+        foreach (config('cc_role.CC_ROLE_LIST') as $role_name => $cc_role_name) {
             // 管理権限は対象外
             if (stripos($role_name, 'admin_') === 0) {
                 continue;
@@ -583,9 +575,8 @@ class PageManage extends ManagePluginBase
 
         // ページデータ取得
         if (empty($current_page)) {
-
             // 画面呼び出し
-            return view('plugins.manage.page.error',[
+            return view('plugins.manage.page.error', [
                 "function"     => __FUNCTION__,
                 "plugin_name"  => "page",
                 "message"      => "指定されたページID が存在しません。",
@@ -611,7 +602,7 @@ class PageManage extends ManagePluginBase
         //var_dump($migration_pages);
 
         // 画面呼び出し
-        return view('plugins.manage.page.migration_order',[
+        return view('plugins.manage.page.migration_order', [
             "function"        => __FUNCTION__,
             "plugin_name"     => "page",
             "current_page"    => $current_page,

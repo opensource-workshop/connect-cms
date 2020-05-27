@@ -35,15 +35,15 @@ class CustomVali_BothRequired implements Rule
         $result;
         $param1 = $this->param1;
         $param2 = $this->param2;
-        if($this->param1 || $this->param2){
-            if($this->param1 && $this->param2){
+        if ($this->param1 || $this->param2) {
+            if ($this->param1 && $this->param2) {
                 // 両方、入力ありならTRUE
                 $result = true;
-            }else{
+            } else {
                 // 片方、未入力ならFALSE
                 $result = false;
             }
-        }else{
+        } else {
             // 両方、未入力ならTRUE
             $result = true;
         }

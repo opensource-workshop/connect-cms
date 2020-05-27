@@ -69,8 +69,9 @@ class KnowledgesPlugin extends UserPluginBase
         // 表示テンプレートを呼び出す。
         return $this->view(
             'knowledges', [
-//            'contents' => $contents,
-        ]);
+            //            'contents' => $contents,
+            ]
+        );
     }
 
     /**
@@ -81,7 +82,8 @@ class KnowledgesPlugin extends UserPluginBase
         // 表示テンプレートを呼び出す。
         return $this->view(
             'knowledges_detail', [
-        ]);
+            ]
+        );
     }
 
 
@@ -113,19 +115,20 @@ class KnowledgesPlugin extends UserPluginBase
 
         // データの存在確認をして、画面を切り替える
         if (empty($contents)) {
-
             // データなしの表示テンプレートを呼び出す。
             return $this->view(
                 'contents_edit_nodata', [
                 'contents' => null,
-            ]);
+                ]
+            );
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'contents_edit_show', [
             'contents' => $contents,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -142,15 +145,15 @@ class KnowledgesPlugin extends UserPluginBase
             // 新規登録画面を呼び出す
             return $this->view(
                 'contents_create', [
-            ]);
-
-        }
-        else {
+                ]
+            );
+        } else {
             // 編集画面テンプレートを呼び出す。
             return $this->view(
                 'contents_edit', [
                 'contents' => $contents,
-            ]);
+                ]
+            );
         }
     }
 
@@ -172,43 +175,42 @@ class KnowledgesPlugin extends UserPluginBase
         $request_order_by = ["contents_updated_at", "desc"];
 
         // 画面からのソート指定があれば使用(ソート指定があった項目は、ソート設定の内容を入れ替える)
-        if ( !empty( $request->sort ) ) {
+        if (!empty($request->sort)) {
             $request_order_by = explode('|', $request->sort);
             if ($request_order_by[1] == "asc") {
                 $sort_inits[$request_order_by[0]]=["asc", "desc"];
-            }
-            else {
+            } else {
                 $sort_inits[$request_order_by[0]]=["desc", "asc"];
             }
         }
 
         // 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの)
         $order_link = array();
-        foreach ( $sort_inits as $order_by_key => $order_by ) {
-            if ( $request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
+        foreach ($sort_inits as $order_by_key => $order_by) {
+            if ($request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
                 $order_link[$order_by_key] = array_reverse($order_by);
-            }
-            else {
+            } else {
                 $order_link[$order_by_key] = $order_by;
             }
         }
 
         // データリストの場合の追加処理
         $buckets = DB::table('buckets')
-                    ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id',  'frames.frame_title', 'pages.page_name')
+                    ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
                     ->leftJoin('contents', 'buckets.id', '=', 'contents.bucket_id')
                     ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
                     ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
                     ->where('buckets.plugin_name', 'contents')
-                    ->orderBy($request_order_by[0],        $request_order_by[1])
+                    ->orderBy($request_order_by[0], $request_order_by[1])
                     ->paginate(10);
 
         return $this->view(
             'contents_edit_datalist', [
             'buckets'           => $buckets,
             'order_link'        => $order_link,
-            'request_order_str' => implode( '|', $request_order_by )
-        ]);
+            'request_order_str' => implode('|', $request_order_by)
+            ]
+        );
     }
 
    /**
@@ -261,13 +263,12 @@ class KnowledgesPlugin extends UserPluginBase
     public function destroy($request, $page_id = null, $frame_id = null, $id = null)
     {
         // id がある場合、コンテンツを削除
-        if ( $id ) {
-
+        if ($id) {
             // Contents データ
             $content = Contents::where('id', $id)->first();
 
             // フレームも同時に削除するがチェックされていたらフレームを削除する。
-            if ( $request->frame_delete_flag == "1" ) {
+            if ($request->frame_delete_flag == "1") {
                 Frame::destroy($frame_id);
             }
 

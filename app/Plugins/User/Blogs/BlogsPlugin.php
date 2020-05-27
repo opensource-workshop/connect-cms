@@ -69,7 +69,8 @@ class BlogsPlugin extends UserPluginBase
      *  POST取得関数（コアから呼び出す）
      *  コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id, $action = null) {
+    public function getPost($id, $action = null)
+    {
 
         // deleteCategories の場合は、Blogs_posts のオブジェクトではないので、nullで返す。
         if ($action == 'deleteCategories') {
@@ -85,13 +86,15 @@ class BlogsPlugin extends UserPluginBase
         $arg_post = BlogsPosts::where('id', $id)->first();
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = BlogsPosts::select('blogs_posts.*',
-                                          'categories.color as category_color',
-                                          'categories.background_color as category_background_color',
-                                          'categories.category as category')
+        $this->post = BlogsPosts::select(
+            'blogs_posts.*',
+            'categories.color as category_color',
+            'categories.background_color as category_background_color',
+            'categories.category as category'
+        )
                                 ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                                 ->where('contents_id', $arg_post->contents_id)
-                                ->where(function($query){
+                                ->where(function ($query) {
                                       $query = $this->appendAuthWhere($query);
                                 })
                                 ->orderBy('id', 'desc')
@@ -122,7 +125,7 @@ class BlogsPlugin extends UserPluginBase
     private function getBlogsCategories($blogs_id)
     {
         $blogs_categories = Categories::select('categories.*')
-                          ->join('blogs_categories', function ($join) use($blogs_id) {
+                          ->join('blogs_categories', function ($join) use ($blogs_id) {
                               $join->on('blogs_categories.categories_id', '=', 'categories.id')
                                    ->where('blogs_categories.blogs_id', '=', $blogs_id)
                                    ->where('blogs_categories.view_flag', 1);
@@ -165,7 +168,7 @@ class BlogsPlugin extends UserPluginBase
         }
         // 承認権限の場合、Active ＋ 承認待ちの取得
         elseif ($this->isCan('role_approval')) {
-            $query->Where('status',   '=', 0)
+            $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
         }
         // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
@@ -193,14 +196,14 @@ class BlogsPlugin extends UserPluginBase
         }
         // 年
         elseif ($blog_frame->scope == 'year') {
-            $query->Where('posted_at',   '>=', $blog_frame->scope_value . '-01-01')
-                  ->Where('posted_at',   '<=', $blog_frame->scope_value . '-12-31 23:59:59');
+            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
+                  ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
         }
         // 年度
         elseif ($blog_frame->scope == 'fiscal') {
             $fiscal_next = intval($blog_frame->scope_value) + 1;
-            $query->Where('posted_at',   '>=', $blog_frame->scope_value . '-04-01')
-                  ->Where('posted_at',   '<=', $fiscal_next . '-03-31 23:59:59');
+            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
+                  ->Where('posted_at', '<=', $fiscal_next . '-03-31 23:59:59');
         }
 
         return $query;
@@ -223,33 +226,34 @@ class BlogsPlugin extends UserPluginBase
         }
 
         // 削除されていないデータでグルーピングして、最新のIDで全件
-        $blogs_query = BlogsPosts::select('blogs_posts.*',
-                                          'categories.color as category_color',
-                                          'categories.background_color as category_background_color',
-                                          'categories.category as category')
+        $blogs_query = BlogsPosts::select(
+            'blogs_posts.*',
+            'categories.color as category_color',
+            'categories.background_color as category_background_color',
+            'categories.category as category'
+        )
                                  ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
-                                 ->whereIn('blogs_posts.id', function($query) use($blog_frame) {
+                                 ->whereIn('blogs_posts.id', function ($query) use ($blog_frame) {
                                      $query->select(DB::raw('MAX(id) As id'))
                                            ->from('blogs_posts')
                                            ->where('blogs_id', $blog_frame->blogs_id)
 
                                            ->where('deleted_at', null)
                                            // 権限を見てWhere を付与する。
-                                           ->where(function($query_auth){
+                                           ->where(function ($query_auth) {
                                                $query_auth = $this->appendAuthWhere($query_auth);
                                            })
                                            ->groupBy('contents_id');
-                                     })
+                                 })
 
                                            // 設定を見てWhere を付与する。
-                                           ->where(function($query_setting) use($blog_frame) {
+                                           ->where(function ($query_setting) use ($blog_frame) {
                                                $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
                                            });
         // フレームの重要記事の条件参照
         if ($blog_frame->important_view == 'important_only') {
             $blogs_query->where('blogs_posts.important', 1);
-        }
-        else if ($blog_frame->important_view == 'not_important') {
+        } elseif ($blog_frame->important_view == 'not_important') {
             $blogs_query->whereNull('blogs_posts.important');
         }
 
@@ -292,8 +296,7 @@ class BlogsPlugin extends UserPluginBase
         // タグの保存
         if ($request->tags) {
             $tags = explode(',', $request->tags);
-            foreach($tags as $tag) {
-
+            foreach ($tags as $tag) {
                 // 新規オブジェクト生成
                 $blogs_posts_tags = new BlogsPostsTags();
 
@@ -314,7 +317,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // タグの保存
         $blogs_posts_tags = BlogsPostsTags::where('blogs_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
-        foreach($blogs_posts_tags as $blogs_posts_tag) {
+        foreach ($blogs_posts_tags as $blogs_posts_tag) {
             $new_tag = $blogs_posts_tag->replicate();
             $new_tag->blogs_posts_id = $to_post->id;
             $new_tag->save();
@@ -333,17 +336,18 @@ class BlogsPlugin extends UserPluginBase
         // 戻り値('sql_method'、'link_pattern'、'link_base')
 
         $return[] = DB::table('blogs_posts')
-                      ->select('frames.page_id              as page_id',
-                               'frames.id                   as frame_id',
-                               'blogs_posts.id              as post_id',
-                               'blogs_posts.post_title      as post_title',
-                               'blogs_posts.important       as important',
-                               'blogs_posts.posted_at       as posted_at',
-                               'blogs_posts.created_name    as posted_name',
-                               'categories.classname        as classname',
-                               'categories.category         as category',
-                               DB::raw('"blogs" as plugin_name')
-                              )
+                      ->select(
+                          'frames.page_id              as page_id',
+                          'frames.id                   as frame_id',
+                          'blogs_posts.id              as post_id',
+                          'blogs_posts.post_title      as post_title',
+                          'blogs_posts.important       as important',
+                          'blogs_posts.posted_at       as posted_at',
+                          'blogs_posts.created_name    as posted_name',
+                          'categories.classname        as classname',
+                          'categories.category         as category',
+                          DB::raw('"blogs" as plugin_name')
+                      )
                       ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
 
@@ -360,9 +364,9 @@ class BlogsPlugin extends UserPluginBase
 /* if で書いたもの。CASE を疑っていた際のテスト用
                       ->whereRaw('(
                                   (blogs_frames.scope IS NULL) OR
-                                  (blogs_frames.scope = "year" AND blogs_frames.scope_value IS NOT NULL AND 
+                                  (blogs_frames.scope = "year" AND blogs_frames.scope_value IS NOT NULL AND
                                       posted_at >= CONCAT(blogs_frames.scope_value, "-01-01") AND posted_at <= CONCAT(blogs_frames.scope_value, "-12-31 23:59:59")) OR
-                                  (blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL AND 
+                                  (blogs_frames.scope = "fiscal" AND blogs_frames.scope_value IS NOT NULL AND
                                       posted_at >= CONCAT(blogs_frames.scope_value, "-04-01") AND posted_at <= CONCAT((blogs_frames.scope_value + 1), "-03-31 23:59:59"))
                                   )')
 */
@@ -377,15 +381,15 @@ class BlogsPlugin extends UserPluginBase
                                   END')
 
                       // blogs_frames テーブルがない(null)場合は全て or blogs_frames で重要
-                      ->where(function($important_query){
+                      ->where(function ($important_query) {
                           $important_query->whereNull('blogs_frames.important_view')
                                           ->orWhere('blogs_frames.important_view', '')
                                           ->orWhere('blogs_frames.important_view', 'top')
-                                          ->orWhere(function($important_query2){
+                                          ->orWhere(function ($important_query2) {
                                                $important_query2->where('blogs_frames.important_view', 'not_important')
                                                                 ->whereNull('blogs_posts.important');
                                           })
-                                          ->orWhere(function($important_query3){
+                                          ->orWhere(function ($important_query3) {
                                                $important_query3->where('blogs_frames.important_view', 'important_only')
                                                                 ->where('blogs_posts.important', 1);
                                           });
@@ -422,19 +426,20 @@ WHERE status = 0
     public static function getSearchArgs($search_keyword, $page_ids = null)
     {
         $return[] = DB::table('blogs_posts')
-                      ->select('blogs_posts.id              as post_id',
-                               'frames.id                   as frame_id',
-                               'frames.page_id              as page_id',
-                               'pages.permanent_link        as permanent_link',
-                               'blogs_posts.post_title      as post_title',
-                               'blogs_posts.important       as important',
-                               'blogs_posts.posted_at       as posted_at',
-                               'blogs_posts.created_name    as posted_name',
-                               'categories.classname        as classname',
-                               'blogs_posts.categories_id   as categories_id',
-                               'categories.category         as category',
-                               DB::raw('"blogs" as plugin_name')
-                              )
+                      ->select(
+                          'blogs_posts.id              as post_id',
+                          'frames.id                   as frame_id',
+                          'frames.page_id              as page_id',
+                          'pages.permanent_link        as permanent_link',
+                          'blogs_posts.post_title      as post_title',
+                          'blogs_posts.important       as important',
+                          'blogs_posts.posted_at       as posted_at',
+                          'blogs_posts.created_name    as posted_name',
+                          'categories.classname        as classname',
+                          'blogs_posts.categories_id   as categories_id',
+                          'categories.category         as category',
+                          DB::raw('"blogs" as plugin_name')
+                      )
                       ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
                       ->leftJoin('blogs_frames', function ($join) {
@@ -447,7 +452,7 @@ WHERE status = 0
                       ->whereIn('pages.id', $page_ids)
                       ->where('status', '?')
                       ->where('posted_at', '<=', Carbon::now())
-                      ->where(function($plugin_query) use($search_keyword) {
+                      ->where(function ($plugin_query) use ($search_keyword) {
                           $plugin_query->where('blogs_posts.post_title', 'like', '?')
                                        ->orWhere('blogs_posts.post_text', 'like', '?');
                       })
@@ -461,15 +466,15 @@ WHERE status = 0
                                   END')
 
                       // blogs_frames テーブルがない(null)場合は全て or blogs_frames で重要
-                      ->where(function($important_query){
+                      ->where(function ($important_query) {
                           $important_query->whereNull('blogs_frames.important_view')
                                           ->orWhere('blogs_frames.important_view', '')
                                           ->orWhere('blogs_frames.important_view', 'top')
-                                          ->orWhere(function($important_query2){
+                                          ->orWhere(function ($important_query2) {
                                                $important_query2->where('blogs_frames.important_view', 'not_important')
                                                                 ->whereNull('blogs_posts.important');
                                           })
-                                          ->orWhere(function($important_query3){
+                                          ->orWhere(function ($important_query3) {
                                                $important_query3->where('blogs_frames.important_view', 'important_only')
                                                                 ->where('blogs_posts.important', 1);
                                           });
@@ -511,7 +516,7 @@ WHERE status = 0
 
         // タグ：画面表示するデータのblogs_posts_id を集める
         $posts_ids = array();
-        foreach($blogs_posts as $blogs_post) {
+        foreach ($blogs_posts as $blogs_post) {
             $posts_ids[] = $blogs_post->id;
         }
 
@@ -520,12 +525,12 @@ WHERE status = 0
 
         // タグ：タグデータ詰めなおし（ブログデータの一覧にあてるための外配列）
         $blogs_posts_tags = array();
-        foreach($blogs_posts_tags_row as $record) {
+        foreach ($blogs_posts_tags_row as $record) {
             $blogs_posts_tags[$record->blogs_posts_id][] = $record->tags;
         }
 
         // タグ：タグデータをポストデータに紐づけ
-        foreach($blogs_posts as &$blogs_post) {
+        foreach ($blogs_posts as &$blogs_post) {
             if (array_key_exists($blogs_post->id, $blogs_posts_tags)) {
                 $blogs_post->tags = $blogs_posts_tags[$blogs_post->id];
             }
@@ -536,7 +541,8 @@ WHERE status = 0
             'blogs', [
             'blogs_posts' => $blogs_posts,
             'blog_frame'  => $blog_frame,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -568,7 +574,8 @@ WHERE status = 0
             'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
             'errors'           => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -596,23 +603,22 @@ WHERE status = 0
         $before_post = null;
         $after_post = null;
         if ($blogs_post) {
-
             // 1件前
-            $before_post = BlogsPosts::whereIn('id', function($query1) use($blogs_post) {
+            $before_post = BlogsPosts::whereIn('id', function ($query1) use ($blogs_post) {
                                            // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
                                            $query1->select(DB::raw('MAX(id) as id'))
                                                   ->from('blogs_posts')
                                                   ->where('blogs_id', $blogs_post->blogs_id)
-                                                  ->where(function($query2){
+                                                  ->where(function ($query2) {
                                                       $query2 = $this->appendAuthWhere($query2);
                                                   })
                                                   ->groupBy('contents_id');
-                                           })
+            })
                                        // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が小さい)で1件目)
                                        // 一覧は 日付(desc), contents_id(desc) で表示するため
-                                       ->where(function($query3) use($blogs_post) {
+                                       ->where(function ($query3) use ($blogs_post) {
                                            $query3->where('posted_at', '<', $blogs_post->posted_at)
-                                                  ->orWhere(function($query4) use($blogs_post) {
+                                                  ->orWhere(function ($query4) use ($blogs_post) {
                                                       $query4->where('posted_at', '=', $blogs_post->posted_at)
                                                              ->where('contents_id', '<', $blogs_post->contents_id);
                                                   });
@@ -622,21 +628,21 @@ WHERE status = 0
                                        ->first();
 
             // 1件後
-            $after_post = BlogsPosts::whereIn('id', function($query1) use($blogs_post) {
+            $after_post = BlogsPosts::whereIn('id', function ($query1) use ($blogs_post) {
                                            // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
                                            $query1->select(DB::raw('MAX(id) as id'))
                                                   ->from('blogs_posts')
                                                   ->where('blogs_id', $blogs_post->blogs_id)
-                                                  ->where(function($query2){
+                                                  ->where(function ($query2) {
                                                       $query2 = $this->appendAuthWhere($query2);
                                                   })
                                                   ->groupBy('contents_id');
-                                           })
+            })
                                        // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が大きい)で1件目)
                                        // 一覧は 日付(desc), contents_id(desc) で表示するため
-                                       ->where(function($query3) use($blogs_post) {
+                                       ->where(function ($query3) use ($blogs_post) {
                                            $query3->where('posted_at', '>', $blogs_post->posted_at)
-                                                  ->orWhere(function($query4) use($blogs_post) {
+                                                  ->orWhere(function ($query4) use ($blogs_post) {
                                                       $query4->where('posted_at', '=', $blogs_post->posted_at)
                                                              ->where('contents_id', '>', $blogs_post->contents_id);
                                                   });
@@ -654,7 +660,8 @@ WHERE status = 0
             'post_tags'   => $blogs_post_tags,
             'before_post' => $before_post,
             'after_post'  => $after_post,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -680,7 +687,7 @@ WHERE status = 0
         // タグ取得
         $blogs_posts_tags_array = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
         $blogs_posts_tags = "";
-        foreach($blogs_posts_tags_array as $blogs_posts_tags_item) {
+        foreach ($blogs_posts_tags_array as $blogs_posts_tags_item) {
             $blogs_posts_tags .= ',' . $blogs_posts_tags_item->tags;
         }
         $blogs_posts_tags = trim($blogs_posts_tags, ',');
@@ -693,7 +700,8 @@ WHERE status = 0
             'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
             'errors'           => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -712,7 +720,6 @@ WHERE status = 0
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
         $old_blogs_post = null;
         if (!empty($blogs_posts_id)) {
-
             // 指定されたID のデータ
             $old_blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
 
@@ -743,7 +750,6 @@ WHERE status = 0
 
         // 新規
         if (empty($blogs_posts_id)) {
-
             // 登録ユーザ
             $blogs_post->created_id  = Auth::user()->id;
 
@@ -755,7 +761,6 @@ WHERE status = 0
         }
         // 更新
         else {
-
             // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
             $blogs_post->contents_id = $old_blogs_post->contents_id;
 
@@ -769,7 +774,6 @@ WHERE status = 0
 
             // データ保存
             $blogs_post->save();
-
         }
 
         // タグの保存
@@ -798,8 +802,7 @@ WHERE status = 0
 
             // 登録ユーザ
             $blogs_post->created_id  = Auth::user()->id;
-        }
-        else {
+        } else {
             $blogs_post = BlogsPosts::find($id)->replicate();
  
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
@@ -809,7 +812,7 @@ WHERE status = 0
             if (empty($check_blogs_post) || $check_blogs_post->id != $id) {
                 return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
-       }
+        }
 
         // ブログ記事設定
         $blogs_post->status = 1;
@@ -822,7 +825,6 @@ WHERE status = 0
         $blogs_post->save();
 
         if (empty($id)) {
-
             // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
             BlogsPosts::where('id', $blogs_post->id)->update(['contents_id' => $blogs_post->id]);
         }
@@ -840,8 +842,7 @@ WHERE status = 0
     public function delete($request, $page_id, $frame_id, $blogs_posts_id)
     {
         // id がある場合、データを削除
-        if ( $blogs_posts_id ) {
-
+        if ($blogs_posts_id) {
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = BlogsPosts::where('id', $blogs_posts_id)->first();
 
@@ -905,7 +906,8 @@ WHERE status = 0
             'blogs_list_buckets', [
             'blog_frame' => $blog_frame,
             'blogs'      => $blogs,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -937,7 +939,7 @@ WHERE status = 0
             $blog = Blogs::where('id', $blogs_id)->first();
         }
         // Frame のbucket_id があれば、bucket_id からブログデータ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($blog_frame->bucket_id) && $create_flag == false) {
+        elseif (!empty($blog_frame->bucket_id) && $create_flag == false) {
             $blog = Blogs::where('bucket_id', $blog_frame->bucket_id)->first();
         }
 
@@ -949,7 +951,8 @@ WHERE status = 0
             'create_flag' => $create_flag,
             'message'     => $message,
             'errors'      => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -973,12 +976,10 @@ WHERE status = 0
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-
             if (empty($blogs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            }
-            else  {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
             }
@@ -989,7 +990,6 @@ WHERE status = 0
 
         // 画面から渡ってくるblogs_id が空ならバケツとブログを新規登録
         if (empty($request->blogs_id)) {
-
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => $request->blog_name,
@@ -1006,7 +1006,6 @@ WHERE status = 0
             // （表示ブログ選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
-
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
@@ -1015,7 +1014,6 @@ WHERE status = 0
         }
         // blogs_id があれば、ブログを更新
         else {
-
             // ブログデータ取得
             $blogs = Blogs::where('id', $request->blogs_id)->first();
 
@@ -1050,8 +1048,7 @@ WHERE status = 0
     public function destroyBuckets($request, $page_id, $frame_id, $blogs_id)
     {
         // blogs_id がある場合、データを削除
-        if ( $blogs_id ) {
-
+        if ($blogs_id) {
             // 記事データを削除する。
             BlogsPosts::where('blogs_id', $blogs_id)->delete();
 
@@ -1104,7 +1101,7 @@ WHERE status = 0
 
         // カテゴリ（全体）
         $general_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
-                                        ->leftJoin('blogs_categories', function ($join) use($blog_frame) {
+                                        ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
                                             $join->on('blogs_categories.categories_id', '=', 'categories.id')
                                                  ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
                                         })
@@ -1130,7 +1127,8 @@ WHERE status = 0
             'blog_frame'         => $blog_frame,
             'errors'             => $errors,
             'create_flag'        => $create_flag,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -1148,7 +1146,6 @@ WHERE status = 0
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
-
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_display_sequence' => ['required'],
@@ -1170,8 +1167,7 @@ WHERE status = 0
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->blogs_categories_id)) {
-            foreach($request->blogs_categories_id as $category_id) {
-
+            foreach ($request->blogs_categories_id as $category_id) {
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'plugin_display_sequence.'.$category_id => ['required'],
@@ -1219,9 +1215,7 @@ WHERE status = 0
 
         // 既存項目アリ
         if (!empty($request->plugin_categories_id)) {
-
-            foreach($request->plugin_categories_id as $plugin_categories_id) {
-
+            foreach ($request->plugin_categories_id as $plugin_categories_id) {
                 // モデルオブジェクト取得
                 $category = Categories::where('id', $plugin_categories_id)->first();
 
@@ -1242,8 +1236,7 @@ WHERE status = 0
         /* 表示フラグ更新(共通カテゴリ)
         ------------------------------------ */
         if (!empty($request->general_categories_id)) {
-            foreach($request->general_categories_id as $general_categories_id) {
-
+            foreach ($request->general_categories_id as $general_categories_id) {
                 // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 BlogsCategories::updateOrCreate(
                     ['categories_id' => $general_categories_id, 'blogs_id' => $blog_frame->blogs_id],
@@ -1260,8 +1253,7 @@ WHERE status = 0
         /* 表示フラグ更新(自ブログのカテゴリ)
         ------------------------------------ */
         if (!empty($request->plugin_categories_id)) {
-            foreach($request->plugin_categories_id as $plugin_categories_id) {
-
+            foreach ($request->plugin_categories_id as $plugin_categories_id) {
                 // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 BlogsCategories::updateOrCreate(
                     ['categories_id' => $plugin_categories_id, 'blogs_id' => $blog_frame->blogs_id],
@@ -1317,7 +1309,7 @@ WHERE status = 0
         // HTTPヘッダー出力
         header('Content-Type: text/xml; charset=UTF-8');
 
-echo <<<EOD
+        echo <<<EOD
 <rss xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
 <channel>
 <title>[{$base_site_name->value}]{$blog_frame->blog_name}</title>
@@ -1329,22 +1321,20 @@ EOD;
 
         $blogs_posts = $this->getPosts($blog_frame, $blog_frame->rss_count);
         foreach ($blogs_posts as $blogs_post) {
-
             $title = $blogs_post->post_title;
             $link = url("/plugin/blogs/show/" . $page_id . "/" . $frame_id . "/" . $blogs_post->id);
             if (mb_strlen(strip_tags($blogs_post->post_text)) > 100) {
                 $description = mb_substr(strip_tags($blogs_post->post_text), 0, 100) . "...";
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
-            }
-            else {
+            } else {
                 $description = strip_tags($blogs_post->post_text);
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
             }
             $pub_date = date(DATE_RSS, strtotime($blogs_post->posted_at));
             $content = strip_tags(html_entity_decode($blogs_post->post_text));
-echo <<<EOD
+            echo <<<EOD
 
 <item>
 <title>{$title}</title>
@@ -1365,12 +1355,12 @@ EOD;
 */
 //echo $rss_text;
 
-echo <<<EOD
+        echo <<<EOD
 </channel>
 </rss>
 EOD;
 
-exit;
+        exit;
     }
 
     /**
@@ -1398,7 +1388,8 @@ exit;
             'blogs_setting_frame', [
             'blog_frame'         => $blog_frame,
             'blog_frame_setting' => $blog_frame_setting,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -1411,7 +1402,7 @@ exit;
 
         // 項目のエラーチェック
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
-        if($request->scope == 'year' || $request->scope == 'fiscal'){
+        if ($request->scope == 'year' || $request->scope == 'fiscal') {
             $validator_values['scope_value'][] = ['required'];
         }
         $validator_attributes['scope_value'] = '指定年';

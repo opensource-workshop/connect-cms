@@ -133,7 +133,6 @@ class UserPluginBase extends PluginBase
     {
         // 関数定義メソッドの有無確認
         if (method_exists($obj, 'getPublicFunctions')) {
-
             // 関数リスト取得
             $public_functions = $obj->getPublicFunctions();
 
@@ -195,7 +194,7 @@ class UserPluginBase extends PluginBase
         // POST チェックに使用する getPost() 関数の有無をチェック
         // POST に関連しないメソッドは除外
         if ($action != "destroyBuckets") {
-            if ( $id && method_exists($obj, 'getPost') ) {
+            if ($id && method_exists($obj, 'getPost')) {
                 $post = $obj->getPost($id, $action);
             }
         }
@@ -209,7 +208,6 @@ class UserPluginBase extends PluginBase
 
         // 関数定義メソッドの有無確認
         if (method_exists($obj, 'declareRole')) {
-
             // 関数リスト取得
             $role_ckeck_table = $obj->declareRole();
 
@@ -236,10 +234,8 @@ class UserPluginBase extends PluginBase
     {
         // 設定があるものはここでチェックする。
         if (array_key_exists($this->action, $role_ckeck_table)) {
-
             // 記載されているメソッドすべての権限を有すること。
             foreach ($role_ckeck_table[$this->action] as $function_authority) {
-
                 // 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
                 $ret = null;
 
@@ -247,8 +243,7 @@ class UserPluginBase extends PluginBase
                 // POST があれば、POST の登録者チェックを行う
                 if (empty($post)) {
                     $ret = $this->can($function_authority, null, null, $this->buckets);
-                }
-                else {
+                } else {
 //print_r($post);
                     $ret = $this->can($function_authority, $post, null, $this->buckets);
                 }
@@ -326,7 +321,7 @@ class UserPluginBase extends PluginBase
             return  $this->page->theme;
         }
         // テーマが設定されていない場合は一般設定の取得
-        foreach($this->configs as $config) {
+        foreach ($this->configs as $config) {
             if ($config->name == 'base_theme') {
                 return $config->value;
             }
@@ -365,8 +360,7 @@ class UserPluginBase extends PluginBase
         if (strpos($arg['theme'], '/') !== false) {
             $arg['theme_group'] = mb_substr($arg['theme'], 0, strpos($arg['theme'], '/'));
             $arg['theme_group_default'] = mb_substr($arg['theme'], 0, strpos($arg['theme'], '/')) . '/Default';
-        }
-        else {
+        } else {
             $arg['theme_group'] = '';
             $arg['theme_group_default'] = '';
         }
@@ -388,7 +382,6 @@ class UserPluginBase extends PluginBase
             // クラス名をnamespace 毎取得
             $instance_name = explode('\\', get_class($this));
             if (is_array($instance_name) && $instance_name[0] == 'App' && $instance_name[1] == 'Plugins' && $instance_name[2] == 'User' && !empty($instance_name[3])) {
-
                 // 引数のアクションと同じメソッドを呼び出す。
                 $class_name = "App\Plugins\Hook\User\\" . $instance_name[3] . "\\" . $instance_name[3] . ucfirst($this->action) . "Hook";
 
@@ -441,7 +434,8 @@ class UserPluginBase extends PluginBase
             'edit_datalist', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -450,7 +444,7 @@ class UserPluginBase extends PluginBase
     protected function getRequestOrderBy($request_sort, $request_order_by)
     {
         // 画面からのソート指定があれば使用
-        if ( !empty( $request_sort ) ) {
+        if (!empty($request_sort)) {
             $request_order_by = explode('|', $request_sort);
         }
         return $request_order_by;
@@ -462,23 +456,21 @@ class UserPluginBase extends PluginBase
     protected function getSortOrderLink($request_sort, $sort_inits, $request_order_by)
     {
         // 画面からのソート指定があれば使用(ソート指定があった項目は、ソート設定の内容を入れ替える)
-        if ( !empty( $request_sort ) ) {
+        if (!empty($request_sort)) {
             //$request_order_by = explode('|', $request_sort);
             if ($request_order_by[1] == "asc") {
                 $sort_inits[$request_order_by[0]]=["asc", "desc"];
-            }
-            else {
+            } else {
                 $sort_inits[$request_order_by[0]]=["desc", "asc"];
             }
         }
 
         // 画面でのリンク用ソート指示(ソート指定されている場合はソート指定を逆転したもの)
         $order_link = array();
-        foreach ( $sort_inits as $order_by_key => $order_by ) {
-            if ( $request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
+        foreach ($sort_inits as $order_by_key => $order_by) {
+            if ($request_order_by[0]==$order_by_key && $request_order_by[1]==$order_by[0]) {
                 $order_link[$order_by_key] = array_reverse($order_by);
-            }
-            else {
+            } else {
                 $order_link[$order_by_key] = $order_by;
             }
         }
@@ -544,8 +536,7 @@ class UserPluginBase extends PluginBase
             $buckets_role->post_flag     = $this->isRequestRole($request->$role_name, 'post');
             $buckets_role->approval_flag = $this->isRequestRole($request->$role_name, 'approval');
             $buckets_role->save();
-        }
-        else {
+        } else {
             if ($buckets_role) {
                 $buckets_role->delete();
             }
@@ -598,7 +589,6 @@ class UserPluginBase extends PluginBase
 
         // layer1 は親とその下を1階層の配列に束ねるもの
         if ($format == 'layer1') {
-
             // 戻り値用
             $ret_array = array();
 
@@ -606,9 +596,8 @@ class UserPluginBase extends PluginBase
             $tree = $this->pages->toTree();
 
             // クロージャ。子を再帰呼び出しするためのもの。
-            $recursiveMenu = function($pages, $page_id) use(&$recursiveMenu, &$ret_array) {
-                foreach($pages as $page) {
-
+            $recursiveMenu = function ($pages, $page_id) use (&$recursiveMenu, &$ret_array) {
+                foreach ($pages as $page) {
                     //$ret_array[$page_id]['child'][] = $page->page_name;
                     $ret_array[$page_id]['child'][] = $page;
                     if (count($page->children) > 0) {
@@ -619,7 +608,7 @@ class UserPluginBase extends PluginBase
             };
 
             // 親階層のループ
-            foreach($tree as $pages) {
+            foreach ($tree as $pages) {
                 //$ret_array[$pages->id]['parent'] = $pages->page_name;
                 $ret_array[$pages->id]['parent'] = $pages;
                 if (count($pages->children) > 0) {
@@ -629,7 +618,6 @@ class UserPluginBase extends PluginBase
             // Log::debug($ret_array);
             return $ret_array;
         }
-
     }
 
     /**
@@ -643,7 +631,7 @@ class UserPluginBase extends PluginBase
         }
 
         $languages = array();
-        foreach($configs as $config) {
+        foreach ($configs as $config) {
             if ($config->category == 'language') {
                 $languages[$config->additional1] = $config;
             }
@@ -667,8 +655,7 @@ class UserPluginBase extends PluginBase
         $config_log_filename_obj = $configs->where('name', 'log_filename')->first();
         if (empty($config_log_filename_obj)) {
             $config_log_filename = "";
-        }
-        else {
+        } else {
             $config_log_filename = $config_log_filename_obj->value;
         }
 
@@ -690,9 +677,8 @@ class UserPluginBase extends PluginBase
         $log_handler_obj = $configs->where('name', 'log_handler')->first();
         if (!empty($log_handler_obj) && $log_handler_obj->value == '1') {
             $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
-        }
-        else {
-            $handler = new StreamHandler($log_path, $log_level , $bubble);
+        } else {
+            $handler = new StreamHandler($log_path, $log_level, $bubble);
         }
 
         // StackTrace用フォーマッタで整形
@@ -738,5 +724,4 @@ Trait へ移動（App\Http\Controllers\Core\ConnectController）
         return view('errors.' . $error_code);
     }
 */
-
 }

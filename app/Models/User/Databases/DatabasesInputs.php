@@ -14,7 +14,8 @@ class DatabasesInputs extends Model
     /**
      *  画像項目があるか判定
      */
-    public function hasImageType($columns) {
+    public function hasImageType($columns)
+    {
 
         // 対応する行のカラム一覧
         $row_columns = $columns->where('databases_id', $this->databases_id);
@@ -31,7 +32,8 @@ class DatabasesInputs extends Model
     /**
      *  n番目の画像型の値があるか判定
      */
-    public function hasThImage($columns, $input_cols) {
+    public function hasThImage($columns, $input_cols)
+    {
         if ($this->getThImage($columns, $input_cols)) {
             return true;
         }
@@ -41,7 +43,8 @@ class DatabasesInputs extends Model
     /**
      *  n番目の画像型の値を返却
      */
-    public function getThImage($columns, $input_cols, $th_no = 1) {
+    public function getThImage($columns, $input_cols, $th_no = 1)
+    {
 
         // 対応する行のカラム一覧
         $row_columns_nosort = $columns->where('databases_id', $this->databases_id);
@@ -72,7 +75,8 @@ class DatabasesInputs extends Model
     /**
      *  n番目のテキスト型の値を返却
      */
-    public function getThText($columns, $input_cols, $th_no = 1) {
+    public function getThText($columns, $input_cols, $th_no = 1)
+    {
 
         // 対応する行のカラム一覧
         $row_columns_nosort = $columns->where('databases_id', $this->databases_id);

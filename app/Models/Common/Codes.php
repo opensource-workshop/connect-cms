@@ -52,8 +52,8 @@ class Codes extends Model
      */
     public static function getCodeToValue($codes, $target_code, $return_colum = 'value')
     {
-        foreach($codes as $code){
-            if ($code->code == $target_code){
+        foreach ($codes as $code) {
+            if ($code->code == $target_code) {
                 // return $code->value;
                 return $code->$return_colum;
             }
