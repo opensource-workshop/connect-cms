@@ -502,7 +502,7 @@ class DatabasesPlugin extends UserPluginBase
             if ($databases_frames) {
                 $get_count = $databases_frames->view_count;
             }
-            $inputs = $inputs_query->paginate($get_count);
+            $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
             // <--- 登録データ行の取得
 
             // 登録データ詳細の取得
