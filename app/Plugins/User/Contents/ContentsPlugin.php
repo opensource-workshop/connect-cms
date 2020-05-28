@@ -549,7 +549,7 @@ class ContentsPlugin extends UserPluginBase
                           ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
                           ->where('buckets.plugin_name', 'contents')
                           ->orderBy($request_order_by[0], $request_order_by[1])
-                          ->paginate(10);
+                          ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         return $this->view(
             'contents_list_buckets', [
