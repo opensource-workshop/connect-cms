@@ -260,7 +260,7 @@ class BlogsPlugin extends UserPluginBase
         // 続き
         $blogs_posts = $blogs_query->orderBy('posted_at', 'desc')
                                    ->orderBy('contents_id', 'desc')
-                                   ->paginate($count);
+                                   ->paginate($count, ["*"], "frame_{$blog_frame->id}_page");
         return $blogs_posts;
     }
 
