@@ -165,19 +165,16 @@ class BlogsPlugin extends UserPluginBase
         // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
-        }
-        // 承認権限の場合、Active ＋ 承認待ちの取得
-        elseif ($this->isCan('role_approval')) {
+        } elseif ($this->isCan('role_approval')) {
+            // 承認権限の場合、Active ＋ 承認待ちの取得
             $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
-        }
-        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->isCan('role_reporter')) {
+        } elseif ($this->isCan('role_reporter')) {
+            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
             $query->Where('status', '=', 0)
                   ->orWhere('blogs_posts.created_id', '=', Auth::user()->id);
-        }
-        // その他（ゲスト）
-        else {
+        } else {
+            // その他（ゲスト）
             $query->where('status', 0);
             $query->where('blogs_posts.posted_at', '<=', Carbon::now());
         }
@@ -193,14 +190,12 @@ class BlogsPlugin extends UserPluginBase
         // 全件表示
         if (empty($blog_frame->scope)) {
             // 全件取得のため、追加条件なしで戻る。
-        }
-        // 年
-        elseif ($blog_frame->scope == 'year') {
+        } elseif ($blog_frame->scope == 'year') {
+            // 年
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
                   ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
-        }
-        // 年度
-        elseif ($blog_frame->scope == 'fiscal') {
+        } elseif ($blog_frame->scope == 'fiscal') {
+            // 年度
             $fiscal_next = intval($blog_frame->scope_value) + 1;
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
                   ->Where('posted_at', '<=', $fiscal_next . '-03-31 23:59:59');
@@ -758,9 +753,8 @@ WHERE status = 0
 
             // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
             BlogsPosts::where('id', $blogs_post->id)->update(['contents_id' => $blogs_post->id]);
-        }
-        // 更新
-        else {
+        } else {
+            // 更新
             // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
             $blogs_post->contents_id = $old_blogs_post->contents_id;
 
@@ -937,9 +931,8 @@ WHERE status = 0
         // blogs_id が渡ってくればblogs_id が対象
         if (!empty($blogs_id)) {
             $blog = Blogs::where('id', $blogs_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id からブログデータ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($blog_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($blog_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id からブログデータ取得、なければ、新規作成か選択へ誘導
             $blog = Blogs::where('bucket_id', $blog_frame->bucket_id)->first();
         }
 
@@ -1011,9 +1004,8 @@ WHERE status = 0
             }
 
             $message = 'ブログ設定を追加しました。';
-        }
-        // blogs_id があれば、ブログを更新
-        else {
+        } else {
+            // blogs_id があれば、ブログを更新
             // ブログデータ取得
             $blogs = Blogs::where('id', $request->blogs_id)->first();
 
