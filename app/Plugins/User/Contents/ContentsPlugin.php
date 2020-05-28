@@ -155,19 +155,16 @@ class ContentsPlugin extends UserPluginBase
         // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
-        }
-        // 承認権限の場合、Active ＋ 承認待ちの取得
-        elseif ($this->isCan('role_approval')) {
+        } elseif ($this->isCan('role_approval')) {
+            // 承認権限の場合、Active ＋ 承認待ちの取得
             $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
-        }
-        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
+        } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
+            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
             $query->Where('status', '=', 0)
                   ->orWhere('contents.created_id', '=', Auth::user()->id);
-        }
-        // その他（ゲスト）
-        else {
+        } else {
+            // その他（ゲスト）
             $query->where('status', 0);
         }
 
@@ -380,9 +377,8 @@ class ContentsPlugin extends UserPluginBase
         // 一時保存(status が 1 になる。)
         if ($status == 1) {
             $contents->status = 1;
-        }
-        // 承認フラグ(要承認の場合はstatus が 2 になる。)
-        elseif ($this->isApproval($frame_id)) {
+        } elseif ($this->isApproval($frame_id)) {
+            // 承認フラグ(要承認の場合はstatus が 2 になる。)
             $contents->status = 2;
         } else {
             $contents->status = 0;
