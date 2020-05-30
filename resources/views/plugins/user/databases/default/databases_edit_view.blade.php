@@ -231,6 +231,22 @@
         </div>
     </div>
 
+    {{-- 詳細表示するページ --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">詳細表示するページ </label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_page_id" value="{{old('view_page_id', $view_frame->view_page_id)}}" class="form-control">
+        </div>
+    </div>
+
+    {{-- 詳細表示するフレーム --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">詳細表示するフレーム </label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_frame_id" value="{{old('view_frame_id', $view_frame->view_frame_id)}}" class="form-control">
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">

@@ -8,16 +8,20 @@ use Illuminate\Support\Facades\Log;
 class DatabasesFrames extends Model
 {
     // 更新する項目の定義
-    protected $fillable = ['databases_id',
-                           'frames_id',
-                           'use_search_flag',
-                           'use_select_flag',
-                           'use_sort_flag',
-                           'default_sort_flag',
-                           'view_count',
-                           'default_hide',
-                           'created_at',
-                           'updated_at'];
+    protected $fillable = [
+        'databases_id',
+        'frames_id',
+        'use_search_flag',
+        'use_select_flag',
+        'use_sort_flag',
+        'default_sort_flag',
+        'view_count',
+        'default_hide',
+        'view_page_id',
+        'view_frame_id',
+        'created_at',
+        'updated_at'
+    ];
 
     /**
      *  並べ替えが設定されているか判断

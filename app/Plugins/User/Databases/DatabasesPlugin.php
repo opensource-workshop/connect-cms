@@ -237,7 +237,7 @@ class DatabasesPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'databases.id as databases_id', 'databases_frames.id as databases_frames_id', 'use_search_flag', 'use_select_flag', 'use_sort_flag', 'view_count', 'default_hide')
+                 ->select('frames.*', 'databases.id as databases_id', 'databases_frames.id as databases_frames_id', 'use_search_flag', 'use_select_flag', 'use_sort_flag', 'view_count', 'default_hide', 'view_page_id', 'view_frame_id')
                  ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
                  ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
                  ->where('frames.id', $frame_id)
@@ -2179,7 +2179,9 @@ class DatabasesPlugin extends UserPluginBase
              'use_sort_flag'     => $request->use_sort_flag ? implode(',', $request->use_sort_flag) : null,
              'default_sort_flag' => $request->default_sort_flag,
              'view_count'        => $request->view_count,
-             'default_hide'      => $request->default_hide]
+             'default_hide'      => $request->default_hide,
+             'view_page_id'        => $request->view_page_id,
+             'view_frame_id'        => $request->view_frame_id]
         );
 
         return $this->editView($request, $page_id, $frame_id);
@@ -2220,38 +2222,6 @@ class DatabasesPlugin extends UserPluginBase
         $return[] = 'show_page';
         $return[] = '/page';
 
-        /*
-        $return[] = DB::table('contents')
-                      ->select('contents.id                 as post_id',
-                               'frames.id                   as frame_id',
-                               'frames.page_id              as page_id',
-                               'pages.permanent_link        as permanent_link',
-                               'frames.frame_title          as post_title',
-                               DB::raw('0 as important'),
-                               'contents.created_at         as posted_at',
-                               'contents.created_name       as posted_name',
-                               DB::raw('null as classname'),
-                               DB::raw('null as categories_id'),
-                               DB::raw('null as category'),
-                               DB::raw('"contents" as plugin_name')
-                              )
-                      ->join('frames', 'frames.bucket_id', '=', 'contents.bucket_id')
-                      ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
-                      ->where('status', '?')
-
-                       ->where(function($plugin_query) use($search_keyword) {
-                           $plugin_query->where('contents.content_text', 'like', '?')
-                                        ->orWhere('frames.frame_title', 'like', '?');
-                       })
-
-                      ->whereNull('contents.deleted_at');
-
-
-        $bind = array(0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $return[] = $bind;
-        $return[] = 'show_page';
-        $return[] = '/page';
-        */
         return $return;
     }
 }

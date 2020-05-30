@@ -1,231 +1,84 @@
 {{--
- * 登録画面テンプレート。
+ * データベース デフォルト テンプレート
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>, よたか <info@hanamachi.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author よたか <info@hanamachi.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @copyright Hanamachi All Rights Reserved
  * @category データベース・プラグイン
  --}}
+
 @extends('core.cms_frame_base')
 @section("plugin_contents_$frame->id")
     @if (empty($setting_error_messages))
-        <form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST">
-            <div class="form-group row no-gutters mb-3">
-                {{ csrf_field() }}
+        @php
+            // コラム配列（DB へのアクセスを減らすために 配列にしておく）
+            $_columns = $inputs[0]->getColumnsDort($columns);
 
-                {{-- 絞り込みカウント --}}
-                @php
-                    $select_columns = $columns->where('select_flag', 1);
-                    $select_column_count = $select_columns->count();
-                    // 並べ替えが有効なら、選択項目のカウントに +1 して、並べ替え用セレクトボックスの位置を確保する。
-                    if ($databases_frames && $databases_frames->isUseSortFlag()) {
-                        $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();
-                        if ($sort_count > 0) {
-                            $select_column_count++;
-                        }
-                    } else {
-                        $sort_count = 0;
-                    }
-                    $slect_full_width = ($select_column_count < 3) ? 6 : 12;
-                    $col_no = ($select_column_count == 0) ? 0 : intdiv($slect_full_width, $select_column_count);
-                    $add_button_width = 0; // 新規ボタンの col width
-                @endphp
+            // リンク（アイテム ID を追加して使用する）
+            $_href = url('/').'/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/';
+        @endphp
 
-                {{-- 新規登録 --}}
-                @can("role_article")
-                    @php
-                        $add_button_width = 2; // 新規ボタンの幅を確保する。
-                    @endphp
-                    <div class="py-1
-                        col-{{$add_button_width}}
-                        order-2
-                        order-sm-10
-                        text-right"
-                    >
-                        <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
-                            <i class="far fa-plus"></i>
-                            <span class="d-none d-md-inline">新規</apan>
-                        </button>
-                    </div>
-                @endcan
+        @include('plugins.user.databases.default.databases_include_ctrl_head') {{--テーブルのヘッダー部分--}}
 
-                {{-- 検索 --}}
-                @if($database_frame && $database_frame->use_search_flag == 1)
-                    <div class="p-1
-                        input-group 
-                        col-{{12 - $add_button_width}} 
-                        col-sm-{{$slect_full_width - $add_button_width}} 
-                        order-1
-                        order-sm-6"
-                    >
-                        <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="検索はキーワードを入力してください。">
-                        <div class="input-group-append">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if($select_columns || $databases_frames->isBasicUseSortFlag())
-                    {{-- 絞り込み --}}
-                    @foreach($select_columns as $select_column)
-                        @php
-                            $session_column_name = "search_column." . $frame->id . '.' . $loop->index . ".value";
-                        @endphp
-                        <div class="p-1
-                            col-{{$col_no * 2}}
-                            col-sm-{{$col_no}}
-                            order-3"
-                        >
-                            <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}" />
-                            <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}" />
-                            @if($select_column->column_type == 'checkbox')
-                                <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART" />
-                            @else
-                                <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL" />
-                            @endif
-                            <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);">
-                                <option value="">{{$select_column->column_name}}</option>
-                                @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
-                                    @if($columns_select->value == Session::get($session_column_name))
-                                         <option value="{{$columns_select->value}}" selected>{{$columns_select->value}}</option>
-                                    @else
-                                        <option value="{{$columns_select->value}}">{{$columns_select->value}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                    @endforeach
-
-                    {{-- 並び順 --}}
-                    @if($sort_count > 0 || $databases_frames->isBasicUseSortFlag())
-                        @php
-                          $sort_column_id = '';
-                          $sort_column_order = '';
-                          // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
-                          if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
-                              $sort_column_id = Session::get('sort_column_id.'.$frame_id);
-                              $sort_column_order = Session::get('sort_column_order.'.$frame_id);
-                          }
-                          else if ($databases_frames && $databases_frames->default_sort_flag) {
-                              $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
-                              if (count($default_sort_flag_part) == 2) {
-                                  $sort_column_id = $default_sort_flag_part[0];
-                                  $sort_column_order = $default_sort_flag_part[1];
-                              }
-                          }
-                        @endphp
-                        <div class="p-1
-                            col-{{$col_no * 2}}
-                            col-sm-{{$col_no}}
-                            order-4"
-                        >
-                            <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);">
-                                {{-- 基本部分 --}}
-                                <option value="">並べ替え</option>
-                                <optgroup label="基本設定">
-                                    @foreach($databases_frames->getBasicUseSortFlag() as $sort_basic)
-                                        @if($sort_basic == ($sort_column_id . '_' . $sort_column_order))
-                                           <option value="{{$sort_basic}}" selected>{{DatabaseColumnType::getDescription($sort_basic)}}</option>
-                                        @else
-                                           <option value="{{$sort_basic}}">{{DatabaseColumnType::getDescription($sort_basic)}}</option>
-                                        @endif
-                                    @endforeach
-                                </optgroup>
-
-                                {{-- 各カラム --}}
-                                @if($sort_count > 0 && $databases_frames->isUseSortFlag('column'))
-                                    <optgroup label="各カラム設定">
-                                        {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
-                                        @foreach($columns->whereIn('sort_flag', [1, 2, 3]) as $sort_column)
-                                            @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
-                                                @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc')
-                                                    <option value="{{$sort_column->id}}_asc" selected>{{$sort_column->column_name}}(昇順)</option>
-                                                @else
-                                                    <option value="{{$sort_column->id}}_asc">{{$sort_column->column_name}}(昇順)</option>
-                                                @endif
-                                            @endif
-                                            @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 3)
-                                                @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc')
-                                                    <option value="{{$sort_column->id}}_desc" selected>{{$sort_column->column_name}}(降順)</option>
-                                                @else
-                                                    <option value="{{$sort_column->id}}_desc">{{$sort_column->column_name}}(降順)</option>
-                                                @endif
-                                            @endif
-                                        @endforeach
-                                    </optgroup>
-                                @endif
-                            </select>
-                        </div>
-                    @endif
-                @endif
-
-            </div>
-        </form>
         @if (!$default_hide_list)
-
-            {{-- データのループ --}}
-            <div class="db-default container">
-                <div class="d-md-table">
-                    <dl class="d-none d-md-table-row text-center">
-                        @foreach($columns as $column)
-                            @if($column->list_hide_flag == 0)
-                                <dt class="d-md-table-cell text-nowrap p-2">{{$column->column_name}}</dt>
-                            @endif
-                        @endforeach
-                    </dl>
-                    @foreach($inputs as $input)
-                        <dl class="d-md-table-row">
-                            @foreach($columns as $column)
-                                @if($column->list_hide_flag == 0)
-                                    @php
-                                        $tmp_data_url = url('/').'/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/'.$input->id;
-                                        $tmp_tag = 'dd';
-                                        $tmp_title_name = '';
-                                        $tmp_value_tag = '';
-                                        $tmp_link[0] = 0;
-                                        $tmp_link[1] = '<a href="'.$tmp_data_url.'">';
-                                        $tmp_link[2] = '</a>';
-                                        $tmp_tag_class = ' class="d-block d-md-table-cell p-md-2';
-                                        if($loop->first && $column->column_type == 'text'){
-                                            $tmp_tag = 'dt';
-                                            $tmp_link[0] = 1;
-                                            $tmp_value_tag = '';
-                                        }elseif($column->column_type == 'image'){
-                                            $tmp_tag_class = ' class="d-block d-md-table-cell p-md-1 type-image';
-                                            $tmp_link[0] = 1;
-                                        }else{
-                                            $tmp_title_name = '<h3 class="d-md-none">'.$column->column_name.'</h3>';
-                                            $tmp_value_tag = 'p';
-                                        }
-                                        $tmp_tag_class.= ($column->classname) ? ' '.$column->classname.'"' : '"';
-                                    @endphp
-
-                                    <{{$tmp_tag}}{!!$tmp_tag_class!!}>
-                                        {!!$tmp_title_name!!}
-                                        @if($tmp_value_tag) <{{$tmp_value_tag}}> @endif
-                                            @if($tmp_link[0]) {!!$tmp_link[1]!!} @endif
-                                                @include('plugins.user.databases.default.databases_include_value')
-                                            @if($tmp_link[0]) {!!$tmp_link[2]!!} @endif
-                                        @if($tmp_value_tag) </{{$tmp_value_tag}}>  @endif
-                                    </{{$tmp_tag}}>
-                               @endif
-                            @endforeach
-                            <p class="d-md-none text-right">
-                                <button type="button" class="btn btn-success" onclick="location.href='{!!$tmp_data_url!!}'">
-                                    <span>詳細 </span><i class="fas fa-angle-right"></i>
-                                </button>
-                            </p>
-                        </dl>
+        {{-- データのループ --}}
+        <div class="db-default container">
+            <div class="d-md-table">
+                <dl class="d-none d-md-table-row text-center"> {{--テーブルのタイトル--}}
+                    @foreach($_columns as $_column) {{--項目を繰り返してタイトルをつける--}}
+                    @if(!$_column['list_hide_flag']) {{--表示する項目を選択--}}
+                        <dt class="d-table-cell text-nowrap p-2 {{$_column['classname']}}">
+                            {{$_column['column_name']}}
+                        </dt>
+                    @endif
                     @endforeach
-                </div>
-            </div>
+                </dl>
 
-            {{-- ページング処理 --}}
-            <div class="text-center">
-                {{ $inputs->links() }}
+                @foreach($inputs as $input)
+                <dl class="d-md-table-row"> {{--テーブルのコンテンツ--}}
+                    @php $_first_flag = 1; @endphp {{--最初の項目を選ぶフラグ--}}
+                    
+                    @foreach($_columns as $_column){{--項目を繰り返す--}}
+                        @if($_column['list_hide_flag']) {{--表示しない項目--}}
+
+                        @elseif($_first_flag) {{--最初の項目--}}
+                        <dt class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
+                            <a href="'{{$_href.$input->id}}">
+                                {{$input->getTagType( $input_cols, $_column, 1)}}
+                            </a>
+                        </dt>
+                        @php $_first_flag=0; @endphp {{--フラグを倒す--}}
+
+                        @elseif( $_column['column_type'] == 'image' ) {{--イメージ項目--}}
+                        <dd class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
+                            <a href="'{{$_href.$input->id}}">
+                                {!!$input->getTagType( $input_cols, $_column, 1)!!}
+                            </a>
+                        </dd>
+
+                        @elseif( $_column['column_type'] == 'video') {{--ビデオ項目--}}
+                        <dd class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
+                            <h3 class="d-md-none">{{$_column['column_name']}}</h3>
+                            {!!$input->getTagType( $input_cols, $_column, 1)!!}
+                        </dd>
+
+                        @else {{--テキスト項目--}}
+                        <dd class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
+                            <h3 class="d-md-none">{{$_column['column_name']}}</h3>
+                            <p>{!!$input->getTagType( $input_cols, $_column, 1)!!}</p>
+                        </dd>
+                        @endif
+                    @endforeach
+                </dl>
+                @endforeach
             </div>
+        </div>
+        
+        <div class="text-center"> {{-- ページング処理 --}}
+            {{ $inputs->links() }}
+        </div>
         @endif
 
     @else
