@@ -758,7 +758,7 @@ class FaqsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $faqs = Faqs::orderBy('created_at', 'desc')
-                       ->paginate(1, ["*"], "frame_{$frame_id}_page");
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
