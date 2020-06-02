@@ -58,14 +58,22 @@
         "phpcs-color": [
             "@phpcs --colors"
         ],
+        "phpcs-any": [
+            "phpcs --standard=phpcs.xml"
+        ],
         "phpcbf": [
             "phpcbf --standard=phpcs.xml ./"
+        ],
+        "phpcbf-any": [
+            "phpcbf --standard=phpcs.xml"
         ]
     },
     "scripts-descriptions": {
         "phpcs": "Run all phpcs (Dev Only, require ./vendor/bin/phpcs).",
-        "phpcs-color": "Run all phpcs add option colors(Linux Only & Dev Only, require ./vendor/bin/phpcs).",
-        "phpcbf": "Run all phpcbf (Dev Only, require ./vendor/bin/phpcbf)."
+        "phpcs-color": "Run all phpcs add option colors (Linux Only & Dev Only, require ./vendor/bin/phpcs).",
+        "phpcs-any": "Phpcs without check PATH, Use -- specify the PATH to check (Dev Only, require ./vendor/bin/phpcs).",
+        "phpcbf": "Run all phpcbf (Dev Only, require ./vendor/bin/phpcbf).",
+        "phpcbf-any": "Phpcbf without check PATH, Use -- specify the PATH to check (Dev Only, require ./vendor/bin/phpcbf)."
     },
     "config": {
         "preferred-install": "dist",
