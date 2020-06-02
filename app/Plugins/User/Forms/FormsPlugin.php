@@ -558,7 +558,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $plugins = DB::table($plugin_name)
                        ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
                        ->orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
