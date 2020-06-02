@@ -244,7 +244,7 @@ class FaqsPlugin extends UserPluginBase
 
        // 取得
         $faqs_posts_recored = $faqs_posts->orderBy('posted_at', 'desc')
-                           ->paginate($count);
+                           ->paginate($count, ["*"], "frame_{$faq_frame->id}_page");
 
         return $faqs_posts_recored;
     }
@@ -758,7 +758,7 @@ class FaqsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $faqs = Faqs::orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(1, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
