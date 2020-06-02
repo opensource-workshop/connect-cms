@@ -370,7 +370,7 @@ class OpacsPlugin extends UserPluginBase
                           })
                           ->where('opacs_id', $opac_frame->opacs_id)
                           ->orderBy('accept_date', 'desc')
-                          ->paginate($opac_frame->view_count);
+                          ->paginate($opac_frame->view_count, ["*"], "frame_{$opac_frame->id}_page");
 */
         } else {
             $opacs_books = DB::table('opacs_books')
@@ -389,7 +389,7 @@ class OpacsPlugin extends UserPluginBase
                                   ->orWhere('barcode', 'like', '%' . $keyword . '%');
                           })
                           ->orderBy('accept_date', 'desc')
-                          ->paginate($opac_frame->view_count);
+                          ->paginate($opac_frame->view_count, ["*"], "frame_{$opac_frame->id}_page");
         }
 
         // 表示テンプレートを呼び出す。
@@ -414,7 +414,7 @@ class OpacsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $opacs = Opacs::orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
