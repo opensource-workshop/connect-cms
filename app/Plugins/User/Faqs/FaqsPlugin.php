@@ -159,22 +159,18 @@ class FaqsPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 全件取得のため、追加条件なしで戻る。
-        }
-        // 承認権限の場合、Active ＋ 承認待ちの取得
-        elseif ($this->isCan('role_approval')) {
+            // 記事修正権限、コンテンツ管理者の場合、全件取得のため、追加条件なしで戻る。
+        } elseif ($this->isCan('role_approval')) {
+            // 承認権限の場合、Active ＋ 承認待ちの取得
             $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
-        }
-        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->isCan('role_reporter')) {
+        } elseif ($this->isCan('role_reporter')) {
+            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
             $query->Where('status', '=', 0)
                   ->orWhere('faqs_posts.created_id', '=', Auth::user()->id);
-        }
-        // その他（ゲスト）
-        else {
+        } else {
+            // その他（ゲスト）
             $query->where('status', 0);
             $query->where('faqs_posts.posted_at', '<=', Carbon::now());
         }
@@ -187,16 +183,14 @@ class FaqsPlugin extends UserPluginBase
      */
     private function appendOrder($query, $faq_frame)
     {
-        // 最新順
         if ($faq_frame->sequence_conditions == 0) {
+            // 最新順
             $query->orderBy('posted_at', 'desc');
-        }
-        // 投稿順
-        elseif ($faq_frame->sequence_conditions == 1) {
+        } elseif ($faq_frame->sequence_conditions == 1) {
+            // 投稿順
             $query->orderBy('posted_at', 'asc');
-        }
-        // 指定順
-        elseif ($faq_frame->sequence_conditions == 2) {
+        } elseif ($faq_frame->sequence_conditions == 2) {
+            // 指定順
             $query->orderBy('display_sequence', 'asc');
         }
 
@@ -237,16 +231,14 @@ class FaqsPlugin extends UserPluginBase
                                  });
         // 表示条件に対するソート条件追加
 
-        // 最新順
         if ($faq_frame->sequence_conditions == 0) {
+            // 最新順
             $faqs_posts->orderBy('posted_at', 'desc');
-        }
-        // 投稿順
-        elseif ($faq_frame->sequence_conditions == 1) {
+        } elseif ($faq_frame->sequence_conditions == 1) {
+            // 投稿順
             $faqs_posts->orderBy('posted_at', 'asc');
-        }
-        // 指定順
-        elseif ($faq_frame->sequence_conditions == 2) {
+        } elseif ($faq_frame->sequence_conditions == 2) {
+            // 指定順
             $faqs_posts->orderBy('display_sequence', 'asc');
         }
 
@@ -615,8 +607,8 @@ class FaqsPlugin extends UserPluginBase
             $faqs_post->status = 2;
         }
 
-        // 新規
         if (empty($faqs_posts_id)) {
+            // 新規
             // 登録ユーザ
             $faqs_post->created_id  = Auth::user()->id;
 
@@ -625,9 +617,8 @@ class FaqsPlugin extends UserPluginBase
 
             // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
             FaqsPosts::where('id', $faqs_post->id)->update(['contents_id' => $faqs_post->id]);
-        }
-        // 更新
-        else {
+        } else {
+            // 更新
             // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
             $faqs_post->contents_id = $old_faqs_post->contents_id;
 
@@ -802,12 +793,11 @@ class FaqsPlugin extends UserPluginBase
         // FAQデータ
         $faq = new Faqs();
 
-        // faqs_id が渡ってくればfaqs_id が対象
         if (!empty($faqs_id)) {
+            // faqs_id が渡ってくればfaqs_id が対象
             $faq = Faqs::where('id', $faqs_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id からFAQデータ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($faq_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($faq_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id からFAQデータ取得、なければ、新規作成か選択へ誘導
             $faq = Faqs::where('bucket_id', $faq_frame->bucket_id)->first();
         }
 
@@ -881,9 +871,8 @@ class FaqsPlugin extends UserPluginBase
             }
 
             $message = 'FAQ設定を追加しました。';
-        }
-        // faqs_id があれば、FAQを更新
-        else {
+        } else {
+            // faqs_id があれば、FAQを更新
             // FAQデータ取得
             $faqs = Faqs::where('id', $request->faqs_id)->first();
 
