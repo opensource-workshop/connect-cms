@@ -261,7 +261,7 @@ class LearningtasksPlugin extends UserPluginBase
 
        // 取得
         $learningtasks_posts_recored = $learningtasks_posts->orderBy('posted_at', 'desc')
-                           ->paginate($count);
+                           ->paginate($count, ["*"], "frame_{$learningtasks_frame->id}_page");
 
         return $learningtasks_posts_recored;
     }
@@ -969,7 +969,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $learningtasks = Learningtasks::orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
