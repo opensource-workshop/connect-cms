@@ -511,12 +511,11 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // 開館カレンダーデータ
         $openingcalendar = new Openingcalendars();
 
-        // id が渡ってくればid が対象
         if (!empty($id)) {
+            // id が渡ってくればid が対象
             $openingcalendar = Openingcalendars::where('id', $id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から開館カレンダーデータ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($openingcalendar_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($openingcalendar_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id から開館カレンダーデータ取得、なければ、新規作成か選択へ誘導
             $openingcalendar = Openingcalendars::where('bucket_id', $openingcalendar_frame->bucket_id)->first();
 
             // 開館カレンダーデータ
@@ -571,8 +570,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるopeningcalendars_id が空ならバケツと開館カレンダーを新規登録
         if (empty($request->openingcalendars_id)) {
+            // 画面から渡ってくるopeningcalendars_id が空ならバケツと開館カレンダーを新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => '無題',
@@ -594,9 +593,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             }
 
             $message = '開館カレンダー設定を追加しました。';
-        }
-        // openingcalendars_id があれば、開館カレンダーを更新
-        else {
+        } else {
+            // openingcalendars_id があれば、開館カレンダーを更新
             // 開館カレンダーデータ取得
             $openingcalendars = Openingcalendars::where('id', $request->openingcalendars_id)->first();
 
@@ -854,8 +852,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // 開館カレンダー＆フレームデータ
         $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
 
-        // 年間カレンダーがアップロードされた。
         if ($request->hasFile('yearschedule_pdf')) {
+            // 年間カレンダーがアップロードされた。
             // PDFファイルチェック
             $validator = Validator::make($request->all(), [
                 'yearschedule_pdf' => [
@@ -890,9 +888,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
             $upload_path = $request->file('yearschedule_pdf')->storeAs($directory, $upload->id . '.' . $request->file('yearschedule_pdf')->getClientOriginalExtension());
 
             //$path = $request->file('yearschedule_pdf')->storeAs('plugins/openingcalendars', $openingcalendar_frame->openingcalendars_id . '.pdf');
-        }
-        // 年間カレンダーがアップロードされなかった。
-        else {
+        } else {
+            // 年間カレンダーがアップロードされなかった。
             // DBに情報保存
             Openingcalendars::where('id', $openingcalendar_frame->openingcalendars_id)
                             ->update(['yearschedule_link_text' => $request->yearschedule_link_text]);
