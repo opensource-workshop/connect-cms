@@ -187,7 +187,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs_query->setBindings($bind);
 
         // ページングしてデータ取得
-        $searchs_results = $searchs_query->paginate($searchs_frame->count);
+        $searchs_results = $searchs_query->paginate($searchs_frame->count, ["*"], "frame_{$searchs_frame->id}_page");
 
         return array($searchs_results, $link_pattern, $link_base);
     }
@@ -267,7 +267,7 @@ class SearchsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $searchs = Searchs::orderBy('created_at', 'desc')
-                          ->paginate(10);
+                          ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
