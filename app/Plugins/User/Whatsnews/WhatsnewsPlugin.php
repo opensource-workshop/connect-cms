@@ -324,7 +324,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $whatsnews = Whatsnews::orderBy('created_at', 'desc')
-                              ->paginate(10);
+                              ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
