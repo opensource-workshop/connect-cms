@@ -275,6 +275,16 @@ class UserPluginBase extends PluginBase
             return 'plugins.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
         }
 
+        // オプションの指定したテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins_option/user/' . $this->frame->plugin_name . "/" . $this->frame->template . "/" . $blade_name . ".blade.php")) {
+            return 'plugins_option.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
+        }
+
+        // オプションのデフォルトテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins_option/user/' . $this->frame->plugin_name . "/default/" . $blade_name . ".blade.php")) {
+            return 'plugins_option.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
+        }
+
         return 'errors/template_notfound';
     }
 
