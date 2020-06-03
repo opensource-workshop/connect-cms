@@ -224,7 +224,7 @@ class DatabasesearchesPlugin extends UserPluginBase
                                 ->groupBy('databases.databases_name')
                                 ->groupBy('databases_input_cols.updated_at')
                                 ->orderBy('databases_input_cols.updated_at', 'desc')
-                                ->paginate($databasesearches->view_count);
+                                ->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
 
         // 登録データ詳細の取得
         $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name')

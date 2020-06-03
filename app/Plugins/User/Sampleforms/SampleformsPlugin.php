@@ -38,7 +38,7 @@ class SampleformsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $sampleforms = Sampleforms::orderBy('created_at', 'desc')
-                       ->paginate(2);
+                       ->paginate(2, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return view(

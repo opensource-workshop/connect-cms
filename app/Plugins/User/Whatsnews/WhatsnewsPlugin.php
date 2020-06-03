@@ -324,7 +324,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $whatsnews = Whatsnews::orderBy('created_at', 'desc')
-                              ->paginate(10);
+                              ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -359,12 +359,11 @@ class WhatsnewsPlugin extends UserPluginBase
         // 新着情報設定データ
         $whatsnew = new Whatsnews();
 
-        // id が渡ってくればid が対象
         if (!empty($id)) {
+            // id が渡ってくればid が対象
             $whatsnew = Whatsnews::where('id', $id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から新着情報設定データ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($whatsnew_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($whatsnew_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id から新着情報設定データ取得、なければ、新規作成か選択へ誘導
             $whatsnew = Whatsnews::where('bucket_id', $whatsnew_frame->bucket_id)->first();
         }
 
@@ -423,8 +422,8 @@ class WhatsnewsPlugin extends UserPluginBase
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるwhatsnews_id が空ならバケツと設定データを新規登録
         if (empty($request->whatsnews_id)) {
+            // 画面から渡ってくるwhatsnews_id が空ならバケツと設定データを新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => '無題',
@@ -445,9 +444,8 @@ class WhatsnewsPlugin extends UserPluginBase
             }
 
             $message = '新着情報設定を追加しました。';
-        }
-        // whatsnews_id があれば、新着情報設定を更新
-        else {
+        } else {
+            // whatsnews_id があれば、新着情報設定を更新
             // 新着情報設定の取得
             $whatsnews = Whatsnews::where('id', $request->whatsnews_id)->first();
 

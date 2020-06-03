@@ -744,7 +744,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations.created_at',
         );
         $query->orderBy('reservations.created_at', 'desc');
-        $reservations = $query->paginate(10);
+        $reservations = $query->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -779,12 +779,11 @@ class ReservationsPlugin extends UserPluginBase
         // 施設データ
         $reservation = new Reservations();
 
-        // id が渡ってくればid が対象
         if (!empty($reservations_id)) {
+            // id が渡ってくればid が対象
             $reservation = Reservations::where('id', $reservations_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($reservation_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($reservation_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
@@ -830,8 +829,8 @@ class ReservationsPlugin extends UserPluginBase
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるid が空ならバケツと施設を新規登録
         if (empty($request->reservations_id)) {
+            // 画面から渡ってくるid が空ならバケツと施設を新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => $request->reservation_name,
@@ -853,9 +852,8 @@ class ReservationsPlugin extends UserPluginBase
             }
 
             $message = '施設予約の設定を追加しました。';
-        }
-        // id があれば、施設予約を更新
-        else {
+        } else {
+            // id があれば、施設予約を更新
             // 施設予約データ取得
             $reservations = Reservations::where('id', $request->reservations_id)->first();
 
@@ -953,12 +951,11 @@ class ReservationsPlugin extends UserPluginBase
         // 施設データ
         $reservation = new Reservations();
 
-        // id が渡ってくればid が対象
         if (!empty($reservations_id)) {
+            // id が渡ってくればid が対象
             $reservation = Reservations::where('id', $reservations_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から施設データ取得
-        elseif (!empty($reservation_frame->bucket_id)) {
+        } elseif (!empty($reservation_frame->bucket_id)) {
+            // Frame のbucket_id があれば、bucket_id から施設データ取得
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 
@@ -1045,12 +1042,11 @@ class ReservationsPlugin extends UserPluginBase
         // 施設データ
         $reservation = new Reservations();
 
-        // id が渡ってくればid が対象
         if (!empty($reservations_id)) {
+            // id が渡ってくればid が対象
             $reservation = Reservations::where('id', $reservations_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から施設データ取得
-        elseif (!empty($reservation_frame->bucket_id)) {
+        } elseif (!empty($reservation_frame->bucket_id)) {
+            // Frame のbucket_id があれば、bucket_id から施設データ取得
             $reservation = Reservations::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
 

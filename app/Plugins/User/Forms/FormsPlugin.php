@@ -311,9 +311,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
-            if($request->forms_columns_value[$forms_column->id]){
+            if ($request->forms_columns_value[$forms_column->id]) {
                 // 入力値があった場合
-                if(is_numeric(mb_convert_kana($request->forms_columns_value[$forms_column->id], 'n'))){
+                if (is_numeric(mb_convert_kana($request->forms_columns_value[$forms_column->id], 'n'))) {
                     // 全角→半角変換した結果が数値の場合
                     $tmp_array = $request->forms_columns_value;
                     // 全角→半角へ丸める
@@ -321,7 +321,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                     $request->merge([
                         "forms_columns_value" => $tmp_array,
                     ]);
-                }else{
+                } else {
                     // 全角→半角変換した結果が数値ではない場合
                     $validator_rule[] = 'numeric';
                 }
@@ -558,7 +558,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $plugins = DB::table($plugin_name)
                        ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
                        ->orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -593,12 +593,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // フォームデータ
         $form = new Forms();
 
-        // forms_id が渡ってくればforms_id が対象
         if (!empty($forms_id)) {
+            // forms_id が渡ってくればforms_id が対象
             $form = Forms::where('id', $forms_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id からフォームデータ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($form_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($form_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id からフォームデータ取得、なければ、新規作成か選択へ誘導
             $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
         }
 
@@ -674,9 +673,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             }
 
             $message = 'フォーム設定を追加しました。<br />　 フォームで使用する項目を設定してください。［ <a href="/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">項目設定</a> ］';
-        }
-        // forms_id があれば、フォームを更新
-        else {
+        } else {
+            // forms_id があれば、フォームを更新
+
             // フォームデータ取得
             $forms = Forms::where('id', $request->forms_id)->first();
 

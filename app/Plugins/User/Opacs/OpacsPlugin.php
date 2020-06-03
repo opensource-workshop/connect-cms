@@ -191,14 +191,13 @@ class OpacsPlugin extends UserPluginBase
         // 返却値
         $ret = 0;
 
-        // 貸し出し許可日数を設定して貸し出しする。
         if ($opac->lent_setting == 2) {
+            // 貸し出し許可日数を設定して貸し出しする。
             if (array_key_exists('lent_days_global', $opac_configs)) {
                 $ret = $opac_configs['lent_days_global'];
             }
-        }
-        // 役割毎に貸し出し許可日数を設定して貸し出しする。
-        elseif ($opac->lent_setting == 3) {
+        } elseif ($opac->lent_setting == 3) {
+            // 役割毎に貸し出し許可日数を設定して貸し出しする。
             // ユーザに設定されている役割をループし、Opac設定の役割毎貸し出し許可日数を取得。一番長い日数を採用する。
             foreach ($users_roles as $users_role) {
                 if ($users_role->target == 'original_role') {
@@ -209,9 +208,8 @@ class OpacsPlugin extends UserPluginBase
                     }
                 }
             }
-        }
-        // 貸し出ししない or 貸し出し許可日数を設定せずに貸し出しする。
-        else {
+        } else {
+            // 貸し出ししない or 貸し出し許可日数を設定せずに貸し出しする。
         }
 
         return strtotime("+" . $ret ." day");
@@ -230,9 +228,8 @@ class OpacsPlugin extends UserPluginBase
             if (array_key_exists('lent_kumit_global', $opac_configs)) {
                 $ret = $opac_configs['lent_limit_global'];
             }
-        }
-        // 役割毎に貸し出し冊数を設定して貸し出しする。
-        elseif ($opac->lent_limit == 2) {
+        } elseif ($opac->lent_limit == 2) {
+            // 役割毎に貸し出し冊数を設定して貸し出しする。
             // ユーザに設定されている役割をループし、Opac設定の役割毎貸し出し冊数を取得。一番多い冊数を採用する。
             foreach ($users_roles as $users_role) {
                 if ($users_role->target == 'original_role') {
@@ -243,9 +240,8 @@ class OpacsPlugin extends UserPluginBase
                     }
                 }
             }
-        }
-        // 貸し出ししない or 貸し出し冊数を設定せずに貸し出しする。
-        else {
+        } else {
+            // 貸し出ししない or 貸し出し冊数を設定せずに貸し出しする。
         }
 
         return $ret;
@@ -370,7 +366,7 @@ class OpacsPlugin extends UserPluginBase
                           })
                           ->where('opacs_id', $opac_frame->opacs_id)
                           ->orderBy('accept_date', 'desc')
-                          ->paginate($opac_frame->view_count);
+                          ->paginate($opac_frame->view_count, ["*"], "frame_{$opac_frame->id}_page");
 */
         } else {
             $opacs_books = DB::table('opacs_books')
@@ -389,7 +385,7 @@ class OpacsPlugin extends UserPluginBase
                                   ->orWhere('barcode', 'like', '%' . $keyword . '%');
                           })
                           ->orderBy('accept_date', 'desc')
-                          ->paginate($opac_frame->view_count);
+                          ->paginate($opac_frame->view_count, ["*"], "frame_{$opac_frame->id}_page");
         }
 
         // 表示テンプレートを呼び出す。
@@ -414,7 +410,7 @@ class OpacsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $opacs = Opacs::orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -449,12 +445,11 @@ class OpacsPlugin extends UserPluginBase
         // OPACデータ
         $opac = new Opacs();
 
-        // opacs_id が渡ってくればopacs_id が対象
         if (!empty($opacs_id)) {
+            // opacs_id が渡ってくればopacs_id が対象
             $opac = Opacs::where('id', $opacs_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id からOPACデータ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($opac_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($opac_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id からOPACデータ取得、なければ、新規作成か選択へ誘導
             $opac = Opacs::where('bucket_id', $opac_frame->bucket_id)->first();
         }
 
@@ -566,9 +561,8 @@ class OpacsPlugin extends UserPluginBase
             }
 
             $message = 'OPAC設定を追加しました。';
-        }
-        // opacs_id があれば、OPACを更新
-        else {
+        } else {
+            // opacs_id があれば、OPACを更新
             // OPACデータ取得
             $opacs = Opacs::where('id', $request->opacs_id)->first();
 

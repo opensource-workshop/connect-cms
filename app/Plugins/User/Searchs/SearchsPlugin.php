@@ -187,7 +187,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs_query->setBindings($bind);
 
         // ページングしてデータ取得
-        $searchs_results = $searchs_query->paginate($searchs_frame->count);
+        $searchs_results = $searchs_query->paginate($searchs_frame->count, ["*"], "frame_{$searchs_frame->id}_page");
 
         return array($searchs_results, $link_pattern, $link_base);
     }
@@ -267,7 +267,7 @@ class SearchsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $searchs = Searchs::orderBy('created_at', 'desc')
-                          ->paginate(10);
+                          ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -302,12 +302,11 @@ class SearchsPlugin extends UserPluginBase
         // 設定データ
         $searchs = new Searchs();
 
-        // id が渡ってくればid が対象
         if (!empty($id)) {
+            // id が渡ってくればid が対象
             $searchs = Searchs::where('id', $id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から設定データ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($searchs_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($searchs_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id から設定データ取得、なければ、新規作成か選択へ誘導
             $searchs = Searchs::where('bucket_id', $searchs_frame->bucket_id)->first();
         }
 
@@ -362,8 +361,8 @@ class SearchsPlugin extends UserPluginBase
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるsearchs_id が空ならバケツと設定を新規登録
         if (empty($request->searchs_id)) {
+            // 画面から渡ってくるsearchs_id が空ならバケツと設定を新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => '無題',
@@ -384,9 +383,8 @@ class SearchsPlugin extends UserPluginBase
             }
 
             $message = '設定を追加しました。';
-        }
-        // whatsnews_id があれば、新着情報設定を更新
-        else {
+        } else {
+            // whatsnews_id があれば、新着情報設定を更新
             // 新着情報設定の取得
             $searchs = Searchs::where('id', $request->searchs_id)->first();
 

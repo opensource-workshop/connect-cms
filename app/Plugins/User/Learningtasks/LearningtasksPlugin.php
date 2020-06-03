@@ -163,22 +163,18 @@ class LearningtasksPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 全件取得のため、追加条件なしで戻る。
-        }
-        // 承認権限の場合、Active ＋ 承認待ちの取得
-        elseif ($this->isCan('role_approval')) {
+            // 記事修正権限、コンテンツ管理者の場合、全件取得のため、追加条件なしで戻る。
+        } elseif ($this->isCan('role_approval')) {
+            // 承認権限の場合、Active ＋ 承認待ちの取得
             $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
-        }
-        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->isCan('role_reporter')) {
+        } elseif ($this->isCan('role_reporter')) {
+            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
             $query->Where('status', '=', 0)
                   ->orWhere('learningtasks_posts.created_id', '=', Auth::user()->id);
-        }
-        // その他（ゲスト）
-        else {
+        } else {
+            // その他（ゲスト）
             $query->where('status', 0);
             $query->where('learningtasks_posts.posted_at', '<=', Carbon::now());
         }
@@ -191,16 +187,14 @@ class LearningtasksPlugin extends UserPluginBase
      */
     private function appendOrder($query, $learningtasks_frame)
     {
-        // 最新順
         if ($learningtasks_frame->sequence_conditions == 0) {
+            // 最新順
             $query->orderBy('posted_at', 'desc');
-        }
-        // 投稿順
-        elseif ($learningtasks_frame->sequence_conditions == 1) {
+        } elseif ($learningtasks_frame->sequence_conditions == 1) {
+            // 投稿順
             $query->orderBy('posted_at', 'asc');
-        }
-        // 指定順
-        elseif ($learningtasks_frame->sequence_conditions == 2) {
+        } elseif ($learningtasks_frame->sequence_conditions == 2) {
+            // 指定順
             $query->orderBy('display_sequence', 'asc');
         }
 
@@ -246,22 +240,20 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 表示条件に対するソート条件追加
 
-        // 最新順
         if ($learningtasks_frame->sequence_conditions == 0) {
+            // 最新順
             $learningtasks_posts->orderBy('posted_at', 'desc');
-        }
-        // 投稿順
-        elseif ($learningtasks_frame->sequence_conditions == 1) {
+        } elseif ($learningtasks_frame->sequence_conditions == 1) {
+            // 投稿順
             $learningtasks_posts->orderBy('posted_at', 'asc');
-        }
-        // 指定順
-        elseif ($learningtasks_frame->sequence_conditions == 2) {
+        } elseif ($learningtasks_frame->sequence_conditions == 2) {
+            // 指定順
             $learningtasks_posts->orderBy('display_sequence', 'asc');
         }
 
        // 取得
         $learningtasks_posts_recored = $learningtasks_posts->orderBy('posted_at', 'desc')
-                           ->paginate($count);
+                           ->paginate($count, ["*"], "frame_{$learningtasks_frame->id}_page");
 
         return $learningtasks_posts_recored;
     }
@@ -808,8 +800,8 @@ class LearningtasksPlugin extends UserPluginBase
             $learningtasks_post->status = 2;
         }
 
-        // 新規
         if (empty($learningtasks_posts_id)) {
+            // 新規
             // 登録ユーザ
             $learningtasks_post->created_id  = Auth::user()->id;
 
@@ -818,9 +810,8 @@ class LearningtasksPlugin extends UserPluginBase
 
             // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
             LearningtasksPosts::where('id', $learningtasks_post->id)->update(['contents_id' => $learningtasks_post->id]);
-        }
-        // 更新
-        else {
+        } else {
+            // 更新
             // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
             $learningtasks_post->contents_id = $old_learningtasks_post->contents_id;
 
@@ -969,7 +960,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $learningtasks = Learningtasks::orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -1004,12 +995,11 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題管理データ
         $learningtasks = new Learningtasks();
 
-        // learningtasks_id が渡ってくればlearningtasks_id が対象
         if (!empty($learningtasks_id)) {
+            // learningtasks_id が渡ってくればlearningtasks_id が対象
             $learningtasks = Learningtasks::where('id', $learningtasks_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から課題管理データ取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($learningtasks_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($learningtasks_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id から課題管理データ取得、なければ、新規作成か選択へ誘導
             $learningtasks = Learningtasks::where('bucket_id', $learningtasks_frame->bucket_id)->first();
         }
 
@@ -1060,8 +1050,8 @@ class LearningtasksPlugin extends UserPluginBase
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるlearningtasks_id が空ならバケツと課題管理を新規登録
         if (empty($request->learningtasks_id)) {
+            // 画面から渡ってくるlearningtasks_id が空ならバケツと課題管理を新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => $request->learningtasks_name,
@@ -1083,9 +1073,8 @@ class LearningtasksPlugin extends UserPluginBase
             }
 
             $message = '課題管理設定を追加しました。';
-        }
-        // learningtasks_id があれば、課題管理を更新
-        else {
+        } else {
+            // learningtasks_id があれば、課題管理を更新
             // 課題管理データ取得
             $learningtasks = Learningtasks::where('id', $request->learningtasks_id)->first();
 
