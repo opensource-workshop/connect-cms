@@ -182,20 +182,39 @@
                     failure('Invalid JSON: ' + xhr.responseText);
                     return;
                 }
+                // [debug]
+                // アップロード後に押せないボタンを解除する
+                // $(':button').prop('disabled', false);
+                // console.log("転送が完了しました。");
+
                 success(json.location);
             };
 
+            // [debug]
+            // アップロード中はボタンを押させない
+            // $(':button').prop('disabled', true);
+            // console.log("転送開始");
+
             formData = new FormData();
-            if( typeof(blobInfo.blob().name) !== undefined )
-                fileName = blobInfo.blob().name;
-            else
-                fileName = blobInfo.filename();
+            // bugfix: 「blobInfo.blob().name」は新規のアップロードの際しか名前が設定されないが、「blobInfo.filename()」は新規の時も回転などimagetoolsを使用した時も
+            // 常に設定されているので、typeofの評価は不要で常に fileName = blobInfo.filename(); でよいのではと思います。
+            // https://github.com/opensource-workshop/connect-cms/pull/353#issuecomment-636411186
+            //
+            // if( typeof(blobInfo.blob().name) !== undefined )
+            //     fileName = blobInfo.blob().name;
+            // else
+            //     fileName = blobInfo.filename();
+            fileName = blobInfo.filename();
 
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);
             formData.append('file', blobInfo.blob(), fileName);
             formData.append('page_id', {{$page_id}});
             xhr.send(formData);
+
+            // [debug]
+            // console.log("Uploaded images and posted content as an ajax request.");
+            // Close the last shown notification.
         }
     });
 </script>
