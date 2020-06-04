@@ -92,6 +92,8 @@ class WhatsnewsPlugin extends UserPluginBase
                      'whatsnews.days',
                      'whatsnews.rss',
                      'whatsnews.rss_count',
+                     'whatsnews.page_method',
+                     'whatsnews.page_count',
                      'whatsnews.view_posted_name',
                      'whatsnews.view_posted_at',
                      'whatsnews.important',
@@ -462,6 +464,8 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->days              = (intval($request->days) < 0) ? 0 : intval($request->days);
         $whatsnews->rss               = $request->rss;
         $whatsnews->rss_count         = intval($request->rss_count);
+        // $whatsnews->page_method       = $request->page_method;
+        // $whatsnews->page_count        = (intval($request->page_count) < 0) ? 0 : intval($request->page_count);
         $whatsnews->view_posted_name  = $request->view_posted_name;
         $whatsnews->view_posted_at    = $request->view_posted_at;
         $whatsnews->important         = $request->important;

@@ -40,6 +40,12 @@
         @endif
     @endforeach
     </dl>
+    {{-- ページング処理 --}}
+    {{-- @if ($whatsnews_frame->page_method == 1)
+        <div class="text-center">
+            {{ $whatsnews->links() }}
+        </div>
+    @endif --}}
 </div>
 @endif
 @endsection
