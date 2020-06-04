@@ -269,10 +269,13 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 件数制限
         if ($method == 'rss') {
+            // 「RSS件数」で制限
             $whatsnews_sql->limit($whatsnews_frame->rss_count);
         } elseif ($whatsnews_frame->view_pattern == 0) {
+            // 「表示件数」で制限
             $whatsnews_sql->limit($whatsnews_frame->count);
         } else {
+            // 「表示日数」で制限
             $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
         }
 
