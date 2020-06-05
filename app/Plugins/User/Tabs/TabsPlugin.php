@@ -122,7 +122,11 @@ class TabsPlugin extends UserPluginBase
         // タブデータ作成 or 更新
         Tabs::updateOrCreate(
             ['frame_id' => $frame_id],
-            ['frame_id' => $frame_id, 'default_frame_id' => $request->default_frame_id, 'frame_ids' => (empty($request->frame_select)) ? '' : implode(',', $request->frame_select)]
+            [
+                'frame_id' => $frame_id, 
+                'default_frame_id' => $request->default_frame_id, 
+                'frame_ids' => (empty($request->frame_select)) ? '' : implode(',', $request->frame_select)
+            ]
         );
 
         // 画面へ
