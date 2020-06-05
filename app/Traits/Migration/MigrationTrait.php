@@ -660,18 +660,37 @@ trait MigrationTrait
     /**
      * 経路探索キーの取得（作成）
      */
-    private function getRouteStr($nc2_page, $nc2_sort_pages)
+    private function getRouteStr($nc2_page, $nc2_sort_pages, $get_display_sequence = false)
     {
+        // 経路探索パス(配列の route_path )
+        // r{root_id}_{parent_id}_{parent_id}_{...}_{page_id}
+
+        // ソート用の配列のキー(root_id を最初に持ってきて、display_sequence でつなぐ)
+        // r{root_id}_{display_sequence}_{display_sequence}_{...}_{display_sequence}
+
         // 前提として、最低限のソートとして、同一階層でのソートができている。
         // ページデータを経路探索をキーに設定済みの配列から、親を探して、自分の経路探索キーを生成する。
         // 経路探索キーは 0021_0026 のように、{第1階層ページID}_{第2階層ページID}_{...} のように生成する。
         foreach($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
             if ($nc2_sort_page->page_id == $nc2_page->parent_id) {
-                return $nc2_sort_page_key . '_' . $this->zeroSuppress($nc2_page->page_id);
+                if ($get_display_sequence) {
+                    // ソート用の配列のキーを取得
+                    return $nc2_sort_page_key . '_' . $this->zeroSuppress($nc2_page->display_sequence);
+                }
+                else {
+                    // 経路探索パス
+                    return $nc2_sort_page->route_path . '_' . $this->zeroSuppress($nc2_page->page_id);
+                }
             }
         }
 
-        return $this->zeroSuppress($nc2_page->page_id);
+        // まだ配列になかった場合（各スペースのルートページ）
+        if ($get_display_sequence) {
+            return 'r' . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->display_sequence);
+        }
+        else {
+            return 'r' . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->page_id);
+        }
     }
 
     /**
@@ -704,12 +723,23 @@ trait MigrationTrait
 
         // 経路探索の文字列をキーにしたページ配列の作成
         foreach($nc2_pages as $nc2_page) {
-            $nc2_sort_pages[$this->getRouteStr($nc2_page, $nc2_sort_pages)] = $nc2_page;
+            $nc2_page->route_path = $this->getRouteStr($nc2_page, $nc2_sort_pages);
+            $nc2_sort_pages[$this->getRouteStr($nc2_page, $nc2_sort_pages, true)] = $nc2_page;
         }
 
         // 経路探索の文字列（キー）でソート
         ksort($nc2_sort_pages);
+        Log::debug($nc2_sort_pages);
+
+        // 新規ページ用のインデックス
+        // 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
+        $new_page_index = 0;
+
         foreach($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
+
+            $new_page_index++;
+            Storage::makeDirectory('migration/_' . $new_page_index);
+
             echo $nc2_sort_page_key . ':' . $nc2_sort_page->page_name . "\n";
         }
     }
