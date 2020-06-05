@@ -26,17 +26,23 @@
         <tr>
             <td class="text-center">
                 <div class="custom-control custom-radio">
-                    @if(isset($tabs) && $tabs->default_frame_id == $frame_record->id)
-                    <input type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}" name="default_frame_id" class="custom-control-input" checked="checked">
-                    @else
-                    <input type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}" name="default_frame_id" class="custom-control-input">
-                    @endif
+                    {{-- 初期選択 --}}
+                    <input 
+                        type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}" 
+                        name="default_frame_id" class="custom-control-input" 
+                        @if (isset($tabs) && $tabs->default_frame_id == $frame_record->id) checked @endif
+                    >
                     <label class="custom-control-label" for="default_frame_id{{$frame_record->id}}"></label>
                 </div>
             </td>
             <td>
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="frame_select{{$frame_record->id}}" name="frame_select[]" value="{{$frame_record->id}}" @if ($tabs && $tabs->onFrame($frame_record->id)) checked @endif />
+                    {{-- 対象フレーム --}}
+                    <input 
+                        type="checkbox" class="custom-control-input" 
+                        id="frame_select{{$frame_record->id}}" name="frame_select[]" value="{{$frame_record->id}}" 
+                        @if ($tabs && $tabs->onFrame($frame_record->id)) checked @endif
+                    >
                     <label class="custom-control-label" for="frame_select{{$frame_record->id}}">
                         {{$frame_record->frame_title}}({{$frame_record->plugin_name}})
                     </label>
@@ -53,8 +59,10 @@
                 <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                     <i class="fas fa-times"></i> キャンセル
                 </button>
-                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
-        </div>
+                <button type="submit" class="btn btn-primary form-horizontal">
+                    <i class="fas fa-check"></i> 更新
+                </button>
+            </div>
         </div>
     </div>
 </form>
