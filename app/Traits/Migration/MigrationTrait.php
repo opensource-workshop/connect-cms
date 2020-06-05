@@ -16,6 +16,8 @@ use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\User\Contents\Contents;
 
+use App\Models\Migration\Nc2\Pages;
+
 use App\Traits\ConnectCommonTrait;
 
 trait MigrationTrait
@@ -643,5 +645,72 @@ trait MigrationTrait
 
         // default
         return 'default';
+    }
+
+    /**
+     * ID のゼロ埋め
+     */
+    private function zeroSuppress($id)
+    {
+        // ページID がとりあえず、1万ページ未満で想定。
+        // ここの桁数を上げれば、さらに大きなページ数でも処理可能
+        return sprintf("%'.04d", $id);
+    }
+
+    /**
+     * 経路探索キーの取得（作成）
+     */
+    private function getRouteStr($nc2_page, $nc2_sort_pages)
+    {
+        // 前提として、最低限のソートとして、同一階層でのソートができている。
+        // ページデータを経路探索をキーに設定済みの配列から、親を探して、自分の経路探索キーを生成する。
+        // 経路探索キーは 0021_0026 のように、{第1階層ページID}_{第2階層ページID}_{...} のように生成する。
+        foreach($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
+            if ($nc2_sort_page->page_id == $nc2_page->parent_id) {
+                return $nc2_sort_page_key . '_' . $this->zeroSuppress($nc2_page->page_id);
+            }
+        }
+
+        return $this->zeroSuppress($nc2_page->page_id);
+    }
+
+    /**
+     * NC2 からデータをエクスポート
+     */
+    private function migrationNC2()
+    {
+        // NetCommons2 のページデータの取得
+
+        // 【対象】
+        // パブリックのみ（グループルームは今後、要考慮）
+        // root_id = 0 は 'グループスペース' などの「くくり」なので不要
+        // display_sequence = 0 はヘッダーカラムなどの共通部分
+
+        // 【ソート】
+        // space_type でソートする。（パブリック、グループ）
+        // thread_num, display_sequence でソートする。
+
+        $nc2_pages = Pages::where('private_flag', 0)
+                          ->where('root_id', '<>', 0)
+                          ->where('display_sequence', '<>', 0)
+                          ->orderBy('space_type')
+                          ->orderBy('thread_num')
+                          ->orderBy('display_sequence')
+                          ->get();
+
+        // NC2 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
+        // そのため、取得したページデータを一度、経路探索モデルに変換する。
+        $nc2_sort_pages = array();
+
+        // 経路探索の文字列をキーにしたページ配列の作成
+        foreach($nc2_pages as $nc2_page) {
+            $nc2_sort_pages[$this->getRouteStr($nc2_page, $nc2_sort_pages)] = $nc2_page;
+        }
+
+        // 経路探索の文字列（キー）でソート
+        ksort($nc2_sort_pages);
+        foreach($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
+            echo $nc2_sort_page_key . ':' . $nc2_sort_page->page_name . "\n";
+        }
     }
 }

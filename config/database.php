@@ -54,6 +54,21 @@ return [
             'engine' => null,
         ],
 
+        'nc2' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('NC2_DB_DATABASE', 'forge'),
+            'username' => env('NC2_DB_USERNAME', 'forge'),
+            'password' => env('NC2_DB_PASSWORD', ''),
+            'unix_socket' => env('NC2_DB_SOCKET', ''),
+            'charset' => 'utf8',
+            'collation' => 'utf8_general_ci',
+            'prefix' => env('NC2_DB_PREFIX', ''),
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'host' => env('DB_HOST', '127.0.0.1'),
