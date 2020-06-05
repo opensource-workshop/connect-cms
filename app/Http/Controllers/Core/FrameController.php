@@ -12,6 +12,7 @@ use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Core\Plugins;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -72,7 +73,12 @@ class FrameController extends ConnectController
         // 追加のプラグインが0、他は連番になっているはずとして、ページ内全て、+1 する。
         DB::table('frames')->where('page_id', '=', $page_id)->increment('display_sequence');
 
-        return redirect($page->permanent_link);
+        return redirect($page->permanent_link)
+                ->with(
+                    'flash_message_for_add_plugin', 
+                    'プラグイン「' . Plugins::query()->where('plugin_name', $request->add_plugin)->first()->plugin_name_full . '」を追加しました。'
+                );
+        ;
     }
 
     /**
