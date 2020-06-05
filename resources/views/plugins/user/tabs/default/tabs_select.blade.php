@@ -30,7 +30,12 @@
                     <input 
                         type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}" 
                         name="default_frame_id" class="custom-control-input" 
-                        @if (isset($tabs) && $tabs->default_frame_id == $frame_record->id) checked @endif
+                        @if (
+                            // タブ情報があれば、該当行をチェック
+                            (isset($tabs) && $tabs->default_frame_id == $frame_record->id) ||
+                            // タブ情報がない（プラグイン設置後の初期表示）場合、最初の行をチェック
+                            empty($tabs) && $loop->first
+                        ) checked @endif
                     >
                     <label class="custom-control-label" for="default_frame_id{{$frame_record->id}}"></label>
                 </div>
