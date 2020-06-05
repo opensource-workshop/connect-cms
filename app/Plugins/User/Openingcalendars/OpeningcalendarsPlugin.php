@@ -336,7 +336,11 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 編集する月
         if ($request->edit_ym) {
+            // プルダウンによる選択値
             $edit_ym = $request->edit_ym;
+        } elseif ($request->target_ym) {
+            // 更新時に使用される値（更新後は直近の編集月を表示する）
+            $edit_ym = $request->target_ym;
         } else {
             $edit_ym = date('Y-m');
         }
