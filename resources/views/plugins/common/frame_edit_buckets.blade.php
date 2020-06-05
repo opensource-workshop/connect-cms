@@ -100,7 +100,7 @@
 {{-- 表示しない。 --}}
 <div class="alert alert-warning">
     <i class="fas fa-exclamation-circle"></i>
-    設定画面から、使用する設定を選択するか、作成してください。
+    表示するコンテンツを選択するか、新規作成してください。
 </div>
 @endif
 
