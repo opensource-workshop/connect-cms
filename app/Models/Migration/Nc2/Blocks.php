@@ -134,28 +134,35 @@ class Blocks extends Model
     /**
      *  フレームテンプレートの変換
      */
-    public function getFrameDesign($nc2_block)
+    public function getFrameDesign()
     {
         // NC2 テンプレート変換配列にあれば、その値。
         // なければ default を返す。
-        if (array_key_exists($nc2_block->theme_name, $this->frame_designs)) {
-            return $this->frame_designs[$nc2_block->theme_name];
+        if (array_key_exists($this->theme_name, $this->frame_designs)) {
+            return $this->frame_designs[$this->theme_name];
         }
         return 'default';
     }
 
     /**
+     *  モジュール名の取得
+     */
+    public function getModuleName()
+    {
+        $action_name = explode('_', $this->action_name);
+        $module_name = $action_name[0];
+        return $module_name;
+    }
+
+    /**
      *  プラグインの変換
      */
-    public function getPluginName($nc2_block)
+    public function getPluginName()
     {
         // NC2 テンプレート変換配列にあれば、その値。
         // 定義のないものは 'NotFound' にする。
-        $action_name = explode('_', $nc2_block->action_name);
-        $module_name = $action_name[0];
-
-        if (array_key_exists($module_name, $this->plugin_name)) {
-            return $this->plugin_name[$module_name];
+        if (array_key_exists($this->getModuleName(), $this->plugin_name)) {
+            return $this->plugin_name[$this->getModuleName()];
         }
         return 'NotFound';
     }

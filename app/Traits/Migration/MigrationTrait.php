@@ -16,6 +16,7 @@ use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\User\Contents\Contents;
 
+use App\Models\Migration\Nc2\Announcement;
 use App\Models\Migration\Nc2\Blocks;
 use App\Models\Migration\Nc2\Pages;
 
@@ -50,7 +51,41 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のHTML をインポート
      */
-    private function importHtml($page_id)
+    private function importSite()
+    {
+        // echo "importSite";
+
+        // 新ページの取り込み
+        $paths = File::glob(storage_path() . '/app/migration/_*');
+
+        // 新ページのループ
+        foreach($paths as $path) {
+
+            // ページの設定取得
+            $page_ini = parse_ini_file($path. '/page.ini', true);
+            //print_r($page_ini);
+
+            // 固定リンクでページの存在確認
+            // 同じ固定リンクのページが存在した場合は、そのページを使用する。
+            $page = Page::where('permanent_link', $page_ini['page_base']['permanent_link'])->first();
+            // var_dump($page);
+
+            // 対象のURL がなかった場合はページの作成
+            if (empty($page)) {
+                $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
+                                      'permanent_link'    => $page_ini['page_base']['permanent_link'],
+                                      'base_display_flag' => $page_ini['page_base']['base_display_flag'],
+                                    ]);
+            }
+            // ページの中身の作成
+            $this->importHtml($page->id, $path);
+        }
+    }
+
+    /**
+     * Connect-CMS 移行形式のHTML をインポート
+     */
+    private function importHtml($page_id, $dir = null)
     {
         /*
         HTML からインポート（ページ指定）
@@ -63,127 +98,176 @@ trait MigrationTrait
         Contents 登録
         */
 
+        // インポート元のディレクトリが指定されていない場合は、ページid と同じ名前のディレクトリがあるとする
+        if (empty($dir)) {
+            $dir = $page_id;
+        }
+
         // フレーム単位のini ファイルの取得
-        $ini_files = File::glob(storage_path() . '/app/migration/' . $page_id . '/*.ini');
+//        $frame_ini_paths = File::glob(storage_path() . '/app/migration/' . $dir . '/frame_*.ini');
+        $frame_ini_paths = File::glob($dir . '/frame_*.ini');
 
         // フレームのループ
         $display_sequence = 0;
-        foreach ($ini_files as $ini_file) {
-            // echo $ini_file . "\n";
+        foreach ($frame_ini_paths as $frame_ini_path) {
+            // echo $frame_ini_path . "\n";
 
             $display_sequence++;
 
             // フレーム毎のini_file の解析
-            $ini_array = parse_ini_file($ini_file, true);
+            $frame_ini = parse_ini_file($frame_ini_path, true);
             //print_r($ini_array);
 
-            // HTML コンテンツの取得（画像処理をループしながら、タグを編集するので、ここで読みこんでおく）
-            $html_file_path = str_replace('.ini', '.html', $ini_file);
-            $content_html = File::get($html_file_path);
-
-            // Buckets 登録
-            // echo "Buckets 登録\n";
-            $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
-
-            // Frames 登録
-            // echo "Frames 登録\n";
-
-            // Frame タイトル
-            $frame_title = '[無題]';
-            if (array_key_exists('frame_base', $ini_array) && array_key_exists('frame_title', $ini_array['frame_base'])) {
-                $frame_title = $ini_array['frame_base']['frame_title'];
-            }
-
-            // Frame デザイン
-            $frame_design = 'default';
-            if (array_key_exists('frame_base', $ini_array) && array_key_exists('frame_design', $ini_array['frame_base'])) {
-                $frame_design = $ini_array['frame_base']['frame_design'];
-            }
-
-            $frame = Frame::create(['page_id'          => $page_id,
-                                    'area_id'          => 2,
-                                    'frame_title'      => $frame_title,
-                                    'frame_design'     => $frame_design,
-                                    'plugin_name'      => 'contents',
-                                    'frame_col'        => 0,
-                                    'template'         => 'default',
-                                    'bucket_id'        => $bucket->id,
-                                    'display_sequence' => $display_sequence,
-                                   ]);
-
-            // [image_names] の画像を登録
-            if (array_key_exists('image_names', $ini_array)) {
-                foreach ($ini_array['image_names'] as $filename => $client_original_name) {
-                    // ファイルサイズ
-                    if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
-                        $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
-                    } else {
-                        $file_size = 0;
-                    }
-                    //echo "ファイルサイズ = " . $file_size . "\n";
-
-                    // Uploads テーブル
-                    $upload = Uploads::create([
-                                  'client_original_name' => $client_original_name,
-                                  'mimetype'             => $this->getMimetypeFromFilename($filename),
-                                  'extension'            => $this->getExtension($filename),
-                                  'size'                 => $file_size,
-                                  'plugin_name'          => 'contents',
-                                  'page_id'              => $page_id,
-                                  'temporary_flag'       => 0,
-                              ]);
-
-                    // ファイルのコピー
-                    $source_file_path = 'migration/' . $page_id . "/" . $filename;
-                    $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
-                    Storage::copy($source_file_path, $destination_file_path);
-
-                    // 画像のパスの修正
-                    $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
-                }
-            }
-
-            // [file_names] の画像を登録
-            if (array_key_exists('file_names', $ini_array)) {
-                foreach ($ini_array['file_names'] as $filename => $client_original_name) {
-                    // ファイルサイズ
-                    if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
-                        $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
-                    } else {
-                        $file_size = 0;
-                    }
-                    //echo "ファイルサイズ = " . $file_size . "\n";
-
-                    // Uploads テーブル
-                    $upload = Uploads::create([
-                                  'client_original_name' => $client_original_name,
-                                  'mimetype'             => $this->getMimetypeFromFilename($filename),
-                                  'extension'            => $this->getExtension($filename),
-                                  'size'                 => $file_size,
-                                  'plugin_name'          => 'contents',
-                                  'page_id'              => $page_id,
-                                  'temporary_flag'       => 0,
-                              ]);
-
-                    // ファイルのコピー
-                    $source_file_path = 'migration/' . $page_id . "/" . $filename;
-                    $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
-                    Storage::copy($source_file_path, $destination_file_path);
-
-                    // ファイルのパスの修正
-                    $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
-                }
-            }
-
-            //Log::debug($content_html);
-
-            // Contents 登録
-            // echo "Contents 登録\n";
-            $content = Contents::create(['bucket_id' => $bucket->id,
-                                         'content_text' => $content_html,
-                                         'status' => 0]);
+            // プラグイン毎の登録処理へ
+            $this->importPlugin(dirname($frame_ini_path), $frame_ini, $display_sequence);
         }
         // echo $page_id . ' の移行が完了';
+    }
+
+    /**
+     * プラグイン毎の登録処理
+     */
+    private function importPlugin($page_dir, $frame_ini, $display_sequence)
+    {
+        // プラグインが指定されていない場合は戻る
+        if (!array_key_exists('frame_base', $frame_ini) || !array_key_exists('plugin_name', $frame_ini['frame_base'])) {
+            return;
+        }
+
+        // プラグイン名
+        $plugin_name = $frame_ini['frame_base']['plugin_name'];
+
+        // プラグイン振り分け
+        if ($plugin_name == 'contents') {
+            $this->importPluginContents($page_dir, $frame_ini, $display_sequence);
+        }
+    }
+
+    /**
+     * 固定記事プラグインの登録処理
+     */
+    private function importPluginContents($page_dir, $frame_ini, $display_sequence)
+    {
+        // コンテンツが指定されていない場合は戻る
+        if (!array_key_exists('contents', $frame_ini) || !array_key_exists('contents_file', $frame_ini['contents'])) {
+            return;
+        }
+
+        // HTML コンテンツの取得（画像処理をループしながら、タグを編集するので、ここで読みこんでおく）
+        $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
+        $content_html = File::get($html_file_path);
+
+        // Buckets 登録
+        // echo "Buckets 登録\n";
+        $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
+
+        // Frames 登録
+        // echo "Frames 登録\n";
+
+        // Frame タイトル
+        $frame_title = '[無題]';
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_title', $frame_ini['frame_base'])) {
+            $frame_title = $frame_ini['frame_base']['frame_title'];
+        }
+
+        // Frame デザイン
+        $frame_design = 'default';
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_design', $frame_ini['frame_base'])) {
+            $frame_design = $frame_ini['frame_base']['frame_design'];
+        }
+
+        $frame = Frame::create(['page_id'          => $page_id,
+                                'area_id'          => 2,
+                                'frame_title'      => $frame_title,
+                                'frame_design'     => $frame_design,
+                                'plugin_name'      => 'contents',
+                                'frame_col'        => 0,
+                                'template'         => 'default',
+                                'bucket_id'        => $bucket->id,
+                                'display_sequence' => $display_sequence,
+                               ]);
+
+        // [image_names] の画像を登録
+        if (array_key_exists('image_names', $frame_ini)) {
+            foreach ($frame_ini['image_names'] as $filename => $client_original_name) {
+                // ファイルサイズ
+//                if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
+                if (File::exists($page_dir . "/" . $filename)) {
+//                    $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
+                    $file_size = File::size($page_dir . "/" . $filename);
+                } else {
+                    $file_size = 0;
+                }
+                //echo "ファイルサイズ = " . $file_size . "\n";
+
+                // Uploads テーブル
+                $upload = Uploads::create([
+                              'client_original_name' => $client_original_name,
+                              'mimetype'             => $this->getMimetypeFromFilename($filename),
+                              'extension'            => $this->getExtension($filename),
+                              'size'                 => $file_size,
+                              'plugin_name'          => 'contents',
+                              'page_id'              => $page_id,
+                              'temporary_flag'       => 0,
+                          ]);
+
+                // ファイルのコピー
+//                $source_file_path = 'migration/' . $page_id . "/" . $filename;
+//                $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
+//                Storage::copy($source_file_path, $destination_file_path);
+                $source_file_path = $page_dir. "/" . $filename;
+                $destination_file_path = storage_path() . "/" . $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
+                File::copy($source_file_path, $destination_file_path);
+
+                // 画像のパスの修正
+                $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
+            }
+        }
+
+        // [file_names] の画像を登録
+        if (array_key_exists('file_names', $frame_ini)) {
+            foreach ($frame_ini['file_names'] as $filename => $client_original_name) {
+                // ファイルサイズ
+//                if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
+                if (File::exists($page_dir . "/" . $filename)) {
+//                    $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
+                    $file_size = File::size($page_dir . "/" . $filename);
+                } else {
+                    $file_size = 0;
+                }
+                //echo "ファイルサイズ = " . $file_size . "\n";
+
+                // Uploads テーブル
+                $upload = Uploads::create([
+                              'client_original_name' => $client_original_name,
+                              'mimetype'             => $this->getMimetypeFromFilename($filename),
+                              'extension'            => $this->getExtension($filename),
+                              'size'                 => $file_size,
+                              'plugin_name'          => 'contents',
+                              'page_id'              => $page_id,
+                              'temporary_flag'       => 0,
+                          ]);
+
+                // ファイルのコピー
+//                $source_file_path = 'migration/' . $page_id . "/" . $filename;
+//                $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
+//                Storage::copy($source_file_path, $destination_file_path);
+                $source_file_path = $page_dir . "/" . $filename;
+                $destination_file_path = storage_path() . "/" . $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
+                File::copy($source_file_path, $destination_file_path);
+
+                // ファイルのパスの修正
+                $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
+            }
+        }
+
+        //Log::debug($content_html);
+
+        // Contents 登録
+        // echo "Contents 登録\n";
+        $content = Contents::create(['bucket_id' => $bucket->id,
+                                     'content_text' => $content_html,
+                                     'status' => 0]);
     }
 
     /**
@@ -769,7 +853,7 @@ trait MigrationTrait
             // ページ設定の保存用変数
             $page_ini = "[page_base]\n";
             $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
-            $page_ini .= "permanent_link = \"" . $nc2_sort_page->permalink . "\"\n";
+            $page_ini .= "permanent_link = \"/" . $nc2_sort_page->permalink . "\"\n";
             $page_ini .= "base_display_flag = 1\n";
 
             // ページディレクトリの作成
@@ -820,17 +904,61 @@ trait MigrationTrait
             $frame_ini = "[frame_base]\n";
             $frame_ini .= "area_id = 2\n";
             $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
-            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($nc2_block) . "\"\n";
-            $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName($nc2_block) . "\"\n";
+            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign() . "\"\n";
+            $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
+            $frame_ini .= "nc2_module_name = \"" . $nc2_block->getModuleName() . "\"\n";
 
             // フレーム設定ファイルの出力
             Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
 
             //echo $nc2_block->block_name . "\n";
 
+            // ブロックのモジュールデータをエクスポート
+            $this->nc2BlockExport($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+
             // ページ、ブロック構成を最後に出力するために保持
             $this->nc2BlockTree($nc2_page, $nc2_block);
         }
+    }
+
+    /**
+     * NC2：ページ内のブロックに配置されているモジュールのエクスポート。
+     * モジュールごとのエクスポート処理に振り分け。
+     */
+    private function nc2BlockExport($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // Connect-CMS のプラグイン名の取得
+        $plugin_name = $nc2_block->getPluginName();
+
+        // モジュールごとに振り分け
+        if ($plugin_name == 'contents') {
+            $this->nc2ExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        }
+    }
+
+    /**
+     * NC2：固定記事（お知らせ）のエクスポート
+     */
+    private function nc2ExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // お知らせモジュールのデータの取得
+        // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
+        $announcement = Announcement::where('block_id', $nc2_block->block_id)->first();
+
+        // 記事
+        $content = trim($announcement->content);
+        $content .= trim($announcement->more_content);
+
+        // HTML content の保存
+        $content_file_name = "frame_" . $frame_index_str . '.html';
+        Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . "/" . $content_file_name, $content);
+
+        // フレーム設定ファイルの追記
+        $contents_ini = "[contents]\n";
+        $contents_ini .= "contents_file = \"" . $content_file_name . "\"\n";
+        Storage::append('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $contents_ini);
+
+        echo "nc2ExportContents";
     }
 
     /**
@@ -839,6 +967,6 @@ trait MigrationTrait
     private function nc2BlockTree($nc2_page, $nc2_block)
     {
         // ページ、ブロック構成を最後に出力するために保持
-        $this->frame_tree .= $nc2_page->page_name . ',' . $nc2_page->permanent_link . ',' . $nc2_block->action_name . ',' . $nc2_block->block_name . "\n";
+        $this->frame_tree .= $nc2_page->page_name . ',' . $nc2_page->permalink . ',' . $nc2_block->action_name . ',' . $nc2_block->block_name . "\n";
     }
 }
