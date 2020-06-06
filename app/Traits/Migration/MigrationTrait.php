@@ -78,7 +78,7 @@ trait MigrationTrait
                                     ]);
             }
             // ページの中身の作成
-            $this->importHtml($page->id, $path);
+            $this->importHtmlImpl($page, $path);
         }
     }
 
@@ -86,6 +86,15 @@ trait MigrationTrait
      * Connect-CMS 移行形式のHTML をインポート
      */
     private function importHtml($page_id, $dir = null)
+    {
+        $page = Page::find($page_id);
+        $this->importHtmlImpl($page);
+    }
+
+    /**
+     * Connect-CMS 移行形式のHTML をインポート
+     */
+    private function importHtmlImpl($page, $dir = null)
     {
         /*
         HTML からインポート（ページ指定）
@@ -100,11 +109,10 @@ trait MigrationTrait
 
         // インポート元のディレクトリが指定されていない場合は、ページid と同じ名前のディレクトリがあるとする
         if (empty($dir)) {
-            $dir = $page_id;
+            $dir = storage_path() . '/app/migration/' . $page->id;
         }
 
         // フレーム単位のini ファイルの取得
-//        $frame_ini_paths = File::glob(storage_path() . '/app/migration/' . $dir . '/frame_*.ini');
         $frame_ini_paths = File::glob($dir . '/frame_*.ini');
 
         // フレームのループ
@@ -119,7 +127,7 @@ trait MigrationTrait
             //print_r($ini_array);
 
             // プラグイン毎の登録処理へ
-            $this->importPlugin(dirname($frame_ini_path), $frame_ini, $display_sequence);
+            $this->importPlugin($page, dirname($frame_ini_path), $frame_ini, $display_sequence);
         }
         // echo $page_id . ' の移行が完了';
     }
@@ -127,7 +135,7 @@ trait MigrationTrait
     /**
      * プラグイン毎の登録処理
      */
-    private function importPlugin($page_dir, $frame_ini, $display_sequence)
+    private function importPlugin($page, $page_dir, $frame_ini, $display_sequence)
     {
         // プラグインが指定されていない場合は戻る
         if (!array_key_exists('frame_base', $frame_ini) || !array_key_exists('plugin_name', $frame_ini['frame_base'])) {
@@ -139,14 +147,14 @@ trait MigrationTrait
 
         // プラグイン振り分け
         if ($plugin_name == 'contents') {
-            $this->importPluginContents($page_dir, $frame_ini, $display_sequence);
+            $this->importPluginContents($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
     /**
      * 固定記事プラグインの登録処理
      */
-    private function importPluginContents($page_dir, $frame_ini, $display_sequence)
+    private function importPluginContents($page, $page_dir, $frame_ini, $display_sequence)
     {
         // コンテンツが指定されていない場合は戻る
         if (!array_key_exists('contents', $frame_ini) || !array_key_exists('contents_file', $frame_ini['contents'])) {
@@ -176,7 +184,7 @@ trait MigrationTrait
             $frame_design = $frame_ini['frame_base']['frame_design'];
         }
 
-        $frame = Frame::create(['page_id'          => $page_id,
+        $frame = Frame::create(['page_id'          => $page->id,
                                 'area_id'          => 2,
                                 'frame_title'      => $frame_title,
                                 'frame_design'     => $frame_design,
@@ -191,9 +199,7 @@ trait MigrationTrait
         if (array_key_exists('image_names', $frame_ini)) {
             foreach ($frame_ini['image_names'] as $filename => $client_original_name) {
                 // ファイルサイズ
-//                if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
                 if (File::exists($page_dir . "/" . $filename)) {
-//                    $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
                     $file_size = File::size($page_dir . "/" . $filename);
                 } else {
                     $file_size = 0;
@@ -207,16 +213,18 @@ trait MigrationTrait
                               'extension'            => $this->getExtension($filename),
                               'size'                 => $file_size,
                               'plugin_name'          => 'contents',
-                              'page_id'              => $page_id,
+                              'page_id'              => $page->id,
                               'temporary_flag'       => 0,
                           ]);
 
                 // ファイルのコピー
-//                $source_file_path = 'migration/' . $page_id . "/" . $filename;
-//                $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
-//                Storage::copy($source_file_path, $destination_file_path);
                 $source_file_path = $page_dir. "/" . $filename;
-                $destination_file_path = storage_path() . "/" . $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
+                $destination_file_dir = storage_path() . "/app/" . $this->getDirectory($upload->id);
+                $destination_file_path = $destination_file_dir . '/' . $upload->id . '.' . $this->getExtension($filename);
+
+                if (!File::isDirectory($destination_file_dir)) {
+                    File::makeDirectory($destination_file_dir, 0775, true);
+                }
                 File::copy($source_file_path, $destination_file_path);
 
                 // 画像のパスの修正
@@ -228,9 +236,7 @@ trait MigrationTrait
         if (array_key_exists('file_names', $frame_ini)) {
             foreach ($frame_ini['file_names'] as $filename => $client_original_name) {
                 // ファイルサイズ
-//                if (File::exists(storage_path() . '/app/migration/' . $page_id . "/" . $filename)) {
                 if (File::exists($page_dir . "/" . $filename)) {
-//                    $file_size = File::size(storage_path() . '/app/migration/' . $page_id . "/" . $filename);
                     $file_size = File::size($page_dir . "/" . $filename);
                 } else {
                     $file_size = 0;
@@ -244,16 +250,17 @@ trait MigrationTrait
                               'extension'            => $this->getExtension($filename),
                               'size'                 => $file_size,
                               'plugin_name'          => 'contents',
-                              'page_id'              => $page_id,
+                              'page_id'              => $page->id,
                               'temporary_flag'       => 0,
                           ]);
 
                 // ファイルのコピー
-//                $source_file_path = 'migration/' . $page_id . "/" . $filename;
-//                $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
-//                Storage::copy($source_file_path, $destination_file_path);
-                $source_file_path = $page_dir . "/" . $filename;
-                $destination_file_path = storage_path() . "/" . $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->getExtension($filename);
+                $source_file_path = $page_dir. "/" . $filename;
+                $destination_file_dir = storage_path() . "/app/" . $this->getDirectory($upload->id);
+                $destination_file_path = $destination_file_dir . '/' . $upload->id . '.' . $this->getExtension($filename);
+                if (!File::isDirectory($destination_file_dir)) {
+                    File::makeDirectory($destination_file_dir, 0775, true);
+                }
                 File::copy($source_file_path, $destination_file_path);
 
                 // ファイルのパスの修正
@@ -385,6 +392,7 @@ trait MigrationTrait
 
         // 指定されたページのHTML を取得
         $html = $this->getHTMLPage($url);
+        //var_dump($url);
 
         // HTMLドキュメントの解析準備
         $dom = new \DOMDocument;
@@ -414,12 +422,18 @@ trait MigrationTrait
             //Log::debug($this->getInnerHtml($frame_title));
 
             // フレーム設定の保存用変数
-            $frame_ini = "[frame_base]\n" . "frame_title = \"" . $this->getInnerHtml($frame_title) . "\"\n";
+            $frame_ini = "[frame_base]\n";
+            $frame_ini .= "area_id = 2\n";
+            $frame_ini .= "frame_title = \"" . $this->getInnerHtml($frame_title) . "\"\n";
 
             // フレームデザイン
             $expression = './/@class';
             $frame_design = $xpath->query($expression, $section)->item(0);
             $frame_ini .= "frame_design = \"" . $this->getFrameDesign($frame_design->value) . "\"\n";
+
+            // プラグイン情報
+            $frame_ini .= "plugin_name = \"contents\"\n";
+            $frame_ini .= "nc2_module_name = \"announcement\"\n";
 
             // 本文を抜き出します。
             $expression = './/div[contains(@class, "panel-body")]/article';
@@ -553,6 +567,11 @@ trait MigrationTrait
                     }
                 }
             }
+
+            // フレーム設定ファイルに [contents] 追加
+            $frame_ini .= "\n";
+            $frame_ini .= "[contents]\n";
+            $frame_ini .= "contents_file = \"frame_" . $frame_index_str . ".html\"\n";
 
             // フレーム設定ファイルの出力
             Storage::put('migration/' . $page_id . "/frame_" . $frame_index_str . '.ini', $frame_ini);
@@ -948,6 +967,13 @@ trait MigrationTrait
         // 記事
         $content = trim($announcement->content);
         $content .= trim($announcement->more_content);
+
+        // 画像を探す
+        $images = $this->get_content_image($content);
+        var_dump($images);
+
+
+
 
         // HTML content の保存
         $content_file_name = "frame_" . $frame_index_str . '.html';
