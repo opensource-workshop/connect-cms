@@ -38,7 +38,7 @@ trait MigrationTrait
     /**
      * ページ、フレームのCSV出力
      */
-    private $frame_tree = "ページタイトル,固定リンク,モジュール,ブロックタイトル\n";
+    private $frame_tree = "page_id,ページタイトル,固定リンク,モジュール,block_id,ブロックタイトル\n";
 
     /**
      * テストメソッド
@@ -958,7 +958,7 @@ trait MigrationTrait
         $contents_ini .= "contents_file = \"" . $content_file_name . "\"\n";
         Storage::append('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $contents_ini);
 
-        echo "nc2ExportContents";
+        //echo "nc2ExportContents";
     }
 
     /**
@@ -967,6 +967,6 @@ trait MigrationTrait
     private function nc2BlockTree($nc2_page, $nc2_block)
     {
         // ページ、ブロック構成を最後に出力するために保持
-        $this->frame_tree .= $nc2_page->page_name . ',' . $nc2_page->permalink . ',' . $nc2_block->action_name . ',' . $nc2_block->block_name . "\n";
+        $this->frame_tree .= $nc2_page->page_id . ',' . $nc2_page->page_name . ',' . $nc2_page->permalink . ',' . $nc2_block->action_name . ',' . $nc2_block->block_id . ',' . $nc2_block->block_name . "\n";
     }
 }
