@@ -16,6 +16,7 @@ use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\User\Contents\Contents;
 
+use App\Models\Migration\Nc2\Blocks;
 use App\Models\Migration\Nc2\Pages;
 
 use App\Traits\ConnectCommonTrait;
@@ -32,6 +33,11 @@ trait MigrationTrait
      * ここから日本語ファイル名を取得する。
      */
     private $content_disposition = "";
+
+    /**
+     * ページ、フレームのCSV出力
+     */
+    private $frame_tree = "ページタイトル,固定リンク,モジュール,ブロックタイトル\n";
 
     /**
      * テストメソッド
@@ -729,18 +735,88 @@ trait MigrationTrait
 
         // 経路探索の文字列（キー）でソート
         ksort($nc2_sort_pages);
-        Log::debug($nc2_sort_pages);
+        //Log::debug($nc2_sort_pages);
 
         // 新規ページ用のインデックス
         // 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
         $new_page_index = 0;
 
+        // ページのループ
         foreach($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
 
-            $new_page_index++;
-            Storage::makeDirectory('migration/_' . $new_page_index);
+            // ページ設定の保存用変数
+            $page_ini = "[page_base]\n";
+            $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
+            $page_ini .= "permanent_link = \"" . $nc2_sort_page->permalink . "\"\n";
+            $page_ini .= "base_display_flag = 1\n";
 
-            echo $nc2_sort_page_key . ':' . $nc2_sort_page->page_name . "\n";
+            // ページディレクトリの作成
+            $new_page_index++;
+            Storage::makeDirectory('migration/_' . $this->zeroSuppress($new_page_index));
+
+            // ページ設定ファイルの出力
+            Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . '/' . "/page.ini" , $page_ini);
+
+            // echo $nc2_sort_page_key . ':' . $nc2_sort_page->page_name . "\n";
+
+            // ブロック処理
+            $this->nc2Block($nc2_sort_page, $new_page_index);
         }
+
+        // ページ、ブロックの関係をCSV 形式で出力。ファイルにしたい場合はコマンドラインでファイルに出力
+        echo $this->frame_tree;
+    }
+
+    /**
+     * NC2：ページ内のブロックをループ
+     */
+    private function nc2Block($nc2_page, $new_page_index)
+    {
+        // 指定されたページ内のブロックを取得
+        $nc2_blocks = Blocks::where('page_id', $nc2_page->page_id)
+                            ->orderBy('thread_num')
+                            ->orderBy('row_num')
+                            ->get();
+
+        // ブロックをループ
+        $frame_index = 0; // フレームの連番
+        foreach ($nc2_blocks as $nc2_block) {
+
+            // グループは対象外（後で実装する）
+            if ($nc2_block->action_name == 'pages_view_grouping') {
+
+                // ページ、ブロック構成を最後に出力するために保持
+                $this->nc2BlockTree($nc2_page, $nc2_block);
+
+                continue;
+            }
+
+            $frame_index++;
+            $frame_index_str = sprintf("%'.04d", $frame_index);
+
+            // フレーム設定の保存用変数
+            $frame_ini = "[frame_base]\n";
+            $frame_ini .= "area_id = 2\n";
+            $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
+            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($nc2_block) . "\"\n";
+            $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName($nc2_block) . "\"\n";
+
+            // フレーム設定ファイルの出力
+            Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+
+            //echo $nc2_block->block_name . "\n";
+
+            // ページ、ブロック構成を最後に出力するために保持
+            $this->nc2BlockTree($nc2_page, $nc2_block);
+        }
+    }
+
+    /**
+     * NC2：ページ内のブロックをCSV用に溜める
+     */
+    private function nc2BlockTree($nc2_page, $nc2_block)
+    {
+        // ページ、ブロック構成を最後に出力するために保持
+        $this->frame_tree .= $nc2_page->page_name . ',' . $nc2_page->permanent_link . ',' . $nc2_block->action_name . ',' . $nc2_block->block_name . "\n";
     }
 }

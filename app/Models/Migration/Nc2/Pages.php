@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Pages extends Model
 {
     /**
-     * create()やupdate()で入力を受け付ける ホワイトリスト
+     * 使用するDB Connection
      */
     protected $connection = 'nc2';
 }
