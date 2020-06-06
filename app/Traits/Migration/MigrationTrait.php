@@ -701,6 +701,28 @@ trait MigrationTrait
 
     /**
      * NC2 からデータをエクスポート
+     *
+     * 動かし方
+     *
+     * 【.env で以下のNC2 用の定義を設定】
+     *
+     * NC2_DB_CONNECTION=mysql
+     * NC2_DB_HOST=127.0.0.1
+     * NC2_DB_PORT=3306
+     * NC2_DB_DATABASE=xxxxxx
+     * NC2_DB_USERNAME=xxxxxx
+     * NC2_DB_PASSWORD=xxxxxx
+     * NC2_DB_PREFIX=netcommons2_ (例)
+     *
+     * 【実行コマンド】
+     * php artisan command:MigrationFromNc2
+     *
+     * 【ブロック・ツリーのCSV】
+     * migrationNC2() 関数の最後で echo $this->frame_tree; しています。
+     * これをコマンドでファイルに出力すればCSV になります。
+     *
+     * 【移行データ】
+     * storage\app\migration にNC2 をエクスポートしたデータが入ります。
      */
     private function migrationNC2()
     {
