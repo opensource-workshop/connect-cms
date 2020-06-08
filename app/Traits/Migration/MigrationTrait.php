@@ -16,6 +16,7 @@ use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\User\Contents\Contents;
 
+use App\Models\Migration\MigrationMappings;
 use App\Models\Migration\Nc2\Announcement;
 use App\Models\Migration\Nc2\Blocks;
 use App\Models\Migration\Nc2\Pages;
@@ -171,20 +172,57 @@ return;
         // アップロード・ファイルのループ
         if (array_key_exists('uploads', $uploads_ini) && array_key_exists('upload', $uploads_ini['uploads'])) {
             foreach($uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
-                // Uploads テーブルの登録
-                $upload = Uploads::create([
-                    'client_original_name' => $uploads_ini[$upload_key]['client_original_name'],
-                    'mimetype'             => $uploads_ini[$upload_key]['mimetype'],
-                    'extension'            => $uploads_ini[$upload_key]['extension'],
-                    'size'                 => $uploads_ini[$upload_key]['size'],
-                    'plugin_name'          => $uploads_ini[$upload_key]['plugin_name'],
-                    'page_id'              => $uploads_ini[$upload_key]['page_id'],
-                    'temporary_flag'       => 0,
-                ]);
+
+                // マッピングテーブルの取得
+                $mapping = MigrationMappings::where('target_source_table', 'uploads')->where('source_id', $upload_key)->first();
+
+                // マッピングテーブルがなければ、Uploads テーブルとマッピングテーブルを追加
+                if (empty($mapping)) {
+
+                    // Uploads テーブルの登録
+                    $upload = Uploads::create([
+                        'client_original_name' => $uploads_ini[$upload_key]['client_original_name'],
+                        'mimetype'             => $uploads_ini[$upload_key]['mimetype'],
+                        'extension'            => $uploads_ini[$upload_key]['extension'],
+                        'size'                 => $uploads_ini[$upload_key]['size'],
+                        'plugin_name'          => $uploads_ini[$upload_key]['plugin_name'],
+                        'page_id'              => $uploads_ini[$upload_key]['page_id'],
+                        'temporary_flag'       => 0,
+                    ]);
+
+                    // マッピングテーブルの追加
+                    $mapping = MigrationMappings::create([
+                        'target_source_table'  => 'uploads',
+                        'source_id'            => $upload_key,
+                        'destination_id'       => $upload->id,
+                    ]);
+                }
+                // マッピングテーブルがあれば、Uploads テーブルを更新
+                else {
+
+                    // Uploads テーブルの更新
+                    $upload = Uploads::find($mapping->destination_id);
+                    if (empty($upload)) {
+                        $this->putLog("No Mapping target = uploads, destination_id = " . $mapping->destination_id);
+                    }
+                    else {
+                        $upload->client_original_name = $uploads_ini[$upload_key]['client_original_name'];
+                        $upload->mimetype             = $uploads_ini[$upload_key]['mimetype'];
+                        $upload->extension            = $uploads_ini[$upload_key]['extension'];
+                        $upload->size                 = $uploads_ini[$upload_key]['size'];
+                        $upload->plugin_name          = $uploads_ini[$upload_key]['plugin_name'];
+                        $upload->page_id              = $uploads_ini[$upload_key]['page_id'];
+                        $upload->temporary_flag       = 0;
+                        $upload->save();
+                    }
+                }
 
                 // ファイルのコピー
                 $source_file_path = 'migration/@uploads/' . $upload_item;
                 $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $uploads_ini[$upload_key]['extension'];
+                if (Storage::exists($destination_file_path)) {
+                    Storage::delete($destination_file_path);
+                }
                 Storage::copy($source_file_path, $destination_file_path);
             }
         }
@@ -307,6 +345,11 @@ return;
         // 
         // --- uploads.ini
         // upload[1] = "upload_00001.jpg"
+        // 
+        // --- mapping テーブル
+        // 
+        // source:
+        // distination:
         // 
         // --- frame_0001.ini
         // [upload_images]
@@ -1244,10 +1287,15 @@ return;
                             // フレーム設定ファイルの追記
                             // 移行したアップロードファイルをini ファイルから探す
                             if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
-                                $images_ini .= $param_split[1] . " = \"" . $this->uploads_ini['uploads']['upload'][$param_split[1]] . "\"\n";
+
+                                // コンテンツ及び[upload_images]セクション内のimg src を作る。
+                                $export_img_src = '../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
+
+                                // [upload_images] 内の画像情報の追記
+                                $images_ini .= $param_split[1] . " = \"" . $export_img_src . "\"\n";
 
                                 // 画像のパスの修正
-                                $content = str_replace($img_src, '../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'], $content);
+                                $content = str_replace($img_src, $export_img_src, $content);
                             }
                         }
                     }
