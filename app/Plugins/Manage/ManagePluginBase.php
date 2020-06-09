@@ -30,15 +30,13 @@ class ManagePluginBase extends PluginBase
 
         if ($name) {
             $configs = Configs::where('name', $name)->get();
-        }
-        elseif ($category) {
+        } elseif ($category) {
             $configs = Configs::where('category', $category)->get();
-        }
-        else {
+        } else {
             $configs = Configs::get();
         }
 
-        foreach($configs as $config) {
+        foreach ($configs as $config) {
             $return_configs[$config->name] = $config;
         }
 

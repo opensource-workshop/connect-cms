@@ -39,21 +39,21 @@
         {{-- 投稿日時 --}}
         <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
 
-        {{-- 重要記事 --}}
-        @if($post->important == 1)
-            <span class="badge badge-danger">重要</span>
-        @endif
-
         {{-- タイトル --}}
         <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><span class="title">{{$post->post_title}}</span></a>
 
         {{-- カテゴリ --}}
         @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
-            @if ($loop->last)
+        {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
+        @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+            <span class="badge badge-pill badge-danger">重要記事に設定</span>
+        @endif
+
+        @if ($loop->last)
             <article>
-            @else
+        @else
             <article class="cc_article">
-            @endif
+        @endif
             {{-- 記事本文 --}}
 
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}

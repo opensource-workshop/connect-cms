@@ -38,16 +38,15 @@
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日')}}</b>
 
-        {{-- 重要記事 --}}
-        @if($post->important == 1)
-            <span class="badge badge-danger">重要</span>
-        @endif
-
         {{-- タイトル --}}
         <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
 
         {{-- カテゴリ --}}
         @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+        {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
+        @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+            <span class="badge badge-pill badge-danger">重要記事に設定</span>
+        @endif
 
         @if ($loop->last)
         <article>

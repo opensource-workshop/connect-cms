@@ -71,7 +71,6 @@ class PasswordController extends ConnectController
 
         // パスワードの照合
         if (!$this->page->checkPassword($request->password, $this->page_tree)) {
-
             $validator = Validator::make($request->all(), []);
             $validator->errors()->add('password', 'パスワードが異なります。');
 

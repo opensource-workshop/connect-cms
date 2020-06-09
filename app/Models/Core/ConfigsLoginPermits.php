@@ -19,5 +19,4 @@ class ConfigsLoginPermits extends Model
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
     protected $fillable = ['apply_sequence', 'ip_address', 'role', 'reject'];
-
 }

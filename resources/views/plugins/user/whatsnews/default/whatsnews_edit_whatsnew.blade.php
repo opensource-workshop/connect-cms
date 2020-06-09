@@ -128,6 +128,33 @@
         </div>
     </div>
 
+    {{-- <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ページ送りの表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                <input 
+                    type="radio" value="1" id="page_method_1" name="page_method" 
+                    class="custom-control-input" {{ $whatsnew->page_method == 1 ? 'checked' : '' }}
+                >
+                <label class="custom-control-label" for="page_method_1">表示する</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="0" id="page_method_0" name="page_method" 
+                    class="custom-control-input" {{ $whatsnew->page_method == 0 ? 'checked' : '' }}
+                >
+                <label class="custom-control-label" for="page_method_0">表示しない</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ページ送り件数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="page_count" value="{{old('page_count', $whatsnew->page_count)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('page_count')) <div class="text-danger">{{$errors->first('page_count')}}</div> @endif
+        </div>
+    </div> --}}
+
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">登録者の表示</label><br />
         <div class="{{$frame->getSettingInputClass(true)}}">

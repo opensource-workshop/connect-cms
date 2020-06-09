@@ -67,7 +67,8 @@ class FaqsPlugin extends UserPluginBase
      *  POST取得関数（コアから呼び出す）
      *  コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id, $action = null) {
+    public function getPost($id, $action = null)
+    {
 
         // deleteCategories の場合は、Faqs_posts のオブジェクトではないので、nullで返す。
         if ($action == 'deleteCategories') {
@@ -83,13 +84,15 @@ class FaqsPlugin extends UserPluginBase
         $arg_post = FaqsPosts::where('id', $id)->first();
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = FaqsPosts::select('faqs_posts.*',
-                                          'categories.color as category_color',
-                                          'categories.background_color as category_background_color',
-                                          'categories.category as category')
+        $this->post = FaqsPosts::select(
+            'faqs_posts.*',
+            'categories.color as category_color',
+            'categories.background_color as category_background_color',
+            'categories.category as category'
+        )
                                 ->leftJoin('categories', 'categories.id', '=', 'faqs_posts.categories_id')
                                 ->where('contents_id', $arg_post->contents_id)
-                                ->where(function($query){
+                                ->where(function ($query) {
                                       $query = $this->appendAuthWhere($query);
                                 })
                                 ->orderBy('id', 'desc')
@@ -119,7 +122,7 @@ class FaqsPlugin extends UserPluginBase
     private function getFaqsCategories($faqs_id)
     {
         $faqs_categories = Categories::select('categories.*')
-                          ->join('faqs_categories', function ($join) use($faqs_id) {
+                          ->join('faqs_categories', function ($join) use ($faqs_id) {
                               $join->on('faqs_categories.categories_id', '=', 'categories.id')
                                    ->where('faqs_categories.faqs_id', '=', $faqs_id)
                                    ->where('faqs_categories.view_flag', 1);
@@ -156,22 +159,18 @@ class FaqsPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
         if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 全件取得のため、追加条件なしで戻る。
-        }
-        // 承認権限の場合、Active ＋ 承認待ちの取得
-        elseif ($this->isCan('role_approval')) {
-            $query->Where('status',   '=', 0)
+            // 記事修正権限、コンテンツ管理者の場合、全件取得のため、追加条件なしで戻る。
+        } elseif ($this->isCan('role_approval')) {
+            // 承認権限の場合、Active ＋ 承認待ちの取得
+            $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
-        }
-        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-        elseif ($this->isCan('role_reporter')) {
+        } elseif ($this->isCan('role_reporter')) {
+            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
             $query->Where('status', '=', 0)
                   ->orWhere('faqs_posts.created_id', '=', Auth::user()->id);
-        }
-        // その他（ゲスト）
-        else {
+        } else {
+            // その他（ゲスト）
             $query->where('status', 0);
             $query->where('faqs_posts.posted_at', '<=', Carbon::now());
         }
@@ -184,16 +183,14 @@ class FaqsPlugin extends UserPluginBase
      */
     private function appendOrder($query, $faq_frame)
     {
-        // 最新順
         if ($faq_frame->sequence_conditions == 0) {
+            // 最新順
             $query->orderBy('posted_at', 'desc');
-        }
-        // 投稿順
-        elseif ($faq_frame->sequence_conditions == 1) {
+        } elseif ($faq_frame->sequence_conditions == 1) {
+            // 投稿順
             $query->orderBy('posted_at', 'asc');
-        }
-        // 指定順
-        elseif ($faq_frame->sequence_conditions == 2) {
+        } elseif ($faq_frame->sequence_conditions == 2) {
+            // 指定順
             $query->orderBy('display_sequence', 'asc');
         }
 
@@ -214,40 +211,40 @@ class FaqsPlugin extends UserPluginBase
         }
 
         // 削除されていないデータでグルーピングして、最新のIDで全件
-        $faqs_posts = FaqsPosts::select('faqs_posts.*',
-                                          'categories.color as category_color',
-                                          'categories.background_color as category_background_color',
-                                          'categories.category as category')
+        $faqs_posts = FaqsPosts::select(
+            'faqs_posts.*',
+            'categories.color as category_color',
+            'categories.background_color as category_background_color',
+            'categories.category as category'
+        )
                                  ->leftJoin('categories', 'categories.id', '=', 'faqs_posts.categories_id')
-                                 ->whereIn('faqs_posts.id', function($query) use($faq_frame) {
+                                 ->whereIn('faqs_posts.id', function ($query) use ($faq_frame) {
                                      $query->select(DB::raw('MAX(id) As id'))
                                            ->from('faqs_posts')
                                            ->where('faqs_id', $faq_frame->faqs_id)
                                            ->where('deleted_at', null)
                                            // 権限を見てWhere を付与する。
-                                           ->where(function($query_auth){
+                                           ->where(function ($query_auth) {
                                                $query_auth = $this->appendAuthWhere($query_auth);
                                            })
                                            ->groupBy('contents_id');
-                                   });
+                                 });
         // 表示条件に対するソート条件追加
 
-        // 最新順
         if ($faq_frame->sequence_conditions == 0) {
+            // 最新順
             $faqs_posts->orderBy('posted_at', 'desc');
-        }
-        // 投稿順
-        elseif ($faq_frame->sequence_conditions == 1) {
+        } elseif ($faq_frame->sequence_conditions == 1) {
+            // 投稿順
             $faqs_posts->orderBy('posted_at', 'asc');
-        }
-        // 指定順
-        elseif ($faq_frame->sequence_conditions == 2) {
+        } elseif ($faq_frame->sequence_conditions == 2) {
+            // 指定順
             $faqs_posts->orderBy('display_sequence', 'asc');
         }
 
        // 取得
-       $faqs_posts_recored = $faqs_posts->orderBy('posted_at', 'desc')
-                           ->paginate($count);
+        $faqs_posts_recored = $faqs_posts->orderBy('posted_at', 'desc')
+                           ->paginate($count, ["*"], "frame_{$faq_frame->id}_page");
 
         return $faqs_posts_recored;
     }
@@ -279,8 +276,7 @@ class FaqsPlugin extends UserPluginBase
         // タグの保存
         if ($request->tags) {
             $tags = explode(',', $request->tags);
-            foreach($tags as $tag) {
-
+            foreach ($tags as $tag) {
                 // 新規オブジェクト生成
                 $faqs_posts_tags = new FaqsPostsTags();
 
@@ -301,7 +297,7 @@ class FaqsPlugin extends UserPluginBase
     {
         // タグの保存
         $faqs_posts_tags = FaqsPostsTags::where('faqs_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
-        foreach($faqs_posts_tags as $faqs_posts_tag) {
+        foreach ($faqs_posts_tags as $faqs_posts_tag) {
             $new_tag = $faqs_posts_tag->replicate();
             $new_tag->faqs_posts_id = $to_post->id;
             $new_tag->save();
@@ -321,17 +317,18 @@ class FaqsPlugin extends UserPluginBase
         // 戻り値('sql_method'、'link_pattern'、'link_base')
 
         $return[] = DB::table('faqs_posts')
-                      ->select('frames.page_id              as page_id',
-                               'frames.id                   as frame_id',
-                               'faqs_posts.id              as post_id',
-                               'faqs_posts.post_title      as post_title',
-                               'faqs_posts.important       as important',
-                               'faqs_posts.posted_at       as posted_at',
-                               'faqs_posts.created_name    as posted_name',
-                               'categories.classname        as classname',
-                               'categories.category         as category',
-                               DB::raw('"faqs" as plugin_name')
-                              )
+                      ->select(
+                          'frames.page_id              as page_id',
+                          'frames.id                   as frame_id',
+                          'faqs_posts.id              as post_id',
+                          'faqs_posts.post_title      as post_title',
+                          'faqs_posts.important       as important',
+                          'faqs_posts.posted_at       as posted_at',
+                          'faqs_posts.created_name    as posted_name',
+                          'categories.classname        as classname',
+                          'categories.category         as category',
+                          DB::raw('"faqs" as plugin_name')
+                      )
                       ->join('faqs', 'faqs.id', '=', 'faqs_posts.faqs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'faqs.bucket_id')
                       ->leftJoin('categories', 'categories.id', '=', 'faqs_posts.categories_id')
@@ -351,25 +348,26 @@ class FaqsPlugin extends UserPluginBase
     public static function getSearchArgs($search_keyword)
     {
         $return[] = DB::table('faqs_posts')
-                      ->select('faqs_posts.id              as post_id',
-                               'frames.id                   as frame_id',
-                               'frames.page_id              as page_id',
-                               'pages.permanent_link        as permanent_link',
-                               'faqs_posts.post_title      as post_title',
-                               'faqs_posts.important       as important',
-                               'faqs_posts.posted_at       as posted_at',
-                               'faqs_posts.created_name    as posted_name',
-                               'categories.classname        as classname',
-                               'faqs_posts.categories_id   as categories_id',
-                               'categories.category         as category',
-                               DB::raw('"faqs" as plugin_name')
-                              )
+                      ->select(
+                          'faqs_posts.id              as post_id',
+                          'frames.id                   as frame_id',
+                          'frames.page_id              as page_id',
+                          'pages.permanent_link        as permanent_link',
+                          'faqs_posts.post_title      as post_title',
+                          'faqs_posts.important       as important',
+                          'faqs_posts.posted_at       as posted_at',
+                          'faqs_posts.created_name    as posted_name',
+                          'categories.classname        as classname',
+                          'faqs_posts.categories_id   as categories_id',
+                          'categories.category         as category',
+                          DB::raw('"faqs" as plugin_name')
+                      )
                       ->join('faqs', 'faqs.id', '=', 'faqs_posts.faqs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'faqs.bucket_id')
                       ->leftJoin('categories', 'categories.id', '=', 'faqs_posts.categories_id')
                       ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
                       ->where('status', '?')
-                      ->where(function($plugin_query) use($search_keyword) {
+                      ->where(function ($plugin_query) use ($search_keyword) {
                           $plugin_query->where('faqs_posts.post_title', 'like', '?')
                                        ->orWhere('faqs_posts.post_text', 'like', '?');
                       })
@@ -409,7 +407,7 @@ class FaqsPlugin extends UserPluginBase
 
         // タグ：画面表示するデータのfaqs_posts_id を集める
         $posts_ids = array();
-        foreach($faqs_posts as $faqs_post) {
+        foreach ($faqs_posts as $faqs_post) {
             $posts_ids[] = $faqs_post->id;
         }
 
@@ -418,12 +416,12 @@ class FaqsPlugin extends UserPluginBase
 
         // タグ：タグデータ詰めなおし（FAQデータの一覧にあてるための外配列）
         $faqs_posts_tags = array();
-        foreach($faqs_posts_tags_row as $record) {
+        foreach ($faqs_posts_tags_row as $record) {
             $faqs_posts_tags[$record->faqs_posts_id][] = $record->tags;
         }
 
         // タグ：タグデータをポストデータに紐づけ
-        foreach($faqs_posts as &$faqs_post) {
+        foreach ($faqs_posts as &$faqs_post) {
             if (array_key_exists($faqs_post->id, $faqs_posts_tags)) {
                 $faqs_post->tags = $faqs_posts_tags[$faqs_post->id];
             }
@@ -434,7 +432,8 @@ class FaqsPlugin extends UserPluginBase
             'faqs', [
             'faqs_posts' => $faqs_posts,
             'faq_frame'  => $faq_frame,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -466,7 +465,8 @@ class FaqsPlugin extends UserPluginBase
             'faqs_categories' => $faqs_categories,
             'faqs_posts_tags' => $faqs_posts_tags,
             'errors'           => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -496,14 +496,14 @@ class FaqsPlugin extends UserPluginBase
         if ($faqs_post) {
             $before_post = FaqsPosts::where('faqs_id', $faqs_post->faqs_id)
                                      ->where('posted_at', '<', $faqs_post->posted_at)
-                                     ->where(function($query){
+                                     ->where(function ($query) {
                                          $query = $this->appendAuthWhere($query);
                                      })
                                      ->orderBy('posted_at', 'desc')
                                      ->first();
             $after_post = FaqsPosts::where('faqs_id', $faqs_post->faqs_id)
                                      ->where('posted_at', '>', $faqs_post->posted_at)
-                                     ->where(function($query){
+                                     ->where(function ($query) {
                                          $query = $this->appendAuthWhere($query);
                                      })
                                      ->orderBy('posted_at', 'asc')
@@ -518,7 +518,8 @@ class FaqsPlugin extends UserPluginBase
             'post_tags'   => $faqs_post_tags,
             'before_post' => $before_post,
             'after_post'  => $after_post,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -544,7 +545,7 @@ class FaqsPlugin extends UserPluginBase
         // タグ取得
         $faqs_posts_tags_array = FaqsPostsTags::where('faqs_posts_id', $faqs_post->id)->get();
         $faqs_posts_tags = "";
-        foreach($faqs_posts_tags_array as $faqs_posts_tags_item) {
+        foreach ($faqs_posts_tags_array as $faqs_posts_tags_item) {
             $faqs_posts_tags .= ',' . $faqs_posts_tags_item->tags;
         }
         $faqs_posts_tags = trim($faqs_posts_tags, ',');
@@ -557,7 +558,8 @@ class FaqsPlugin extends UserPluginBase
             'faqs_categories' => $faqs_categories,
             'faqs_posts_tags' => $faqs_posts_tags,
             'errors'           => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -576,7 +578,6 @@ class FaqsPlugin extends UserPluginBase
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
         $old_faqs_post = null;
         if (!empty($faqs_posts_id)) {
-
             // 指定されたID のデータ
             $old_faqs_post = FaqsPosts::where('id', $faqs_posts_id)->first();
 
@@ -606,9 +607,8 @@ class FaqsPlugin extends UserPluginBase
             $faqs_post->status = 2;
         }
 
-        // 新規
         if (empty($faqs_posts_id)) {
-
+            // 新規
             // 登録ユーザ
             $faqs_post->created_id  = Auth::user()->id;
 
@@ -617,10 +617,8 @@ class FaqsPlugin extends UserPluginBase
 
             // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
             FaqsPosts::where('id', $faqs_post->id)->update(['contents_id' => $faqs_post->id]);
-        }
-        // 更新
-        else {
-
+        } else {
+            // 更新
             // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
             $faqs_post->contents_id = $old_faqs_post->contents_id;
 
@@ -634,7 +632,6 @@ class FaqsPlugin extends UserPluginBase
 
             // データ保存
             $faqs_post->save();
-
         }
 
         // タグの保存
@@ -663,8 +660,7 @@ class FaqsPlugin extends UserPluginBase
 
             // 登録ユーザ
             $faqs_post->created_id  = Auth::user()->id;
-        }
-        else {
+        } else {
             $faqs_post = FaqsPosts::find($id)->replicate();
  
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
@@ -674,7 +670,7 @@ class FaqsPlugin extends UserPluginBase
             if (empty($check_faqs_post) || $check_faqs_post->id != $id) {
                 return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
-       }
+        }
 
         // FAQ記事設定
         $faqs_post->status = 1;
@@ -688,7 +684,6 @@ class FaqsPlugin extends UserPluginBase
         $faqs_post->save();
 
         if (empty($id)) {
-
             // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
             FaqsPosts::where('id', $faqs_post->id)->update(['contents_id' => $faqs_post->id]);
         }
@@ -706,8 +701,7 @@ class FaqsPlugin extends UserPluginBase
     public function delete($request, $page_id, $frame_id, $faqs_posts_id)
     {
         // id がある場合、データを削除
-        if ( $faqs_posts_id ) {
-
+        if ($faqs_posts_id) {
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = FaqsPosts::where('id', $faqs_posts_id)->first();
 
@@ -764,14 +758,15 @@ class FaqsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $faqs = Faqs::orderBy('created_at', 'desc')
-                       ->paginate(10);
+                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'faqs_list_buckets', [
             'faq_frame' => $faq_frame,
             'faqs'      => $faqs,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -798,12 +793,11 @@ class FaqsPlugin extends UserPluginBase
         // FAQデータ
         $faq = new Faqs();
 
-        // faqs_id が渡ってくればfaqs_id が対象
         if (!empty($faqs_id)) {
+            // faqs_id が渡ってくればfaqs_id が対象
             $faq = Faqs::where('id', $faqs_id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id からFAQデータ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($faq_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($faq_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id からFAQデータ取得、なければ、新規作成か選択へ誘導
             $faq = Faqs::where('bucket_id', $faq_frame->bucket_id)->first();
         }
 
@@ -815,7 +809,8 @@ class FaqsPlugin extends UserPluginBase
             'create_flag' => $create_flag,
             'message'     => $message,
             'errors'      => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -841,12 +836,10 @@ class FaqsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-
             if (empty($faqs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $faqs_id, $create_flag, $message, $validator->errors());
-            }
-            else  {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $faqs_id, $create_flag, $message, $validator->errors());
             }
@@ -857,7 +850,6 @@ class FaqsPlugin extends UserPluginBase
 
         // 画面から渡ってくるfaqs_id が空ならバケツとFAQを新規登録
         if (empty($request->faqs_id)) {
-
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => $request->faq_name,
@@ -874,16 +866,13 @@ class FaqsPlugin extends UserPluginBase
             // （表示FAQ選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
-
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
             $message = 'FAQ設定を追加しました。';
-        }
-        // faqs_id があれば、FAQを更新
-        else {
-
+        } else {
+            // faqs_id があれば、FAQを更新
             // FAQデータ取得
             $faqs = Faqs::where('id', $request->faqs_id)->first();
 
@@ -919,8 +908,7 @@ class FaqsPlugin extends UserPluginBase
     public function destroyBuckets($request, $page_id, $frame_id, $faqs_id)
     {
         // faqs_id がある場合、データを削除
-        if ( $faqs_id ) {
-
+        if ($faqs_id) {
             // 記事データを削除する。
             FaqsPosts::where('faqs_id', $faqs_id)->delete();
 
@@ -973,7 +961,7 @@ class FaqsPlugin extends UserPluginBase
 
         // カテゴリ（全体）
         $general_categories = Categories::select('categories.*', 'faqs_categories.id as faqs_categories_id', 'faqs_categories.categories_id', 'faqs_categories.view_flag')
-                                        ->leftJoin('faqs_categories', function ($join) use($faq_frame) {
+                                        ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
                                             $join->on('faqs_categories.categories_id', '=', 'categories.id')
                                                  ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id);
                                         })
@@ -999,7 +987,8 @@ class FaqsPlugin extends UserPluginBase
             'faq_frame'         => $faq_frame,
             'errors'             => $errors,
             'create_flag'        => $create_flag,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -1017,7 +1006,6 @@ class FaqsPlugin extends UserPluginBase
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
-
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_display_sequence' => ['required'],
@@ -1039,8 +1027,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->faqs_categories_id)) {
-            foreach($request->faqs_categories_id as $category_id) {
-
+            foreach ($request->faqs_categories_id as $category_id) {
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'plugin_display_sequence.'.$category_id => ['required'],
@@ -1088,9 +1075,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 既存項目アリ
         if (!empty($request->plugin_categories_id)) {
-
-            foreach($request->plugin_categories_id as $plugin_categories_id) {
-
+            foreach ($request->plugin_categories_id as $plugin_categories_id) {
                 // モデルオブジェクト取得
                 $category = Categories::where('id', $plugin_categories_id)->first();
 
@@ -1111,8 +1096,7 @@ class FaqsPlugin extends UserPluginBase
         /* 表示フラグ更新(共通カテゴリ)
         ------------------------------------ */
         if (!empty($request->general_categories_id)) {
-            foreach($request->general_categories_id as $general_categories_id) {
-
+            foreach ($request->general_categories_id as $general_categories_id) {
                 // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 FaqsCategories::updateOrCreate(
                     ['categories_id' => $general_categories_id, 'faqs_id' => $faq_frame->faqs_id],
@@ -1129,8 +1113,7 @@ class FaqsPlugin extends UserPluginBase
         /* 表示フラグ更新(自FAQのカテゴリ)
         ------------------------------------ */
         if (!empty($request->plugin_categories_id)) {
-            foreach($request->plugin_categories_id as $plugin_categories_id) {
-
+            foreach ($request->plugin_categories_id as $plugin_categories_id) {
                 // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 FaqsCategories::updateOrCreate(
                     ['categories_id' => $plugin_categories_id, 'faqs_id' => $faq_frame->faqs_id],
@@ -1186,7 +1169,7 @@ class FaqsPlugin extends UserPluginBase
         // HTTPヘッダー出力
         header('Content-Type: text/xml; charset=UTF-8');
 
-echo <<<EOD
+        echo <<<EOD
 <rss xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
 <channel>
 <title>[{$base_site_name->value}]{$faq_frame->faq_name}</title>
@@ -1198,22 +1181,20 @@ EOD;
 
         $faqs_posts = $this->getPosts($faq_frame, $faq_frame->rss_count);
         foreach ($faqs_posts as $faqs_post) {
-
             $title = $faqs_post->post_title;
             $link = url("/plugin/faqs/show/" . $page_id . "/" . $frame_id . "/" . $faqs_post->id);
             if (mb_strlen(strip_tags($faqs_post->post_text)) > 100) {
                 $description = mb_substr(strip_tags($faqs_post->post_text), 0, 100) . "...";
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
-            }
-            else {
+            } else {
                 $description = strip_tags($faqs_post->post_text);
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
             }
             $pub_date = date(DATE_RSS, strtotime($faqs_post->posted_at));
             $content = strip_tags(html_entity_decode($faqs_post->post_text));
-echo <<<EOD
+            echo <<<EOD
 
 <item>
 <title>{$title}</title>
@@ -1234,11 +1215,11 @@ EOD;
 */
 //echo $rss_text;
 
-echo <<<EOD
+        echo <<<EOD
 </channel>
 </rss>
 EOD;
 
-exit;
+        exit;
     }
 }

@@ -17,7 +17,7 @@
 @if (empty($blog_frame) || empty($blog_frame->blogs_id))
     <div class="alert alert-warning text-center">
         <i class="fas fa-exclamation-circle"></i>
-        Blog の設定を行ってからBlog フレームの設定を行います。
+        表示するコンテンツを選択するか、新規作成してください。
     </div>
 @else
 

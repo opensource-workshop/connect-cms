@@ -34,9 +34,20 @@ $(function () {
         $(this).find(".modal-content").load(link.attr("data-href"));
     });
 });
+
+// フラッシュメッセージのfadeout
+$(function(){
+    $('.connect-flash').fadeOut(10000);
+});
 </script>
 
 {{-- *********************************************************** --}}
+    {{-- フラッシュメッセージ表示 --}}
+    @if (session('flash_message_for_add_plugin'))
+        <div class="connect-flash alert alert-success text-center">
+            {{ session('flash_message_for_add_plugin') }}
+        </div>
+    @endif
 
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])

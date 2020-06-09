@@ -61,7 +61,7 @@
                 <div class="alert alert-secondary" role="alert">
                     例) "apple word"<br>
                     例) "type_code1=topic code"<br>
-                    例) "value"=コネクト 太郎"<br>
+                    例) "value=コネクト 太郎"<br>
                 </div>
             </p>
         </div>

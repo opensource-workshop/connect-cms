@@ -59,7 +59,7 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         // ユーザー認証はカスタマイズしたもので行う。
-        Auth::provider('connect_eloquent', function($app, array $config) {
+        Auth::provider('connect_eloquent', function ($app, array $config) {
             return new ConnectEloquentUserProvider($app['hash'], $config['model']);
         });
     }

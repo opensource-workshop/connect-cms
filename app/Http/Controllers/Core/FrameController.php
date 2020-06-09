@@ -12,6 +12,7 @@ use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Core\Plugins;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -47,7 +48,7 @@ class FrameController extends ConnectController
     public function addPlugin($request, $page_id = null, $frame_id = null)
     {
         // 権限チェック
-        if ($this->can("frames.create") ) {
+        if ($this->can("frames.create")) {
             abort(403, '権限がありません。');
         }
 
@@ -72,7 +73,12 @@ class FrameController extends ConnectController
         // 追加のプラグインが0、他は連番になっているはずとして、ページ内全て、+1 する。
         DB::table('frames')->where('page_id', '=', $page_id)->increment('display_sequence');
 
-        return redirect($page->permanent_link);
+        return redirect($page->permanent_link)
+                ->with(
+                    'flash_message_for_add_plugin', 
+                    'プラグイン「' . Plugins::query()->where('plugin_name', $request->add_plugin)->first()->plugin_name_full . '」を追加しました。'
+                );
+        ;
     }
 
     /**
@@ -84,7 +90,7 @@ class FrameController extends ConnectController
     public function destroy($request, $page_id, $frame_id)
     {
         // 権限チェック
-        if ($this->can("frames.delete") ) {
+        if ($this->can("frames.delete")) {
             abort(403, '権限がありません。');
         }
 
@@ -107,7 +113,7 @@ class FrameController extends ConnectController
     public function update($request, $page_id, $frame_id)
     {
         // 権限チェック
-        if ($this->can("frames.edit") ) {
+        if ($this->can("frames.edit")) {
             abort(403, '権限がありません。');
         }
 
@@ -145,7 +151,7 @@ class FrameController extends ConnectController
     public function sequenceDown($request, $page_id, $frame_id, $area_id)
     {
         // 権限チェック
-        if ($this->can("frames.edit") ) {
+        if ($this->can("frames.edit")) {
             abort(403, '権限がありません。');
         }
 
@@ -170,16 +176,15 @@ class FrameController extends ConnectController
 
         // ページ内フレームをループ。上から順番に番号設定。対象番号の場合に次と入れ替え。
         foreach ($frames as $frame) {
-
             // 対象番号の次
-            if ( $change_flag ) {
+            if ($change_flag) {
                 $change_flag = false;
 
                 Frame::where('id', $frame->id)
                   ->update(['display_sequence' => $display_sequence - 1]);
             }
             // 指定された番号
-            elseif ( $frame->id == $frame_id ) {
+            elseif ($frame->id == $frame_id) {
                 $change_flag = true;
 
                 Frame::where('id', $frame->id)
@@ -203,7 +208,7 @@ class FrameController extends ConnectController
     public function sequenceUp($request, $page_id, $frame_id)
     {
         // 権限チェック
-        if ($this->can("frames.edit") ) {
+        if ($this->can("frames.edit")) {
             abort(403, '権限がありません。');
         }
 
@@ -226,16 +231,15 @@ class FrameController extends ConnectController
 
         // ページ内フレームをループ。下から順番に番号設定。対象番号の場合に次と入れ替え。
         foreach ($frames as $frame) {
-
             // 対象番号の次
-            if ( $change_flag ) {
+            if ($change_flag) {
                 $change_flag = false;
 
                 Frame::where('id', $frame->id)
                   ->update(['display_sequence' => $display_sequence + 1]);
             }
             // 指定された番号
-            elseif ( $frame->id == $frame_id ) {
+            elseif ($frame->id == $frame_id) {
                 $change_flag = true;
 
                 Frame::where('id', $frame->id)
@@ -258,7 +262,7 @@ class FrameController extends ConnectController
     public function edit($request, $page_id, $frame_id)
     {
         // 権限チェック
-        if ($this->can("frames.edit") ) {
+        if ($this->can("frames.edit")) {
             abort(403, '権限がありません。');
         }
 
@@ -286,7 +290,7 @@ class FrameController extends ConnectController
     public function frame_setting($request, $page_id, $frame_id)
     {
         // 権限チェック
-        if ($this->can("role_arrangement") ) {
+        if ($this->can("role_arrangement")) {
             abort(403, '権限がありません。');
         }
 

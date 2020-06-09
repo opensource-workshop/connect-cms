@@ -18,7 +18,7 @@
 @if (empty($blog_frame) || empty($blog_frame->blogs_id))
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用するFAQを選択するか、作成してください。
+        表示するコンテンツを選択するか、新規作成してください。
     </div>
 @else
 {{-- 最後にendif --}}
@@ -190,7 +190,11 @@
         </table>
 
         <div class="card card-body bg-light p-2 m-2">
-            クラス名は cc_category_xxxx で使用できます。
+            <ul>
+                <li>クラス名は cc_category_xxxx で使用できます。</li>
+                <li>サイト全体で共通のカテゴリは<a href="{{ url('/manage/site/categories') }}" target="_blank">管理画面</a>から設定することができます。</li>
+                <li>本画面にて、ブログ単位の個別カテゴリを設定することも可能です。</li>
+            </ul>
         </div>
     </div>
 

@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン共通
- --}}
+--}}
 @php
     // テーマ固有書式
     $style_formats_file = '';
@@ -80,7 +80,7 @@
     }
 
     // plugins
-    $plugins = 'file image link autolink preview textcolor code table lists advlist';
+    $plugins = 'file image imagetools link autolink preview textcolor code table lists advlist';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
@@ -92,6 +92,11 @@
         $toolbar .= '| translate ';
     }
     $toolbar = "toolbar  : '" . $toolbar . "',";
+
+    // imagetools_toolbar (need imagetools plugin)
+    // rotateleft rotateright flipv fliphは、フォーカスが外れないと images_upload_handler が走らないため、使わない。フォーカスが外さないで確定すると、固定記事の場合、コンテンツカラム内にbase64画像（超長い文字列)がそのまま送られ、カラムサイズオーバーでSQLエラーになる。
+    // しかし editimage (画像の編集) であれば、モーダルを開いてそこで編集し「保存」ボタンを押下時に images_upload_handler が走るため、base64問題を回避できる。
+    $imagetools_toolbar = "imagetools_toolbar  : 'editimage imageoptions',";
 
 @endphp
 <input type="hidden" name="page_id" value="{{$page_id}}">
@@ -108,6 +113,9 @@
 
         {{-- plugins --}}
         {!!$plugins!!}
+
+        {{-- imagetools_toolbar --}}
+        {!!$imagetools_toolbar!!}
 
         {{-- formatselect = スタイル, styleselect = 書式 --}}
         {!!$toolbar!!}
@@ -172,6 +180,10 @@
             xhr.onload = function() {
                 var json;
 
+                // アップロード後に押せない全ボタンを解除する
+                $(':button').prop('disabled', false);
+                // console.log("転送が完了しました。");
+
                 if (xhr.status < 200 || xhr.status >= 300) {
                     failure('HTTP Error: ' + xhr.status);
                     return;
@@ -182,14 +194,25 @@
                     failure('Invalid JSON: ' + xhr.responseText);
                     return;
                 }
+
                 success(json.location);
             };
 
+            // アップロード中は全ボタンを押させない
+            $(':button').prop('disabled', true);
+            // console.log("転送開始");
+
             formData = new FormData();
-            if( typeof(blobInfo.blob().name) !== undefined )
-                fileName = blobInfo.blob().name;
-            else
-                fileName = blobInfo.filename();
+
+            // bugfix: 「blobInfo.blob().name」は新規のアップロードの際しか名前が設定されないが、「blobInfo.filename()」は新規の時も回転などimagetoolsを使用した時も
+            // 常に設定されているので、typeofの評価は不要で常に fileName = blobInfo.filename(); でよいのではと思います。
+            // https://github.com/opensource-workshop/connect-cms/pull/353#issuecomment-636411186
+            //
+            // if( typeof(blobInfo.blob().name) !== undefined )
+            //     fileName = blobInfo.blob().name;
+            // else
+            //     fileName = blobInfo.filename();
+            fileName = blobInfo.filename();
 
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);

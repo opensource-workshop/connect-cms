@@ -44,12 +44,12 @@ trait RegistersUsers
             // OK で画面へ
         }
         // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
-        else if ($configs_array['user_register_enable'] != "1") {
+        elseif ($configs_array['user_register_enable'] != "1") {
             abort(403);
         }
 
         // フォームの初期値として空のユーザオブジェクトを渡す。
-        return view('auth.register',[
+        return view('auth.register', [
             "user"    => new User(),
             "configs" => $configs,
         ]);
@@ -79,7 +79,7 @@ trait RegistersUsers
             // OK で画面へ
         }
         // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
-        else if ($configs_array['user_register_enable'] != "1") {
+        elseif ($configs_array['user_register_enable'] != "1") {
             //Log::debug("register 403.");
             abort(403);
         }
@@ -89,10 +89,9 @@ trait RegistersUsers
 
         // ユーザー管理権限がある場合は、各権限の付与
         if ($this->isCan('admin_user')) {
-
             // ユーザ権限の登録
             if (!empty($request->base)) {
-                foreach($request->base as $role_name => $value) {
+                foreach ($request->base as $role_name => $value) {
                     UsersRoles::create([
                         'users_id'   => $user->id,
                         'target'     => 'base',
@@ -104,7 +103,7 @@ trait RegistersUsers
 
             // 管理権限の登録
             if (!empty($request->manage)) {
-                foreach($request->manage as $role_name => $value) {
+                foreach ($request->manage as $role_name => $value) {
                     UsersRoles::create([
                         'users_id'   => $user->id,
                         'target'     => 'manage',

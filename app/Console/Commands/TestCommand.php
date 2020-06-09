@@ -61,30 +61,29 @@ class TestCommand extends Command
         ]);
 */
 /*
-		$attributes = ['name' => 'hoge'];
-		Category::create($attributes);
+        $attributes = ['name' => 'hoge'];
+        Category::create($attributes);
 */
 /*
-		$node = Category::find(2);
-		$node->saveAsRoot();
+        $node = Category::find(2);
+        $node->saveAsRoot();
 */
 /*
-		$parent = Category::find(2); //Bar
-		$children = Category::find(1); //Foo
-		$parent->appendNode($children);
+        $parent = Category::find(2); //Bar
+        $children = Category::find(1); //Foo
+        $parent->appendNode($children);
 */
 
-		$results = Category::get();
-		$tree = $results->toTree();
+        $results = Category::get();
+        $tree = $results->toTree();
 
-		$traverse = function ($categories, $prefix = '-') use (&$traverse) {
-			foreach ($categories as $category) {
-				echo PHP_EOL.$prefix.' '.$category->name;
+        $traverse = function ($categories, $prefix = '-') use (&$traverse) {
+            foreach ($categories as $category) {
+                echo PHP_EOL.$prefix.' '.$category->name;
 
-				$traverse($category->children, $prefix.'-');
-				}
-			};
-		$traverse($tree);
-
+                $traverse($category->children, $prefix.'-');
+            }
+        };
+        $traverse($tree);
     }
 }

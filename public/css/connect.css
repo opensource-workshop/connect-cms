@@ -53,18 +53,6 @@ body {
     vertical-align: middle;
     margin: 0 5px 3px 0;
 }
-.ccMainArea .exclamation + .exclamation {
-    margin-top: -10px;
-}
-#ccMainArea .card-body .exclamation {
-    padding-left: 0;
-    text-indent: 0;
-}
-#ccMainArea .card-body .exclamation::before {
-    content: "！";
-    background: none;
-    color: #FF0004;
-}
 /* ※印ポイント */
 .ccMainArea .cc-note {
     padding-left: 0.8rem;

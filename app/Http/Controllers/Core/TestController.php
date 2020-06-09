@@ -56,5 +56,4 @@ class TestController extends ConnectController
             'id'     => $id,
         ]);
     }
-
 }

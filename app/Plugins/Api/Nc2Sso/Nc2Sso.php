@@ -76,7 +76,6 @@ class Nc2Sso extends ApiPluginBase
 
         // ユーザが存在する
         if (!empty($user)) {
-
             // ユーザ権限データ取得
             //$roles = UsersRoles::getUsersRoles($user->id);
             $users_roles = new UsersRoles();
@@ -87,36 +86,41 @@ class Nc2Sso extends ApiPluginBase
             // ユーザはあり、書き込み系の権限がない場合は、自動ログイン
             //if ($users_roles->notRole('role_reporter', $user->id)) {
 
-            // ユーザはあり、記事書き込み権限のみの場合は、自動ログイン
-            if ($users_roles->isOnlyRole('role_reporter', $user->id)) {
+            // // ユーザはあり、記事書き込み権限のみの場合は、自動ログイン
+            // if ($users_roles->isOnlyRole('role_reporter', $user->id)) {
+            //     // ログイン
+            //     Auth::login($user, true);
 
-                // ログイン
-                Auth::login($user, true);
+            //     // トップページへ
+            //     return redirect("/");
+            // }
 
-                // トップページへ
-                return redirect("/");
-            }
+            // // 管理者権限の場合は、NC2 側でも管理者の場合、自動ログイン
+            // //if ($user->role == config('cc_role.ROLE_SYSTEM_MANAGER') && $check_result['role_authority_id'] == 1) {
+            // if ($users_roles->haveAdmin($user->id) && $check_result['role_authority_id'] == 1) {
+            //     // ログイン
+            //     Auth::login($user, true);
 
-            // 管理者権限の場合は、NC2 側でも管理者の場合、自動ログイン
-            //if ($user->role == config('cc_role.ROLE_SYSTEM_MANAGER') && $check_result['role_authority_id'] == 1) {
-            if ($users_roles->haveAdmin($user->id) && $check_result['role_authority_id'] == 1) {
+            //     // トップページへ
+            //     return redirect("/");
+            // }
 
-                // ログイン
-                Auth::login($user, true);
+            // // 権限エラー
+            // abort(403, "SSO 権限エラー。<br />&nbsp;&nbsp;&nbsp;&nbsp;NetCommons2 の権限より高い権限でのログインはできません。");
 
-                // トップページへ
-                return redirect("/");
-            }
+            // 権限チェックしない
+            // ログイン
+            Auth::login($user, true);
 
-            // 権限エラー
-            abort(403, "SSO 権限エラー。<br />&nbsp;&nbsp;&nbsp;&nbsp;NetCommons2 の権限より高い権限でのログインはできません。");
-        }
-        else {
+            // トップページへ
+            return redirect("/");
+
+        } else {
             // ユーザが存在しない場合、一般権限でユーザを作成して、自動ログイン
             $user           = new User;
             $user->name     = $check_result['handle'];
             $user->userid   = $login_id;
-            $user->password = 'password';
+            $user->password = 'sso-invalid-password';   // プレーンテキストのパスワードは設定しても、入力パスワードと一致する事はないため、無効になる
             //$user->role     = 0;
             $user->save();
 

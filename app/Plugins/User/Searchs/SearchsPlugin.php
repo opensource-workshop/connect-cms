@@ -68,11 +68,12 @@ class SearchsPlugin extends UserPluginBase
     private function getSearchsFrame($frame_id)
     {
         // Frame データ
-        $frame = Frame::select('searchs.*',
-                              'frames.id as frames_id',
-                              'frames.bucket_id',
-                              'frames.disable_searchs'
-                          )
+        $frame = Frame::select(
+            'searchs.*',
+            'frames.id as frames_id',
+            'frames.bucket_id',
+            'frames.disable_searchs'
+        )
                         ->leftJoin('searchs', 'frames.bucket_id', '=', 'searchs.bucket_id')
                         ->where('frames.id', $frame_id)
                         ->first();
@@ -118,8 +119,7 @@ class SearchsPlugin extends UserPluginBase
 
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
-        foreach($target_plugins as $target_plugin) {
-
+        foreach ($target_plugins as $target_plugin) {
             // クラスファイルの存在チェック。
             $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
 
@@ -136,27 +136,26 @@ class SearchsPlugin extends UserPluginBase
         // ベースの新着DUAL（ダミーテーブル）
         $searchs_sql = DB::table('searchs_dual')
                  ->select(
-                          DB::raw("null as post_id"),
-                          DB::raw("null as frame_id"),
-                          DB::raw("null as page_id"),
-                          DB::raw("null as permanent_link"),
-                          DB::raw("null as post_title"),
-                          DB::raw("null as important"),
-                          DB::raw("null as posted_at"),
-                          DB::raw("null as posted_name"),
-                          DB::raw("null as classname"),
-                          DB::raw("null as categories_id"),
-                          DB::raw("null as category"),
-                          DB::raw("null as plugin_name")
-                         )
+                     DB::raw("null as post_id"),
+                     DB::raw("null as frame_id"),
+                     DB::raw("null as page_id"),
+                     DB::raw("null as permanent_link"),
+                     DB::raw("null as post_title"),
+                     DB::raw("null as important"),
+                     DB::raw("null as posted_at"),
+                     DB::raw("null as posted_name"),
+                     DB::raw("null as classname"),
+                     DB::raw("null as categories_id"),
+                     DB::raw("null as category"),
+                     DB::raw("null as plugin_name")
+                 )
                  ->leftJoin('categories', 'categories.id', '=', 'searchs_dual.categories_id');
 
         // フレームの選択が有効な場場合のため、フレームID を取っておく。
         $frame_ids = explode(',', $searchs_frame->target_frame_ids);
 
         // 各プラグインのSQL をUNION
-        foreach($union_sqls as $union_sql) {
-
+        foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
             if ($searchs_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
@@ -173,12 +172,12 @@ class SearchsPlugin extends UserPluginBase
 
         // 各プラグインから受け取ったSQL Bind 用変数をまとめる。
         $bind = array();
-        foreach($sql_binds as $plugin_bind) {
+        foreach ($sql_binds as $plugin_bind) {
             $bind = array_merge($bind, $plugin_bind);
 
             // フレームの選択が行われる場合はフレームID もBind する。
             if ($searchs_frame->frame_select == 1) {
-                foreach($frame_ids as $frame_id) {
+                foreach ($frame_ids as $frame_id) {
                     $bind[] = $frame_id;
                 }
             }
@@ -188,7 +187,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs_query->setBindings($bind);
 
         // ページングしてデータ取得
-        $searchs_results = $searchs_query->paginate($searchs_frame->count);
+        $searchs_results = $searchs_query->paginate($searchs_frame->count, ["*"], "frame_{$searchs_frame->id}_page");
 
         return array($searchs_results, $link_pattern, $link_base);
     }
@@ -215,7 +214,8 @@ class SearchsPlugin extends UserPluginBase
             'searchs', [
             'searchs_frame'   => $searchs_frame,
             'errors'          => $errors,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -253,7 +253,8 @@ class SearchsPlugin extends UserPluginBase
             'searchs_results' => $searchs_results,
             'link_pattern'    => $link_pattern,
             'link_base'       => $link_base,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -266,14 +267,15 @@ class SearchsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $searchs = Searchs::orderBy('created_at', 'desc')
-                          ->paginate(10);
+                          ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'searchs_list_buckets', [
             'searchs_frame' => $searchs_frame,
             'searchs'       => $searchs,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -300,12 +302,11 @@ class SearchsPlugin extends UserPluginBase
         // 設定データ
         $searchs = new Searchs();
 
-        // id が渡ってくればid が対象
         if (!empty($id)) {
+            // id が渡ってくればid が対象
             $searchs = Searchs::where('id', $id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id から設定データ取得、なければ、新規作成か選択へ誘導
-        else if (!empty($searchs_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($searchs_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id から設定データ取得、なければ、新規作成か選択へ誘導
             $searchs = Searchs::where('bucket_id', $searchs_frame->bucket_id)->first();
         }
 
@@ -321,7 +322,8 @@ class SearchsPlugin extends UserPluginBase
             'create_flag'           => $create_flag,
             'message'               => $message,
             'errors'                => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -347,12 +349,10 @@ class SearchsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-
             if (empty($searchs_frame->searchs_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
-            else  {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }
@@ -361,9 +361,8 @@ class SearchsPlugin extends UserPluginBase
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるsearchs_id が空ならバケツと設定を新規登録
         if (empty($request->searchs_id)) {
-
+            // 画面から渡ってくるsearchs_id が空ならバケツと設定を新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => '無題',
@@ -379,16 +378,13 @@ class SearchsPlugin extends UserPluginBase
             // Frame にBuckets が設定されている ＞ 既存のフレーム＆新着情報設定更新
             // （新着情報設定選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             if (empty($searchs_frame->bucket_id)) {
-
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
             $message = '設定を追加しました。';
-        }
-        // whatsnews_id があれば、新着情報設定を更新
-        else {
-
+        } else {
+            // whatsnews_id があれば、新着情報設定を更新
             // 新着情報設定の取得
             $searchs = Searchs::where('id', $request->searchs_id)->first();
 
@@ -419,8 +415,7 @@ class SearchsPlugin extends UserPluginBase
     public function destroyBuckets($request, $page_id, $frame_id, $id)
     {
         // id がある場合、データを削除
-        if ( $id ) {
-
+        if ($id) {
             // フレームから、新着の設定取得
             $searchs_frame = $this->getSearchsFrame($frame_id);
 
@@ -432,7 +427,6 @@ class SearchsPlugin extends UserPluginBase
 
             // FrameのバケツIDの更新
             Frame::where('id', $frame_id)->update(['bucket_id' => null]);
-
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }

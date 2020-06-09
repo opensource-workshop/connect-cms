@@ -19,7 +19,7 @@ class Whatsnews extends Model
 
         // 表示ON になっているプラグインの情報を付与して返却
         if (!empty($this->target_plugins)) {
-            foreach(explode(',', $this->target_plugins) as $target_plugin) {
+            foreach (explode(',', $this->target_plugins) as $target_plugin) {
                 $target_plugins[$target_plugin] = true;
             }
         }

@@ -54,7 +54,7 @@ class SecurityManage extends ManagePluginBase
                          ->orderBy('apply_sequence', 'asc')
                          ->get();
 
-        return view('plugins.manage.security.loginpermit',[
+        return view('plugins.manage.security.loginpermit', [
             "function"             => __FUNCTION__,
             "plugin_name"          => "security",
             "login_permits"        => $login_permits,
@@ -79,7 +79,6 @@ class SecurityManage extends ManagePluginBase
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_apply_sequence) || !empty($request->add_ip_address) || !empty($request->add_reject)) {
-
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_apply_sequence'   => ['required'],
@@ -99,8 +98,7 @@ class SecurityManage extends ManagePluginBase
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->login_permits_id)) {
-            foreach($request->login_permits_id as $login_permit_id) {
-
+            foreach ($request->login_permits_id as $login_permit_id) {
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'apply_sequence.'.$login_permit_id   => ['required'],
@@ -131,9 +129,7 @@ class SecurityManage extends ManagePluginBase
 
         // 既存項目アリ
         if (!empty($request->login_permits_id)) {
-
-            foreach($request->login_permits_id as $login_permit_id) {
-
+            foreach ($request->login_permits_id as $login_permit_id) {
                 // モデルオブジェクト取得
                 $login_permits = ConfigsLoginPermits::where('id', $login_permit_id)->first();
 

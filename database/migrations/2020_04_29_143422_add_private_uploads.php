@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddClassDatabasesColumns extends Migration
+class AddPrivateUploads extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,9 @@ class AddClassDatabasesColumns extends Migration
      */
     public function up()
     {
-        Schema::table('databases_columns', function (Blueprint $table) {
+        Schema::table('uploads', function (Blueprint $table) {
             //
-            $table->string('classname')->nullable()->comment('Class名')->after('select_flag');
+            $table->integer('private')->default(0)->after('page_id');
         });
     }
 
@@ -26,9 +26,9 @@ class AddClassDatabasesColumns extends Migration
      */
     public function down()
     {
-        Schema::table('databases_columns', function (Blueprint $table) {
+        Schema::table('uploads', function (Blueprint $table) {
             //
-            $table->dropColumn('classname');
+            $table->dropColumn('private');
         });
     }
 }
