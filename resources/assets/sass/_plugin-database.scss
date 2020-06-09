@@ -1,0 +1,447 @@
+ // db 用の色指定
+$db-base: $blue; //プライマリーカラーを使用する
+
+$db-base-bg: $body-bg; //基本背景色
+$db-light-bg: $gray-100; // cap背景色
+$db-cap-bg: $gray-200; // cap背景色
+$db-cap-txt: $db-base; // cap文字色
+$db-base-txt: $yiq-text-dark; //基本文字色
+$db-sub-txt: $yiq-text-light; //サブ文字色
+$db-link-txt: $blue; // リンク文字色
+$db-sub-link-txt: $gray-100; // サブリンク文字色
+$db-base-border: $gray-300; // 罫線色
+$db-light-border: $gray-200; // 明るい罫線色
+$db-sub-border: $white; // サブ罫線色
+$db-shadow: rgba($black, .125); //基本背景色
+
+// データベース：詳細画面
+.db-default-detail{
+    width: 100%;
+    margin-bottom: 1.5rem;
+    h2{
+        font-weight: bold;
+        font-size: 1.25rem;
+        padding: 0.375rem 0 0.375rem 1rem;
+        margin-bottom: 0.5rem;
+        background: $db-light-bg;
+        border-bottom: 1px solid $db-base-border;
+    }
+    dl{
+        padding-bottom: calc(1rem - 1px);
+        margin-bottom: 1rem;
+        background-color: $db-base-bg;
+        border-bottom: 1px solid $db-base-border;
+        dt{
+            font-size: 1rem;
+            border-bottom: 1px solid $db-base-border;
+            padding: 0 0 0.25rem calc(0.5rem - 1px);
+            margin-bottom: 0.25rem;
+        }
+        dd{
+            margin-bottom: 0;
+            padding: 0 0 0 1rem;
+        }
+        &.type-image{
+            border: none;
+            margin-bottom: 0.5rem;
+            dt{
+                display: none;
+            }
+            dd{
+                text-align: center;
+                padding: 1rem;
+                img{
+                    min-width: 50%;
+                }
+            }
+        }
+    }
+    }
+@media (min-width: map-get($grid-breakpoints, 'md')) {
+    .db-default-detail{
+        h2{
+            font-size: 1.5rem;
+        }
+        dl{
+            margin-bottom: 2rem;
+            dt{
+                font-size: 1.25rem;
+                margin-bottom: 0.5rem;
+                padding-left: 1.25rem;
+            }
+            dd{
+                padding-left: 3rem;
+            }
+            &.type-image dd img{
+                min-width: 80%;
+            }
+        }
+    }
+    }
+
+// データベース：デフォルト
+.db-default{
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    dl{
+        background-clip: border-box;
+        margin-bottom: 1.5rem;
+        dt{
+            margin-bottom: 0.5rem;
+            border: 1px solid $db-base-border;
+            border-width: 0 0 1px 0;
+            background-color: $table-head-bg;
+            padding: 0;
+            a{
+                font-size: 1.25rem;
+                display: block;
+                padding: 0.375rem 0 0.375rem 1rem;
+            }
+        }
+        dd{
+            padding-bottom: calc(0.5rem - 1px);
+            margin-bottom: 0.5rem;
+            border: 1px solid $db-base-border;
+            border-width: 0 0 1px 0;
+            background-color: $db-base-bg;
+            h3{
+                font-weight: bold;
+                font-size: 1rem;
+                border-bottom: 1px solid $db-base-border;
+                padding: 0 0 0.25rem calc(0.5rem - 1px);
+                margin-bottom: 0.25rem;
+            }
+            p{
+                margin: 0;
+                padding-left: 1rem;
+            }
+            &.type-image{
+                text-align: center;
+                padding: 1rem;
+                border: none;
+                margin-bottom: 0.5rem;
+                img{
+                    min-width: 50%;
+                }
+            }
+        }
+    }
+    }
+@media (min-width: map-get($grid-breakpoints, 'md')) {
+    .db-default{
+        overflow: scroll auto;
+        > div{
+            min-width: 100%;
+        }
+        dl{
+            dt, dd, dd.type-image{
+                vertical-align: middle;
+                border: 1px solid $db-base-border;
+                border-width: 0 1px 1px 0;
+                width: auto;
+            }
+            dt{
+                a{
+                    font-size: 1rem;
+                    display: block;
+                    padding: 0;
+                    height: 100%;
+                }
+                &:first-child{
+                    border-left: 1px solid $db-base-border;
+                }
+            } 
+            dd p{
+                padding: 0;
+            }
+            &:first-child dt{
+                border-width: 1px 0;
+                border-right: 1px solid $db-sub-border;
+                text-align: nowrap;
+                &:last-child{
+                    border-right: 1px solid $db-base-border;
+                }
+            }
+        }
+    }
+    }
+@media (min-width: map-get($grid-breakpoints, 'lg')) {
+    .db-default{
+        overflow: auto auto;
+    }
+    }
+
+// データベース：テーブル
+.db-tabel{
+    width: 100%;
+    overflow: scroll auto;
+    padding: 0;
+    margin: 0;
+    > div{
+        min-width: 100%;
+    }
+    dl{
+        background-clip: border-box;
+        dt, dd{
+            vertical-align: middle;
+            border: 1px solid $db-base-border;
+            border-width: 0 1px 1px 0;
+        }
+        dt{
+            background-color: $table-head-bg;
+            &:first-child{
+                border-left: 1px solid $db-base-border;
+            }
+        }
+        dd{
+            background-color: $db-base-bg;
+        }
+        &:first-child{
+            dt{
+                border-top: 1px solid $db-base-border;
+                border-right: 1px solid $db-sub-border;
+                text-align: nowrap;
+                &:last-child{
+                    border-right: 1px solid $db-base-border;
+                }
+            }
+        }
+    }
+    }
+
+// データベース：リスト
+.db-list{
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    .db-adata{
+        width: 100%;
+        position: relative;
+        padding-bottom: 3rem; /*詳細ボタン設置用*/
+        border: 1px solid $db-base-border;
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+        &:after{
+            display: block;
+            clear: both;
+            content: "";
+        }
+        .main-image{
+            float: left;
+            width: 30%;
+            height: 100%;
+            overflow: hidden;
+            border-top-left-radius: 0.25rem;
+            a{
+                img{
+                }
+            }
+        }
+        h2{
+            float:right;
+            overflow: hidden;
+            width: calc(70% - 0.25rem);
+            padding: 0;
+            margin: 0 0 0.5rem;
+            border-top-right-radius: 0.25rem;
+            background-color: $db-cap-bg;
+            a{
+                display: block;
+                padding: 0.2rem 0 0.2rem 0.5em;
+                font-size: 1.1rem;
+                font-weight: bold;
+            }
+        }
+        .db-contents{
+            width: calc(70% - 0.25rem);
+            float: right;
+            padding: 0;
+            margin: 0;
+            div{
+                padding-bottom: calc(0.5rem - 1px);
+                margin-bottom: 0.5rem;
+                border-bottom: 1px solid $db-base-border;
+                background-color: $db-base-bg;
+                h3{
+                    font-weight: bold;
+                    font-size: 1rem;
+                    border-bottom: 1px solid $db-base-border;
+                    padding: 0 0 calc(0.2rem - 1px) 0.5rem;
+                    margin-bottom: 0.1rem;
+                }
+                p{
+                    margin: 0;
+                    padding-left: 1rem;
+                }
+            }
+        }
+        button{
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+        }
+        &.no-image{ 
+            padding-bottom: 0;
+            h2{
+                width: 100%;
+                float: none;
+                border-top-left-radius: 0.25rem;
+            }
+            .db-contents{
+                width: calc(100% - 1rem);
+                float: none;
+                padding: 0;
+                margin: 0 0.5rem 3.5rem 0.5rem;
+            }
+        }
+    }
+}
+@media (min-width: map-get($grid-breakpoints, 'md')) {
+    .db-list .db-adata{
+        //左右二分割用
+        width: calc(50% - 0.5rem);
+    }
+}
+
+// データベース：カード
+.db-card{
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    .db-adata{
+        position: relative;
+        border: 1px solid $db-base-border;
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+        .main-image{
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            a{
+                img{}
+            }
+        }
+        h2{
+            margin-bottom: 0.5rem;
+            padding: 0;
+            background-color: $db-cap-bg;
+            a{
+                display: block;
+                padding: 0.4rem 0 0.4rem 0.5em;
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+        }
+        .db-contents{
+            width: calc(100% - 1rem);
+            float: none;
+            padding: 0;
+            margin: 0 0.5rem 3.5rem 0.5rem;
+            div{
+                padding-bottom: calc(0.5rem - 1px);
+                border-bottom: 1px solid $db-base-border;
+                margin-bottom: 0.5rem;
+                background-color: $db-base-bg;
+                h3{
+                    font-weight: bold;
+                    font-size: 1rem;
+                    border-bottom: 1px solid $db-base-border;
+                    padding: 0 0 calc(0.2rem - 1px) 0.5rem;
+                    margin-bottom: 0.1rem;
+                }
+                p{
+                    margin: 0;
+                    padding-left: 1rem;
+                }
+            }
+        }
+        button{
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+        }
+    }
+    }
+@media (min-width: map-get($grid-breakpoints, 'md')) {
+    .db-card .db-adata{
+        width: calc(50% - 0.5rem);
+    }
+    }
+@media (min-width: map-get($grid-breakpoints, 'lg')) {
+    .db-card .db-adata{
+        width: calc(33% - 1rem);
+    }
+    }
+@media (min-width: map-get($grid-breakpoints, 'xl')) {
+    .db-card .db-adata{
+        width: calc(25% - 1rem);
+    }
+    }
+
+// データベース：メニュー
+.db-menu{
+    display: none;
+    }
+@media (min-width: map-get($grid-breakpoints, 'lg')) {
+   .db-menu{
+        display: block;
+        .db-adata{
+            display: flex;
+            width: 100%;
+            height: 5rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid $db-base;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+            background-color: $db-base;
+            a{
+                &.main-image{
+                    display: block;
+                    height: 5rem;
+                    width: 35%;
+                    border-top-left-radius: 0.25rem;
+                    background-color: $db-base-bg;
+                    img{
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                }
+            }
+            dl{
+                display: block;
+                width: 65%;
+                height: 5rem;
+                overflow: hidden;
+                dt{
+                    a{
+                        display: block;
+                        font-size: 0.8rem;
+                        padding: 0.4rem 0 0.3rem 0.5rem;
+                        background-color: $db-cap-bg;
+                    }
+                }
+                dd{
+                    padding-left: 0;
+                    a{
+                        display: block;
+                        color: $db-sub-link-txt;
+                        font-size: 0.9rem;
+                        line-height: 1.5rem;
+                        padding-left: 0.5rem;
+                    }
+                }
+            }
+            &.no-image {
+                dl {
+                    width: 100%;
+                }
+            }
+        }
+   }
+    }
+
