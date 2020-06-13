@@ -132,7 +132,6 @@ trait MigrationTrait
 
         // アップロード・ファイルの取り込み
         $this->importUpload();
-return;
 
         // 新ページの取り込み
         $paths = File::glob(storage_path() . '/app/migration/_*');
@@ -292,9 +291,24 @@ return;
         $plugin_name = $frame_ini['frame_base']['plugin_name'];
 
         // プラグイン振り分け
+
+        // 固定記事（お知らせ）
         if ($plugin_name == 'contents') {
             $this->importPluginContents($page, $page_dir, $frame_ini, $display_sequence);
         }
+        // メニュー
+        elseif ($plugin_name == 'menus') {
+            $this->importPluginMenus($page, $page_dir, $frame_ini, $display_sequence);
+        }
+    }
+
+    /**
+     * メニュープラグインの登録処理
+     */
+    private function importPluginMenus($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // Frames 登録
+        $this->importPluginFrame($page, $frame_ini, $display_sequence);
     }
 
     /**
@@ -316,30 +330,7 @@ return;
         $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
 
         // Frames 登録
-        // echo "Frames 登録\n";
-
-        // Frame タイトル
-        $frame_title = '[無題]';
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_title', $frame_ini['frame_base'])) {
-            $frame_title = $frame_ini['frame_base']['frame_title'];
-        }
-
-        // Frame デザイン
-        $frame_design = 'default';
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_design', $frame_ini['frame_base'])) {
-            $frame_design = $frame_ini['frame_base']['frame_design'];
-        }
-
-        $frame = Frame::create(['page_id'          => $page->id,
-                                'area_id'          => 2,
-                                'frame_title'      => $frame_title,
-                                'frame_design'     => $frame_design,
-                                'plugin_name'      => 'contents',
-                                'frame_col'        => 0,
-                                'template'         => 'default',
-                                'bucket_id'        => $bucket->id,
-                                'display_sequence' => $display_sequence,
-                               ]);
+        $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
 
         // NC2 から移行した場合：[upload_images] の画像を登録
         // 
@@ -358,10 +349,31 @@ return;
         // --- frame_0001.html
         // img src="../@uploads/upload_00002.jpg"
         // 
-        // 
-        // 
-        // 
         if (array_key_exists('upload_images', $frame_ini)) {
+            foreach ($frame_ini['upload_images'] as $nc2_upload_id => $image_path) {
+
+                // 画像のパスの修正
+                // ini ファイルのID はNC2 のアップロードID が入っている。
+                // マッピングテーブルから新ID を取得して、変換する。
+                $migration_mapping = MigrationMappings::where('target_source_table', 'uploads')->where('source_id', $nc2_upload_id)->first();
+
+                // コンテンツ中のアップロード画像のパスの修正
+                $content_html = str_replace($image_path, '/file/' . $migration_mapping->destination_id, $content_html);
+            }
+        }
+
+        // NC2 から移行した場合：[upload_files] のファイルを登録
+        if (array_key_exists('upload_files', $frame_ini)) {
+            foreach ($frame_ini['upload_files'] as $nc2_upload_id => $file_path) {
+
+                // 画像のパスの修正
+                // ini ファイルのID はNC2 のアップロードID が入っている。
+                // マッピングテーブルから新ID を取得して、変換する。
+                $migration_mapping = MigrationMappings::where('target_source_table', 'uploads')->where('source_id', $nc2_upload_id)->first();
+
+                // コンテンツ中のアップロード画像のパスの修正
+                $content_html = str_replace($file_path, '/file/' . $migration_mapping->destination_id, $content_html);
+            }
         }
 
         // NC3 のHTTP から移行した場合：[image_names] の画像を登録
@@ -444,6 +456,56 @@ return;
         $content = Contents::create(['bucket_id' => $bucket->id,
                                      'content_text' => $content_html,
                                      'status' => 0]);
+    }
+
+    /**
+     * フレームの登録処理
+     */
+    private function importPluginFrame($page, $frame_ini, $display_sequence, $bucket = null)
+    {
+        // Frames 登録
+        // echo "Frames 登録\n";
+
+        // Frame タイトル
+        $frame_title = '[無題]';
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_title', $frame_ini['frame_base'])) {
+            $frame_title = $frame_ini['frame_base']['frame_title'];
+        }
+
+        // Frame デザイン
+        $frame_design = 'default';
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_design', $frame_ini['frame_base'])) {
+            $frame_design = $frame_ini['frame_base']['frame_design'];
+        }
+
+        // Frame エリアID
+        $frame_area_id = 2; // メイン
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
+            $frame_area_id = $frame_ini['frame_base']['area_id'];
+        }
+
+        // plugin_name
+        $plugin_name = '';
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('plugin_name', $frame_ini['frame_base'])) {
+            $plugin_name = $frame_ini['frame_base']['plugin_name'];
+        }
+
+        // bucket_id
+        $bucket_id = null;
+        if ($bucket) {
+            $bucket_id = $bucket->id;
+        }
+
+        $frame = Frame::create(['page_id'          => $page->id,
+                                'area_id'          => $frame_area_id,
+                                'frame_title'      => $frame_title,
+                                'frame_design'     => $frame_design,
+                                'plugin_name'      => $plugin_name,
+                                'frame_col'        => 0,
+                                'template'         => 'default',
+                                'bucket_id'        => $bucket_id,
+                                'display_sequence' => $display_sequence,
+                               ]);
     }
 
     /**
@@ -839,7 +901,7 @@ return;
     private function get_content_anchor($content)
     {
 
-        $pattern = "|<a href=\"(.*?)\".*?>(.*?)</a>|mis";
+        $pattern = "|<a.*?href=\"(.*?)\".*?>(.*?)</a>|mis";
         if (preg_match_all($pattern, $content, $anchors)) {
             if (is_array($anchors) && isset($anchors[1])) {
                 return $anchors[1];
@@ -1190,6 +1252,28 @@ return;
 
         // ブロックをループ
         $frame_index = 0; // フレームの連番
+
+
+        // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
+        // NC2 では、ヘッダ、左、右が一つずつで共通のため、ここで処理する。
+        if ($new_page_index == 1) {
+
+            // 指定されたページ内のブロックを取得
+            $nc2_common_blocks = Blocks::select('blocks.*', 'pages.page_name')
+                                       ->join('pages', 'pages.page_id', '=', 'blocks.page_id')
+                                       ->whereIn('pages.page_name', ['Header Column', 'Left Column', 'Right Column'])
+                                       ->orderBy('page_id', 'desc')
+                                       ->orderBy('col_num', 'desc')
+                                       ->get();
+
+            // 共通部分をBlock 設定に追加する。
+            foreach($nc2_common_blocks as $nc2_common_block) {
+                $nc2_blocks->prepend($nc2_common_block);
+            }
+            // Log::debug($nc2_blocks);
+        }
+
+        // ページ内のブロック
         foreach ($nc2_blocks as $nc2_block) {
 
             // グループは対象外（後で実装する）
@@ -1206,7 +1290,7 @@ return;
 
             // フレーム設定の保存用変数
             $frame_ini = "[frame_base]\n";
-            $frame_ini .= "area_id = 2\n";
+            $frame_ini .= "area_id = " . $this->nc2BlockArea($nc2_block) . "\n";
             $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
             $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign() . "\"\n";
             $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
@@ -1226,6 +1310,23 @@ return;
     }
 
     /**
+     * NC2：ブロックのエリア
+     */
+    private function nc2BlockArea($nc2_block)
+    {
+        if ($nc2_block->page_name == 'Header Column') {
+            return '0';
+        }
+        elseif ($nc2_block->page_name == 'Left Column') {
+            return '1';
+        }
+        elseif ($nc2_block->page_name == 'Right Column') {
+            return '3';
+        }
+        return '2';
+    }
+
+    /**
      * NC2：ページ内のブロックに配置されているモジュールのエクスポート。
      * モジュールごとのエクスポート処理に振り分け。
      */
@@ -1235,8 +1336,18 @@ return;
         $plugin_name = $nc2_block->getPluginName();
 
         // モジュールごとに振り分け
+
+        // 固定記事（お知らせ）
         if ($plugin_name == 'contents') {
             $this->nc2ExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        }
+        // メニュー
+        elseif ($plugin_name == 'menus') {
+            // 今のところ、メニューの追加設定はなし。
+        }
+        // 移行できなかったモジュール
+        else {
+            $this->putLog("no migrate module = " . $nc2_block->getModuleName(), $nc2_block);
         }
     }
 
@@ -1266,47 +1377,17 @@ return;
     {
         // 画像を探す
         $img_srcs = $this->get_content_image($content);
-        var_dump($img_srcs);
+        //var_dump($img_srcs);
 
-        if (!empty($img_srcs)) {
+        // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
+        $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $new_page_index, $frame_index_str, $content, $img_srcs, '[upload_images]');
 
-            // フレーム設定ファイルの追記
-            $images_ini = "[upload_images]\n";
+        // 添付ファイルを探す
+        $anchors = $this->get_content_anchor($content);
+        //var_dump($anchors);
 
-            foreach($img_srcs as $img_src) {
-                // common_download_main があれば、NC2 の画像として移行する。
-                if (stripos($img_src, 'common_download_main') !== false) {
-                    // &amp; があれば、& に変換
-                    $img_src_tmp = str_replace('&amp;', '&', $img_src);
-                    // &で分割
-                    $src_params = explode('&', $img_src_tmp);
-                    foreach($src_params as $src_param) {
-                        $param_split = explode('=', $src_param);
-                        if ($param_split[0] == 'upload_id') {
-
-                            // フレーム設定ファイルの追記
-                            // 移行したアップロードファイルをini ファイルから探す
-                            if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
-
-                                // コンテンツ及び[upload_images]セクション内のimg src を作る。
-                                $export_img_src = '../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
-
-                                // [upload_images] 内の画像情報の追記
-                                $images_ini .= $param_split[1] . " = \"" . $export_img_src . "\"\n";
-
-                                // 画像のパスの修正
-                                $content = str_replace($img_src, $export_img_src, $content);
-                            }
-                        }
-                    }
-                }
-                else {
-                    // 移行しなかった画像のimg タグとしてログに記録
-                    $this->putLog("no migrate img = " . $img_src, $nc2_block);
-                }
-            }
-            Storage::append('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $images_ini);
-        }
+        // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
+        $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $new_page_index, $frame_index_str, $content, $anchors, '[upload_files]');
 
         // HTML content の保存
         $content_file_name = "frame_" . $frame_index_str . '.html';
@@ -1316,6 +1397,57 @@ return;
         $contents_ini = "[contents]\n";
         $contents_ini .= "contents_file = \"" . $content_file_name . "\"\n";
         Storage::append('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $contents_ini);
+    }
+
+    /**
+     * NC2：common_download_main をエクスポート形式に変換
+     */
+    private function nc2MigrationCommonDownloadMain($nc2_block, $new_page_index, $frame_index_str, $content, $paths, $section_name)
+    {
+        if (empty($paths)) {
+            return $content;
+        }
+
+        // フレーム設定ファイルの追記
+        $ini_text = $section_name . "\n";
+
+        foreach($paths as $path) {
+            // common_download_main があれば、NC2 の画像として移行する。
+            if (stripos($path, 'common_download_main') !== false) {
+
+                // &amp; があれば、& に変換
+                $path_tmp = str_replace('&amp;', '&', $path);
+                // &で分割
+                $src_params = explode('&', $path_tmp);
+                foreach($src_params as $src_param) {
+                    $param_split = explode('=', $src_param);
+                    if ($param_split[0] == 'upload_id') {
+
+                        // フレーム設定ファイルの追記
+                        // 移行したアップロードファイルをini ファイルから探す
+                        if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
+
+                            // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
+                            $export_path = '../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
+
+                            // [upload_images] or [upload_files] 内の画像情報の追記
+                            $ini_text .= $param_split[1] . " = \"" . $export_path . "\"\n";
+
+                            // ファイルのパスの修正
+                            $content = str_replace($path, $export_path, $content);
+                        }
+                    }
+                }
+            }
+            else {
+                // 移行しなかったファイルのimg or a タグとしてログに記録
+                $this->putLog("no migrate img = " . $path, $nc2_block);
+            }
+        }
+        Storage::append('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $ini_text);
+
+        // パスを変更した記事を返す。
+        return $content;
     }
 
     /**
