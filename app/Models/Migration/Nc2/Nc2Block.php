@@ -4,12 +4,17 @@ namespace App\Models\Migration\Nc2;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Blocks extends Model
+class Nc2Block extends Model
 {
     /**
      * 使用するDB Connection
      */
     protected $connection = 'nc2';
+
+    /**
+     * テーブル名の指定
+     */
+    protected $table = 'blocks';
 
     /**
      * NC2 theme_name -> Connect-CMS frame_design 変換用テーブル

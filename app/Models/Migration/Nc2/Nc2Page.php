@@ -4,7 +4,7 @@ namespace App\Models\Migration\Nc2;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Announcement extends Model
+class Nc2Page extends Model
 {
     /**
      * 使用するDB Connection
@@ -12,7 +12,7 @@ class Announcement extends Model
     protected $connection = 'nc2';
 
     /**
-     * テーブル名が単数形なので、明示的に指定
+     * テーブル名の指定
      */
-    protected $table = 'announcement';
+    protected $table = 'pages';
 }
