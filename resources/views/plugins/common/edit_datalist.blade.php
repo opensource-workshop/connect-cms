@@ -43,7 +43,9 @@
                 <tr>
                     <th></th>
                     <th>{{$frame->plugin_name_full}}名</th>
+{{--
                     <th>詳細</th>
+--}}
                     <th>作成日</th>
                 </tr>
             </thead>
@@ -52,7 +54,9 @@
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
                     <td><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></input></td>
                     <td>{{$plugin->plugin_bucket_name}}</td>
+{{--
                     <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/{{$frame->plugin_name}}/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}'"><i class="far fa-edit"></i> 設定変更</button></th>
+--}}
                     <td>{{$plugin->created_at}}</td>
                 </tr>
             @endforeach

@@ -78,6 +78,11 @@ class UserPluginBase extends PluginBase
     public $id = null;
 
     /**
+     *  リクエスト内で画面に渡すメッセージ
+     */
+    protected $cc_massage = null;
+
+    /**
      *  コンストラクタ
      */
     function __construct($page = null, $frame = null, $pages = null)
@@ -355,6 +360,9 @@ class UserPluginBase extends PluginBase
 
         // 表示しているテーマ
         $arg['theme'] = $this->getThemeName();
+
+        // リクエスト内で画面に渡したいメッセージ
+        $arg['cc_massage'] = $this->cc_massage;
 
         // テーマ Default ディレクトリの確認（テーマがグループテーマなら、グループ内のDefault）
         if (strpos($arg['theme'], '/') !== false) {
