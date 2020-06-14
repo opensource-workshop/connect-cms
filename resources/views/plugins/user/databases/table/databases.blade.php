@@ -45,7 +45,7 @@
 
                         @elseif($_first_flag) {{--最初の項目--}}
                         <dt class="d-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
-                            <a href="'{{$_href.$input->id}}">
+                            <a href="{{$_href.$input->id}}">
                                 {{$input->getTagType( $input_cols, $_column, 1)}}
                             </a>
                         </dt>
