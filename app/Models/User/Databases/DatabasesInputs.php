@@ -12,7 +12,6 @@ class DatabasesInputs extends Model
     use UserableNohistory;
 
     /**
-    <<<<<<< HEAD
     *  タイプを指定して、表示するデータの番号を返す
     */
     public function getNumType($columns, $type, $th_no=1){
@@ -47,7 +46,6 @@ class DatabasesInputs extends Model
         foreach ($row_columns as $column) {
             if ($column->column_type == 'image') {
                 return true;
-                //>>>>>>> upstream/master
             }
         }
         return false;
@@ -217,6 +215,5 @@ class DatabasesInputs extends Model
         }
 
         return $input_col->value;
-        //>>>>>>> upstream/master
     }
 }
