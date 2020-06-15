@@ -141,7 +141,6 @@ class DatabasesInputs extends Model
         return url('/').'/plugin/databases/detail/'.$pageid.'/'.$frameid.'/';
     }
 
-
     /**
     *  n番目の画像型の値があるか判定
     */
