@@ -13,8 +13,14 @@
 @section("plugin_contents_$frame->id")
     @if (empty($setting_error_messages))
         @php
-            // コラム配列
-            $_columns = $inputs[0]->getColumnsDort($columns);
+            // コラム配列（DB へのアクセスを減らすために 配列にしておく）
+            //$_columns = $inputs[0]->getColumnsDort($columns);
+
+            //データがない時に〝$inputs〟が存在しないので function が使えない。
+            $_columns = json_decode(json_encode($columns, JSON_UNESCAPED_UNICODE, 10), true);
+            $_display_sequence = array_column($_columns, 'display_sequence');
+            $_id = array_column($_columns, 'id');
+            array_multisort( $_display_sequence, SORT_ASC, $_id, SORT_ASC, $_columns );
 
             // 表示した項目の ID を保存する配列
             $_show = [];
