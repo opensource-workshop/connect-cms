@@ -29,12 +29,13 @@
             //$_href = $inputs[0]->getPageFrameLink($databases_frames, $page->id, $frame->id);
 
             //データがない時に〝$inputs〟が存在しないので function が使えない。
-            $_obj = $databases_frames->where( 'frames_id', $frame->id )->select( 'view_page_id', 'view_frame_id' )->first();
+            $_obj = $databases_frames->where( 'frames_id', $frame->id )
+                ->select( 'view_page_id', 'view_frame_id' )->first();
                 
             $pageid = $page->id;
             $frameid = $frame->id;
 
-            if( $_obj->view_page_id && $_obj->view_frame_id ){
+            if( isset($_obj->view_page_id) && isset($_obj->view_frame_id) && $_obj->view_page_id && $_obj->view_frame_id ){
                 if( $_obj->view_page_id != $pageid ){
                     $pageid = $_obj->view_page_id;
                 }

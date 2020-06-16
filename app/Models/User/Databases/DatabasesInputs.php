@@ -130,7 +130,7 @@ class DatabasesInputs extends Model
         $_obj = $frames->where( 'frames_id', $frameid )
             ->select( 'view_page_id', 'view_frame_id' )->first();
 
-        if( $_obj->view_page_id && $_obj->view_frame_id ){
+        if( isset($_obj->view_page_id) && isset($_obj->view_frame_id) && $_obj->view_page_id && $_obj->view_frame_id ){
             if( $_obj->view_page_id != $pageid ){
                 $pageid = $_obj->view_page_id;
             }

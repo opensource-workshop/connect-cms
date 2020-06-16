@@ -44,8 +44,8 @@
                 text-right"
             >
                 <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
-                    <i class="far fa-plus"></i>
-                    <span class="d-none d-md-inline">新規</apan>
+                    <i class="fas fa-plus"></i>
+                    <span class="d-none d-md-inline">新規</span>
                 </button>
             </div>
         @endcan

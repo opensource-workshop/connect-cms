@@ -2121,6 +2121,12 @@ class DatabasesPlugin extends UserPluginBase
         // デフォルトで必須
         $validator_values['view_count'] = ['required'];
         $validator_attributes['view_count'] = '表示件数';
+        
+        //半角数字
+        $validator_values['view_page_id'] = ['numeric'];
+        $validator_attributes['view_page_id'] = '表示するページID';
+        $validator_values['view_frame_id'] = ['numeric'];
+        $validator_attributes['view_frame_id'] = '表示するフレームID';
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_values);
