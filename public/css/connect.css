@@ -33,11 +33,13 @@ body {
     background-color: #f2f2f2;
     border-radius: 7px;
 }
+/*
 #ccMainArea .card-body .column {
     margin: 25px 0;
     border: #999 2px solid;
     background-color: #fff;
 }
+*/
 /* 注意ポイント */
 .ccMainArea .cc-exclamation {
     padding-left: 1.1rem;
