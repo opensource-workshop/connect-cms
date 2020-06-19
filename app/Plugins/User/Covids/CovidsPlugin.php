@@ -56,8 +56,9 @@ class CovidsPlugin extends UserPluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["getData"]   = array('role_arrangement');
-        $role_ckeck_table["change"]   = array('role_arrangement');
+        $role_ckeck_table["getData"]        = array('role_arrangement');
+        $role_ckeck_table["change"]         = array('role_arrangement');
+        $role_ckeck_table["destroyBuckets"] = array('role_arrangement');
         return $role_ckeck_table;
     }
 
@@ -279,32 +280,6 @@ class CovidsPlugin extends UserPluginBase
     }
 
     /**
-     * データ編集用表示関数
-     * コアが編集画面表示の際に呼び出す関数
-     */
-    public function edit($request, $page_id, $frame_id, $id = null)
-    {
-        // データ取得
-        $contents = $this->getFrameContents($frame_id);
-
-        // データがない場合は、新規登録用画面
-        if (empty($contents)) {
-            // 新規登録画面を呼び出す
-            return $this->view(
-                'contents_create', [
-                ]
-            );
-        } else {
-            // 編集画面テンプレートを呼び出す。
-            return $this->view(
-                'contents_edit', [
-                'contents' => $contents,
-                ]
-            );
-        }
-    }
-
-    /**
      *  URL からデータのインポート
      */
     public function getData($request, $page_id, $frame_id)
@@ -322,7 +297,7 @@ class CovidsPlugin extends UserPluginBase
         // CSV の確認
         $csv_last_date = '';
         $csv_next_date = '';
-        $paths = File::glob(storage_path() . '/app/plugins/covids/*');
+        $paths = File::glob(storage_path() . '/app/plugins/covids/' . $covid->id . '/*');
         if (!empty($paths)) {
             rsort($paths);
             $csv_last_date_mdy = pathinfo(basename($paths[0]))['filename'];
@@ -354,181 +329,27 @@ class CovidsPlugin extends UserPluginBase
         );
     }
 
-    /**
-     *  データ詳細表示関数
-     *  コアがデータ削除の確認用に呼び出す関数
-     */
-    public function show($request, $page_id, $frame_id, $id = null)
-    {
-        // 権限チェック
-        // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
-        if ($this->can('frames.delete')) {
-            return $this->view_error(403);
-        }
-
-        // データ取得
-        $contents = $this->getFrameContents($frame_id);
-
-        // データの存在確認をして、画面を切り替える
-        if (empty($contents)) {
-            // データなしの表示テンプレートを呼び出す。
-            return $this->view(
-                'contents_edit_nodata', [
-                'contents' => null,
-                ]
-            );
-        }
-
-        // 表示テンプレートを呼び出す。
-        return $this->view(
-            'contents_show', [
-            'contents' => $contents,
-            ]
-        );
-    }
-
-   /**
-    * データ新規登録関数
-    */
-    public function store($request, $page_id = null, $frame_id = null, $id = null, $status = 0)
-    {
-        // バケツがまだ登録されていなかったら登録する。
-        if (empty($this->buckets)) {
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'contents'
-            ]);
-        } else {
-            $bucket_id = $this->buckets['id'];
-        }
-
-        // コンテンツデータの登録
-        $contents = new Contents;
-        $contents->created_id   = Auth::user()->id;
-        $contents->bucket_id    = $bucket_id;
-        $contents->content_text = $request->contents;
-
-        // 一時保存(status が 1 になる。)
-        if ($status == 1) {
-            $contents->status = 1;
-        } elseif ($this->isApproval($frame_id)) {
-            // 承認フラグ(要承認の場合はstatus が 2 になる。)
-            $contents->status = 2;
-        } else {
-            $contents->status = 0;
-        }
-
-        $contents->save();
-
-        // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)
-                  ->update(['bucket_id' => $bucket_id]);
-
-        return;
-    }
-
-   /**
-    * データ更新（確定）関数
-    */
-    public function update($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
-        $oldrow = Contents::find($id);
-
-        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
-        $newrow = $oldrow->replicate();
-        $newrow->content_text = $request->contents;
-
-        // 承認フラグ(要承認の場合はstatus が2 になる。)
-        if ($this->isApproval($frame_id)) {
-            $newrow->status = 2;
-        } else {
-            $newrow->status = 0;
-        }
-
-        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
-        if ($newrow->status != 2) {
-            Contents::where('bucket_id', $oldrow->bucket_id)->where('status', 0)->update(['status' => 9]);
-        }
-        //Contents::where('id', $oldrow->id)->update(['status' => 9]);
-
-        // 変更のデータ保存
-        $newrow->save();
-
-        return;
-    }
-
-   /**
-    * データ一時保存関数
-    */
-    public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // 新規で一時保存しようとしたときは id、レコードがまだない。
-        if (empty($id)) {
-            $status = 1;
-            $this->store($request, $page_id, $frame_id, $id, $status);
-        } else {
-            // 旧データ取得
-            $oldrow = Contents::find($id);
-
-            // 旧レコードが表示でなければ、履歴に更新（表示を履歴に更新すると、画面に表示されなくなる）
-// 過去のステータスも残す方式にする。
-//            if ($oldrow->status != 0) {
-//                Contents::where('id', $id)->update(['status' => 9]);
-//            }
-
-            // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
-            $newrow = $oldrow->replicate();
-            $newrow->content_text = $request->contents;
-            $newrow->status = 1; //（一時保存）
-            $newrow->save();
-        }
-        return;
-    }
-
-   /**
-    * 承認
-    */
-    public function approval($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
-        $oldrow = Contents::find($id);
-
-        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
-        Contents::where('bucket_id', $oldrow->bucket_id)->where('status', 0)->update(['status' => 9]);
-
-        // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
-        $newrow = $oldrow->replicate();
-        $newrow->status = 0;
-        $newrow->save();
-
-        return;
-    }
-
    /**
     * データ削除関数
     */
-    public function delete($request, $page_id = null, $frame_id = null, $id = null)
+    public function destroyBuckets($request, $page_id, $frame_id, $covid_id)
     {
-        // id がある場合、コンテンツを削除
-        if ($id) {
-            // Contents データ
-            $content = Contents::where('id', $id)->first();
+        // covid_id がある場合、コンテンツを削除
+        if ($covid_id) {
+            // 削除のために Covids データ取得（以後、bucket_id はここから使用することで、Covids データがあるもので処理を保証）
+            $covid = Covid::find($covid_id);
 
-            // フレームも同時に削除するがチェックされていたらフレームを削除する。
-            if ($request->frame_delete_flag == "1") {
-                Frame::destroy($frame_id);
-            }
+            // Covids 詳細データ
+            $content = CovidDailyReport::where('covid_id', $covid->id)->delete();
 
-            // 論理削除のため、コンテンツデータを status:9 に変更する。バケツデータは削除しない。
-// 過去のステータスも残す方式にする。
-//            Contents::where('id', $id)->update(['status' => 9]);
+            // bucket 削除
+            Buckets::where('id', $covid->bucket_id)->delete();
 
-            // 削除ユーザの更新
-            Contents::where('bucket_id', $content->bucket_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
+            // CSV ファイルの削除
+            Storage::deleteDirectory('plugins/covids/' . $covid->id);
 
-            // 同じbucket_id のものを削除
-            Contents::where('bucket_id', $content->bucket_id)->delete();
+            // Covids データ
+            $covid->delete();
         }
         return;
     }
@@ -600,7 +421,7 @@ class CovidsPlugin extends UserPluginBase
             }
 
             // ファイルに保存
-            Storage::put('plugins/covids/' . $csv_date . '.csv', $http_str);
+            Storage::put('plugins/covids/' . $covid->id . '/' . $csv_date . '.csv', $http_str);
         }
         return $this->getData($request, $page_id, $frame_id);
     }
@@ -661,11 +482,11 @@ class CovidsPlugin extends UserPluginBase
         $file_name = $csv_date . ".csv";
 
         // データ取得実行
-        if (!Storage::exists('plugins/covids/' . $file_name)) {
+        if (!Storage::exists('plugins/covids/' . $covid->id . '/' . $file_name)) {
             return;
         }
 
-        $csv_str = Storage::get('plugins/covids/' . $file_name);
+        $csv_str = Storage::get('plugins/covids/' . $covid->id . '/' . $file_name);
 
         // 一度、該当日付のデータを削除して取り込みなおす。
         CovidDailyReport::where('target_date', $target_date)->delete();
@@ -711,15 +532,8 @@ class CovidsPlugin extends UserPluginBase
 
                 $index++;
             }
-
-            // 追加項目の計算
-//            if (!empty($covid_daily_report->deaths)) {
-//                $covid_daily_report->case_fatality_rate_moment = $covid_daily_report->deaths / $covid_daily_report->confirmed;
-//            }
-
             $covid_daily_report->save();
         }
-        //return $this->getData($request, $page_id, $frame_id);
         return;
     }
 }
