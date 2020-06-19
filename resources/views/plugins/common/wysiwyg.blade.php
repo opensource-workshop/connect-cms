@@ -80,14 +80,14 @@
     }
 
     // plugins
-    $plugins = 'file image imagetools link autolink preview textcolor code table lists advlist';
+    $plugins = 'file image imagetools link autolink preview textcolor code table lists advlist media';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
     $plugins = "plugins  : '" . $plugins . "',";
 
     // toolbar
-    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file | preview | code ';
+    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image media file | preview | code';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $toolbar .= '| translate ';
     }

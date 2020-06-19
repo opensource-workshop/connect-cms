@@ -62,6 +62,7 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="source_base_url" value="{{old('source_base_url', $covid->source_base_url)}}" class="form-control">
             @if ($errors && $errors->has('source_base_url')) <div class="text-danger">{{$errors->first('source_base_url')}}</div> @endif
+            <span class="text-muted">/で終わってください。</span><br>
         </div>
     </div>
 

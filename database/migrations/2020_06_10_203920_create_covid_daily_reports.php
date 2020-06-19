@@ -24,10 +24,10 @@ class CreateCovidDailyReports extends Migration
             $table->string('last_update', 255)->nullable()->comment('更新日');
             $table->string('lat', 255)->nullable()->comment('緯度');
             $table->string('long_', 255)->nullable()->comment('経度');
-            $table->integer('confirmed')->comment('感染者数');
-            $table->integer('deaths')->comment('死亡者数');
-            $table->integer('recovered')->comment('回復者数');
-            $table->integer('active')->comment('感染中');
+            $table->integer('confirmed')->nullable()->comment('感染者数');
+            $table->integer('deaths')->nullable()->comment('死亡者数');
+            $table->integer('recovered')->nullable()->comment('回復者数');
+            $table->integer('active')->nullable()->comment('感染中');
             $table->string('combined_key', 255)->nullable()->comment('国＆群等');
             $table->string('incidence_rate', 255)->nullable()->comment('Admin2 + Province_State + Country_Region.');
             $table->string('case_fatality_ratio', 255)->nullable()->comment('10万人あたりの確定症例');

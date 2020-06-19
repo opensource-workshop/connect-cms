@@ -1,0 +1,45 @@
+Array
+(
+    [url] => http://opensource-workshop.jp/
+    [content_type] => text/html; charset=iso-8859-1
+    [http_code] => 302
+    [header_size] => 184
+    [request_size] => 84
+    [filetime] => -1
+    [ssl_verify_result] => 0
+    [redirect_count] => 0
+    [total_time] => 156000
+    [namelookup_time] => 47000
+    [connect_time] => 109000
+    [pretransfer_time] => 109000
+    [size_upload] => 0
+    [size_download] => 215
+    [speed_download] => 1378
+    [speed_upload] => 0
+    [download_content_length] => 215
+    [upload_content_length] => -1
+    [starttransfer_time] => 156000
+    [redirect_time] => 0
+    [redirect_url] => https://opensource-workshop.jp/
+    [primary_ip] => 27.133.129.62
+    [certinfo] => Array
+        (
+        )
+
+    [primary_port] => 80
+    [local_ip] => 192.168.10.3
+    [local_port] => 56340
+    [http_version] => 2
+    [protocol] => 1
+    [ssl_verifyresult] => 0
+    [scheme] => HTTP
+    [content_length_download] => 215
+    [content_length_upload] => -1
+    [appconnect_time] => 0
+    [request_header] => GET / HTTP/1.1
+Host: opensource-workshop.jp
+Accept: */*
+Accept-Encoding: gzip
+
+
+)

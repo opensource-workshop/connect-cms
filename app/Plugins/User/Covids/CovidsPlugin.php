@@ -6,8 +6,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use File;
 use DB;
 use Session;
+use Storage;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -41,6 +43,8 @@ class CovidsPlugin extends UserPluginBase
         ];
         $functions['post'] = [
             'change',
+            'importData',
+            'pullData',
         ];
         return $functions;
     }
@@ -58,6 +62,31 @@ class CovidsPlugin extends UserPluginBase
     }
 
     /* オブジェクト変数 */
+
+    /**
+     * CSV とテーブルの項目合わせ
+     */
+    private $column_names = [
+                'FIPS'                => 'fips',
+                'Admin2'              => 'admin2',
+                'Province/State'      => 'province_state',
+                'Province_State'      => 'province_state',
+                'Country/Region'      => 'country_region',
+                'Country_Region'      => 'country_region',
+                'Last Update'         => 'last_update',
+                'Last_Update'         => 'last_update',
+                'Latitude'            => 'lat',            // 03-01-2020 から
+                'Lat'                 => 'lat',
+                'Longitude'           => 'long_',          // 03-01-2020 から
+                'Long_'               => 'long_',
+                'Confirmed'           => 'confirmed',
+                'Deaths'              => 'deaths',
+                'Recovered'           => 'recovered',
+                'Active'              => 'active',
+                'Combined_Key'        => 'combined_key',
+                'Incidence_Rate'      => 'combined_key',
+                'Case-Fatality_Ratio' => 'case_fatality_ratio',
+            ];
 
     /**
      * POSTデータ
@@ -110,12 +139,53 @@ class CovidsPlugin extends UserPluginBase
     public function index($request, $page_id, $frame_id)
     {
         // データ取得
-        $covid_daily_reports = $this->getDailyReports($frame_id);
+        $frame = Frame::find($frame_id);
+        $covid = Covid::firstOrNew(['bucket_id' => $frame->bucket_id]);
+
+        // 集計データの日付のリスト
+        $covid_report_days = CovidDailyReport::select('target_date')
+                                             ->groupBy("target_date")
+                                             ->orderBy('target_date', 'DESC')
+                                             ->get();
+
+        // 対象日付
+        $target_date = '';
+        if (!$covid_report_days->isEmpty()) {
+            $target_date = $covid_report_days->first()->target_date;  // 指定がないとデータのある最後の日
+        }
+        if ($request->filled('target_date')) {
+            $target_date = $request->target_date;
+        }
+
+        // 集計データの取得
+        $raw_select = "country_region, ";
+        $raw_select .= "SUM(confirmed) as total_confirmed, ";
+        $raw_select .= "SUM(deaths) as total_deaths, ";
+        $raw_select .= "SUM(recovered) as total_recovered, ";
+        $raw_select .= "SUM(active) as total_active, ";
+        $raw_select .= "TRUNCATE(SUM(deaths) / NULLIF(SUM(confirmed),0) * 100 + 0.05, 1) as case_fatality_rate_moment, ";
+        $raw_select .= "TRUNCATE(SUM(deaths) / NULLIF((SUM(deaths) + SUM(recovered)),0) * 100 + 0.05, 1) as case_fatality_rate_estimation, ";
+        $raw_select .= "TRUNCATE(SUM(confirmed) * SUM(deaths) / NULLIF((SUM(deaths) + SUM(recovered)),0), 0) as deaths_estimation, ";
+        $raw_select .= "TRUNCATE(SUM(active) / NULLIF(SUM(confirmed),0) * 100 + 0.05, 1) as active_rate ";
+
+        $covid_daily_reports = CovidDailyReport::select(DB::raw($raw_select))
+                                               ->where('covid_id', $covid->id)
+                                               ->where('target_date', $target_date)
+                                               ->groupBy("target_date")
+                                               ->groupBy("country_region")
+                                               ->orderByRaw('SUM(confirmed) DESC')
+                                               ->orderBy('country_region')
+//                                               ->having('case_fatality_rate_estimation', '<', 50)
+                                               ->limit(5)
+                                               ->get();
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'covids', [
+            'covid' => $covid,
             'covid_daily_reports' => $covid_daily_reports,
+            'covid_report_days'   => $covid_report_days,
+            'target_date'         => $target_date,
             ]
         );
     }
@@ -179,7 +249,7 @@ class CovidsPlugin extends UserPluginBase
         }
 
         // Covid データの確認
-        $covid = Covid::find($request->covid_id);
+        $covid = Covid::findOrNew($request->covid_id);
 
         // バケツデータ更新 or 追加
         $buckets = Buckets::updateOrCreate(
@@ -189,6 +259,10 @@ class CovidsPlugin extends UserPluginBase
              'plugin_name' => 'covid',
             ]
         );
+
+        // FrameのバケツIDの更新
+        Frame::where('id', $frame_id)
+                  ->update(['bucket_id' => $buckets->id]);
 
         // Covid データ更新 or 追加
         $covid = Covid::updateOrCreate(
@@ -235,10 +309,47 @@ class CovidsPlugin extends UserPluginBase
      */
     public function getData($request, $page_id, $frame_id)
     {
+        // PHP のタイムアウトの変更
+        //set_time_limit(3600);
+
+        // フレームとCovid 定義の取得
+        $frame = Frame::find($frame_id);
+        $covid = Covid::firstOrNew(['bucket_id' => $frame->bucket_id]);
+
+        // システム日付
+        $start_date = date('Y-m-d');
+
+        // CSV の確認
+        $csv_last_date = '';
+        $csv_next_date = '';
+        $paths = File::glob(storage_path() . '/app/plugins/covids/*');
+        if (!empty($paths)) {
+            rsort($paths);
+            $csv_last_date_mdy = pathinfo(basename($paths[0]))['filename'];
+            $csv_last_date = date('Y-m-d', strtotime(str_replace('-', '/', $csv_last_date_mdy)));
+            $csv_next_date = date('Y-m-d', strtotime('+1 day', strtotime($csv_last_date)));
+        }
+
+        // 集計データがあれば、その日の次の
+        $covid_report_last_day = CovidDailyReport::select('target_date')
+                                                 ->orderBy('target_date', 'DESC')
+                                                 ->first();
+        if (!empty($covid_report_last_day)) {
+            $start_date = date('Y-m-d', strtotime('+1 day', strtotime($covid_report_last_day->target_date)));
+        }
+
+        // 画面で指定があった場合
+        if ($request->has('start_date')) {
+            $start_date = $request->start_date;
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'get_data', [
-//            'contents' => $contents,
+            'covid'         => $covid,
+            'start_date'    => $start_date,
+            'csv_last_date' => $csv_last_date,
+            'csv_next_date' => $csv_next_date,
             ]
         );
     }
@@ -430,6 +541,185 @@ class CovidsPlugin extends UserPluginBase
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
+        return;
+    }
+
+   /**
+    * CSV データ取得
+    */
+    public function pullData($request, $page_id, $frame_id)
+    {
+        // フレームに紐づくcovid データの取得
+        $covid = $this->getCovidFrame($frame_id);
+
+        // 日付の指定チェック
+        $csv_next_date = '';
+        if (!$request->filled('csv_next_date')) {
+            $this->cc_massage = '日付を指定してください。';
+            return $this->getData($request, $page_id, $frame_id);
+        }
+        $csv_next_date = $request->csv_next_date;
+
+        // 日付フォーマットを合わせて今日までを取得
+        $today = date('Y-m-d');
+
+        // 日付クラスに設定して日数計算
+        $csv_next_date_obj = new \DateTime($csv_next_date);
+        $today_obj = new \DateTime($today);
+        $date_diff = $csv_next_date_obj->diff($today_obj);
+
+        // 日付ループ
+        $target_date = $csv_next_date;
+        for ($i = 0; $i < $date_diff->days + 1; $i++) {
+            $target_date = date('Y-m-d', strtotime('+' . $i . ' day', strtotime($csv_next_date)));
+            //echo $target_date . "<br />";
+
+            // ジョンズホプキンス大のCSV ファイル名の日付フォーマットである 月-日-年 に変更する。
+            $csv_date = date('m-d-Y', strtotime(str_replace('-', '/', $target_date)));
+
+            // データURL
+            //$request_url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/" . $csv_date . ".csv";
+            $request_url = $covid->source_base_url . $csv_date . ".csv";
+
+            // Github からデータ取得（HTTP レスポンスが gzip 圧縮されている）
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $request_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_ENCODING, "gzip");
+            //リクエストヘッダ出力設定
+            curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+
+            // データ取得実行
+            $http_str = curl_exec($ch);
+
+            // HTTPヘッダ取得
+            $http_header = curl_getinfo($ch);
+            if (empty($http_header) || !array_key_exists('http_code', $http_header) || $http_header['http_code'] != 200) {
+                // データが取得できなかったため、スルー。
+                break;
+            }
+
+            // ファイルに保存
+            Storage::put('plugins/covids/' . $csv_date . '.csv', $http_str);
+        }
+        return $this->getData($request, $page_id, $frame_id);
+    }
+
+   /**
+    * データ取り込み
+    */
+    public function importData($request, $page_id, $frame_id)
+    {
+        // 日付
+        $start_date = null;
+        if ($request->has('start_date')) {
+            $start_date = $request->start_date;
+        } else {
+            $start_date = date('Y-m-d');  // 指定がなければ今日
+        }
+        //$start_date = '01-22-2020';
+
+        // 日付フォーマットを合わせて今日までを取得
+        $today = date('Y-m-d');
+
+        // 日付クラスに設定して日数計算
+        $start_date_obj = new \DateTime($start_date);
+        $today_obj = new \DateTime($today);
+        $date_diff = $start_date_obj->diff($today_obj);
+
+        // 日付ループ
+        $target_date = $start_date;
+        for ($i = 0; $i < $date_diff->days + 1; $i++) {
+            $target_date = date('Y-m-d', strtotime('+' . $i . ' day', strtotime($start_date)));
+            //echo $target_date . "<br />";
+
+            // 取り込み済みの日付はスルーする(hourly バッチで処理するイメージのため)
+            $covid_daily_report_target_date = CovidDailyReport::where('target_date', $target_date)->first();
+            if (!empty($covid_daily_report_target_date)) {
+                continue;
+            }
+
+            // 日を指定してデータを取り込み
+            $this->pullDateData($request, $page_id, $frame_id, $target_date);
+        }
+
+        return $this->getData($request, $page_id, $frame_id);
+    }
+
+   /**
+    * データ取得
+    */
+    public function pullDateData($request, $page_id, $frame_id, $target_date)
+    {
+        // フレームに紐づくcovid データの取得
+        $covid = $this->getCovidFrame($frame_id);
+
+        // ジョンズホプキンス大のCSV ファイル名の日付フォーマットである 月-日-年 に変更する。
+        $csv_date = date('m-d-Y', strtotime(str_replace('-', '/', $target_date)));
+
+        // データファイル名
+        $file_name = $csv_date . ".csv";
+
+        // データ取得実行
+        if (!Storage::exists('plugins/covids/' . $file_name)) {
+            return;
+        }
+
+        $csv_str = Storage::get('plugins/covids/' . $file_name);
+
+        // 一度、該当日付のデータを削除して取り込みなおす。
+        CovidDailyReport::where('target_date', $target_date)->delete();
+
+        // CSV 処理
+        // str_getcsv は改行をうまく処理しなかったので、行にばらすのはexplode で実施
+        $csv_lines = explode("\n", $csv_str);
+
+        // CSV1行目（DBカラム名に編集する）
+        $csv_header = null;
+
+        // CSV 行の処理
+        foreach ($csv_lines as $csv_line) {
+            if (empty(trim($csv_line))) {
+                continue;
+            }
+
+            // ヘッダでUTF8 のbom 付のデータが来たので、bom 削除
+            $csv_line = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $csv_line);
+
+            if (empty($csv_header)) {
+                $csv_header_cols = str_getcsv($csv_line);
+                foreach ($csv_header_cols as &$csv_header_col) {
+                    if (array_key_exists($csv_header_col, $this->column_names)) {
+                        $csv_header_col = $this->column_names[$csv_header_col];
+                    }
+                }
+                $csv_header = $csv_header_cols;
+                continue;
+            }
+
+            // 日毎のデータレコードのインスタンス作成
+            $covid_daily_report = new CovidDailyReport();
+            $covid_daily_report->covid_id = $covid->id;
+            $covid_daily_report->target_date = $target_date;
+
+            // 登録するカラムの代入
+            $csv_body_cols = str_getcsv($csv_line);
+            $index = 0;
+            foreach ($csv_body_cols as $col_index => $csv_body_col) {
+
+                $covid_daily_report->setAttribute($csv_header[$col_index], empty($csv_body_col) ? null : $csv_body_col);
+
+                $index++;
+            }
+
+            // 追加項目の計算
+//            if (!empty($covid_daily_report->deaths)) {
+//                $covid_daily_report->case_fatality_rate_moment = $covid_daily_report->deaths / $covid_daily_report->confirmed;
+//            }
+
+            $covid_daily_report->save();
+        }
+        //return $this->getData($request, $page_id, $frame_id);
         return;
     }
 }
