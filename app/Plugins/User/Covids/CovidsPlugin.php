@@ -121,7 +121,7 @@ class CovidsPlugin extends UserPluginBase
 
         // Bucketsに応じたデータを返す。
 
-        $covid_daily_reports = 
+        $covid_daily_reports =
             CovidDailyReport::select(
                 DB::raw("country_region, sum(confirmed) as sum_confirmed, sum(deaths) as sum_deaths")
             )
@@ -210,8 +210,7 @@ class CovidsPlugin extends UserPluginBase
         // 新規作成の場合は、空。変更の場合は配置されているフレームから引っ張ってくる。
         if ($create_flag) {
             $covid = new Covid();
-        }
-        else {
+        } else {
             $covid = $this->getCovidFrame($frame_id);
         }
 
@@ -527,7 +526,6 @@ class CovidsPlugin extends UserPluginBase
             $csv_body_cols = str_getcsv($csv_line);
             $index = 0;
             foreach ($csv_body_cols as $col_index => $csv_body_col) {
-
                 $covid_daily_report->setAttribute($csv_header[$col_index], empty($csv_body_col) ? null : $csv_body_col);
 
                 $index++;

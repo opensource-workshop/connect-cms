@@ -85,7 +85,7 @@ class UserPluginBase extends PluginBase
     /**
      *  コンストラクタ
      */
-    function __construct($page = null, $frame = null, $pages = null)
+    public function __construct($page = null, $frame = null, $pages = null)
     {
         // ページの保持
         $this->page = $page;
