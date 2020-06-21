@@ -56,12 +56,17 @@ trait MigrationTrait
      * ログ自体はプログラムが途中でコケても残るように、append する。
      * ここは、ログファイルの名前を時分秒を付けて保存したいため、シングルトンでファイル名を保持するためのもの。
      */
-    private $log_path = null;
+    private $log_path = array();
 
     /**
      * uploads.ini
      */
     private $uploads_ini = null;
+
+    /**
+     * 移行の設定ファイル
+     */
+    private $migration_config = array();
 
     /**
      * NC2 action_name -> Connect-CMS plugin_name 変換用テーブル
@@ -107,22 +112,119 @@ trait MigrationTrait
     }
 
     /**
-     * テストメソッド
+     * モニターログ出力
      */
-    private function putLog($str, $nc2_block = null, $filename = 'migration')
+    private function putError($destination, $message, $detail = null, $nc2_block = null)
     {
+        $this->putLog($destination, $message, $detail, $nc2_block, 'error');
+    }
+
+    /**
+     * モニターログ出力
+     */
+    private function putMonitor($destination, $message, $detail = null, $nc2_block = null)
+    {
+        $this->putLog($destination, $message, $detail, $nc2_block, 'monitor');
+    }
+
+    /**
+     * ログ出力
+     * destination = 0 : 出力なし、1 : ログ、2 : 標準出力、3 : ログ＆標準出力
+     */
+    private function putLog($destination, $message, $detail, $nc2_block = null, $filename = 'migration')
+    {
+        // 最初のみ。
         // ログのファイル名の設定
-        if (empty($this->log_path)) {
-            $this->log_path = "migration/" . $filename . "_" . date('His') . '.log';
+        if (!array_key_exists($filename, $this->log_path)) {
+            $this->log_path[$filename] = "migration/" . $filename . "_" . date('His') . '.log';
+
+            // ログにヘッダー出力
+            if (config('migration.MIGRATION_JOB_LOG')) {
+                Storage::append($this->log_path[$filename], "page_id,block_id,category,message");
+            }
+
+            // 標準出力にヘッダー出力
+            if (config('migration.MIGRATION_JOB_MONITOR')) {
+                echo "page_id,block_id,category,message" . "\n";
+            }
         }
 
-        $append_str = "";
-        if (!empty($nc2_block)) {
-            $append_str .= $nc2_block->page_id . ",";
-            $append_str .= $nc2_block->block_id . ",";
+        // メッセージ組み立て
+        $log_str = "";
+        if (empty($nc2_block)) {
+            $log_str .= ",,";
+        } else {
+            $log_str .= $nc2_block->page_id . ",";
+            $log_str .= $nc2_block->block_id . ",";
+        }
+        $log_str .= $message . ",";
+        $log_str .= $detail;
+
+
+        // ログ出力
+        if (config('migration.MIGRATION_JOB_LOG') && ($destination == 1 || $destination == 3)) {
+            Storage::append($this->log_path[$filename], $log_str);
         }
 
-        Storage::append($this->log_path, $append_str . $str);
+        // 標準出力
+        if (config('migration.MIGRATION_JOB_MONITOR') && ($destination == 2 || $destination == 3)) {
+            echo $log_str . "\n";
+        }
+    }
+
+    /**
+     * インポートの初期処理
+     */
+    private function migrationInit()
+    {
+        // 環境ごとの移行設定の読み込み
+        if (Storage::exists('migration_config/migration_config.ini')) {
+            $this->migration_config = parse_ini_file(storage_path() . '/app/migration_config/migration_config.ini', true);
+        }
+
+        // uploads のini ファイルの読み込み
+        if (Storage::exists('migration/@uploads/uploads.ini')) {
+            $this->uploads_ini = parse_ini_file(storage_path() . '/app/migration/@uploads/uploads.ini', true);
+        }
+    }
+
+    /**
+     * 移行設定の取得
+     */
+    private function getMigrationConfig($section, $key, $default = false)
+    {
+        // 指定されたセクション、キーで設定ファイルを確認して値を返す。
+        if (array_key_exists($section, $this->migration_config) && array_key_exists($key, $this->migration_config[$section])) {
+            return $this->migration_config[$section][$key];
+        }
+        return $default;
+    }
+
+    /**
+     * 移行設定の取得
+     */
+    private function hasMigrationConfig($section, $key, $value)
+    {
+        // 設定の取得
+        $config_value = $this->getMigrationConfig($section, $key);
+
+        // 設定がなければ、false
+        if (!$config_value) {
+            return false;
+        }
+
+        // 設定が配列の場合、値があるか確認、配列ではない場合は単純な比較
+        if (is_array($config_value)) {
+            if (in_array($value, $config_value)) {
+                return true;
+            }
+        } else {
+            if ($config_value === $value) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -130,16 +232,32 @@ trait MigrationTrait
      */
     private function importSite()
     {
-        // echo "importSite";
+        $this->putMonitor(3, "importSite() Start.");
+
+        // 移行の初期処理
+        $this->migrationInit();
 
         // アップロード・ファイルの取り込み
-        $this->importUpload();
+        if ($this->getMigrationConfig('uploads', 'nc2_migration_uploads', true)) {
+            $this->putMonitor(3, "uploads Start.");
+
+            $this->importUpload();
+        }
 
         // 新ページの取り込み
         $paths = File::glob(storage_path() . '/app/migration/_*');
 
         // 新ページのループ
         foreach ($paths as $path) {
+            $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
+
+            // ページ指定の有無
+            if ($this->getMigrationConfig('page_cond', 'import_page_dir')) {
+                if (basename($path) != $this->getMigrationConfig('page_cond', 'import_page_dir')) {
+                    continue;
+                }
+            }
+
             // ページの設定取得
             $page_ini = parse_ini_file($path. '/page.ini', true);
             //print_r($page_ini);
@@ -151,6 +269,8 @@ trait MigrationTrait
 
             // 対象のURL がなかった場合はページの作成
             if (empty($page)) {
+                $this->putMonitor(3, "Page create.");
+
                 // ページの作成
                 $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
                                       'permanent_link'    => $page_ini['page_base']['permanent_link'],
@@ -175,6 +295,8 @@ trait MigrationTrait
                     'source_key'           => ltrim(basename($path), '_'),
                     'destination_key'      => $page->id]
                 );
+            } else {
+                $this->putMonitor(3, "Page found. Use existing page.");
             }
 
             // ページの中身の作成
@@ -219,7 +341,7 @@ trait MigrationTrait
                     // マッピングテーブルがあれば、Uploads テーブルを更新
                     $upload = Uploads::find($mapping->destination_key);
                     if (empty($upload)) {
-                        $this->putLog("No Mapping target = uploads, destination_key = " . $mapping->destination_key);
+                        $this->putMonitor(1, "No Mapping target = uploads", "destination_key = " . $mapping->destination_key);
                     } else {
                         $upload->client_original_name = $uploads_ini[$upload_key]['client_original_name'];
                         $upload->mimetype             = $uploads_ini[$upload_key]['mimetype'];
@@ -308,6 +430,11 @@ trait MigrationTrait
         // プラグイン名
         $plugin_name = $frame_ini['frame_base']['plugin_name'];
 
+        // インポートしないプラグインに指定されていたら、対象外とする。
+        if ($this->hasMigrationConfig('plugin', 'migration_no_import_pugins', $plugin_name)) {
+            return;
+        }
+
         // プラグイン振り分け
         if ($plugin_name == 'contents') {
             // 固定記事（お知らせ）
@@ -344,6 +471,14 @@ trait MigrationTrait
         $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
         $content_html = File::get($html_file_path);
 
+        // 対象外の条件を確認
+        $ommit_keywords = $this->getMigrationConfig('contents', 'ommit_keyword', array());
+        foreach ($ommit_keywords as $ommit_keyword) {
+            if (stripos($content_html, $ommit_keyword) !== false) {
+                return;
+            }
+        }
+
         // Buckets 登録
         // echo "Buckets 登録\n";
         $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
@@ -370,6 +505,7 @@ trait MigrationTrait
         //
         if (array_key_exists('upload_images', $frame_ini)) {
             // アップロードファイル定義のループ
+
             foreach ($frame_ini['upload_images'] as $nc2_upload_id => $image_path) {
                 // 画像のパスの修正
                 // ini ファイルのID はNC2 のアップロードID が入っている。
@@ -377,20 +513,28 @@ trait MigrationTrait
                 $migration_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $nc2_upload_id)->first();
 
                 // コンテンツ中のアップロード画像のパスの修正
-                $content_html = str_replace($image_path, '/file/' . $migration_mapping->destination_key, $content_html);
+                if (!empty($migration_mapping)) {
+                    $content_html = str_replace($image_path, '/file/' . $migration_mapping->destination_key, $content_html);
+                } else {
+                    // $this->putError(1, 'image path not found mapping', "コンテンツ中のアップロード画像のパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
+                }
             }
         }
 
         // NC2 から移行した場合：[upload_files] のファイルを登録
         if (array_key_exists('upload_files', $frame_ini)) {
             foreach ($frame_ini['upload_files'] as $nc2_upload_id => $file_path) {
-                // 画像のパスの修正
+                // アップロードファイルのパスの修正
                 // ini ファイルのID はNC2 のアップロードID が入っている。
                 // マッピングテーブルから新ID を取得して、変換する。
                 $migration_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $nc2_upload_id)->first();
 
-                // コンテンツ中のアップロード画像のパスの修正
-                $content_html = str_replace($file_path, '/file/' . $migration_mapping->destination_key, $content_html);
+                // コンテンツ中のアップロードファイルのパスの修正
+                if (!empty($migration_mapping)) {
+                    $content_html = str_replace($file_path, '/file/' . $migration_mapping->destination_key, $content_html);
+                } else {
+                    // $this->putError(1, 'file path not found mapping', "コンテンツ中のアップロードファイルのパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
+                }
             }
         }
 
@@ -1046,6 +1190,31 @@ trait MigrationTrait
     }
 
     /**
+     * 経路探索キーの取得（Block）
+     */
+    private function getRouteBlockStr($nc2_block, $nc2_sort_blocks, $get_display_sequence = false)
+    {
+        foreach ($nc2_sort_blocks as $nc2_sort_block_key => $nc2_sort_block) {
+            if ($nc2_sort_block->block_id == $nc2_block->parent_id) {
+                if ($get_display_sequence) {
+                    // ソート用の配列のキーを取得
+                    return $nc2_sort_block_key . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num);
+                } else {
+                    // 経路探索パス
+                    return $nc2_sort_block->route_path . '_' . $this->zeroSuppress($nc2_block->block_id);
+                }
+            }
+        }
+
+        // まだ配列になかった場合（各スペースのルートページ）
+        if ($get_display_sequence) {
+            return 'r' . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num);
+        } else {
+            return 'r' . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->block_id);
+        }
+    }
+
+    /**
      * NC2 からデータをエクスポート
      *
      * 動かし方
@@ -1091,8 +1260,10 @@ trait MigrationTrait
         // space_type でソートする。（パブリック、グループ）
         // thread_num, display_sequence でソートする。
 
-        $this->putLog("page_id,block_id,message");
-        $this->putLog(",,Start migrationNC2.");
+        $this->putMonitor(3, "Start migrationNC2.");
+
+        // 移行の初期処理
+        $this->migrationInit();
 
         // uploads_path の最後に / がなければ追加
         if (mb_substr($uploads_path, -1) != '/') {
@@ -1100,22 +1271,29 @@ trait MigrationTrait
         }
 
         // uploads データとファイルのエクスポート
-        $this->nc2Uploads($uploads_path);
-
-        // uploads のini ファイルの読み込み
-        $this->uploads_ini = parse_ini_file(storage_path() . '/app/migration/@uploads/uploads.ini', true);
+        if ($this->getMigrationConfig('uploads', 'nc2_migration_uploads', true)) {
+            $this->nc2Uploads($uploads_path);
+        }
 
         // NC2 日誌（journal）データのエクスポート
-        $this->nc2Journal();
+        if (!$this->hasMigrationConfig('plugin', 'migration_no_import_pugins', 'blogs')) {
+            $this->nc2Journal();
+        }
 
         // NC2 のページデータ
-        $nc2_pages = Nc2Page::where('private_flag', 0)
-                            ->where('root_id', '<>', 0)
-                            ->where('display_sequence', '<>', 0)
-                            ->orderBy('space_type')
-                            ->orderBy('thread_num')
-                            ->orderBy('display_sequence')
-                            ->get();
+        $nc2_pages_query = Nc2Page::where('private_flag', 0)
+                                  ->where('root_id', '<>', 0)
+                                  ->where('display_sequence', '<>', 0);
+
+        // ページ指定の有無
+        if ($this->getMigrationConfig('page_cond', 'export_page_id')) {
+            $nc2_pages_query->where('page_id', $this->getMigrationConfig('page_cond', 'export_page_id'));
+        }
+
+        $nc2_pages = $nc2_pages_query->orderBy('space_type')
+                                     ->orderBy('thread_num')
+                                     ->orderBy('display_sequence')
+                                     ->get();
 
         // NC2 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
         // そのため、取得したページデータを一度、経路探索モデルに変換する。
@@ -1136,7 +1314,10 @@ trait MigrationTrait
         $new_page_index = 0;
 
         // ページのループ
+        $this->putMonitor(1, "Page loop.");
         foreach ($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
+            $this->putMonitor(3, "Page", "page_id = " . $nc2_sort_page->page_id);
+
             // ページ設定の保存用変数
             $page_ini = "[page_base]\n";
             $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
@@ -1215,6 +1396,8 @@ trait MigrationTrait
      */
     private function nc2Uploads($uploads_path)
     {
+        $this->putMonitor(3, "Start nc2Uploads.");
+
         // NC2 アップロードテーブルを移行する。
         $nc2_uploads = Nc2Upload::orderBy('upload_id')->get();
 
@@ -1227,6 +1410,11 @@ trait MigrationTrait
 
         // アップロード・ファイルのループ
         foreach ($nc2_uploads as $nc2_upload) {
+            // NC2 バックアップは対象外
+            if ($nc2_upload->file_path == 'backup/') {
+                continue;
+            }
+
             // ファイルのコピー
             $source_file_path = $uploads_path . $nc2_upload->file_path . $nc2_upload->physical_file_name;
             $destination_file_dir = storage_path() . "/app/migration/@uploads";
@@ -1255,6 +1443,11 @@ trait MigrationTrait
 
         // フレーム設定ファイルの出力
         Storage::append('migration/@uploads/uploads.ini', $uploads_ini_detail);
+
+        // uploads のini ファイルの再読み込み
+        if (Storage::exists('migration/@uploads/uploads.ini')) {
+            $this->uploads_ini = parse_ini_file(storage_path() . '/app/migration/@uploads/uploads.ini', true);
+        }
     }
 
     /**
@@ -1262,6 +1455,8 @@ trait MigrationTrait
      */
     private function nc2Journal()
     {
+        $this->putMonitor(3, "Start nc2Journal.");
+
         // NC2日誌（Journal）を移行する。
         $nc2_journals = Nc2Journal::orderBy('journal_id')->get();
 
@@ -1290,7 +1485,7 @@ trait MigrationTrait
                 // タイトルに " あり
                 if (strpos($nc2_journal_post->title, '"')) {
                     // ログ出力
-                    $this->putLog("Blog title in double-quotation = " . $nc2_journal_post->title);
+                    $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc2_journal_post->title);
                 }
                 $journals_ini .= "post_title[" . $nc2_journal_post->post_id . "] = \"" . str_replace('"', '', $nc2_journal_post->title) . "\"\n";
 
@@ -1323,11 +1518,11 @@ trait MigrationTrait
         $nc2_blocks = Nc2Block::where('page_id', $nc2_page->page_id)
                               ->orderBy('thread_num')
                               ->orderBy('row_num')
+                              ->orderBy('col_num')
                               ->get();
 
         // ブロックをループ
         $frame_index = 0; // フレームの連番
-
 
         // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
         // NC2 では、ヘッダ、左、右が一つずつで共通のため、ここで処理する。
@@ -1353,9 +1548,28 @@ trait MigrationTrait
             // Log::debug($nc2_blocks);
         }
 
+        // 経路探索の文字列をキーにしたページ配列の作成
+        $nc2_sort_blocks = array();
+        foreach ($nc2_blocks as $nc2_block) {
+            $nc2_block->route_path = $this->getRouteBlockStr($nc2_block, $nc2_sort_blocks);
+            $nc2_sort_blocks[$this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, true)] = $nc2_block;
+        }
+
+        // 経路探索の文字列（キー）でソート
+        ksort($nc2_sort_blocks);
+        //Log::debug($nc2_sort_blocks);
+
+        // ソート結果でCollection 詰めなおし
+        $nc2_blocks = collect();
+        foreach ($nc2_sort_blocks as $nc2_sort_block) {
+            $nc2_blocks[] = $nc2_sort_block;
+        }
+
         // ページ内のブロック
         foreach ($nc2_blocks as $nc2_block) {
-            // グループは対象外（後で実装する）
+            $this->putMonitor(1, "Block", "block_id = " . $nc2_block->block_id);
+
+            // グループは対象外（frame_col で対応）
             if ($nc2_block->action_name == 'pages_view_grouping') {
                 // ページ、ブロック構成を最後に出力するために保持
                 $this->nc2BlockTree($nc2_page, $nc2_block);
@@ -1374,9 +1588,12 @@ trait MigrationTrait
             $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
 
             // グルーピングされているブロックの考慮
-            // 同じ行（row_num）に配置されているブロックの数を12で計算する。
-            $row_block_count = $nc2_blocks->where('row_num', $nc2_block->row_num)->where('page_name', $nc2_block->page_name)->count();
-            if ($row_block_count > 1 && ($row_block_count <= 12)) {
+            // 同じ親で同じ行（row_num）に配置されているブロックの数を12で計算する。
+            // 親（parent_id）= 0 でcol_num があるデータがある。NC2 の場合は、親にグループが居るはず。
+            $row_block_count = $nc2_blocks->where('parent_id', $nc2_block->parent_id)->where('row_num', $nc2_block->row_num)->count();
+            $row_block_parent = $nc2_blocks->where('block_id', $nc2_block->parent_id)->first();
+
+            if ($row_block_count > 1 && $row_block_count <= 12 && $row_block_parent && $row_block_parent->action_name == 'pages_view_grouping') {
                 $frame_ini .= "frame_col = " . floor(12 / $row_block_count) . "\n";
             }
             $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
@@ -1384,7 +1601,12 @@ trait MigrationTrait
             // モジュールに紐づくメインのデータのID
             $frame_ini .= $this->nc2BlockMainDataId($nc2_block);
 
-            $frame_ini .= "nc2_module_name = \"" . $nc2_block->getModuleName() . "\"\n";
+            // NC2 情報
+            $frame_nc2 = "\n";
+            $frame_nc2 .= "[nc2_info]\n";
+            $frame_nc2 .= "nc2_block_id = \"" . $nc2_block->block_id . "\"\n";
+            $frame_nc2 .= "nc2_module_name = \"" . $nc2_block->getModuleName() . "\"\n";
+            $frame_ini .= $frame_nc2;
 
             // フレーム設定ファイルの出力
             Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
@@ -1424,9 +1646,18 @@ trait MigrationTrait
             if ($nc2_block->temp_name == 'default') {
                 // メニューのdefault テンプレートの場合、Connect-CMS では「ディレクトリ展開式」に変更する。
                 return 'opencurrenttree';
-            } elseif ($nc2_block->temp_name == 'headerflat') {
-                // メニューのheaderflat テンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
+            } elseif (strpos($nc2_block->temp_name, 'side') !== false) {
+                // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
+                return 'opencurrenttree';
+            } elseif (strpos($nc2_block->temp_name, 'header') !== false) {
+                // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
                 return 'dropdown';
+            } elseif (strpos($nc2_block->temp_name, 'jq_gnavi') !== false) {
+                // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
+                return 'dropdown';
+            } elseif ($nc2_block->temp_name == 'topic_path') {
+                // パンくず。
+                return 'breadcrumbs';
             }
         }
         return 'default';
@@ -1467,7 +1698,7 @@ trait MigrationTrait
             // 今のところ、メニューの追加設定はなし。
         } else {
             // 移行できなかったモジュール
-            $this->putLog("no migrate module = " . $nc2_block->getModuleName(), $nc2_block);
+            $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
         }
     }
 
@@ -1481,8 +1712,15 @@ trait MigrationTrait
         $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->first();
 
         // 記事
-        $content = trim($announcement->content);
-        $content .= trim($announcement->more_content);
+
+        // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
+        $content = "";
+        if (!empty($announcement)) {
+            $content = trim($announcement->content);
+            $content .= trim($announcement->more_content);
+        } else {
+            $this->putError(1, "no announcement record", "block_id = " . $nc2_block->block_id);
+        }
 
         // WYSIWYG 記事のエクスポート
         $save_folder = '_' . $this->zeroSuppress($new_page_index);
@@ -1566,7 +1804,7 @@ trait MigrationTrait
                 }
             } else {
                 // 移行しなかったファイルのimg or a タグとしてログに記録
-                $this->putLog("no migrate img = " . $path, $nc2_block);
+                $this->putError(1, "no migrate img", "src = " . $path, $nc2_block);
             }
         }
 
