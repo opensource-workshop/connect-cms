@@ -108,29 +108,6 @@ class CovidsPlugin extends UserPluginBase
         return $covid;
     }
 
-    /**
-     *  データ取得
-     */
-    private function getDailyReports($frame_id)
-    {
-        // buckets_id
-        $buckets_id = null;
-        if (!empty($this->buckets)) {
-            $buckets_id = $this->buckets->id;
-        }
-
-        // Bucketsに応じたデータを返す。
-
-        $covid_daily_reports =
-            CovidDailyReport::select(
-                DB::raw("country_region, sum(confirmed) as sum_confirmed, sum(deaths) as sum_deaths")
-            )
-            ->groupBy("country_region")
-            ->get();
-
-        return $covid_daily_reports;
-    }
-
     /* 画面アクション関数 */
 
     /**
@@ -149,6 +126,12 @@ class CovidsPlugin extends UserPluginBase
                                              ->orderBy('target_date', 'DESC')
                                              ->get();
 
+        // 閲覧種類
+        $view_type = 'table_daily_confirmed_desc';
+        if ($request->filled('view_type')) {
+            $view_type = $request->view_type;
+        }
+
         // 対象日付
         $target_date = '';
         if (!$covid_report_days->isEmpty()) {
@@ -158,6 +141,160 @@ class CovidsPlugin extends UserPluginBase
             $target_date = $request->target_date;
         }
 
+        // データのある最後の日
+        $last_date = $covid_report_days->first()->target_date;
+
+        // 表示件数
+        $view_count = 5;
+        if ($request->filled('view_count')) {
+            $view_count = $request->view_count;
+        }
+
+        // 詳細データ取得
+        if (strpos($view_type, 'graph_') === 0) {
+            // グラフ
+            $covid_daily_reports = $this->getGraphReports($covid, $view_type, $target_date, $last_date, $view_count);
+            $template = 'covids_graph';
+        } else {
+            // 表
+            $covid_daily_reports = $this->getDailyReports($covid, $view_type, $target_date, $view_count);
+            $template = 'covids';
+        }
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            $template, [
+            'covid' => $covid,
+            'covid_daily_reports' => $covid_daily_reports,
+            'covid_report_days'   => $covid_report_days,
+            'view_type'           => $view_type,
+            'target_date'         => $target_date,
+            'view_count'          => $view_count,
+            ]
+        );
+    }
+
+    /**
+     *  詳細データ取得関数（グラフ）
+     */
+    private function getGraphReports($covid, $view_type, $target_date, $last_date, $view_count)
+    {
+        /*
+        -- 指定日期間の合計で上位を計算
+        SELECT country_region
+        FROM covid_daily_reports
+        WHERE target_date > '2020-06-09'
+        GROUP BY country_region
+        ORDER BY SUM(confirmed) DESC
+        LIMIT 5
+
+        -- 上位の国で指定日付の期間の数値を取得
+        SELECT country_region, target_date, SUM(confirmed) as total_confirmed
+        FROM covid_daily_reports
+        WHERE country_region IN (
+          'US', 'Brazil', 'Russia', 'India', 'United Kingdom'
+        )
+          AND target_date > '2020-06-09'
+        GROUP BY target_date, country_region
+        ORDER BY SUM(confirmed) DESC
+        */
+
+        // 条件の編集(対象国の絞り込み、対象の詳細データ取得・絞り込みで使用)
+        $cond = 'SUM(confirmed)';  // 初期値：感染者推移
+        if ($view_type == 'graph_deaths') {
+            $cond = 'SUM(deaths)';  // 死亡者推移
+        } elseif ($view_type == 'graph_recovered') {
+            $cond = 'SUM(recovered)';  // 回復者推移
+        } elseif ($view_type == 'graph_active') {
+            $cond = 'SUM(active)';  // 感染中推移
+        } elseif ($view_type == 'graph_fatality_rate_moment') {
+            $cond = 'TRUNCATE(SUM(deaths) / NULLIF(SUM(confirmed),0) * 100 + 0.05, 1)';  // 致死率(計算日)推移グラフ
+        } elseif ($view_type == 'graph_fatality_rate_estimation') {
+            $cond = 'TRUNCATE(SUM(deaths) / NULLIF((SUM(deaths) + SUM(recovered)),0) * 100 + 0.05, 1)';  // 致死率(予測)推移グラフ
+        } elseif ($view_type == 'graph_deaths_estimation') {
+            $cond = 'TRUNCATE(SUM(confirmed) * SUM(deaths) / NULLIF((SUM(deaths) + SUM(recovered)),0), 0)';  // 死亡者数(予測)推移グラフ
+        } elseif ($view_type == 'graph_active_rate') {
+            $cond = 'TRUNCATE(SUM(active) / NULLIF(SUM(confirmed),0) * 100 + 0.05, 1)';  // Active率推移グラフ
+        }
+
+        // 対象の国取得
+        $country_recs = CovidDailyReport::select('country_region')
+                                        ->where('target_date', $last_date)
+                                        ->groupBy("country_region")
+                                        ->orderByRaw($cond . ' DESC')
+                                        ->limit($view_count)
+                                        ->get();
+        $countries = $country_recs->pluck('country_region');
+
+        // 対象日付が空なら処理しない。
+        if (empty($target_date)) {
+            return array();
+        }
+
+        // 日付クラスに設定して日数計算
+        $target_date_obj = new \DateTime($target_date);
+        $last_date_obj = new \DateTime($last_date);
+        $date_diff = $target_date_obj->diff($last_date_obj);
+
+        // 対象の日付配列生成
+        $target_dates = array();
+
+        // 日付ループ
+        for ($i = 0; $i < $date_diff->days + 1; $i++) {
+            $target_dates[] = date('Y-m-d', strtotime('+' . $i . 'day', strtotime($target_date)));
+        }
+
+        // 最終的に画面で使用する配列を[日付][国]で作成する。
+        // 詳細レコードはSQL で取得した後、日付、国のキーを見てデータにセットする。
+        // それにより、詳細データの日付や国が抜けているレコードがあっても、結果がずれないようにする。
+        $graph_table = array();
+
+        // ヘッダー
+        foreach ($countries as $country) {
+            $graph_table['国'][] = $country;
+        }
+        // データエリア
+        foreach ($target_dates as $target_date_item) {
+            foreach ($countries as $country) {
+                $graph_table[$target_date_item][$country] = 0;
+            }
+        }
+
+        // 対象の詳細データ取得
+        $raw_select = "country_region, target_date, ";
+        $raw_select .= $cond . " as total_count ";
+        $covid_daily_reports_query = CovidDailyReport::select(DB::raw($raw_select))
+                                                     ->whereIn('country_region', $countries)
+                                                     ->where('target_date', '>=', $target_date)
+                                                     ->groupBy("target_date")
+                                                     ->groupBy("country_region")
+                                                     ->orderBy('target_date')
+                                                     ->orderByRaw($cond . ' DESC');
+
+        $covid_daily_reports = $covid_daily_reports_query->get();
+        //Log::debug($covid_daily_reports);
+
+        // あらかじめ、[日付][国]の配列を作成して、そこに値を入れていくことで、順番が保証される。
+        foreach ($covid_daily_reports as $covid_daily_report) {
+            if (array_key_exists($covid_daily_report->target_date, $graph_table) &&
+                array_key_exists($covid_daily_report->country_region, $graph_table[$covid_daily_report->target_date])) {
+                if (empty($covid_daily_report->total_count)) {
+                    $graph_table[$covid_daily_report->target_date][$covid_daily_report->country_region] = 0;
+                } else {
+                    $graph_table[$covid_daily_report->target_date][$covid_daily_report->country_region] = $covid_daily_report->total_count;
+                }
+            }
+        }
+        //Log::debug($graph_table);
+
+        return $graph_table;
+    }
+
+    /**
+     *  詳細データ取得関数
+     */
+    private function getDailyReports($covid, $view_type, $target_date, $view_count)
+    {
         // 集計データの取得
         $raw_select = "country_region, ";
         $raw_select .= "SUM(confirmed) as total_confirmed, ";
@@ -169,26 +306,50 @@ class CovidsPlugin extends UserPluginBase
         $raw_select .= "TRUNCATE(SUM(confirmed) * SUM(deaths) / NULLIF((SUM(deaths) + SUM(recovered)),0), 0) as deaths_estimation, ";
         $raw_select .= "TRUNCATE(SUM(active) / NULLIF(SUM(confirmed),0) * 100 + 0.05, 1) as active_rate ";
 
-        $covid_daily_reports = CovidDailyReport::select(DB::raw($raw_select))
-                                               ->where('covid_id', $covid->id)
-                                               ->where('target_date', $target_date)
-                                               ->groupBy("target_date")
-                                               ->groupBy("country_region")
-                                               ->orderByRaw('SUM(confirmed) DESC')
-                                               ->orderBy('country_region')
-//                                               ->having('case_fatality_rate_estimation', '<', 50)
-                                               ->limit(5)
-                                               ->get();
+        $covid_daily_reports_query = CovidDailyReport::select(DB::raw($raw_select))
+                                                     ->where('covid_id', $covid->id)
+                                                     ->where('target_date', $target_date)
+                                                     ->groupBy("target_date")
+                                                     ->groupBy("country_region");
 
-        // 表示テンプレートを呼び出す。
-        return $this->view(
-            'covids', [
-            'covid' => $covid,
-            'covid_daily_reports' => $covid_daily_reports,
-            'covid_report_days'   => $covid_report_days,
-            'target_date'         => $target_date,
-            ]
-        );
+        // ソート
+        if ($view_type == "table_daily_confirmed_desc") {
+            $covid_daily_reports_query->orderByRaw('SUM(confirmed) DESC');
+        } elseif ($view_type == "table_daily_confirmed_asc") {
+            $covid_daily_reports_query->orderByRaw('SUM(confirmed) ASC');
+        } elseif ($view_type == "table_daily_deaths_desc") {
+            $covid_daily_reports_query->orderByRaw('SUM(deaths) DESC');
+        } elseif ($view_type == "table_daily_deaths_asc") {
+            $covid_daily_reports_query->orderByRaw('SUM(deaths) ASC');
+        } elseif ($view_type == "table_daily_recovered_desc") {
+            $covid_daily_reports_query->orderByRaw('SUM(recovered) DESC');
+        } elseif ($view_type == "table_daily_recovered_asc") {
+            $covid_daily_reports_query->orderByRaw('SUM(recovered) ASC');
+        } elseif ($view_type == "table_daily_active_desc") {
+            $covid_daily_reports_query->orderByRaw('SUM(active) DESC');
+        } elseif ($view_type == "table_daily_active_asc") {
+            $covid_daily_reports_query->orderByRaw('SUM(active) ASC');
+        } elseif ($view_type == "table_daily_fatality_rate_moment_desc") {
+            $covid_daily_reports_query->orderByRaw('TRUNCATE(SUM(deaths) / NULLIF(SUM(confirmed),0) * 100 + 0.05, 1) DESC');
+        } elseif ($view_type == "table_daily_fatality_rate_estimation_desc") {
+            $covid_daily_reports_query->orderByRaw('TRUNCATE(SUM(deaths) / NULLIF((SUM(deaths) + SUM(recovered)),0) * 100 + 0.05, 1) DESC');
+        } elseif ($view_type == "table_daily_deaths_estimation_desc") {
+            $covid_daily_reports_query->orderByRaw('TRUNCATE(SUM(confirmed) * SUM(deaths) / NULLIF((SUM(deaths) + SUM(recovered)),0), 0) DESC');
+        } elseif ($view_type == "table_daily_active_rate_desc") {
+            $covid_daily_reports_query->orderByRaw('TRUNCATE(SUM(active) / NULLIF(SUM(confirmed),0) * 100 + 0.05, 1) DESC');
+        }
+
+        // 第2ソート（国/地域）
+        $covid_daily_reports_query->orderBy('country_region');
+
+        // 表示件数
+        if ($view_count != "all") {
+            $covid_daily_reports_query->limit($view_count);
+        }
+
+        // get ＆ return
+        $covid_daily_reports = $covid_daily_reports_query->get();
+        return $covid_daily_reports;
     }
 
     /**

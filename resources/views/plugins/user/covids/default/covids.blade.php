@@ -9,36 +9,38 @@
 
 @section("plugin_contents_$frame->id")
 
+@php
+    $option_blade_path = 'plugins.user.covids.default.select_option';
+@endphp
+
 <div class="alert alert-primary">
     @if (isset($target_date))
         対象日付：{{$target_date}}
     @endif
 </div>
 
-<form action="{{url('/')}}/plugin/covids/index/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/covids/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{csrf_field()}}
     <div class="form-group row mb-3">
         <div class="col-sm-4">
-            <select class="form-control" name="search_column[0][value]" onchange="javascript:submit(this.form);">
-                <option value="">閲覧種類</option>
-                <option value="日別状況表">日別状況表</option>
-                <option value="感染者推移グラフ">感染者推移グラフ</option>
-                <option value="死亡者推移グラフ">死亡者推移グラフ</option>
-                <option value="回復者推移グラフ">回復者推移グラフ</option>
-                <option value="感染中推移グラフ">感染中推移グラフ</option>
-            </select>
+            {{-- 日別状況表 --}}
+            @include('plugins.user.covids.default.covids_view_type_select')
         </div>
         <div class="col-sm-4">
             <select class="form-control" name="target_date" onchange="javascript:submit(this.form);">
                 <option value="">日付</option>
                 @foreach ($covid_report_days as $covid_report_day)
                     @if ($covid_report_day->target_date == $target_date)
-                        <option value="{{$covid_report_day->target_date}}" selected>{{$covid_report_day->target_date}}</option>
+                        <option value="{{$covid_report_day->target_date}}" selected class="text-white bg-primary">{{$covid_report_day->target_date}}</option>
                     @else
                         <option value="{{$covid_report_day->target_date}}">{{$covid_report_day->target_date}}</option>
                     @endif
                 @endforeach
             </select>
+        </div>
+        <div class="col-sm-4">
+            {{-- 表示件数 --}}
+            @include('plugins.user.covids.default.covids_view_count')
         </div>
     </div>
 </form>
