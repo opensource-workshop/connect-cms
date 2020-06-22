@@ -87,7 +87,7 @@
     $plugins = "plugins  : '" . $plugins . "',";
 
     // toolbar
-    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image media file | preview | code';
+    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image media file | preview | code ';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $toolbar .= '| translate ';
     }
