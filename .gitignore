@@ -22,6 +22,8 @@ yarn-error.log
 composer.phar
 
 # Option Plugins (対象外部分はオプションプラグインのサンプル)
+github_copy.bat
+
 /app/ModelsOption/*
 !/app/ModelsOption/User\Optionsamples/*
 /app/PluginsOption/*
