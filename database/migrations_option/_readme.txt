@@ -1,13 +1,13 @@
 
-// migration ‚Ìw’è•û–@
-// --path ‚ÅƒIƒvƒVƒ‡ƒ“‚Ìmigration ƒtƒ@ƒCƒ‹‚ÌƒpƒX‚ğw’è‚µ‚Ü‚·B
+// migration ã®æŒ‡å®šæ–¹æ³•
+// --path ã§ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®migration ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ã‚’æŒ‡å®šã—ã¾ã™ã€‚
 
-// ƒe[ƒuƒ‹¶¬—p
+// ãƒ†ãƒ¼ãƒ–ãƒ«ç”Ÿæˆç”¨
 php artisan make:migration optionsamples_table --path=database/migrations_option --create=optionsamples
 
-// ƒe[ƒuƒ‹C³—p
+// ãƒ†ãƒ¼ãƒ–ãƒ«ä¿®æ­£ç”¨
 php artisan make:migration add_xxxxxx_id_to_xxxxxx_table --path=database/migrations_option --table=optionsamples
 
-// Às—p
+// å®Ÿè¡Œç”¨
 php artisan migrate --path=database/migrations_option
 
