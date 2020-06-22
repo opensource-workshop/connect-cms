@@ -51,6 +51,10 @@ class PluginManage extends ManagePluginBase
         // プラグインのディレクトリの取得
         $directories = File::directories(app_path().'/Plugins/User');
 
+        // オプション・プラグインのディレクトリの取得
+        $option_directories = File::directories(app_path().'/PluginsOption/User');
+        $directories = array_merge($directories, $option_directories);
+
         // プラグインのini ファイルの取得
         foreach ($directories as $dirkey => $directorie) {
             // ini ファイルがあれば、プラグインの日本語名を取得、プラグインの一覧に設定
