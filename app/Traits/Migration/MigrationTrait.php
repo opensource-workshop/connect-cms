@@ -10,10 +10,13 @@ use Session;
 use Storage;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
+use App\Models\User\Blogs\Blogs;
+use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Contents\Contents;
 use App\Models\User\Menus\Menu;
 
@@ -22,6 +25,7 @@ use App\Models\Migration\Nc2\Nc2Announcement;
 use App\Models\Migration\Nc2\Nc2Block;
 use App\Models\Migration\Nc2\Nc2Journal;
 use App\Models\Migration\Nc2\Nc2JournalBlock;
+use App\Models\Migration\Nc2\Nc2JournalCategory;
 use App\Models\Migration\Nc2\Nc2JournalPost;
 use App\Models\Migration\Nc2\Nc2Page;
 use App\Models\Migration\Nc2\Nc2Upload;
@@ -34,6 +38,15 @@ use App\Traits\ConnectCommonTrait;
  * 数値のフォルダはインポート先のページ指定で実行したもの。
  * _付のフォルダは新規ページを作るもの。
  * @付のフォルダは共通データ（uploadsなど）
+ *
+ * [MigrationMapping]テーブルの target_source_table の説明
+ * --- エクスポート
+ * nc2_pages    : source_key にNC2 のpage_id、destination_key にエクスポート用ページフォルダID（連番）
+ * --- インポート
+ * connect_page : source_key にインポート用ディレクトリ、destination_key に新ページID。ページ移行時、親を探すのに使用。
+ * uploads      : source_key にNC2 のuploads_id、destination_key に新Upload のid。WYSIWYG 移行時に使用。
+ * blogs        : source_key にNC2 のblogs_id、destination_key に新Blog のid。2回目の実行用。
+ *
  */
 trait MigrationTrait
 {
@@ -101,6 +114,25 @@ trait MigrationTrait
         'search'        => 'searchs',      // 検索
         'todo'          => 'Development',  // ToDo
         'whatsnew'      => 'whatsnews',    // 新着情報
+    ];
+
+    /**
+     * NC2 日誌のデフォルトカテゴリー
+     */
+    protected $nc2_default_categories = [
+        0   => '今日の出来事',
+        1   => '連絡事項',
+        2   => '報告事項',
+        3   => 'ミーティング',
+        4   => '本・雑誌',
+        5   => 'ニュース',
+        6   => '映画・テレビ',
+        7   => '音楽',
+        8   => 'スポーツ',
+        9   => 'パソコン・インターネット',
+        10  => 'ペット',
+        11  => '総合学習',
+        12  => 'アニメ・コミック',
     ];
 
     /**
@@ -238,10 +270,18 @@ trait MigrationTrait
         $this->migrationInit();
 
         // アップロード・ファイルの取り込み
-        if ($this->getMigrationConfig('uploads', 'nc2_migration_uploads', true)) {
-            $this->putMonitor(3, "uploads Start.");
+        if ($this->getMigrationConfig('uploads', 'import_nc2_uploads', true)) {
+            $this->putMonitor(3, "uploads import Start.");
+            $this->importUploads();
+        }
 
-            $this->importUpload();
+        // 共通カテゴリの取り込み
+        $this->importCommonCategories();
+
+        // ブログの取り込み
+        if ($this->getMigrationConfig('plugin', 'import_ommit_pugins', 'blogs')) {
+            $this->putMonitor(3, "blogs import Start.");
+            $this->importBlogs();
         }
 
         // 新ページの取り込み
@@ -307,7 +347,7 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のアップロード・ファイルをインポート
      */
-    private function importUpload()
+    private function importUploads()
     {
         // アップロード・ファイル定義の取り込み
         $uploads_ini = parse_ini_file(storage_path() . '/app/migration/@uploads/uploads.ini', true);
@@ -363,6 +403,111 @@ trait MigrationTrait
                     }
                     Storage::copy($source_file_path, $destination_file_path);
                 }
+            }
+        }
+    }
+
+    /**
+     * Connect-CMS 移行形式のカテゴリをインポート
+     */
+    private function importCommonCategories()
+    {
+        // 共通カテゴリのファイル読み込み
+        $source_file_path = 'migration/@categories/categories.ini';
+        if (Storage::exists($source_file_path)) {
+            $categories_ini = parse_ini_file(storage_path() . '/app/' . $source_file_path, true);
+            if (array_key_exists('categories', $categories_ini) && array_key_exists('categories', $categories_ini['categories'])) {
+                $this->importCategories($categories_ini['categories']['categories']);
+            }
+        }
+    }
+
+    /**
+     * Connect-CMS 移行形式のカテゴリをインポート
+     */
+    private function importCategories($categories, $target = null, $plugin_id = null)
+    {
+        $display_sequence = 0;
+        foreach ($categories as $category) {
+            $display_sequence++;
+            $category = Categories::create(['classname' => 'category_default', 'category' => $category, 'color' => '#ffffff', 'background_color' => '#606060', 'target' => $target, 'plugin_id' => $plugin_id, 'display_sequence' => $display_sequence]);
+        }
+    }
+
+    /**
+     * Connect-CMS 移行形式のブログをインポート
+     */
+    private function importBlogs()
+    {
+        // ブログ定義の取り込み
+        $blogs_ini_paths = File::glob(storage_path() . '/app/migration/@blogs/blog_*.ini');
+
+        // ブログ定義のループ
+        foreach ($blogs_ini_paths as $blogs_ini_path) {
+            // ini_file の解析
+            $blog_ini = parse_ini_file($blogs_ini_path, true);
+
+            // nc2 の journal_id
+            $nc2_journal_id = 0;
+            if (array_key_exists('nc2_info', $blog_ini) && array_key_exists('journal_id', $blog_ini['nc2_info'])) {
+                $nc2_journal_id = $blog_ini['nc2_info']['journal_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'blogs')->where('source_key', $nc2_journal_id)->first();
+
+            // マッピングテーブルを確認して、追加か更新の処理を分岐
+            if (empty($mapping)) {
+                // マッピングテーブルがなければ、Buckets テーブルと Blogs テーブル、マッピングテーブルを追加
+                $blog_name = '無題';
+                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('blog_name', $blog_ini['blog_base'])) {
+                    $blog_name = $blog_ini['blog_base']['blog_name'];
+                }
+//                $bucket = Buckets::create(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
+
+                $view_count = 10;
+                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('view_count', $blog_ini['blog_base'])) {
+                    $view_count = $blog_ini['blog_base']['view_count'];
+                    // view_count が 0 を含む空の場合は、初期値にする。（NC2 で0 で全件表示されているものがあるので、その対応）
+                    if (empty($view_count)) {
+                        $view_count = 10;
+                    }
+                }
+//                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'view_count' => $view_count]);
+
+                // マッピングテーブルの追加
+/*
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'blogs',
+                    'source_key'           => $nc2_journal_id,
+                    'destination_key'      => $blog->id,
+                ]);
+*/
+                // Blogs の記事を取得（TSV）
+                $blog_tsv_filename = str_replace('ini', 'tsv', basename($blogs_ini_path));
+                if (Storage::exists('migration/@blogs/' . $blog_tsv_filename)) {
+                    // TSV ファイル取得（1つのTSV で1つのブログ丸ごと）
+                    $blog_tsv = Storage::get('migration/@blogs/' . $blog_tsv_filename);
+                    // POST が無いものは対象外
+                    if (empty($blog_tsv)) {
+                        continue;
+                    }
+                    // 改行で記事毎に分割
+                    $blog_tsv_lines = explode("\n", $blog_tsv);
+                    foreach ($blog_tsv_lines as $blog_tsv_line) {
+                        // タブで項目に分割
+                        $blog_tsv_cols = explode("\t", $blog_tsv_line);
+                        // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
+                        $posted_at_ts = mktime(substr($blog_tsv_cols[0], 8, 2), substr($blog_tsv_cols[0], 10, 2), substr($blog_tsv_cols[0], 12, 2), substr($blog_tsv_cols[0], 4, 2), substr($blog_tsv_cols[0], 6, 2), substr($blog_tsv_cols[0], 0, 4));
+                        $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
+                        // ブログ記事テーブル追加
+//                        $blogs_posts = BlogsPosts::create('blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[3], 'post_text' => $blog_tsv_cols[4], 'post_text2' => $blog_tsv_cols[5], 'categories_id' => 0, 'important' => null, 'status' => 0, 'posted_at' => $posted_at);
+                    }
+                }
+
+            } else {
+                // マッピングテーブルがあれば、Blogs テーブル更新
+                // *** あとで。
             }
         }
     }
@@ -431,7 +576,7 @@ trait MigrationTrait
         $plugin_name = $frame_ini['frame_base']['plugin_name'];
 
         // インポートしないプラグインに指定されていたら、対象外とする。
-        if ($this->hasMigrationConfig('plugin', 'migration_no_import_pugins', $plugin_name)) {
+        if ($this->hasMigrationConfig('plugin', 'import_ommit_pugins', $plugin_name)) {
             return;
         }
 
@@ -472,9 +617,9 @@ trait MigrationTrait
         $content_html = File::get($html_file_path);
 
         // 対象外の条件を確認
-        $ommit_keywords = $this->getMigrationConfig('contents', 'ommit_keyword', array());
-        foreach ($ommit_keywords as $ommit_keyword) {
-            if (stripos($content_html, $ommit_keyword) !== false) {
+        $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
+        foreach ($import_ommit_keywords as $import_ommit_keyword) {
+            if (stripos($content_html, $import_ommit_keyword) !== false) {
                 return;
             }
         }
@@ -1271,12 +1416,15 @@ trait MigrationTrait
         }
 
         // uploads データとファイルのエクスポート
-        if ($this->getMigrationConfig('uploads', 'nc2_migration_uploads', true)) {
+        if ($this->getMigrationConfig('uploads', 'export_nc2_uploads', true)) {
             $this->nc2Uploads($uploads_path);
         }
 
+        // カテゴリデータのエクスポート
+        $this->nc2Categories();
+
         // NC2 日誌（journal）データのエクスポート
-        if (!$this->hasMigrationConfig('plugin', 'migration_no_import_pugins', 'blogs')) {
+        if (!$this->hasMigrationConfig('plugin', 'export_ommit_pugins', 'blogs')) {
             $this->nc2Journal();
         }
 
@@ -1451,6 +1599,21 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：カテゴリの移行
+     */
+    private function nc2Categories()
+    {
+        $this->putMonitor(3, "Start nc2Categories.");
+
+        // categories,ini ファイル
+        $uploads_ini = "[categories]";
+        foreach ($this->nc2_default_categories as $nc2_default_category_key => $nc2_default_category) {
+            $uploads_ini .= "\n" . "categories[" . $nc2_default_category_key . "] = \"" . $nc2_default_category . "\"";
+        }
+        Storage::put('migration/@categories/categories.ini', $uploads_ini);
+    }
+
+    /**
      * NC2：日誌（Journal）の移行
      */
     private function nc2Journal()
@@ -1472,16 +1635,68 @@ trait MigrationTrait
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
             $journals_ini .= "view_count = 10\n";
 
+            // NC2 情報
+            $journals_ini .= "\n";
+            $journals_ini .= "[nc2_info]\n";
+            $journals_ini .= "journal_id = " . $nc2_journal->journal_id . "\n";
+
+            // NC2日誌のカテゴリ（journal_category）を移行する。
+            $journals_ini .= "\n";
+            $journals_ini .= "[categories]\n";
+            $nc2_journal_categories = Nc2JournalCategory::where('journal_id', $nc2_journal->journal_id)->orderBy('display_sequence')->get();
+            $category_index = 0;
+            $journals_ini_commons = "";
+            $journals_ini_originals = "";
+
+            foreach ($nc2_journal_categories as $nc2_journal_category) {
+                if (in_array($nc2_journal_category->category_name, $this->nc2_default_categories)) {
+                    // 共通カテゴリにあるものは個別に作成しない。
+                    $journals_ini_commons .= "common_categories[" . array_search($nc2_journal_category->category_name, $this->nc2_default_categories) . "] = \"" . $nc2_journal_category->category_name . "\"\n";
+                } else {
+                    $journals_ini_originals .= "original_categories[" . $category_index . "] = \"" . $nc2_journal_category->category_name . "\"\n";
+                    $category_index++;
+                }
+            }
+            if (!empty($journals_ini_commons)) {
+                $journals_ini .= $journals_ini_commons;
+            }
+            if (!empty($journals_ini_originals)) {
+                $journals_ini .= $journals_ini_originals;
+            }
+
             // NC2日誌の記事（journal_post）を移行する。
             $nc2_journal_posts = Nc2JournalPost::where('journal_id', $nc2_journal->journal_id)->orderBy('post_id')->get();
 
             // journals_ini ファイルの詳細（変数に保持、後でappend。[blog_post] セクションを切れないため。）
-            $blog_post_ini_detail = "";
+            // $blog_post_ini_detail = "";
+
+            // 日誌の記事はTSV でエクスポート
+            // 日付{\t}status{\t}承認フラグ{\t}タイトル{\t}本文1{\t}本文2{\t}続き表示文言{\t}続き隠し文言
+            $journals_tsv = "";
 
             // NC2日誌の記事をループ
             $journals_ini .= "\n";
             $journals_ini .= "[blog_post]\n";
             foreach ($nc2_journal_posts as $nc2_journal_post) {
+
+                // TSV 形式でエクスポート
+                if (!empty($journals_tsv)) {
+                    $journals_tsv .= "\n";
+                }
+
+                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content);
+                $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content);
+
+                $journals_tsv .= $nc2_journal_post->journal_date    . "\t";
+                $journals_tsv .= $nc2_journal_post->status          . "\t";
+                $journals_tsv .= $nc2_journal_post->agree_flag      . "\t";
+                $journals_tsv .= $nc2_journal_post->title           . "\t";
+                $journals_tsv .= $content                           . "\t";
+                $journals_tsv .= $more_content                      . "\t";
+                $journals_tsv .= $nc2_journal_post->more_title      . "\t";
+                $journals_tsv .= $nc2_journal_post->hide_more_title . "\t";
+
+                // 記事のタイトルの一覧
                 // タイトルに " あり
                 if (strpos($nc2_journal_post->title, '"')) {
                     // ログ出力
@@ -1489,23 +1704,36 @@ trait MigrationTrait
                 }
                 $journals_ini .= "post_title[" . $nc2_journal_post->post_id . "] = \"" . str_replace('"', '', $nc2_journal_post->title) . "\"\n";
 
-                // 記事をエクスポート
-                $nc2_block = null;
-                $save_folder = '@blogs';
-                $content_filename = $this->zeroSuppress($nc2_journal->journal_id) . '_' . $this->zeroSuppress($nc2_journal_post->post_id) . ".html";
-                $ini_filename = null;
-                $content = $nc2_journal_post->content . $nc2_journal_post->more_content;
-                $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content);
+                // 1記事：1HTML の移行のロジック
+                //
+                // // タイトルに " あり
+                // if (strpos($nc2_journal_post->title, '"')) {
+                //     // ログ出力
+                //     $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc2_journal_post->title);
+                // }
+                // $journals_ini .= "post_title[" . $nc2_journal_post->post_id . "] = \"" . str_replace('"', '', $nc2_journal_post->title) . "\"\n";
+                //
+                // // 記事をエクスポート
+                // $nc2_block = null;
+                // $save_folder = '@blogs';
+                // $content_filename = $this->zeroSuppress($nc2_journal->journal_id) . '_' . $this->zeroSuppress($nc2_journal_post->post_id) . ".html";
+                // $ini_filename = null;
+                // $content = $nc2_journal_post->content . $nc2_journal_post->more_content;
+                // $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content);
 
-                $blog_post_ini_detail .= "\n";
-                $blog_post_ini_detail .= "[" . $nc2_journal_post->post_id . "]\n";
-                $blog_post_ini_detail .= "post_html = \"" . $content_filename . "\"\n";
+                // $blog_post_ini_detail .= "\n";
+                // $blog_post_ini_detail .= "[" . $nc2_journal_post->post_id . "]\n";
+                // $blog_post_ini_detail .= "post_html = \"" . $content_filename . "\"\n";
             }
 
             // blog の記事毎設定
-            $journals_ini .= $blog_post_ini_detail;
+            // $journals_ini .= $blog_post_ini_detail;
 
+            // blog の設定
             Storage::put('migration/@blogs/blog_' . $this->zeroSuppress($nc2_journal->journal_id) . '.ini', $journals_ini);
+
+            // blog の記事
+            Storage::put('migration/@blogs/blog_' . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
         }
     }
 
@@ -1756,7 +1984,9 @@ trait MigrationTrait
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
 
         // HTML content の保存
-        Storage::put('migration/' . $save_folder . "/" . $content_filename, $content);
+        if ($save_folder) {
+            Storage::put('migration/' . $save_folder . "/" . $content_filename, $content);
+        }
 
         // フレーム設定ファイルの追記
         if ($ini_filename) {
@@ -1764,6 +1994,8 @@ trait MigrationTrait
             $contents_ini .= "contents_file = \"" . $content_filename . "\"\n";
             Storage::append('migration/' . $save_folder . "/" . $ini_filename, $contents_ini);
         }
+
+        return $content;
     }
 
     /**
