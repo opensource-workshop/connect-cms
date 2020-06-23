@@ -432,6 +432,10 @@ trait MigrationTrait
             $display_sequence++;
             $category = Categories::create(['classname' => 'category_default', 'category' => $category, 'color' => '#ffffff', 'background_color' => '#606060', 'target' => $target, 'plugin_id' => $plugin_id, 'display_sequence' => $display_sequence]);
         }
+
+        // 登録したカテゴリをCollection で返す
+        $categories = Categories::where('target', $target)->where('plugin_id', $plugin_id)->orderBy('id', 'asc')->get();
+        return $categories;
     }
 
     /**
@@ -439,6 +443,9 @@ trait MigrationTrait
      */
     private function importBlogs()
     {
+        // 共通カテゴリの取得
+        $common_categories = Categories::whereNull('target')->whereNull('plugin_id')->orderBy('id', 'asc')->get();
+
         // ブログ定義の取り込み
         $blogs_ini_paths = File::glob(storage_path() . '/app/migration/@blogs/blog_*.ini');
 
@@ -463,7 +470,7 @@ trait MigrationTrait
                 if (array_key_exists('blog_base', $blog_ini) && array_key_exists('blog_name', $blog_ini['blog_base'])) {
                     $blog_name = $blog_ini['blog_base']['blog_name'];
                 }
-//                $bucket = Buckets::create(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
+                $bucket = Buckets::create(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
 
                 $view_count = 10;
                 if (array_key_exists('blog_base', $blog_ini) && array_key_exists('view_count', $blog_ini['blog_base'])) {
@@ -473,16 +480,21 @@ trait MigrationTrait
                         $view_count = 10;
                     }
                 }
-//                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'view_count' => $view_count]);
+                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'view_count' => $view_count]);
 
                 // マッピングテーブルの追加
-/*
                 $mapping = MigrationMapping::create([
                     'target_source_table'  => 'blogs',
                     'source_key'           => $nc2_journal_id,
                     'destination_key'      => $blog->id,
                 ]);
-*/
+
+                // ブログ固有カテゴリ追加
+                $blog_categories = collect();
+                if (array_key_exists('categories', $blog_ini) && array_key_exists('original_categories', $blog_ini['categories'])) {
+                    $blog_categories = $this->importCategories($blog_ini['categories']['original_categories'], 'blogs', $blog->id);
+                }
+
                 // Blogs の記事を取得（TSV）
                 $blog_tsv_filename = str_replace('ini', 'tsv', basename($blogs_ini_path));
                 if (Storage::exists('migration/@blogs/' . $blog_tsv_filename)) {
@@ -497,9 +509,19 @@ trait MigrationTrait
                     foreach ($blog_tsv_lines as $blog_tsv_line) {
                         // タブで項目に分割
                         $blog_tsv_cols = explode("\t", $blog_tsv_line);
+
                         // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
                         $posted_at_ts = mktime(substr($blog_tsv_cols[0], 8, 2), substr($blog_tsv_cols[0], 10, 2), substr($blog_tsv_cols[0], 12, 2), substr($blog_tsv_cols[0], 4, 2), substr($blog_tsv_cols[0], 6, 2), substr($blog_tsv_cols[0], 0, 4));
                         $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
+
+                        // 記事のカテゴリID
+                        // 共通カテゴリに同じ文言があれば、共通カテゴリを使用。
+                        // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
+                        $categories_id = null;
+                        if ($common_categories->firstWhere('category',  )) {
+                        }
+
+
                         // ブログ記事テーブル追加
 //                        $blogs_posts = BlogsPosts::create('blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[3], 'post_text' => $blog_tsv_cols[4], 'post_text2' => $blog_tsv_cols[5], 'categories_id' => 0, 'important' => null, 'status' => 0, 'posted_at' => $posted_at);
                     }
@@ -1644,7 +1666,6 @@ trait MigrationTrait
             $journals_ini .= "\n";
             $journals_ini .= "[categories]\n";
             $nc2_journal_categories = Nc2JournalCategory::where('journal_id', $nc2_journal->journal_id)->orderBy('display_sequence')->get();
-            $category_index = 0;
             $journals_ini_commons = "";
             $journals_ini_originals = "";
 
@@ -1653,8 +1674,7 @@ trait MigrationTrait
                     // 共通カテゴリにあるものは個別に作成しない。
                     $journals_ini_commons .= "common_categories[" . array_search($nc2_journal_category->category_name, $this->nc2_default_categories) . "] = \"" . $nc2_journal_category->category_name . "\"\n";
                 } else {
-                    $journals_ini_originals .= "original_categories[" . $category_index . "] = \"" . $nc2_journal_category->category_name . "\"\n";
-                    $category_index++;
+                    $journals_ini_originals .= "original_categories[" . $nc2_journal_category->category_id . "] = \"" . $nc2_journal_category->category_name . "\"\n";
                 }
             }
             if (!empty($journals_ini_commons)) {
@@ -1686,8 +1706,13 @@ trait MigrationTrait
 
                 $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content);
                 $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content);
+//                $category      = $nc2_journal_categories->firstWhere('category_id', $nc2_journal_post->category_id)->category;
+
+
 
                 $journals_tsv .= $nc2_journal_post->journal_date    . "\t";
+                $journals_tsv .= $nc2_journal_post->category_id     . "\t";
+//                $journals_tsv .= $category                          . "\t";
                 $journals_tsv .= $nc2_journal_post->status          . "\t";
                 $journals_tsv .= $nc2_journal_post->agree_flag      . "\t";
                 $journals_tsv .= $nc2_journal_post->title           . "\t";
