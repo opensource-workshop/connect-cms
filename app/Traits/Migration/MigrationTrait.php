@@ -518,12 +518,24 @@ trait MigrationTrait
                         // 共通カテゴリに同じ文言があれば、共通カテゴリを使用。
                         // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
                         $categories_id = null;
-                        if ($common_categories->firstWhere('category',  )) {
+                        if ($common_categories->firstWhere('category', $blog_tsv_cols[1])) {
+                            $categories_id = $common_categories->firstWhere('category', $blog_tsv_cols[1])->id;
+                        }
+                        if (empty($categories_id) && $blog_categories->firstWhere('category', $blog_tsv_cols[1])) {
+                            $categories_id = $blog_categories->firstWhere('category', $blog_tsv_cols[1])->id;
                         }
 
+                        // 本文
+                        $post_text = $this->changeWYSIWYG($blog_tsv_cols[5]);
+                        // 本文2
+                        $post_text2 = $this->changeWYSIWYG($blog_tsv_cols[6]);
 
                         // ブログ記事テーブル追加
-//                        $blogs_posts = BlogsPosts::create('blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[3], 'post_text' => $blog_tsv_cols[4], 'post_text2' => $blog_tsv_cols[5], 'categories_id' => 0, 'important' => null, 'status' => 0, 'posted_at' => $posted_at);
+                        $blogs_posts = BlogsPosts::create(['blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[4], 'post_text' => $post_text, 'post_text2' => $post_text2, 'categories_id' => $categories_id, 'important' => null, 'status' => 0, 'posted_at' => $posted_at]);
+
+                        // contents_id を初回はid と同じものを入れて、更新
+                        $blogs_posts->contents_id = $blogs_posts->id;
+                        $blogs_posts->save();
                     }
                 }
 
@@ -532,6 +544,30 @@ trait MigrationTrait
                 // *** あとで。
             }
         }
+    }
+
+    /**
+     * WYSIWYG 内の画像パスをエクスポート形式からConnect-CMS コンテンツへ変換
+     */
+    private function changeWYSIWYG($content)
+    {
+        $images = $this->getContentImage($content);
+        if (empty($images)) {
+            return $content;
+        }
+        foreach ($images as $image_path) {
+            if (strpos($image_path, '../@uploads') === 0) {
+                $img_filename = str_replace('../@uploads/', '', $image_path);
+                $nc2_upload_id = array_search($img_filename, $this->uploads_ini['uploads']['upload']);
+                $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $nc2_upload_id)->first();
+                if (!empty($upload_mapping)) {
+                    $content = str_replace($image_path, '/file/' . $upload_mapping->destination_key, $content);
+                } else {
+                    // $this->putError(1, 'image path not found mapping', "コンテンツ中のアップロード画像のパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
+                }
+            }
+        }
+        return $content;
     }
 
     /**
@@ -609,6 +645,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'menus') {
             // メニュー
             $this->importPluginMenus($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'blogs') {
+            // ブログ
+            $this->importPluginBlogs($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -622,6 +661,52 @@ trait MigrationTrait
 
         // Menus 登録
         $menus = Menu::create(['frame_id' => $frame->id, 'page_ids' => '']);
+    }
+
+    /**
+     * ブログプラグインの登録処理
+     */
+    private function importPluginBlogs($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $blog_id = null;
+        $blog_ini = null;
+        $journal_id = null;
+        $migration_mappings = null;
+        $blogs = null;
+        $bucket = null;
+
+        // エクスポートファイルの blog_id 取得（エクスポート時の連番）
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('blog_id', $frame_ini['frame_base'])) {
+            $blog_id = $frame_ini['frame_base']['blog_id'];
+        }
+        // ブログの情報取得
+        if (!empty($blog_id) && Storage::exists('migration/@blogs/blog_' . $blog_id . '.ini')) {
+            $blog_ini = parse_ini_file(storage_path() . '/app/migration/@blogs/blog_' . $blog_id . '.ini', true);
+        }
+        // NC2 のjournal_id
+        if (!empty($blog_ini) && array_key_exists('nc2_info', $blog_ini) && array_key_exists('journal_id', $blog_ini['nc2_info'])) {
+            $journal_id = $blog_ini['nc2_info']['journal_id'];
+        }
+        // NC2 のjournal_id でマップ確認
+        if (!empty($blog_ini) && array_key_exists('nc2_info', $blog_ini) && array_key_exists('journal_id', $blog_ini['nc2_info'])) {
+            $migration_mappings = MigrationMapping::where('target_source_table', 'blogs')->where('source_key', $journal_id)->first();
+        }
+        // マップから新Blog を取得
+        if (!empty($migration_mappings)) {
+            $blogs = Blogs::find($migration_mappings->destination_key);
+        }
+        // 新Blog からBucket ID を取得
+        if (!empty($blogs)) {
+            $bucket = Buckets::find($blogs->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (!empty($bucket)) {
+            $this->putError(1, 'Blog フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
     }
 
     /**
@@ -1220,6 +1305,42 @@ trait MigrationTrait
     }
 
     /**
+     * HTML からimg タグ全体を取得
+     */
+    private function getContentImageTag($content)
+    {
+        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+
+        if (preg_match_all($pattern, $content, $images)) {
+            if (is_array($images) && isset($images[0])) {
+                return $images[0];
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * HTML からimg タグの style 属性を取得
+     */
+    private function getImageStyle($content)
+    {
+        $pattern = '/<img.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+
+        if (preg_match_all($pattern, $content, $images)) {
+            if (is_array($images) && isset($images[1])) {
+                return $images[1];
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * HTML からa タグの href 属性を取得
      */
     private function getContentAnchor($content)
@@ -1666,6 +1787,7 @@ trait MigrationTrait
             $journals_ini .= "\n";
             $journals_ini .= "[categories]\n";
             $nc2_journal_categories = Nc2JournalCategory::where('journal_id', $nc2_journal->journal_id)->orderBy('display_sequence')->get();
+            //Log::debug($nc2_journal_categories);
             $journals_ini_commons = "";
             $journals_ini_originals = "";
 
@@ -1706,13 +1828,16 @@ trait MigrationTrait
 
                 $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content);
                 $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content);
-//                $category      = $nc2_journal_categories->firstWhere('category_id', $nc2_journal_post->category_id)->category;
 
-
+                $category_obj  = $nc2_journal_categories->firstWhere('category_id', $nc2_journal_post->category_id);
+                $category      = "";
+                if (!empty($category_obj)) {
+                    $category  = $category_obj->category_name;
+                }
 
                 $journals_tsv .= $nc2_journal_post->journal_date    . "\t";
-                $journals_tsv .= $nc2_journal_post->category_id     . "\t";
-//                $journals_tsv .= $category                          . "\t";
+                // $journals_tsv .= $nc2_journal_post->category_id     . "\t";
+                $journals_tsv .= $category                          . "\t";
                 $journals_tsv .= $nc2_journal_post->status          . "\t";
                 $journals_tsv .= $nc2_journal_post->agree_flag      . "\t";
                 $journals_tsv .= $nc2_journal_post->title           . "\t";
@@ -2000,6 +2125,30 @@ trait MigrationTrait
 
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
+
+        // 画像全体
+        $img_srcs = $this->getContentImageTag($content);
+        if (!empty($img_srcs)) {
+            $img_srcs = array_unique($img_srcs);
+            foreach ($img_srcs as $img_src) {
+                if (stripos($img_src, '../@uploads') !== false && stripos($img_src, 'class=') === false) {
+                    $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
+                    $content = str_replace($img_src, $new_img_src, $content);
+                }
+            }
+        }
+
+        // 画像のstyle設定を探す
+        $img_styles = $this->getImageStyle($content);
+        if (!empty($img_styles)) {
+            $img_styles = array_unique($img_styles);
+            //Log::debug($img_styles);
+            foreach ($img_styles as $img_style) {
+                $new_img_style = str_replace('height', 'max-height', $img_style);
+                $new_img_style = str_replace('max-max-height', 'max-height', $new_img_style);
+                $content = str_replace($img_style, $new_img_style, $content);
+            }
+        }
 
         // 添付ファイルを探す
         $anchors = $this->getContentAnchor($content);
