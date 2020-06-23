@@ -61,7 +61,7 @@
         $table_cell_class_list_file = File::get($table_cell_class_default_path);
     }
 
-    // テーマ固有箇条書き（ULタグ）
+    // テーマ固有 箇条書きリスト（ULタグ）の表示設定
     $advlist_bullet_lists_file = '';
     $advlist_bullet_lists_path = public_path() . '/themes/' . $theme . '/wysiwyg/advlist_bullet_lists.txt';
     $advlist_bullet_lists_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/advlist_bullet_lists.txt';
@@ -70,6 +70,17 @@
     }
     else if (File::exists($advlist_bullet_lists_default_path)) {
         $advlist_bullet_lists_file = File::get($advlist_bullet_lists_default_path);
+    }
+
+    // テーマ固有 番号箇条書きリスト（OLタグ）の表示設定
+    $advlist_number_lists_file = '';
+    $advlist_number_lists_path = public_path() . '/themes/' . $theme . '/wysiwyg/advlist_number_lists.txt';
+    $advlist_number_lists_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/advlist_number_lists.txt';
+    if (File::exists($advlist_number_lists_path)) {
+        $advlist_number_lists_file = File::get($advlist_number_lists_path);
+    }
+    else if (File::exists($advlist_number_lists_default_path)) {
+        $advlist_number_lists_file = File::get($advlist_number_lists_default_path);
     }
 
     // TinyMCE Body クラス
@@ -137,8 +148,11 @@
         {{-- テーマ固有スタイル --}}
         {!!$block_formats_file!!}
 
-        {{-- テーマ固有箇条書き（ULタグ） --}}
+        {{-- テーマ固有 箇条書きリスト（ULタグ）の表示設定 --}}
         {!!$advlist_bullet_lists_file!!}
+
+        {{-- テーマ固有 番号箇条書きリスト（OLタグ）の表示設定 --}}
+        {!!$advlist_number_lists_file!!}
 
         menubar  : '',
         relative_urls : false,
