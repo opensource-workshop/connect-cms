@@ -1,0 +1,1 @@
+advlist_bullet_styles: "default,circle,disc,square",

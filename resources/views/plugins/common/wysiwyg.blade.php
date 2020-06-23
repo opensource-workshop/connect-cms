@@ -61,6 +61,17 @@
         $table_cell_class_list_file = File::get($table_cell_class_default_path);
     }
 
+    // テーマ固有箇条書き（ULタグ）
+    $advlist_bullet_lists_file = '';
+    $advlist_bullet_lists_path = public_path() . '/themes/' . $theme . '/wysiwyg/advlist_bullet_lists.txt';
+    $advlist_bullet_lists_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/advlist_bullet_lists.txt';
+    if (File::exists($advlist_bullet_lists_path)) {
+        $advlist_bullet_lists_file = File::get($advlist_bullet_lists_path);
+    }
+    else if (File::exists($advlist_bullet_lists_default_path)) {
+        $advlist_bullet_lists_file = File::get($advlist_bullet_lists_default_path);
+    }
+
     // TinyMCE Body クラス
     $body_class = '';
     if ($frame->area_id == 0) {
@@ -125,6 +136,9 @@
 
         {{-- テーマ固有スタイル --}}
         {!!$block_formats_file!!}
+
+        {{-- テーマ固有箇条書き（ULタグ） --}}
+        {!!$advlist_bullet_lists_file!!}
 
         menubar  : '',
         relative_urls : false,
