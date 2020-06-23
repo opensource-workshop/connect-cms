@@ -205,6 +205,11 @@ class DefaultController extends ConnectController
             $finder = View::getFinder();
             $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name;
 
+            // テンプレート・ディレクトリがない場合はオプションプラグインのテンプレートディレクトリを探す
+            if (!file_exists($plugin_view_path)) {
+                $plugin_view_path = $finder->getPaths()[0].'/plugins_option/user/' . $action_core_frame->plugin_name;
+            }
+
             // テンプレートソート時に順番が書いていない場合用の変数。通常の順番が1からと想定し、空のものは1000から開始
             $tmp_display_sequence = 1000;
 
@@ -415,6 +420,24 @@ class DefaultController extends ConnectController
     }
 
     /**
+     *  newするクラス名の取得
+     */
+    private function getClassname($plugin_name)
+    {
+        // 標準プラグインとして存在するか確認
+        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+        // オプションプラグインとして存在するか確認
+        $class_name = "App\PluginsOption\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+        return false;
+    }
+
+    /**
      *  画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
@@ -449,7 +472,8 @@ class DefaultController extends ConnectController
         }
 
         // 引数のアクションと同じメソッドを呼び出す。
-        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        //$class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        $class_name = $this->getClassname($plugin_name);
         $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
@@ -506,7 +530,8 @@ class DefaultController extends ConnectController
         }
 
         // 引数のアクションと同じメソッドを呼び出す。
-        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        //$class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        $class_name = $this->getClassname($plugin_name);
         $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
@@ -522,7 +547,8 @@ class DefaultController extends ConnectController
         // プラグインのインスタンス生成（メインエリア）
         $plugin_instances = array();
         foreach ($frames as $frame) {
-            $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
+            //$class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
+            $class_name = $this->getClassname($frame->plugin_name);
             $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
         }
 
@@ -587,7 +613,8 @@ class DefaultController extends ConnectController
         foreach ($layouts_info as $area) {
             if (array_key_exists('frames', $area)) {
                 foreach ($area['frames'] as $frame) {
-                    $class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
+                    //$class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
+                    $class_name = $this->getClassname($frame->plugin_name);
                     $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
                 }
 

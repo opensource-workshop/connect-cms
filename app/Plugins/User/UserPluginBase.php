@@ -78,6 +78,11 @@ class UserPluginBase extends PluginBase
     public $id = null;
 
     /**
+     *  画面間用メッセージ
+     */
+    public $cc_massage = null;
+
+    /**
      *  コンストラクタ
      */
     function __construct($page = null, $frame = null, $pages = null)
@@ -275,6 +280,16 @@ class UserPluginBase extends PluginBase
             return 'plugins.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
         }
 
+        // オプションの指定したテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins_option/user/' . $this->frame->plugin_name . "/" . $this->frame->template . "/" . $blade_name . ".blade.php")) {
+            return 'plugins_option.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
+        }
+
+        // オプションのデフォルトテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins_option/user/' . $this->frame->plugin_name . "/default/" . $blade_name . ".blade.php")) {
+            return 'plugins_option.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
+        }
+
         return 'errors/template_notfound';
     }
 
@@ -355,6 +370,9 @@ class UserPluginBase extends PluginBase
 
         // 表示しているテーマ
         $arg['theme'] = $this->getThemeName();
+
+        // 画面間用メッセージ
+        $arg['cc_massage'] = $this->cc_massage;
 
         // テーマ Default ディレクトリの確認（テーマがグループテーマなら、グループ内のDefault）
         if (strpos($arg['theme'], '/') !== false) {

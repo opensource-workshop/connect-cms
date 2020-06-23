@@ -61,6 +61,12 @@ class Frame extends Model
             $frame_view = view('plugins.user.' . $this->plugin_name . '.' . $this->plugin_name . '_frame_edit_tab', ['page' => $page, 'frame' => $frame, 'action' => $action]);
             echo $frame_view->render();
         }
+
+        // オプションのプラグイン側のフレームメニューが存在する場合は、読み込む
+        if (file_exists(resource_path().'/views/plugins_option/user/' . $this->plugin_name . "/" . $this->plugin_name . "_frame_edit_tab.blade.php")) {
+            $frame_view = view('plugins_option.user.' . $this->plugin_name . '.' . $this->plugin_name . '_frame_edit_tab', ['page' => $page, 'frame' => $frame, 'action' => $action]);
+            echo $frame_view->render();
+        }
     }
 
     /**
