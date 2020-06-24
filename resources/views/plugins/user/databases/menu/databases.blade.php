@@ -15,7 +15,6 @@
         @inject('dbInputs', 'App\Models\User\Databases\DatabasesInputs')
         @php
             // コラム配列（メニューに表示するデータのみにする）
-            $__columns = $dbInputs->getColumnsDort($columns, '');
             $_columns = $dbInputs->getColumnsDort($columns, 'list');
 
             // メニュー用のリンク（アイテム ID を追加する）
