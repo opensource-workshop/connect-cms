@@ -8,8 +8,6 @@
 --}}
 @extends('core.cms_frame_base')
 @section("plugin_contents_$frame->id")
-@php $row_flag = 0; @endphp
-
     @can("role_article")
         <div class="row">
             <div class="col-12 text-right mb-1">
@@ -27,24 +25,9 @@
                 {{-- 項目表示 --}}
                 @if(!$loop->first)
                     @php
-                        $tmp_classes = array();
-                        $tmp_class = '';
-                        switch($column->column_type){ //データのタイプを取得してクラスを指定する
-                            case 'file':
-                            case 'image':
-                            case 'video':
-                                $tmp_classes[] = 'type-'.$column->column_type;
-                                break;
-                        }
-                        if($column->classname){
-                            $tmp_classes[] = $column->classname;
-                        }
-                        if(count($tmp_classes)){
-                            $tmp_class = implode(' ', $tmp_classes);
-                            $tmp_class = ' class="'.$tmp_class.'"';
-                        }
+                        $_class = 'type-'.$column->column_type.' '.$column->classname;
                     @endphp
-                    <dl{!!$tmp_class!!}>
+                    <dl class="{{$_class}}">
                         <dt>{{$column->column_name}}</dt>
                         <dd>
                             @if($column->classname == 'db-url')
@@ -59,8 +42,7 @@
 
                 {{-- 最初の項目をデータのタイトルにする --}}
                 @else
-                    @if(!$column->classname)<h2>
-                    @else<h2 class="{{$column->classname}}">@endif
+                    <h2 class="{{$column->classname}}">
                         @include('plugins.user.databases.default.databases_include_detail_value')
                     </h2>
                 @endif

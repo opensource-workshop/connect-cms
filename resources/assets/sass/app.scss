@@ -8,9 +8,5 @@
 // Bootstrap
 @import "~bootstrap/scss/bootstrap";
 
-// 追加スタイル
-@for $i from 1 to 20 {
-    .w-#{ 5 * $i } { width: 5% * $i !important; }
-}
-
+// デフォルトプラグインスタイル
 @import "plugin-database";
