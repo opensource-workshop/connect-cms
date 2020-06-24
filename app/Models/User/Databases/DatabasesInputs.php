@@ -219,7 +219,7 @@ class DatabasesInputs extends Model
     /**
     *  タイプに合わせた value をソースを返す
     */
-    public function getTagType($input_cols, $column, $notag=0){
+    public function getTagType($input_cols, $column, $notag=null){
 
         $_obj = $this->getVolue($input_cols, $column['id']);
 

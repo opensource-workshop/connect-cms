@@ -12,15 +12,10 @@
 @extends('core.cms_frame_base')
 @section("plugin_contents_$frame->id")
     @if (empty($setting_error_messages))
+    @inject('dbInputs', 'App\Models\User\Databases\DatabasesInputs') 
         @php
             // コラム配列（DB へのアクセスを減らすために 配列にしておく）
-            //$_columns = $inputs[0]->getColumnsDort($columns);
-
-            //データがない時に〝$inputs〟が存在しないので function が使えない。
-            $_columns = json_decode(json_encode($columns, JSON_UNESCAPED_UNICODE, 10), true);
-            $_display_sequence = array_column($_columns, 'display_sequence');
-            $_id = array_column($_columns, 'id');
-            array_multisort( $_display_sequence, SORT_ASC, $_id, SORT_ASC, $_columns );
+            $_columns = $dbInputs->getColumnsDort($columns);
 
             // リンク（アイテム ID を追加して使用する）
             $_href = url('/').'/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/';
@@ -52,7 +47,7 @@
                         @elseif($_first_flag) {{--最初の項目--}}
                         <dt class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
                             <a href="{{$_href.$input->id}}">
-                                {{$input->getTagType( $input_cols, $_column, 1)}}
+                                {!!$input->getTagType( $input_cols, $_column, 1)!!}
                             </a>
                         </dt>
                         @php $_first_flag=0; @endphp {{--フラグを倒す--}}
@@ -76,6 +71,7 @@
                             <p>{!!$input->getTagType( $input_cols, $_column, 1)!!}</p>
                         </dd>
                         @endif
+
                     @endforeach
                 </dl>
                 @endforeach
