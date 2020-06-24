@@ -12,18 +12,10 @@
 @extends('core.cms_frame_base')
 @section("plugin_contents_$frame->id")
     @if (empty($setting_error_messages))
+        @inject('dbInputs', 'App\Models\User\Databases\DatabasesInputs')
         @php
-            // コラム配列（DB へのアクセスを減らすために 配列にしておく）
-            //$_columns = $inputs[0]->getColumnsDort($columns);
-
-            //データがない時に〝$inputs〟が存在しないので function が使えない。
-            $_columns = json_decode(json_encode($columns, JSON_UNESCAPED_UNICODE, 10), true);
-            $_display_sequence = array_column($_columns, 'display_sequence');
-            $_id = array_column($_columns, 'id');
-            array_multisort( $_display_sequence, SORT_ASC, $_id, SORT_ASC, $_columns );
-
-            // 表示した項目の ID を保存する配列
-            $_show = [];
+            // コラム配列（リストで表示するデータのみにする）
+            $_columns = $dbInputs->getColumns($columns, 'list');
 
             // リンク（アイテム ID を追加する）
             $_href = url('/').'/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/';
@@ -31,32 +23,33 @@
 
         @include('plugins.user.databases.default.databases_include_ctrl_head') {{--テーブルのヘッダー部分--}}
 
-        @if (!$default_hide_list)
-            <div class="db-card"> {{-- テンプレートを複製するときは、ここのクラスを変更する --}}
+        @if(!$default_hide_list)
+            {{-- テンプレートを複製するときは、ここのクラスを変更する --}}
+            <div class="db-card"> 
             
             @foreach($inputs as $input) {{-- データのループ --}}
-                <div class="db-adata">
-                @if( $_show[] = $imgid = $input->getNumType($_columns, 'image', 1)) {{-- サムネール --}}
-                    <a href="{{$_href.$input->id}}" class="main-image {{$_columns[$imgid]['classname']}}">
-                        <img src="{{url('/')}}/file/{{$input->getVolue($input_cols, $_columns[$imgid]['id'], 'value')}}" class="img-fluid">
+                <div class="db-adata{{$_columns['cls']}}">
+
+                @if( $_columns['thum'] ) {{-- サムネール --}}
+                    <a href="{{$_href.$input->id}}" class="main-image {{$_columns['thum']['classname']}}">
+                        <img src="{{url('/')}}/file/{{$input->getVolue($input_cols, $_columns['thum']['id'], 'value')}}" class="img-fluid">
                     </a>
                 @endif
 
-                    @php $_show[] = $txtid = $input->getNumType($_columns, 'text', 1); @endphp
-                    <h2 class="{{$_columns[$txtid]['classname']}}"> {{-- 項目のタイトル --}}
+                @if( $_columns['title'] ) {{-- タイトル --}}
+                    <h2 class="{{$_columns['title']['classname']}}"> 
                         <a href="{{$_href.$input->id}}">
-                            {{$input->getVolue($input_cols, $_columns[$txtid]['id'], 'value')}}
+                            {{$input->getVolue($input_cols, $_columns['title']['id'], 'value')}}
                         </a>
                     </h2>
+                @endif
 
                     <div class="db-contents"> {{-- 項目のループ --}}
-                    @foreach($_columns as $_key => $_column)
-                    @if(!in_array($_key ,$_show) && !$_column['list_hide_flag']) {{--表示する項目を選択--}}
+                    @foreach($_columns['item'] as $_key => $_column)
                         <div class="{{$_column['classname']}}">
                             <h3>{{$_column['column_name']}}</h3>
                             {!!$input->getTagType( $input_cols, $_column )!!}
                         </div>
-                    @endif
                     @endforeach
                     </div>
 

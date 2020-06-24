@@ -9,7 +9,7 @@
  --}}
 
 <form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST">
-    <div class="form-group row no-gutters mb-3">
+    <div class="db-list-header form-group row no-gutters mb-3">
         {{ csrf_field() }}
 
         {{-- 絞り込みカウント --}}
@@ -35,7 +35,7 @@
         {{-- 新規登録 --}}
         @can("role_article")
             @php
-                $add_button_width = 2; // 新規ボタンの幅を確保する。
+                $add_button_width = 1; // 新規ボタンの幅を確保する。
             @endphp
             <div class="py-1
                 col-{{$add_button_width}}
@@ -43,7 +43,7 @@
                 order-sm-10
                 text-right"
             >
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
+                <button type="button" class="btn btn-success db-btn" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
                     <i class="fas fa-plus"></i>
                     <span class="d-none d-md-inline">新規</span>
                 </button>
@@ -59,7 +59,7 @@
                 order-1
                 order-sm-6"
             >
-                <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="検索はキーワードを入力してください。">
+                <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="キーワード入力">
                 <div class="input-group-append">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i>
