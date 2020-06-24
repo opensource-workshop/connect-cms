@@ -24,7 +24,7 @@
         @if (!$default_hide_list)
             <div class="db-menu">
             @foreach($inputs as $input) {{-- データのループ --}}
-                <div class="db-adata{{$_columns['catchcls']}}">
+                <div class="db-adata{{$_columns['cls'].$_columns['catchcls']}}">
 
                 @if( $_columns['thum'] ) {{-- サムネール --}}
                     <a href="{{$_href.$input->id}}" class="main-image {{$_columns['thum']['classname']}}">

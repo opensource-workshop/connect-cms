@@ -168,7 +168,7 @@ class DatabasesInputs extends Model
         }
         if(!$_res['title']){ $_res['cls'].= ' no-title';} //タイトルがない時のクラスを追加
         if(!$_res['thum']){ $_res['cls'].= ' no-thum';} //サムネールがない時のクラスを追加
-        if(!$_res['catch']){ $_res['catchcls'] = $_res['cls'].' no-catch';} //キャッチコピーがない時のクラスを追加
+        if(!$_res['catch']){ $_res['catchcls'] = ' no-catch';} //キャッチコピーがない時のクラスを追加
         return $_res;
     }
 
