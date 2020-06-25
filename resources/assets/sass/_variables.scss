@@ -1,37 +1,206 @@
+// bootstrap デフォルト設定
+    // Color system
+    $grays: ();
+        $white: #fff;
+        $gray-100: #f8f9fa;
+        $gray-200: #e9ecef;
+        $gray-300: #dee2e6;
+        $gray-400: #ced4da;
+        $gray-500: #adb5bd;
+        $gray-600: #6c757d;
+        $gray-700: #495057;
+        $gray-800: #343a40;
+        $gray-900: #212529;
+        $black: #000;
 
-// Body
-$body-bg: #f5f8fa;
+        // stylelint-disable-next-line scss/dollar-variable-default
+        $grays: map-merge(
+            (
+                "100": $gray-100,
+                "200": $gray-200,
+                "300": $gray-300,
+                "400": $gray-400,
+                "500": $gray-500,
+                "600": $gray-600,
+                "700": $gray-700,
+                "800": $gray-800,
+                "900": $gray-900
+            ),
+            $grays
+        );
+
+    $colors: ();
+        $blue: #007bff;
+        $indigo: #6610f2;
+        $purple: #6f42c1;
+        $pink: #e83e8c;
+        $red: #dc3545;
+        $orange: #fd7e14;
+        $yellow: #ffc107;
+        $green: #28a745;
+        $teal: #20c997;
+        $cyan: #17a2b8;
+
+        // stylelint-disable-next-line scss/dollar-variable-default
+        $colors: map-merge(
+            (
+                "blue": $blue,
+                "indigo": $indigo,
+                "purple": $purple,
+                "pink": $pink,
+                "red": $red,
+                "orange": $orange,
+                "yellow": $yellow,
+                "green": $green,
+                "teal": $teal,
+                "cyan": $cyan,
+                "white": $white,
+                "gray": $gray-600,
+                "gray-dark": $gray-800
+            ),
+            $colors
+        );
+
+// 基本色設定
+$primary: $blue;
+
+$sub-color: $black;
+@if darken( grayscale( $primary ), 50% ) == black {
+    $sub-color: $white;
+}
+
+$light: $gray-100;
+$dark: $gray-800;
+
+//$light: mix( $primary, $white, 2%);
+//$dark: mix( $primary, $black, 30%);
+
+$secondary: $gray-600;
+$success: $green;
+$info: $cyan;
+$warning: $yellow;
+$danger: $red;
+
+    $theme-colors: ();
+        // stylelint-disable-next-line scss/dollar-variable-default
+        $theme-colors: map-merge(
+            (
+                "primary": $primary,
+                "secondary": $secondary,
+                "success": $success,
+                "info": $info,
+                "warning": $warning,
+                "danger": $danger,
+                "light": $light,
+                "dark": $dark
+            ),
+            $theme-colors
+        );
+
+    // This variable affects the `.h-*` and `.w-*` classes.
+    $sizes: ();
+        // stylelint-disable-next-line scss/dollar-variable-default
+        $sizes: map-merge(
+            (
+                5: 5%,
+                10: 10%,
+                15: 15%,
+                20: 20%,
+                25: 25%,
+                30: 30%,
+                35: 35%,
+                45: 45%,
+                50: 50%,
+                55: 55%,
+                60: 60%,
+                65: 65%,
+                70: 70%,
+                75: 75%,
+                80: 80%,
+                85: 85%,
+                90: 90%,
+                95: 95%,
+                100: 100%,
+                auto: auto
+            ),
+            $sizes
+        );
+    // end bootstrap デフォルト設定
+
+// Body 基本色
+$body-bg: $light;
+$body-color: $gray-900;
+$border-color: $gray-300;
+$hr-border-color: $border-color;
 
 // Borders
-$laravel-border-color: darken($body-bg, 10%);
-$list-group-border: $laravel-border-color;
-$navbar-default-border: $laravel-border-color;
-$panel-default-border: $laravel-border-color;
-$panel-inner-border: $laravel-border-color;
+    $laravel-border-color: darken($body-bg, 10%);
+    $list-group-border-color: $laravel-border-color;
+    $navbar-default-border: $laravel-border-color;
+    $panel-default-border: $laravel-border-color;
+    $panel-inner-border: $laravel-border-color;
 
 // Brands
-$brand-primary: #3097D1;
+$brand-primary: #3097d1;
 $brand-info: #8eb4cb;
 $brand-success: #2ab27b;
 $brand-warning: #cbb956;
 $brand-danger: #bf5329;
 
 // Typography
-$icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
-$font-family-sans-serif: "Raleway", sans-serif;
+$icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
+$font-family-sans-serif:
+    -apple-system, //Apple デフォルト欧文フォント
+    BlinkMacSystemFont, //Chrome, Opera デフォルト欧文フォント
+    'Segoe UI', //win7〜 欧文フォント
+    Roboto, //アンドロイド 欧文フォント
+    'Hiragino Sans', //macOS, iOS11〜 日本語フォント
+    'Noto Sans CJK JP', //Linux(Ubuntu), win(Note) 日本語フォント
+    'Yu Gothic', //Win7〜 日本語フォント
+    sans-serif, //デフォルトゴシック
+    'Apple Color Emoji', //Apple 絵文字
+    'Segoe UI Emoji', //Win7〜 絵文字
+    'Segoe UI Symbol', //Win7〜 絵文字
+    'Noto Sans Emoji'; //アンドロイド 絵文字
+// りのつか氏 の『font-familyについて本気で考えてみた』を参考にしました。
+// https://qiita.com/tsuka-rinorino/items/b30e03ce10aa38ac2a10
+
+$font-family-monospace:
+    'Source Han Code JP N', // 源ノ角ゴシック Code JP プログラミング用フォント
+    Consolas, // win10 欧文フォント
+    Courier, // apple + Chrome, Opera 欧文フォント
+    'Hiragino Sans', // apple + Chrome, Opera 日本語フォント
+    'Noto Sans Mono CJK JP Regular', // Linux(Ubuntu), win(Note) 日本語フォント
+    monospace;
+// 源ノ角ゴシック Code JP は デフォルトフォントではありませんが、
+// プログラミングフォントとして評価が高いので最初に設定してます。
+
+$font-family-serif:
+    'Times New Roman', //欧文フォント
+    YuMincho, // macos 追加インストールされている場合に表示される
+    'Hiragino Mincho ProN', // apple + Chrome, Opera 日本語フォント
+    'Yu Mincho', // Win7〜 日本語フォント
+    'Noto Serif CJK JP', // Linux(Ubuntu), win(Note) 日本語フォント
+    serif;
+
 $line-height-base: 1.6;
-$text-color: #636b6f;
+$text-color: $body-color;
 
-// Navbar
-$navbar-default-bg: #fff;
+// Navbar これは反映されるのか？
+    $navbar-default-bg: #fff;
 
-// Buttons
-$btn-default-color: $text-color;
+// Buttons これは反映されるのか？
+    $btn-default-color: $text-color;
 
 // Inputs
-$input-border: lighten($text-color, 40%);
-$input-border-focus: lighten($brand-primary, 25%);
-$input-color-placeholder: lighten($text-color, 30%);
+    $input-border: lighten($text-color, 60%);
+    $input-border-color: $input-border;
+    $input-border-focus: lighten($brand-primary, 50%);
+    $input-focus-border-color: $input-border-focus;
+    $input-color-placeholder: lighten($text-color, 40%);
+    $input-placeholder-color: $input-color-placeholder;
 
-// Panels
-$panel-default-heading-bg: #fff;
+// Panels これは反映されるのか？
+    $panel-default-heading-bg: #fff;
+
+

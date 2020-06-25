@@ -1,5 +1,5 @@
 {{--
- * データベース デフォルト テンプレート
+ * データベース テーブル テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
@@ -25,11 +25,11 @@
 
         @if (!$default_hide_list)
         {{-- データのループ --}}
-        <div class="db-default container">
-            <div class="d-md-table">
-                <dl class="d-none d-md-table-row text-center"> {{--テーブルのタイトル--}}
-                    @foreach($_columns as $_column) {{--項目を繰り返してタイトルをつける--}}
-                    @if(!$_column['list_hide_flag']) {{--表示する項目を選択--}}
+        <div class="db-tabel container">
+            <div class="d-table">
+                <dl class="d-table-row text-center">
+                    @foreach($_columns as $_column)
+                    @if(!$_column['list_hide_flag'])
                         <dt class="d-table-cell text-nowrap p-2 {{$_column['classname']}}">
                             {{$_column['column_name']}}
                         </dt>
@@ -38,47 +38,33 @@
                 </dl>
 
                 @foreach($inputs as $input)
-                <dl class="d-md-table-row"> {{--テーブルのコンテンツ--}}
+                <dl class="d-table-row"> {{--テーブルのコンテンツ--}}
                     @php $_first_flag = 1; @endphp {{--最初の項目を選ぶフラグ--}}
-                    
+
                     @foreach($_columns as $_column){{--項目を繰り返す--}}
                         @if($_column['list_hide_flag']) {{--表示しない項目--}}
 
                         @elseif($_first_flag) {{--最初の項目--}}
-                        <dt class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
+                        <dt class="d-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
                             <a href="{{$_href.$input->id}}">
                                 {!!$input->getTagType( $input_cols, $_column, 1)!!}
                             </a>
                         </dt>
                         @php $_first_flag=0; @endphp {{--フラグを倒す--}}
 
-                        @elseif( $_column['column_type'] == 'image' ) {{--イメージ項目--}}
-                        <dd class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
-                            <a href="{{$_href.$input->id}}">
-                                {!!$input->getTagType( $input_cols, $_column, 1)!!}
-                            </a>
-                        </dd>
-
-                        @elseif( $_column['column_type'] == 'video') {{--ビデオ項目--}}
-                        <dd class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
-                            <h3 class="d-md-none">{{$_column['column_name']}}</h3>
+                        @else {{--テキスト項目--}}
+                        <dd class="d-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
                             {!!$input->getTagType( $input_cols, $_column, 1)!!}
                         </dd>
-
-                        @else {{--テキスト項目--}}
-                        <dd class="d-md-table-cell p-2 type-{{$_column['column_type']}} {{$_column['classname']}}">
-                            <h3 class="d-md-none">{{$_column['column_name']}}</h3>
-                            <p>{!!$input->getTagType( $input_cols, $_column, 1)!!}</p>
-                        </dd>
                         @endif
-
                     @endforeach
                 </dl>
                 @endforeach
             </div>
         </div>
-        
-        <div class="text-center"> {{-- ページング処理 --}}
+
+        {{-- ページング処理 --}}
+        <div class="text-center">
             {{ $inputs->links() }}
         </div>
         @endif
