@@ -1571,6 +1571,11 @@ trait MigrationTrait
             $this->nc2Journal();
         }
 
+        // NC2 汎用データベース（multidatabase）データのエクスポート
+        if (!$this->hasMigrationConfig('plugin', 'export_ommit_pugins', 'databases')) {
+            $this->nc2Multidatabase();
+        }
+
         // NC2 のページデータ
         $nc2_pages_query = Nc2Page::where('private_flag', 0)
                                   ->where('root_id', '<>', 0)
@@ -1805,6 +1810,114 @@ trait MigrationTrait
             if (!empty($journals_ini_originals)) {
                 $journals_ini .= $journals_ini_originals;
             }
+
+            // NC2日誌の記事（journal_post）を移行する。
+            $nc2_journal_posts = Nc2JournalPost::where('journal_id', $nc2_journal->journal_id)->orderBy('post_id')->get();
+
+            // journals_ini ファイルの詳細（変数に保持、後でappend。[blog_post] セクションを切れないため。）
+            // $blog_post_ini_detail = "";
+
+            // 日誌の記事はTSV でエクスポート
+            // 日付{\t}status{\t}承認フラグ{\t}タイトル{\t}本文1{\t}本文2{\t}続き表示文言{\t}続き隠し文言
+            $journals_tsv = "";
+
+            // NC2日誌の記事をループ
+            $journals_ini .= "\n";
+            $journals_ini .= "[blog_post]\n";
+            foreach ($nc2_journal_posts as $nc2_journal_post) {
+
+                // TSV 形式でエクスポート
+                if (!empty($journals_tsv)) {
+                    $journals_tsv .= "\n";
+                }
+
+                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content);
+                $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content);
+
+                $category_obj  = $nc2_journal_categories->firstWhere('category_id', $nc2_journal_post->category_id);
+                $category      = "";
+                if (!empty($category_obj)) {
+                    $category  = $category_obj->category_name;
+                }
+
+                $journals_tsv .= $nc2_journal_post->journal_date    . "\t";
+                // $journals_tsv .= $nc2_journal_post->category_id     . "\t";
+                $journals_tsv .= $category                          . "\t";
+                $journals_tsv .= $nc2_journal_post->status          . "\t";
+                $journals_tsv .= $nc2_journal_post->agree_flag      . "\t";
+                $journals_tsv .= $nc2_journal_post->title           . "\t";
+                $journals_tsv .= $content                           . "\t";
+                $journals_tsv .= $more_content                      . "\t";
+                $journals_tsv .= $nc2_journal_post->more_title      . "\t";
+                $journals_tsv .= $nc2_journal_post->hide_more_title . "\t";
+
+                // 記事のタイトルの一覧
+                // タイトルに " あり
+                if (strpos($nc2_journal_post->title, '"')) {
+                    // ログ出力
+                    $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc2_journal_post->title);
+                }
+                $journals_ini .= "post_title[" . $nc2_journal_post->post_id . "] = \"" . str_replace('"', '', $nc2_journal_post->title) . "\"\n";
+
+                // 1記事：1HTML の移行のロジック
+                //
+                // // タイトルに " あり
+                // if (strpos($nc2_journal_post->title, '"')) {
+                //     // ログ出力
+                //     $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc2_journal_post->title);
+                // }
+                // $journals_ini .= "post_title[" . $nc2_journal_post->post_id . "] = \"" . str_replace('"', '', $nc2_journal_post->title) . "\"\n";
+                //
+                // // 記事をエクスポート
+                // $nc2_block = null;
+                // $save_folder = '@blogs';
+                // $content_filename = $this->zeroSuppress($nc2_journal->journal_id) . '_' . $this->zeroSuppress($nc2_journal_post->post_id) . ".html";
+                // $ini_filename = null;
+                // $content = $nc2_journal_post->content . $nc2_journal_post->more_content;
+                // $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content);
+
+                // $blog_post_ini_detail .= "\n";
+                // $blog_post_ini_detail .= "[" . $nc2_journal_post->post_id . "]\n";
+                // $blog_post_ini_detail .= "post_html = \"" . $content_filename . "\"\n";
+            }
+
+            // blog の記事毎設定
+            // $journals_ini .= $blog_post_ini_detail;
+
+            // blog の設定
+            Storage::put('migration/@blogs/blog_' . $this->zeroSuppress($nc2_journal->journal_id) . '.ini', $journals_ini);
+
+            // blog の記事
+            Storage::put('migration/@blogs/blog_' . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
+        }
+    }
+
+    /**
+     * NC2：汎用データベース（Databases）の移行
+     */
+    private function nc2Multidatabase()
+    {
+        $this->putMonitor(3, "Start nc2Multidatabase.");
+
+        // NC2汎用データベース（Multidatabase）を移行する。
+        $nc2_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
+
+        // 空なら戻る
+        if ($nc2_multidatabases->isEmpty()) {
+            return;
+        }
+
+        // NC2汎用データベース（Multidatabase）のループ
+        foreach ($nc2_multidatabases as $nc2_multidatabase) {
+            $multidatabase_ini = "";
+            $multidatabase_ini .= "[multidatabase_base]\n";
+            $multidatabase_ini .= "multidatabase_name = \"" . $nc2_multidatabase->multidatabase_name . "\"\n";
+            $multidatabase_ini .= "view_count = 10\n";
+
+            // NC2 情報
+            $multidatabase_ini .= "\n";
+            $multidatabase_ini .= "[nc2_info]\n";
+            $multidatabase_ini .= "multidatabase_id = " . $nc2_multidatabase->multidatabase_id . "\n";
 
             // NC2日誌の記事（journal_post）を移行する。
             $nc2_journal_posts = Nc2JournalPost::where('journal_id', $nc2_journal->journal_id)->orderBy('post_id')->get();
