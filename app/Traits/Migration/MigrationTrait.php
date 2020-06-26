@@ -290,13 +290,13 @@ trait MigrationTrait
         $this->importCommonCategories();
 
         // ブログの取り込み
-        if ($this->getMigrationConfig('plugin', 'import_ommit_pugins', 'blogs')) {
+        if (!$this->getMigrationConfig('plugin', 'import_ommit_pugins', 'blogs')) {
             $this->putMonitor(3, "blogs import Start.");
             $this->importBlogs();
         }
 
         // データベースの取り込み
-        if ($this->getMigrationConfig('plugin', 'import_ommit_pugins', 'databases')) {
+        if (!$this->getMigrationConfig('plugin', 'import_ommit_pugins', 'databases')) {
             $this->putMonitor(3, "databases import Start.");
             $this->importDatabases();
         }
@@ -649,11 +649,15 @@ trait MigrationTrait
                         // タブで項目に分割
                         $database_tsv_cols = explode("\t", trim($database_tsv_line));
                         foreach($database_tsv_cols as $database_tsv_col) {
+if (array_key_exists($databases_columns_id_idx, $column_ids)) {
                             $databases_input_cols = DatabasesInputCols::create([
                                 'databases_inputs_id'  => $databases_input->id,
                                 'databases_columns_id' => $column_ids[$databases_columns_id_idx],
                                 'value'                => $database_tsv_col,
                             ]);
+} else {
+    $this->putError(3, 'データベース詳細インポートエラー', "databases_columns_id_idx = " . $databases_columns_id_idx);
+}
                             $databases_columns_id_idx++;
                         }
                     }
