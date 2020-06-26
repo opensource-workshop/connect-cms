@@ -114,7 +114,7 @@ class Nc2Sso extends ApiPluginBase
 
             // トップページへ
             return redirect("/");
-            
+
         } else {
             // ユーザが存在しない場合、一般権限でユーザを作成して、自動ログイン
             $user           = new User;
