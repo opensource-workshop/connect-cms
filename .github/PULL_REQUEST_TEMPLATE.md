@@ -8,5 +8,4 @@
 レビューするに当たって参考にできる情報があればそのリンク
 
 ## チェックリスト（Checklist）
-- [ ] PHP_CodeSnifferを実行して、本PR内に指摘が存在しないことを確認した。
-https://github.com/opensource-workshop/connect-cms/wiki/PHP_CodeSniffer
+- [ ] PHP_CodeSnifferを実行して、本PR内に指摘が存在しないことを確認した。https://github.com/opensource-workshop/connect-cms/wiki/PHP_CodeSniffer
