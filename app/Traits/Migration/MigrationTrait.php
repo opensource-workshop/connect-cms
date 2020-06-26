@@ -55,7 +55,8 @@ use App\Traits\ConnectCommonTrait;
  * --- インポート
  * connect_page : source_key にインポート用ディレクトリ、destination_key に新ページID。ページ移行時、親を探すのに使用。
  * uploads      : source_key にNC2 のuploads_id、destination_key に新Upload のid。WYSIWYG 移行時に使用。
- * blogs        : source_key にNC2 のblogs_id、destination_key に新Blog のid。2回目の実行用。
+ * blogs        : source_key にNC2 のblogs_id、destination_key に新Blog のid。新旧のつなぎ＆2回目の実行用。
+ * databases    : source_key にNC2 のdatabases_id、destination_key に新Database のid。新旧のつなぎ＆2回目の実行用。
  *
  */
 trait MigrationTrait
@@ -339,8 +340,10 @@ trait MigrationTrait
                     $parent_mapping = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $page_ini['page_base']['parent_page_dir'])->first();
 
                     // 親ページの取得
-                    $parent_page = Page::find($parent_mapping->destination_key);
-                    $parent_page->appendNode($page);
+                    if (!empty($parent_mapping)) {
+                        $parent_page = Page::find($parent_mapping->destination_key);
+                        $parent_page->appendNode($page);
+                    }
                 }
 
                 // マッピングテーブルの追加
@@ -595,6 +598,13 @@ trait MigrationTrait
 
                 $database = Databases::create(['bucket_id' => $bucket->id, 'databases_name' => $database_name]);
 
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'databases',
+                    'source_key'           => $nc2_multidatabase_id,
+                    'destination_key'      => $database->id,
+                ]);
+
                 // columns のid を配列に保持。後で入力データを移行する際の column_id に使うため。
                 $column_ids = array();
 
@@ -754,6 +764,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'blogs') {
             // ブログ
             $this->importPluginBlogs($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'databases') {
+            // データベース
+            $this->importPluginDatabases($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -809,6 +822,52 @@ trait MigrationTrait
         // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
         if (!empty($bucket)) {
             $this->putError(1, 'Blog フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+    /**
+     * データベースプラグインの登録処理
+     */
+    private function importPluginDatabases($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $database_id = null;
+        $database_ini = null;
+        $multidatabase_id = null;
+        $migration_mappings = null;
+        $databases = null;
+        $bucket = null;
+
+        // エクスポートファイルの database_id 取得（エクスポート時の連番）
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('database_id', $frame_ini['frame_base'])) {
+            $database_id = $frame_ini['frame_base']['database_id'];
+        }
+        // データベースの情報取得
+        if (!empty($database_id) && Storage::exists('migration/@databases/database_' . $database_id . '.ini')) {
+            $database_ini = parse_ini_file(storage_path() . '/app/migration/@databases/database_' . $database_id . '.ini', true);
+        }
+        // NC2 のmultidatabase_id
+        if (!empty($database_ini) && array_key_exists('nc2_info', $database_ini) && array_key_exists('multidatabase_id', $database_ini['nc2_info'])) {
+            $multidatabase_id = $database_ini['nc2_info']['multidatabase_id'];
+        }
+        // NC2 のmultidatabase_id でマップ確認
+        if (!empty($database_ini) && array_key_exists('nc2_info', $database_ini) && array_key_exists('multidatabase_id', $database_ini['nc2_info'])) {
+            $migration_mappings = MigrationMapping::where('target_source_table', 'databases')->where('source_key', $multidatabase_id)->first();
+        }
+        // マップから新Database を取得
+        if (!empty($migration_mappings)) {
+            $databases = Databases::find($migration_mappings->destination_key);
+        }
+        // 新データベース からBucket ID を取得
+        if (!empty($databases)) {
+            $bucket = Buckets::find($databases->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (!empty($bucket)) {
+            $this->putError(1, 'Database フレームのみで実体なし', "page_dir = " . $page_dir);
         }
 
         // Frames 登録
@@ -2006,8 +2065,8 @@ trait MigrationTrait
         $this->putMonitor(3, "Start nc2Multidatabase.");
 
         // NC2汎用データベース（Multidatabase）を移行する。
-//        $nc2_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
-        $nc2_multidatabases = Nc2Multidatabase::where("multidatabase_id", 1)->orderBy('multidatabase_id')->get();
+        $nc2_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
+//        $nc2_multidatabases = Nc2Multidatabase::where("multidatabase_id", 1)->orderBy('multidatabase_id')->get();
 
         // 空なら戻る
         if ($nc2_multidatabases->isEmpty()) {
@@ -2283,6 +2342,13 @@ trait MigrationTrait
         if ($module_name == 'journal') {
             $nc2_journal_block = Nc2JournalBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "blog_id = \"" . $this->zeroSuppress($nc2_journal_block->journal_id) . "\"\n";
+        }elseif ($module_name == 'multidatabase') {
+            $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc2_block->block_id)->first();
+            if (empty($nc2_multidatabase_block)) {
+                $this->putError(3, "Nc2MultidatabaseBlock not found.", "block_id = " . $nc2_block->block_id, $nc2_block);
+            } else {
+                $ret = "database_id = \"" . $this->zeroSuppress($nc2_multidatabase_block->multidatabase_id) . "\"\n";
+            }
         }
         return $ret;
     }
