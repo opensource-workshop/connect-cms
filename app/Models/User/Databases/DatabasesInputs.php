@@ -14,14 +14,13 @@ class DatabasesInputs extends Model
     /**
     *  指定したタイプの項目があるか判定
     */
-    public function hasType($columns, $_type)
-    {
+    public function hasType($columns, $_type){
         $_types = array();
         
-        if ($_type && is_string($_type)) {
+        if($_type && is_string($_type)){
             //文字列で項目のタイプが指定されていたとき
             $_types = $this->getColumnTypeAry($_type);
-        } else {
+        }else{
             //不明の場合は偽を返す
             return false;
         }
@@ -32,7 +31,7 @@ class DatabasesInputs extends Model
         // 指定されたタイプの項目を探す
         foreach ($row_columns as $column) {
             //if ($column->column_type == $_type) {
-            if (in_array($column->column_type, $_types)) {
+            if(in_array($column->column_type, $_types)){
                 return true;
             }
         }
@@ -42,32 +41,28 @@ class DatabasesInputs extends Model
     /**
     *  テキスト項目があるか判定
     */
-    public function hasTitleType($columns)
-    {
+    public function hasTitleType($columns){
         return $this->hasType($columns, 'title');
     }
 
     /**
     *  画像項目があるか判定
     */
-    public function hasImageType($columns)
-    {
+    public function hasImageType($columns){
         return $this->hasType($columns, 'image');
     }
 
     /**
     *  文章の項目があるか判定
     */
-    public function hasSentenceType($columns)
-    {
+    public function hasSentenceType($columns){
         return $this->hasType($columns, 'sentence');
     }
 
     /**
     *  n番目の画像型の値があるか判定
     */
-    public function hasThImage($columns, $input_cols)
-    {
+    public function hasThImage($columns, $input_cols){
         if ($this->getThImage($columns, $input_cols)) {
             return true;
         }
@@ -77,19 +72,18 @@ class DatabasesInputs extends Model
     /**
     *  タイプを指定して、表示するデータの番号を返す
     */
-    public function getNumType($columns, $type, $th_no = 1)
-    {
+    public function getNumType($columns, $type, $th_no=1){
         //コラムのデータを１行づつ確認する。
         foreach ($columns as $num => $col) {
-            if (!$col['list_hide_flag']) {
-                if ($col['column_type'] == 'image' && $type == 'image') {
+            if(!$col['list_hide_flag']){
+                if($col['column_type'] == 'image' && $type == 'image' ){
                     $th_no--;
-                    if ($th_no == 0) {
+                    if($th_no == 0){
                         return $num;
                     }
-                } elseif (($col['column_type'] == 'text' || $col['column_type'] == 'textarea' ) && $type == 'text') {
+                }elseif(($col['column_type'] == 'text' || $col['column_type'] == 'textarea' ) && $type == 'text' ){
                     $th_no--;
-                    if ($th_no == 0) {
+                    if($th_no == 0){
                         return $num;
                     }
                 }
@@ -100,33 +94,31 @@ class DatabasesInputs extends Model
     /**
     *  コラムをソートして返す（オブジェクトのままソートした方がいい？）
     */
-    public function getColumns($columns, $_hide = null)
-    {
+    public function getColumns($columns, $_hide=null){
         $_columns = json_decode(json_encode($columns, JSON_UNESCAPED_UNICODE, 10), true);
         $_display_sequence = array_column($_columns, 'display_sequence');
         $_id = array_column($_columns, 'id');
-        array_multisort($_display_sequence, SORT_ASC, $_id, SORT_ASC, $_columns);
+        array_multisort( $_display_sequence, SORT_ASC, $_id, SORT_ASC, $_columns );
 
-        if ($_hide=='list' || $_hide=='detail') {
+        if($_hide=='list' || $_hide=='detail'){
             // リストか 詳細 なら配列を加工して戻す。
             return $this->getColumnsSet($_columns, $_hide);
-        } else {
+
+        }else{
             // ハイドがなければ配列のままもどす。
             return $_columns;
         }
     }
     // getColumns のエイリアス
-    public function getColumnsDort($columns, $_hide = null)
-    {
+    public function getColumnsDort($columns, $_hide=null){
         return $this->getColumns($columns, $_hide);
     }
 
     /**
     *  コラムのデータを配置しやすいように整理する
     */
-    private function getColumnsSet($columns, $hide)
-    {
-        if ($hide != 'list' && $hide != 'detail') {
+    private function getColumnsSet($columns, $hide){
+        if($hide != 'list' && $hide != 'detail'){
             return $columns;
         }
         //表示に必要な項目
@@ -148,48 +140,42 @@ class DatabasesInputs extends Model
 
         foreach ($columns as $_column) {
             //使用する行のみ抜き出す
-            if ($_column[$hide.'_hide_flag'] != 1) {
+            if($_column[$hide.'_hide_flag'] != 1){
                 $_col = array();
 
                 foreach ($_column as $_key => $_val) {
                     // 表示必要な項目のみ選ぶ
-                    if (in_array($_key, $_usedata)) {
+                    if(in_array($_key, $_usedata)){
                         $_col[$_key] = $_val;
                     }
                 }
                 //最初のテキストはタイトルとして扱う
-                if ($_res['title'] == null && in_array($_col['column_type'], $_title_type)) {
+                if($_res['title'] == null && in_array($_col['column_type'], $_title_type)){
                     $_res['title'] = $_col;
 
                 //最初のイメージはサムネールとして扱う（詳細の場合はメインイメージ？）
-                } elseif ($_res['thum'] == null && in_array($_col['column_type'], $_thum_type)) {
+                }elseif($_res['thum'] == null && in_array($_col['column_type'], $_thum_type)){
                     $_res['thum'] = $_col;
 
                 //メニュー用にキャッチコピーを準備する
-                } elseif ($_res['catch'] == null && in_array($_col['column_type'], $_catch_type)) {
+                }elseif($_res['catch'] == null && in_array($_col['column_type'], $_catch_type)){
                     $_res['item'][$_column['id']] = $_res['catch'] = $_col;
-                } else {
+
+                }else{
                     $_res['item'][$_column['id']] = $_col;
                 }
             }
         }
-        if (!$_res['title']) {
-            $_res['cls'].= ' no-title';
-        } //タイトルがない時のクラスを追加
-        if (!$_res['thum']) {
-            $_res['cls'].= ' no-thum';
-        } //サムネールがない時のクラスを追加
-        if (!$_res['catch']) {
-            $_res['catchcls'] = ' no-catch';
-        } //キャッチコピーがない時のクラスを追加
+        if(!$_res['title']){ $_res['cls'].= ' no-title';} //タイトルがない時のクラスを追加
+        if(!$_res['thum']){ $_res['cls'].= ' no-thum';} //サムネールがない時のクラスを追加
+        if(!$_res['catch']){ $_res['catchcls'] = ' no-catch';} //キャッチコピーがない時のクラスを追加
         return $_res;
     }
 
     /**
     *  指定した番号のコラムの値を返す
     */
-    public function getVolue($input_cols, $column_id, $col = '')
-    {
+    public function getVolue($input_cols, $column_id, $col='') {
 
         // 対応する行のカラムの値
         $input_col = $input_cols->
@@ -199,9 +185,9 @@ class DatabasesInputs extends Model
         if (empty($input_col)) {
             return '';
         }
-        if ($col) {
+        if($col){
             return $input_col->$col;
-        } else {
+        }else{
             return $input_col;
         }
     }
@@ -209,20 +195,21 @@ class DatabasesInputs extends Model
     /**
     *  グループ化された項目のタイプ
     */
-    private function getColumnTypeAry($_type)
-    {
+    private function getColumnTypeAry($_type){
         //入力値が文字列以外なら偽を返す。
-        if (!is_string($_type)) {
+        if(!is_string($_type)){
             return false;
         }
 
-        if ($_type == 'title') {
+        if($_type == 'title'){
             //タイトルとして使えるタイプ
             $_res = array('text', 'radio', 'select');
-        } elseif ($_type == 'sentence') {
-            //文字列として使えるタイプ
+
+        }elseif($_type == 'sentence'){
+            //文字列として使えるタイプ   
             $_res = array('text', 'textarea', 'checkbox', 'wysiwyg', 'group');
-        } else {
+
+        }else{
             //単独盲目でのチェック
             $_res = array($_type);
         }
@@ -232,14 +219,13 @@ class DatabasesInputs extends Model
     /**
     *  タイプに合わせた value をソースを返す
     */
-    public function getTagType($input_cols, $column, $notag = null)
-    {
+    public function getTagType($input_cols, $column, $notag=null){
 
         $_obj = $this->getVolue($input_cols, $column['id']);
 
         if (empty($_obj) || empty($_obj->value)) {
             return '';
-        } else {
+        }else{
             $_value = $_obj->value;
         }
 
@@ -259,9 +245,9 @@ class DatabasesInputs extends Model
             case 'checkbox':
                 $_value = implode(', ', explode(',', $_value));
             default:
-                if ($notag) {
+                if($notag){
                     return $_value;
-                } else {
+                }else{
                     return  '<p>'.$_value.'</p>';
                 }
                 break;
@@ -271,17 +257,16 @@ class DatabasesInputs extends Model
     /**
     * メニュー用のリンクを返す
     */
-    public function getPageFrameLink($frames, $pageid, $frameid)
-    {
+    public function getPageFrameLink( $frames, $pageid, $frameid ){
         //データベースが存在するフレーム設定を読み込む
-        $_obj = $frames->where('frames_id', $frameid)
-            ->select('view_page_id', 'view_frame_id')->first();
+        $_obj = $frames->where( 'frames_id', $frameid )
+            ->select( 'view_page_id', 'view_frame_id' )->first();
 
-        if (isset($_obj->view_page_id) && isset($_obj->view_frame_id) && $_obj->view_page_id && $_obj->view_frame_id) {
-            if ($_obj->view_page_id != $pageid) {
+        if( isset($_obj->view_page_id) && isset($_obj->view_frame_id) && $_obj->view_page_id && $_obj->view_frame_id ){
+            if( $_obj->view_page_id != $pageid ){
                 $pageid = $_obj->view_page_id;
             }
-            if ($_obj->view_frame_id != $frameid) {
+            if( $_obj->view_frame_id != $frameid ){
                 $frameid = $_obj->view_frame_id;
             }
         }
@@ -291,8 +276,7 @@ class DatabasesInputs extends Model
     /**
      *  n番目の画像型の値を返却
      */
-    public function getThImage($columns, $input_cols, $th_no = 1)
-    {
+    public function getThImage($columns, $input_cols, $th_no = 1){
 
         // 対応する行のカラム一覧
         $row_columns_nosort = $columns->where('databases_id', $this->databases_id);
@@ -323,8 +307,7 @@ class DatabasesInputs extends Model
     /**
      *  n番目のテキスト型の値を返却
      */
-    public function getThText($columns, $input_cols, $th_no = 1)
-    {
+    public function getThText($columns, $input_cols, $th_no = 1){
 
         // 対応する行のカラム一覧
         $row_columns_nosort = $columns->where('databases_id', $this->databases_id);
