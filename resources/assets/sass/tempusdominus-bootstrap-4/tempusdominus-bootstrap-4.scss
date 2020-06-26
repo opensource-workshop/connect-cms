@@ -1,0 +1,22 @@
+// Import bootstrap variables including default color palette and fonts
+// カレンダーから日付入力する スタイルシート
+
+@import "../../bootstrap4/scss/_functions.scss";
+@import "../../bootstrap4/scss/_variables.scss";
+
+//@import "/Users/yotaka/www/html/github/connect-cms/node_modules/bootstrap/scss/_functions.scss";
+//@import "/Users/yotaka/www/html/github/connect-cms/node_modules/bootstrap/scss/_variables.scss";
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+// Import datepicker component
+@import "_tempusdominus-bootstrap-4";

@@ -1,0 +1,468 @@
+/*  Connect-CMS add CSS
+------------------------------------- */
+
+/*  body
+------------------------------------- */
+body {
+    background-color: #ffffff;
+}
+
+/*  WYSIWYG
+------------------------------------- */
+/* 追加選択肢の背景色が微妙なので打ち消す設定（TableのClassなど） */
+.mce-text {
+    color: #000 !important;
+    background-color: transparent !important;
+}
+
+.mce-active .mce-text {
+/*    color: #fff !important;*/
+    background-color: transparent !important;
+}
+
+.mce-active {
+    background-color: #ededee !important;
+}
+
+/* WYSIWYG で設定できる記事の書式
+------------------------------------- */
+/* 囲み(グレー) */
+.ccMainArea .cc-column {
+    margin: 15px 0;
+    padding: 25px;
+    background-color: #f2f2f2;
+    border-radius: 7px;
+}
+/*
+#ccMainArea .card-body .column {
+    margin: 25px 0;
+    border: #999 2px solid;
+    background-color: #fff;
+}
+*/
+/* 注意ポイント */
+.ccMainArea .cc-exclamation {
+    padding-left: 1.1rem;
+    text-indent: -1.2rem;
+}
+.ccMainArea .cc-exclamation::before {
+    content: "";
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    background: url("/css/images/acc_exclamation.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 5px 3px 0;
+}
+/* ※印ポイント */
+.ccMainArea .cc-note {
+    padding-left: 0.8rem;
+    text-indent: -0.8rem;
+}
+.ccMainArea .cc-note::before {
+    content: "";
+    display: inline-block;
+    width: .8rem;
+    height: .8rem;
+    background: url("/css/images/acc_note.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 3px 2px 0;
+}
+.ccMainArea .cc-note + .cc-note {
+    margin-top: -10px;
+}
+/* アイコン(PDF) */
+.ccMainArea a.cc-icon-pdf:after {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url("/css/images/icon_pdf.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
+/* アイコン(Excel) */
+.ccMainArea a.cc-icon-excel:after {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url("/css/images/icon_excel.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
+/* アイコン(Word) */
+.ccMainArea a.cc-icon-word:after {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url("/css/images/icon_word.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
+/* アイコン(外部サイト) */
+.ccMainArea a.cc-icon-external:after {
+    content: "";
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    background: url("/css/images/icon_external.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
+
+/*  プラグイン追加
+------------------------------------- */
+#pluginAddModal {
+    z-index: 9999;
+}
+
+/*  Navbar
+------------------------------------- */
+.navbar-brand {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: calc(100% - 100px);
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #f0f0f0;
+}
+
+.card-none {
+    border: none;
+}
+
+.frame-setting-menu .navbar-light .navbar-nav .nav-link {
+    color: #007bff;
+}
+.frame-setting-menu .navbar-light .navbar-nav .active {
+    color: #909090;
+    /* padding: 0.5rem; */
+    border-bottom: 2px solid #b64c4c;
+}
+
+/*  Active
+------------------------------------- */
+.cc-active {
+    border-bottom: 2px solid #b64c4c;
+}
+.cc-active-tr {
+    background-color: #f0f0f0;
+}
+
+/* タイトルバーフォントの文字色（背景が濃い場合に白にする）
+------------------------------------- */
+.cc-primary-font-color,
+.cc-secondary-font-color,
+.cc-success-font-color,
+.cc-info-font-color,
+.cc-danger-font-color,
+.cc-dark-font-color {
+    color: white;
+}
+
+/* アイコンフォントの文字色（背景が濃い場合に白にする）
+------------------------------------- */
+.bg-primary .cc-font-color,
+.bg-secondary .cc-font-color,
+.bg-success .cc-font-color,
+.bg-info .cc-font-color,
+.bg-danger .cc-font-color,
+.bg-dark .cc-font-color {
+    color: white;
+}
+
+/* H* タグ フレームタイトル
+------------------------------------- */
+h1.card-header {
+    font-size: 1.25rem;
+}
+
+/* 文字色
+------------------------------------- */
+.cc-color-blue {
+    color: #0000ff;
+}
+.cc-color-red {
+    color: #ff0000;
+}
+
+/* カーソル
+------------------------------------- */
+.cc-cursor-text {
+    cursor: text;
+}
+a.cc-cursor-text:hover {
+    text-decoration: none;
+}
+
+/* ページネーションをセンタリングする。
+------------------------------------- */
+.pagination {
+    justify-content: center;
+}
+
+/* フォントサイズ
+------------------------------------- */
+.cc-font-90 {
+    font-size: 90%;
+}
+
+/* テーブル
+------------------------------------- */
+@media screen and (max-width: 768px) {
+    .cc-table-md-responsive td, .cc-table-md-responsive th {
+        display: block;
+    }
+}
+.cc-th-bg-gray th {
+    background-color: #f0f0f0;
+    font-weight: normal;
+}
+
+/* 擬似テーブル
+------------------------------------- */
+.cc-table-set {
+    /*margin-bottom: 2rem;*/
+}
+.cc-table-set dl {}
+.cc-table-set dl dt, .cc-table-set dl dd {
+    /*padding: 0.5rem 2rem;*/
+    padding: 0rem 0.2rem;
+}
+.cc-table-set dl dt {
+    /*background: #454545;*/
+    /*color: #fff;*/
+    text-align: center;
+/*
+    border:1px #dedede solid;
+    border-width: 0 1px 1px 0;
+*/
+}
+.cc-table-set dl dd {
+/*
+    border:1px #333 solid;
+    border-width: 0 1px 1px 0;
+*/
+}
+
+/* 開館カレンダー
+------------------------------------- */
+.openingcalendar-pdf {
+    text-align: right;
+}
+.openingcalendar-title {
+    font-size: 1.25rem;
+    text-align: center;
+    margin-bottom: 0;
+}
+.openingcalendar-monthWrap {
+    display: flex;
+    justify-content: space-between;
+}
+.openingcalendar-timeLegend dl {
+    display: flex;
+    line-height: 1;
+    margin: 0 0 5px;
+    overflow: hidden;
+}
+.openingcalendar-timeLegend dl dt {
+    width: 15px;
+    margin-right: 7px;
+}
+.openingcalendar-timeLegend dl dd {
+    margin-right: 20px;
+    width: 100px;
+}
+.openingcalendar-month-table {
+    text-align: center;
+    border: 1px solid #dee2e6;
+}
+.openingcalendar-month-table th {
+    font-weight: normal;
+}
+
+
+/* ヘッダーバー
+------------------------------------- */
+#navbarsExampleDefault {
+    z-index: 9999;
+}
+
+/* Card の中のUL
+------------------------------------- */
+.card ul {
+    margin-bottom: 0;
+    /* padding-left: 1.5em; POPUPカレンダーのレイアウトに影響あり  */
+}
+
+/* Menu
+------------------------------------- */
+.dropdown-menu {
+    /* bootstrap4 デフォルトのままだとヘッダーの画像の後ろに回り込むため  */
+    z-index: 9999;
+}
+
+/* FAQ
+------------------------------------- */
+.faq-list-title p {
+    display: inline;
+}
+
+/* LearningTasks
+------------------------------------- */
+.learningtasks-list-title p {
+    display: inline;
+}
+
+/* 管理画面（ページ管理）
+------------------------------------- */
+.manage-page-selectpage {
+    max-width: 150px;
+}
+.manage-page-pagename {
+    min-width: 200px;
+}
+
+/* 幅
+------------------------------------- */
+.cc-w20pct {
+    width: 20%;
+}
+.cc-w25pct {
+    width: 25%;
+}
+.cc-w30pct {
+    width: 30%;
+}
+.cc-w40pct {
+    width: 40%;
+}
+.cc-w50pct {
+    width: 50%;
+}
+
+/* 管理プラグイン（ページ管理）
+------------------------------------- */
+.cc-page-layout-icon {
+    width: 20px;
+}
+.cc-page-layout-background {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+}
+
+
+/*  Connect-CMS add CSS Bootstrap3
+------------------------------------- */
+
+/*
+    body { font-family: inherit; }
+*/
+
+/* table のレスポンシブ対応
+------------------------------------- */
+@media screen and (max-width: 768px) {
+    .cc_responsive_table td, .cc_responsive_table th {
+        display: block;
+    }
+    .cc_responsive_table th {
+        background-color: #f0f0f0;
+    }
+    .cc_responsive_table thead {
+        display: none;
+    }
+}
+
+.cc_responsive_table_view_thead thead {
+    display: table-header-group;
+}
+
+/* table のレスポンシブ対応(メディアクエリを使わない)
+------------------------------------- */
+.cc-force-responsive-table td, .cc-force-responsive-table th {
+    display: block;
+}
+.cc-force-responsive-table th {
+    background-color: #f0f0f0;
+}
+.cc-force-responsive-table thead {
+    display: none;
+}
+
+/* 入力(input)関係
+------------------------------------- */
+
+/* チェックボックス、ラジオボタンの選択用グループラベル */
+.cc_label_input_group {
+    font-weight: normal;
+    width: 100%;
+    display: inherit;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+/* チェックボックス、ラジオボタンの選択用グループラベル */
+.cc_label_panel_list {
+    font-weight: normal;
+    width: 100%;
+    display: inherit;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+.cc_label_panel_list .input-group-addon {
+    border: none;
+    border-right: 1px solid #ccd0d2;
+    border-top: 1px solid #ccd0d2;
+    border-radius: 0;
+}
+.cc_label_panel_list .form-control {
+    border: none;
+    border-radius: 0;
+}
+
+/* border 関係
+------------------------------------- */
+.cc_label_panel_list .cc_border_top_none {
+    border-top: none;
+}
+
+/* margin 関係
+------------------------------------- */
+.cc_margin_top_4 {
+    margin-top: 4px;
+}
+
+/* ul 関係
+------------------------------------- */
+.cc_ul_padding_top_10 {
+    padding-top: 10px;
+}
+
+.cc_ul_line_height li {
+    line-height: 28px;
+}
+
+/* p 関係
+------------------------------------- */
+.cc_margin_bottom_0 {
+    margin-bottom: 0;
+}
+
+/* 記事関係
+------------------------------------- */
+.cc_article {
+    border-bottom: 1px solid #c0c0c0;
+    margin-bottom: 16px;
+}
+

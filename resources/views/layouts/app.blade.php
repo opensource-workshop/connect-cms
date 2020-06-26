@@ -64,15 +64,17 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-
-    <!-- Fonts -->
+    
+    {{--<!-- Fonts -->
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
+    --}}
 
     <!-- Scripts -->
     <script src="{{asset('js/app.js')}}"></script>
 
-    <!-- tempusdominus-bootstrap-4 -->
+    {{--<!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="{{asset('/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')}}" />
+    --}}
     {{--
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/locale/ja.js"></script>
@@ -87,18 +89,18 @@
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
 
-    <!-- Themes CSS -->
 @if (isset($themes['css']) && $themes['css'] != '')
+    <!-- Themes CSS -->
     <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
 @endif
 
-    <!-- Themes JS -->
 @if (isset($themes['js']) && $themes['js'] != '')
+    <!-- Themes JS -->
     <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js"></script>
 @endif
 
-    <!-- Connect-CMS Page CSS -->
 @if (isset($page))
+    <!-- Connect-CMS Page CSS -->
     <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
 @endif
 
