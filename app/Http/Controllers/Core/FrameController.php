@@ -75,7 +75,7 @@ class FrameController extends ConnectController
 
         return redirect($page->permanent_link)
                 ->with(
-                    'flash_message_for_add_plugin',
+                    'flash_message_for_add_plugin', 
                     'プラグイン「' . Plugins::query()->where('plugin_name', $request->add_plugin)->first()->plugin_name_full . '」を追加しました。'
                 );
         ;
