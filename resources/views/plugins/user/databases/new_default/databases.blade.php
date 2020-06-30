@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -86,21 +86,21 @@
             @if($sort_count > 0 || $databases_frames->isBasicUseSortFlag())
 
                 @php
-                  $sort_column_id = '';
-                  $sort_column_order = '';
+                    $sort_column_id = '';
+                    $sort_column_order = '';
 
-                  // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
-                  if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
-                      $sort_column_id = Session::get('sort_column_id.'.$frame_id);
-                      $sort_column_order = Session::get('sort_column_order.'.$frame_id);
-                  }
-                  else if ($databases_frames && $databases_frames->default_sort_flag) {
-                      $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
-                      if (count($default_sort_flag_part) == 2) {
-                          $sort_column_id = $default_sort_flag_part[0];
-                          $sort_column_order = $default_sort_flag_part[1];
-                      }
-                  }
+                    // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
+                    if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
+                        $sort_column_id = Session::get('sort_column_id.'.$frame_id);
+                        $sort_column_order = Session::get('sort_column_order.'.$frame_id);
+                    }
+                    else if ($databases_frames && $databases_frames->default_sort_flag) {
+                        $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
+                        if (count($default_sort_flag_part) == 2) {
+                            $sort_column_id = $default_sort_flag_part[0];
+                            $sort_column_order = $default_sort_flag_part[1];
+                        }
+                    }
                 @endphp
 
                 <div class="col-sm-{{$col_no}}">
