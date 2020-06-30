@@ -253,6 +253,12 @@ class DefaultController extends ConnectController
                     }
                 }
             }
+            // template.iniでtemplate_name(テンプレート名)が被ると array_multisort(): array sizes are inconsistentエラー出る
+            // テンプレート名重複は設置ミスです。
+            // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            // Log::debug(var_export($sort_array, true));
+            // Log::debug(var_export($target_frame_templates, true));
+            //
             // 編集画面でのテンプレート順番の変更
             array_multisort($sort_array, $target_frame_templates);
 
