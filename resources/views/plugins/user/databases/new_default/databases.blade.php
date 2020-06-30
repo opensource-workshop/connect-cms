@@ -166,18 +166,26 @@
         <tbody>
         @foreach($inputs as $input)
         <tr>
+            @php
+            // bugfix: $loop->firstだと1つ目の項目が、一覧非表示の場合、詳細画面に飛べなくなるため、フラグで対応する
+            $is_first = true;
+            @endphp
+
             @foreach($columns as $column)
                 @if($column->list_hide_flag == 0)
-                    @if($loop->first)
-                    <td>
-                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
-                            @include('plugins.user.databases.default.databases_include_value')
-                        </a>
-                    </td>
+                    @if($is_first)
+                        <td>
+                            <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
+                                @include('plugins.user.databases.default.databases_include_value')
+                            </a>
+                        </td>
+                        @php
+                        $is_first = false;
+                        @endphp
                     @else
-                    <td>
-                        @include('plugins.user.databases.default.databases_include_value')
-                    </td>
+                        <td>
+                            @include('plugins.user.databases.default.databases_include_value')
+                        </td>
                     @endif
                 @endif
             @endforeach
