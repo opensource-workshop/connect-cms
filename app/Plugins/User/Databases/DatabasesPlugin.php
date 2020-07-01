@@ -32,7 +32,9 @@ use App\Plugins\User\UserPluginBase;
  *
  * データベースの作成＆データ収集用プラグイン。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  * @package Contoroller
@@ -1492,7 +1494,7 @@ class DatabasesPlugin extends UserPluginBase
         $column->caption_color = \Bs4TextColor::dark;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を追加しました。';
-        
+
         // 編集画面へ戻る。
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, $errors);
     }
@@ -1573,6 +1575,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.caption_color',
                 'databases_columns.classname',
                 'databases_columns.display_sequence',
+                'databases_columns.row_group',
+                'databases_columns.column_group',
                 DB::raw('count(databases_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(databases_columns_selects.value order by databases_columns_selects.display_sequence SEPARATOR \',\') as select_names')
             )
@@ -1591,7 +1595,9 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.caption',
                 'databases_columns.caption_color',
                 'databases_columns.classname',
-                'databases_columns.display_sequence'
+                'databases_columns.display_sequence',
+                'databases_columns.row_group',
+                'databases_columns.column_group'
             )
             ->orderby('databases_columns.display_sequence')
             ->get();
@@ -1762,6 +1768,20 @@ class DatabasesPlugin extends UserPluginBase
             ];
             $validator_attributes['rule_date_after_equal'] = '～日以降を許容';
         }
+        // 行グループを指定時、入力値が数値であるかチェック
+        if ($request->row_group) {
+            $validator_values['row_group'] = [
+                'numeric',
+            ];
+            $validator_attributes['row_group'] = '行グループ';
+        }
+        // 列グループを指定時、入力値が数値であるかチェック
+        if ($request->column_group) {
+            $validator_values['column_group'] = [
+                'numeric',
+            ];
+            $validator_attributes['column_group'] = '列グループ';
+        }
 
         // エラーチェック
         if ($validator_values) {
@@ -1812,10 +1832,10 @@ class DatabasesPlugin extends UserPluginBase
         $column->search_flag = (empty($request->search_flag)) ? 0 : $request->search_flag;
         // 絞り込み対象指定
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
-        // // 行グループ
-        // $column->row_group = is_null($request->row_group) ? null : (int)$request->row_group;
-        // // 列グループ
-        // $column->column_group = is_null($request->column_group) ? null : (int)$request->column_group;
+        // 行グループ
+        $column->row_group = $request->row_group;
+        // 列グループ
+        $column->column_group = $request->column_group;
 
         // 保存
         $column->save();

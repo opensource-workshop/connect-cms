@@ -1,10 +1,12 @@
 {{--
  * 項目の設定画面
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -88,7 +90,7 @@
                     <input type="hidden" name="column_id" value="">
                     <input type="hidden" name="display_sequence" value="">
                     <input type="hidden" name="display_sequence_operation" value="">
-            
+
                     {{-- メッセージエリア --}}
                     <div class="alert alert-info mt-2">
                         <i class="fas fa-exclamation-circle"></i>
@@ -114,6 +116,8 @@
                                     <th class="text-center w-35 text-nowrap">項目名</th>
                                     <th class="text-center w-30 text-nowrap">型</th>
                                     <th class="text-center text-nowrap">必須</th>
+                                    <th class="text-center">行<a href="#" data-toggle="tooltip" data-placement="top" title="行グループ">...</a></th>
+                                    <th class="text-center">列<a href="#" data-toggle="tooltip" data-placement="top" title="列グループ">...</a></th>
                                     <th class="text-center text-nowrap">詳細
                                         <a href="https://connect-cms.jp/manual/user/database#frame-125" target="_brank">
                                             <i class="fas fa-info-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i>
@@ -131,7 +135,7 @@
 
                                 {{-- 新規登録用の行 --}}
                                 <tr class="thead-light">
-                                    <th colspan="7">【項目の追加行】</th>
+                                    <th colspan="9">【項目の追加行】</th>
                                 </tr>
                                 @include('plugins.user.databases.default.databases_edit_row_add')
                             </tbody>
