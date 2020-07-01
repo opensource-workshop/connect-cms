@@ -2055,7 +2055,7 @@ class DatabasesPlugin extends UserPluginBase
             'Content-Type' => 'text/csv',
             'content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
- 
+
         // データ
         $csv_data = '';
         foreach ($csv_array as $csv_line) {
@@ -2121,7 +2121,7 @@ class DatabasesPlugin extends UserPluginBase
         // デフォルトで必須
         $validator_values['view_count'] = ['required'];
         $validator_attributes['view_count'] = '表示件数';
-        
+
         //半角数字
         $validator_values['view_page_id'] = ['numeric'];
         $validator_attributes['view_page_id'] = '表示するページID';
@@ -2133,31 +2133,35 @@ class DatabasesPlugin extends UserPluginBase
         $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
+        // $message = null;
         if ($validator->fails()) {
             return $this->editView($request, $page_id, $frame_id)->withErrors($validator);
         }
 
         // 更新後のメッセージ
-        $message = null;
+        //$message = null;
 
         // データベース＆フレームデータ
         $database_frame = $this->getDatabaseFrame($frame_id);
 
         // 表示設定の保存
         $databases_frames = DatabasesFrames::updateOrCreate(
-            ['databases_id'      => $database_frame->databases_id,
-             'frames_id'         => $frame_id],
-            ['databases_id'      => $database_frame->databases_id,
-             'frames_id'         => $frame_id,
-             'use_search_flag'   => $request->use_search_flag,
-             'use_select_flag'   => $request->use_select_flag,
-             'use_sort_flag'     => $request->use_sort_flag ? implode(',', $request->use_sort_flag) : null,
-             'default_sort_flag' => $request->default_sort_flag,
-             'view_count'        => $request->view_count,
-             'default_hide'      => $request->default_hide,
-             'view_page_id'        => $request->view_page_id,
-             'view_frame_id'        => $request->view_frame_id]
+            [
+                'databases_id'      => $database_frame->databases_id,
+                'frames_id'         => $frame_id
+            ],
+            [
+                'databases_id'      => $database_frame->databases_id,
+                'frames_id'         => $frame_id,
+                'use_search_flag'   => $request->use_search_flag,
+                'use_select_flag'   => $request->use_select_flag,
+                'use_sort_flag'     => $request->use_sort_flag ? implode(',', $request->use_sort_flag) : null,
+                'default_sort_flag' => $request->default_sort_flag,
+                'view_count'        => $request->view_count,
+                'default_hide'      => $request->default_hide,
+                'view_page_id'        => $request->view_page_id,
+                'view_frame_id'        => $request->view_frame_id
+            ]
         );
 
         return $this->editView($request, $page_id, $frame_id);
