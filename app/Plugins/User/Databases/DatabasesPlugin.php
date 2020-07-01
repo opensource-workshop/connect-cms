@@ -1274,7 +1274,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'databases_datalist', [
+            'databases_list_buckets', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
             ]
