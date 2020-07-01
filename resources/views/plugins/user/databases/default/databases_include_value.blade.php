@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 @php
     $obj = $input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $column->id)->first();
 
@@ -37,7 +37,7 @@
     }
     // その他の型
     else {
-        $value = $obj ? $obj->value: "";
+        $value = $obj ? $obj->value : "";
     }
 @endphp
 
