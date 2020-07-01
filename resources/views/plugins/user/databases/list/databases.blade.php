@@ -21,7 +21,7 @@
             $_href = url('/').'/plugin/databases/detail/'.$page->id.'/'.$frame_id.'/';
         @endphp
 
-        @include('plugins.user.databases.default.databases_include_ctrl_head') {{--テーブルのヘッダー部分--}}
+        @include('plugins.user.databases.single_sheet.databases_include_ctrl_head') {{--テーブルのヘッダー部分--}}
 
         @if(!$default_hide_list)
             {{-- テンプレートを複製するときは、ここのクラスを変更する --}}
