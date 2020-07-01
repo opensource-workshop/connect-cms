@@ -157,7 +157,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesColumns($database)
     {
         // データベースのカラムデータ
-        $database_columns = [];
+        $databases_columns = [];
         if (!empty($database)) {
             $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
             if ($database->user_mail_send_flag == '1' && empty($databases_columns->where('column_type', \DatabaseColumnType::mail)->first())) {
