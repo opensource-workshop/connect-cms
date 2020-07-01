@@ -4,14 +4,14 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com> 永原 篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
- @extends('core.cms_frame_base_setting')
+--}}
+@extends('core.cms_frame_base_setting')
 
- @section("core.cms_frame_edit_tab_$frame->id")
+@section("core.cms_frame_edit_tab_$frame->id")
 	{{-- プラグイン側のフレームメニュー --}}
 	@include('plugins.user.databases.databases_frame_edit_tab')
 @endsection
- 
+
 @section("plugin_setting_$frame->id")
     <script type="text/javascript">
         /**
@@ -160,7 +160,7 @@
                                 @endforeach
 
                                 <tr class="thead-light">
-                                   <th colspan="7">【選択肢の追加行】</th>
+                                    <th colspan="7">【選択肢の追加行】</th>
                                 </tr>
 
                                 {{-- 新規登録用の行 --}}
