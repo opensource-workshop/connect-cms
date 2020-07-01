@@ -35,6 +35,16 @@
             $value = '<video src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" controls />';
         }
     }
+    // インデックス型
+    else if ($column->column_type == 'checkbox'){
+        if (empty($obj) || empty($obj->value)) {
+            $value = '';
+        }
+        else {
+            $values = explode(',', $obj->value);
+            $value = implode(', ', $values);
+        }
+    }
     // その他の型
     else {
         $value = $obj ? $obj->value: "";

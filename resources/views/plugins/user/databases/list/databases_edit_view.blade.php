@@ -231,6 +231,38 @@
         </div>
     </div>
 
+    {{-- 詳細表示するページ --}}
+    @php
+        if( old('view_page_id', $view_frame->view_page_id)){
+            $_view_pageid = old('view_page_id', $view_frame->view_page_id);
+        }else{
+            $_view_pageid = $page->id;
+        }
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">詳細表示するページ ID</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_page_id" value="{{$_view_pageid}}" class="form-control">
+            <span class="small">メニューテンプレートのみ 半角数字</span>
+        </div>
+    </div>
+
+    {{-- 詳細表示するフレーム --}}
+    @php
+        if( old('view_frame_id', $view_frame->view_frame_id)){
+            $_view_frameid = old('view_frame_id', $view_frame->view_frame_id);
+        }else{
+            $_view_frameid = $frame_id;
+        }
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">詳細表示するフレーム ID</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_frame_id" value="{{$_view_frameid}}" class="form-control">
+            <span class="small">メニューテンプレートのみ 半角数字</span>
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
