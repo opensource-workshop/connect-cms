@@ -1753,7 +1753,7 @@ class DatabasesPlugin extends UserPluginBase
             $validator_values['rule_word_count'] = [
                 'numeric',
             ];
-            $validator_attributes['rule_word_count'] = '入力文字数';
+            $validator_attributes['rule_word_count'] = '入力最大文字数';
         }
         // ～日以降許容を指定時、入力値が数値であるかチェック
         if ($request->rule_date_after_equal) {
@@ -1812,6 +1812,10 @@ class DatabasesPlugin extends UserPluginBase
         $column->search_flag = (empty($request->search_flag)) ? 0 : $request->search_flag;
         // 絞り込み対象指定
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
+        // // 行グループ
+        // $column->row_group = is_null($request->row_group) ? null : (int)$request->row_group;
+        // // 列グループ
+        // $column->column_group = is_null($request->column_group) ? null : (int)$request->column_group;
 
         // 保存
         $column->save();
