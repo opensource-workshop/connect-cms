@@ -292,7 +292,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -351,6 +350,7 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($database)) {
             $databases = null;
             $columns = null;
+            $group_rows_cols_columns = null;
             $inputs = null;
             $input_cols = null;
         } else {
@@ -362,6 +362,9 @@ class DatabasesPlugin extends UserPluginBase
 
             // カラムの取得
             $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence', 'asc')->get();
+
+            // 行グループ・列グループの配列に置き換えたcolumns
+            $group_rows_cols_columns = $this->replaceArrayGroupRowsColsColumns($columns, 'list_hide_flag');
 
             // 登録データ行の取得 --->
 
@@ -531,26 +534,58 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'databases', [
-            'request'  => $request,
-            'frame_id' => $frame_id,
-            'database' => $database,
-            'databases_columns' => $databases_columns,
-            'databases_columns_id_select' => $databases_columns_id_select,
-            'errors' => $errors,
-            'setting_error_messages' => $setting_error_messages,
+            'databases',
+            [
+                'request'  => $request,
+                'frame_id' => $frame_id,
+                'database' => $database,
+                'databases_columns' => $databases_columns,
+                'databases_columns_id_select' => $databases_columns_id_select,
+                'errors' => $errors,
+                'setting_error_messages' => $setting_error_messages,
 
-            'databases'        => $databases,
-            'database_frame'   => $database_frame,
-            'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
-            'columns'          => $columns,
-            'inputs'           => $inputs,
-            'input_cols'       => $input_cols,
-            'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
-            'default_hide_list' => $default_hide_list,
-
+                'databases'        => $databases,
+                'database_frame'   => $database_frame,
+                'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
+                'columns'          => $columns,
+                'group_rows_cols_columns' => $group_rows_cols_columns,
+                'inputs'           => $inputs,
+                'input_cols'       => $input_cols,
+                'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
+                'default_hide_list' => $default_hide_list,
             ]
         )->withInput($request->all);
+    }
+
+    /**
+     * 行グループ・列グループの配列に置き換えたcolumns
+     */
+    private function replaceArrayGroupRowsColsColumns($columns, $hide_flag_column_name = 'list_hide_flag')
+    {
+        // 行グループ・列グループの配列に置き換えたcolumns
+        $group_rows_cols_columns = [];
+        foreach ($columns as $column) {
+            // 表示しないcolumnは、group_rows_cols_columnsに含まない。
+            //
+            // 一覧に表示する (list_hide_flag=0)
+            // 詳細に表示する (detail_hide_flag=0)
+            if ($column->$hide_flag_column_name == 0) {
+                if (is_null($column->row_group) && is_null($column->column_group)) {
+                    // 行グループ・列グループどっちも設定なし
+                    //
+                    // row_group = null & column_group = nullは1行として扱うため、
+                    // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
+                    // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
+                    $group_cols_columns = null;                         // 初期化
+                    $group_cols_columns[''][0] = $column;               // column_group = ''としてセット
+                    $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
+                } else {
+                    // 行グループ・列グループどっちか設定あり
+                    $group_rows_cols_columns[$column->row_group][$column->column_group][] = $column;
+                }
+            }
+        }
+        return $group_rows_cols_columns;
     }
 
     /**
@@ -596,7 +631,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function detail($request, $page_id, $frame_id, $id, $mode = null)
     {
-
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
@@ -616,6 +650,9 @@ class DatabasesPlugin extends UserPluginBase
             return;
         }
 
+        // 行グループ・列グループの配列に置き換えたcolumns
+        $group_rows_cols_columns = $this->replaceArrayGroupRowsColsColumns($columns, 'detail_hide_flag');
+
         // データ詳細の取得
         $input_cols = $this->getDatabasesInputCols($id);
 
@@ -628,13 +665,14 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            $blade, [
-            'frame_id'   => $frame_id,
-            'database'   => $database,
-            'columns'    => $columns,
-            'inputs'     => $inputs,
-            'input_cols' => $input_cols,
-
+            $blade,
+            [
+                'frame_id'   => $frame_id,
+                'database'   => $database,
+                'columns'    => $columns,
+                'group_rows_cols_columns' => $group_rows_cols_columns,
+                'inputs'     => $inputs,
+                'input_cols' => $input_cols,
             ]
         )->withInput($request->all);
     }
@@ -705,7 +743,7 @@ class DatabasesPlugin extends UserPluginBase
         } elseif (is_string($value)) {
             $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
         }
- 
+
         return $value;
     }
 
