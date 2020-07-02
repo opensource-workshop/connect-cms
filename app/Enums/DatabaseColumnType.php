@@ -22,7 +22,8 @@ final class DatabaseColumnType
     const image = 'image';
     const video = 'video';
     const wysiwyg = 'wysiwyg';
-    const group = 'group';
+    // delete:「行グループ」「列グループ」追加に伴い、機能してない 項目の型「まとめ行」を廃止
+    // const group = 'group';
 
     const created_asc    = 'created_asc';
     const created_desc   = 'created_desc';
@@ -47,7 +48,8 @@ final class DatabaseColumnType
         self::image=>'画像型',
         self::video=>'動画型',
         self::wysiwyg=>'ウィジウィグ',
-        self::group=>'まとめ行',
+        // delete:「行グループ」「列グループ」追加に伴い、機能してない 項目の型「まとめ行」を廃止
+        // self::group=>'まとめ行',
 
         self::created_asc    => '登録日（古い順）',
         self::created_desc   => '登録日（新しい順）',
