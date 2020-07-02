@@ -1,10 +1,11 @@
 {{--
  * 確認画面テンプレート。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -40,15 +41,6 @@
 
         @switch($database_column->column_type)
 
-        @case(DatabaseColumnType::group)
-            <div class="form-inline">
-                @foreach($database_column->group as $group_row)
-                    <label class="control-label" style="vertical-align: top; margin-right: 10px;@if (!$loop->first) margin-left: 30px;@endif">{{$group_row->column_name}}</label>
-                    {{$request->databases_columns_value[$group_row->id]}}
-                    <input name="databases_columns_value[{{$group_row->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$group_row->id]}}" />
-                @endforeach
-            </div>
-            @break
         @case(DatabaseColumnType::text)
             {{$request->databases_columns_value[$database_column->id]}}
             <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">

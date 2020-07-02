@@ -203,7 +203,7 @@
             </div>
         @endif
 
-        @if ($column->column_type == DatabaseColumnType::time || $column->column_type == DatabaseColumnType::group)
+        @if ($column->column_type == DatabaseColumnType::time)
             {{-- 項目毎の固有設定 --}}
             <div class="card mb-4">
                 <h5 class="card-header">項目毎の固有設定</h5>
@@ -224,31 +224,6 @@
                                         </option>
                                     @endforeach
                                 </select>
-                            </div>
-                        </div>
-                    @endif
-
-                    {{-- まとめ数 ※データ型が「まとめ行」のみ表示 --}}
-                    @if ($column->column_type == DatabaseColumnType::group)
-                        <div class="form-group row">
-                            <label class="{{$frame->getSettingLabelClass()}}">まとめ数 
-                                <label class="badge badge-danger">必須
-                                </label>
-                            </label>
-                            <div class="{{$frame->getSettingInputClass()}}">
-                                <select class="form-control" name="frame_col">
-                                    <option value=""></option>
-                                    @for ($i = 1; $i < 5; $i++)
-                                        <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>
-                                            {{$i}}
-                                        </option>
-                                    @endfor
-                                </select>
-                                @if ($errors && $errors->has('frame_col'))
-                                    <div class="text-danger">
-                                        {{$errors->first('frame_col')}}
-                                    </div>
-                                @endif
                             </div>
                         </div>
                     @endif

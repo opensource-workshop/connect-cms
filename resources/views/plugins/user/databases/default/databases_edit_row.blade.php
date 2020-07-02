@@ -74,10 +74,6 @@
                 )
                 id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
             @endif
-            {{-- まとめ数を保持する項目、且つ、まとめ数の設定がない場合、ツールチップで設定を促すメッセージを表示 --}}
-            @if ($column->column_type == DatabaseColumnType::group && !$column->frame_col)
-                id="frame-col-tip" data-toggle="tooltip" title="まとめ数の設定がありません。設定してください。" data-trigger="manual" data-placement="bottom"
-            @endif
             onclick="location.href='{{url('/')}}/plugin/databases/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
             >
             <i class="far fa-window-restore"></i>
@@ -106,19 +102,18 @@
     $column->column_type == DatabaseColumnType::radio ||
     $column->column_type == DatabaseColumnType::checkbox ||
     $column->column_type == DatabaseColumnType::select ||
-    $column->column_type == DatabaseColumnType::group ||
     $column->caption
     )
     <tr>
         <td class="pt-3 border border-0"></td>
         <td class="pt-3 border border-0" colspan="7">
-            @if ($column->column_type != DatabaseColumnType::group && $column->select_count > 0)
+            @if ($column->select_count > 0)
                 {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
                 <div class="small">
                     <i class="far fa-list-alt"></i>
                     {{ $column->select_names }}
                 </div>
-            @elseif($column->column_type != DatabaseColumnType::group && !$column->caption && $column->select_count == 0)
+            @elseif(!$column->caption && $column->select_count == 0)
                 {{-- 選択肢データがなく、キャプションの設定もない場合はツールチップ分、余白として改行する --}}
                 <br>
             @endif
@@ -129,11 +124,6 @@
                     <i class="fas fa-pen"></i>
                     {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}
                 </div>
-            @endif
-
-            @if ($column->column_type == DatabaseColumnType::group && !isset($column->frame_col))
-                {{-- まとめ行でまとめ数の設定がない場合はツールチップ分、余白として改行する --}}
-                <br>
             @endif
         </td>
     </tr>

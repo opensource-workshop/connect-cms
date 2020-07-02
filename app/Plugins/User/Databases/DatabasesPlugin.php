@@ -312,15 +312,6 @@ class DatabasesPlugin extends UserPluginBase
         $databases_columns_id_select = null;
         if ($database) {
             $databases_columns_id_select = $this->getDatabasesColumnsSelects($database->id);
-            if (DatabasesColumns::query()
-                ->where('databases_id', $database->id)
-                ->where('column_type', \DatabaseColumnType::group)
-                ->whereNull('frame_col')
-                ->get()
-                ->count() > 0) {
-                // データ型が「まとめ行」で、まとめ数の設定がないデータが存在する場合
-                $setting_error_messages[] = 'フレームの設定画面から、項目データ（まとめ行のまとめ数）を設定してください。';
-            }
 
             /**
              * データベースのカラムデータを取得
@@ -698,11 +689,8 @@ class DatabasesPlugin extends UserPluginBase
 
         // カラムの選択肢用データ
         $databases_columns_id_select = null;
-        $databases_columns_errors = null;
         if ($database) {
             $databases_columns_id_select = $this->getDatabasesColumnsSelects($database->id);
-            // データ型が「まとめ行」、且つ、まとめ数の設定がないデータを取得
-            $databases_columns_errors = DatabasesColumns::query()->where('databases_id', $database->id)->where('column_type', \DatabaseColumnType::group)->whereNull('frame_col')->get();
         }
 
         // データ詳細の取得
@@ -722,7 +710,6 @@ class DatabasesPlugin extends UserPluginBase
             'database' => $database,
             'databases_columns' => $databases_columns,
             'databases_columns_id_select' => $databases_columns_id_select,
-            'databases_columns_errors' => $databases_columns_errors,
             'input_cols'  => $input_cols,
             'errors'      => $errors,
             ]
@@ -1764,13 +1751,6 @@ class DatabasesPlugin extends UserPluginBase
         $validator_values = null;
         $validator_attributes = null;
 
-        // データ型が「まとめ行」の場合はまとめ数について必須チェック
-        if ($column->column_type == \DatabaseColumnType::group) {
-            $validator_values['frame_col'] = [
-                'required'
-            ];
-            $validator_attributes['frame_col'] = 'まとめ数';
-        }
         // 桁数チェックの指定時、入力値が数値であるかチェック
         if ($request->rule_digits_or_less) {
             $validator_values['rule_digits_or_less'] = [
