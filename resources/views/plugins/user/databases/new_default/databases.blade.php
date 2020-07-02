@@ -22,18 +22,23 @@
             // 行グループ・列グループの配列に置き換えたcolumns
             $group_rows_cols_columns = [];
             foreach ($columns as $column) {
-                if (is_null($column->row_group) && is_null($column->column_group)) {
-                    // 行グループ・列グループどっちも設定なし
-                    //
-                    // row_group = null & column_group = nullは1行として扱うため、
-                    // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
-                    // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
-                    $group_cols_columns = null;                         // 初期化
-                    $group_cols_columns[''][0] = $column;               // column_group = ''としてセット
-                    $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
-                } else {
-                    // 行グループ・列グループどっちか設定あり
-                    $group_rows_cols_columns[$column->row_group][$column->column_group][] = $column;
+
+                // 一覧に表示する (list_hide_flag=0)
+                if ($column->list_hide_flag == 0) {
+
+                    if (is_null($column->row_group) && is_null($column->column_group)) {
+                        // 行グループ・列グループどっちも設定なし
+                        //
+                        // row_group = null & column_group = nullは1行として扱うため、
+                        // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
+                        // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
+                        $group_cols_columns = null;                         // 初期化
+                        $group_cols_columns[''][0] = $column;               // column_group = ''としてセット
+                        $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
+                    } else {
+                        // 行グループ・列グループどっちか設定あり
+                        $group_rows_cols_columns[$column->row_group][$column->column_group][] = $column;
+                    }
                 }
             }
             @endphp
@@ -47,14 +52,12 @@
                         <div class="col-sm">
                         {{-- カラム ループ --}}
                         @foreach($group_col_columns as $column)
-                            @if($column->list_hide_flag == 0)
-                                <div class="row pt-2 pb-2">
-                                    <div class="col">
-                                        <small><b>{{$column->column_name}}</b></small><br>
-                                        @include('plugins.user.databases.default.databases_include_value')
-                                    </div>
+                            <div class="row pt-2 pb-2">
+                                <div class="col">
+                                    <small><b>{{$column->column_name}}</b></small><br>
+                                    @include('plugins.user.databases.default.databases_include_value')
                                 </div>
-                            @endif
+                            </div>
                         @endforeach
                         </div>
                     @endforeach
