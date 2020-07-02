@@ -123,8 +123,8 @@ class TabsPlugin extends UserPluginBase
         Tabs::updateOrCreate(
             ['frame_id' => $frame_id],
             [
-                'frame_id' => $frame_id, 
-                'default_frame_id' => $request->default_frame_id, 
+                'frame_id' => $frame_id,
+                'default_frame_id' => $request->default_frame_id,
                 'frame_ids' => (empty($request->frame_select)) ? '' : implode(',', $request->frame_select)
             ]
         );
