@@ -112,9 +112,9 @@
                         <table class="table table-hover">
                             <thead class="thead-light">
                                 <tr>
-                                    <th class="text-center w-10 text-nowrap">表示順</th>
-                                    <th class="text-center w-35 text-nowrap">項目名</th>
-                                    <th class="text-center w-30 text-nowrap">型</th>
+                                    <th class="text-center text-nowrap">表示順</th>
+                                    <th class="text-center text-nowrap" style="min-width: 165px;">項目名</th>
+                                    <th class="text-center text-nowrap" style="min-width: 165px;">型</th>
                                     <th class="text-center text-nowrap">必須</th>
                                     <th class="text-center">行<a href="#" data-toggle="tooltip" data-placement="top" title="行グループ">...</a></th>
                                     <th class="text-center">列<a href="#" data-toggle="tooltip" data-placement="top" title="列グループ">...</a></th>
