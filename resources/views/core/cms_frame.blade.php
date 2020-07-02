@@ -33,9 +33,9 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
 
 @endphp
 @if($frame->frame_col==0)
-<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$default_hidden}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$default_hidden}}{{$hidden_flag}}{{" $frame->plugin_name-$frame->template"}}" id="frame-{{ $frame->frame_id }}">
 @else
-<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$hidden_flag}}" id="frame-{{ $frame->frame_id }}">
+<div class="p-0 col-sm-{{$frame->frame_col}} @if ($frame->area_id==2 &&!$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$hidden_flag}}{{" $frame->plugin_name-$frame->template"}}" id="frame-{{ $frame->frame_id }}">
 @endif
 
 @if ($frame->browser_width == '100%')
