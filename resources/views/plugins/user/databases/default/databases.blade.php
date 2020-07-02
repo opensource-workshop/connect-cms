@@ -3,6 +3,7 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
@@ -16,53 +17,45 @@
 
     @if ($default_hide_list)
     @else
-    {{-- データのループ --}}
-    <table class="table table-bordered">
-        <thead class="thead-light">
-        <tr>
-        @foreach($columns as $column)
-            @if($column->list_hide_flag == 0)
-            <th>{{$column->column_name}}</th>
-            @endif
-        @endforeach
-        </tr>
-        </thead>
-
-        <tbody>
         @foreach($inputs as $input)
-        <tr>
-            @php
-            // bugfix: $loop->firstだと1つ目の項目が、一覧非表示の場合、詳細画面に飛べなくなるため、フラグで対応する
-            $is_first = true;
-            @endphp
+            <div class="container @if(! $loop->first) mt-4 @endif">
+                {{-- 行グループ ループ --}}
+                @foreach($group_rows_cols_columns as $group_row_cols_columns)
+                    <div class="row border-left border-right border-bottom @if($loop->first) border-top @endif">
+                    {{-- 列グループ ループ --}}
+                    @foreach($group_row_cols_columns as $group_col_columns)
+                        <div class="col-sm">
+                        {{-- カラム ループ --}}
+                        @foreach($group_col_columns as $column)
+                            <div class="row pt-2 pb-2">
+                                <div class="col">
+                                    <small><b>{{$column->column_name}}</b></small><br>
+                                    @include('plugins.user.databases.default.databases_include_value')
+                                </div>
+                            </div>
+                        @endforeach
+                        </div>
+                    @endforeach
+                    </div>
+                @endforeach
+            </div>
 
-            @foreach($columns as $column)
-                @if($column->list_hide_flag == 0)
-                    @if($is_first)
-                        <td>
-                            <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
-                                @include('plugins.user.databases.default.databases_include_value')
-                            </a>
-                        </td>
-                        @php
-                        $is_first = false;
-                        @endphp
-                    @else
-                        <td>
-                            @include('plugins.user.databases.default.databases_include_value')
-                        </td>
-                    @endif
-                @endif
-            @endforeach
-        </tr>
+            {{-- 詳細 --}}
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="text-right">
+                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
+                            <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         @endforeach
-        </tbody>
-    </table>
 
-    {{-- ページング処理 --}}
-    <div class="text-center">
-        {{ $inputs->links() }}
-    </div>
+        {{-- ページング処理 --}}
+        <div class="text-center mt-2">
+            {{ $inputs->links() }}
+        </div>
     @endif
 
 @else
