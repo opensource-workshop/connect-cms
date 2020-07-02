@@ -9,8 +9,7 @@
 --}}
 <tr>
     {{-- 表示順 --}}
-    <td class="text-center text-nowrap p-1">
-
+    <td nowrap>
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $column->id }}, {{ $column->display_sequence }}, 'up')">
             <i class="fas fa-arrow-up"></i>
@@ -23,12 +22,12 @@
     </td>
 
     {{-- 項目名 --}}
-    <td class="p-1">
+    <td>
         <input class="form-control" type="text" name="column_name_{{ $column->id }}" value="{{ old('column_name_'.$column->id, $column->column_name)}}">
     </td>
 
     {{-- 型 --}}
-    <td class="p-1">
+    <td>
         <select class="form-control" name="column_type_{{ $column->id }}">
             <option value="" disabled>型を指定</option>
                 @foreach (DatabaseColumnType::getMembers() as $key=>$value)
@@ -44,23 +43,23 @@
     </td>
 
     {{-- 必須 --}}
-    <td class="align-middle text-center p-1">
+    <td class="align-middle text-center">
         <input type="checkbox" name="required_{{ $column->id }}" value="1"
             @if ($column->required == Required::on) checked="checked" @endif>
     </td>
 
     {{-- 行グループ --}}
-    <td class="align-middle text-center p-1">
+    <td class="align-middle text-center">
         {{$column->row_group}}
     </td>
 
     {{-- 列グループ --}}
-    <td class="align-middle text-center p-1">
+    <td class="align-middle text-center">
         {{$column->column_group}}
     </td>
 
     {{-- 詳細設定 --}}
-    <td class="text-center p-1">
+    <td class="text-center">
         {{-- 詳細ボタン --}}
         <button
             type="button"
@@ -81,7 +80,7 @@
     </td>
 
     {{-- 更新ボタン --}}
-    <td class="text-center p-1">
+    <td class="text-center">
         <button
             class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
@@ -91,7 +90,7 @@
     </td>
 
     {{-- 削除ボタン --}}
-    <td class="text-center p-1">
+    <td class="text-center">
         <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});">
             <i class="fas fa-trash-alt"></i>
         </button>
