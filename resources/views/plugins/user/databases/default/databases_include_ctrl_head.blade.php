@@ -1,6 +1,8 @@
 {{--
  * データベース ヘッダー テンプレート
  *
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
