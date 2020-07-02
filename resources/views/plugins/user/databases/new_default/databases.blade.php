@@ -51,7 +51,7 @@
                                 <div class="row pt-2 pb-2">
                                     <div class="col">
                                         <small><b>{{$column->column_name}}</b></small><br>
-                                        @include('plugins.user.databases.new_default.databases_include_value')
+                                        @include('plugins.user.databases.default.databases_include_value')
                                     </div>
                                 </div>
                             @endif
