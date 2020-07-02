@@ -1,13 +1,15 @@
 {{--
  * 項目の設定行テンプレート
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 <tr>
     {{-- 表示順 --}}
-    <td class="text-center text-nowrap">
+    <td class="text-center text-nowrap p-1">
 
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $column->id }}, {{ $column->display_sequence }}, 'up')">
@@ -21,12 +23,12 @@
     </td>
 
     {{-- 項目名 --}}
-    <td>
+    <td class="p-1">
         <input class="form-control" type="text" name="column_name_{{ $column->id }}" value="{{ old('column_name_'.$column->id, $column->column_name)}}">
     </td>
 
     {{-- 型 --}}
-    <td>
+    <td class="p-1">
         <select class="form-control" name="column_type_{{ $column->id }}">
             <option value="" disabled>型を指定</option>
                 @foreach (DatabaseColumnType::getMembers() as $key=>$value)
@@ -42,22 +44,32 @@
     </td>
 
     {{-- 必須 --}}
-    <td class="align-middle text-center">
-        <input type="checkbox" name="required_{{ $column->id }}" value="1" 
+    <td class="align-middle text-center p-1">
+        <input type="checkbox" name="required_{{ $column->id }}" value="1"
             @if ($column->required == Required::on) checked="checked" @endif>
     </td>
 
+    {{-- 行グループ --}}
+    <td class="align-middle text-center p-1">
+        {{$column->row_group}}
+    </td>
+
+    {{-- 列グループ --}}
+    <td class="align-middle text-center p-1">
+        {{$column->column_group}}
+    </td>
+
     {{-- 詳細設定 --}}
-    <td class="text-center">
+    <td class="text-center p-1">
         {{-- 詳細ボタン --}}
-        <button 
-            type="button" 
-            class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
+        <button
+            type="button"
+            class="btn btn-primary btn-xs cc-font-90 text-nowrap"
             {{-- 選択肢を保持する項目、且つ、選択肢の設定がない場合のみツールチップを表示 --}}
             @if (
-                ($column->column_type == DatabaseColumnType::radio || 
-                $column->column_type == DatabaseColumnType::checkbox || 
-                $column->column_type == DatabaseColumnType::select) && 
+                ($column->column_type == DatabaseColumnType::radio ||
+                $column->column_type == DatabaseColumnType::checkbox ||
+                $column->column_type == DatabaseColumnType::select) &&
                 $column->select_count == 0
                 )
                 id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
@@ -73,9 +85,9 @@
     </td>
 
     {{-- 更新ボタン --}}
-    <td class="text-center">
-        <button 
-            class="btn btn-primary cc-font-90 text-nowrap" 
+    <td class="text-center p-1">
+        <button
+            class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
             >
             <i class="fas fa-save"></i>
@@ -83,7 +95,7 @@
     </td>
 
     {{-- 削除ボタン --}}
-    <td class="text-center">
+    <td class="text-center p-1">
         <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});">
             <i class="fas fa-trash-alt"></i>
         </button>
@@ -91,15 +103,15 @@
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
 @if (
-    $column->column_type == DatabaseColumnType::radio || 
-    $column->column_type == DatabaseColumnType::checkbox || 
+    $column->column_type == DatabaseColumnType::radio ||
+    $column->column_type == DatabaseColumnType::checkbox ||
     $column->column_type == DatabaseColumnType::select ||
     $column->column_type == DatabaseColumnType::group ||
     $column->caption
     )
     <tr>
-        <td class="pt-0 border border-0"></td>
-        <td class="pt-0 border border-0" colspan="7">
+        <td class="pt-3 border border-0"></td>
+        <td class="pt-3 border border-0" colspan="7">
             @if ($column->column_type != DatabaseColumnType::group && $column->select_count > 0)
                 {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
                 <div class="small">
@@ -118,7 +130,7 @@
                     {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}
                 </div>
             @endif
-            
+
             @if ($column->column_type == DatabaseColumnType::group && !isset($column->frame_col))
                 {{-- まとめ行でまとめ数の設定がない場合はツールチップ分、余白として改行する --}}
                 <br>

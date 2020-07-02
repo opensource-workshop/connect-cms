@@ -1,17 +1,19 @@
 {{--
  * データベース項目の詳細設定画面
  *
- * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com> 永原 篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
- @extends('core.cms_frame_base_setting')
+--}}
+@extends('core.cms_frame_base_setting')
 
- @section("core.cms_frame_edit_tab_$frame->id")
+@section("core.cms_frame_edit_tab_$frame->id")
 	{{-- プラグイン側のフレームメニュー --}}
 	@include('plugins.user.databases.databases_frame_edit_tab')
 @endsection
- 
+
 @section("plugin_setting_$frame->id")
     <script type="text/javascript">
         /**
@@ -139,8 +141,8 @@
 
                                         <td class="align-middle text-center">
                                             {{-- 更新ボタン --}}
-                                            <button 
-                                                class="btn btn-primary cc-font-90 text-nowrap" 
+                                            <button
+                                                class="btn btn-primary cc-font-90 text-nowrap"
                                                 onclick="javascript:submit_update_select({{ $select->id }});"
                                                 >
                                                 <i class="fas fa-save"></i>
@@ -149,8 +151,8 @@
 
                                         <td class="text-center">
                                             {{-- 削除ボタン --}}
-                                            <button 
-                                                class="btn btn-danger cc-font-90 text-nowrap" 
+                                            <button
+                                                class="btn btn-danger cc-font-90 text-nowrap"
                                                 onclick="javascript:return submit_delete_select({{ $select->id }});"
                                                 >
                                                 <i class="fas fa-trash-alt"></i>
@@ -160,7 +162,7 @@
                                 @endforeach
 
                                 <tr class="thead-light">
-                                   <th colspan="7">【選択肢の追加行】</th>
+                                    <th colspan="7">【選択肢の追加行】</th>
                                 </tr>
 
                                 {{-- 新規登録用の行 --}}
@@ -545,6 +547,29 @@
                         </div>
                     </div>
                 @endif
+
+                {{-- グループ --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}} pt-0">グループ</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="col pl-0">
+                            <label>行グループ</label>
+                            <input type="text" name="row_group" value="{{old('row_group', $column->row_group)}}" class="form-control" />
+                            <small class="text-muted">※ 数値で入力します。</small>
+                            @if ($errors && $errors->has('row_group'))
+                                <div class="text-danger">{{$errors->first('row_group')}}</div>
+                            @endif
+                        </div>
+                        <div class="col pl-0">
+                            <label>列グループ</label>
+                            <input type="text" name="column_group" value="{{old('column_group', $column->column_group)}}" class="form-control" />
+                            <small class="text-muted">※ 数値で入力します。</small>
+                            @if ($errors && $errors->has('column_group'))
+                                <div class="text-danger">{{$errors->first('column_group')}}</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
 
                 {{-- ボタンエリア --}}
                 <div class="form-group text-center">

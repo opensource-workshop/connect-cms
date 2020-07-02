@@ -32,7 +32,9 @@ use App\Plugins\User\UserPluginBase;
  *
  * データベースの作成＆データ収集用プラグイン。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  * @package Contoroller
@@ -157,7 +159,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesColumns($database)
     {
         // データベースのカラムデータ
-        $database_columns = [];
+        $databases_columns = [];
         if (!empty($database)) {
             $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
             if ($database->user_mail_send_flag == '1' && empty($databases_columns->where('column_type', \DatabaseColumnType::mail)->first())) {
@@ -290,7 +292,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -349,6 +350,7 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($database)) {
             $databases = null;
             $columns = null;
+            $group_rows_cols_columns = null;
             $inputs = null;
             $input_cols = null;
         } else {
@@ -360,6 +362,9 @@ class DatabasesPlugin extends UserPluginBase
 
             // カラムの取得
             $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence', 'asc')->get();
+
+            // 行グループ・列グループの配列に置き換えたcolumns
+            $group_rows_cols_columns = $this->replaceArrayGroupRowsColsColumns($columns, 'list_hide_flag');
 
             // 登録データ行の取得 --->
 
@@ -529,26 +534,58 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'databases', [
-            'request'  => $request,
-            'frame_id' => $frame_id,
-            'database' => $database,
-            'databases_columns' => $databases_columns,
-            'databases_columns_id_select' => $databases_columns_id_select,
-            'errors' => $errors,
-            'setting_error_messages' => $setting_error_messages,
+            'databases',
+            [
+                'request'  => $request,
+                'frame_id' => $frame_id,
+                'database' => $database,
+                'databases_columns' => $databases_columns,
+                'databases_columns_id_select' => $databases_columns_id_select,
+                'errors' => $errors,
+                'setting_error_messages' => $setting_error_messages,
 
-            'databases'        => $databases,
-            'database_frame'   => $database_frame,
-            'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
-            'columns'          => $columns,
-            'inputs'           => $inputs,
-            'input_cols'       => $input_cols,
-            'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
-            'default_hide_list' => $default_hide_list,
-
+                'databases'        => $databases,
+                'database_frame'   => $database_frame,
+                'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
+                'columns'          => $columns,
+                'group_rows_cols_columns' => $group_rows_cols_columns,
+                'inputs'           => $inputs,
+                'input_cols'       => $input_cols,
+                'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
+                'default_hide_list' => $default_hide_list,
             ]
         )->withInput($request->all);
+    }
+
+    /**
+     * 行グループ・列グループの配列に置き換えたcolumns
+     */
+    private function replaceArrayGroupRowsColsColumns($columns, $hide_flag_column_name = 'list_hide_flag')
+    {
+        // 行グループ・列グループの配列に置き換えたcolumns
+        $group_rows_cols_columns = [];
+        foreach ($columns as $column) {
+            // 表示しないcolumnは、group_rows_cols_columnsに含まない。
+            //
+            // 一覧に表示する (list_hide_flag=0)
+            // 詳細に表示する (detail_hide_flag=0)
+            if ($column->$hide_flag_column_name == 0) {
+                if (is_null($column->row_group) && is_null($column->column_group)) {
+                    // 行グループ・列グループどっちも設定なし
+                    //
+                    // row_group = null & column_group = nullは1行として扱うため、
+                    // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
+                    // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
+                    $group_cols_columns = null;                         // 初期化
+                    $group_cols_columns[''][0] = $column;               // column_group = ''としてセット
+                    $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
+                } else {
+                    // 行グループ・列グループどっちか設定あり
+                    $group_rows_cols_columns[$column->row_group][$column->column_group][] = $column;
+                }
+            }
+        }
+        return $group_rows_cols_columns;
     }
 
     /**
@@ -594,7 +631,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function detail($request, $page_id, $frame_id, $id, $mode = null)
     {
-
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
@@ -614,6 +650,9 @@ class DatabasesPlugin extends UserPluginBase
             return;
         }
 
+        // 行グループ・列グループの配列に置き換えたcolumns
+        $group_rows_cols_columns = $this->replaceArrayGroupRowsColsColumns($columns, 'detail_hide_flag');
+
         // データ詳細の取得
         $input_cols = $this->getDatabasesInputCols($id);
 
@@ -626,13 +665,14 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            $blade, [
-            'frame_id'   => $frame_id,
-            'database'   => $database,
-            'columns'    => $columns,
-            'inputs'     => $inputs,
-            'input_cols' => $input_cols,
-
+            $blade,
+            [
+                'frame_id'   => $frame_id,
+                'database'   => $database,
+                'columns'    => $columns,
+                'group_rows_cols_columns' => $group_rows_cols_columns,
+                'inputs'     => $inputs,
+                'input_cols' => $input_cols,
             ]
         )->withInput($request->all);
     }
@@ -703,7 +743,7 @@ class DatabasesPlugin extends UserPluginBase
         } elseif (is_string($value)) {
             $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
         }
- 
+
         return $value;
     }
 
@@ -1492,7 +1532,7 @@ class DatabasesPlugin extends UserPluginBase
         $column->caption_color = \Bs4TextColor::dark;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を追加しました。';
-        
+
         // 編集画面へ戻る。
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, $errors);
     }
@@ -1573,6 +1613,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.caption_color',
                 'databases_columns.classname',
                 'databases_columns.display_sequence',
+                'databases_columns.row_group',
+                'databases_columns.column_group',
                 DB::raw('count(databases_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(databases_columns_selects.value order by databases_columns_selects.display_sequence SEPARATOR \',\') as select_names')
             )
@@ -1591,7 +1633,9 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.caption',
                 'databases_columns.caption_color',
                 'databases_columns.classname',
-                'databases_columns.display_sequence'
+                'databases_columns.display_sequence',
+                'databases_columns.row_group',
+                'databases_columns.column_group'
             )
             ->orderby('databases_columns.display_sequence')
             ->get();
@@ -1753,7 +1797,7 @@ class DatabasesPlugin extends UserPluginBase
             $validator_values['rule_word_count'] = [
                 'numeric',
             ];
-            $validator_attributes['rule_word_count'] = '入力文字数';
+            $validator_attributes['rule_word_count'] = '入力最大文字数';
         }
         // ～日以降許容を指定時、入力値が数値であるかチェック
         if ($request->rule_date_after_equal) {
@@ -1761,6 +1805,20 @@ class DatabasesPlugin extends UserPluginBase
                 'numeric',
             ];
             $validator_attributes['rule_date_after_equal'] = '～日以降を許容';
+        }
+        // 行グループを指定時、入力値が数値であるかチェック
+        if ($request->row_group) {
+            $validator_values['row_group'] = [
+                'numeric',
+            ];
+            $validator_attributes['row_group'] = '行グループ';
+        }
+        // 列グループを指定時、入力値が数値であるかチェック
+        if ($request->column_group) {
+            $validator_values['column_group'] = [
+                'numeric',
+            ];
+            $validator_attributes['column_group'] = '列グループ';
         }
 
         // エラーチェック
@@ -1812,6 +1870,10 @@ class DatabasesPlugin extends UserPluginBase
         $column->search_flag = (empty($request->search_flag)) ? 0 : $request->search_flag;
         // 絞り込み対象指定
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
+        // 行グループ
+        $column->row_group = $request->row_group;
+        // 列グループ
+        $column->column_group = $request->column_group;
 
         // 保存
         $column->save();
