@@ -24,7 +24,7 @@
     </td>
     {{-- 型 --}}
     <td>
-        <select class="form-control" name="column_type_{{ $column->id }}" style="min-width: 140px;">
+        <select class="form-control" name="column_type_{{ $column->id }}">
             <option value="" disabled>型を指定</option>
             @foreach (FormColumnType::getMembers() as $key=>$value)
                 <option value="{{$key}}"
