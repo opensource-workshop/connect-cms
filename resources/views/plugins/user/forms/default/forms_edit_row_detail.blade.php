@@ -2,17 +2,18 @@
  * フォーム項目の詳細設定画面
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
- @extends('core.cms_frame_base_setting')
+--}}
+@extends('core.cms_frame_base_setting')
 
- @section("core.cms_frame_edit_tab_$frame->id")
-      {{-- プラグイン側のフレームメニュー --}}
-     @include('plugins.user.forms.forms_frame_edit_tab')
- @endsection
- 
- @section("plugin_setting_$frame->id")
+@section("core.cms_frame_edit_tab_$frame->id")
+    {{-- プラグイン側のフレームメニュー --}}
+    @include('plugins.user.forms.forms_frame_edit_tab')
+@endsection
+
+@section("plugin_setting_$frame->id")
 <script type="text/javascript">
 
     /**
@@ -47,7 +48,7 @@
     /**
      * 選択肢の削除ボタン押下
      */
-     function submit_delete_select(select_id) {
+    function submit_delete_select(select_id) {
         if(confirm('選択肢を削除します。\nよろしいですか？')){
             form_column_detail.action = "{{url('/')}}/plugin/forms/deleteSelect/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
             form_column_detail.select_id.value = select_id;
@@ -59,7 +60,7 @@
     /**
      * その他の設定の更新ボタン押下
      */
-     function submit_update_column_detail() {
+    function submit_update_column_detail() {
         form_column_detail.action = "{{url('/')}}/plugin/forms/updateColumnDetail/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_column_detail.submit();
     }
@@ -116,7 +117,7 @@
                                     <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
                                         <i class="fas fa-arrow-up"></i>
                                     </button>
-                            
+
                                     {{-- 下移動 --}}
                                     <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
                                         <i class="fas fa-arrow-down"></i>
@@ -130,8 +131,8 @@
 
                                 {{-- 更新ボタン --}}
                                 <td class="align-middle text-center">
-                                    <button 
-                                        class="btn btn-primary cc-font-90 text-nowrap" 
+                                    <button
+                                        class="btn btn-primary cc-font-90 text-nowrap"
                                         onclick="javascript:submit_update_select({{ $select->id }});"
                                     >
                                         <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
@@ -139,8 +140,8 @@
                                 </td>
                                 {{-- 削除ボタン --}}
                                 <td class="text-center">
-                                        <button 
-                                        class="btn btn-danger cc-font-90 text-nowrap" 
+                                        <button
+                                        class="btn btn-danger cc-font-90 text-nowrap"
                                         onclick="javascript:return submit_delete_select({{ $select->id }});"
                                     >
                                         <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
@@ -152,7 +153,7 @@
                             <th colspan="7">【選択肢の追加行】</th>
                         </tr>
 
-                       {{-- 新規登録用の行 --}}
+                        {{-- 新規登録用の行 --}}
                         <tr>
                             <td>
                                 {{-- 余白 --}}
@@ -190,22 +191,15 @@
                         <div class="{{$frame->getSettingInputClass()}}">
                             <select class="form-control" name="minutes_increments">
                                 @foreach (MinutesIncrements::getMembers() as $key=>$value)
-                                    <option value="{{$key}}"
-                                        {{-- 初期表示用 --}}
-                                        @if($key == $column->minutes_increments)
-                                            selected="selected"
-                                        @endif
-                                        {{-- validation用 --}}
-                                        @if($key == old('minutes_increments'))
-                                            selected="selected"
-                                        @endif
-                                    >{{ $value }}</option>
+                                    <option value="{{$key}}" @if($key == old('minutes_increments', $column->minutes_increments)) selected @endif>
+                                        {{ $value }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
                 @endif
-                    
+
                 {{-- 分刻み指定（From/To） ※データ型が「時間型（From/To）」のみ表示 --}}
                 @if ($column->column_type == FormColumnType::time_from_to)
                     {{-- From --}}
@@ -214,16 +208,9 @@
                         <div class="{{$frame->getSettingInputClass()}}">
                             <select class="form-control" name="minutes_increments_from">
                                 @foreach (MinutesIncrements::getMembers() as $key=>$value)
-                                    <option value="{{$key}}"
-                                        {{-- 初期表示用 --}}
-                                        @if($key == $column->minutes_increments_from)
-                                            selected="selected"
-                                        @endif
-                                        {{-- validation用 --}}
-                                        @if($key == old('minutes_increments_from'))
-                                            selected="selected"
-                                        @endif
-                                    >{{ $value }}</option>
+                                    <option value="{{$key}}" @if($key == old('minutes_increments_from', $column->minutes_increments_from)) selected @endif>
+                                        {{ $value }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -234,16 +221,9 @@
                         <div class="{{$frame->getSettingInputClass()}}">
                             <select class="form-control" name="minutes_increments_to">
                                 @foreach (MinutesIncrements::getMembers() as $key=>$value)
-                                    <option value="{{$key}}"
-                                        {{-- 初期表示用 --}}
-                                        @if($key == $column->minutes_increments_to)
-                                            selected="selected"
-                                        @endif
-                                        {{-- validation用 --}}
-                                        @if($key == old('minutes_increments_to'))
-                                            selected="selected"
-                                        @endif
-                                    >{{ $value }}</option>
+                                    <option value="{{$key}}" @if($key == old('minutes_increments_to', $column->minutes_increments_to)) selected @endif>
+                                        {{ $value }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -258,14 +238,14 @@
                             <select class="form-control" name="frame_col">
                                 <option value=""></option>
                                 @for ($i = 1; $i < 5; $i++)
-                                    <option value="{{$i}}"  @if($column->frame_col == $i)  selected @endif>{{$i}}</option>
+                                    <option value="{{$i}}"  @if(old('frame_col', $column->frame_col) == $i) selected @endif>{{$i}}</option>
                                 @endfor
                             </select>
                             @if ($errors && $errors->has('frame_col')) <div class="text-danger">{{$errors->first('frame_col')}}</div> @endif
                         </div>
                     </div>
                 @endif
-    
+
                 {{-- ボタンエリア --}}
                 <div class="form-group text-center">
                     <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
@@ -384,16 +364,9 @@
                 <div class="{{$frame->getSettingInputClass()}}">
                     <select class="form-control" name="caption_color">
                         @foreach (Bs4TextColor::getMembers() as $key=>$value)
-                            <option value="{{$key}}" class="{{ $key }}"
-                                {{-- 初期表示用 --}}
-                                @if($key == $column->caption_color)
-                                    selected="selected"
-                                @endif
-                                {{-- validation用 --}}
-                                @if($key == old('caption_color'))
-                                    selected="selected"
-                                @endif
-                            >{{ $value }}</option>
+                            <option value="{{$key}}" class="{{ $key }}" @if($key == old('caption_color', $column->caption_color)) selected @endif>
+                                {{ $value }}
+                            </option>
                         @endforeach
                     </select>
                 </div>

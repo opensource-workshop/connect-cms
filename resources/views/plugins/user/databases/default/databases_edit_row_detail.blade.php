@@ -364,12 +364,8 @@
                     <div class="{{$frame->getSettingInputClass()}}">
                         <select class="form-control" name="caption_color">
                             @foreach (Bs4TextColor::getMembers() as $key=>$value)
-                                <option value="{{$key}}" class="{{ $key }}"
-                                    {{-- 初期表示用 --}}
-                                    @if($key == $column->caption_color) selected="selected" @endif
-                                    {{-- validation用 --}}
-                                    @if($key == old('caption_color')) selected="selected" @endif
-                                    >{{ $value }}
+                                <option value="{{$key}}" class="{{ $key }}" @if($key == old('caption_color', $column->caption_color)) selected @endif>
+                                    {{ $value }}
                                 </option>
                             @endforeach
                         </select>
@@ -395,19 +391,11 @@
                     <label class="{{$frame->getSettingLabelClass(true)}}">一覧への表示指定</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->list_hide_flag == 0)
-                                <input type="radio" value="0" id="list_hide_flag_0" name="list_hide_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="0" id="list_hide_flag_0" name="list_hide_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="0" id="list_hide_flag_0" name="list_hide_flag" class="custom-control-input" @if(old('list_hide_flag', $column->list_hide_flag) == 0) checked="checked" @endif>
                             <label class="custom-control-label" for="list_hide_flag_0">一覧に表示する</label>
                         </div>
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->list_hide_flag == 1)
-                                <input type="radio" value="1" id="list_hide_flag_1" name="list_hide_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="1" id="list_hide_flag_1" name="list_hide_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="1" id="list_hide_flag_1" name="list_hide_flag" class="custom-control-input" @if(old('list_hide_flag', $column->list_hide_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="list_hide_flag_1">一覧に表示しない</label>
                         </div>
                     </div>
@@ -418,19 +406,11 @@
                     <label class="{{$frame->getSettingLabelClass(true)}}">詳細への表示指定</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->detail_hide_flag == 0)
-                                <input type="radio" value="0" id="detail_hide_flag_0" name="detail_hide_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="0" id="detail_hide_flag_0" name="detail_hide_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="0" id="detail_hide_flag_0" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 0) checked="checked" @endif>
                             <label class="custom-control-label" for="detail_hide_flag_0">詳細に表示する</label>
                         </div>
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->detail_hide_flag == 1)
-                                <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="detail_hide_flag_1">詳細に表示しない</label>
                         </div>
                     </div>
@@ -441,35 +421,19 @@
                     <label class="{{$frame->getSettingLabelClass(true)}}">並べ替え指定</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->sort_flag == 0)
-                                <input type="radio" value="0" id="sort_flag_0" name="sort_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="0" id="sort_flag_0" name="sort_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="0" id="sort_flag_0" name="sort_flag" class="custom-control-input" @if(old('sort_flag', $column->sort_flag) == 0) checked="checked" @endif>
                             <label class="custom-control-label" for="sort_flag_0">使用しない</label>
                         </div>
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->sort_flag == 1)
-                                <input type="radio" value="1" id="sort_flag_1" name="sort_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="1" id="sort_flag_1" name="sort_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="1" id="sort_flag_1" name="sort_flag" class="custom-control-input" @if(old('sort_flag', $column->sort_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="sort_flag_1">昇順＆降順</label>
                         </div>
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->sort_flag == 2)
-                                <input type="radio" value="2" id="sort_flag_2" name="sort_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="2" id="sort_flag_2" name="sort_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="2" id="sort_flag_2" name="sort_flag" class="custom-control-input" @if(old('sort_flag', $column->sort_flag) == 2) checked="checked" @endif>
                             <label class="custom-control-label" for="sort_flag_2">昇順のみ</label>
                         </div>
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->sort_flag == 3)
-                                <input type="radio" value="3" id="sort_flag_3" name="sort_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="3" id="sort_flag_3" name="sort_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="3" id="sort_flag_3" name="sort_flag" class="custom-control-input" @if(old('sort_flag', $column->sort_flag) == 3) checked="checked" @endif>
                             <label class="custom-control-label" for="sort_flag_3">降順のみ</label>
                         </div>
                     </div>
@@ -480,19 +444,11 @@
                     <label class="{{$frame->getSettingLabelClass(true)}}">検索対象指定</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->search_flag == 0)
-                                <input type="radio" value="0" id="search_flag_0" name="search_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="0" id="search_flag_0" name="search_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="0" id="search_flag_0" name="search_flag" class="custom-control-input" @if(old('search_flag', $column->search_flag) == 0) checked="checked" @endif>
                             <label class="custom-control-label" for="search_flag_0">検索対象にしない</label>
                         </div>
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if($column->search_flag == 1)
-                                <input type="radio" value="1" id="search_flag_1" name="search_flag" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="1" id="search_flag_1" name="search_flag" class="custom-control-input">
-                            @endif
+                            <input type="radio" value="1" id="search_flag_1" name="search_flag" class="custom-control-input" @if(old('search_flag', $column->search_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="search_flag_1">検索対象とする</label>
                         </div>
                     </div>
@@ -504,19 +460,11 @@
                         <label class="{{$frame->getSettingLabelClass(true)}}">絞り込み対象指定</label>
                         <div class="{{$frame->getSettingInputClass(true)}}">
                             <div class="custom-control custom-radio custom-control-inline">
-                                @if($column->select_flag == 0)
-                                    <input type="radio" value="0" id="select_flag_0" name="select_flag" class="custom-control-input" checked="checked">
-                                @else
-                                    <input type="radio" value="0" id="select_flag_0" name="select_flag" class="custom-control-input">
-                                @endif
+                                <input type="radio" value="0" id="select_flag_0" name="select_flag" class="custom-control-input" @if(old('select_flag', $column->select_flag) == 0) checked="checked" @endif>
                                 <label class="custom-control-label" for="select_flag_0">絞り込み対象にしない</label>
                             </div>
                             <div class="custom-control custom-radio custom-control-inline">
-                                @if($column->select_flag == 1)
-                                    <input type="radio" value="1" id="select_flag_1" name="select_flag" class="custom-control-input" checked="checked">
-                                @else
-                                    <input type="radio" value="1" id="select_flag_1" name="select_flag" class="custom-control-input">
-                                @endif
+                                <input type="radio" value="1" id="select_flag_1" name="select_flag" class="custom-control-input" @if(old('select_flag', $column->select_flag) == 1) checked="checked" @endif>
                                 <label class="custom-control-label" for="select_flag_1">絞り込み対象とする</label>
                             </div>
                         </div>
