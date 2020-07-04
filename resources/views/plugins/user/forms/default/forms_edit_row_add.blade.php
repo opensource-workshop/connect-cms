@@ -11,11 +11,11 @@
     </td>
     {{-- 項目名 --}}
     <td>
-        <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}" style="min-width: 150px;">
+        <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}">
     </td>
     {{-- 型 --}}
     <td>
-        <select class="form-control" name="column_type" style="min-width: 100px;">
+        <select class="form-control" name="column_type">
             <option value="" disabled>型を指定</option>
             @foreach (FormColumnType::getMembers() as $key=>$value)
                 <option value="{{$key}}"

@@ -112,8 +112,8 @@
                     <thead>
                         <tr>
                             <th class="text-center" nowrap>表示順</th>
-                            <th class="text-center" nowrap>項目名</th>
-                            <th class="text-center" nowrap>型</th>
+                            <th class="text-center" style="min-width: 165px;" nowrap>項目名</th>
+                            <th class="text-center" style="min-width: 165px;" nowrap>型</th>
                             <th class="text-center" nowrap>必須</th>
                             <th class="text-center" nowrap>詳細 <a href="https://connect-cms.jp/manual/user/form#frame-125" target="_brank"><span class="fas fa-info-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
                             <th class="text-center" nowrap>更新</th>
