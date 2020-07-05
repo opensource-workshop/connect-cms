@@ -2,9 +2,10 @@
  * ブログ記事登録画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -72,6 +73,12 @@
         <label class="control-label">本文 <label class="badge badge-danger">必須</label></label>
         <textarea name="post_text">{!!old('post_text', $blogs_posts->post_text)!!}</textarea>
         @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">続き</label>
+        <textarea name="post_text2">{!!old('post_text2', $blogs_posts->post_text2)!!}</textarea>
+        @if ($errors && $errors->has('post_text2')) <div class="text-danger">{{$errors->first('post_text2')}}</div> @endif
     </div>
 
     <div class="form-group">
