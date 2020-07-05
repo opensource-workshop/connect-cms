@@ -2,9 +2,10 @@
  * ブログ画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -56,6 +57,17 @@
 
             {{-- 記事本文 --}}
             {!! $post->post_text !!}
+
+            {{-- 続きを読む --}}
+            @if ($post->post_text2)
+                <div id="post_text2_button_{{$frame->id}}_{{$post->id}}">
+                    <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-down"></i> 続きを読む</button>
+                </div>
+                <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;">
+                    {!! $post->post_text2 !!}
+                    <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-up"></i> 閉じる</button>
+                </div>
+            @endif
 
             {{-- タグ --}}
             @isset($post->tags)

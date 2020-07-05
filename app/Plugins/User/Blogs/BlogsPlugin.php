@@ -27,6 +27,7 @@ use App\Plugins\User\UserPluginBase;
  * ブログプラグイン
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  * @package Contoroller
@@ -449,7 +450,8 @@ WHERE status = 0
                       ->where('posted_at', '<=', Carbon::now())
                       ->where(function ($plugin_query) use ($search_keyword) {
                           $plugin_query->where('blogs_posts.post_title', 'like', '?')
-                                       ->orWhere('blogs_posts.post_text', 'like', '?');
+                                       ->orWhere('blogs_posts.post_text', 'like', '?')
+                                       ->orWhere('blogs_posts.post_text2', 'like', '?');
                       })
                       ->whereRaw('CASE
                                   WHEN blogs_frames.scope IS NULL
@@ -478,7 +480,7 @@ WHERE status = 0
                       ->whereNull('blogs_posts.deleted_at');
 
         //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids, 0, Carbon::now(), '%'.$search_keyword.'%', '%'.$search_keyword.'%', '', 'top', 'not_important', 'important_only', 1);
+        $bind = array($page_ids, 0, Carbon::now(), '%'.$search_keyword.'%', '%'.$search_keyword.'%', '%'.$search_keyword.'%', '', 'top', 'not_important', 'important_only', 1);
         $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
@@ -737,6 +739,7 @@ WHERE status = 0
         $blogs_post->important     = $request->important;
         $blogs_post->posted_at     = $request->posted_at . ':00';
         $blogs_post->post_text     = $request->post_text;
+        $blogs_post->post_text2    = $request->post_text2;
 
         // 承認の要否確認とステータス処理
         if ($this->isApproval($frame_id)) {
@@ -777,7 +780,7 @@ WHERE status = 0
         return $this->index($request, $page_id, $frame_id);
     }
 
-   /**
+    /**
     * データ一時保存関数
     */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
@@ -798,7 +801,7 @@ WHERE status = 0
             $blogs_post->created_id  = Auth::user()->id;
         } else {
             $blogs_post = BlogsPosts::find($id)->replicate();
- 
+
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
             $check_blogs_post = $this->getPost($id);
 
@@ -815,6 +818,7 @@ WHERE status = 0
         $blogs_post->important  = $request->important;
         $blogs_post->posted_at  = $request->posted_at . ':00';
         $blogs_post->post_text  = $request->post_text;
+        $blogs_post->post_text2 = $request->post_text2;
 
         $blogs_post->save();
 
@@ -850,7 +854,7 @@ WHERE status = 0
         return $this->index($request, $page_id, $frame_id);
     }
 
-   /**
+    /**
     * 承認
     */
     public function approval($request, $page_id = null, $frame_id = null, $id = null)
@@ -1062,7 +1066,7 @@ WHERE status = 0
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
+    /**
     * データ紐づけ変更関数
     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
