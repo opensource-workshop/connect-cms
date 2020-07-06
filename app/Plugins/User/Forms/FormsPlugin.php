@@ -127,7 +127,7 @@ class FormsPlugin extends UserPluginBase
         // グループがあれば、結果配列をネストする。
         $ret_array = array();
         for ($i = 0; $i < count($forms_columns); $i++) {
-            if ($forms_columns[$i]->column_type == "group") {
+            if ($forms_columns[$i]->column_type == \FormColumnType::group) {
                 $tmp_group = $forms_columns[$i];
                 $group_row = array();
                 for ($j = 1; $j <= $forms_columns[$i]->frame_col; $j++) {
@@ -469,7 +469,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // forms_input_cols 登録
         foreach ($forms_columns as $forms_column) {
-            if ($forms_column->column_type == "group") {
+            if ($forms_column->column_type == \FormColumnType::group) {
                 continue;
             }
 
