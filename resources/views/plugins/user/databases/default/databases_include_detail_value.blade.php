@@ -10,7 +10,7 @@
     $obj = $input_cols->where('databases_columns_id', $column->id)->first();
 
     // ファイル型
-    if ($column->column_type == 'file') {
+    if ($column->column_type == DatabaseColumnType::file) {
         if (empty($obj)) {
             $value = '';
         }
@@ -19,7 +19,7 @@
         }
     }
     // 画像型
-    else if ($column->column_type == 'image') {
+    elseif ($column->column_type == DatabaseColumnType::image) {
         if (empty($obj)) {
             $value = '';
         }
@@ -28,12 +28,21 @@
         }
     }
     // 動画型
-    else if ($column->column_type == 'video') {
+    elseif ($column->column_type == DatabaseColumnType::video) {
         if (empty($obj)) {
             $value = '';
         }
         else {
             $value = '<video src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" controls />';
+        }
+    }
+    // リンク型
+    elseif ($column->column_type == DatabaseColumnType::link) {
+        if (empty($obj)) {
+            $value = '';
+        }
+        else {
+            $value = '<a href="' . $obj->value . '" target="_blank">' . $obj->value . '</a>';
         }
     }
     // その他の型
@@ -48,13 +57,15 @@
 @endphp
 
 {{-- ファイル型 --}}
-@if ($column->column_type == 'file')
+@if ($column->column_type == DatabaseColumnType::file)
     {!!$value!!}
-@elseif ($column->column_type == 'image')
+@elseif ($column->column_type == DatabaseColumnType::image)
     {!!$value!!}
-@elseif ($column->column_type == 'video')
+@elseif ($column->column_type == DatabaseColumnType::video)
     {!!$value!!}
-@elseif ($column->column_type == 'wysiwyg')
+@elseif ($column->column_type == DatabaseColumnType::link)
+    {!!$value!!}
+@elseif ($column->column_type == DatabaseColumnType::wysiwyg)
     {!!$value!!}
 @else
     {!!nl2br(e($value))!!}

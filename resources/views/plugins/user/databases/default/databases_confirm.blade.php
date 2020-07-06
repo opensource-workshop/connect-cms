@@ -85,6 +85,10 @@
             {{$request->databases_columns_value[$database_column->id]}}
             <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
             @break
+        @case(DatabaseColumnType::link)
+            <a href="{{$request->databases_columns_value[$database_column->id]}}" target="_blank">{{$request->databases_columns_value[$database_column->id]}}</a>
+            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+            @break
         @case(DatabaseColumnType::file)
             @php
                 // value 値の取得

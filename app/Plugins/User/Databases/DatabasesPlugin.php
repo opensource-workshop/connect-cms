@@ -245,7 +245,7 @@ class DatabasesPlugin extends UserPluginBase
                                      ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                      ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                      ->where('databases_inputs_id', $inputs_id)
-                                     ->whereIn('databases_columns.column_type', ['file','image','video'])
+                                     ->whereIn('databases_columns.column_type', [\DatabaseColumnType::file, \DatabaseColumnType::image, \DatabaseColumnType::video])
                                      ->orderBy('databases_inputs_id', 'asc')
                                      ->orderBy('databases_columns_id', 'asc')
                                      ->get();
@@ -854,9 +854,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // ファイル項目を探して保存
         foreach ($databases_columns as $databases_column) {
-            if (($databases_column->column_type == 'file')  ||
-                ($databases_column->column_type == 'image') ||
-                ($databases_column->column_type == 'video')) {
+            if (($databases_column->column_type == \DatabaseColumnType::file)  ||
+                ($databases_column->column_type == \DatabaseColumnType::image) ||
+                ($databases_column->column_type == \DatabaseColumnType::video)) {
                 // ファイル系の処理パターン
                 // 新規登録   ＞ アップロードされたことを hasFile で検知
                 // 変更の削除 ＞ databases_columns_delete_ids に削除するdatabases_input_cols の id を溜める。項目値も一旦クリア。
@@ -881,7 +881,7 @@ class DatabasesPlugin extends UserPluginBase
                         'page_id'              => $page_id,
                         'temporary_flag'       => 1,
                         'created_id'           => Auth::user()->id,
-                     ]);
+                    ]);
 
                     // ファイル保存
                     $directory = $this->getDirectory($upload->id);
@@ -1091,9 +1091,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // ファイル型のファイル、uploads テーブルを削除
         foreach ($input_cols as $input_col) {
-            if (($input_col->column_type == 'file') ||
-                ($input_col->column_type == 'image') ||
-                ($input_col->column_type == 'video')) {
+            if (($input_col->column_type == \DatabaseColumnType::file) ||
+                ($input_col->column_type == \DatabaseColumnType::image) ||
+                ($input_col->column_type == \DatabaseColumnType::video)) {
                 // 削除するファイルデータ
                 $delete_upload = Uploads::find($input_col->value);
 
