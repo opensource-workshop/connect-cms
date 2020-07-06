@@ -3,6 +3,7 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
@@ -107,7 +108,7 @@
             @endphp
             @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
                 <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
-                <img src="{{url('/')}}/file/{{$value_obj->id}}" />
+                <img src="{{url('/')}}/file/{{$value_obj->id}}" class="img-fluid" />
             @else
                 <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
             @endif
