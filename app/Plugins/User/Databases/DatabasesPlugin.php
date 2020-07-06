@@ -153,7 +153,6 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      *  カラムデータ取得
-     *  ※まとめ行の設定が不正な場合はリテラル「frame_setting_error」を返す
      *  ※データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合はリテラル「mail_setting_error」を返す
      */
     private function getDatabasesColumns($database)
