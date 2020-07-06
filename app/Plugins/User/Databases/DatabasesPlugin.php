@@ -172,30 +172,7 @@ class DatabasesPlugin extends UserPluginBase
             return null;
         }
 
-        // グループがあれば、結果配列をネストする。
-        $ret_array = array();
-        for ($i = 0; $i < count($databases_columns); $i++) {
-            if ($databases_columns[$i]->column_type == "group") {
-                $tmp_group = $databases_columns[$i];
-                $group_row = array();
-                for ($j = 1; $j <= $databases_columns[$i]->frame_col; $j++) {
-                    // dd(count($databases_columns), $i, $j);
-                    if (count($databases_columns) >= (1 + $i + $j)) {
-                        $group_row[] = $databases_columns[$i + $j];
-                    } else {
-                        return 'frame_setting_error';
-                    }
-                }
-                $tmp_group->group = $group_row;
-
-                $ret_array[] = $tmp_group;
-                $i = $i + $databases_columns[$i]->frame_col;
-            } else {
-                $ret_array[] = $databases_columns[$i];
-            }
-        }
-
-        return $ret_array;
+        return $databases_columns;
     }
 
     /**
@@ -1015,10 +992,6 @@ class DatabasesPlugin extends UserPluginBase
 
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
-            if ($databases_column->column_type == "group") {
-                continue;
-            }
-
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
                 $value = implode(',', $request->databases_columns_value[$databases_column->id]);
@@ -1201,10 +1174,6 @@ class DatabasesPlugin extends UserPluginBase
 
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
-            if ($databases_column->column_type == "group") {
-                continue;
-            }
-
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
                 $value = implode(',', $request->databases_columns_value[$databases_column->id]);
