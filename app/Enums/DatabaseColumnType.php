@@ -18,6 +18,7 @@ final class DatabaseColumnType
     // const datetime = 'datetime';
     const date = 'date';
     const time = 'time';
+    const link = 'link';
     const file = 'file';
     const image = 'image';
     const video = 'video';
@@ -44,6 +45,7 @@ final class DatabaseColumnType
         // self::datetime=>'日付＆時間型',
         self::date=>'日付型',
         self::time=>'時間型',
+        self::link=>'リンク型',
         self::file=>'ファイル型',
         self::image=>'画像型',
         self::video=>'動画型',

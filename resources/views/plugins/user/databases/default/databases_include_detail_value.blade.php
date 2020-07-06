@@ -10,8 +10,8 @@
     $obj = $input_cols->where('databases_columns_id', $column->id)->first();
 
     // ファイル型
-    if ($column->column_type == 'file') {
-        if (empty($obj) || empty($obj->value)) {
+    if ($column->column_type == DatabaseColumnType::file) {
+        if (empty($obj)) {
             $value = '';
         }
         else {
@@ -19,8 +19,8 @@
         }
     }
     // 画像型
-    else if ($column->column_type == 'image') {
-        if (empty($obj) || empty($obj->value)) {
+    elseif ($column->column_type == DatabaseColumnType::image) {
+        if (empty($obj)) {
             $value = '';
         }
         else {
@@ -28,17 +28,26 @@
         }
     }
     // 動画型
-    else if ($column->column_type == 'video') {
-        if (empty($obj) || empty($obj->value)) {
+    elseif ($column->column_type == DatabaseColumnType::video) {
+        if (empty($obj)) {
             $value = '';
         }
         else {
             $value = '<video src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" controls />';
         }
     }
+    // リンク型
+    elseif ($column->column_type == DatabaseColumnType::link) {
+        if (empty($obj)) {
+            $value = '';
+        }
+        else {
+            $value = '<a href="' . $obj->value . '" target="_blank">' . $obj->value . '</a>';
+        }
+    }
     // その他の型
     else {
-        $value = $obj ? $obj->value: "";
+        $value = $obj ? $obj->value : "";
     }
 
     // 空の場合、なにか出力しないと「項目名<br>値」で出力してるテンプレートは高さがずれてしまうため対応
@@ -47,17 +56,17 @@
     }
 @endphp
 
-@if ($value)
-    {{-- ファイル型 --}}
-    @if ($column->column_type == 'file')
-        {!!$value!!}
-    @elseif ($column->column_type == 'image')
-        {!!$value!!}
-    @elseif ($column->column_type == 'video')
-        {!!$value!!}
-    @elseif ($column->column_type == 'wysiwyg')
-        {!!$value!!}
-    @else
-        {!!nl2br(e($value))!!}
-    @endif
+{{-- ファイル型 --}}
+@if ($column->column_type == DatabaseColumnType::file)
+    {!!$value!!}
+@elseif ($column->column_type == DatabaseColumnType::image)
+    {!!$value!!}
+@elseif ($column->column_type == DatabaseColumnType::video)
+    {!!$value!!}
+@elseif ($column->column_type == DatabaseColumnType::link)
+    {!!$value!!}
+@elseif ($column->column_type == DatabaseColumnType::wysiwyg)
+    {!!$value!!}
+@else
+    {!!nl2br(e($value))!!}
 @endif
