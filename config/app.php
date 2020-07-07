@@ -235,6 +235,7 @@ return [
         'ReservationCalendarDisplayType' => \App\Enums\ReservationCalendarDisplayType::class,
         'FormColumnType' => \App\Enums\FormColumnType::class,
         'DatabaseColumnType' => \App\Enums\DatabaseColumnType::class,
+        'DatabaseSortFlag' => \App\Enums\DatabaseSortFlag::class,
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
         'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
