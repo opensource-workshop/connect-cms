@@ -104,8 +104,8 @@
     $column->caption
     )
     <tr>
-        <td class="pt-3 border border-0"></td>
-        <td class="pt-3 border border-0" colspan="7">
+        <td class="pt-2 border border-0"></td>
+        <td class="pt-2 border border-0" colspan="8">
             @if ($column->select_count > 0)
                 {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
                 <div class="small">
