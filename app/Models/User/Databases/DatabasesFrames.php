@@ -71,8 +71,12 @@ class DatabasesFrames extends Model
             return false;
         }
 
+        // 並び順 のkey配列を返す
+        $enums_sort_flags_keys = \DatabaseSortFlag::getSortFlagsKeys();
+
         // 配列にマッチ
-        if (in_array(array('created_asc', 'created_desc', 'updated_asc', 'updated_desc', 'random'), $use_sort_flags)) {
+        // if (in_array(array('created_asc', 'created_desc', 'updated_asc', 'updated_desc', 'random'), $use_sort_flags)) {
+        if (in_array($enums_sort_flags_keys, $use_sort_flags)) {
             return true;
         }
         return false;

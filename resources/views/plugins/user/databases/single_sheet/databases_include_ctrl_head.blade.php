@@ -3,10 +3,11 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author よたか <info@hanamachi.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @copyright Hanamachi All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 
 <form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST">
     <div class="db-list-header form-group row no-gutters mb-3">
@@ -89,11 +90,7 @@
                     <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);">
                         <option value="">{{$select_column->column_name}}</option>
                         @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
-                            @if($columns_select->value == Session::get($session_column_name))
-                                 <option value="{{$columns_select->value}}" selected>{{$columns_select->value}}</option>
-                            @else
-                                <option value="{{$columns_select->value}}">{{$columns_select->value}}</option>
-                            @endif
+                            <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -102,21 +99,21 @@
             {{-- 並び順 --}}
             @if($sort_count > 0 || $databases_frames->isBasicUseSortFlag())
                 @php
-                  $sort_column_id = '';
-                  $sort_column_order = '';
+                    $sort_column_id = '';
+                    $sort_column_order = '';
 
-                  // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
-                  if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
-                      $sort_column_id = Session::get('sort_column_id.'.$frame_id);
-                      $sort_column_order = Session::get('sort_column_order.'.$frame_id);
-                  }
-                  else if ($databases_frames && $databases_frames->default_sort_flag) {
-                      $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
-                      if (count($default_sort_flag_part) == 2) {
-                          $sort_column_id = $default_sort_flag_part[0];
-                          $sort_column_order = $default_sort_flag_part[1];
-                      }
-                  }
+                    // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
+                    if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
+                        $sort_column_id = Session::get('sort_column_id.'.$frame_id);
+                        $sort_column_order = Session::get('sort_column_order.'.$frame_id);
+                    }
+                    else if ($databases_frames && $databases_frames->default_sort_flag) {
+                        $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
+                        if (count($default_sort_flag_part) == 2) {
+                            $sort_column_id = $default_sort_flag_part[0];
+                            $sort_column_order = $default_sort_flag_part[1];
+                        }
+                    }
                 @endphp
                 <div class="p-1
                     col-{{$col_no * 2}}
@@ -128,11 +125,7 @@
                         <option value="">並べ替え</option>
                         <optgroup label="基本設定">
                             @foreach($databases_frames->getBasicUseSortFlag() as $sort_basic)
-                                @if($sort_basic == ($sort_column_id . '_' . $sort_column_order))
-                                   <option value="{{$sort_basic}}" selected>{{DatabaseColumnType::getDescription($sort_basic)}}</option>
-                                @else
-                                   <option value="{{$sort_basic}}">{{DatabaseColumnType::getDescription($sort_basic)}}</option>
-                                @endif
+                                <option value="{{$sort_basic}}" @if($sort_basic == ($sort_column_id . '_' . $sort_column_order)) selected @endif>{{  DatabaseSortFlag::getDescription($sort_basic)  }}</option>
                             @endforeach
                         </optgroup>
 
@@ -141,20 +134,15 @@
                             <optgroup label="各カラム設定">
                                 {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
                                 @foreach($columns->whereIn('sort_flag', [1, 2, 3]) as $sort_column)
+
                                     @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
-                                        @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc')
-                                            <option value="{{$sort_column->id}}_asc" selected>{{$sort_column->column_name}}(昇順)</option>
-                                        @else
-                                            <option value="{{$sort_column->id}}_asc">{{$sort_column->column_name}}(昇順)</option>
-                                        @endif
+                                        <option value="{{$sort_column->id}}_asc" @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc') selected @endif>{{  $sort_column->column_name  }}(昇順)</option>
                                     @endif
+
                                     @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 3)
-                                        @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc')
-                                            <option value="{{$sort_column->id}}_desc" selected>{{$sort_column->column_name}}(降順)</option>
-                                        @else
-                                            <option value="{{$sort_column->id}}_desc">{{$sort_column->column_name}}(降順)</option>
-                                        @endif
+                                        <option value="{{$sort_column->id}}_desc" @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc') selected @endif>{{  $sort_column->column_name  }}(降順)</option>
                                     @endif
+
                                 @endforeach
                             </optgroup>
                         @endif

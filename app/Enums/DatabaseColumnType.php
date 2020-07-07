@@ -2,10 +2,12 @@
 
 namespace App\Enums;
 
+use App\Enums\EnumsBase;
+
 /**
- * フォーム項目区分
+ * データベース項目区分
  */
-final class DatabaseColumnType
+final class DatabaseColumnType extends EnumsBase
 {
     // 定数メンバ
     const text = 'text';
@@ -26,12 +28,13 @@ final class DatabaseColumnType
     // delete:「行グループ」「列グループ」追加に伴い、機能してない 項目の型「まとめ行」を廃止
     // const group = 'group';
 
-    const created_asc    = 'created_asc';
-    const created_desc   = 'created_desc';
-    const updated_asc    = 'updated_asc';
-    const updated_desc   = 'updated_desc';
-    const random_session = 'random_session';
-    const random_every   = 'random_every';
+    // move: ソート用項目のため、App\Enums\DatabaseSortFlag.phpに移動
+    // const created_asc    = 'created_asc';
+    // const created_desc   = 'created_desc';
+    // const updated_asc    = 'updated_asc';
+    // const updated_desc   = 'updated_desc';
+    // const random_session = 'random_session';
+    // const random_every   = 'random_every';
 
     // key/valueの連想配列
     const enum = [
@@ -53,27 +56,12 @@ final class DatabaseColumnType
         // delete:「行グループ」「列グループ」追加に伴い、機能してない 項目の型「まとめ行」を廃止
         // self::group=>'まとめ行',
 
-        self::created_asc    => '登録日（古い順）',
-        self::created_desc   => '登録日（新しい順）',
-        self::updated_asc    => '更新日（古い順）',
-        self::updated_desc   => '更新日（新しい順）',
-        self::random_session => 'ランダム（セッション）',
-        self::random_every   => 'ランダム（毎回）',
+        // move: ソート用項目のため、App\Enums\DatabaseSortFlag.phpに移動
+        // self::created_asc    => '登録日（古い順）',
+        // self::created_desc   => '登録日（新しい順）',
+        // self::updated_asc    => '更新日（古い順）',
+        // self::updated_desc   => '更新日（新しい順）',
+        // self::random_session => 'ランダム（セッション）',
+        // self::random_every   => 'ランダム（毎回）',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }

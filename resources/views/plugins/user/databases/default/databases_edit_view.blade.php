@@ -2,9 +2,10 @@
  * 表示設定画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベースプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -83,41 +84,18 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">並べ替え項目の表示</label>
         <div class="{{$frame->getSettingInputClass(false)}}">
-
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[created_asc]" value="created_asc" class="custom-control-input" id="use_sort_flag_created_asc" @if(old('use_sort_flag.created_asc', $view_frame->isUseSortFlag('created_asc'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_created_asc">登録日（古い順）</label>
-            </div>
-
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[created_desc]" value="created_desc" class="custom-control-input" id="use_sort_flag_created_desc" @if(old('use_sort_flag.created_desc', $view_frame->isUseSortFlag('created_desc'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_created_desc">登録日（新しい順）</label>
-            </div>
-
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[updated_asc]" value="updated_asc" class="custom-control-input" id="use_sort_flag_updated_asc" @if(old('use_sort_flag.updated_asc', $view_frame->isUseSortFlag('updated_asc'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_updated_asc">更新日（古い順）</label>
-            </div>
-
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[updated_desc]" value="updated_desc" class="custom-control-input" id="use_sort_flag_updated_desc" @if(old('use_sort_flag.updated_desc', $view_frame->isUseSortFlag('updated_desc'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_updated_desc">更新日（新しい順）</label>
-            </div>
-
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[random_session]" value="random_session" class="custom-control-input" id="use_sort_flag_random_session" @if(old('use_sort_flag.random_session', $view_frame->isUseSortFlag('random_session'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_random_session">ランダム（セッション）</label>
-            </div>
-
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[random_every]" value="random_every" class="custom-control-input" id="use_sort_flag_random_every" @if(old('use_sort_flag.random_every', $view_frame->isUseSortFlag('random_every'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_random_every">ランダム（毎回）</label>
-            </div>
-
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="use_sort_flag[column]" value="column" class="custom-control-input" id="use_sort_flag_column" @if(old('use_sort_flag.column', $view_frame->isUseSortFlag('column'))) checked=checked @endif>
-                <label class="custom-control-label" for="use_sort_flag_column">各カラム設定</label>
-            </div>
+            @foreach (DatabaseSortFlag::getDisplaySortFlags() as $sort_key => $sort_view)
+                {{--
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" name="use_sort_flag[created_asc]" value="created_asc" class="custom-control-input" id="use_sort_flag_created_asc" @ if(old('use_sort_flag.created_asc', $ view_frame->isUseSortFlag('created_asc'))) checked=checked @ endif>
+                    <label class="custom-control-label" for="use_sort_flag_created_asc">登録日（古い順）</label>
+                </div>
+                --}}
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" name="use_sort_flag[{{$sort_key}}]" value="{{$sort_key}}" class="custom-control-input" id="use_sort_flag_{{$sort_key}}" @if(old('use_sort_flag.' . $sort_key, $view_frame->isUseSortFlag($sort_key))) checked=checked @endif>
+                    <label class="custom-control-label" for="use_sort_flag_{{$sort_key}}">{{  $sort_view  }}</label>
+                </div>
+            @endforeach
         </div>
     </div>
 
@@ -134,12 +112,10 @@
 
             <optgroup label="基本設定">
                 <option value="">指定なし</option>
-                <option value="created_asc" @if($default_sort_flag == 'created_asc') selected @endif>登録日（古い順）</option>
-                <option value="created_desc" @if($default_sort_flag == 'created_desc') selected @endif>登録日（新しい順）</option>
-                <option value="updated_asc" @if($default_sort_flag == 'updated_asc') selected @endif>更新日（古い順）</option>
-                <option value="updated_desc" @if($default_sort_flag == 'updated_desc') selected @endif>更新日（新しい順）</option>
-                <option value="random_session" @if($default_sort_flag == 'random_session') selected @endif>ランダム（セッション）</option>
-                <option value="random_every" @if($default_sort_flag == 'random_every') selected @endif>ランダム（毎回）</option>
+                @foreach (DatabaseSortFlag::getSortFlags() as $sort_key => $sort_view)
+                    {{-- <option value="created_asc" @ if($default_sort_flag == 'created_asc') selected @ endif>登録日（古い順）</option> --}}
+                    <option value="{{$sort_key}}" @if($default_sort_flag == $sort_key) selected @endif>{{  $sort_view  }}</option>
+                @endforeach
             </optgroup>
             <optgroup label="各カラム設定">
                 {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
