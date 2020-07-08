@@ -28,6 +28,7 @@ github_copy.bat
 !/app/ModelsOption/User\Optionsamples/*
 /app/PluginsOption/*
 !/app/PluginsOption/User/Optionsamples/*
+/app/EnumsOption/*
 /database/migrations_option/*
 !/database/migrations_option/_readme.txt
 !/database/migrations_option/2020_06_03_163936_optionsamples_table.php
