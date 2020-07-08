@@ -34,7 +34,7 @@
         @endphp
 
         {{-- 新規登録 --}}
-        @can("role_article")
+        @can('posts.create', [[null, $frame->plugin_name, $buckets]])
             @php
                 $add_button_width = 1; // 新規ボタンの幅を確保する。
             @endphp
