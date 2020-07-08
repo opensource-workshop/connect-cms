@@ -29,7 +29,7 @@
         <tbody>
         @foreach($openingcalendars as $openingcalendar)
             <tr @if ($openingcalendar_frame->openingcalendars_id == $openingcalendar->id) class="active"@endif>
-                <td nowrap><input type="radio" value="{{$openingcalendar->bucket_id}}" name="select_bucket"@if ($openingcalendar_frame->bucket_id == $openingcalendar->bucket_id) checked @endif></input></td>
+                <td nowrap><input type="radio" value="{{$openingcalendar->bucket_id}}" name="select_bucket"@if ($openingcalendar_frame->bucket_id == $openingcalendar->bucket_id) checked @endif></td>
                 <td nowrap>{{$openingcalendar->openingcalendar_name}}</td>
                 <td nowrap><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/openingcalendars/editBuckets/{{$page->id}}/{{$frame_id}}/{{$openingcalendar->id}}'"><i class="far fa-edit"></i><span class="d-none d-xl-inline"> 設定変更</span></button></td>
                 <td nowrap>{{$openingcalendar->created_at}}</td>

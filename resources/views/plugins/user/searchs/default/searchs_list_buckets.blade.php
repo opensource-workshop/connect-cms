@@ -29,7 +29,7 @@
         @foreach($searchs as $search)
             <tr @if ($searchs_frame->bucket_id == $search->bucket_id) class="cc-active-tr"@endif>
                 <td>
-                    <input type="radio" value="{{$search->bucket_id}}" name="select_bucket"@if ($searchs_frame->bucket_id == $search->bucket_id) checked @endif></input>
+                    <input type="radio" value="{{$search->bucket_id}}" name="select_bucket"@if ($searchs_frame->bucket_id == $search->bucket_id) checked @endif>
                     <span class="{{$frame->getSettingCaptionClass()}}">{{$search->search_name}}</span>
                 </td>
                 <td class="{{$frame->getNarrowDisplayNone()}}">{{$search->search_name}}</td>

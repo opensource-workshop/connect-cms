@@ -29,7 +29,7 @@
         <tbody>
         @foreach($whatsnews as $whatsnew)
             <tr @if ($whatsnew_frame->whatsnews_id == $whatsnew->id) class="active"@endif>
-                <td nowrap><input type="radio" value="{{$whatsnew->bucket_id}}" name="select_bucket"@if ($whatsnew_frame->bucket_id == $whatsnew->bucket_id) checked @endif></input></td>
+                <td nowrap><input type="radio" value="{{$whatsnew->bucket_id}}" name="select_bucket"@if ($whatsnew_frame->bucket_id == $whatsnew->bucket_id) checked @endif></td>
                 <td nowrap>{{$whatsnew->whatsnew_name}}</td>
 {{--
                 <td nowrap><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/whatsnews/editBuckets/{{$page->id}}/{{$frame_id}}/{{$whatsnew->id}}'"><i class="far fa-edit"></i><span class="d-none d-xl-inline"> 設定変更</span></button></td>

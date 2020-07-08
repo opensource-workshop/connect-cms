@@ -94,11 +94,11 @@
             @foreach($login_permits as $login_permit)
                 <tr>
                     <td nowrap>
-                        <input type="hidden" value="{{$login_permit->id}}" name="login_permits_id[{{$login_permit->id}}]"></input>
-                        <input type="text" value="{{old('apply_sequence.'.$login_permit->id, $login_permit->apply_sequence)}}" name="apply_sequence[{{$login_permit->id}}]" class="form-control"></input>
+                        <input type="hidden" value="{{$login_permit->id}}" name="login_permits_id[{{$login_permit->id}}]">
+                        <input type="text" value="{{old('apply_sequence.'.$login_permit->id, $login_permit->apply_sequence)}}" name="apply_sequence[{{$login_permit->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('ip_address.'.$login_permit->id, $login_permit->ip_address)}}" name="ip_address[{{$login_permit->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('ip_address.'.$login_permit->id, $login_permit->ip_address)}}" name="ip_address[{{$login_permit->id}}]" class="form-control">
                     </td>
                     <td nowrap>
                         <select name="role[{{$login_permit->id}}]" class="form-control">
@@ -142,10 +142,10 @@
             @if ($create_flag)
                 <tr>
                     <td nowrap>
-                        <input type="text" value="{{old('add_apply_sequence', '')}}" name="add_apply_sequence" class="form-control"></input>
+                        <input type="text" value="{{old('add_apply_sequence', '')}}" name="add_apply_sequence" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_ip_address', '')}}" name="add_ip_address" class="form-control"></input>
+                        <input type="text" value="{{old('add_ip_address', '')}}" name="add_ip_address" class="form-control">
                     </td>
                     <td nowrap>
                         <select name="add_role" class="form-control">
@@ -186,10 +186,10 @@
             @else
                 <tr>
                     <td nowrap>
-                        <input type="text" value="{{old('add_apply_sequence', '')}}" name="add_apply_sequence" class="form-control"></input>
+                        <input type="text" value="{{old('add_apply_sequence', '')}}" name="add_apply_sequence" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_ip_address', '')}}" name="add_ip_address" class="form-control"></input>
+                        <input type="text" value="{{old('add_ip_address', '')}}" name="add_ip_address" class="form-control">
                     </td>
                     <td nowrap>
                         <div class="custom-control custom-radio custom-control-inline">

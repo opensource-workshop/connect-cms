@@ -97,11 +97,11 @@
             @foreach($languages as $language)
                 <tr>
                     <td nowrap>
-                        <input type="hidden" value="{{$language->id}}" name="languages_id[{{$language->id}}]"></input>
-                        <input type="text" value="{{old('language.'.$language->id, $language->value)}}" name="language[{{$language->id}}]" class="form-control"></input>
+                        <input type="hidden" value="{{$language->id}}" name="languages_id[{{$language->id}}]">
+                        <input type="text" value="{{old('language.'.$language->id, $language->value)}}" name="language[{{$language->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('url.'.$language->id, $language->additional1)}}" name="url[{{$language->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('url.'.$language->id, $language->additional1)}}" name="url[{{$language->id}}]" class="form-control">
                     </td>
                     <td nowrap>
                         <a href="javascript:form_delete('{{$language->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
@@ -111,10 +111,10 @@
             @if ($create_flag)
                 <tr>
                     <td nowrap>
-                        <input type="text" value="" name="add_language" class="form-control"></input>
+                        <input type="text" value="" name="add_language" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_url" class="form-control"></input>
+                        <input type="text" value="" name="add_url" class="form-control">
                     </td>
                     <td nowrap>
                     </td>
@@ -122,10 +122,10 @@
             @else
                 <tr>
                     <td nowrap>
-                        <input type="text" value="{{old('add_language', '')}}" name="add_language" class="form-control"></input>
+                        <input type="text" value="{{old('add_language', '')}}" name="add_language" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_url', '')}}" name="add_url" class="form-control"></input>
+                        <input type="text" value="{{old('add_url', '')}}" name="add_url" class="form-control">
                     </td>
                     <td nowrap>
                     </td>

@@ -29,7 +29,7 @@
         @foreach($learningtasks as $learningtask)
             <tr @if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) class="cc-active-tr"@endif>
                 <td>
-                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) checked @endif></input>
+                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) checked @endif>
                     <span class="{{$frame->getSettingCaptionClass()}}">{{$learningtask->learningtasks_name}}</span>
                 </td>
                 <td class="{{$frame->getNarrowDisplayNone()}}">{{$learningtask->learningtasks_name}}</td>

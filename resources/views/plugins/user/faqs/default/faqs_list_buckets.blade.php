@@ -29,7 +29,7 @@
         @foreach($faqs as $faq)
             <tr @if ($faq_frame->bucket_id == $faq->bucket_id) class="cc-active-tr"@endif>
                 <td>
-                    <input type="radio" value="{{$faq->bucket_id}}" name="select_bucket"@if ($faq_frame->bucket_id == $faq->bucket_id) checked @endif></input>
+                    <input type="radio" value="{{$faq->bucket_id}}" name="select_bucket"@if ($faq_frame->bucket_id == $faq->bucket_id) checked @endif>
                     <span class="{{$frame->getSettingCaptionClass()}}">{{$faq->faq_name}}</span>
                 </td>
                 <td class="{{$frame->getNarrowDisplayNone()}}">{{$faq->faq_name}}</td>

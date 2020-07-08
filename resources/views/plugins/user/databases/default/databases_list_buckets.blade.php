@@ -65,7 +65,7 @@
             <tbody>
             @foreach($plugins as $plugin)
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
-                    <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></input></td>
+                    <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
                     <td nowrap>{{$plugin->plugin_bucket_name}}</td>
                     <td nowrap>
                         <button class="btn btn-primary btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}'">
