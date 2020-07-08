@@ -638,6 +638,7 @@ class DatabasesPlugin extends UserPluginBase
                 'database'   => $database,
                 'columns'    => $columns,
                 'group_rows_cols_columns' => $group_rows_cols_columns,
+                // inputにすると値があってもnullになるため、$inputsのままでいく
                 'inputs'     => $inputs,
                 'input_cols' => $input_cols,
             ]
@@ -991,6 +992,12 @@ class DatabasesPlugin extends UserPluginBase
 
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
+            // 登録日型・更新日型は、databases_inputsテーブルの登録日・更新日を利用するため、登録しない
+            if ($databases_column->column_type == \DatabaseColumnType::created ||
+                    $databases_column->column_type == \DatabaseColumnType::updated) {
+                continue;
+            }
+
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
                 $value = implode(',', $request->databases_columns_value[$databases_column->id]);
@@ -1009,9 +1016,9 @@ class DatabasesPlugin extends UserPluginBase
                 $databases_input_cols->save();
 
                 // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if (($databases_column->column_type == "file")  ||
-                    ($databases_column->column_type == "image") ||
-                    ($databases_column->column_type == "video")) {
+                if (($databases_column->column_type == \DatabaseColumnType::file)  ||
+                    ($databases_column->column_type == \DatabaseColumnType::image) ||
+                    ($databases_column->column_type == \DatabaseColumnType::video)) {
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
@@ -1020,7 +1027,7 @@ class DatabasesPlugin extends UserPluginBase
             $contents_text .= $databases_column->column_name . "：" . $value . "\n";
 
             // メール型
-            if ($databases_column->column_type == "mail") {
+            if ($databases_column->column_type == \DatabaseColumnType::mail) {
                 $user_mailaddresses[] = $value;
             }
         }
@@ -1190,7 +1197,7 @@ class DatabasesPlugin extends UserPluginBase
                 $databases_input_cols->save();
 
                 // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if ($databases_column->column_type == "file") {
+                if ($databases_column->column_type == \DatabaseColumnType::file) {
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
@@ -1199,7 +1206,7 @@ class DatabasesPlugin extends UserPluginBase
             $contents_text .= $databases_column->column_name . "：" . $value . "\n";
 
             // メール型
-            if ($databases_column->column_type == "mail") {
+            if ($databases_column->column_type == \DatabaseColumnType::mail) {
                 $user_mailaddresses[] = $value;
             }
         }

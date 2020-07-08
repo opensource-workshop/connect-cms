@@ -23,50 +23,21 @@
 --}}
 
         @foreach($databases_columns as $database_column)
-        <div class="form-group row">
-            <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
             @switch($database_column->column_type)
-            @case("group")
-                @php
-                    // グループカラムの幅の計算
-                    $col_count = floor(12/count($database_column->group));
-                    if ($col_count < 3) {
-                        $col_count = 3;
-                    }
-                @endphp
-                <div class="col-sm-9 pr-0">
-                <div class="container-fluid row" style="padding: 0;">
-                @foreach($database_column->group as $group_row)
-
-                    {{-- 項目名 --}}
-                    @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
-                        <div class="col-sm-{{$col_count}}" style="padding-left: 0px;">
-                        <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
-                    @else
-                        <div class="col-sm-{{$col_count}} pr-0">
-                        <label class="control-label">{{$group_row->column_name}}</label>
-                    @endif
-
-                    {{-- 必須 --}}
-                    @if ($group_row->required)<label class="badge badge-danger">必須</label> @endif
-
-                    {{-- 項目 ※まとめ設定行 --}}
-                    @include('plugins.user.databases.default.databases_input_' . $group_row->column_type,['database_obj' => $group_row])
-                    <div class="small {{ $group_row->caption_color }}">{!! nl2br($group_row->caption) !!}</div>
-                        </div>
-                @endforeach
-                    </div>
-                    <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
-                </div>
+            {{-- 登録日型・更新日型は入力表示しない --}}
+            @case(DatabaseColumnType::created)
+            @case(DatabaseColumnType::updated)
                 @break
-            {{-- 項目 ※まとめ未設定行 --}}
+            {{-- 通常の項目 --}}
             @default
-                <div class="col-sm-9">
-                    @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
-                    <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
+                <div class="form-group row">
+                    <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
+                    <div class="col-sm-9">
+                        @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
+                        <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
+                    </div>
                 </div>
             @endswitch
-        </div>
         @endforeach
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
