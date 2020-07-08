@@ -46,7 +46,7 @@ class DatabasesPlugin extends UserPluginBase
     /* コアから呼び出す関数 */
 
     /**
-     *  関数定義（コアから呼び出す）
+     * 追加の関数定義（コアから呼び出す）
      */
     public function getPublicFunctions()
     {
@@ -63,8 +63,6 @@ class DatabasesPlugin extends UserPluginBase
             'index',
             'detail',
             'input',
-            'publicConfirm',
-            'publicStore',
             'cancel',
             'updateColumn',
             'updateColumnSequence',
@@ -81,39 +79,31 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  権限定義
+     * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
     {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["input"]                = array('role_article');
-        $role_ckeck_table["publicConfirm"]        = array('role_article');
-        $role_ckeck_table["publicStore"]          = array('role_article');
-        $role_ckeck_table["delete"]               = array('role_article');
+        $role_ckeck_table["input"]                = array('posts.create', 'posts.update');
+        $role_ckeck_table["publicConfirm"]        = array('posts.create', 'posts.update');
+        $role_ckeck_table["publicStore"]          = array('posts.create', 'posts.update');
 
-        $role_ckeck_table["listBuckets"]          = array('role_arrangement');
-        $role_ckeck_table["createBuckets"]        = array('role_arrangement');
-        $role_ckeck_table["editBuckets"]          = array('role_arrangement');
-        $role_ckeck_table["saveBuckets"]          = array('role_arrangement');
-        $role_ckeck_table["destroyBuckets"]       = array('role_arrangement');
-        $role_ckeck_table["changeBuckets"]        = array('role_arrangement');
-        $role_ckeck_table["addColumn"]            = array('role_arrangement');
-        $role_ckeck_table["editColumnDetail"]     = array('role_arrangement');
-        $role_ckeck_table["editColumn"]           = array('role_arrangement');
-        $role_ckeck_table["deleteColumn"]         = array('role_arrangement');
-        $role_ckeck_table["updateColumn"]         = array('role_arrangement');
-        $role_ckeck_table["updateColumnSequence"] = array('role_arrangement');
-        $role_ckeck_table["updateColumnDetail"]   = array('role_arrangement');
-        $role_ckeck_table["addSelect"]            = array('role_arrangement');
-        $role_ckeck_table["addPref"]              = array('role_arrangement');
-        $role_ckeck_table["updateSelect"]         = array('role_arrangement');
-        $role_ckeck_table["updateSelectSequence"] = array('role_arrangement');
-        $role_ckeck_table["deleteSelect"]         = array('role_arrangement');
-        $role_ckeck_table["deleteColumnsSelects"] = array('role_arrangement');
-        $role_ckeck_table["downloadCsv"]          = array('role_arrangement');
-        $role_ckeck_table["editView"]             = array('role_arrangement');
-        $role_ckeck_table["saveView"]             = array('role_arrangement');
+        $role_ckeck_table["editColumnDetail"]     = array('buckets.editColumn');
+        $role_ckeck_table["updateColumn"]         = array('buckets.editColumn');
+        $role_ckeck_table["updateColumnSequence"] = array('buckets.editColumn');
+        $role_ckeck_table["updateColumnDetail"]   = array('buckets.editColumn');
+        $role_ckeck_table["addSelect"]            = array('buckets.addColumn');
+        $role_ckeck_table["addPref"]              = array('buckets.addColumn');
+        $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
+        $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
+        $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
+        $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
+        $role_ckeck_table["editView"]             = array('frames.edit');
+        $role_ckeck_table["saveView"]             = array('frames.edit');
         return $role_ckeck_table;
     }
 
@@ -650,11 +640,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function input($request, $page_id, $frame_id, $id = null, $errors = null)
     {
-        // 権限チェック（まずはモデレータでチェック）
-        if ($this->can('role_article')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -801,11 +786,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function publicConfirm($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（まずはモデレータでチェック）
-        if ($this->can('role_article')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
@@ -929,12 +909,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function publicStore($request, $page_id, $frame_id, $id = null)
     {
-
-        // 権限チェック（まずはモデレータでチェック）
-        if ($this->can('role_article')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
@@ -1081,12 +1055,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function delete($request, $page_id, $frame_id, $id)
     {
-
-        // 権限チェック（まずはモデレータでチェック）
-        if ($this->can('role_article')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 行 idがなければ終了
         if (empty($id)) {
             // 表示テンプレートを呼び出す。
@@ -1890,7 +1858,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns_id' => $request->column_id,
                 'value'                => $pref,
                 'display_sequence'     => $max_display_sequence,
-             ]);
+            ]);
             $max_display_sequence++;
         }
         $message = '選択肢【 '. $request->select_name .' 】を追加しました。';
@@ -2221,5 +2189,27 @@ class DatabasesPlugin extends UserPluginBase
         $return[] = '/page';
 
         return $return;
+    }
+
+    /**
+     * 権限設定変更 画面
+     * [TODO] 一時的に承認権限を使わない設定で修正する。今後承認機能を実装したら、当メソッドを削除する。
+     */
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    {
+        // 承認を使わない設定にして、親クラスの同メソッドを呼ぶ
+        $use_approval = false;
+        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
+    }
+
+    /**
+     * 権限設定 保存処理
+     * [TODO] 一時的に承認権限を使わない設定で修正する。今後承認機能を実装したら、当メソッドを削除する。
+     */
+    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    {
+        // 承認を使わない設定にして、親クラスの同メソッドを呼ぶ
+        $use_approval = false;
+        return parent::saveBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }
 }

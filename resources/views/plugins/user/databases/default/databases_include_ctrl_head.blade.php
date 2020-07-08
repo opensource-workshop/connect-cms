@@ -9,7 +9,7 @@
 --}}
 
 {{-- 新規登録 --}}
-@can("role_article")
+@can('posts.create', [[null, $frame->plugin_name, $buckets]])
     <div class="row">
         <p class="text-right col-12">
             {{-- 新規登録ボタン --}}

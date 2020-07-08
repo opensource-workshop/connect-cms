@@ -23,7 +23,7 @@
     @endforeach
 </table>
 
-@can("role_article")
+@can('posts.update', [[$inputs, $frame->plugin_name, $buckets]])
 <div class="row">
     <div class="col-12 text-right mb-1">
         <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}'">
