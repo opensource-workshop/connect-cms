@@ -45,6 +45,15 @@
             $value = '<a href="' . $obj->value . '" target="_blank">' . $obj->value . '</a>';
         }
     }
+    // 登録日型
+    elseif ($column->column_type == DatabaseColumnType::created) {
+        // DatabasesPlugin.phpにて、inputでbladeに値を渡すと、値があってもnullになるため、inputsのままでいく
+        $value = $inputs->created_at;
+    }
+    // 更新日型
+    elseif ($column->column_type == DatabaseColumnType::updated) {
+        $value = $inputs->updated_at;
+    }
     // その他の型
     else {
         $value = $obj ? $obj->value : "";

@@ -34,110 +34,117 @@
 <form action="" name="databases_store{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     @foreach($databases_columns as $database_column)
-    <div class="form-group container-fluid row">
-        {{-- ラベル --}}
-        <label class="col-sm-2 control-label text-nowrap">{{$database_column->column_name}}</label>
-        {{-- 項目 --}}
-        <div class="col-sm-10">
 
-        @switch($database_column->column_type)
+        {{-- 登録日型・更新日型は入力表示しない --}}
+        @if($database_column->column_type == DatabaseColumnType::created ||
+            $database_column->column_type == DatabaseColumnType::updated)
+            @continue
+        @endif
 
-        @case(DatabaseColumnType::text)
-            {{$request->databases_columns_value[$database_column->id]}}
-            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
-            @break
-        @case(DatabaseColumnType::textarea)
-            {!!nl2br(e($request->databases_columns_value[$database_column->id]))!!}
-            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
-            @break
-        @case(DatabaseColumnType::radio)
-            @if (array_key_exists($database_column->id, $request->databases_columns_value))
-                <input name="databases_columns_value[{{$database_column->id}}]" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">{{$request->databases_columns_value[$database_column->id]}}
-            @else
-                <input name="databases_columns_value[{{$database_column->id}}]" type="hidden">
-            @endif
-            @break
-        @case(DatabaseColumnType::checkbox)
-            @if (array_key_exists($database_column->id, $request->databases_columns_value))
-                @foreach($request->databases_columns_value[$database_column->id] as $checkbox_item)
-                    <input name="databases_columns_value[{{$database_column->id}}][]" type="hidden" value="{{$checkbox_item}}">{{$checkbox_item}}@if (!$loop->last), @endif
-                @endforeach
-            @else
-                <input name="databases_columns_value[{{$database_column->id}}][]" type="hidden">
-            @endif
-            @break
-        @case(DatabaseColumnType::select)
-            @if (array_key_exists($database_column->id, $request->databases_columns_value))
-                <input name="databases_columns_value[{{$database_column->id}}]" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">{{$request->databases_columns_value[$database_column->id]}}
-            @else
-                <input name="databases_columns_value[{{$database_column->id}}]" type="hidden">
-            @endif
-            @break
-        @case(DatabaseColumnType::mail)
-            {{$request->databases_columns_value[$database_column->id]}}
-            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
-            @break
-        @case("date")
-            {{$request->databases_columns_value[$database_column->id]}}
-            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
-            @break
-        @case(DatabaseColumnType::time)
-            {{$request->databases_columns_value[$database_column->id]}}
-            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
-            @break
-        @case(DatabaseColumnType::link)
-            <a href="{{$request->databases_columns_value[$database_column->id]}}" target="_blank">{{$request->databases_columns_value[$database_column->id]}}</a>
-            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
-            @break
-        @case(DatabaseColumnType::file)
-            @php
-                // value 値の取得
-                if ($uploads && $uploads->where('columns_id', $database_column->id)) {
-                    $value_obj = $uploads->where('columns_id', $database_column->id)->first();
-                }
-            @endphp
-            @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
-                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
-                <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
-            @else
-                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
-            @endif
-            @break
-        @case(DatabaseColumnType::image)
-            @php
-                // value 値の取得
-                if ($uploads && $uploads->where('columns_id', $database_column->id)) {
-                    $value_obj = $uploads->where('columns_id', $database_column->id)->first();
-                }
-            @endphp
-            @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
-                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
-                <img src="{{url('/')}}/file/{{$value_obj->id}}" class="img-fluid" />
-            @else
-                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
-            @endif
-            @break
-        @case(DatabaseColumnType::video)
-            @php
-                // value 値の取得
-                if ($uploads && $uploads->where('columns_id', $database_column->id)) {
-                    $value_obj = $uploads->where('columns_id', $database_column->id)->first();
-                }
-            @endphp
-            @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
-                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
-                <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
-            @else
-                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
-            @endif
-            @break
-        @case(DatabaseColumnType::wysiwyg)
-            {!!$request->databases_columns_value[$database_column->id]!!}
-            <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
-            @break
-        @endswitch
+        <div class="form-group container-fluid row">
+            {{-- ラベル --}}
+            <label class="col-sm-2 control-label text-nowrap">{{$database_column->column_name}}</label>
+            {{-- 項目 --}}
+            <div class="col-sm-10">
+
+            @switch($database_column->column_type)
+
+            @case(DatabaseColumnType::text)
+                {{$request->databases_columns_value[$database_column->id]}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case(DatabaseColumnType::textarea)
+                {!!nl2br(e($request->databases_columns_value[$database_column->id]))!!}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case(DatabaseColumnType::radio)
+                @if (array_key_exists($database_column->id, $request->databases_columns_value))
+                    <input name="databases_columns_value[{{$database_column->id}}]" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">{{$request->databases_columns_value[$database_column->id]}}
+                @else
+                    <input name="databases_columns_value[{{$database_column->id}}]" type="hidden">
+                @endif
+                @break
+            @case(DatabaseColumnType::checkbox)
+                @if (array_key_exists($database_column->id, $request->databases_columns_value))
+                    @foreach($request->databases_columns_value[$database_column->id] as $checkbox_item)
+                        <input name="databases_columns_value[{{$database_column->id}}][]" type="hidden" value="{{$checkbox_item}}">{{$checkbox_item}}@if (!$loop->last), @endif
+                    @endforeach
+                @else
+                    <input name="databases_columns_value[{{$database_column->id}}][]" type="hidden">
+                @endif
+                @break
+            @case(DatabaseColumnType::select)
+                @if (array_key_exists($database_column->id, $request->databases_columns_value))
+                    <input name="databases_columns_value[{{$database_column->id}}]" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">{{$request->databases_columns_value[$database_column->id]}}
+                @else
+                    <input name="databases_columns_value[{{$database_column->id}}]" type="hidden">
+                @endif
+                @break
+            @case(DatabaseColumnType::mail)
+                {{$request->databases_columns_value[$database_column->id]}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case("date")
+                {{$request->databases_columns_value[$database_column->id]}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case(DatabaseColumnType::time)
+                {{$request->databases_columns_value[$database_column->id]}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case(DatabaseColumnType::link)
+                <a href="{{$request->databases_columns_value[$database_column->id]}}" target="_blank">{{$request->databases_columns_value[$database_column->id]}}</a>
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case(DatabaseColumnType::file)
+                @php
+                    // value 値の取得
+                    if ($uploads && $uploads->where('columns_id', $database_column->id)) {
+                        $value_obj = $uploads->where('columns_id', $database_column->id)->first();
+                    }
+                @endphp
+                @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
+                    <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
+                    <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
+                @else
+                    <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
+                @endif
+                @break
+            @case(DatabaseColumnType::image)
+                @php
+                    // value 値の取得
+                    if ($uploads && $uploads->where('columns_id', $database_column->id)) {
+                        $value_obj = $uploads->where('columns_id', $database_column->id)->first();
+                    }
+                @endphp
+                @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
+                    <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
+                    <img src="{{url('/')}}/file/{{$value_obj->id}}" class="img-fluid" />
+                @else
+                    <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
+                @endif
+                @break
+            @case(DatabaseColumnType::video)
+                @php
+                    // value 値の取得
+                    if ($uploads && $uploads->where('columns_id', $database_column->id)) {
+                        $value_obj = $uploads->where('columns_id', $database_column->id)->first();
+                    }
+                @endphp
+                @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
+                    <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
+                    <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
+                @else
+                    <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="">
+                @endif
+                @break
+            @case(DatabaseColumnType::wysiwyg)
+                {!!$request->databases_columns_value[$database_column->id]!!}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @endswitch
+            </div>
         </div>
-    </div>
     @endforeach
 
     {{-- 削除対象のファイルのid --}}

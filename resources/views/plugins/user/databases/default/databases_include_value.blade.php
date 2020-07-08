@@ -45,6 +45,14 @@
             $value = '<a href="' . $obj->value . '" target="_blank">' . $obj->value . '</a>';
         }
     }
+    // 登録日型
+    elseif ($column->column_type == DatabaseColumnType::created) {
+        $value = $input->created_at;
+    }
+    // 更新日型
+    elseif ($column->column_type == DatabaseColumnType::updated) {
+        $value = $input->updated_at;
+    }
     // その他の型
     else {
         $value = $obj ? $obj->value : "";

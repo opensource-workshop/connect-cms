@@ -23,13 +23,21 @@
 --}}
 
         @foreach($databases_columns as $database_column)
-        <div class="form-group row">
-            <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
-            <div class="col-sm-9">
-                @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
-                <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
-            </div>
-        </div>
+            @switch($database_column->column_type)
+            {{-- 登録日型・更新日型は入力表示しない --}}
+            @case(DatabaseColumnType::created)
+            @case(DatabaseColumnType::updated)
+                @break
+            {{-- 通常の項目 --}}
+            @default
+                <div class="form-group row">
+                    <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
+                    <div class="col-sm-9">
+                        @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
+                        <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
+                    </div>
+                </div>
+            @endswitch
         @endforeach
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
