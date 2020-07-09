@@ -65,7 +65,7 @@
     @foreach($buckets_list as $bucket)
         <tr @if ($bucket->frames_id == $frame_id) class="cc-active-tr"@endif>
             <td>
-                <input type="radio" value="{{$bucket->id}}" name="select_bucket"@if ($bucket->frames_id == $frame_id) checked @endif></input>
+                <input type="radio" value="{{$bucket->id}}" name="select_bucket"@if ($bucket->frames_id == $frame_id) checked @endif>
             </td>
             <td>{{$bucket->contents_updated_at}}</td>
             <td>{{$bucket->page_name}}</td>

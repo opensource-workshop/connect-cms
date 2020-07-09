@@ -76,14 +76,14 @@
         <div class="card">
             <div class="card-body p-2">
                 @if ($codestudy->study_lang == 'java' || old('study_lang') == 'java')
-                    <label class="m-0"><input name="study_lang" type="radio" value="java" checked> Java</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="java" checked> Java</label>
                 @else
-                    <label class="m-0"><input name="study_lang" type="radio" value="java"> Java</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="java"> Java</label>
                 @endif
                 @if ($codestudy->study_lang == 'php' || old('study_lang') == 'php')
-                    <label class="m-0"><input name="study_lang" type="radio" value="php" checked> PHP</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="php" checked> PHP</label>
                 @else
-                    <label class="m-0"><input name="study_lang" type="radio" value="php"> PHP</input></label>
+                    <label class="m-0"><input name="study_lang" type="radio" value="php"> PHP</label>
                 @endif
             </div>
         </div>

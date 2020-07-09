@@ -51,7 +51,7 @@
                 @foreach($patterns as $pattern)
             <td class="px-1">
 {{$pattern->caption}}<br />
-                <label><input type="radio" name="all_check" onclick="javascript:set_all_time({{$loop->index}});">{{$pattern->pattern}}</input></label>
+                <label><input type="radio" name="all_check" onclick="javascript:set_all_time({{$loop->index}});">{{$pattern->pattern}}</label>
             </td>
                 @endforeach
         </tr>
@@ -62,9 +62,9 @@
             <td class="px-1" nowrap>
                 <label class="my-1">
                     @if ($edit_day && $edit_day->openingcalendars_patterns_id == $pattern->id)
-                    <input type="radio" value="{{$pattern->id}}" name="openingcalendars[{{$key}}]" checked="checked">{{$pattern->pattern}}</input>
+                    <input type="radio" value="{{$pattern->id}}" name="openingcalendars[{{$key}}]" checked="checked">{{$pattern->pattern}}
                     @else
-                    <input type="radio" value="{{$pattern->id}}" name="openingcalendars[{{$key}}]">{{$pattern->pattern}}</input>
+                    <input type="radio" value="{{$pattern->id}}" name="openingcalendars[{{$key}}]">{{$pattern->pattern}}
                     @endif
                 </label>
             </td>

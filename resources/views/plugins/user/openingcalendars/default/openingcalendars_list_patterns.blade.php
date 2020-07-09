@@ -70,17 +70,17 @@
         @foreach($patterns as $pattern)
             <tr>
                 <td nowrap>
-                    <input type="hidden" value="{{$pattern->openingcalendars_patterns_id}}" name="openingcalendars_patterns_id[{{$pattern->openingcalendars_patterns_id}}]"></input>
-                    <input type="text" value="{{old('display_sequence.'.$pattern->openingcalendars_patterns_id, $pattern->display_sequence)}}" name="display_sequence[{{$pattern->openingcalendars_patterns_id}}]" class="form-control"></input>
+                    <input type="hidden" value="{{$pattern->openingcalendars_patterns_id}}" name="openingcalendars_patterns_id[{{$pattern->openingcalendars_patterns_id}}]">
+                    <input type="text" value="{{old('display_sequence.'.$pattern->openingcalendars_patterns_id, $pattern->display_sequence)}}" name="display_sequence[{{$pattern->openingcalendars_patterns_id}}]" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('caption.'.$pattern->openingcalendars_patterns_id, $pattern->caption)}}" name="caption[{{$pattern->openingcalendars_patterns_id}}]" class="form-control"></input>
+                    <input type="text" value="{{old('caption.'.$pattern->openingcalendars_patterns_id, $pattern->caption)}}" name="caption[{{$pattern->openingcalendars_patterns_id}}]" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('pattern.'.$pattern->openingcalendars_patterns_id, $pattern->pattern)}}" name="pattern[{{$pattern->openingcalendars_patterns_id}}]" class="form-control"></input>
+                    <input type="text" value="{{old('pattern.'.$pattern->openingcalendars_patterns_id, $pattern->pattern)}}" name="pattern[{{$pattern->openingcalendars_patterns_id}}]" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('color.'.$pattern->openingcalendars_patterns_id, $pattern->color)}}" name="color[{{$pattern->openingcalendars_patterns_id}}]" class="form-control"></input>
+                    <input type="text" value="{{old('color.'.$pattern->openingcalendars_patterns_id, $pattern->color)}}" name="color[{{$pattern->openingcalendars_patterns_id}}]" class="form-control">
                 </td>
                 <td nowrap>
                     <a href="javascript:form_delete('{{$pattern->openingcalendars_patterns_id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
@@ -90,16 +90,16 @@
         @if ($create_flag)
             <tr>
                 <td nowrap>
-                    <input type="text" value="" name="add_display_sequence" class="form-control"></input>
+                    <input type="text" value="" name="add_display_sequence" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_caption" class="form-control"></input>
+                    <input type="text" value="" name="add_caption" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_pattern" class="form-control"></input>
+                    <input type="text" value="" name="add_pattern" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_color" class="form-control"></input>
+                    <input type="text" value="" name="add_color" class="form-control">
                 </td>
                 <td nowrap>
                 </td>
@@ -107,16 +107,16 @@
         @else
             <tr>
                 <td nowrap>
-                    <input type="text" value="{{old('add_display_sequence', '')}}" name="add_display_sequence" class="form-control"></input>
+                    <input type="text" value="{{old('add_display_sequence', '')}}" name="add_display_sequence" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_caption', '')}}" name="add_caption" class="form-control"></input>
+                    <input type="text" value="{{old('add_caption', '')}}" name="add_caption" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_pattern', '')}}" name="add_pattern" class="form-control"></input>
+                    <input type="text" value="{{old('add_pattern', '')}}" name="add_pattern" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control"></input>
+                    <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control">
                 </td>
                 <td nowrap>
                 </td>

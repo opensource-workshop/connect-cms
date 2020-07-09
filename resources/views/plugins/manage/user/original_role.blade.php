@@ -69,14 +69,14 @@
             @foreach($configs as $config)
                 <tr>
                     <td nowrap>
-                        <input type="hidden" value="{{$config->id}}" name="configs_id[{{$config->id}}]"></input>
-                        <input type="text" value="{{old('additional1.'.$config->id, $config->additional1)}}" name="additional1[{{$config->id}}]" class="form-control"></input>
+                        <input type="hidden" value="{{$config->id}}" name="configs_id[{{$config->id}}]">
+                        <input type="text" value="{{old('additional1.'.$config->id, $config->additional1)}}" name="additional1[{{$config->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('name.'.$config->id, $config->name)}}" name="name[{{$config->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('name.'.$config->id, $config->name)}}" name="name[{{$config->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('value.'.$config->id, $config->value)}}" name="value[{{$config->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('value.'.$config->id, $config->value)}}" name="value[{{$config->id}}]" class="form-control">
                     </td>
                     <td nowrap>
                         <a href="javascript:form_delete('{{$config->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
@@ -86,13 +86,13 @@
             @if ($create_flag)
                 <tr>
                     <td nowrap>
-                        <input type="text" value="" name="add_additional1" class="form-control"></input>
+                        <input type="text" value="" name="add_additional1" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_name" class="form-control"></input>
+                        <input type="text" value="" name="add_name" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_value" class="form-control"></input>
+                        <input type="text" value="" name="add_value" class="form-control">
                     </td>
                     <td nowrap>
                     </td>
@@ -100,13 +100,13 @@
             @else
                 <tr>
                     <td nowrap>
-                        <input type="text" value="{{old('add_additional1', '')}}" name="add_additional1" class="form-control"></input>
+                        <input type="text" value="{{old('add_additional1', '')}}" name="add_additional1" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_name', '')}}" name="add_name" class="form-control"></input>
+                        <input type="text" value="{{old('add_name', '')}}" name="add_name" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_value', '')}}" name="add_value" class="form-control"></input>
+                        <input type="text" value="{{old('add_value', '')}}" name="add_value" class="form-control">
                     </td>
                     <td nowrap>
                     </td>

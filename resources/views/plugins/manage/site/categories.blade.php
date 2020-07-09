@@ -73,23 +73,23 @@
             @foreach($categories as $category)
                 <tr>
                     <td nowrap>
-                        <input type="hidden" value="{{$category->id}}" name="categories_id[{{$category->id}}]"></input>
-                        <input type="text" value="{{old('display_sequence.'.$category->id, $category->display_sequence)}}" name="display_sequence[{{$category->id}}]" class="form-control"></input>
+                        <input type="hidden" value="{{$category->id}}" name="categories_id[{{$category->id}}]">
+                        <input type="text" value="{{old('display_sequence.'.$category->id, $category->display_sequence)}}" name="display_sequence[{{$category->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('classname.'.$category->id, $category->classname)}}" name="classname[{{$category->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('classname.'.$category->id, $category->classname)}}" name="classname[{{$category->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('category.'.$category->id, $category->category)}}" name="category[{{$category->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('category.'.$category->id, $category->category)}}" name="category[{{$category->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('color.'.$category->id, $category->color)}}" name="color[{{$category->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('color.'.$category->id, $category->color)}}" name="color[{{$category->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('background_color.'.$category->id, $category->background_color)}}" name="background_color[{{$category->id}}]" class="form-control"></input>
+                        <input type="text" value="{{old('background_color.'.$category->id, $category->background_color)}}" name="background_color[{{$category->id}}]" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="hidden" value="{{old('target.'.$category->id, $category->target)}}" name="target[{{$category->id}}]" class="form-control"></input>
+                        <input type="hidden" value="{{old('target.'.$category->id, $category->target)}}" name="target[{{$category->id}}]" class="form-control">
                         @if ($category->target)
                             <span class="badge" style="color:{{$category->color}};background-color:{{$category->background_color}};">{{$category->target}}</span>
                         @else
@@ -97,7 +97,7 @@
                         @endif
                     </td>
                     <td nowrap>
-                        <input type="hidden" value="{{old('plugin_id.'.$category->id, $category->plugin_id)}}" name="plugin_id[{{$category->id}}]"></input>
+                        <input type="hidden" value="{{old('plugin_id.'.$category->id, $category->plugin_id)}}" name="plugin_id[{{$category->id}}]">
                         {{$category->plugin_id}}
                     </td>
                     <td nowrap>
@@ -108,25 +108,25 @@
             @if ($create_flag)
                 <tr>
                     <td nowrap>
-                        <input type="text" value="" name="add_display_sequence" class="form-control"></input>
+                        <input type="text" value="" name="add_display_sequence" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_classname" class="form-control"></input>
+                        <input type="text" value="" name="add_classname" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_category" class="form-control"></input>
+                        <input type="text" value="" name="add_category" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_color" class="form-control"></input>
+                        <input type="text" value="" name="add_color" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_background_color" class="form-control"></input>
+                        <input type="text" value="" name="add_background_color" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="hidden" value="" name="add_target" class="form-control"></input>
+                        <input type="hidden" value="" name="add_target" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="hidden" value="" name="add_plugin_id"></input>
+                        <input type="hidden" value="" name="add_plugin_id">
                     </td>
                     <td nowrap>
                     </td>
@@ -134,25 +134,25 @@
             @else
                 <tr>
                     <td nowrap>
-                        <input type="text" value="{{old('add_display_sequence', '')}}" name="add_display_sequence" class="form-control"></input>
+                        <input type="text" value="{{old('add_display_sequence', '')}}" name="add_display_sequence" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_classname', '')}}" name="add_classname" class="form-control"></input>
+                        <input type="text" value="{{old('add_classname', '')}}" name="add_classname" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_category', '')}}" name="add_category" class="form-control"></input>
+                        <input type="text" value="{{old('add_category', '')}}" name="add_category" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control"></input>
+                        <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_background_color', '')}}" name="add_background_color" class="form-control"></input>
+                        <input type="text" value="{{old('add_background_color', '')}}" name="add_background_color" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="hidden" value="{{old('add_target', '')}}" name="add_target" class="form-control"></input>
+                        <input type="hidden" value="{{old('add_target', '')}}" name="add_target" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="hidden" value="{{old('add_plugin_id', '')}}" name="add_plugin_id"></input>
+                        <input type="hidden" value="{{old('add_plugin_id', '')}}" name="add_plugin_id">
                     </td>
                     <td nowrap>
                     </td>
