@@ -61,9 +61,9 @@
 
         <div class="col-md-8">
             @if (isset($function) && $function == 'edit')
-                <input id="password" type="password" class="form-control" name="password" placeholder="ログインするためのパスワードを入力します。">
+                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" placeholder="ログインするためのパスワードを入力します。">
             @else
-                <input id="password" type="password" class="form-control" name="password" required placeholder="ログインするためのパスワードを入力します。">
+                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" required placeholder="ログインするためのパスワードを入力します。">
             @endif
 
             @if ($errors->has('password'))
