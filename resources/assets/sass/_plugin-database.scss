@@ -26,7 +26,7 @@ $db-sub-border: mix( $db-text, $_std, 5%); // cap罫線色
 $db-shadow: rgba($black, .125); //基本背景色
 
 //データベース：ヘッダー設定
-.db-list-header{
+.plugin-databases .db-list-header{
     .db-btn{
         width: 100%;
         padding: 0.375rem 0;
@@ -37,14 +37,14 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
 }
 @media (min-width: map-get($grid-breakpoints, 'sm')) {
-    .db-list-header{
+    .plugin-databases .db-list-header{
         .db-btn{
             padding: 0.375rem 0.75rem;
         }
     }
 }
 @media (min-width: map-get($grid-breakpoints, 'md')) {
-    .db-list-header{
+    .plugin-databases .db-list-header{
         .db-btn{
             width: auto;
             padding: 0.375rem 0.5rem;
@@ -56,7 +56,7 @@ $db-shadow: rgba($black, .125); //基本背景色
 }
 
 // データベース：詳細画面
-.db-default-detail{
+.plugin-databases .db-default-detail{
     width: 100%;
     margin-bottom: 1.5rem;
     h2{
@@ -104,7 +104,7 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
     }
 @media (min-width: map-get($grid-breakpoints, 'md')) {
-    .db-default-detail{
+    .plugin-databases .db-default-detail{
         h2{
             font-size: 1.5rem;
         }
@@ -126,7 +126,7 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
 
 // データベース：デフォルト
-.db-default{
+.plugin-databases .db-default{
     width: 100%;
     padding: 0;
     margin: 0;
@@ -179,7 +179,7 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
     }
 @media (min-width: map-get($grid-breakpoints, 'md')) {
-    .db-default{
+    .plugin-databases .db-default{
         overflow: scroll auto;
         > div{
             min-width: 100%;
@@ -217,13 +217,13 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
     }
 @media (min-width: map-get($grid-breakpoints, 'lg')) {
-    .db-default{
+    .plugin-databases .db-default{
         overflow: auto auto;
     }
     }
 
 // データベース：テーブル
-.db-tabel{
+.plugin-databases .db-tabel{
     width: 100%;
     overflow: scroll auto;
     padding: 0;
@@ -269,7 +269,7 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
 
 // データベース：リスト
-.db-list{
+.plugin-databases .db-list{
     display: inline-flex;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -366,14 +366,14 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
     }
 @media (min-width: map-get($grid-breakpoints, 'md')) {
-    .db-list .db-adata{
+    .plugin-databases .db-list .db-adata{
         //左右二分割用
         width: calc(50% - 0.5rem);
     }
     }
 
 // データベース：カード
-.db-card{
+.plugin-databases .db-card{
     display: inline-flex;
     flex-wrap: wrap;
     //justify-content: space-between;
@@ -443,29 +443,29 @@ $db-shadow: rgba($black, .125); //基本背景色
     }
     }
 @media (min-width: map-get($grid-breakpoints, 'md')) {
-    .db-card .db-adata{
+    .plugin-databases .db-card .db-adata{
         width: calc(50% - 0.5rem);
         margin-right: 0.5rem;
     }
     }
 @media (min-width: map-get($grid-breakpoints, 'lg')) {
-    .db-card .db-adata{
+    .plugin-databases .db-card .db-adata{
         width: calc(33% - 1rem);
         margin-right: 1rem;
     }
     }
 @media (min-width: map-get($grid-breakpoints, 'xl')) {
-    .db-card .db-adata{
+    .plugin-databases .db-card .db-adata{
         width: calc(25% - 1rem);
     }
     }
 
 // データベース：メニュー
-.db-menu{
+.plugin-databases .db-menu{
     display: none;
     }
 @media (min-width: map-get($grid-breakpoints, 'lg')) {
-   .db-menu{
+   .plugin-databases .db-menu{
         display: block;
         .db-adata{
             display: flex;
