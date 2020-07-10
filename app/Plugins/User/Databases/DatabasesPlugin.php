@@ -1354,7 +1354,7 @@ class DatabasesPlugin extends UserPluginBase
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
-            $message = 'データベース設定を追加しました。<br />　 データベースで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/databases/editColumn/' . $page_id . '/' . $frame_id . '/">項目設定</a> ］';
+            $message = 'データベース設定を追加しました。<br />　 データベースで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/databases/editColumn/' . $page_id . '/' . $frame_id . '/#frame-' . $frame->id . '">項目設定</a> ］';
         } else {
             // databases_id があれば、データベースを更新
             // データベースデータ取得
