@@ -254,19 +254,25 @@
         <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->frame_select == 0)
-                    <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input">
-                @endif
+                <input 
+                    type="radio" 
+                    value="0" 
+                    id="frame_select_0" 
+                    name="frame_select" 
+                    class="custom-control-input" 
+                    {{ $whatsnew->frame_select == 0 ? 'checked' : '' }}
+                >
                 <label class="custom-control-label" for="frame_select_0">全て表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->frame_select == 1)
-                    <input type="radio" value="1" id="frame_select_1" name="frame_select" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="frame_select_1" name="frame_select" class="custom-control-input">
-                @endif
+                <input 
+                    type="radio" 
+                    value="1" 
+                    id="frame_select_1" 
+                    name="frame_select" 
+                    class="custom-control-input" 
+                    {{ $whatsnew->frame_select == 1 ? 'checked' : '' }}
+                >
                 <label class="custom-control-label" for="frame_select_1">選択したものだけ表示する</label>
             </div>
         </div>
