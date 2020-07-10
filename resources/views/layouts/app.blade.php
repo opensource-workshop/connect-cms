@@ -70,6 +70,9 @@
 
     <!-- Scripts -->
     <script src="{{asset('js/app.js')}}"></script>
+@if( App::environment(['local', 'staging']) )
+    <script>Vue.config.devtools = true;</script>
+@endif
 
     <!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="{{asset('/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')}}" />
