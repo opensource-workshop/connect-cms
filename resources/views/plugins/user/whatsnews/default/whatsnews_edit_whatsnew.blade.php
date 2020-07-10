@@ -44,6 +44,7 @@
 @else
 <form action="{{url('/')}}/plugin/whatsnews/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
+    <div id="app_{{ $frame->id }}">
 
     {{-- create_flag がtrue の場合、新規作成するためにwhatsnews_id を空にする --}}
     @if ($create_flag)
@@ -261,6 +262,7 @@
                     name="frame_select" 
                     class="custom-control-input" 
                     {{ $whatsnew->frame_select == 0 ? 'checked' : '' }}
+                    v-on:click="setDisabledTargetFrame(0)"
                 >
                 <label class="custom-control-label" for="frame_select_0">全て表示する</label>
             </div>
@@ -272,6 +274,7 @@
                     name="frame_select" 
                     class="custom-control-input" 
                     {{ $whatsnew->frame_select == 1 ? 'checked' : '' }}
+                    v-on:click="setDisabledTargetFrame(1)"
                 >
                 <label class="custom-control-label" for="frame_select_1">選択したものだけ表示する</label>
             </div>
@@ -323,6 +326,7 @@
             @endif
         </div>
     </div>
+    </div>
 </form>
 @endif
 @endif
@@ -343,4 +347,25 @@
     </div>
 </div>
 @endif
+
+<script>
+    new Vue({
+        el: "#app_{{ $frame->id }}",
+        methods: {
+            // 対象フレームのチェックボックスdisabled制御
+            setDisabledTargetFrame:function(frame_select_value){
+                const elms = document.querySelectorAll("[id^=target_plugins_frame]");
+                for (var i = 0; i < elms.length; i++) {
+                    // disabledでチェックボックスの選択状態がクリアされてしまうが、再選択時に意識的に選択してもらう
+                    elms[i].disabled = frame_select_value == '0' ? true : false;
+                }
+            }
+        },
+        // 初期表示にvueメソッドをcallする
+        mounted: function(){
+            this.setDisabledTargetFrame({{ $whatsnew->frame_select }});
+        }
+    })
+</script>
+
 @endsection
