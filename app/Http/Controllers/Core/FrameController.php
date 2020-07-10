@@ -34,7 +34,7 @@ class FrameController extends ConnectController
     /**
      *  コンストラクタ
      */
-    function __construct($page_id, $frame_id)
+    public function __construct($page_id, $frame_id)
     {
         // ルートパラメータを取得する
     }
@@ -140,7 +140,7 @@ class FrameController extends ConnectController
                       'none_hidden'       => ($request->none_hidden == '') ? 0 : $request->none_hidden,
         ]);
 
-        return redirect($page->permanent_link."#".$frame_id);
+        return redirect($page->permanent_link."#frame-".$frame_id);
     }
 
     /**
