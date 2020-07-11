@@ -54,29 +54,31 @@
         @else
         <article class="cc_article">
         @endif
+            <div class="clearfix">
 
-            {{-- 記事本文 --}}
-            {!! $post->post_text !!}
+                {{-- 記事本文 --}}
+                {!! $post->post_text !!}
 
-            {{-- 続きを読む --}}
-            @if ($post->post_text2)
-                {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
-                <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post->tags) class="mb-2" @endisset>
-                    <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-down"></i> 続きを読む</button>
-                </div>
-                <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post->tags) class="mb-2" @endisset>
-                    {!! $post->post_text2 !!}
-                    <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-up"></i> 閉じる</button>
-                </div>
-            @endif
+                {{-- 続きを読む --}}
+                @if ($post->post_text2)
+                    {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
+                    <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post->tags) class="mb-2" @endisset>
+                        <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-down"></i> 続きを読む</button>
+                    </div>
+                    <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post->tags) class="mb-2" @endisset>
+                        {!! $post->post_text2 !!}
+                        <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-up"></i> 閉じる</button>
+                    </div>
+                @endif
 
-            {{-- タグ --}}
-            @isset($post->tags)
-                @foreach($post->tags as $tag)
-                    <span class="badge badge-secondary">{{$tag}}</span>
-                @endforeach
-            @endisset
+                {{-- タグ --}}
+                @isset($post->tags)
+                    @foreach($post->tags as $tag)
+                        <span class="badge badge-secondary">{{$tag}}</span>
+                    @endforeach
+                @endisset
 
+            </div>
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
             <div class="row">
                 <div class="col-12 text-right mb-1">
