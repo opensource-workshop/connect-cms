@@ -11,6 +11,9 @@ class DatabasesInputs extends Model
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
 
+    // 更新する項目の定義
+    protected $fillable = ['databases_id', 'databases_inputs_id', 'databases_columns_id', 'value'];
+
     /**
     *  指定したタイプの項目があるか判定
     */
