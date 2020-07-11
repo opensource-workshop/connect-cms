@@ -544,7 +544,6 @@ class DatabasesPlugin extends UserPluginBase
             if (Auth::user()) {
                 // ログイン済み
                 foreach ($databases_columns_roles as $databases_columns_role) {
-
                     if ($this->isCan('role_article') &&
                             $databases_columns_role->role_name == \DatabaseColumnRoleName::role_article &&
                             $databases_columns_role->list_detail_hide_flag == 1) {
