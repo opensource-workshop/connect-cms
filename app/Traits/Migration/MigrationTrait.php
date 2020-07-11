@@ -781,6 +781,20 @@ trait MigrationTrait
      */
     private function importPluginMenus($page, $page_dir, $frame_ini, $display_sequence)
     {
+        // メニューオプション（エリア）の確認
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
+            // フレームの指定と＆オプションの位置指定が両方OKなら、インポートする。
+            if (($frame_ini['frame_base']['area_id'] == 0 && $this->hasMigrationConfig('menus', 'import_menu_area', 'header')) ||
+                ($frame_ini['frame_base']['area_id'] == 1 && $this->hasMigrationConfig('menus', 'import_menu_area', 'left')) ||
+                ($frame_ini['frame_base']['area_id'] == 2 && $this->hasMigrationConfig('menus', 'import_menu_area', 'main')) ||
+                ($frame_ini['frame_base']['area_id'] == 3 && $this->hasMigrationConfig('menus', 'import_menu_area', 'right')) ||
+                ($frame_ini['frame_base']['area_id'] == 4 && $this->hasMigrationConfig('menus', 'import_menu_area', 'footer'))) {
+            }
+            else {
+                return;
+            }
+        }
+
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence);
 
@@ -881,6 +895,24 @@ trait MigrationTrait
     }
 
     /**
+     * HTML からGoogle Analytics タグ部分を削除
+     */
+    private function deleteGATag($content)
+    {
+        preg_match_all('/<script(.*?)script>/is', $content, $matches);
+
+        foreach ($matches[0] as $matche) {
+            if (stripos($matche, 'www.google-analytics.com/analytics.js')) {
+                $content = str_replace($matche, '', $content);
+            }
+            if (stripos($matche, 'GoogleAnalyticsObject')) {
+                $content = str_replace($matche, '', $content);
+            }
+        }
+        return $content;
+    }
+
+    /**
      * 固定記事プラグインの登録処理
      */
     private function importPluginContents($page, $page_dir, $frame_ini, $display_sequence)
@@ -893,6 +925,9 @@ trait MigrationTrait
         // HTML コンテンツの取得（画像処理をループしながら、タグを編集するので、ここで読みこんでおく）
         $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
         $content_html = File::get($html_file_path);
+
+        // Google Analytics タグ部分を削除
+        $content_html = $this->deleteGATag($content_html);
 
         // 対象外の条件を確認
         $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
@@ -1657,7 +1692,7 @@ trait MigrationTrait
             if ($nc2_sort_block->block_id == $nc2_block->parent_id) {
                 if ($get_display_sequence) {
                     // ソート用の配列のキーを取得
-                    return $nc2_sort_block_key . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num);
+                    return $nc2_sort_block_key . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num) . '_' . $nc2_block->block_id;
                 } else {
                     // 経路探索パス
                     return $nc2_sort_block->route_path . '_' . $this->zeroSuppress($nc2_block->block_id);
@@ -1667,7 +1702,7 @@ trait MigrationTrait
 
         // まだ配列になかった場合（各スペースのルートページ）
         if ($get_display_sequence) {
-            return 'r' . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num);
+            return 'r' . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num) . '_' . $nc2_block->block_id;
         } else {
             return 'r' . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->block_id);
         }
@@ -2248,7 +2283,8 @@ trait MigrationTrait
 
         // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
         // NC2 では、ヘッダ、左、右が一つずつで共通のため、ここで処理する。
-        if ($new_page_index == 1) {
+        //if ($new_page_index == 1) {
+        if ($nc2_page->permalink == '' && $nc2_page->display_sequence == 1 && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0) {
             // 指定されたページ内のブロックを取得
             $nc2_common_blocks = Nc2Block::select('blocks.*', 'pages.page_name')
                                          ->join('pages', 'pages.page_id', '=', 'blocks.page_id')
@@ -2276,10 +2312,11 @@ trait MigrationTrait
             $nc2_block->route_path = $this->getRouteBlockStr($nc2_block, $nc2_sort_blocks);
             $nc2_sort_blocks[$this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, true)] = $nc2_block;
         }
+        // Log::debug($nc2_sort_blocks);
 
         // 経路探索の文字列（キー）でソート
         ksort($nc2_sort_blocks);
-        //Log::debug($nc2_sort_blocks);
+        // Log::debug($nc2_sort_blocks);
 
         // ソート結果でCollection 詰めなおし
         $nc2_blocks = collect();
