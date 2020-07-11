@@ -416,6 +416,61 @@
                     </div>
                 </div>
 
+                {{-- 権限毎に一覧・詳細で非表示にする指定 --}}
+                <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}} pt-0">一覧・詳細に表示しない権限指定</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="col pl-0">
+                            @foreach (DatabaseColumnRoleName::getMembers() as $role_name => $display_value)
+                                @php
+                                $hide_flag = 0;
+                                if (isset($columns_roles[$role_name])) {
+                                    $hide_flag = $columns_roles[$role_name]->list_detail_hide_flag;
+                                }
+                                @endphp
+                                {{--
+                                <div class="custom-control custom-checkbox">
+                                    <input name="role_article[list_detail_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="list_detail_hide_role_article">
+                                    <label class="custom-control-label" for="list_detail_hide_role_article">モデレータ</label>
+                                </div>
+                                --}}
+                                <div class="custom-control custom-checkbox">
+                                    <input name="{{$role_name}}[list_detail_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_list_detail_hide" @if(old($role_name . '.list_detail_hide_flag', $hide_flag) == 1) checked="checked" @endif>
+                                    <label class="custom-control-label" for="{{$role_name}}_list_detail_hide">{{  $display_value  }}</label>
+                                </div>
+                            @endforeach
+                            <small class="text-muted">※ 「権限なし」とは、コンテンツ管理者・プラグイン管理者・モデレータ・承認者・編集者のいずれの権限もない状態です。</small>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 権限毎に登録・編集で非表示にする指定 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}} pt-0">登録・編集に表示しない権限指定</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="col pl-0">
+                            @foreach (DatabaseColumnRoleName::getRegistEditHideMembers() as $role_name => $display_value)
+                                @php
+                                $hide_flag = 0;
+                                if (isset($columns_roles[$role_name])) {
+                                    $hide_flag = $columns_roles[$role_name]->regist_edit_hide_flag;
+                                }
+                                @endphp
+                                {{--
+                                <div class="custom-control custom-checkbox">
+                                    <input name="role_article[regist_edit_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="regist_edit_hide_role_guest">
+                                    <label class="custom-control-label" for="regist_edit_hide_role_guest">モデレータ</label>
+                                </div>
+                                --}}
+                                <div class="custom-control custom-checkbox">
+                                    <input name="{{$role_name}}[regist_edit_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_list_detail_hide" @if(old($role_name . '.regist_edit_hide_flag', $hide_flag) == 1) checked="checked" @endif>
+                                    <label class="custom-control-label" for="{{$role_name}}_list_detail_hide">{{  $display_value  }}</label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
                 {{-- 並べ替え指定 --}}
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}}">並べ替え指定</label>

@@ -17,6 +17,7 @@ use App\Models\Common\Uploads;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesColumnsSelects;
+use App\Models\User\Databases\DatabasesColumnsRole;
 use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databases\DatabasesInputCols;
@@ -526,20 +527,77 @@ class DatabasesPlugin extends UserPluginBase
             //
             // 一覧に表示する (list_hide_flag=0)
             // 詳細に表示する (detail_hide_flag=0)
-            if ($column->$hide_flag_column_name == 0) {
-                if (is_null($column->row_group) && is_null($column->column_group)) {
-                    // 行グループ・列グループどっちも設定なし
-                    //
-                    // row_group = null & column_group = nullは1行として扱うため、
-                    // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
-                    // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
-                    $group_cols_columns = null;                         // 初期化
-                    $group_cols_columns[''][0] = $column;               // column_group = ''としてセット
-                    $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
-                } else {
-                    // 行グループ・列グループどっちか設定あり
-                    $group_rows_cols_columns[$column->row_group][$column->column_group][] = $column;
+            if ($column->$hide_flag_column_name != 0) {
+                continue;
+            }
+
+            // カラムの非表示権限データ取得
+            $databases_columns_roles = $column->databasesColumnsRoles;
+
+            // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            // Log::debug('role_article_admin: '.var_export($this->isCan('role_article_admin'), true));
+            // Log::debug('role_arrangement: '.var_export($this->isCan('role_arrangement'), true));
+            // Log::debug('role_article: '.var_export($this->isCan('role_article'), true));
+            // Log::debug('role_approval: '.var_export($this->isCan('role_approval'), true));
+            // Log::debug('role_reporter: '.var_export($this->isCan('role_reporter'), true));
+
+            if (Auth::user()) {
+                // ログイン済み
+                foreach ($databases_columns_roles as $databases_columns_role) {
+
+                    if ($this->isCan('role_article') &&
+                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_article &&
+                            $databases_columns_role->list_detail_hide_flag == 1) {
+                        // モデレータ権限あり & モデレータ非表示のcolumnは、group_rows_cols_columnsに含まない。
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('モデレータ', true));
+                        continue 2;
+                    } elseif ($this->isCan('role_reporter') &&
+                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_reporter &&
+                            $databases_columns_role->list_detail_hide_flag == 1) {
+                        // 編集者権限あり & 編集者非表示のcolumnは、group_rows_cols_columnsに含まない。
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('編集者権限', true));
+                        continue 2;
+                    } elseif (!$this->isCan('role_article_admin') &&
+                            !$this->isCan('role_arrangement') &&
+                            !$this->isCan('role_article') &&
+                            !$this->isCan('role_approval') &&
+                            !$this->isCan('role_reporter') &&
+                            $databases_columns_role->role_name == \DatabaseColumnRoleName::no_role &&
+                            $databases_columns_role->list_detail_hide_flag == 1) {
+                        // 権限なし(コンテンツ管理者・プラグイン管理者・モデレータ・承認者・編集者のいずれの権限も付いていない)
+                        // & 権限なし非表示のcolumnは、group_rows_cols_columnsに含まない。
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('権限なし', true));
+                        continue 2;
+                    }
                 }
+            } else {
+                // 未ログイン
+                foreach ($databases_columns_roles as $databases_columns_role) {
+                    // 未ログインで非表示のcolumnは、group_rows_cols_columnsに含まない。
+                    if ($databases_columns_role->role_name == \DatabaseColumnRoleName::not_login &&
+                            $databases_columns_role->list_detail_hide_flag == 1) {
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('未ログイン', true));
+                        continue 2;
+                    }
+                }
+            }
+
+            if (is_null($column->row_group) && is_null($column->column_group)) {
+                // 行グループ・列グループどっちも設定なし
+                //
+                // row_group = null & column_group = nullは1行として扱うため、
+                // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
+                // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
+                $group_cols_columns = null;                         // 初期化
+                $group_cols_columns[''][0] = $column;               // column_group = ''としてセット
+                $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
+            } else {
+                // 行グループ・列グループどっちか設定あり
+                $group_rows_cols_columns[$column->row_group][$column->column_group][] = $column;
             }
         }
         return $group_rows_cols_columns;
@@ -1410,14 +1468,14 @@ class DatabasesPlugin extends UserPluginBase
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+                ->update(['bucket_id' => $request->select_bucket]);
 
         // 関連するセッションクリア
         $request->session()->forget('databases.'.$frame_id);
@@ -1491,18 +1549,25 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // --- 画面に値を渡す準備
-        $column = DatabasesColumns::query()->where('id', $column_id)->first();
-        $selects = DatabasesColumnsSelects::query()->where('databases_columns_id', $column->id)->orderBy('display_sequence', 'asc')->get();
+        $column = DatabasesColumns::where('id', $column_id)->first();
+        $selects = DatabasesColumnsSelects::where('databases_columns_id', $column->id)->orderBy('display_sequence', 'asc')->get();
+        $columns_roles = DatabasesColumnsRole::where('databases_columns_id', $column->id)
+                                                ->get()
+                                                // keyをrole_nameにした結果をセット
+                                                ->mapWithKeys(function ($item) {
+                                                    return [$item['role_name'] => $item];
+                                                });
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
             'databases_edit_row_detail',
             [
                 'databases_id' => $databases_id,
-                'column'     => $column,
-                'selects'     => $selects,
-                'message'     => $message,
-                'errors'     => $errors,
+                'column' => $column,
+                'selects' => $selects,
+                'columns_roles' => $columns_roles,
+                'message' => $message,
+                'errors' => $errors,
             ]
         );
     }
@@ -1689,7 +1754,7 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
-        $column = DatabasesColumns::query()->where('id', $request->column_id)->first();
+        $column = DatabasesColumns::where('id', $request->column_id)->first();
 
         $validator_values = null;
         $validator_attributes = null;
@@ -1800,6 +1865,33 @@ class DatabasesPlugin extends UserPluginBase
 
         // 保存
         $column->save();
+
+
+        // delete -> insert
+        // カラム権限データを削除する。
+        DatabasesColumnsRole::where('databases_columns_id', $request->column_id)->delete();
+
+        $column_role_name_keys = \DatabaseColumnRoleName::getMemberKeys();
+
+        foreach ($column_role_name_keys as $column_role_name_key) {
+            if (! isset($request->$column_role_name_key)) {
+                // チェックなしの権限はスルー
+                continue;
+            }
+            $list_detail_hide_flag = isset($request->$column_role_name_key['list_detail_hide_flag']) ? $request->$column_role_name_key['list_detail_hide_flag'] : 0;
+            $regist_edit_hide_flag = isset($request->$column_role_name_key['regist_edit_hide_flag']) ? $request->$column_role_name_key['regist_edit_hide_flag'] : 0;
+
+            $columns_role = new DatabasesColumnsRole();
+            $columns_role->databases_id = $request->databases_id;
+            $columns_role->databases_columns_id = $request->column_id;
+            $columns_role->role_name = $column_role_name_key;
+            $columns_role->list_detail_hide_flag = $list_detail_hide_flag;
+            $columns_role->regist_edit_hide_flag = $regist_edit_hide_flag;
+
+            // 保存
+            $columns_role->save();
+        }
+
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
