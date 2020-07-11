@@ -16,7 +16,7 @@ class FromNc2 extends Command
      *
      * @var string
      */
-    protected $signature = 'command:MigrationFromNc2 {uploads_path}';
+    protected $signature = 'command:MigrationFromNc2';
 
     /**
      * The console command description.
@@ -43,6 +43,6 @@ class FromNc2 extends Command
     public function handle()
     {
         // NC2 をデータベースから移行する
-        $this->migrationNC2($this->argument("uploads_path"));
+        $this->migrationNC2();
     }
 }

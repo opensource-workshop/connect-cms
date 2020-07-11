@@ -281,85 +281,89 @@ trait MigrationTrait
         $this->migrationInit();
 
         // アップロード・ファイルの取り込み
-        if ($this->getMigrationConfig('uploads', 'import_nc2_uploads', true)) {
+        if ($this->getMigrationConfig('uploads', 'cc_import_uploads')) {
             $this->putMonitor(3, "uploads import Start.");
             $this->importUploads();
         }
 
         // 共通カテゴリの取り込み
-        $this->importCommonCategories();
+        if ($this->getMigrationConfig('categories', 'cc_import_categories')) {
+            $this->importCommonCategories();
+        }
 
         // ブログの取り込み
-        if (!$this->getMigrationConfig('plugin', 'import_ommit_pugins', 'blogs')) {
+        if ($this->hasMigrationConfig('plugin', 'cc_import_pugins', 'blogs')) {
             $this->putMonitor(3, "blogs import Start.");
             $this->importBlogs();
         }
 
         // データベースの取り込み
-        if (!$this->getMigrationConfig('plugin', 'import_ommit_pugins', 'databases')) {
+        if ($this->hasMigrationConfig('plugin', 'cc_import_pugins', 'databases')) {
             $this->putMonitor(3, "databases import Start.");
             $this->importDatabases();
         }
 
         // 新ページの取り込み
-        $paths = File::glob(storage_path() . '/app/migration/_*');
+        if ($this->getMigrationConfig('pages', 'cc_import_pages')) {
+            $paths = File::glob(storage_path() . '/app/migration/_*');
 
-        // 新ページのループ
-        foreach ($paths as $path) {
-            $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
+            // 新ページのループ
+            foreach ($paths as $path) {
+                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
 
-            // ページ指定の有無
-            if ($this->getMigrationConfig('page_cond', 'import_page_dir')) {
-                if (basename($path) != $this->getMigrationConfig('page_cond', 'import_page_dir')) {
-                    continue;
-                }
-            }
-
-            // ページの設定取得
-            $page_ini = parse_ini_file($path. '/page.ini', true);
-            //print_r($page_ini);
-
-            // 固定リンクでページの存在確認
-            // 同じ固定リンクのページが存在した場合は、そのページを使用する。
-            $page = Page::where('permanent_link', $page_ini['page_base']['permanent_link'])->first();
-            // var_dump($page);
-
-            // 対象のURL がなかった場合はページの作成
-            if (empty($page)) {
-                $this->putMonitor(3, "Page create.");
-
-                // ページの作成
-                $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
-                                      'permanent_link'    => $page_ini['page_base']['permanent_link'],
-                                      'base_display_flag' => $page_ini['page_base']['base_display_flag'],
-                                    ]);
-
-                // 親ページの指定があるか
-                if (array_key_exists('page_base', $page_ini) && array_key_exists('parent_page_dir', $page_ini['page_base'])) {
-                    // マッピングテーブルから、親ページのページIDを取得
-                    $parent_mapping = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $page_ini['page_base']['parent_page_dir'])->first();
-
-                    // 親ページの取得
-                    if (!empty($parent_mapping)) {
-                        $parent_page = Page::find($parent_mapping->destination_key);
-                        $parent_page->appendNode($page);
+                // ページ指定の有無
+                if ($this->getMigrationConfig('pages', 'cc_import_where_page_dir')) {
+                    if (basename($path) != $this->getMigrationConfig('pages', 'cc_import_where_page_dir')) {
+                        continue;
                     }
                 }
 
-                // マッピングテーブルの追加
-                $mapping = MigrationMapping::updateOrCreate(
-                    ['target_source_table' => 'connect_page',
-                    'source_key' => ltrim(basename($path), '_')],
-                    ['target_source_table'  => 'connect_page',
-                    'source_key'           => ltrim(basename($path), '_'),
-                    'destination_key'      => $page->id]
-                );
-            } else {
-                $this->putMonitor(3, "Page found. Use existing page.");
-            }
+                // ページの設定取得
+                $page_ini = parse_ini_file($path. '/page.ini', true);
+                //print_r($page_ini);
 
-            // ページの中身の作成
-            $this->importHtmlImpl($page, $path);
+                // 固定リンクでページの存在確認
+                // 同じ固定リンクのページが存在した場合は、そのページを使用する。
+                $page = Page::where('permanent_link', $page_ini['page_base']['permanent_link'])->first();
+                // var_dump($page);
+
+                // 対象のURL がなかった場合はページの作成
+                if (empty($page)) {
+                    $this->putMonitor(3, "Page create.");
+
+                    // ページの作成
+                    $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
+                                          'permanent_link'    => $page_ini['page_base']['permanent_link'],
+                                          'base_display_flag' => $page_ini['page_base']['base_display_flag'],
+                                        ]);
+
+                    // 親ページの指定があるか
+                    if (array_key_exists('page_base', $page_ini) && array_key_exists('parent_page_dir', $page_ini['page_base'])) {
+                        // マッピングテーブルから、親ページのページIDを取得
+                        $parent_mapping = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $page_ini['page_base']['parent_page_dir'])->first();
+
+                        // 親ページの取得
+                        if (!empty($parent_mapping)) {
+                            $parent_page = Page::find($parent_mapping->destination_key);
+                            $parent_page->appendNode($page);
+                        }
+                    }
+
+                    // マッピングテーブルの追加
+                    $mapping = MigrationMapping::updateOrCreate(
+                        ['target_source_table' => 'connect_page',
+                        'source_key' => ltrim(basename($path), '_')],
+                        ['target_source_table'  => 'connect_page',
+                        'source_key'           => ltrim(basename($path), '_'),
+                        'destination_key'      => $page->id]
+                    );
+                } else {
+                    $this->putMonitor(3, "Page found. Use existing page.");
+                }
+
+                // ページの中身の作成
+                $this->importHtmlImpl($page, $path);
+            }
         }
     }
 
@@ -557,7 +561,6 @@ trait MigrationTrait
                         $blogs_posts->save();
                     }
                 }
-
             } else {
                 // マッピングテーブルがあれば、Blogs テーブル更新
                 // *** あとで。
@@ -610,7 +613,6 @@ trait MigrationTrait
 
                 if (array_key_exists('databases_columns', $databases_ini) && array_key_exists('databases_column', $databases_ini['databases_columns'])) {
                     foreach ($databases_ini['databases_columns']['databases_column'] as $multidatabase_id => $databases_title) {
-
                         $databases_column = DatabasesColumns::create([
                             'databases_id'     => $database->id,
                             'column_type'      => $databases_ini[$multidatabase_id]['column_type'],
@@ -641,23 +643,23 @@ trait MigrationTrait
                     // 改行で記事毎に分割
                     $database_tsv_lines = explode("\n", $database_tsv);
                     foreach ($database_tsv_lines as $database_tsv_line) {
-
                         $databases_input = DatabasesInputs::create(['databases_id' => $database->id]);
 
                         $databases_columns_id_idx = 0;
 
                         // タブで項目に分割
                         $database_tsv_cols = explode("\t", trim($database_tsv_line));
-                        foreach($database_tsv_cols as $database_tsv_col) {
-if (array_key_exists($databases_columns_id_idx, $column_ids)) {
-                            $databases_input_cols = DatabasesInputCols::create([
-                                'databases_inputs_id'  => $databases_input->id,
-                                'databases_columns_id' => $column_ids[$databases_columns_id_idx],
-                                'value'                => $database_tsv_col,
-                            ]);
-} else {
-    $this->putError(3, 'データベース詳細インポートエラー', "databases_columns_id_idx = " . $databases_columns_id_idx);
-}
+                        foreach ($database_tsv_cols as $database_tsv_col) {
+                            // エラーの内容は再度、チェックすること。
+                            if (array_key_exists($databases_columns_id_idx, $column_ids)) {
+                                $databases_input_cols = DatabasesInputCols::create([
+                                    'databases_inputs_id'  => $databases_input->id,
+                                    'databases_columns_id' => $column_ids[$databases_columns_id_idx],
+                                    'value'                => $database_tsv_col,
+                                ]);
+                            } else {
+                                $this->putError(3, 'データベース詳細インポートエラー', "databases_columns_id_idx = " . $databases_columns_id_idx);
+                            }
                             $databases_columns_id_idx++;
                         }
                     }
@@ -753,8 +755,8 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
         // プラグイン名
         $plugin_name = $frame_ini['frame_base']['plugin_name'];
 
-        // インポートしないプラグインに指定されていたら、対象外とする。
-        if ($this->hasMigrationConfig('plugin', 'import_ommit_pugins', $plugin_name)) {
+        // インポートするプラグインに指定されているか確認して、対象とする。
+        if (!$this->hasMigrationConfig('frames', 'import_frame_pugins', $plugin_name)) {
             return;
         }
 
@@ -1704,7 +1706,7 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
      *
      *
      */
-    private function migrationNC2($uploads_path)
+    private function migrationNC2()
     {
         // NetCommons2 のページデータの取得
 
@@ -1723,100 +1725,106 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
         $this->migrationInit();
 
         // uploads_path の最後に / がなければ追加
-        if (mb_substr($uploads_path, -1) != '/') {
+        $uploads_path = $this->getMigrationConfig('uploads', 'nc2_export_uploads_path');
+        if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
             $uploads_path = $uploads_path . '/';
         }
 
         // uploads データとファイルのエクスポート
-        if ($this->getMigrationConfig('uploads', 'export_nc2_uploads', true)) {
-            $this->nc2Uploads($uploads_path);
+        if ($this->getMigrationConfig('uploads', 'nc2_export_uploads')) {
+            $this->nc2ExportUploads($uploads_path);
         }
 
         // カテゴリデータのエクスポート
-        $this->nc2Categories();
+        if ($this->getMigrationConfig('categories', 'nc2_export_categories')) {
+            $this->nc2ExportCategories();
+        }
 
         // NC2 日誌（journal）データのエクスポート
-        if (!$this->hasMigrationConfig('plugin', 'export_ommit_pugins', 'blogs')) {
-            $this->nc2Journal();
+        if ($this->hasMigrationConfig('plugin', 'nc2_export_pugins', 'blogs')) {
+            $this->nc2ExportJournal();
         }
 
         // NC2 汎用データベース（multidatabase）データのエクスポート
-        if (!$this->hasMigrationConfig('plugin', 'export_ommit_pugins', 'databases')) {
-            $this->nc2Multidatabase();
+        if ($this->hasMigrationConfig('plugin', 'nc2_export_pugins', 'databases')) {
+            $this->nc2ExportMultidatabase();
         }
 
-        // NC2 のページデータ
-        $nc2_pages_query = Nc2Page::where('private_flag', 0)
-                                  ->where('root_id', '<>', 0)
-                                  ->where('display_sequence', '<>', 0);
+        // pages データとファイルのエクスポート
+        if ($this->getMigrationConfig('pages', 'nc2_export_pages')) {
+            // NC2 のページデータ
+            $nc2_pages_query = Nc2Page::where('private_flag', 0)
+                                      ->where('root_id', '<>', 0)
+                                      ->where('display_sequence', '<>', 0);
 
-        // ページ指定の有無
-        if ($this->getMigrationConfig('page_cond', 'export_page_id')) {
-            $nc2_pages_query->where('page_id', $this->getMigrationConfig('page_cond', 'export_page_id'));
-        }
-
-        $nc2_pages = $nc2_pages_query->orderBy('space_type')
-                                     ->orderBy('thread_num')
-                                     ->orderBy('display_sequence')
-                                     ->get();
-
-        // NC2 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
-        // そのため、取得したページデータを一度、経路探索モデルに変換する。
-        $nc2_sort_pages = array();
-
-        // 経路探索の文字列をキーにしたページ配列の作成
-        foreach ($nc2_pages as $nc2_page) {
-            $nc2_page->route_path = $this->getRouteStr($nc2_page, $nc2_sort_pages);
-            $nc2_sort_pages[$this->getRouteStr($nc2_page, $nc2_sort_pages, true)] = $nc2_page;
-        }
-
-        // 経路探索の文字列（キー）でソート
-        ksort($nc2_sort_pages);
-        //Log::debug($nc2_sort_pages);
-
-        // 新規ページ用のインデックス
-        // 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
-        $new_page_index = 0;
-
-        // ページのループ
-        $this->putMonitor(1, "Page loop.");
-        foreach ($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
-            $this->putMonitor(3, "Page", "page_id = " . $nc2_sort_page->page_id);
-
-            // ページ設定の保存用変数
-            $page_ini = "[page_base]\n";
-            $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
-            $page_ini .= "permanent_link = \"/" . $nc2_sort_page->permalink . "\"\n";
-            $page_ini .= "base_display_flag = 1\n";
-
-            // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
-            if ($nc2_sort_page->parent_id > 1) {
-                // マッピングテーブルから親のページのディレクトリを探す
-                $parent_page_mapping = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $nc2_sort_page->parent_id)->first();
-                if (!empty($parent_page_mapping)) {
-                    $page_ini .= "parent_page_dir = \"" . $parent_page_mapping->destination_key . "\"\n";
-                }
+            // ページ指定の有無
+            if ($this->getMigrationConfig('pages', 'nc2_export_where_page_id')) {
+                $nc2_pages_query->where('page_id', $this->getMigrationConfig('pages', 'nc2_export_where_page_id'));
             }
 
-            // ページディレクトリの作成
-            $new_page_index++;
-            Storage::makeDirectory('migration/_' . $this->zeroSuppress($new_page_index));
+            $nc2_pages = $nc2_pages_query->orderBy('space_type')
+                                         ->orderBy('thread_num')
+                                         ->orderBy('display_sequence')
+                                         ->get();
 
-            // ページ設定ファイルの出力
-            Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
+            // NC2 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
+            // そのため、取得したページデータを一度、経路探索モデルに変換する。
+            $nc2_sort_pages = array();
 
-            // マッピングテーブルの追加
-            $mapping = MigrationMapping::updateOrCreate(
-                ['target_source_table' => 'nc2_pages', 'source_key' => $nc2_sort_page->page_id],
-                ['target_source_table' => 'nc2_pages',
-                 'source_key'          => $nc2_sort_page->page_id,
-                 'destination_key'     => $this->zeroSuppress($new_page_index)]
-            );
+            // 経路探索の文字列をキーにしたページ配列の作成
+            foreach ($nc2_pages as $nc2_page) {
+                $nc2_page->route_path = $this->getRouteStr($nc2_page, $nc2_sort_pages);
+                $nc2_sort_pages[$this->getRouteStr($nc2_page, $nc2_sort_pages, true)] = $nc2_page;
+            }
 
-            // echo $nc2_sort_page_key . ':' . $nc2_sort_page->page_name . "\n";
+            // 経路探索の文字列（キー）でソート
+            ksort($nc2_sort_pages);
+            //Log::debug($nc2_sort_pages);
 
-            // ブロック処理
-            $this->nc2Block($nc2_sort_page, $new_page_index);
+            // 新規ページ用のインデックス
+            // 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
+            $new_page_index = 0;
+
+            // ページのループ
+            $this->putMonitor(1, "Page loop.");
+            foreach ($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
+                $this->putMonitor(3, "Page", "page_id = " . $nc2_sort_page->page_id);
+
+                // ページ設定の保存用変数
+                $page_ini = "[page_base]\n";
+                $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
+                $page_ini .= "permanent_link = \"/" . $nc2_sort_page->permalink . "\"\n";
+                $page_ini .= "base_display_flag = 1\n";
+
+                // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
+                if ($nc2_sort_page->parent_id > 1) {
+                    // マッピングテーブルから親のページのディレクトリを探す
+                    $parent_page_mapping = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $nc2_sort_page->parent_id)->first();
+                    if (!empty($parent_page_mapping)) {
+                        $page_ini .= "parent_page_dir = \"" . $parent_page_mapping->destination_key . "\"\n";
+                    }
+                }
+
+                // ページディレクトリの作成
+                $new_page_index++;
+                Storage::makeDirectory('migration/_' . $this->zeroSuppress($new_page_index));
+
+                // ページ設定ファイルの出力
+                Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::updateOrCreate(
+                    ['target_source_table' => 'nc2_pages', 'source_key' => $nc2_sort_page->page_id],
+                    ['target_source_table' => 'nc2_pages',
+                     'source_key'          => $nc2_sort_page->page_id,
+                     'destination_key'     => $this->zeroSuppress($new_page_index)]
+                );
+
+                // echo $nc2_sort_page_key . ':' . $nc2_sort_page->page_name . "\n";
+
+                // ブロック処理
+                $this->nc2Block($nc2_sort_page, $new_page_index);
+            }
         }
 
         // ページ、ブロックの関係をCSV 形式で出力。ファイルにしたい場合はコマンドラインでファイルに出力
@@ -1859,9 +1867,9 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
      * [upload_00002]
      * ・・・
      */
-    private function nc2Uploads($uploads_path)
+    private function nc2ExportUploads($uploads_path)
     {
-        $this->putMonitor(3, "Start nc2Uploads.");
+        $this->putMonitor(3, "Start nc2ExportUploads.");
 
         // NC2 アップロードテーブルを移行する。
         $nc2_uploads = Nc2Upload::orderBy('upload_id')->get();
@@ -1918,9 +1926,9 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
     /**
      * NC2：カテゴリの移行
      */
-    private function nc2Categories()
+    private function nc2ExportCategories()
     {
-        $this->putMonitor(3, "Start nc2Categories.");
+        $this->putMonitor(3, "Start nc2ExportCategories.");
 
         // categories,ini ファイル
         $uploads_ini = "[categories]";
@@ -1933,9 +1941,9 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
     /**
      * NC2：日誌（Journal）の移行
      */
-    private function nc2Journal()
+    private function nc2ExportJournal()
     {
-        $this->putMonitor(3, "Start nc2Journal.");
+        $this->putMonitor(3, "Start nc2ExportJournal.");
 
         // NC2日誌（Journal）を移行する。
         $nc2_journals = Nc2Journal::orderBy('journal_id')->get();
@@ -1994,7 +2002,6 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
             $journals_ini .= "\n";
             $journals_ini .= "[blog_post]\n";
             foreach ($nc2_journal_posts as $nc2_journal_post) {
-
                 // TSV 形式でエクスポート
                 if (!empty($journals_tsv)) {
                     $journals_tsv .= "\n";
@@ -2064,9 +2071,9 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
     /**
      * NC2：汎用データベース（Databases）の移行
      */
-    private function nc2Multidatabase()
+    private function nc2ExportMultidatabase()
     {
-        $this->putMonitor(3, "Start nc2Multidatabase.");
+        $this->putMonitor(3, "Start nc2ExportMultidatabase.");
 
         // NC2汎用データベース（Multidatabase）を移行する。
         $nc2_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
@@ -2333,6 +2340,13 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
 
             // ページ、ブロック構成を最後に出力するために保持
             $this->nc2BlockTree($nc2_page, $nc2_block);
+
+            // Connect-CMS のプラグイン名の取得
+            $plugin_name = $nc2_block->getPluginName();
+            if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'forms' || $plugin_name == 'reservations' || $plugin_name == 'searchs' || $plugin_name == 'whatsnews') {
+                // 移行できなかったモジュール
+                $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
+            }
         }
     }
 
@@ -2346,7 +2360,7 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
         if ($module_name == 'journal') {
             $nc2_journal_block = Nc2JournalBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "blog_id = \"" . $this->zeroSuppress($nc2_journal_block->journal_id) . "\"\n";
-        }elseif ($module_name == 'multidatabase') {
+        } elseif ($module_name == 'multidatabase') {
             $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc2_block->block_id)->first();
             if (empty($nc2_multidatabase_block)) {
                 $this->putError(3, "Nc2MultidatabaseBlock not found.", "block_id = " . $nc2_block->block_id, $nc2_block);
@@ -2418,9 +2432,6 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
         } elseif ($plugin_name == 'menus') {
             // メニュー
             // 今のところ、メニューの追加設定はなし。
-        } else {
-            // 移行できなかったモジュール
-            $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
         }
     }
 
@@ -2549,12 +2560,12 @@ if (array_key_exists($databases_columns_id_idx, $column_ids)) {
 
                             // ファイルのパスの修正
                             $content = str_replace($path, $export_path, $content);
+                        } else {
+                            // 移行しなかったファイルのimg or a タグとしてログに記録
+                            $this->putError(1, "no migrate img", "src = " . $path, $nc2_block);
                         }
                     }
                 }
-            } else {
-                // 移行しなかったファイルのimg or a タグとしてログに記録
-                $this->putError(1, "no migrate img", "src = " . $path, $nc2_block);
             }
         }
 
