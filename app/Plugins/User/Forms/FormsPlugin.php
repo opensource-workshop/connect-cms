@@ -705,12 +705,18 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     }
 
     /**
-     *  フォーム削除処理
+     * フォーム削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $forms_id)
     {
         // forms_id がある場合、データを削除
         if ($forms_id) {
+            $forms_columns = FormsColumns::where('forms_id', $forms_id)->orderBy('display_sequence')->get();
+            foreach ($forms_columns as $forms_column) {
+                // カラムに紐づく選択肢の削除
+                $this->deleteColumnsSelects($forms_column->id);
+            }
+
             // カラムデータを削除する。
             FormsColumns::where('forms_id', $forms_id)->delete();
 
@@ -729,9 +735,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
@@ -1308,7 +1314,7 @@ ORDER BY forms_inputs_id, forms_columns_id
             'Content-Type' => 'text/csv',
             'content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
- 
+
         // データ
         $csv_data = '';
         foreach ($csv_array as $csv_line) {
