@@ -435,8 +435,8 @@
                                 </div>
                                 --}}
                                 <div class="custom-control custom-checkbox">
-                                    <input name="{{$role_name}}[list_detail_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_list_detail_hide" @if(old($role_name . '.list_detail_hide_flag', $hide_flag) == 1) checked="checked" @endif>
-                                    <label class="custom-control-label" for="{{$role_name}}_list_detail_hide">{{  $display_value  }}</label>
+                                    <input name="{{$role_name}}[list_detail_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_list_detail_hide_flag" @if(old($role_name . '.list_detail_hide_flag', $hide_flag) == 1) checked="checked" @endif>
+                                    <label class="custom-control-label" for="{{$role_name}}_list_detail_hide_flag">{{  $display_value  }}</label>
                                 </div>
                             @endforeach
                             <small class="text-muted">※ 「権限なし」とは、コンテンツ管理者・プラグイン管理者・モデレータ・承認者・編集者のいずれの権限もない状態です。</small>
@@ -463,8 +463,8 @@
                                 </div>
                                 --}}
                                 <div class="custom-control custom-checkbox">
-                                    <input name="{{$role_name}}[regist_edit_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_list_detail_hide" @if(old($role_name . '.regist_edit_hide_flag', $hide_flag) == 1) checked="checked" @endif>
-                                    <label class="custom-control-label" for="{{$role_name}}_list_detail_hide">{{  $display_value  }}</label>
+                                    <input name="{{$role_name}}[regist_edit_hide_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_regist_edit_hide_flag" @if(old($role_name . '.regist_edit_hide_flag', $hide_flag) == 1) checked="checked" @endif>
+                                    <label class="custom-control-label" for="{{$role_name}}_regist_edit_hide_flag">{{  $display_value  }}</label>
                                 </div>
                             @endforeach
                         </div>
