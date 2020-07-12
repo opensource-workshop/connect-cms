@@ -1357,9 +1357,9 @@ class DatabasesPlugin extends UserPluginBase
 
             // DB作成後に表示される項目設定リンクは、作成したDBではなく、表示中DBの項目設定リンクのため、一旦リンクを外す
             // 項目設定周りが databases_id に対応できたら、databases_id をリンク含めて復活できると思う
-            // $message = 'データベース設定を追加しました。<br />　 データベースで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/databases/editColumn/' . $page_id . '/' . $frame_id . '/#frame-' . $frame->id . '">項目設定</a> ］';
+            // $message = 'データベース設定を追加しました。<br />　 データベースで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/databases/editColumn/' . $page_id . '/' . $frame_id . '/#frame-' . $frame_id . '">項目設定</a> ］';
             $message = 'データベース設定を追加しました。<br />' .
-                        '　 [ <a href="' . url('/') . '/plugin/databases/listBuckets/' . $page_id . '/' . $frame_id . '/#frame-' . $frame->id . '">DB選択</a> ]から作成したデータベースを選択後、［ 項目設定 ］で使用する項目を設定してください。';
+                        '　 [ <a href="' . url('/') . '/plugin/databases/listBuckets/' . $page_id . '/' . $frame_id . '/#frame-' . $frame_id . '">DB選択</a> ]から作成したデータベースを選択後、［ 項目設定 ］で使用する項目を設定してください。';
         } else {
             // databases_id があれば、データベースを更新
             // データベースデータ取得
