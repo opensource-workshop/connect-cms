@@ -672,7 +672,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
-            $message = 'フォーム設定を追加しました。<br />　 フォームで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">項目設定</a> ］';
+            // bugfix: フォーム作成後のメッセージを実際の動きと合わせたものに見直し
+            // $message = 'フォーム設定を追加しました。<br />　 フォームで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/forms/editColumn/' . $page_id . '/' . $frame_id . '/">項目設定</a> ］';
+            $message = 'フォーム設定を追加しました。<br />' .
+                        '　 [ <a href="' . url('/') . '/plugin/forms/listBuckets/' . $page_id . '/' . $frame_id . '/#frame-' . $frame_id . '">フォーム選択</a> ]から作成したフォームを選択後、［ 項目設定 ］で使用する項目を設定してください。';
         } else {
             // forms_id があれば、フォームを更新
 
@@ -701,7 +704,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 新規作成フラグを付けてフォーム設定変更画面を呼ぶ
         $create_flag = false;
 
-        return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message);
+        // bugfix: 登録後は登録後の$forms->idを渡す。
+        // return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $forms->id, $create_flag, $message);
     }
 
     /**
