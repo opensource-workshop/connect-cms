@@ -1556,6 +1556,9 @@ class DatabasesPlugin extends UserPluginBase
     {
         // databases_id がある場合、データを削除
         if ($databases_id) {
+            // カラム権限データを削除する。
+            DatabasesColumnsRole::where('databases_id', $databases_id)->delete();
+
             // カラムデータを削除する。
             DatabasesColumns::where('databases_id', $databases_id)->delete();
 
@@ -1761,8 +1764,12 @@ class DatabasesPlugin extends UserPluginBase
         // 明細行から削除対象の項目名を抽出
         $str_column_name = "column_name_"."$request->column_id";
 
+        // カラム権限の削除
+        DatabasesColumnsRole::where('databases_columns_id', $request->column_id)->delete();
+
         // 項目の削除
-        DatabasesColumns::query()->where('id', $request->column_id)->delete();
+        DatabasesColumns::where('id', $request->column_id)->delete();
+
         // 項目に紐づく選択肢の削除
         $this->deleteColumnsSelects($request->column_id);
         $message = '項目【 '. $request->$str_column_name .' 】を削除しました。';
