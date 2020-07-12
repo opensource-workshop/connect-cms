@@ -1392,6 +1392,12 @@ class DatabasesPlugin extends UserPluginBase
     {
         // databases_id がある場合、データを削除
         if ($databases_id) {
+            $databases_columns = DatabasesColumns::where('databases_id', $databases_id)->orderBy('display_sequence')->get();
+            foreach ($databases_columns as $databases_column) {
+                // カラムに紐づく選択肢の削除
+                $this->deleteColumnsSelects($databases_column->id);
+            }
+
             // カラムデータを削除する。
             DatabasesColumns::where('databases_id', $databases_id)->delete();
 
