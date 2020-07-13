@@ -468,6 +468,7 @@
                                     <label class="custom-control-label" for="{{$role_name}}_regist_edit_hide_flag">{{  $display_value  }}</label>
                                 </div>
                             @endforeach
+                            <small class="text-muted">※ 該当権限のユーザの場合、表示しないカラムは入力できないため、必須等のチェック処理を設定していてもチェックしません。</small>
                         </div>
                     </div>
                 </div>
