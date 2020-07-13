@@ -37,7 +37,8 @@
 
     {{-- 絞り込み --}}
     @php
-        $select_columns = $columns->where('select_flag', 1);
+        // change: コントローラ側で取得するよう見直し
+        // $select_columns = $columns->where('select_flag', 1);
 
         if ($databases_frames && $databases_frames->isUseSortFlag()) {
             $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();

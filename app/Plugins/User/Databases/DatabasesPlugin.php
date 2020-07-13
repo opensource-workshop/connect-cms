@@ -304,6 +304,7 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($database)) {
             $databases = null;
             $columns = null;
+            $select_columns = null;
             $group_rows_cols_columns = null;
             $inputs = null;
             $input_cols = null;
@@ -408,8 +409,7 @@ class DatabasesPlugin extends UserPluginBase
                         } elseif ($search_option_parts[1] == 'LE') {
                             $query->where('value', '<=', $search_option_parts[2]);
                         }
-
-                                         $query->groupBy('databases_inputs_id');
+                        $query->groupBy('databases_inputs_id');
                     });
                 }
             }
@@ -430,7 +430,7 @@ class DatabasesPlugin extends UserPluginBase
                             } else {
                                 $query->where('value', $search_column['value']);
                             }
-                               $query->groupBy('databases_inputs_id');
+                            $query->groupBy('databases_inputs_id');
                         });
                     }
                 }
@@ -473,6 +473,16 @@ class DatabasesPlugin extends UserPluginBase
 
             // カラム選択肢の取得
             $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
+
+            // 絞り込み対象カラム
+            $select_columns = $columns->where('select_flag', 1);
+            foreach ($select_columns as $key => $select_column) {
+                // 権限のよって非表示columかどうか
+                if ($this->isHideRoleColumn($select_column, 'list_detail_hide_flag')) {
+                    // 権限によって非表示なら、絞り込みから取り除く
+                    unset($select_columns[$key]);
+                }
+            }
         }
 
         //--- 表示設定（フレーム設定）データ
@@ -502,6 +512,7 @@ class DatabasesPlugin extends UserPluginBase
                 'database_frame'   => $database_frame,
                 'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
                 'columns'          => $columns,
+                'select_columns'   => $select_columns,
                 'group_rows_cols_columns' => $group_rows_cols_columns,
                 'inputs'           => $inputs,
                 'input_cols'       => $input_cols,

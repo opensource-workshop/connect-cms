@@ -15,7 +15,9 @@
 
         {{-- 絞り込みカウント --}}
         @php
-            $select_columns = $columns->where('select_flag', 1);
+            // change: コントローラ側で取得するよう見直し
+            // $select_columns = $columns->where('select_flag', 1);
+
             $select_column_count = $select_columns->count();
 
             // 並べ替えが有効なら、選択項目のカウントに +1 して、並べ替え用セレクトボックスの位置を確保する。
