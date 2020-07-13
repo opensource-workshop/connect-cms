@@ -439,7 +439,8 @@
                                     <label class="custom-control-label" for="{{$role_name}}_list_detail_hide_flag">{{  $display_value  }}</label>
                                 </div>
                             @endforeach
-                            <small class="text-muted">※ 「権限なし」とは、コンテンツ管理者・プラグイン管理者・モデレータ・承認者・編集者のいずれの権限もない状態です。</small>
+                            <small class="text-muted">※ 「権限なし」とは、コンテンツ管理者・プラグイン管理者・モデレータ・承認者・編集者のいずれの権限もない状態です。</small><br>
+                            <small class="text-muted">※ 該当権限のユーザは、「並べ替え指定」「検索対象指定」「絞り込み対象指定」からも当カラムを取り除き、見れなくします。</small>
                         </div>
                     </div>
                 </div>
