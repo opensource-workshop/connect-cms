@@ -54,7 +54,7 @@ class DatabasesFrames extends Model
     }
 
     /**
-     *  各カラム以外の基本設定としての並べ替えが指定されているか判定
+     * 各カラム以外の基本設定としての並べ替えが指定されているか判定
      */
     public function isBasicUseSortFlag()
     {
@@ -71,15 +71,29 @@ class DatabasesFrames extends Model
             return false;
         }
 
-        // 並び順 のkey配列を返す
-        $enums_sort_flags_keys = \DatabaseSortFlag::getSortFlagsKeys();
+        // 並び順 のkey配列を返す（$this->use_sort_flag（DatabasesFrames->use_sort_flag = 表示設定）のため、column'各カラム設定' を含む）
+        // $enums_sort_flags_member_keys = \DatabaseSortFlag::getSortFlagsKeys();
+        $enums_sort_flags_member_keys = \DatabaseSortFlag::getMemberKeys();
 
-        // 配列にマッチ
+        // 配列にマッチ => NG. in_array()の配列どうしの比較で、配列の値を全て含んでいるかチェックには対応してない
         // if (in_array(array('created_asc', 'created_desc', 'updated_asc', 'updated_desc', 'random'), $use_sort_flags)) {
-        if (in_array($enums_sort_flags_keys, $use_sort_flags)) {
-            return true;
+        // if (in_array($enums_sort_flags_keys, $use_sort_flags)) {
+        //     return true;
+        // }
+        // return false;
+        //
+        // bugfix: 指定されたソート順が、使えるソート順以外に使われてないかチェック
+        foreach ($use_sort_flags as $use_sort_flag) {
+            if (in_array($use_sort_flag, $enums_sort_flags_member_keys)) {
+                // 含まれているソート順はなにもしない
+            } else {
+                // 含まれていないソート順はエラーとしてfalse
+                return false;
+            }
         }
-        return false;
+        // var_dump($enums_sort_flags_member_keys);
+        // var_dump($use_sort_flags);
+        return true;
     }
 
     /**
