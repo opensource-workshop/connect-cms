@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベースプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -14,6 +14,7 @@
 
 @section("plugin_setting_$frame->id")
 @if (!$database->id && !$create_flag)
+    {{-- idなし & 変更. どんな状態??? --}}
     <div class="alert alert-warning mt-2">
         <i class="fas fa-exclamation-circle"></i>
         データベース選択画面から選択するか、データベース新規作成で作成してください。
@@ -23,11 +24,15 @@
     <div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i>
 
     @if ($message)
+        {{-- 変更：変更確定後 --}}
+        {{-- 登録：変更確定後 --}}
         {!!$message!!}
     @else
         @if (empty($database) || $create_flag)
+            {{-- 登録：初期表示 --}}
             新しいデータベース設定を登録します。
         @else
+            {{-- 変更：初期表示 --}}
             データベース設定を変更します。
         @endif
     @endif

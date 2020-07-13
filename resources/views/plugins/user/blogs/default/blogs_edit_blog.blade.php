@@ -38,90 +38,87 @@
 @else
 <form action="{{url('/')}}/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
-    <div id="app_{{ $frame->id }}">
+    {{-- create_flag がtrue の場合、新規作成するためにblogs_id を空にする --}}
+    @if ($create_flag)
+        <input type="hidden" name="blogs_id" value="">
+    @else
+        <input type="hidden" name="blogs_id" value="{{$blog->id}}">
+    @endif
 
-        {{-- create_flag がtrue の場合、新規作成するためにblogs_id を空にする --}}
-        @if ($create_flag)
-            <input type="hidden" name="blogs_id" value="">
-        @else
-            <input type="hidden" name="blogs_id" value="{{$blog->id}}">
-        @endif
-
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">ブログ名 <label class="badge badge-danger">必須</label></label>
-            <div class="{{$frame->getSettingInputClass()}}">
-                <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control">
-                @if ($errors && $errors->has('blog_name')) <div class="text-danger">{{$errors->first('blog_name')}}</div> @endif
-            </div>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ブログ名 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control">
+            @if ($errors && $errors->has('blog_name')) <div class="text-danger">{{$errors->first('blog_name')}}</div> @endif
         </div>
+    </div>
 
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
-            <div class="{{$frame->getSettingInputClass()}}">
-                <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3">
-                @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
-            </div>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
         </div>
+    </div>
 
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass(true)}}">RSS</label>
-            <div class="{{$frame->getSettingInputClass(true)}}">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if($blog->rss == 1)
-                        <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="rss_off">表示する</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if($blog->rss == 0)
-                        <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="rss_on">表示しない</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">RSS件数 <label class="badge badge-danger">必須</label></label>
-            <div class="{{$frame->getSettingInputClass()}}">
-                <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3">
-                @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
-            </div>
-        </div>
-
-        {{-- Submitボタン --}}
-        <div class="form-group text-center">
-            <div class="row">
-                <div class="col-3"></div>
-                <div class="col-6">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
-                        <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
-                    </button>
-                    <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
-                        <span class="{{$frame->getSettingButtonCaptionClass()}}">
-                        @if (empty($blog) || $create_flag)
-                            登録確定
-                        @else
-                            変更確定
-                        @endif
-                        </span>
-                    </button>
-                </div>
-
-                {{-- 既存ブログの場合は削除処理のボタンも表示 --}}
-                @if ($create_flag)
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">RSS</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($blog->rss == 1)
+                    <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input" checked="checked">
                 @else
-                <div class="col-3 text-right">
-                    <a data-toggle="collapse" href="#collapse{{$blog_frame->id}}">
-                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
-                    </a>
-                </div>
+                    <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input">
                 @endif
+                <label class="custom-control-label" for="rss_off">表示する</label>
             </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($blog->rss == 0)
+                    <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="rss_on">表示しない</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">RSS件数 <label class="badge badge-danger">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
+        </div>
+    </div>
+
+    {{-- Submitボタン --}}
+    <div class="form-group text-center">
+        <div class="row">
+            <div class="col-3"></div>
+            <div class="col-6">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
+                </button>
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                    <span class="{{$frame->getSettingButtonCaptionClass()}}">
+                    @if (empty($blog) || $create_flag)
+                        登録確定
+                    @else
+                        変更確定
+                    @endif
+                    </span>
+                </button>
+            </div>
+
+            {{-- 既存ブログの場合は削除処理のボタンも表示 --}}
+            @if ($create_flag)
+            @else
+            <div class="col-3 text-right">
+                <a data-toggle="collapse" href="#collapse{{$blog_frame->id}}">
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
+                </a>
+            </div>
+            @endif
         </div>
     </div>
 </form>

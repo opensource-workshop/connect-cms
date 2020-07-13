@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class DatabasesColumnsSelects extends Model
 {
-    // XV‚·‚é€–Ú‚Ì’è‹`
+    // æ›´æ–°ã™ã‚‹é …ç›®ã®å®šç¾©
     protected $fillable = ['databases_columns_id', 'value', 'display_sequence', 'created_at', 'updated_at'];
 }

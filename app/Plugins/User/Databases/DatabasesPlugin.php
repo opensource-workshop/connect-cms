@@ -1449,12 +1449,13 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'databases_edit_database', [
-            'database_frame'  => $database_frame,
-            'database'        => $database,
-            'create_flag' => $create_flag,
-            'message'     => $message,
-            'errors'      => $errors,
+            'databases_edit_database',
+            [
+                'database_frame'  => $database_frame,
+                'database'        => $database,
+                'create_flag' => $create_flag,
+                'message'     => $message,
+                'errors'      => $errors,
             ]
         )->withInput($request->all);
     }
@@ -1518,7 +1519,11 @@ class DatabasesPlugin extends UserPluginBase
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
-            $message = 'データベース設定を追加しました。<br />　 データベースで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/databases/editColumn/' . $page_id . '/' . $frame_id . '/#frame-' . $frame->id . '">項目設定</a> ］';
+            // DB作成後に表示される項目設定リンクは、作成したDBではなく、表示中DBの項目設定リンクのため、一旦リンクを外す
+            // 項目設定周りが databases_id に対応できたら、databases_id をリンク含めて復活できると思う
+            // $message = 'データベース設定を追加しました。<br />　 データベースで使用する項目を設定してください。［ <a href="' . url('/') . '/plugin/databases/editColumn/' . $page_id . '/' . $frame_id . '/#frame-' . $frame_id . '">項目設定</a> ］';
+            $message = 'データベース設定を追加しました。<br />' .
+                        '　 [ <a href="' . url('/') . '/plugin/databases/listBuckets/' . $page_id . '/' . $frame_id . '/#frame-' . $frame_id . '">DB選択</a> ]から作成したデータベースを選択後、［ 項目設定 ］で使用する項目を設定してください。';
         } else {
             // databases_id があれば、データベースを更新
             // データベースデータ取得
@@ -1546,7 +1551,9 @@ class DatabasesPlugin extends UserPluginBase
         // 新規作成フラグを付けてデータベース設定変更画面を呼ぶ
         $create_flag = false;
 
-        return $this->editBuckets($request, $page_id, $frame_id, $databases_id, $create_flag, $message);
+        // bugfix: 登録後は登録後の$databases->idを渡す。渡さないと作成後に表示中のDBの変更画面になり、そこに作成したDB名がセットされた状態で表示される
+        // return $this->editBuckets($request, $page_id, $frame_id, $databases_id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $databases->id, $create_flag, $message);
     }
 
     /**
@@ -1558,6 +1565,12 @@ class DatabasesPlugin extends UserPluginBase
         if ($databases_id) {
             // カラム権限データを削除する。
             DatabasesColumnsRole::where('databases_id', $databases_id)->delete();
+
+            $databases_columns = DatabasesColumns::where('databases_id', $databases_id)->orderBy('display_sequence')->get();
+            foreach ($databases_columns as $databases_column) {
+                // カラムに紐づく選択肢の削除
+                $this->deleteColumnsSelects($databases_column->id);
+            }
 
             // カラムデータを削除する。
             DatabasesColumns::where('databases_id', $databases_id)->delete();
