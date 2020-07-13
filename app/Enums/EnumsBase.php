@@ -18,18 +18,26 @@ class EnumsBase
     const enum = [];
 
     /*
-    * 対応した和名を返す
-    */
+     * 対応した和名を返す
+     */
     public static function getDescription($key): string
     {
         return static::enum[$key];
     }
 
     /*
-    * key/valueの連想配列を返す
-    */
+     * key/valueの連想配列を返す
+     */
     public static function getMembers()
     {
         return static::enum;
+    }
+
+    /**
+     * key配列を返す
+     */
+    public static function getMemberKeys()
+    {
+        return array_keys(static::enum);
     }
 }

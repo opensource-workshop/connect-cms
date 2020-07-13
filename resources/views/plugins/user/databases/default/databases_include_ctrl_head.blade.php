@@ -38,28 +38,23 @@
     {{-- 絞り込み --}}
     @php
         $select_columns = $columns->where('select_flag', 1);
-        $select_column_count = $select_columns->count();
 
-        // 並べ替えが有効なら、選択項目のカウントに +1 して、並べ替え用セレクトボックスの位置を確保する。
         if ($databases_frames && $databases_frames->isUseSortFlag()) {
             $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();
-            if ($sort_count > 0) {
-                $select_column_count++;
-            }
         }
         else {
             $sort_count = 0;
         }
-
-        $col_no = ($select_column_count == 0) ? 0 : intdiv(12, $select_column_count);
     @endphp
     @if($select_columns || $databases_frames->isBasicUseSortFlag())
         <div class="form-group row mb-3">
+
+        {{-- 絞り込み --}}
         @foreach($select_columns as $select_column)
             @php
                 $session_column_name = "search_column." . $frame->id . '.' . $loop->index . ".value";
             @endphp
-            <div class="col-sm-{{$col_no}}">
+            <div class="col-sm">
                 <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
                 <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
                 @if($select_column->column_type == 'checkbox')
@@ -97,7 +92,7 @@
                 }
             @endphp
 
-            <div class="col-sm-{{$col_no}}">
+            <div class="col-sm">
                 <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);">
 
                     {{-- 基本部分 --}}

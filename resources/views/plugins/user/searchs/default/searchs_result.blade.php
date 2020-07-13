@@ -33,7 +33,7 @@
         @endif
         <dd>
             @if ($link_pattern[$searchs_result->plugin_name] == 'show_page_frame_post')
-            <a href="{{url('/')}}{{$link_base[$searchs_result->plugin_name]}}/{{$searchs_result->page_id}}/{{$searchs_result->frame_id}}/{{$searchs_result->post_id}}">
+            <a href="{{url('/')}}{{$link_base[$searchs_result->plugin_name]}}/{{$searchs_result->page_id}}/{{$searchs_result->frame_id}}/{{$searchs_result->post_id}}#frame-{{$searchs_result->frame_id}}">
                 {{$searchs_result->post_title}}
             </a>
             @elseif ($link_pattern[$searchs_result->plugin_name] == 'show_page')

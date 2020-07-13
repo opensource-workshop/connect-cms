@@ -47,13 +47,4 @@ final class DatabaseSortFlag extends EnumsBase
         unset($sort_flags[self::column]);
         return $sort_flags;
     }
-
-    /**
-     * 並び順 のkey配列を返す
-     */
-    public static function getSortFlagsKeys()
-    {
-        $sort_flags = self::getSortFlags();
-        return array_keys($sort_flags);
-    }
 }
