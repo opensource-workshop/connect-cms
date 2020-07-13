@@ -305,6 +305,8 @@ class DatabasesPlugin extends UserPluginBase
             $databases = null;
             $columns = null;
             $select_columns = null;
+            $sort_columns = null;
+            $sort_count = 0;
             $group_rows_cols_columns = null;
             $inputs = null;
             $input_cols = null;
@@ -483,6 +485,24 @@ class DatabasesPlugin extends UserPluginBase
                     unset($select_columns[$key]);
                 }
             }
+
+            // 並び順対象カラム
+            if ($databases_frames && $databases_frames->isUseSortFlag()) {
+                // {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
+                $sort_columns = $columns->whereIn('sort_flag', [1, 2, 3]);
+                foreach ($sort_columns as $key => $sort_column) {
+                    // 権限のよって非表示columかどうか
+                    if ($this->isHideRoleColumn($sort_column, 'list_detail_hide_flag')) {
+                        // 権限によって非表示なら、並び順から取り除く
+                        unset($sort_columns[$key]);
+                    }
+                }
+
+                $sort_count = $sort_columns->count();
+            } else {
+                $sort_columns = null;
+                $sort_count = 0;
+            }
         }
 
         //--- 表示設定（フレーム設定）データ
@@ -512,8 +532,10 @@ class DatabasesPlugin extends UserPluginBase
                 'database_frame'   => $database_frame,
                 'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
                 'columns'          => $columns,
-                'select_columns'   => $select_columns,
                 'group_rows_cols_columns' => $group_rows_cols_columns,
+                'select_columns'   => $select_columns,
+                'sort_columns'     => $sort_columns,
+                'sort_count'       => $sort_count,
                 'inputs'           => $inputs,
                 'input_cols'       => $input_cols,
                 'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
