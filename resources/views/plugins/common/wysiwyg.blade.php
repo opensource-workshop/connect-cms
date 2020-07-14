@@ -102,14 +102,14 @@
     }
 
     // plugins
-    $plugins = 'file image imagetools link autolink preview textcolor code table lists advlist';
+    $plugins = 'file image imagetools media link autolink preview textcolor code table lists advlist';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
     $plugins = "plugins  : '" . $plugins . "',";
 
     // toolbar
-    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file | preview | code ';
+    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $toolbar .= '| translate ';
     }
@@ -173,8 +173,9 @@
 
         body_class : "{{$body_class}}",
 
-        // file_picker_types: 'file image media',
-        // media_live_embeds: true,
+        file_picker_types: 'file image media',
+        media_live_embeds: true,
+
         image_caption: true,
         image_title: true,
         image_class_list: [
