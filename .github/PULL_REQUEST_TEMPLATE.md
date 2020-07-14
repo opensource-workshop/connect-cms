@@ -8,7 +8,7 @@
 レビューするに当たって参考にできる情報があればそのリンク
 
 ## DB変更の有無（Whether DB is modified）
-Pull requestsにマイグレーションの追加があるか
+Pull requestsにマイグレーションの追加があるか<br>
 有り / 無し
 
 ## チェックリスト（Checklist）
