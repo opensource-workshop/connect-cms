@@ -17,6 +17,7 @@ use App\Models\Common\Uploads;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesColumnsSelects;
+use App\Models\User\Databases\DatabasesColumnsRole;
 use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databases\DatabasesInputCols;
@@ -281,15 +282,11 @@ class DatabasesPlugin extends UserPluginBase
 
             /**
              * データベースのカラムデータを取得
-             * ※まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
              * ※データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合はリテラル「mail_setting_error」が返る
              */
             $databases_columns = $this->getDatabasesColumns($database);
 
-            if ($databases_columns == 'frame_setting_error') {
-                // 項目データはあるが、まとめ行の設定（まとめ行の位置とまとめ数の設定）が不正な場合
-                $setting_error_messages[] = 'まとめ行の設定が不正です。フレームの設定画面からまとめ行の位置、又は、まとめ数の設定を見直してください。';
-            } elseif ($databases_columns == 'mail_setting_error') {
+            if ($databases_columns == 'mail_setting_error') {
                 // データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合
                 $setting_error_messages[] = 'メールアドレス型の項目を設定してください。（データベースの設定「登録者にメール送信する」と関連）';
             } elseif (!$databases_columns) {
@@ -307,6 +304,9 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($database)) {
             $databases = null;
             $columns = null;
+            $select_columns = null;
+            $sort_columns = null;
+            $sort_count = 0;
             $group_rows_cols_columns = null;
             $inputs = null;
             $input_cols = null;
@@ -351,14 +351,18 @@ class DatabasesPlugin extends UserPluginBase
                                                ->where('databases_id', $database->id);
             }
 
+            // 権限のよって非表示columのdatabases_columns_id配列を取得する
+            $hide_columns_ids = $this->getHideColumnsIds($columns, 'list_detail_display_flag');
+
             // キーワード指定の追加
             if (!empty(session('search_keyword.'.$frame_id))) {
-                $inputs_query->whereIn('databases_inputs.id', function ($query) use ($frame_id) {
+                $inputs_query->whereIn('databases_inputs.id', function ($query) use ($frame_id, $hide_columns_ids) {
                                // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
                                $query->select('databases_inputs_id')
                                      ->from('databases_input_cols')
                                      ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                      ->where('databases_columns.search_flag', 1)
+                                     ->whereNotIn('databases_columns.id', $hide_columns_ids)
                                      ->where('value', 'like', '%' . session('search_keyword.'.$frame_id) . '%')
                                      ->groupBy('databases_inputs_id');
                 });
@@ -411,8 +415,7 @@ class DatabasesPlugin extends UserPluginBase
                         } elseif ($search_option_parts[1] == 'LE') {
                             $query->where('value', '<=', $search_option_parts[2]);
                         }
-
-                                         $query->groupBy('databases_inputs_id');
+                        $query->groupBy('databases_inputs_id');
                     });
                 }
             }
@@ -433,7 +436,7 @@ class DatabasesPlugin extends UserPluginBase
                             } else {
                                 $query->where('value', $search_column['value']);
                             }
-                               $query->groupBy('databases_inputs_id');
+                            $query->groupBy('databases_inputs_id');
                         });
                     }
                 }
@@ -476,6 +479,21 @@ class DatabasesPlugin extends UserPluginBase
 
             // カラム選択肢の取得
             $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
+
+            // 絞り込み対象カラム
+            $select_columns = $columns->where('select_flag', 1)
+                                        ->whereNotIn('id', $hide_columns_ids);
+
+            // 並び順対象カラム
+            if ($databases_frames && $databases_frames->isUseSortFlag()) {
+                // {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
+                $sort_columns = $columns->whereIn('sort_flag', [1, 2, 3])
+                                        ->whereNotIn('id', $hide_columns_ids);
+                $sort_count = $sort_columns->count();
+            } else {
+                $sort_columns = null;
+                $sort_count = 0;
+            }
         }
 
         //--- 表示設定（フレーム設定）データ
@@ -506,6 +524,9 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
                 'columns'          => $columns,
                 'group_rows_cols_columns' => $group_rows_cols_columns,
+                'select_columns'   => $select_columns,
+                'sort_columns'     => $sort_columns,
+                'sort_count'       => $sort_count,
                 'inputs'           => $inputs,
                 'input_cols'       => $input_cols,
                 'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
@@ -517,32 +538,156 @@ class DatabasesPlugin extends UserPluginBase
     /**
      * 行グループ・列グループの配列に置き換えたcolumns
      */
-    private function replaceArrayGroupRowsColsColumns($columns, $hide_flag_column_name = 'list_hide_flag')
+    private function replaceArrayGroupRowsColsColumns($databases_columns, $hide_flag_column_name = 'list_hide_flag')
     {
+        if (empty($databases_columns)) {
+            return [];
+        }
+
         // 行グループ・列グループの配列に置き換えたcolumns
         $group_rows_cols_columns = [];
-        foreach ($columns as $column) {
-            // 表示しないcolumnは、group_rows_cols_columnsに含まない。
-            //
-            // 一覧に表示する (list_hide_flag=0)
-            // 詳細に表示する (detail_hide_flag=0)
-            if ($column->$hide_flag_column_name == 0) {
-                if (is_null($column->row_group) && is_null($column->column_group)) {
-                    // 行グループ・列グループどっちも設定なし
-                    //
-                    // row_group = null & column_group = nullは1行として扱うため、
-                    // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
-                    // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
-                    $group_cols_columns = null;                         // 初期化
-                    $group_cols_columns[''][0] = $column;               // column_group = ''としてセット
-                    $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
-                } else {
-                    // 行グループ・列グループどっちか設定あり
-                    $group_rows_cols_columns[$column->row_group][$column->column_group][] = $column;
-                }
+
+        // 権限のよって非表示columのdatabases_columns_id配列を取得する
+        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'list_detail_display_flag');
+
+        // 表示しないcolumnは、group_rows_cols_columnsに含まない。
+        //
+        // 一覧に表示する (list_hide_flag=0)
+        // 詳細に表示する (detail_hide_flag=0)
+        $disp_databases_columns = $databases_columns->where($hide_flag_column_name, 0)
+                                                    ->whereNotIn('id', $hide_columns_ids);
+
+        foreach ($disp_databases_columns as $databases_column) {
+            if (is_null($databases_column->row_group) && is_null($databases_column->column_group)) {
+                // 行グループ・列グループどっちも設定なし
+                //
+                // row_group = null & column_group = nullは1行として扱うため、
+                // $group_rows_cols_columns[row_group = 連番][column_group = ''で固定][columns_key = 0 で固定] とする
+                // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
+                $group_cols_columns = null;                         // 初期化
+                $group_cols_columns[''][0] = $databases_column;     // column_group = ''としてセット
+                $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
+            } else {
+                // 行グループ・列グループどっちか設定あり
+                $group_rows_cols_columns[$databases_column->row_group][$databases_column->column_group][] = $databases_column;
             }
         }
         return $group_rows_cols_columns;
+    }
+
+    /**
+     * 権限のよって登録・編集の非表示columnsを取り除く
+     */
+    private function removeRegistEditHideColumns($databases_columns)
+    {
+        if (empty($databases_columns)) {
+            // 登録・編集用のメソッドのため、基本ここに入ってくることはない
+            return [];
+        }
+
+        // 権限のよって非表示columのdatabases_columns_id配列を取得する
+        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
+
+        // 表示しないcolumnは、group_rows_cols_columnsに含まない。
+        $disp_databases_columns = $databases_columns->whereNotIn('id', $hide_columns_ids);
+
+        return $disp_databases_columns;
+    }
+
+    /**
+     * 権限のよって非表示columのdatabases_columns_id配列を取得する
+     * $display_flag_column_name = regist_edit_display_flag|list_detail_display_flag
+     */
+    private function getHideColumnsIds($databases_columns, $display_flag_column_name = 'list_detail_display_flag')
+    {
+        if (empty($databases_columns)) {
+            return [];
+        }
+
+        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+        // Log::debug('role_article_admin: '.var_export($this->isCan('role_article_admin'), true));
+        // Log::debug('role_arrangement: '.var_export($this->isCan('role_arrangement'), true));
+        // Log::debug('role_article: '.var_export($this->isCan('role_article'), true));
+        // Log::debug('role_approval: '.var_export($this->isCan('role_approval'), true));
+        // Log::debug('role_reporter: '.var_export($this->isCan('role_reporter'), true));
+
+        $databases_hide_columns_ids = [];
+
+        foreach ($databases_columns as $databases_column) {
+            if ($this->isCan('role_article_admin')) {
+                // コンテンツ管理者のユーザは、必ず当カラムを表示します。
+                continue;
+            }
+
+            // 権限で表示カラムを制御
+            if (!$databases_column->role_display_control_flag) {
+                // 制御しない表示カラムはスルー
+                continue;
+            }
+
+            // 権限で表示カラムを制御する場合、一度に非表示扱いにする
+            // 該当権限で表示フラグをゲットできたら、array keyを指定して非表示扱いから取り除く
+            $databases_hide_columns_ids[$databases_column->id] = $databases_column->id;
+
+            // カラムの表示権限データ取得
+            $databases_columns_roles = $databases_column->databasesColumnsRoles;
+
+            if (Auth::user()) {
+                // ログイン済み
+                foreach ($databases_columns_roles as $databases_columns_role) {
+                    if ($this->isCan('role_article') &&
+                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_article &&
+                            $databases_columns_role->$display_flag_column_name == 1) {
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('モデレータ', true));
+
+                        // モデレータ権限あり & モデレータ表示のcolumn
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
+                        continue 2;
+                    } elseif ($this->isCan('role_reporter') &&
+                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_reporter &&
+                            $databases_columns_role->$display_flag_column_name == 1) {
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('編集者権限', true));
+
+                        // 編集者権限あり & 編集者表示のcolumn
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
+                        continue 2;
+                    } elseif (!$this->isCan('role_arrangement') &&
+                            !$this->isCan('role_article') &&
+                            !$this->isCan('role_approval') &&
+                            !$this->isCan('role_reporter') &&
+                            $databases_columns_role->role_name == \DatabaseColumnRoleName::no_role &&
+                            $databases_columns_role->$display_flag_column_name == 1) {
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('権限なし', true));
+
+                        // 権限なし(プラグイン管理者・モデレータ・承認者・編集者のいずれの権限も付いていない)
+                        // & 権限なし表示のcolumn
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
+                        continue 2;
+                    }
+                }
+            } else {
+                // 未ログイン
+                foreach ($databases_columns_roles as $databases_columns_role) {
+                    // 未ログインで非表示のcolumnは、取り除く
+                    if ($databases_columns_role->role_name == \DatabaseColumnRoleName::not_login &&
+                            $databases_columns_role->$display_flag_column_name == 1) {
+                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                        // Log::debug(var_export('未ログイン', true));
+
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
+                        continue 2;
+                    }
+                }
+            }
+        }
+        return $databases_hide_columns_ids;
     }
 
     /**
@@ -649,6 +794,9 @@ class DatabasesPlugin extends UserPluginBase
         // データベースのカラムデータ ※ まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
         $databases_columns = $this->getDatabasesColumns($database);
 
+        // 権限のよって登録・編集の非表示columnsを取り除く
+        $databases_columns = $this->removeRegistEditHideColumns($databases_columns);
+
         // カラムの選択肢用データ
         $databases_columns_id_select = null;
         if ($database) {
@@ -665,15 +813,16 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'databases_input', [
-            'request'  => $request,
-            'frame_id' => $frame_id,
-            'id'       => $id,
-            'database' => $database,
-            'databases_columns' => $databases_columns,
-            'databases_columns_id_select' => $databases_columns_id_select,
-            'input_cols'  => $input_cols,
-            'errors'      => $errors,
+            'databases_input',
+            [
+                'request'  => $request,
+                'frame_id' => $frame_id,
+                'id'       => $id,
+                'database' => $database,
+                'databases_columns' => $databases_columns,
+                'databases_columns_id_select' => $databases_columns_id_select,
+                'input_cols'  => $input_cols,
+                'errors'      => $errors,
             ]
         )->withInput($request->all);
     }
@@ -791,6 +940,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // データベースのカラムデータ
         $databases_columns = $this->getDatabasesColumns($database);
+
+        // 権限のよって登録・編集の非表示columnsを取り除く
+        $databases_columns = $this->removeRegistEditHideColumns($databases_columns);
 
         // ファイル系の詳細データ
         $uploads = collect();
@@ -950,13 +1102,27 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
-        // id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
-        if (!empty($id)) {
-            DatabasesInputCols::where('databases_inputs_id', $id)->delete();
-        }
-
         // データベースのカラムデータ
         $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
+
+        // 権限のよって登録・編集の非表示columのdatabases_columns_id配列を取得する
+        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
+        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+        // Log::debug(var_export($databases_columns_ids, true));
+
+        // id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
+        // delete -> insertのため、権限非表示カラムは消さずに残す。
+        if (!empty($id)) {
+            DatabasesInputCols::where('databases_inputs_id', $id)
+                                ->whereNotIn('databases_columns_id', $hide_columns_ids)
+                                ->delete();
+        }
+
+        // データベースのカラムデータ 権限非表示カラムを除いて再取得
+        $databases_columns = DatabasesColumns::where('databases_id', $database->id)
+                                                ->whereNotIn('id', $hide_columns_ids)
+                                                ->orderBy('display_sequence')
+                                                ->get();
 
         // メールの送信文字列
         $contents_text = '';
@@ -1013,7 +1179,7 @@ class DatabasesPlugin extends UserPluginBase
         $number = $database->numbering_use_flag ? $database->numbering_prefix . sprintf('%06d', $this->getNo('databases', $database->bucket_id, $database->numbering_prefix)) : null;
 
         // 登録後メッセージ内の採番文字列を置換
-        $after_message = str_replace('[[number]]', $number, $database->after_message);
+        // $after_message = str_replace('[[number]]', $number, $database->after_message);
 
         // メール送信
         if ($database->mail_send_flag) {
@@ -1399,6 +1565,9 @@ class DatabasesPlugin extends UserPluginBase
     {
         // databases_id がある場合、データを削除
         if ($databases_id) {
+            // カラム権限データを削除する。
+            DatabasesColumnsRole::where('databases_id', $databases_id)->delete();
+
             $databases_columns = DatabasesColumns::where('databases_id', $databases_id)->orderBy('display_sequence')->get();
             foreach ($databases_columns as $databases_column) {
                 // カラムに紐づく選択肢の削除
@@ -1430,7 +1599,7 @@ class DatabasesPlugin extends UserPluginBase
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+                ->update(['bucket_id' => $request->select_bucket]);
 
         // 関連するセッションクリア
         $request->session()->forget('databases.'.$frame_id);
@@ -1504,18 +1673,25 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // --- 画面に値を渡す準備
-        $column = DatabasesColumns::query()->where('id', $column_id)->first();
-        $selects = DatabasesColumnsSelects::query()->where('databases_columns_id', $column->id)->orderBy('display_sequence', 'asc')->get();
+        $column = DatabasesColumns::where('id', $column_id)->first();
+        $selects = DatabasesColumnsSelects::where('databases_columns_id', $column->id)->orderBy('display_sequence', 'asc')->get();
+        $columns_roles = DatabasesColumnsRole::where('databases_columns_id', $column->id)
+                                                ->get()
+                                                // keyをrole_nameにした結果をセット
+                                                ->mapWithKeys(function ($item) {
+                                                    return [$item['role_name'] => $item];
+                                                });
 
         // 編集画面テンプレートを呼び出す。
         return $this->view(
             'databases_edit_row_detail',
             [
                 'databases_id' => $databases_id,
-                'column'     => $column,
-                'selects'     => $selects,
-                'message'     => $message,
-                'errors'     => $errors,
+                'column' => $column,
+                'selects' => $selects,
+                'columns_roles' => $columns_roles,
+                'message' => $message,
+                'errors' => $errors,
             ]
         );
     }
@@ -1603,8 +1779,12 @@ class DatabasesPlugin extends UserPluginBase
         // 明細行から削除対象の項目名を抽出
         $str_column_name = "column_name_"."$request->column_id";
 
+        // カラム権限の削除
+        DatabasesColumnsRole::where('databases_columns_id', $request->column_id)->delete();
+
         // 項目の削除
-        DatabasesColumns::query()->where('id', $request->column_id)->delete();
+        DatabasesColumns::where('id', $request->column_id)->delete();
+
         // 項目に紐づく選択肢の削除
         $this->deleteColumnsSelects($request->column_id);
         $message = '項目【 '. $request->$str_column_name .' 】を削除しました。';
@@ -1702,7 +1882,7 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
-        $column = DatabasesColumns::query()->where('id', $request->column_id)->first();
+        $column = DatabasesColumns::where('id', $request->column_id)->first();
 
         $validator_values = null;
         $validator_attributes = null;
@@ -1800,6 +1980,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->list_hide_flag = (empty($request->list_hide_flag)) ? 0 : $request->list_hide_flag;
         // 詳細から非表示にする指定
         $column->detail_hide_flag = (empty($request->detail_hide_flag)) ? 0 : $request->detail_hide_flag;
+        // 権限で表示カラムを制御
+        $column->role_display_control_flag = (empty($request->role_display_control_flag)) ? 0 : $request->role_display_control_flag;
         // 並べ替え指定
         $column->sort_flag = (empty($request->sort_flag)) ? 0 : $request->sort_flag;
         // 検索対象指定
@@ -1813,6 +1995,33 @@ class DatabasesPlugin extends UserPluginBase
 
         // 保存
         $column->save();
+
+
+        // delete -> insert
+        // カラム権限データを削除する。
+        DatabasesColumnsRole::where('databases_columns_id', $request->column_id)->delete();
+
+        $column_role_name_keys = \DatabaseColumnRoleName::getMemberKeys();
+
+        foreach ($column_role_name_keys as $column_role_name_key) {
+            if (! isset($request->$column_role_name_key)) {
+                // チェックなしの権限はスルー
+                continue;
+            }
+            $list_detail_display_flag = isset($request->$column_role_name_key['list_detail_display_flag']) ? $request->$column_role_name_key['list_detail_display_flag'] : 0;
+            $regist_edit_display_flag = isset($request->$column_role_name_key['regist_edit_display_flag']) ? $request->$column_role_name_key['regist_edit_display_flag'] : 0;
+
+            $columns_role = new DatabasesColumnsRole();
+            $columns_role->databases_id = $request->databases_id;
+            $columns_role->databases_columns_id = $request->column_id;
+            $columns_role->role_name = $column_role_name_key;
+            $columns_role->list_detail_display_flag = $list_detail_display_flag;
+            $columns_role->regist_edit_display_flag = $regist_edit_display_flag;
+
+            // 保存
+            $columns_role->save();
+        }
+
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す

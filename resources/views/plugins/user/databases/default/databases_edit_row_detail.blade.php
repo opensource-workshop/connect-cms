@@ -416,6 +416,88 @@
                     </div>
                 </div>
 
+                {{-- 権限毎に一覧・詳細で非表示にする指定 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}} pt-0">権限の表示指定</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="col pl-0">
+
+                            <div class="row">
+                                <div class="col-md">
+                                    <label>表示カラムの制御</label><br>
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        <input type="radio" value="1" id="role_display_control_flag_1" name="role_display_control_flag" class="custom-control-input" @if(old('role_display_control_flag', $column->role_display_control_flag) == 1) checked="checked" @endif>
+                                        <label class="custom-control-label" for="role_display_control_flag_1">権限で制御する</label>
+                                    </div>
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        <input type="radio" value="0" id="role_display_control_flag_0" name="role_display_control_flag" class="custom-control-input" @if(old('role_display_control_flag', $column->role_display_control_flag) == 0) checked="checked" @endif>
+                                        <label class="custom-control-label" for="role_display_control_flag_0">権限で制御しない</label>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">
+                                            ※ コンテンツ管理者のユーザは、「権限で制御する」場合でも、必ず当カラムを表示します。
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md">
+                                    <label>一覧・詳細で表示する権限</label>
+                                    @foreach (DatabaseColumnRoleName::getMembers() as $role_name => $display_value)
+                                        @php
+                                        $display_flag = 0;
+                                        if (isset($columns_roles[$role_name])) {
+                                            $display_flag = $columns_roles[$role_name]->list_detail_display_flag;
+                                        }
+                                        @endphp
+                                        {{--
+                                        <div class="custom-control custom-checkbox">
+                                            <input name="role_article[list_detail_display_flag]" value="1" type="checkbox" class="custom-control-input" id="list_detail_hide_role_article">
+                                            <label class="custom-control-label" for="list_detail_hide_role_article">モデレータ</label>
+                                        </div>
+                                        --}}
+                                        <div class="custom-control custom-checkbox">
+                                            <input name="{{$role_name}}[list_detail_display_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_list_detail_display_flag" @if(old($role_name . '.list_detail_display_flag', $display_flag) == 1) checked="checked" @endif>
+                                            <label class="custom-control-label" for="{{$role_name}}_list_detail_display_flag">{{  $display_value  }}</label>
+                                        </div>
+                                    @endforeach
+                                    <small class="text-muted">
+                                        ※ 「権限なし」とは、プラグイン管理者・モデレータ・承認者・編集者のいずれの権限もない状態です。<br>
+                                        ※ 表示しない権限のユーザは、「並べ替え指定」「検索対象指定」「絞り込み対象指定」からも当カラムを取り除き、見れなくします。
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md">
+                                    <label>登録・編集で表示する権限</label>
+                                    @foreach (DatabaseColumnRoleName::getRegistEditDisplayMembers() as $role_name => $display_value)
+                                        @php
+                                        $display_flag = 0;
+                                        if (isset($columns_roles[$role_name])) {
+                                            $display_flag = $columns_roles[$role_name]->regist_edit_display_flag;
+                                        }
+                                        @endphp
+                                        {{--
+                                        <div class="custom-control custom-checkbox">
+                                            <input name="role_article[regist_edit_display_flag]" value="1" type="checkbox" class="custom-control-input" id="regist_edit_hide_role_guest">
+                                            <label class="custom-control-label" for="regist_edit_hide_role_guest">モデレータ</label>
+                                        </div>
+                                        --}}
+                                        <div class="custom-control custom-checkbox">
+                                            <input name="{{$role_name}}[regist_edit_display_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_regist_edit_display_flag" @if(old($role_name . '.regist_edit_display_flag', $display_flag) == 1) checked="checked" @endif>
+                                            <label class="custom-control-label" for="{{$role_name}}_regist_edit_display_flag">{{  $display_value  }}</label>
+                                        </div>
+                                    @endforeach
+                                    <small class="text-muted">※ 表示しない権限のユーザの場合、表示しないカラムは入力できないため、必須等のチェック処理を設定していてもチェックしません。</small>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
                 {{-- 並べ替え指定 --}}
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}}">並べ替え指定</label>

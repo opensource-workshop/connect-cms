@@ -35,17 +35,6 @@
     </div>
     @endif
 
-    {{-- 絞り込み --}}
-    @php
-        $select_columns = $columns->where('select_flag', 1);
-
-        if ($databases_frames && $databases_frames->isUseSortFlag()) {
-            $sort_count = $columns->whereIn('sort_flag', [1, 2, 3])->count();
-        }
-        else {
-            $sort_count = 0;
-        }
-    @endphp
     @if($select_columns || $databases_frames->isBasicUseSortFlag())
         <div class="form-group row mb-3">
 
@@ -107,7 +96,7 @@
                     @if($sort_count > 0 && $databases_frames->isUseSortFlag('column'))
                     <optgroup label="各カラム設定">
                         {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
-                        @foreach($columns->whereIn('sort_flag', [1, 2, 3]) as $sort_column)
+                        @foreach($sort_columns as $sort_column)
 
                             @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
                                 <option value="{{$sort_column->id}}_asc" @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc') selected @endif>{{  $sort_column->column_name  }}(昇順)</option>
