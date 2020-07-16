@@ -7,5 +7,9 @@
 ## 参考（Reference）
 レビューするに当たって参考にできる情報があればそのリンク
 
+## DB変更の有無（Whether DB is modified）
+Pull requestsにマイグレーションの追加があるか<br>
+有り / 無し
+
 ## チェックリスト（Checklist）
 - [ ] PHP_CodeSnifferを実行して、本PR内に指摘が存在しないことを確認した。https://github.com/opensource-workshop/connect-cms/wiki/PHP_CodeSniffer

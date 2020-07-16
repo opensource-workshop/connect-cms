@@ -136,7 +136,10 @@
                     @endif
                     <label class="custom-control-label" for="role_reporter">編集者</label>
                 </div>
-                <small class="text-muted">※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。</small>
+                <small class="text-muted">
+                    ※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。<br>
+                    ※「コンテンツ管理者」は、「コンテンツ管理者」権限と同時に「プラグイン管理者」「モデレータ」「承認者」「編集者」権限も併せて持ちます。
+                </small>
             </div>
         </div>
 
