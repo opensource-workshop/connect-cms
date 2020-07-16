@@ -18,8 +18,8 @@ class CreateDatabasesColumnsRolesTable extends Migration
             $table->integer('databases_id');
             $table->integer('databases_columns_id');
             $table->string('role_name', 255);
-            $table->integer('list_detail_hide_flag')->comment('一覧・詳細から非表示にする指定')->nullable();
-            $table->integer('regist_edit_hide_flag')->comment('登録・編集から非表示にする指定')->nullable();
+            $table->integer('list_detail_display_flag')->comment('一覧・詳細で表示する指定')->nullable();
+            $table->integer('regist_edit_display_flag')->comment('登録・編集で表示する指定')->nullable();
 
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();

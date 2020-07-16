@@ -352,7 +352,7 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 権限のよって非表示columのdatabases_columns_id配列を取得する
-            $hide_columns_ids = $this->getHideColumnsIds($columns, 'list_detail_hide_flag');
+            $hide_columns_ids = $this->getHideColumnsIds($columns, 'list_detail_display_flag');
 
             // キーワード指定の追加
             if (!empty(session('search_keyword.'.$frame_id))) {
@@ -548,7 +548,7 @@ class DatabasesPlugin extends UserPluginBase
         $group_rows_cols_columns = [];
 
         // 権限のよって非表示columのdatabases_columns_id配列を取得する
-        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'list_detail_hide_flag');
+        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'list_detail_display_flag');
 
         // 表示しないcolumnは、group_rows_cols_columnsに含まない。
         //
@@ -586,7 +586,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 権限のよって非表示columのdatabases_columns_id配列を取得する
-        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_hide_flag');
+        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
 
         // 表示しないcolumnは、group_rows_cols_columnsに含まない。
         $disp_databases_columns = $databases_columns->whereNotIn('id', $hide_columns_ids);
@@ -596,9 +596,9 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * 権限のよって非表示columのdatabases_columns_id配列を取得する
-     * $hide_flag_column_name = regist_edit_hide_flag|list_detail_hide_flag
+     * $display_flag_column_name = regist_edit_display_flag|list_detail_display_flag
      */
-    private function getHideColumnsIds($databases_columns, $hide_flag_column_name = 'list_detail_hide_flag')
+    private function getHideColumnsIds($databases_columns, $display_flag_column_name = 'list_detail_display_flag')
     {
         if (empty($databases_columns)) {
             return [];
@@ -611,9 +611,25 @@ class DatabasesPlugin extends UserPluginBase
         // Log::debug('role_approval: '.var_export($this->isCan('role_approval'), true));
         // Log::debug('role_reporter: '.var_export($this->isCan('role_reporter'), true));
 
-        $databases_columns_ids = [];
+        $databases_hide_columns_ids = [];
+
         foreach ($databases_columns as $databases_column) {
-            // カラムの非表示権限データ取得
+            if ($this->isCan('role_article_admin')) {
+                // コンテンツ管理者のユーザは、必ず当カラムを表示します。
+                continue;
+            }
+
+            // 権限で表示カラムを制御
+            if (!$databases_column->role_display_control_flag) {
+                // 制御しない表示カラムはスルー
+                continue;
+            }
+
+            // 権限で表示カラムを制御する場合、一度に非表示扱いにする
+            // 該当権限で表示フラグをゲットできたら、array keyを指定して非表示扱いから取り除く
+            $databases_hide_columns_ids[$databases_column->id] = $databases_column->id;
+
+            // カラムの表示権限データ取得
             $databases_columns_roles = $databases_column->databasesColumnsRoles;
 
             if (Auth::user()) {
@@ -621,32 +637,37 @@ class DatabasesPlugin extends UserPluginBase
                 foreach ($databases_columns_roles as $databases_columns_role) {
                     if ($this->isCan('role_article') &&
                             $databases_columns_role->role_name == \DatabaseColumnRoleName::role_article &&
-                            $databases_columns_role->$hide_flag_column_name == 1) {
-                        // モデレータ権限あり & モデレータ非表示のcolumnは、取り除く
+                            $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('モデレータ', true));
-                        $databases_columns_ids[] = $databases_columns_role->databases_columns_id;
+
+                        // モデレータ権限あり & モデレータ表示のcolumn
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
                         continue 2;
                     } elseif ($this->isCan('role_reporter') &&
                             $databases_columns_role->role_name == \DatabaseColumnRoleName::role_reporter &&
-                            $databases_columns_role->$hide_flag_column_name == 1) {
-                        // 編集者権限あり & 編集者非表示のcolumnは、取り除く
+                            $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('編集者権限', true));
-                        $databases_columns_ids[] = $databases_columns_role->databases_columns_id;
+
+                        // 編集者権限あり & 編集者表示のcolumn
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
                         continue 2;
-                    } elseif (!$this->isCan('role_article_admin') &&
-                            !$this->isCan('role_arrangement') &&
+                    } elseif (!$this->isCan('role_arrangement') &&
                             !$this->isCan('role_article') &&
                             !$this->isCan('role_approval') &&
                             !$this->isCan('role_reporter') &&
                             $databases_columns_role->role_name == \DatabaseColumnRoleName::no_role &&
-                            $databases_columns_role->$hide_flag_column_name == 1) {
-                        // 権限なし(コンテンツ管理者・プラグイン管理者・モデレータ・承認者・編集者のいずれの権限も付いていない)
-                        // & 権限なし非表示のcolumnは、取り除く
+                            $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('権限なし', true));
-                        $databases_columns_ids[] = $databases_columns_role->databases_columns_id;
+
+                        // 権限なし(プラグイン管理者・モデレータ・承認者・編集者のいずれの権限も付いていない)
+                        // & 権限なし表示のcolumn
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
                         continue 2;
                     }
                 }
@@ -655,16 +676,18 @@ class DatabasesPlugin extends UserPluginBase
                 foreach ($databases_columns_roles as $databases_columns_role) {
                     // 未ログインで非表示のcolumnは、取り除く
                     if ($databases_columns_role->role_name == \DatabaseColumnRoleName::not_login &&
-                            $databases_columns_role->$hide_flag_column_name == 1) {
+                            $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('未ログイン', true));
-                        $databases_columns_ids[] = $databases_columns_role->databases_columns_id;
+
+                        // 非表示扱いから取り除く(=表示する)
+                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
                         continue 2;
                     }
                 }
             }
         }
-        return $databases_columns_ids;
+        return $databases_hide_columns_ids;
     }
 
     /**
@@ -1083,7 +1106,7 @@ class DatabasesPlugin extends UserPluginBase
         $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
 
         // 権限のよって登録・編集の非表示columのdatabases_columns_id配列を取得する
-        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_hide_flag');
+        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
         // Log::debug(var_export($databases_columns_ids, true));
 
@@ -1957,6 +1980,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->list_hide_flag = (empty($request->list_hide_flag)) ? 0 : $request->list_hide_flag;
         // 詳細から非表示にする指定
         $column->detail_hide_flag = (empty($request->detail_hide_flag)) ? 0 : $request->detail_hide_flag;
+        // 権限で表示カラムを制御
+        $column->role_display_control_flag = (empty($request->role_display_control_flag)) ? 0 : $request->role_display_control_flag;
         // 並べ替え指定
         $column->sort_flag = (empty($request->sort_flag)) ? 0 : $request->sort_flag;
         // 検索対象指定
@@ -1983,15 +2008,15 @@ class DatabasesPlugin extends UserPluginBase
                 // チェックなしの権限はスルー
                 continue;
             }
-            $list_detail_hide_flag = isset($request->$column_role_name_key['list_detail_hide_flag']) ? $request->$column_role_name_key['list_detail_hide_flag'] : 0;
-            $regist_edit_hide_flag = isset($request->$column_role_name_key['regist_edit_hide_flag']) ? $request->$column_role_name_key['regist_edit_hide_flag'] : 0;
+            $list_detail_display_flag = isset($request->$column_role_name_key['list_detail_display_flag']) ? $request->$column_role_name_key['list_detail_display_flag'] : 0;
+            $regist_edit_display_flag = isset($request->$column_role_name_key['regist_edit_display_flag']) ? $request->$column_role_name_key['regist_edit_display_flag'] : 0;
 
             $columns_role = new DatabasesColumnsRole();
             $columns_role->databases_id = $request->databases_id;
             $columns_role->databases_columns_id = $request->column_id;
             $columns_role->role_name = $column_role_name_key;
-            $columns_role->list_detail_hide_flag = $list_detail_hide_flag;
-            $columns_role->regist_edit_hide_flag = $regist_edit_hide_flag;
+            $columns_role->list_detail_display_flag = $list_detail_display_flag;
+            $columns_role->regist_edit_display_flag = $regist_edit_display_flag;
 
             // 保存
             $columns_role->save();
