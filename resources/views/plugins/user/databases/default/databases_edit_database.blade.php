@@ -14,7 +14,7 @@
 
 @section("plugin_setting_$frame->id")
 @if (!$database->id && !$create_flag)
-    {{-- idなし & 変更. どんな状態??? --}}
+    {{-- idなし & 変更 = DB未選択&変更:初期表示 --}}
     <div class="alert alert-warning mt-2">
         <i class="fas fa-exclamation-circle"></i>
         データベース選択画面から選択するか、データベース新規作成で作成してください。
