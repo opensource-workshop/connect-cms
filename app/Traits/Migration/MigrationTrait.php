@@ -1816,9 +1816,10 @@ trait MigrationTrait
             ksort($nc2_sort_pages);
             //Log::debug($nc2_sort_pages);
 
-            // 新規ページ用のインデックス
-            // 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
-            $new_page_index = 0;
+            // NC2 のページID を使うことにした。
+            //// 新規ページ用のインデックス
+            //// 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
+            //// $new_page_index = 0;
 
             // ページのループ
             $this->putMonitor(1, "Page loop.");
@@ -1841,7 +1842,7 @@ trait MigrationTrait
                 }
 
                 // ページディレクトリの作成
-                $new_page_index++;
+                $new_page_index = $nc2_sort_page->page_id;
                 Storage::makeDirectory('migration/_' . $this->zeroSuppress($new_page_index));
 
                 // ページ設定ファイルの出力
@@ -2283,7 +2284,6 @@ trait MigrationTrait
 
         // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
         // NC2 では、ヘッダ、左、右が一つずつで共通のため、ここで処理する。
-        //if ($new_page_index == 1) {
         if ($nc2_page->permalink == '' && $nc2_page->display_sequence == 1 && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0) {
             // 指定されたページ内のブロックを取得
             $nc2_common_blocks = Nc2Block::select('blocks.*', 'pages.page_name')
