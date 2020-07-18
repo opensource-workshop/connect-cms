@@ -2325,6 +2325,7 @@ trait MigrationTrait
                     $multidatabase_cols_rows[$metadata_id]["row_group"]    = 1;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 2;
                 }
+                $multidatabase_cols_rows[$metadata_id]["columns_selects"]  = null;
             }
 
             // カラム情報出力
