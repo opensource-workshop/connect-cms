@@ -620,7 +620,7 @@ trait MigrationTrait
                 }
                 $bucket = Buckets::create(['bucket_name' => $database_name, 'plugin_name' => 'databases']);
 
-                $database = Databases::create(['bucket_id' => $bucket->id, 'databases_name' => $database_name]);
+                $database = Databases::create(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -630,12 +630,13 @@ trait MigrationTrait
                 ]);
             } else {
                 // マッピングテーブルがあれば、一度該当のDatabase 関係データを削除する。
-                // bucket, databases はそのまま使う。databases_columns, databases_inputs, databases_input_cols は削除
+                // bucket, databases はそのまま使う。databases_columns, databases_inputs, databases_input_cols, databases_columns_selects は削除
                 $database = Databases::find($mapping->destination_key);
 
-                // DatabasesInputCols 削除。カラムデータを呼び出して、カラムのID で削除
+                // DatabasesInputCols, DatabasesColumnsSelects 削除。カラムデータを呼び出して、カラムのID で削除
                 $databases_columns = DatabasesColumns::where('databases_id', $database->id)->get();
                 foreach ($databases_columns as $databases_column) {
+                    DatabasesColumnsSelects::where('databases_columns_id', $databases_column->id)->delete();
                     DatabasesInputCols::where('databases_columns_id', $databases_column->id)->delete();
                 }
 
@@ -667,6 +668,21 @@ trait MigrationTrait
                     ]);
                     $column_ids[] = $databases_column->id;
                     $create_columns[] = $databases_column;
+
+                    // 選択型項目で選択肢がある場合、DatabasesColumnsSelects テーブルを追加
+                    $columns_selects = $databases_ini[$column_id]['columns_selects'];
+                    if (!empty($columns_selects)) {
+                        $columns_selects = explode('|', $columns_selects);
+                        $display_sequence = 1;
+                        foreach ($columns_selects as $columns_select) {
+                            DatabasesColumnsSelects::create([
+                                'databases_columns_id' => $databases_column->id,
+                                'value'                => $columns_select,
+                                'display_sequence'     => $display_sequence,
+                            ]);
+                            $display_sequence++;
+                        }
+                    }
                 }
             }
 
@@ -2325,7 +2341,7 @@ trait MigrationTrait
                     $multidatabase_cols_rows[$metadata_id]["row_group"]    = 1;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 2;
                 }
-                $multidatabase_cols_rows[$metadata_id]["columns_selects"]  = null;
+                $multidatabase_cols_rows[$metadata_id]["columns_selects"]  = $multidatabase_metadata->select_content;
             }
 
             // カラム情報出力
@@ -2355,6 +2371,7 @@ trait MigrationTrait
                 $multidatabase_ini .= "display_sequence = "   . $display_sequence                       . "\n";
                 $multidatabase_ini .= "row_group        = "   . $multidatabase_cols["row_group"]        . "\n";
                 $multidatabase_ini .= "column_group     = "   . $multidatabase_cols["column_group"]     . "\n";
+                $multidatabase_ini .= "columns_selects  = \"" . $multidatabase_cols["columns_selects"]  . "\"\n";
             }
 
             // カラムのヘッダー及びTSV 行毎の枠準備（カラム詳細データを枠に入れる。データは抜けがあり得るため、単純に結合すると、カラムがおかしくなる）
@@ -2423,6 +2440,11 @@ trait MigrationTrait
                 } elseif ($multidatabase_metadata_content->type === 6) {
                     // WYSIWYG
                     $content = $this->nc2Wysiwyg(null, null, null, null, $content);
+                } elseif ($multidatabase_metadata_content->type === 9) {
+                    // 日付型
+                    if (!empty($content) && strlen($content) == 14) {
+                        $content = $this->getCCDatetime($content);
+                    }
                 }
 
                 $tsv_record[$multidatabase_metadata_content->metadata_id] = $content;
