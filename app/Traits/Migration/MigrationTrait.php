@@ -275,8 +275,7 @@ trait MigrationTrait
      */
     private function getCCDatetime($gmt_datetime)
     {
-        $gmt_datetime_ts = mktime(substr($gmt_datetime, 8, 2), substr($gmt_datetime, 10, 2), substr($gmt_datetime, 12, 2),
-                                  substr($gmt_datetime, 4, 2), substr($gmt_datetime, 6, 2), substr($gmt_datetime, 0, 4));
+        $gmt_datetime_ts = mktime(substr($gmt_datetime, 8, 2), substr($gmt_datetime, 10, 2), substr($gmt_datetime, 12, 2), substr($gmt_datetime, 4, 2), substr($gmt_datetime, 6, 2), substr($gmt_datetime, 0, 4));
         // 9時間足す
         $gmt_datetime_ts = $gmt_datetime_ts + (60 * 60 * 9);
         // Connect-CMS の形式で返す
