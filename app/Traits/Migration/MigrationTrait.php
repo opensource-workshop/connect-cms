@@ -271,6 +271,18 @@ trait MigrationTrait
     }
 
     /**
+     * 日時の関数
+     */
+    private function getCCDatetime($gmt_datetime)
+    {
+        $gmt_datetime_ts = mktime(substr($gmt_datetime, 8, 2), substr($gmt_datetime, 10, 2), substr($gmt_datetime, 12, 2), substr($gmt_datetime, 4, 2), substr($gmt_datetime, 6, 2), substr($gmt_datetime, 0, 4));
+        // 9時間足す
+        $gmt_datetime_ts = $gmt_datetime_ts + (60 * 60 * 9);
+        // Connect-CMS の形式で返す
+        return date('Y-m-d H:i:s', $gmt_datetime_ts);
+    }
+
+    /**
      * Connect-CMS 移行形式のHTML をインポート
      */
     private function importSite()
@@ -312,8 +324,9 @@ trait MigrationTrait
                 $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
 
                 // ページ指定の有無
-                if ($this->getMigrationConfig('pages', 'cc_import_where_page_dir')) {
-                    if (basename($path) != $this->getMigrationConfig('pages', 'cc_import_where_page_dir')) {
+                $cc_import_where_page_dirs = $this->getMigrationConfig('pages', 'cc_import_where_page_dirs');
+                if (!empty($cc_import_where_page_dirs)) {
+                    if (!in_array(basename($path), $cc_import_where_page_dirs)) {
                         continue;
                     }
                 }
@@ -581,6 +594,14 @@ trait MigrationTrait
             // ini_file の解析
             $databases_ini = parse_ini_file($databases_ini_path, true);
 
+            // データベース指定の有無
+            $cc_import_where_database_ids = $this->getMigrationConfig('databases', 'cc_import_where_database_ids');
+            if (!empty($cc_import_where_database_ids)) {
+                if (!in_array($databases_ini['nc2_info']['multidatabase_id'], $cc_import_where_database_ids)) {
+                    continue;
+                }
+            }
+
             // nc2 の multidatabase_id
             $nc2_multidatabase_id = 0;
             if (array_key_exists('nc2_info', $databases_ini) && array_key_exists('multidatabase_id', $databases_ini['nc2_info'])) {
@@ -592,7 +613,7 @@ trait MigrationTrait
 
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
-                // マッピングテーブルがなければ、Buckets テーブルと Blogs テーブル、マッピングテーブルを追加
+                // マッピングテーブルがなければ、Buckets テーブルと Database テーブル、マッピングテーブルを追加
                 $database_name = '無題';
                 if (array_key_exists('database_base', $databases_ini) && array_key_exists('database_name', $databases_ini['database_base'])) {
                     $database_name = $databases_ini['database_base']['database_name'];
@@ -607,61 +628,92 @@ trait MigrationTrait
                     'source_key'           => $nc2_multidatabase_id,
                     'destination_key'      => $database->id,
                 ]);
+            } else {
+                // マッピングテーブルがあれば、一度該当のDatabase 関係データを削除する。
+                // bucket, databases はそのまま使う。databases_columns, databases_inputs, databases_input_cols は削除
+                $database = Databases::find($mapping->destination_key);
 
-                // columns のid を配列に保持。後で入力データを移行する際の column_id に使うため。
-                $column_ids = array();
-
-                if (array_key_exists('databases_columns', $databases_ini) && array_key_exists('databases_column', $databases_ini['databases_columns'])) {
-                    foreach ($databases_ini['databases_columns']['databases_column'] as $multidatabase_id => $databases_title) {
-                        $databases_column = DatabasesColumns::create([
-                            'databases_id'     => $database->id,
-                            'column_type'      => $databases_ini[$multidatabase_id]['column_type'],
-                            'column_name'      => $databases_ini[$multidatabase_id]['column_name'],
-                            'required'         => $databases_ini[$multidatabase_id]['required'],
-                            'frame_col'        => 0,
-                            'list_hide_flag'   => $databases_ini[$multidatabase_id]['list_hide_flag'],
-                            'detail_hide_flag' => $databases_ini[$multidatabase_id]['detail_hide_flag'],
-                            'sort_flag'        => $databases_ini[$multidatabase_id]['sort_flag'],
-                            'search_flag'      => $databases_ini[$multidatabase_id]['search_flag'],
-                            'select_flag'      => $databases_ini[$multidatabase_id]['select_flag'],
-                            'display_sequence' => $databases_ini[$multidatabase_id]['display_sequence'],
-                        ]);
-                        $column_ids[] = $databases_column->id;
-                    }
+                // DatabasesInputCols 削除。カラムデータを呼び出して、カラムのID で削除
+                $databases_columns = DatabasesColumns::where('databases_id', $database->id)->get();
+                foreach($databases_columns as $databases_column) {
+                    DatabasesInputCols::where('databases_columns_id', $databases_column->id)->delete();
                 }
 
-                // データベースの情報取得
-                // Blogs の記事を取得（TSV）
-                $database_tsv_filename = str_replace('ini', 'tsv', basename($databases_ini_path));
-                if (Storage::exists('migration/@databases/' . $database_tsv_filename)) {
-                    // TSV ファイル取得（1つのTSV で1つのデータベース丸ごと）
-                    $database_tsv = Storage::get('migration/@databases/' . $database_tsv_filename);
-                    // POST が無いものは対象外
-                    if (empty($database_tsv)) {
+                // DatabasesColumns と DatabasesInputs はデータベースのID で削除
+                DatabasesColumns::where('databases_id', $database->id)->delete();
+                DatabasesInputs::where('databases_id', $database->id)->delete();
+            }
+
+            // columns のid を配列に保持。後で入力データを移行する際の column_id に使うため。
+            $column_ids = array();
+
+            if (array_key_exists('databases_columns', $databases_ini) && array_key_exists('databases_column', $databases_ini['databases_columns'])) {
+                foreach ($databases_ini['databases_columns']['databases_column'] as $multidatabase_id => $databases_title) {
+                    $databases_column = DatabasesColumns::create([
+                        'databases_id'     => $database->id,
+                        'column_type'      => $databases_ini[$multidatabase_id]['column_type'],
+                        'column_name'      => $databases_ini[$multidatabase_id]['column_name'],
+                        'required'         => $databases_ini[$multidatabase_id]['required'],
+                        'frame_col'        => 0,
+                        'list_hide_flag'   => $databases_ini[$multidatabase_id]['list_hide_flag'],
+                        'detail_hide_flag' => $databases_ini[$multidatabase_id]['detail_hide_flag'],
+                        'sort_flag'        => $databases_ini[$multidatabase_id]['sort_flag'],
+                        'search_flag'      => $databases_ini[$multidatabase_id]['search_flag'],
+                        'select_flag'      => $databases_ini[$multidatabase_id]['select_flag'],
+                        'display_sequence' => $databases_ini[$multidatabase_id]['display_sequence'],
+                    ]);
+                    $column_ids[] = $databases_column->id;
+                }
+            }
+
+            // データベースの情報取得
+
+            // Database のデータを取得（TSV）
+            $database_tsv_filename = str_replace('ini', 'tsv', basename($databases_ini_path));
+
+            if (Storage::exists('migration/@databases/' . $database_tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのデータベース丸ごと）
+                $database_tsv = Storage::get('migration/@databases/' . $database_tsv_filename);
+                // POST が無いものは対象外
+                if (empty($database_tsv)) {
+                    continue;
+                }
+
+                // 行ループで使用する各種変数
+                $header_skip = true;  // ヘッダースキップフラグ（1行目はカラム名の行）
+                $created_at_idx = 0;  // created_at のカラムインデックス（0 の場合は無効）
+                $created_at = '';     // created_at の内容（日時）
+                $updated_at_idx = 0;  // updated_at のカラムインデックス（0 の場合は無効）
+                $updated_at = '';     // updated_at の内容（日時）
+
+                // 改行で記事毎に分割（行の処理）
+                $database_tsv_lines = explode("\n", $database_tsv);
+                foreach ($database_tsv_lines as $database_tsv_line) {
+                    // 1行目はカラム名の行のため、対象外
+                    if ($header_skip) {
+                        $header_skip = false;
                         continue;
                     }
-                    // 改行で記事毎に分割
-                    $database_tsv_lines = explode("\n", $database_tsv);
-                    foreach ($database_tsv_lines as $database_tsv_line) {
-                        $databases_input = DatabasesInputs::create(['databases_id' => $database->id]);
+                    // 行データの追加
+                    $databases_input = DatabasesInputs::create(['databases_id' => $database->id]);
 
-                        $databases_columns_id_idx = 0;
+                    $databases_columns_id_idx = 0;
 
-                        // タブで項目に分割
-                        $database_tsv_cols = explode("\t", trim($database_tsv_line));
-                        foreach ($database_tsv_cols as $database_tsv_col) {
-                            // エラーの内容は再度、チェックすること。
-                            if (array_key_exists($databases_columns_id_idx, $column_ids)) {
-                                $databases_input_cols = DatabasesInputCols::create([
-                                    'databases_inputs_id'  => $databases_input->id,
-                                    'databases_columns_id' => $column_ids[$databases_columns_id_idx],
-                                    'value'                => $database_tsv_col,
-                                ]);
-                            } else {
-                                $this->putError(3, 'データベース詳細インポートエラー', "databases_columns_id_idx = " . $databases_columns_id_idx);
-                            }
-                            $databases_columns_id_idx++;
+                    // タブで項目に分割
+                    $database_tsv_cols = explode("\t", trim($database_tsv_line));
+                    foreach ($database_tsv_cols as $database_tsv_col) {
+                        // エラーの内容は再度、チェックすること。
+                        if (array_key_exists($databases_columns_id_idx, $column_ids)) {
+                            // セルデータの追加
+                            $databases_input_cols = DatabasesInputCols::create([
+                                'databases_inputs_id'  => $databases_input->id,
+                                'databases_columns_id' => $column_ids[$databases_columns_id_idx],
+                                'value'                => $database_tsv_col,
+                            ]);
+                        } else {
+                            $this->putError(3, 'データベース詳細インポートエラー', "databases_columns_id_idx = " . $databases_columns_id_idx);
                         }
+                        $databases_columns_id_idx++;
                     }
                 }
             }
@@ -1793,8 +1845,8 @@ trait MigrationTrait
                                       ->where('display_sequence', '<>', 0);
 
             // ページ指定の有無
-            if ($this->getMigrationConfig('pages', 'nc2_export_where_page_id')) {
-                $nc2_pages_query->where('page_id', $this->getMigrationConfig('pages', 'nc2_export_where_page_id'));
+            if ($this->getMigrationConfig('pages', 'nc2_export_where_page_ids')) {
+                $nc2_pages_query->whereIn('page_id', $this->getMigrationConfig('pages', 'nc2_export_where_page_ids'));
             }
 
             $nc2_pages = $nc2_pages_query->orderBy('space_type')
@@ -2112,8 +2164,13 @@ trait MigrationTrait
         $this->putMonitor(3, "Start nc2ExportMultidatabase.");
 
         // NC2汎用データベース（Multidatabase）を移行する。
-        $nc2_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
-//        $nc2_multidatabases = Nc2Multidatabase::where("multidatabase_id", 1)->orderBy('multidatabase_id')->get();
+        $nc2_export_where_multidatabase_ids = $this->getMigrationConfig('databases', 'nc2_export_where_multidatabase_ids');
+
+        if (empty($nc2_export_where_multidatabase_ids)) {
+            $nc2_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
+        } else {
+            $nc2_multidatabases = Nc2Multidatabase::whereIn('multidatabase_id', $nc2_export_where_multidatabase_ids)->orderBy('multidatabase_id')->get();
+        }
 
         // 空なら戻る
         if ($nc2_multidatabases->isEmpty()) {
@@ -2232,10 +2289,17 @@ trait MigrationTrait
                 $tsv_cols[$metadata_id] = "";
             }
 
+            $tsv_header .= "created_at\tupdated_at";
+            $tsv_cols['insert_time'] = "";
+            $tsv_cols['update_time'] = "";
+
             // データベースの記事
             $multidatabase_metadata_contents
-                = Nc2MultidatabaseMetadataContent::select('multidatabase_metadata_content.*')
+                = Nc2MultidatabaseMetadataContent::select('multidatabase_metadata_content.*',
+                                                          'multidatabase_content.insert_time as multidatabase_content_insert_time',
+                                                          'multidatabase_content.update_time as multidatabase_content_update_time')
                                                  ->join('multidatabase_metadata', 'multidatabase_metadata.metadata_id', '=', 'multidatabase_metadata_content.metadata_id')
+                                                 ->join('multidatabase_content', 'multidatabase_content.content_id', '=', 'multidatabase_metadata_content.content_id')
                                                  ->join('multidatabase', 'multidatabase.multidatabase_id', '=', 'multidatabase_metadata.multidatabase_id')
                                                  ->where('multidatabase.multidatabase_id', $multidatabase_id)
                                                  ->orderBy('multidatabase_metadata_content.content_id', 'asc')
@@ -2248,10 +2312,15 @@ trait MigrationTrait
             $tsv_record = $tsv_cols;
             Storage::delete('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv');
             foreach ($multidatabase_metadata_contents as $multidatabase_metadata_content) {
+                // レコードのID が変わった＝コントロールブレイク
                 if ($content_id != $multidatabase_metadata_content->content_id) {
                     if ($content_id == 0) {
                         Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv_header);
                     } else {
+                        // 登録日時、更新日時
+                        $tsv_record['insert_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_insert_time);
+                        $tsv_record['update_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_update_time);
+                        // データ行の書き出し
                         Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
                     }
                     $content_id = $multidatabase_metadata_content->content_id;
@@ -2260,6 +2329,10 @@ trait MigrationTrait
                 $content = str_replace("\n", "<br />", $multidatabase_metadata_content->content);
                 $tsv_record[$multidatabase_metadata_content->metadata_id] = $content;
             }
+            // 登録日時、更新日時
+            $tsv_record['insert_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_insert_time);
+            $tsv_record['update_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_update_time);
+            // データ行の書き出し
             Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
 
             // detabase の設定
@@ -2273,11 +2346,18 @@ trait MigrationTrait
     private function nc2Block($nc2_page, $new_page_index)
     {
         // 指定されたページ内のブロックを取得
-        $nc2_blocks = Nc2Block::where('page_id', $nc2_page->page_id)
-                              ->orderBy('thread_num')
-                              ->orderBy('row_num')
-                              ->orderBy('col_num')
-                              ->get();
+        $nc2_blocks_query = Nc2Block::where('page_id', $nc2_page->page_id);
+
+        // 対象外のブロックがあれば加味する。
+        $export_ommit_blocks = $this->getMigrationConfig('frames', 'export_ommit_blocks');
+        if (!empty($export_ommit_blocks)) {
+            $nc2_blocks_query->whereNotIn('block_id', $export_ommit_blocks);
+        }
+
+        $nc2_blocks = $nc2_blocks_query->orderBy('thread_num')
+                                       ->orderBy('row_num')
+                                       ->orderBy('col_num')
+                                       ->get();
 
         // ブロックをループ
         $frame_index = 0; // フレームの連番
