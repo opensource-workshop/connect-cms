@@ -313,11 +313,22 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_column->rule_allowed_numeric) {
             if ($request->forms_columns_value[$forms_column->id]) {
                 // 入力値があった場合
-                if (is_numeric(mb_convert_kana($request->forms_columns_value[$forms_column->id], 'n'))) {
+                if (
+                        is_numeric(
+                            mb_convert_kana(
+                                $request->forms_columns_value[$forms_column->id], 
+                                'n'
+                            )
+                        )
+                    ) {
                     // 全角→半角変換した結果が数値の場合
                     $tmp_array = $request->forms_columns_value;
                     // 全角→半角へ丸める
-                    $tmp_array[$forms_column->id] = mb_convert_kana($request->forms_columns_value[$forms_column->id], 'n');
+                    $tmp_array[$forms_column->id] = 
+                        mb_convert_kana(
+                            $request->forms_columns_value[$forms_column->id], 
+                            'n'
+                        );
                     $request->merge([
                         "forms_columns_value" => $tmp_array,
                     ]);
