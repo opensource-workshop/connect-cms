@@ -12,7 +12,7 @@ class DatabasesInputs extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['databases_id', 'databases_inputs_id', 'databases_columns_id', 'value'];
+    protected $fillable = ['databases_id', 'databases_inputs_id', 'databases_columns_id', 'value', 'created_at', 'updated_at'];
 
     /**
     *  指定したタイプの項目があるか判定
@@ -261,6 +261,7 @@ class DatabasesInputs extends Model
 
             case 'checkbox':
                 $_value = implode(', ', explode(',', $_value));
+                // 敢えてbreak していないと思うが、いずれ見直したい。
             default:
                 if ($notag) {
                     return $_value;

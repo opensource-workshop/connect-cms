@@ -871,12 +871,39 @@ class DatabasesPlugin extends UserPluginBase
         // 数値チェック
         if ($databases_column->rule_allowed_numeric) {
             if ($request->databases_columns_value[$databases_column->id]) {
-                // 入力値があった場合
-                if (is_numeric(mb_convert_kana($request->databases_columns_value[$databases_column->id], 'n'))) {
+                // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）
+                $replace_defs = [
+                    'ー' => '-',
+                    '－' => '-',
+                    '―' => '-'
+                ];
+                $search = array_keys($replace_defs);
+                $replace = array_values($replace_defs);
+
+                if (
+                        is_numeric(
+                            mb_convert_kana(
+                                str_replace(
+                                    $search, 
+                                    $replace, 
+                                    $request->databases_columns_value[$databases_column->id]
+                                ),
+                                'n'
+                            )
+                        )
+                    ) {
                     // 全角→半角変換した結果が数値の場合
                     $tmp_array = $request->databases_columns_value;
                     // 全角→半角へ丸める
-                    $tmp_array[$databases_column->id] = mb_convert_kana($request->databases_columns_value[$databases_column->id], 'n');
+                    $tmp_array[$databases_column->id] = 
+                        mb_convert_kana(
+                            str_replace(
+                                $search, 
+                                $replace, 
+                                $request->databases_columns_value[$databases_column->id]
+                            ),
+                            'n'
+                        );
                     $request->merge([
                         "databases_columns_value" => $tmp_array,
                     ]);
