@@ -872,11 +872,22 @@ class DatabasesPlugin extends UserPluginBase
         if ($databases_column->rule_allowed_numeric) {
             if ($request->databases_columns_value[$databases_column->id]) {
                 // 入力値があった場合
-                if (is_numeric(mb_convert_kana($request->databases_columns_value[$databases_column->id], 'n'))) {
+                if (
+                        is_numeric(
+                            mb_convert_kana(
+                                $request->databases_columns_value[$databases_column->id], 
+                                'n'
+                            )
+                        )
+                    ) {
                     // 全角→半角変換した結果が数値の場合
                     $tmp_array = $request->databases_columns_value;
                     // 全角→半角へ丸める
-                    $tmp_array[$databases_column->id] = mb_convert_kana($request->databases_columns_value[$databases_column->id], 'n');
+                    $tmp_array[$databases_column->id] = 
+                        mb_convert_kana(
+                            $request->databases_columns_value[$databases_column->id], 
+                            'n'
+                        );
                     $request->merge([
                         "databases_columns_value" => $tmp_array,
                     ]);
