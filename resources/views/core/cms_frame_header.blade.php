@@ -55,6 +55,11 @@
 --}}
         <div class="float-right">
 
+            {{-- プラグイン名 --}}
+            <span class="badge badge-secondary">
+                {{ Plugins::query()->where('plugin_name', $frame->plugin_name)->first()->plugin_name_full }}
+            </span>
+
             {{-- 上移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
