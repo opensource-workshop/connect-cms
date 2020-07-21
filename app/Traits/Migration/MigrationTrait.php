@@ -29,6 +29,7 @@ use App\Models\User\Menus\Menu;
 use App\Models\Migration\MigrationMapping;
 use App\Models\Migration\Nc2\Nc2Announcement;
 use App\Models\Migration\Nc2\Nc2Block;
+use App\Models\Migration\Nc2\Nc2Item;
 use App\Models\Migration\Nc2\Nc2Journal;
 use App\Models\Migration\Nc2\Nc2JournalBlock;
 use App\Models\Migration\Nc2\Nc2JournalCategory;
@@ -39,6 +40,7 @@ use App\Models\Migration\Nc2\Nc2MultidatabaseMetadata;
 use App\Models\Migration\Nc2\Nc2MultidatabaseMetadataContent;
 use App\Models\Migration\Nc2\Nc2Page;
 use App\Models\Migration\Nc2\Nc2Upload;
+use App\Models\Migration\Nc2\Nc2User;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -262,7 +264,7 @@ trait MigrationTrait
                 return true;
             }
         } else {
-            if ($config_value === $value) {
+            if ($config_value == $value) {  // === すると、ini のtrue が判断できない。
                 return true;
             }
         }
@@ -735,11 +737,19 @@ trait MigrationTrait
                     // created_at、updated_at のカラムがない or データが空の場合は、処理時間を入れる。
                     if ($created_at_idx != 0 && array_key_exists($created_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$created_at_idx])) {
                         $created_at = $database_tsv_cols[$created_at_idx];
+if (!\DateTime::createFromFormat('Y-m-d H:i:s', $created_at)) {
+    $this->putError(1, '日付エラー', "created_at = " . $created_at);
+    $created_at = date('Y-m-d H:i:s');
+}
                     } else {
                         $created_at = date('Y-m-d H:i:s');
                     }
                     if ($updated_at_idx != 0 && array_key_exists($updated_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$updated_at_idx])) {
                         $updated_at = $database_tsv_cols[$updated_at_idx];
+if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
+    $this->putError(1, '日付エラー', "updated_at = " . $updated_at);
+    $updated_at = date('Y-m-d H:i:s');
+}
                     } else {
                         $updated_at = date('Y-m-d H:i:s');
                     }
@@ -1906,6 +1916,11 @@ trait MigrationTrait
             $this->nc2ExportCategories();
         }
 
+        // ユーザデータのエクスポート
+        if ($this->getMigrationConfig('user', 'nc2_export_users')) {
+            $this->nc2ExportUsers();
+        }
+
         // NC2 日誌（journal）データのエクスポート
         if ($this->hasMigrationConfig('plugin', 'nc2_export_pugins', 'blogs')) {
             $this->nc2ExportJournal();
@@ -2103,6 +2118,104 @@ trait MigrationTrait
             $uploads_ini .= "\n" . "categories[" . $nc2_default_category_key . "] = \"" . $nc2_default_category . "\"";
         }
         Storage::put('migration/@categories/categories.ini', $uploads_ini);
+    }
+
+    /**
+     * 半角 @ を全角 ＠ に変換する。
+     */
+    private function replaceFullwidthAt($str)
+    {
+        return str_replace('@', '＠', $str);
+    }
+
+    /**
+     * NC2：ユーザの移行
+     */
+    private function nc2ExportUsers()
+    {
+        $this->putMonitor(3, "Start nc2ExportUsers.");
+
+        /*
+            移行項目：login_id、password、handle、role_authority_id、system_flag
+                      role_authority_id：1 => 管理権限は全てON、コンテンツ権限はコンテンツ管理者
+                                       ：2 => 主担権限。管理権限は全てOFF、コンテンツ権限はコンテンツ管理者
+                                       ：3 => モデレータ権限。管理権限は全てOFF、コンテンツ権限はモデレータ＆編集者
+                                       ：4 => 一般権限。管理権限は全てOFF、コンテンツ権限は編集者
+                                       ：5 => ゲスト権限。管理権限は全てOFF、コンテンツ権限はなし
+                      system_flag：
+            Connect-CMS に機能追加するもの：active_flag
+        */
+
+        /*
+        [users]
+        user[0] = "admin"
+        user[1] = "test_user"
+
+        [admin]
+        name        = "システム管理者"
+        email       = "system@example.com"
+        userid      = systemAdmin6152
+        password    = $2y$10$Zy7krF.Kcq43qMWC2ZKjqFXLt44urVgh3argR41E6qhmQAZ5e6WKi
+        users_roles = "role_article_admin|admin_system"
+        */
+
+        // NC2 ユーザの最初のメアド項目取得
+        $nc2_mail_item = Nc2Item::where('type', 'email')
+                                ->orderBy('col_num')
+                                ->orderBy('row_num')
+                                ->first();
+
+        // NC2 ユーザデータ取得
+        $nc2_users_query = Nc2User::select('users.*', 'users_items_link.content AS email')
+                                  ->where('active_flag', 1);
+        if (!empty($nc2_mail_item)) {
+            $nc2_users_query->leftJoin('users_items_link', function ($join) use($nc2_mail_item) {
+                $join->on('users_items_link.user_id', '=', 'users.user_id')
+                     ->where('users_items_link.item_id', '=', $nc2_mail_item->item_id);
+            });
+        }
+        $nc2_users = $nc2_users_query->orderBy('insert_time')
+                                     ->get();
+
+        // 空なら戻る
+        if ($nc2_users->isEmpty()) {
+            return;
+        }
+
+        // ini ファイル用変数
+        $users_ini = "[users]\n";
+
+        // NC2ユーザ（User）のループ（ユーザインデックス用）
+        foreach ($nc2_users as $nc2_user) {
+            $users_ini .= "user[\"" . $nc2_user->user_id . "\"] = \"" . $nc2_user->handle . "\"\n";
+        }
+
+        // NC2ユーザ（User）のループ（ユーザデータ用）
+        foreach ($nc2_users as $nc2_user) {
+            // テスト用データ変換
+            if ($this->hasMigrationConfig('user', 'nc2_export_test_mail', true)) {
+                $nc2_user->email = $this->replaceFullwidthAt($nc2_user->email);
+                $nc2_user->login_id = $this->replaceFullwidthAt($nc2_user->login_id);
+            }
+            $users_ini .= "\n";
+            $users_ini .= "[\"" . $nc2_user->user_id . "\"]\n";
+            $users_ini .= "name        = \"" . $nc2_user->handle . "\"\n";
+            $users_ini .= "email       = \"" . $nc2_user->email . "\"\n";
+            $users_ini .= "userid      = \"" . $nc2_user->login_id . "\"\n";
+            $users_ini .= "password    = \"" . $nc2_user->password . "\"\n";
+            if ($nc2_user->role_authority_id == 1) {
+                $users_ini .= "users_roles = \"role_article_admin|admin_system\"\n";
+            } elseif ($nc2_user->role_authority_id == 2) {
+                $users_ini .= "users_roles = \"role_article_admin\"\n";
+            } elseif ($nc2_user->role_authority_id == 3) {
+                $users_ini .= "users_roles = \"role_article\"\n";
+            } elseif ($nc2_user->role_authority_id == 4) {
+                $users_ini .= "users_roles = \"role_reporter\"\n";
+            }
+        }
+
+        // Userデータの出力
+        Storage::put('migration/@users/users.ini', $users_ini);
     }
 
     /**
