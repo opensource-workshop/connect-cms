@@ -61,9 +61,12 @@
         * 選択肢に都道府県追加ボタン押下
         */
         function submit_add_pref(btn) {
-            database_column_detail.action = "{{url('/')}}/plugin/databases/addPref/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-            btn.disabled = true;
-            database_column_detail.submit();
+            if(confirm('選択肢に47都道府県を追加します。\nよろしいですか？')){
+                database_column_detail.action = "{{url('/')}}/plugin/databases/addPref/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+                btn.disabled = true;
+                database_column_detail.submit();
+            }
+            return false;
         }
 
         /**
@@ -191,7 +194,7 @@
                                 <tr>
                                     {{-- ＋ボタン --}}
                                     <td colspan="4" class="text-center">
-                                        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_pref(this);">
+                                        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:return submit_add_pref(this);">
                                             <i class="fas fa-plus"></i> 都道府県を追加
                                         </button>
                                     </td>
