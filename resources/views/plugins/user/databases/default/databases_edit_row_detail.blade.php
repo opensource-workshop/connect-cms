@@ -503,8 +503,8 @@
 
                 {{-- 並べ替え指定 --}}
                 <div class="form-group row">
-                    <label class="{{$frame->getSettingLabelClass(true)}}">並べ替え指定</label>
-                    <div class="{{$frame->getSettingInputClass(true)}}">
+                    <label class="{{$frame->getSettingLabelClass()}} pt-0">並べ替え指定</label>
+                    <div class="{{$frame->getSettingInputClass()}}">
                         <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="0" id="sort_flag_0" name="sort_flag" class="custom-control-input" @if(old('sort_flag', $column->sort_flag) == 0) checked="checked" @endif>
                             <label class="custom-control-label" for="sort_flag_0">使用しない</label>
@@ -520,6 +520,11 @@
                         <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="3" id="sort_flag_3" name="sort_flag" class="custom-control-input" @if(old('sort_flag', $column->sort_flag) == 3) checked="checked" @endif>
                             <label class="custom-control-label" for="sort_flag_3">降順のみ</label>
+                        </div>
+                        <div>
+                            <small class="text-muted">
+                                ※ 昇順＆降順・昇順のみ・降順のみのいずれかを選び、表示設定＞並べ替え項目の表示「各カラム設定」をチェックすると、並び順として当カラムを利用できます。
+                            </small>
                         </div>
                     </div>
                 </div>
