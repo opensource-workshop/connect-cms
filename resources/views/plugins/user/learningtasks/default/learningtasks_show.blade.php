@@ -13,20 +13,158 @@
 
 <article>
 
-    {{-- 記事本文 --}}
-    {!! $post->post_text !!}
+    {{-- 課題 --}}
+    <h5 class="mb-1"><span class="badge badge-secondary">課題</span></h5>
+    <div class="card">
+        <div class="card-body pb-0">
+            {!! $post->post_text !!}
+        </div>
+    </div>
 
     {{-- 課題ファイル --}}
     @if ($post_files)
-        @foreach($post_files as $post_file)
-        <p>
-            <a href="{{url('/')}}/file/{{$post_file->task_file_uploads_id}}" target="_blank" rel="noopener">{{$post_file->client_original_name}}</a>
-        </p>
-        @endforeach
+        <h5 class="mb-1"><span class="badge badge-secondary mt-3">課題ファイル</span></h5>
+        <div class="card">
+            <div class="card-body pb-0">
+                @foreach($post_files as $post_file)
+                <p>
+                    <a href="{{url('/')}}/file/{{$post_file->task_file_uploads_id}}" target="_blank" rel="noopener">{{$post_file->client_original_name}}</a>
+                </p>
+                @endforeach
+            </div>
+        </div>
     @endif
 
+    {{-- レポート --}}
+    <h5 class="mb-1"><span class="badge badge-secondary mt-3">レポート</span></h5>
+    <div class="card">
+        <div class="card-body">
+
+            <h5><span class="badge badge-secondary">履歴</span></h5>
+            <ul class="mb-3">
+                <li>2020-07-01<br />
+                    提出 - <a href="#">発達臨床実践特論（R2認定通信）レポート_永原_0620.docx</a>
+                <li>2020-07-02<br />
+                    <span class="text-danger font-weight-bold">評価：D</span><br />
+                    添削ファイル - <a href="#">発達臨床実践特論（R2認定通信）レポート_教員添削_0702.docx</a><br />
+                    コメント<br />
+                    <div class="card">
+                        <div class="card-body py-2">
+                            レポートに対するコメントです。
+                        </div>
+                    </div>
+
+                <li>2020-07-05<br />
+                    再提出 - <a href="#">発達臨床実践特論（R2認定通信）レポート_永原_0702.docx</a><br />
+                    <span class="text-danger font-weight-bold">評価：A</span><br />
+                    コメント<br />
+                    <div class="card">
+                        <div class="card-body py-2">
+                            よくできました。
+                        </div>
+                    </div>
+            </ul>
+
+            <form action="" method="POST" class="" name="form_report_posts" enctype="multipart/form-data">
+                <div class="form-group">
+                    <h5 class="mb-1"><span class="badge badge-secondary" for="report">提出</span></h5>
+                    <input type="file" name="report" class="form-control-file mb-2" id="report">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- 試験 --}}
+    <h5 class="mb-1"><span class="badge badge-secondary mt-3">試験</span></h5>
+    <div class="card">
+        <div class="card-body">
+
+            <h5><span class="badge badge-secondary">試験申し込み</span></h5>
+                <div class="form-group ml-3">
+                    <div class="custom-control custom-radio">
+                        <input type="radio" id="customRadio1" name="customRadio" class="custom-control-input">
+                        <label class="custom-control-label" for="customRadio1">2020年7月10日（金）10:00 - 11:00</label>
+                    </div>
+                    <div class="custom-control custom-radio">
+                        <input type="radio" id="customRadio2" name="customRadio" class="custom-control-input">
+                        <label class="custom-control-label" for="customRadio2">2020年7月11日（土）10:00 - 11:00</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">
+                        <i class="fas fa-check"></i> <span class="hidden-xs">試験申し込み</span>
+                    </button>
+                </div>
+
+            <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
+            <ul class="mb-3">
+                <li><a href="#">発達臨床実践特論（R2認定通信）試験問題.pdf</a>
+                <li><a href="#">発達臨床実践特論（R2認定通信）試験解答用ファイル.docx</a>
+            </ul>
+
+            <h5><span class="badge badge-secondary">履歴</span></h5>
+            <ul class="mb-3">
+                <li>2020-07-10<br />
+                    提出 - <a href="#">発達臨床実践特論（R2認定通信）試験_永原_0620.docx</a>
+                <li>2020-07-11<br />
+                    <span class="text-danger font-weight-bold">評価：D</span><br />
+                    添削ファイル - <a href="#">発達臨床実践特論（R2認定通信）試験_教員添削_0702.docx</a><br />
+                    コメント<br />
+                    <div class="card">
+                        <div class="card-body py-2">
+                            試験に対するコメントです。
+                        </div>
+                    </div>
+
+                <li>2020-07-12<br />
+                    再提出 - <a href="#">発達臨床実践特論（R2認定通信）試験_永原_0712.docx</a><br />
+                    <span class="text-danger font-weight-bold">評価：A</span><br />
+                    コメント<br />
+                    <div class="card">
+                        <div class="card-body py-2">
+                            よくできました。
+                        </div>
+                    </div>
+            </ul>
+
+            <form action="" method="POST" class="" name="form_report_posts" enctype="multipart/form-data">
+                <div class="form-group">
+                    <h5 class="mb-1"><span class="badge badge-secondary" for="report">提出</span></h5>
+                    <input type="file" name="report" class="form-control-file mb-2" id="report">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- 課題 --}}
+    <h5 class="mb-1"><span class="badge badge-secondary mt-3">課題情報</span></h5>
+    <div class="card">
+        <div class="card-body">
+
+            {{-- 投稿日時 --}}
+            記載日：{{$post->posted_at->format('Y年n月j日 H時i分')}}
+
+            {{-- 重要記事 --}}
+            @if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
+
+            {{-- カテゴリ --}}
+            @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+
+            {{-- タグ --}}
+            @isset($post_tags)
+                @foreach($post_tags as $tags)
+                    <span class="badge badge-secondary">{{$tags->tags}}</span>
+                @endforeach
+            @endisset
+        </div>
+    </div>
+
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-    <div class="row">
+    <div class="row mt-3">
         <div class="col-12 text-right mb-1">
         @if ($post->status == 2)
             @can('preview',[[null, 'learningtasks', 'preview_off']])
@@ -53,24 +191,9 @@
         @endcan
         </div>
     </div>
+
 </article>
 
-
-{{-- 投稿日時 --}}
-{{$post->posted_at->format('Y年n月j日 H時i分')}}
-
-{{-- 重要記事 --}}
-@if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
-
-{{-- カテゴリ --}}
-@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
-
-{{-- タグ --}}
-@isset($post_tags)
-    @foreach($post_tags as $tags)
-        <span class="badge badge-secondary">{{$tags->tags}}</span>
-    @endforeach
-@endisset
 
 {{-- 一覧へ戻る --}}
 <div class="row">
