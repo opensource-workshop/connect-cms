@@ -47,6 +47,11 @@ class AppServiceProvider extends AuthServiceProvider
 
         // *** ロールから確認（一般）
 
+        // ゲスト
+        Gate::define('role_guest', function ($user, $args = null) {
+            return $this->check_role($user, 'role_guest');
+        });
+
         // 編集者
         Gate::define('role_reporter', function ($user, $args = null) {
             return $this->check_role($user, 'role_reporter');

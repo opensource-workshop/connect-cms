@@ -27,6 +27,49 @@
     @endif
 @endcan
 
+{{-- 要処理一覧：教員機能 --}}
+<h5><span class="badge badge-secondary">教員用：処理待ち一覧</span></h5>
+<table class="table table-bordered table-sm">
+    <thead class="bg-light">
+    <tr>
+        <th scope="col" class="text-nowrap">受講者</th>
+        <th scope="col" class="text-nowrap">必要処理</th>
+        <th scope="col" class="text-nowrap">レポート</th>
+        <th scope="col" class="text-nowrap">試験</th>
+        <th scope="col" class="text-nowrap">受講者最終アクション</th>
+    </tr>
+    <tbody>
+    <tr>
+        <td>A20K0001 - 永原　篤</td>
+        <td><a href="#">レポート評価</a></td>
+        <td>-</td>
+        <td>-</td>
+        <td>2020-07-05 22:30:40 - レポート提出</td>
+    </tr>
+    <tr>
+        <td>A20K0002 - 伊藤　博文</td>
+        <td><a href="#">レポート再評価</a></td>
+        <td>D</td>
+        <td>-</td>
+        <td>2020-07-06 09:10:20 - レポート再提出</td>
+    </tr>
+    <tr>
+        <td>A20K0003 - 黑田　清隆</td>
+        <td><a href="#">試験評価</a></td>
+        <td>A</td>
+        <td>-</td>
+        <td>2020-07-10 09:10:20 - 解答提出</td>
+    </tr>
+    <tr>
+        <td>B20L0012 - 大隈　重信</td>
+        <td><a href="#">試験再評価</a></td>
+        <td>B</td>
+        <td>D</td>
+        <td>2020-07-10 12:20:40 - 解答再提出</td>
+    </tr>
+    </tbody>
+</table>
+
 {{-- 課題管理表示 --}}
 @if (isset($learningtasks_posts))  {{-- 課題があるか --}}
     @foreach($categories_and_posts as $category_id => $categories_and_post)  {{-- カテゴリのループ --}}
