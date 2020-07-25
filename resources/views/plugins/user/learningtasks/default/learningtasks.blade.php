@@ -28,6 +28,7 @@
 @endcan
 
 {{-- 要処理一覧：教員機能 --}}
+{{--
 <h5><span class="badge badge-secondary">教員用：処理待ち一覧</span></h5>
 <table class="table table-bordered table-sm">
     <thead class="bg-light">
@@ -69,9 +70,10 @@
     </tr>
     </tbody>
 </table>
+--}}
 
 {{-- 課題管理表示 --}}
-@if (isset($learningtasks_posts))  {{-- 課題があるか --}}
+@if (isset($posts))  {{-- 課題があるか --}}
     @foreach($categories_and_posts as $category_id => $categories_and_post)  {{-- カテゴリのループ --}}
     <div class="accordion @if (!$loop->first) mt-3 @endif" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
         <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
@@ -80,9 +82,13 @@
     <thead class="bg-light">
     <tr>
         <th scope="col" class="text-nowrap">科目名</th>
-        <th scope="col" class="text-nowrap">レポート</th>
-        <th scope="col" class="text-nowrap">試験日時</th>
-        <th scope="col" class="text-nowrap">試験評価</th>
+        @if ($learningtask->useReport())
+            <th scope="col" class="text-nowrap">レポート</th>
+        @endif
+        @if ($learningtask->useExamination())
+            <th scope="col" class="text-nowrap">試験日時</th>
+            <th scope="col" class="text-nowrap">試験評価</th>
+        @endif
 {{--
         <th scope="col" class="text-nowrap">単位数</th>
         <th scope="col" class="text-nowrap">免許状の種類</th>
@@ -94,23 +100,13 @@
 
             <tr>
                 <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
-                <td>
-                @if ($loop->index == 0)
-                    未提出
-                @elseif ($loop->index == 2)
-                    <span class="text-danger">評価：D</span>
-                @else
-                    評価：A
+                 @if ($learningtask->useReport())
+                    <td>{{$learningtask_user->getReportStatus($post->id)}}</td>
                 @endif
-                </td>
-                <td class="text-nowrap">
-                @if ($loop->index == 0)
-                @elseif ($loop->index == 2)
-                @else
-                    2020年7月10日 10:00～11:30<br />2020年7月10日 10:00～11:30
+                @if ($learningtask->useExamination())
+                    <td>{{$learningtask_user->getApplyingExaminationDate($post->id)}}</td>
+                    <td>{{$learningtask_user->getExaminationStatus($post->id)}}</td>
                 @endif
-                </td>
-                <td>A</td>
 {{--
                 <td>4単位</td>
                 <td>小専免<br />中専免<br />高専免</td>
@@ -123,7 +119,7 @@
     @endforeach
     {{-- ページング処理 --}}
     <div class="text-center">
-        {{ $learningtasks_posts->links() }}
+        {{ $posts->links() }}
     </div>
 @endif
 

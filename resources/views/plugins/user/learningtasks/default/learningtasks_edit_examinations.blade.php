@@ -38,7 +38,7 @@
 @else
 <form action="{{url('/')}}/plugin/learningtasks/saveExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
     {{ csrf_field() }}
-    <input type="hidden" name="learningtasks_id" value="{{$learningtasks_frame->learningtasks_id}}">
+    <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
 
     <div class="form-group row">
         <label class="col-md-2 control-label">タイトル</label>

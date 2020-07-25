@@ -105,7 +105,7 @@ return [
         'role_reporter'      => ['role_reporter', 'role_article_admin'],
         'role_approval'      => ['role_approval', 'role_article_admin'],
         'role_article'       => ['role_article', 'role_article_admin'],
-        'role_guest'         => ['role_guest', 'role_article_admin'],
+        //'role_guest'         => ['role_guest', 'role_article_admin'], // テスト用
 
         'admin_system'       => ['admin_system'],
         'admin_page'         => ['admin_page', 'admin_system'],

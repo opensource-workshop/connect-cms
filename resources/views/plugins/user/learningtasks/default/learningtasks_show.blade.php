@@ -26,6 +26,7 @@
 <h2>{!!$post->post_title!!}</h2>
 
 {{-- 受講者選択：教員機能 --}}
+{{--
 <h5><span class="badge badge-secondary">受講者選択（教員用）</span></h5>
 <div class="form-group row">
     <label class="col-sm-3 control-label text-sm-right">評価する受講者</label>
@@ -42,6 +43,7 @@
         </select>
     </div>
 </div>
+--}}
 
 <article>
 
@@ -68,13 +70,14 @@
     @endif
 
     {{-- レポート --}}
+    @if ($learningtask->useReport())
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">レポート</span></h5>
     <div class="card">
         <div class="card-body">
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
             <ol class="mb-3">
-                @forelse($learningtask_user->report_statuses as $report_status)
+                @forelse($learningtask_user->getReportStatuses($post->id) as $report_status)
                 <li>{{$report_status->getStstusName()}}
                 <table class="table table-bordered table-sm report_table">
                 <tbody>
@@ -211,30 +214,32 @@
             </form>
         </div>
     </div>
+    @endif
 
     {{-- 試験 --}}
+    @if ($learningtask->useExamination())
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">試験</span></h5>
     <div class="card">
         <div class="card-body">
             {{-- 試験に合格済み --}}
-            @if ($learningtask_user->isPassExamination())
+            @if ($learningtask_user->isPassExamination($post->id))
                 <div class="card mb-3">
                     <div class="card-body">
                         試験に合格済みです。
                     </div>
                 </div>
             {{-- 試験に申し込み済み --}}
-            @elseif ($learningtask_user->getApplyingExamination())
+            @elseif ($learningtask_user->getApplyingExamination($post->id))
                 <h5><span class="badge badge-secondary">申し込み済の試験日</span></h5>
                 <div class="card mb-3">
                     <div class="card-body">
-                        試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate()}}</span> です。
+                        試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate($post->id)}}</span> です。
                     </div>
                 </div>
             {{-- 試験に申し込みまだ --}}
             @else
                 <h5><span class="badge badge-secondary">試験申し込み</span></h5>
-                @if ($learningtask_user->canExamination())
+                @if ($learningtask_user->canExamination($post->id))
                     <form action="{{url('/')}}/plugin/learningtasks/changeStatus4/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status4">
                         {{ csrf_field() }}
                         <div class="form-group row mb-3">
@@ -265,18 +270,18 @@
                     <div class="card border-danger mb-3">
                         <div class="card-body">
                             試験に申し込む条件が不足しています。<br />
-                            {{$learningtask_user->reasonExamination()}}
+                            {{$learningtask_user->reasonExamination($post->id)}}
                         </div>
                     </div>
                 @endif
             @endif
 
             {{-- 試験前 --}}
-            @if ($learningtask_user->isApplyingExamination())
+            @if ($learningtask_user->isApplyingExamination($post->id))
                 <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
                 <div class="card border-danger mb-3">
                     <div class="card-body">
-                        試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate()}}</span> です。<br />
+                        試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate($post->id)}}</span> です。<br />
                         開始時間以降にこのページを開くと、ここに試験ファイルのリンクが表示され、ダウンロードできるようになります。<br />
                         ※ 時間になっても、ダウンロードが表示されない場合は、画面を再読み込みしてみてください。
                     </div>
@@ -284,7 +289,7 @@
             @endif
 
             {{-- 試験中 --}}
-            @if ($learningtask_user->isNowExamination())
+            @if ($learningtask_user->isNowExamination($post->id))
                 <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
 
                 {{-- 試験用ファイル --}}
@@ -310,7 +315,7 @@
             <h5><span class="badge badge-secondary">履歴</span></h5>
             <ol class="mb-3">
 
-                @forelse($learningtask_user->examination_statuses as $examination_status)
+                @forelse($learningtask_user->getExaminationStatuses($post->id) as $examination_status)
                 <li>{{$examination_status->getStstusName()}}
                 <table class="table table-bordered table-sm report_table">
                 <tbody>
@@ -455,6 +460,7 @@
             </form>
         </div>
     </div>
+    @endif
 
     {{-- 課題 --}}
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">課題情報</span></h5>
