@@ -10,7 +10,7 @@ use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 
 /**
  * 課題管理のユーザ情報保持クラス
- * 
+ *
  * メソッド一覧(public のもの)
  * ・レポートの履歴取得                       getReportStatuses($post_id)
  * ・レポートの状況取得                       getReportStatus($post_id)
@@ -58,24 +58,25 @@ class LearningtasksUser
 
         // ユーザーstatusテーブル
         if (!empty($this->user)) {
-
             // レポートの履歴
-            $this->report_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->user->id)
-                                                               ->whereIn('task_status', [1, 2, 3])
-                                                               ->orderBy('post_id', 'asc')
-                                                               ->orderBy('id', 'asc')
-                                                               ->get();
+            $this->report_statuses = LearningtasksUsersStatuses::where(
+                'user_id', '=', $this->user->id
+            )->whereIn('task_status', [1, 2, 3])
+             ->orderBy('post_id', 'asc')
+             ->orderBy('id', 'asc')
+             ->get();
 
             // 試験の履歴
-            $this->examination_statuses = LearningtasksUsersStatuses::select('learningtasks_users_statuses.*',
-                                                                             'learningtasks_examinations.start_at',
-                                                                             'learningtasks_examinations.end_at')
-                ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
-                ->where('learningtasks_users_statuses.user_id', '=', $this->user->id)
-                ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
-                ->orderBy('learningtasks_users_statuses.post_id', 'asc')
-                ->orderBy('learningtasks_users_statuses.id', 'asc')
-                ->get();
+            $this->examination_statuses = LearningtasksUsersStatuses::select(
+                'learningtasks_users_statuses.*',
+                'learningtasks_examinations.start_at',
+                'learningtasks_examinations.end_at'
+            )->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+             ->where('learningtasks_users_statuses.user_id', '=', $this->user->id)
+             ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
+             ->orderBy('learningtasks_users_statuses.post_id', 'asc')
+             ->orderBy('learningtasks_users_statuses.id', 'asc')
+             ->get();
         }
     }
 

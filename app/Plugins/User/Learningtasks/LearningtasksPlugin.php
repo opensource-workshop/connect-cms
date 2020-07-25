@@ -1641,7 +1641,6 @@ class LearningtasksPlugin extends UserPluginBase
 
         // アップロードファイルがあれば保存する。
         if ($request->hasFile('upload_file')) {
-
             // uploads テーブルに情報追加、ファイルのid を取得する
             $upload = Uploads::create([
                 'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
