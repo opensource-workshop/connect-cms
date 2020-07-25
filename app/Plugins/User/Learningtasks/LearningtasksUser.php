@@ -134,7 +134,7 @@ class LearningtasksUser
      *  申し込み中の試験
      */
     public function getApplyingExaminationDate()
-    {
+    {	
         // 日本語での開始 - 終了表記で返す。
         return $this->getViewDate($this->getApplyingExamination());
     }
@@ -147,7 +147,7 @@ class LearningtasksUser
         $applying_examination_ts = null;
         $applying_examination = null;
 
-        // 終了日が到達していない、一番早い日時の試験を抜き出す
+        // 履歴から、終了日が到達していない、一番早い日時の試験を抜き出す
         foreach ($this->examination_statuses as $examination_status) {
             // 対象は試験申し込み履歴
             if ($examination_status->task_status == 4) {
@@ -187,5 +187,22 @@ class LearningtasksUser
             }
         }
         return $applying_examination;
+    }
+
+    /**
+     *  試験に合格済みか
+     */
+    public function isPassExamination()
+    {
+        // 履歴をループして、試験で評価がA, B, C のいずれかがあれば合格
+        foreach ($this->examination_statuses as $examination_status) {
+            // 対象は試験の評価
+            if ($examination_status->task_status == 6) {
+                if ($examination_status->grade == 'A' || $examination_status->grade == 'B' || $examination_status->grade == 'C') {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

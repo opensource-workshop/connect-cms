@@ -46,7 +46,7 @@ class LearningtasksPlugin extends UserPluginBase
         4 : 試験申し込み
         5 : 試験の解答提出（再提出も同じ。提出アクションが2つ目以降は再提出となるだけ）
         6 : 試験の評価（再評価も同じ）
-        7 : コメント
+        7 : 試験のコメント
 
         task_status の変更メソッドは 本体を private の changeStatusImpl() とする。
         各ステータス毎に public の入り口メソッドを持ち、権限チェックを行う。
@@ -431,7 +431,7 @@ class LearningtasksPlugin extends UserPluginBase
                 $upload = Uploads::find($learningtasks_posts_file->upload_id);
 
                 // アップロードファイルの削除
-                $directory = $this->getDirectory($upload->upload_id);
+                $directory = $this->getDirectory($upload->id);
                 Storage::delete($directory . '/' . $upload->id . "." . $upload->extension);
 
                 // アップロードテーブルの削除
@@ -740,19 +740,27 @@ class LearningtasksPlugin extends UserPluginBase
         //    $learningtasks_post_tags = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
         //}
 
-        // 課題管理データを取得
-        $post_files
-            = LearningtasksPostsFiles::select(
-                'learningtasks_posts_files.*',
-                'uploads.id as uploads_id', 'uploads.client_original_name'
-            )
-                 ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
-                 ->where('post_id', $post->id)
-                 ->where('task_flag', 0)
-                 ->get();
+        // 課題の添付ファイル（学習指導書など）を取得
+        $post_files = LearningtasksPostsFiles::select(
+            'learningtasks_posts_files.*',
+            'uploads.id as uploads_id', 'uploads.client_original_name'
+        )->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+         ->where('post_id', $post->id)
+         ->where('task_flag', 0)
+         ->get();
 
-        // 試験情報
+        // 試験の添付ファイル（試験問題、解答用ファイルなど）を取得
+        $examination_files = LearningtasksPostsFiles::select(
+            'learningtasks_posts_files.*',
+            'uploads.id as uploads_id', 'uploads.client_original_name'
+        )->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+         ->where('post_id', $post->id)
+         ->where('task_flag', 1)
+         ->get();
+
+        // 試験情報(申し込み可能な分 = 終了日時が現在より後のもの)
         $examinations = LearningtasksExaminations::where('post_id', $post->id)
+                                                 ->where('end_at', '>=', date('Y-m-d H:i:00'))
                                                  ->orderBy('start_at', 'asc')
                                                  ->get();
 
@@ -788,10 +796,10 @@ class LearningtasksPlugin extends UserPluginBase
         return $this->view(
             'learningtasks_show', [
             'learningtasks_frame'  => $frame,
-            'post'           => $post,
-            //'post_tags'      => $learningtasks_post_tags,
-            'post_files'     => $post_files,
-            'examinations'   => $examinations,
+            'post'              => $post,
+            'post_files'        => $post_files,
+            'examination_files' => $examination_files,
+            'examinations'      => $examinations,
             'learningtask_user' => $learningtask_user,
             ]
         );

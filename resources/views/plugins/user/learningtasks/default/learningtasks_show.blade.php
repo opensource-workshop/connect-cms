@@ -115,7 +115,7 @@
 
             <form action="{{url('/')}}/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
                 {{ csrf_field() }}
-                <h5 class="mb-1"><span class="badge badge-secondary" for="report_file">提出</span></h5>
+                <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
                 <div class="form-group row mb-1">
 
                     <label class="col-sm-3 control-label text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
@@ -139,7 +139,7 @@
 
             <form action="{{url('/')}}/plugin/learningtasks/changeStatus2/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status2" enctype="multipart/form-data">
                 {{ csrf_field() }}
-                <h5 class="mb-1"><span class="badge badge-secondary" for="status2_file">評価・添削（教員用）</span></h5>
+                <h5 class="mb-1"><span class="badge badge-secondary" for="status2">評価・添削（教員用）</span></h5>
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
                     <div class="col-sm-9">
@@ -182,7 +182,7 @@
 
             <form action="{{url('/')}}/plugin/learningtasks/changeStatus3/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status3" enctype="multipart/form-data">
                 {{ csrf_field() }}
-                <h5 class="mb-1"><span class="badge badge-secondary" for="status9_file">受講生へのコメント（教員用）</span></h5>
+                <h5 class="mb-1"><span class="badge badge-secondary" for="status3">受講生へのコメント（教員用）</span></h5>
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
                     <div class="col-sm-9">
@@ -216,38 +216,54 @@
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">試験</span></h5>
     <div class="card">
         <div class="card-body">
-
-            @if ($learningtask_user->getApplyingExamination())
+            {{-- 試験に合格済み --}}
+            @if ($learningtask_user->isPassExamination())
+                <div class="card mb-3">
+                    <div class="card-body">
+                        試験に合格済みです。
+                    </div>
+                </div>
+            {{-- 試験に申し込み済み --}}
+            @elseif ($learningtask_user->getApplyingExamination())
                 <h5><span class="badge badge-secondary">申し込み済の試験日</span></h5>
                 <div class="card mb-3">
-                    <div class="card-body py-2">
+                    <div class="card-body">
                         試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate()}}</span> です。
                     </div>
                 </div>
+            {{-- 試験に申し込みまだ --}}
             @else
                 <h5><span class="badge badge-secondary">試験申し込み</span></h5>
                 @if ($learningtask_user->canExamination())
                     <form action="{{url('/')}}/plugin/learningtasks/changeStatus4/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status4">
                         {{ csrf_field() }}
                         <div class="form-group row mb-3">
-                            <label class="col-sm-3 control-label text-sm-right">試験日 <label class="badge badge-danger">必須</label></label>
+                            <label class="col-sm-3 control-label text-sm-right">試験日</label>
                             <div class="col-sm-9">
-                                @foreach ($examinations as $examination)
-                                <div class="custom-control custom-radio">
-                                    <input type="radio" id="examination_{{$loop->index}}" name="examination_id" class="custom-control-input" value="{{$examination->id}}">
-                                    <label class="custom-control-label" for="examination_{{$loop->index}}">{{$learningtask_user->getViewDate($examination)}}</label>
-                                </div>
-                                @endforeach
+                                @if (count($examinations) > 0)
+                                    @foreach ($examinations as $examination)
+                                    <div class="custom-control custom-radio">
+                                        <input type="radio" id="examination_{{$loop->index}}" name="examination_id" class="custom-control-input" value="{{$examination->id}}">
+                                        <label class="custom-control-label" for="examination_{{$loop->index}}">{{$learningtask_user->getViewDate($examination)}}</label>
+                                    </div>
+                                    @endforeach
 
-                                <button type="submit" class="btn btn-primary btn-sm mt-2" onclick="javascript:return confirm('試験日を登録します。\nよろしいですか？');">
-                                    <i class="fas fa-check"></i> <span class="hidden-xs">試験申し込み</span>
-                                </button>
+                                    <button type="submit" class="btn btn-primary btn-sm mt-2" onclick="javascript:return confirm('試験日を登録します。\nよろしいですか？');">
+                                        <i class="fas fa-check"></i> <span class="hidden-xs">試験申し込み</span>
+                                    </button>
+                                @else
+                                    <div class="card border-danger mb-3">
+                                        <div class="card-body">
+                                            この科目には、もう申し込める試験がありません。
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </form>
                 @else
                     <div class="card border-danger mb-3">
-                        <div class="card-body py-2">
+                        <div class="card-body">
                             試験に申し込む条件が不足しています。<br />
                             {{$learningtask_user->reasonExamination()}}
                         </div>
@@ -259,7 +275,7 @@
             @if ($learningtask_user->isApplyingExamination())
                 <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
                 <div class="card border-danger mb-3">
-                    <div class="card-body py-2">
+                    <div class="card-body">
                         試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate()}}</span> です。<br />
                         開始時間以降にこのページを開くと、ここに試験ファイルのリンクが表示され、ダウンロードできるようになります。<br />
                         ※ 時間になっても、ダウンロードが表示されない場合は、画面を再読み込みしてみてください。
@@ -270,146 +286,87 @@
             {{-- 試験中 --}}
             @if ($learningtask_user->isNowExamination())
                 <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
-                <div class="card mb-3">
-                    <div class="card-body pb-0 pl-0">
-                        <ul class="mb-3">
-                            <li><a href="#">発達臨床実践特論（R2認定通信）試験問題.pdf</a>
-                            <li><a href="#">発達臨床実践特論（R2認定通信）試験解答用ファイル.docx</a>
-                        </ul>
+
+                {{-- 試験用ファイル --}}
+                @if (count($examination_files) > 0)
+                    <div class="card mb-3">
+                        <div class="card-body pb-0 pl-0">
+                            <ul class="mb-3">
+                            @foreach($examination_files as $examination_file)
+                                <li><a href="{{url('/')}}/file/{{$examination_file->upload_id}}" target="_blank" rel="noopener">{{$examination_file->client_original_name}}</a></li>
+                            @endforeach
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            試験用のファイルはありません。
+                        </div>
+                    </div>
+                @endif
             @endif
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
             <ol class="mb-3">
-                <li>申し込み<br />
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>申込日時</th>
-                        <td>2020-07-09 10:00:30</td>
-                    </tr>
-                    <tr>
-                        <th>試験日時</th>
-                        <td>2020年7月10日（金）10:00 - 11:00</td>
-                    </tr>
-                </tbody>
-                </table>
 
-                <li>提出<br />
+                @forelse($learningtask_user->examination_statuses as $examination_status)
+                <li>{{$examination_status->getStstusName()}}
                 <table class="table table-bordered table-sm report_table">
                 <tbody>
                     <tr>
-                        <th>提出日時</th>
-                        <td>2020-07-10 10:45:30</td>
+                        <th>{{$examination_status->getStstusPostTimeName()}}</th>
+                        <td>{{$examination_status->created_at}}</td>
                     </tr>
+                    @if ($examination_status->hasFile())
                     <tr>
-                        <th>解答ファイル</th>
-                        <td><a href="#">発達臨床実践特論（R2認定通信）試験_0710.docx</a></td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <li>評価<br />
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>評価日時</th>
-                        <td>2020-07-11 09:20:30</td>
-                    </tr>
-                    <tr>
-                        <th>添削・参考ファイル</th>
-                        <td><a href="#">発達臨床実践特論（R2認定通信）レポート_教員添削_0711.docx</a></td>
-                    </tr>
-                    <tr>
-                        <th>評価</th>
-                        <td><span class="text-danger font-weight-bold">D</span></td>
-                    </tr>
-                    <tr>
-                        <th>コメント</th>
-                        <td>試験に対するコメントです。</td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <li>教員からのコメント<br />
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>投稿日時</th>
-                        <td>2020-07-11 09:35:40</td>
-                    </tr>
-                    <tr>
-                        <th>参考ファイル</th>
-                        <td><a href="#">参考_0711.docx</a></td>
-                    </tr>
-                    <tr>
-                        <th>コメント</th>
-                        <td>試験評価に対する追加の参考資料です。</td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <li>申し込み<br />
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>申込日時</th>
-                        <td>2020-07-11 15:06:00</td>
-                    </tr>
-                    <tr>
-                        <th>試験日時</th>
-                        <td>2020年7月12日（日）17:00 - 18:00</td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <li>再提出<br />
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>提出日時</th>
-                        <td>2020-07-12 17:40:30</td>
-                    </tr>
-                    <tr>
-                        <th>解答ファイル</th>
-                        <td><a href="#">発達臨床実践特論（R2認定通信）試験_0712.docx</a></td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <li>評価<br />
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>評価日時</th>
-                        <td>2020-07-13 09:10:00</td>
-                    </tr>
-                    <tr>
-                        <th>添削・参考ファイル</th>
+                        <th>{{$examination_status->getUploadFileName()}}</th>
+                        @if (empty($examination_status->upload_id))
                         <td>なし</td>
+                        @else
+                        <td><a href="{{url('/')}}/file/{{$examination_status->upload_id}}" target="_blank">{{$examination_status->upload->client_original_name}}</a></td>
+                        @endif
                     </tr>
+                    @endif
+                    @if ($examination_status->hasExamination())
+                    <tr>
+                        <th>試験日時</th>
+                        <td>{{$learningtask_user->getViewDate($examination_status)}}</td>
+                    </tr>
+                    @endif
+                    @if ($examination_status->hasGrade())
                     <tr>
                         <th>評価</th>
-                        <td><span class="text-danger font-weight-bold">A</span></td>
+                        <td><span class="text-danger font-weight-bold">{{$examination_status->grade}}</span></td>
                     </tr>
+                    @endif
+                    @if ($examination_status->hasComment())
                     <tr>
                         <th>コメント</th>
-                        <td>よくできました。</td>
+                        <td>{!!nl2br(e($examination_status->comment))!!}</td>
                     </tr>
+                    @endif
                 </tbody>
                 </table>
+                @empty
+                    <div class="card">
+                        <div class="card-body p-3">
+                            まだ履歴がありません。
+                        </div>
+                    </div>
+                @endforelse
             </ol>
 
-            <form action="" method="POST" class="" name="form_report_posts" enctype="multipart/form-data">
-                <h5 class="mb-1"><span class="badge badge-secondary" for="report_file">解答</span></h5>
+            <form action="{{url('/')}}/plugin/learningtasks/changeStatus5/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status5" enctype="multipart/form-data">
+                {{ csrf_field() }}
+                <h5 class="mb-1"><span class="badge badge-secondary" for="status5">解答</span></h5>
                 <div class="form-group row mb-1">
 
                     <label class="col-sm-3 control-label text-sm-right">解答ファイル <label class="badge badge-danger">必須</label></label>
                     <div class="col-sm-9">
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="report_file">
-                            <label class="custom-file-label" for="report_file" data-browse="参照">試験の回答ファイルを選んでください。</label>
+                            <input type="file" class="custom-file-input" id="status5_file" name="upload_file">
+                            <label class="custom-file-label" for="status5_file" data-browse="参照">試験の回答ファイルを選んでください。</label>
                         </div>
                     </div>
                 </div>
@@ -417,22 +374,22 @@
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-right"></label>
                     <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('試験の解答を提出します。\nよろしいですか？');">
                             <i class="fas fa-check"></i> <span class="hidden-xs">試験の解答提出</span>
                         </button>
                     </div>
                 </div>
             </form>
 
-            <form action="" method="POST" class="" name="form_report_posts" enctype="multipart/form-data">
-
-                <h5 class="mb-1"><span class="badge badge-secondary" for="collection_file">評価・添削（教員用）</span></h5>
+            <form action="{{url('/')}}/plugin/learningtasks/changeStatus6/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status6" enctype="multipart/form-data">
+                {{ csrf_field() }}
+                <h5 class="mb-1"><span class="badge badge-secondary" for="status6">評価・添削（教員用）</span></h5>
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
                     <div class="col-sm-9">
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="collection_file">
-                            <label class="custom-file-label" for="collection_file" data-browse="参照">添削したファイルや参考ファイル（任意）</label>
+                            <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
+                            <label class="custom-file-label" for="status6_file" data-browse="参照">添削したファイルや参考ファイル（任意）</label>
                         </div>
                     </div>
                 </div>
@@ -440,14 +397,14 @@
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-sm-right">コメント</label>
                     <div class="col-sm-9">
-                        <textarea class="form-control mb-1" rows="3"></textarea>
+                        <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
                     </div>
                 </div>
 
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
                     <div class="col-sm-9">
-                        <select class="form-control mb-1">
+                        <select class="form-control mb-1" name="grade">
                             <option>評価を選んでください。</option>
                             <option value="A">Ａ</option>
                             <option value="B">Ｂ</option>
@@ -460,22 +417,22 @@
                 <div class="form-group row">
                     <label class="col-sm-3 control-label text-right"></label>
                     <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
                             <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
                         </button>
                     </div>
                 </div>
             </form>
 
-            <form action="" method="POST" class="" name="form_report_posts" enctype="multipart/form-data">
-
-                <h5 class="mb-1"><span class="badge badge-secondary" for="collection_file">受講生へのコメント（教員用）</span></h5>
+            <form action="{{url('/')}}/plugin/learningtasks/changeStatus7/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status7" enctype="multipart/form-data">
+                {{ csrf_field() }}
+                <h5 class="mb-1"><span class="badge badge-secondary" for="status7">受講生へのコメント（教員用）</span></h5>
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
                     <div class="col-sm-9">
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="collection_file">
-                            <label class="custom-file-label" for="collection_file" data-browse="参照">参考ファイル（任意）</label>
+                            <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
+                            <label class="custom-file-label" for="status6_file" data-browse="参照">参考ファイル（任意）</label>
                         </div>
                     </div>
                 </div>
@@ -483,14 +440,14 @@
                 <div class="form-group row mb-1">
                     <label class="col-sm-3 control-label text-sm-right">コメント</label>
                     <div class="col-sm-9">
-                        <textarea class="form-control mb-1" rows="3"></textarea>
+                        <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
                     </div>
                 </div>
 
                 <div class="form-group row">
                     <label class="col-sm-3 control-label text-right"></label>
                     <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
                             <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
                         </button>
                     </div>
