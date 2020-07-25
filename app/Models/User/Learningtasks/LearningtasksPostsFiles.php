@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Userable;
 
+/*
+    task_flag
+    0 : レポート用
+    1 : 試験用
+*/
 class LearningtasksPostsFiles extends Model
 {
     // 論理削除
@@ -21,5 +26,5 @@ class LearningtasksPostsFiles extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['learningtasks_posts_id', 'task_file_uploads_id'];
+    protected $fillable = ['post_id', 'upload_id', 'task_flag'];
 }
