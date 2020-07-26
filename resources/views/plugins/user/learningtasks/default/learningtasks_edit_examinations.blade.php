@@ -7,24 +7,8 @@
  --}}
 @extends('core.cms_frame_base')
 
-<div class="frame-setting-menu">
-    <nav class="navbar navbar-expand-md navbar-light bg-light">
-        <span class="d-md-none">編集メニュー</span>
-        <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg" aria-expanded="false">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="navbar-collapse collapse" id="collapsingNavbarLg" style="">
-            <ul class="navbar-nav">
-                <li role="presentation" class="nav-item">
-                    <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">基本項目</a>
-                </li>
-                <li role="presentation" class="nav-item">
-                    <span class="nav-link"><span class="active">試験関係</span></span>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
+{{-- 編集画面側のフレームメニュー --}}
+@include('plugins.user.learningtasks.learningtasks_setting_edit_tab')
 
 @section("plugin_contents_$frame->id")
 
@@ -36,9 +20,9 @@
         </div>
     </div>
 @else
-<form action="{{url('/')}}/plugin/learningtasks/saveExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
+<form action="{{url('/')}}/redirect/plugin/learningtasks/saveExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
     {{ csrf_field() }}
-    <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
+    <input type="hidden" name="redirect_path" value="/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
 
     <div class="form-group row">
         <label class="col-md-2 control-label">タイトル</label>

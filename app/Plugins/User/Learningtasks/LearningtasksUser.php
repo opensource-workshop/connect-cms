@@ -14,6 +14,7 @@ use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
  * メソッド一覧(public のもの)
  * ・レポートの履歴取得                       getReportStatuses($post_id)
  * ・レポートの状況取得                       getReportStatus($post_id)
+ * ・レポートの提出を行えるか？               canReportUpload($post_id)
  * ・試験の履歴取得                           getExaminationStatuses($post_id)
  * ・試験の状況取得                           getExaminationStatuse($post_id)
  * ・試験の申込を行えるか？判定のみ           canExamination($post_id)
@@ -108,6 +109,52 @@ class LearningtasksUser
         } elseif ($report_status->task_status == 2) {
             return $report_status->grade;
         }
+    }
+
+    /**
+     *  レポートの状況取得
+     */
+    public function canReportUpload($post_id)
+    {
+        list($can_ret, $not_message) = $this->canReportUploadImpl($post_id);
+        return $can_ret;
+    }
+
+    /**
+     *  レポートの状況の文言取得
+     */
+    public function getReportUploadMessage($post_id)
+    {
+        list($can_ret, $message) = $this->canReportUploadImpl($post_id);
+        return $message;
+    }
+
+    /**
+     *  レポートの状況取得
+     */
+    private function canReportUploadImpl($post_id)
+    {
+        if (empty($post_id)) {
+            return array(false, 'データがありません。');
+        }
+
+        // 初めはOK。提出済みならNO、再提出があればOK。合格ならその時点でNO
+        $can_report_upload = array(true, '未提出');
+
+        $report_statuses = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2]);
+        foreach ($report_statuses as $report_status) {
+            // レポートで合格のため、提出不可
+            if ($report_status->task_status == 2 && ($report_status->grade == 'A' || $report_status->grade == 'B' || $report_status->grade == 'C')) {
+                return array(false, 'すでに合格しているため、提出不要です。');
+            }
+            // 提出済みがくればfalse、D 評価がくれば再提出でtrue
+            if ($report_status->task_status == 1) {
+                $can_report_upload = array(false, '提出済みのため、現在は提出できません。');
+            } elseif ($report_status->task_status == 2 && $report_status->grade == 'D') {
+                $can_report_upload = array(true, '再提出が必要');
+            }
+        }
+        return $can_report_upload;
     }
 
     /**

@@ -119,6 +119,8 @@
             <form action="{{url('/')}}/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
                 {{ csrf_field() }}
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
+
+                @if ($learningtask_user->canReportUpload($post->id))
                 <div class="form-group row mb-1">
 
                     <label class="col-sm-3 control-label text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
@@ -138,6 +140,13 @@
                         </button>
                     </div>
                 </div>
+                @else
+                    <div class="card mb-3">
+                        <div class="card-body p-3">
+                            {{$learningtask_user->getReportUploadMessage($post->id)}}
+                        </div>
+                    </div>
+                @endif
             </form>
 
             <form action="{{url('/')}}/plugin/learningtasks/changeStatus2/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status2" enctype="multipart/form-data">
