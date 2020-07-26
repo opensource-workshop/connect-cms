@@ -19,7 +19,10 @@
     <div class="card-body">
 
         <div class="alert alert-info">
+            <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する参加を設定します。
+{{--
             <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する権限を設定します。
+--}}
         </div>
 
         <form action="{{url('/')}}/manage/user/saveGroups/{{$user->id}}" method="POST" class="">
@@ -51,8 +54,12 @@
                                 @else
                                     <input type="radio" value="general" id="group_role_{{$group_user->id}}_1" name="group_roles[{{$group_user->id}}]" class="custom-control-input">
                                 @endif
+                                <label class="custom-control-label" for="group_role_{{$group_user->id}}_1">参加</label>
+{{--
                                 <label class="custom-control-label" for="group_role_{{$group_user->id}}_1">一般</label>
+--}}
                             </div>
+{{-- グループに対する設定を権限で詳細化する際に使用。
                             <div class="custom-control custom-radio custom-control-inline">
                                 @if($group_user->group_role == "moderator")
                                     <input type="radio" value="moderator" id="group_role_{{$group_user->id}}_4" name="group_roles[{{$group_user->id}}]" class="custom-control-input" checked="checked">
@@ -69,6 +76,7 @@
                                 @endif
                                 <label class="custom-control-label" for="group_role_{{$group_user->id}}_3">管理者</label>
                             </div>
+--}}
                         </td>
                     </tr>
                 @endforeach

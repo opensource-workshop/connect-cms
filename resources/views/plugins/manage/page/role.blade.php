@@ -48,6 +48,17 @@
                 @endif
                     <div class="card-body">
 
+                        <div class="card border-warning mb-3">
+                            <div class="card-header bg-warning">実装状況</div>
+                            <div class="card-body">
+                                ※ 2020-07-26 現在、ページ権限は以下の対応となっています。
+                                <ul>
+                                    <li> メンバーシップページに参加するための判定で使用可能（どの権限でも同じ）。
+                                    <li> 各権限を用いての基本権限の上書きはまだ（今後の実装予定）
+                                </ul>
+                            </div>
+                        </div>
+
                         <form class="form-horizontal" method="POST" action="{{url('/manage/page/saveRole/')}}/{{$page->id}}">
                             {{csrf_field()}}
                             <input type="hidden" name="group_id" value="{{$group->id}}">

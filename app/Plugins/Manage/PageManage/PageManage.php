@@ -507,7 +507,10 @@ class PageManage extends ManagePluginBase
         $groups = Group::orderBy('name', 'asc')->get();
 
         // ページ権限を取得してGroup オブジェクトに保持する。
-        $page_roles = PageRole::where('role_value', 1)->orderBy('group_id', 'asc')->get();
+        $page_roles = PageRole::where('page_id', $page->id)
+                              ->where('role_value', 1)
+                              ->orderBy('group_id', 'asc')
+                              ->get();
         foreach ($groups as $group) {
             $group->page_roles = $page_roles->where('group_id', $group->id);
         }
@@ -527,13 +530,12 @@ class PageManage extends ManagePluginBase
      */
     private function updatePageRoles($page_id, $group_id, $role_name, $role_value)
     {
-        // role_value が空の場合は、チェックされていないということなので、delete
-        // この時、もともとレコードがない場合は 0件削除されるだけなので、delete 処理する。
         if (empty($role_value)) {
+            // role_value が空の場合は、チェックされていないということなので、delete
+            // この時、もともとレコードがない場合は 0件削除されるだけなので、delete 処理する。
             PageRole::where('page_id', $page_id)->where('group_id', $group_id)->where('role_name', $role_name)->delete();
-        }
-        // 更新もしくは追加
-        else {
+        } else {
+            // 更新もしくは追加
             PageRole::updateOrCreate(
                 ['page_id' => $page_id, 'group_id' => $group_id, 'target' => 'base', 'role_name' => $role_name,],
                 ['page_id' => $page_id, 'group_id' => $group_id, 'target' => 'base', 'role_name' => $role_name, 'role_value' => 1]
