@@ -80,6 +80,7 @@
 </div>
 @endif
 
+@if (isset($id) && $id)
 <div class="card mt-3">
     <div class="card-header">【{{$group->name}}】グループ参加ユーザ一覧</div>
     <div class="card-body">
@@ -115,4 +116,5 @@
         @endif
     </div>
 </div>
+@endif
 @endsection
