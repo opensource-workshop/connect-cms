@@ -753,7 +753,15 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 受講生のID
-        session(['student_id' => $request->student_id]);
+        if (empty($request->student_id)) {
+             session()->forget('student_id');
+        } else {
+            session(['student_id' => $request->student_id]);
+        }
+
+        // 課題のIDもセッションに保持する。
+        // 課題のIDが変わったら、受講生を選びなおす。
+        session(['learningtask_post_id' => $post_id]);
 
         // 詳細画面へ
         return $this->show($request, $page_id, $frame_id, $post_id);
@@ -764,6 +772,12 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
+        // 課題のIDが変わったら、受講生を選びなおす。
+        if (session('learningtask_post_id') != $post_id) {
+             session()->forget('student_id');
+             session()->forget('learningtask_post_id');
+        }
+
         // 課題管理
         $learningtask = $this->getLearningTask($frame_id);
 

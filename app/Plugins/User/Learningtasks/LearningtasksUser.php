@@ -27,6 +27,7 @@ use App\User;
  * ・レポートの状況取得                       getReportStatus($post_id)
  * ・レポートの提出を行えるか？               canReportUpload($post_id)
  * ・レポートの評価を行えるか？               canReportEvaluate($post_id)
+ * ・レポートにコメントを行えるか？           canReportComment($post_id)
  * ・試験の履歴有無                           hasExaminationStatuses($post_id)
  * ・試験の履歴取得                           getExaminationStatuses($post_id)
  * ・試験の状況取得                           getExaminationStatus($post_id)
@@ -153,14 +154,14 @@ class LearningtasksUser
     /**
      *  評価中の受講生
      */
-    public function getStudent()
+    public function getStudent($default = "")
     {
         if (empty($this->student_id)) {
-            return "";
+            return $default;
         }
         $student = User::find($this->student_id);
         if (empty($student)) {
-            return "";
+            return $default;
         }
         return $student->name;
     }
@@ -327,17 +328,41 @@ class LearningtasksUser
     /**
      *  レポートの評価を行えるか？
      */
-    private function canReportEvaluate($post_id)
+    public function canReportEvaluate($post_id)
     {
         if (empty($post_id)) {
             return false;
         }
-        // レポートの最新ステータスが提出済みで未評価
+        // レポートの最新ステータスが提出済みか評価済み
         $last_report_status = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2])->last();
 
         // 提出済み or 評価済みの最後を取得して、取得したものが提出済みの場合、評価がまだということになる。
-        if ($last_report_status->task_status == 1) {
-            return trye;
+        if (!empty($last_report_status) && $last_report_status->task_status == 1) {
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     *  レポートにコメントを行えるか？
+     */
+    public function canReportComment($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        // レポートの最新ステータスが提出済みか評価済み
+        $last_report_status = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2])->last();
+
+        // 提出済み or 評価済みの最後を取得して、取得したものが提出済みの場合、評価がまだということになる。
+        if (!empty($last_report_status) && $last_report_status->task_status == 1) {
+            return true;
+        }
+
+        // 最後が評価済みで評価がD の場合、まだ完了していないので、コメント可能
+        if (!empty($last_report_status) && $last_report_status->task_status == 2 && $last_report_status->grade == 'D') {
+            return true;
         }
         return false;
     }
