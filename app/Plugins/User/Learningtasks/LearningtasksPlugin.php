@@ -12,8 +12,8 @@ use DB;
 use Session;
 use App\Plugins\User\Learningtasks\LearningtasksUser;
 
-use App\User;
 use App\Models\Core\Configs;
+use App\Models\Core\UsersRoles;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -29,6 +29,7 @@ use App\Models\User\Learningtasks\LearningtasksPostsTags;
 use App\Models\User\Learningtasks\LearningtasksPostsFiles;
 use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
+use App\User;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -78,7 +79,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'editExaminations', 'editUsers'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveUsers', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
+        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveUsers', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
         return $functions;
     }
 
@@ -631,7 +632,7 @@ class LearningtasksPlugin extends UserPluginBase
         $posts = $this->getPosts($learningtask);
 
         // ユーザー関連情報のまとめ
-        $learningtask_user = new LearningtasksUser();
+        $learningtask_user = new LearningtasksUser($request, $page_id);
 
         // タグ：画面表示するデータのlearningtasks_posts_id を集める
         //$posts_ids = array();
@@ -739,6 +740,26 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
+     *  教員用、ユーザ切り替え
+     */
+    public function switchUser($request, $page_id, $frame_id, $post_id)
+    {
+        // ユーザー関連情報のまとめ
+        $learningtask_user = new LearningtasksUser($request, $page_id, $this->getPost($post_id));
+
+        // 教員のみ
+        if (!$learningtask_user->isTeacher()) {
+            $this->index($request, $page_id, $frame_id);
+        }
+
+        // 受講生のID
+        session(['student_id' => $request->student_id]);
+
+        // 詳細画面へ
+        return $this->show($request, $page_id, $frame_id, $post_id);
+    }
+
+    /**
      *  詳細表示関数
      */
     public function show($request, $page_id, $frame_id, $post_id)
@@ -751,19 +772,6 @@ class LearningtasksPlugin extends UserPluginBase
         if (empty($post)) {
             return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
-
-        // タグ取得
-        // タグ：タグデータ取得
-        //$learningtasks_post_tags = new LearningtasksPostsTags();
-        //if ($learningtasks_post) {
-        //    $learningtasks_post_tags = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
-        //}
-
-
-
-// 自分のものだけ。
-// 全POST分取得＆使用時にpost_id渡す方式へ
-
 
         // 課題の添付ファイル（学習指導書など）を取得
         $post_files = LearningtasksPostsFiles::select(
@@ -789,33 +797,8 @@ class LearningtasksPlugin extends UserPluginBase
                                                  ->orderBy('start_at', 'asc')
                                                  ->get();
 
-        // ユーザ
-//        $user = Auth::user();
-
         // ユーザー関連情報のまとめ
-        $learningtask_user = new LearningtasksUser();
-
-        // ユーザーstatusテーブル
-        //$users_statuses = null;
-//        if (!empty($user)) {
-//            // レポートの履歴
-//            $learningtask_user->report_statuses = LearningtasksUsersStatuses::where('post_id', $post->id)
-//                ->where('user_id', '=', $user->id)
-//                ->whereIn('task_status', [1, 2, 3])
-//                ->orderBy('id', 'asc')
-//                ->get();
-
-            // 試験の履歴
-//            $learningtask_user->examination_statuses = LearningtasksUsersStatuses::select('learningtasks_users_statuses.*',
-//                                                                                          'learningtasks_examinations.start_at',
-//                                                                                          'learningtasks_examinations.end_at')
-//                ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
-//                ->where('learningtasks_users_statuses.post_id', $post->id)
-//                ->where('learningtasks_users_statuses.user_id', '=', $user->id)
-//                ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
-//                ->orderBy('learningtasks_users_statuses.id', 'asc')
-//                ->get();
-//        }
+        $learningtask_user = new LearningtasksUser($request, $page_id, $post);
 
         // 詳細画面を呼び出す。
         return $this->view(
@@ -1855,6 +1838,13 @@ EOD;
         // グループのユーザを取得
         $group_users = GroupUser::select('user_id')->whereIn('group_id', $page_roles->pluck('group_id'))->groupBy('user_id')->get();
 
+        // 学生のみに絞る
+        $students = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
+                              ->where('target', 'original_role')
+                              ->where('role_name', 'student')
+                              ->where('role_value', 1)
+                              ->get();
+
         // メンバーシップのユーザ情報を取得
         // この時、すでに権限付与済みのユーザも紐づける。
         $membership_users = User::select('users.*', 'learningtasks_users.user_id AS join_user_id')
@@ -1863,14 +1853,13 @@ EOD;
                                          ->where('learningtasks_users.post_id', '=', $post->id)
                                          ->whereNull('learningtasks_users.deleted_at');
                                 })
-                                ->whereIn('users.id', $group_users->pluck('user_id'))
+                                ->whereIn('users.id', $students->pluck('users_id'))
                                 ->orderBy('id', 'asc')
                                 ->get();
 
         // 画面を呼び出す。
         return $this->view(
             'learningtasks_edit_users', [
-//            'learningtask'              => $learningtask,
             'learningtasks_posts'    => $post,
             'membership_users'       => $membership_users,
             ]

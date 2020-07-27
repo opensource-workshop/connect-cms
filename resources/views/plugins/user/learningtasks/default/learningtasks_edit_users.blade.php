@@ -27,6 +27,7 @@
     <div class="form-group row">
         <label class="col-sm-3">参加方式</label>
         <div class="col-sm-9">
+{{-- 今後の選択肢として保留（ユーザ選択時のインターフェースの考慮）
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->join_flag == 0)
                     <input type="radio" value="0" id="join_flag_0" name="join_flag" class="custom-control-input" checked="checked">
@@ -35,6 +36,7 @@
                 @endif
                 <label class="custom-control-label" for="join_flag_0">全員参加</label>
             </div><br />
+--}}
 {{-- 今後の選択肢として保留（ユーザ選択時のインターフェースの考慮）
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->join_flag == 1)
@@ -51,7 +53,7 @@
                 @else
                     <input type="radio" value="2" id="join_flag_2" name="join_flag" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="join_flag_2">配置ページのメンバーシップユーザ全員</label>
+                <label class="custom-control-label" for="join_flag_2">配置ページのメンバーシップ受講生全員</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->join_flag == 3)
@@ -59,13 +61,13 @@
                 @else
                     <input type="radio" value="3" id="join_flag_3" name="join_flag" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="join_flag_3">配置ページのメンバーシップユーザから選ぶ</label>
+                <label class="custom-control-label" for="join_flag_3">配置ページのメンバーシップ受講生から選ぶ</label>
             </div>
         </div>
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-3 control-label">メンバーシップユーザ</label>
+        <label class="col-sm-3 control-label">メンバーシップ受講生</label>
         <div class="col-sm-9">
             <div class="card p-2">
             {{-- チェックなし用の処理では、削除（参加除外）が必要なため、処理用にhidden で画面のユーザを送る ---}}

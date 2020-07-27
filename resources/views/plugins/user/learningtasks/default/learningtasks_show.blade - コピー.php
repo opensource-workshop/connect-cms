@@ -26,33 +26,21 @@
 <h2>{!!$post->post_title!!}</h2>
 
 {{-- 受講者選択：教員機能 --}}
-@if ($learningtask_user->isTeacher())
-    <h5><span class="badge badge-warning">評価中の受講者</span></h5>
-    <div class="card mb-3 border-danger">
-        <div class="card-body">
-            <h3 class="mb-0">{{$learningtask_user->getStudent()}}</h3>
-        </div>
+<h5><span class="badge badge-secondary">受講者選択（教員用）</span></h5>
+<div class="form-group row">
+    <label class="col-sm-3 control-label text-sm-right">評価する受講者</label>
+    <div class="col-sm-9">
+        <select class="form-control mb-1" name="student_id">
+            <option>評価する受講者を選んでください。</option>
+            @foreach ($learningtask_user->getStudents() as $student)
+            <option value="{{$student->id}}">{{$student->name}}</option>
+            @endforeach
+        </select>
     </div>
-
-    <h5><span class="badge badge-secondary">受講者選択（教員用）</span></h5>
-    <div class="form-group row">
-        <label class="col-sm-3 control-label text-sm-right">評価する受講者</label>
-        <div class="col-sm-9">
-            <form action="{{url('/')}}/redirect/plugin/learningtasks/switchUser/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST">
-                {{ csrf_field() }}
-                <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
-                <select class="form-control mb-1" name="student_id" onchange="javascript:submit(this.form);">
-                    <option>評価する受講者を選んでください。</option>
-                    @foreach ($learningtask_user->getStudents() as $student)
-                    <option value="{{$student->id}}"@if ($learningtask_user->getStudentId() == $student->id) selected @endif>{{$student->name}}</option>
-                    @endforeach
-                </select>
-            </form>
-        </div>
-    </div>
-@endif
+</div>
 
 <article>
+
     {{-- 課題 --}}
     <h5 class="mb-1"><span class="badge badge-secondary">課題</span></h5>
     <div class="card">
@@ -76,7 +64,7 @@
     @endif
 
     {{-- レポート --}}
-    @if ($learningtask->useReport() && $learningtask_user->canReportView($post->id))
+    @if ($learningtask->useReport())
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">レポート</span></h5>
     <div class="card">
         <div class="card-body">
@@ -240,7 +228,7 @@
     @endif
 
     {{-- 試験 --}}
-    @if ($learningtask->useExamination() && $learningtask_user->canExaminationView($post->id))
+    @if ($learningtask->useExamination())
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">試験</span></h5>
     <div class="card">
         <div class="card-body">
