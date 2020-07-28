@@ -68,7 +68,7 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
         $ret->user_roles = $users_roles->getUsersRoles($identifier);
 
         // guest 権限は自動的に付与する。
-        //$ret->user_roles['base']['role_guest'] = 1;
+        $ret->user_roles['base']['role_guest'] = 1;
 
         return $ret;
     }
