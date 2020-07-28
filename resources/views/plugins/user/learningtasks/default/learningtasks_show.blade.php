@@ -26,27 +26,33 @@
 <h2>{!!$post->post_title!!}</h2>
 
 {{-- 受講者選択：教員機能 --}}
-{{--
-<h5><span class="badge badge-secondary">受講者選択（教員用）</span></h5>
-<div class="form-group row">
-    <label class="col-sm-3 control-label text-sm-right">評価する受講者</label>
-    <div class="col-sm-9">
-        <select class="form-control mb-1">
-            <option>評価する受講者を選んでください。</option>
-            <option>A20K0001 - 永原　篤</option>
-            <option>A20K0002 - 伊藤　博文</option>
-            <option>A20K0003 - 黑田　清隆</option>
-            <option>A20K0004 - 山縣　有朋</option>
-            <option>B20L0011 - 松方　正義</option>
-            <option>B20L0012 - 大隈　重信</option>
-            <option>B20L0013 - 桂　太郎</option>
-        </select>
+@if ($learningtask_user->isTeacher())
+    <h5><span class="badge badge-warning">評価中の受講者</span></h5>
+    <div class="card mb-3 border-danger">
+        <div class="card-body">
+            <h3 class="mb-0">{{$learningtask_user->getStudent('受講者を選んでください。')}}</h3>
+        </div>
     </div>
-</div>
---}}
+
+    <h5><span class="badge badge-secondary">受講者選択（教員用）</span></h5>
+    <div class="form-group row">
+        <label class="col-sm-3 control-label text-sm-right">評価する受講者</label>
+        <div class="col-sm-9">
+            <form action="{{url('/')}}/redirect/plugin/learningtasks/switchUser/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST">
+                {{ csrf_field() }}
+                <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                <select class="form-control mb-1" name="student_id" onchange="javascript:submit(this.form);">
+                    <option value="">評価する受講者を選んでください。</option>
+                    @foreach ($learningtask_user->getStudents() as $student)
+                    <option value="{{$student->id}}"@if ($learningtask_user->getStudentId() == $student->id) selected @endif>{{$student->name}}</option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+    </div>
+@endif
 
 <article>
-
     {{-- 課題 --}}
     <h5 class="mb-1"><span class="badge badge-secondary">課題</span></h5>
     <div class="card">
@@ -70,154 +76,187 @@
     @endif
 
     {{-- レポート --}}
-    @if ($learningtask->useReport())
+    @if ($learningtask->useReport() && $learningtask_user->canReportView($post->id))
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">レポート</span></h5>
     <div class="card">
         <div class="card-body">
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
-            <ol class="mb-3">
-                @forelse($learningtask_user->getReportStatuses($post->id) as $report_status)
-                <li>{{$report_status->getStstusName()}}
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>{{$report_status->getStstusPostTimeName()}}</th>
-                        <td>{{$report_status->created_at}}</td>
-                    </tr>
-                    <tr>
-                        <th>{{$report_status->getUploadFileName()}}</th>
-                        @if (empty($report_status->upload_id))
-                        <td>なし</td>
-                        @else
-                        <td><a href="{{url('/')}}/file/{{$report_status->upload_id}}" target="_blank">{{$report_status->upload->client_original_name}}</a></td>
+            @if ($learningtask_user->hasReportStatuses($post->id))
+                <ol class="mb-3">
+                    @foreach($learningtask_user->getReportStatuses($post->id) as $report_status)
+                    <li>{{$report_status->getStstusName()}}
+                    <table class="table table-bordered table-sm report_table">
+                    <tbody>
+                        <tr>
+                            <th>{{$report_status->getStstusPostTimeName()}}</th>
+                            <td>{{$report_status->created_at}}</td>
+                        </tr>
+                        <tr>
+                            <th>{{$report_status->getUploadFileName()}}</th>
+                            @if (empty($report_status->upload_id))
+                            <td>なし</td>
+                            @else
+                            <td><a href="{{url('/')}}/file/{{$report_status->upload_id}}" target="_blank">{{$report_status->upload->client_original_name}}</a></td>
+                            @endif
+                        </tr>
+                        @if ($report_status->hasGrade())
+                        <tr>
+                            <th>評価</th>
+                            <td><span class="text-danger font-weight-bold">{{$report_status->grade}}</span></td>
+                        </tr>
                         @endif
-                    </tr>
-                    @if ($report_status->hasGrade())
-                    <tr>
-                        <th>評価</th>
-                        <td><span class="text-danger font-weight-bold">{{$report_status->grade}}</span></td>
-                    </tr>
-                    @endif
-                    @if ($report_status->hasComment())
-                    <tr>
-                        <th>コメント</th>
-                        <td>{!!nl2br(e($report_status->comment))!!}</td>
-                    </tr>
-                    @endif
-                </tbody>
-                </table>
-                @empty
-                    <div class="card">
-                        <div class="card-body p-3">
-                            まだ履歴がありません。
-                        </div>
+                        @if ($report_status->hasComment())
+                        <tr>
+                            <th>コメント</th>
+                            <td>{!!nl2br(e($report_status->comment))!!}</td>
+                        </tr>
+                        @endif
+                    </tbody>
+                    </table>
+                    @endforeach
+                </ol>
+            @else
+                <div class="card mb-3">
+                    <div class="card-body p-3">
+                        まだ履歴がありません。
                     </div>
-                @endforelse
-            </ol>
+                </div>
+            @endif
 
-            <form action="{{url('/')}}/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
-                {{ csrf_field() }}
+            @if ($learningtask_user->isStudent())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
-                <div class="form-group row mb-1">
 
-                    <label class="col-sm-3 control-label text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="report_file" name="upload_file">
-                            <label class="custom-file-label" for="report_file" data-browse="参照">レポートファイルを選んでください。</label>
+                @if ($learningtask_user->canReportUpload($post->id))
+                    <form action="{{url('/')}}/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
+                        {{ csrf_field() }}
+                        <div class="form-group row mb-1">
+
+                            <label class="col-sm-3 control-label text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="report_file" name="upload_file">
+                                    <label class="custom-file-label" for="report_file" data-browse="参照">レポートファイルを選んでください。</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-1">
+                            <label class="col-sm-3 control-label text-right"></label>
+                            <div class="col-sm-9">
+                                <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポートを提出します。\nよろしいですか？');">
+                                    <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                @else
+                    <div class="card mb-3">
+                        <div class="card-body p-3">
+                            {{$learningtask_user->getReportUploadMessage($post->id)}}
                         </div>
                     </div>
-                </div>
+                @endif
+            @endif
 
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-right"></label>
-                    <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポートを提出します。\nよろしいですか？');">
-                            <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-            <form action="{{url('/')}}/plugin/learningtasks/changeStatus2/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status2" enctype="multipart/form-data">
-                {{ csrf_field() }}
+            @if ($learningtask_user->isTeacher())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status2">評価・添削（教員用）</span></h5>
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="status2_file" name="upload_file">
-                            <label class="custom-file-label" for="status2_file" data-browse="参照">添削したファイルや参考ファイル（任意）</label>
+                @if ($learningtask_user->canReportEvaluate($post->id))
+                    <form action="{{url('/')}}/plugin/learningtasks/changeStatus2/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status2" enctype="multipart/form-data">
+                        {{ csrf_field() }}
+                        <div class="form-group row mb-1">
+                            <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="status2_file" name="upload_file">
+                                    <label class="custom-file-label" for="status2_file" data-browse="参照">添削したファイルや参考ファイル（任意）</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-1">
+                            <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                            <div class="col-sm-9">
+                                <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-1">
+                            <label class="col-sm-3 control-label text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
+                            <div class="col-sm-9">
+                                <select class="form-control mb-1" name="grade">
+                                    <option>評価を選んでください。</option>
+                                    <option value="A">Ａ</option>
+                                    <option value="B">Ｂ</option>
+                                    <option value="C">Ｃ</option>
+                                    <option value="D">Ｄ</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 control-label text-right"></label>
+                            <div class="col-sm-9">
+                                <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
+                                    <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                @else
+                    <div class="card mb-3">
+                        <div class="card-body p-3">
+                            評価を登録できるレポートがありません。
                         </div>
                     </div>
-                </div>
+                @endif
+            @endif
 
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">コメント</label>
-                    <div class="col-sm-9">
-                        <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
-                    </div>
-                </div>
-
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
-                    <div class="col-sm-9">
-                        <select class="form-control mb-1" name="grade">
-                            <option>評価を選んでください。</option>
-                            <option value="A">Ａ</option>
-                            <option value="B">Ｂ</option>
-                            <option value="C">Ｃ</option>
-                            <option value="D">Ｄ</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label class="col-sm-3 control-label text-right"></label>
-                    <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
-                            <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-            <form action="{{url('/')}}/plugin/learningtasks/changeStatus3/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status3" enctype="multipart/form-data">
-                {{ csrf_field() }}
+            @if ($learningtask_user->isTeacher())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status3">受講生へのコメント（教員用）</span></h5>
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="status9_file" name="upload_file">
-                            <label class="custom-file-label" for="status9_file" data-browse="参照">参考ファイル（任意）</label>
+                @if ($learningtask_user->canReportComment($post->id))
+                    <form action="{{url('/')}}/plugin/learningtasks/changeStatus3/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status3" enctype="multipart/form-data">
+                        {{ csrf_field() }}
+                        <div class="form-group row mb-1">
+                            <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="status9_file" name="upload_file">
+                                    <label class="custom-file-label" for="status9_file" data-browse="参照">参考ファイル（任意）</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-1">
+                            <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                            <div class="col-sm-9">
+                                <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 control-label text-right"></label>
+                            <div class="col-sm-9">
+                                <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
+                                    <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                @else
+                    <div class="card mb-3">
+                        <div class="card-body p-3">
+                            コメントできるレポートがありません。
                         </div>
                     </div>
-                </div>
-
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">コメント</label>
-                    <div class="col-sm-9">
-                        <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label class="col-sm-3 control-label text-right"></label>
-                    <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
-                            <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
+                @endif
+            @endif
         </div>
     </div>
     @endif
 
     {{-- 試験 --}}
-    @if ($learningtask->useExamination())
+    @if ($learningtask->useExamination() && $learningtask_user->canExaminationView($post->id))
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">試験</span></h5>
     <div class="card">
         <div class="card-body">
@@ -289,7 +328,7 @@
             @endif
 
             {{-- 試験中 --}}
-            @if ($learningtask_user->isNowExamination($post->id))
+            @if ($learningtask_user->canViewExaminationFile($post->id))
                 <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
 
                 {{-- 試験用ファイル --}}
@@ -313,151 +352,167 @@
             @endif
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
-            <ol class="mb-3">
 
-                @forelse($learningtask_user->getExaminationStatuses($post->id) as $examination_status)
-                <li>{{$examination_status->getStstusName()}}
-                <table class="table table-bordered table-sm report_table">
-                <tbody>
-                    <tr>
-                        <th>{{$examination_status->getStstusPostTimeName()}}</th>
-                        <td>{{$examination_status->created_at}}</td>
-                    </tr>
-                    @if ($examination_status->hasFile())
-                    <tr>
-                        <th>{{$examination_status->getUploadFileName()}}</th>
-                        @if (empty($examination_status->upload_id))
-                        <td>なし</td>
-                        @else
-                        <td><a href="{{url('/')}}/file/{{$examination_status->upload_id}}" target="_blank">{{$examination_status->upload->client_original_name}}</a></td>
-                        @endif
-                    </tr>
-                    @endif
-                    @if ($examination_status->hasExamination())
-                    <tr>
-                        <th>試験日時</th>
-                        <td>{{$learningtask_user->getViewDate($examination_status)}}</td>
-                    </tr>
-                    @endif
-                    @if ($examination_status->hasGrade())
-                    <tr>
-                        <th>評価</th>
-                        <td><span class="text-danger font-weight-bold">{{$examination_status->grade}}</span></td>
-                    </tr>
-                    @endif
-                    @if ($examination_status->hasComment())
-                    <tr>
-                        <th>コメント</th>
-                        <td>{!!nl2br(e($examination_status->comment))!!}</td>
-                    </tr>
-                    @endif
-                </tbody>
-                </table>
-                @empty
-                    <div class="card">
-                        <div class="card-body p-3">
-                            まだ履歴がありません。
-                        </div>
+            @if ($learningtask_user->hasExaminationStatuses($post->id))
+                <ol class="mb-3">
+                    @foreach($learningtask_user->getExaminationStatuses($post->id) as $examination_status)
+                        <li>{{$examination_status->getStstusName()}}
+                        <table class="table table-bordered table-sm report_table">
+                        <tbody>
+                            <tr>
+                                <th>{{$examination_status->getStstusPostTimeName()}}</th>
+                                <td>{{$examination_status->created_at}}</td>
+                            </tr>
+                            @if ($examination_status->hasFile())
+                            <tr>
+                                <th>{{$examination_status->getUploadFileName()}}</th>
+                                @if (empty($examination_status->upload_id))
+                                <td>なし</td>
+                                @else
+                                <td><a href="{{url('/')}}/file/{{$examination_status->upload_id}}" target="_blank">{{$examination_status->upload->client_original_name}}</a></td>
+                                @endif
+                            </tr>
+                            @endif
+                            @if ($examination_status->hasExamination())
+                            <tr>
+                                <th>試験日時</th>
+                                <td>{{$learningtask_user->getViewDate($examination_status)}}</td>
+                            </tr>
+                            @endif
+                            @if ($examination_status->hasGrade())
+                            <tr>
+                                <th>評価</th>
+                                <td><span class="text-danger font-weight-bold">{{$examination_status->grade}}</span></td>
+                            </tr>
+                            @endif
+                            @if ($examination_status->hasComment())
+                            <tr>
+                                <th>コメント</th>
+                                <td>{!!nl2br(e($examination_status->comment))!!}</td>
+                            </tr>
+                            @endif
+                        </tbody>
+                        </table>
+                    @endforeach
+                </ol>
+            @else
+                <div class="card mb-3">
+                    <div class="card-body p-3">
+                        まだ履歴がありません。
                     </div>
-                @endforelse
-            </ol>
+                </div>
+            @endif
 
-            <form action="{{url('/')}}/plugin/learningtasks/changeStatus5/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status5" enctype="multipart/form-data">
-                {{ csrf_field() }}
+            @if ($learningtask_user->isStudent())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status5">解答</span></h5>
-                <div class="form-group row mb-1">
+                @if ($learningtask_user->canExaminationUpload($post->id))
+                    <form action="{{url('/')}}/plugin/learningtasks/changeStatus5/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status5" enctype="multipart/form-data">
+                        {{ csrf_field() }}
+                        <div class="form-group row mb-1">
 
-                    <label class="col-sm-3 control-label text-sm-right">解答ファイル <label class="badge badge-danger">必須</label></label>
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="status5_file" name="upload_file">
-                            <label class="custom-file-label" for="status5_file" data-browse="参照">試験の回答ファイルを選んでください。</label>
+                            <label class="col-sm-3 control-label text-sm-right">解答ファイル <label class="badge badge-danger">必須</label></label>
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="status5_file" name="upload_file">
+                                    <label class="custom-file-label" for="status5_file" data-browse="参照">試験の回答ファイルを選んでください。</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-1">
+                            <label class="col-sm-3 control-label text-right"></label>
+                            <div class="col-sm-9">
+                                <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('試験の解答を提出します。\nよろしいですか？');">
+                                    <i class="fas fa-check"></i> <span class="hidden-xs">試験の解答提出</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                @else
+                    <div class="card mb-3">
+                        <div class="card-body p-3">
+                            現在、試験結果のアップロードはできません。
                         </div>
                     </div>
-                </div>
+                @endif
+            @endif
 
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-right"></label>
-                    <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('試験の解答を提出します。\nよろしいですか？');">
-                            <i class="fas fa-check"></i> <span class="hidden-xs">試験の解答提出</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-            <form action="{{url('/')}}/plugin/learningtasks/changeStatus6/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status6" enctype="multipart/form-data">
-                {{ csrf_field() }}
-                <h5 class="mb-1"><span class="badge badge-secondary" for="status6">評価・添削（教員用）</span></h5>
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
-                            <label class="custom-file-label" for="status6_file" data-browse="参照">添削したファイルや参考ファイル（任意）</label>
+            @if ($learningtask_user->isTeacher())
+                <form action="{{url('/')}}/plugin/learningtasks/changeStatus6/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status6" enctype="multipart/form-data">
+                    {{ csrf_field() }}
+                    <h5 class="mb-1"><span class="badge badge-secondary" for="status6">評価・添削（教員用）</span></h5>
+                    <div class="form-group row mb-1">
+                        <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
+                        <div class="col-sm-9">
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
+                                <label class="custom-file-label" for="status6_file" data-browse="参照">添削したファイルや参考ファイル（任意）</label>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">コメント</label>
-                    <div class="col-sm-9">
-                        <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
-                    </div>
-                </div>
-
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
-                    <div class="col-sm-9">
-                        <select class="form-control mb-1" name="grade">
-                            <option>評価を選んでください。</option>
-                            <option value="A">Ａ</option>
-                            <option value="B">Ｂ</option>
-                            <option value="C">Ｃ</option>
-                            <option value="D">Ｄ</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label class="col-sm-3 control-label text-right"></label>
-                    <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
-                            <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-            <form action="{{url('/')}}/plugin/learningtasks/changeStatus7/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status7" enctype="multipart/form-data">
-                {{ csrf_field() }}
-                <h5 class="mb-1"><span class="badge badge-secondary" for="status7">受講生へのコメント（教員用）</span></h5>
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
-                            <label class="custom-file-label" for="status6_file" data-browse="参照">参考ファイル（任意）</label>
+                    <div class="form-group row mb-1">
+                        <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                        <div class="col-sm-9">
+                            <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group row mb-1">
-                    <label class="col-sm-3 control-label text-sm-right">コメント</label>
-                    <div class="col-sm-9">
-                        <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                    <div class="form-group row mb-1">
+                        <label class="col-sm-3 control-label text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
+                        <div class="col-sm-9">
+                            <select class="form-control mb-1" name="grade">
+                                <option>評価を選んでください。</option>
+                                <option value="A">Ａ</option>
+                                <option value="B">Ｂ</option>
+                                <option value="C">Ｃ</option>
+                                <option value="D">Ｄ</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group row">
-                    <label class="col-sm-3 control-label text-right"></label>
-                    <div class="col-sm-9">
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
-                            <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
-                        </button>
+                    <div class="form-group row">
+                        <label class="col-sm-3 control-label text-right"></label>
+                        <div class="col-sm-9">
+                            <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
+                                <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            @endif
+
+            @if ($learningtask_user->isTeacher())
+                <form action="{{url('/')}}/plugin/learningtasks/changeStatus7/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status7" enctype="multipart/form-data">
+                    {{ csrf_field() }}
+                    <h5 class="mb-1"><span class="badge badge-secondary" for="status7">受講生へのコメント（教員用）</span></h5>
+                    <div class="form-group row mb-1">
+                        <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
+                        <div class="col-sm-9">
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
+                                <label class="custom-file-label" for="status6_file" data-browse="参照">参考ファイル（任意）</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row mb-1">
+                        <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                        <div class="col-sm-9">
+                            <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-sm-3 control-label text-right"></label>
+                        <div class="col-sm-9">
+                            <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
+                                <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            @endif
         </div>
     </div>
     @endif

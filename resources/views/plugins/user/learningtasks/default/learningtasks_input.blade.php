@@ -7,24 +7,8 @@
  --}}
 @extends('core.cms_frame_base')
 
-<div class="frame-setting-menu">
-    <nav class="navbar navbar-expand-md navbar-light bg-light">
-        <span class="d-md-none">編集メニュー</span>
-        <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg" aria-expanded="false">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="navbar-collapse collapse" id="collapsingNavbarLg" style="">
-            <ul class="navbar-nav">
-                <li role="presentation" class="nav-item">
-                    <span class="nav-link"><span class="active">基本項目</span></span>
-                </li>
-                <li role="presentation" class="nav-item">
-                    <a href="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">試験関係</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
+{{-- 編集画面側のフレームメニュー --}}
+@include('plugins.user.learningtasks.learningtasks_setting_edit_tab')
 
 @section("plugin_contents_$frame->id")
 
@@ -45,9 +29,11 @@
 
 {{-- 投稿用フォーム --}}
 @if (empty($learningtasks_posts->id))
-    <form action="{{url('/')}}/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
+    <form action="{{url('/')}}/redirect/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
+        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
+    <form action="{{url('/')}}/redirect/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
+        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">

@@ -51,7 +51,7 @@
     }
 </script>
 
-<form action="{{url('/')}}/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group table-responsive">

@@ -2,29 +2,47 @@
 
 namespace App\Plugins\User\Learningtasks;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use App\Enums\DayOfWeek;
+use App\Models\Common\PageRole;
+use App\Models\Common\GroupUser;
+use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
+use App\User;
 
 /**
  * 課題管理のユーザ情報保持クラス
  *
  * メソッド一覧(public のもの)
+ * ・教員か                                   isTeacher()
+ * ・学生か                                   isStudent()
+ * ・評価中の受講生                           getStudent()
+ * ・レポートの表示を行えるか？               canReportView($post_id)
+ * ・試験の表示を行えるか？                   canExaminationView($post_id)
+ * ・レポートの履歴有無                       hasReportStatuses($post_id)
  * ・レポートの履歴取得                       getReportStatuses($post_id)
  * ・レポートの状況取得                       getReportStatus($post_id)
+ * ・レポートの提出を行えるか？               canReportUpload($post_id)
+ * ・レポートの評価を行えるか？               canReportEvaluate($post_id)
+ * ・レポートにコメントを行えるか？           canReportComment($post_id)
+ * ・試験の履歴有無                           hasExaminationStatuses($post_id)
  * ・試験の履歴取得                           getExaminationStatuses($post_id)
- * ・試験の状況取得                           getExaminationStatuse($post_id)
+ * ・試験の状況取得                           getExaminationStatus($post_id)
+ * ・試験問題を表示して良いか？               canViewExaminationFile($post_id)
+ * ・試験の提出を行えるか？                   canExaminationUpload($post_id)
  * ・試験の申込を行えるか？判定のみ           canExamination($post_id)
  * ・試験の申込を行えるか？理由のみ           reasonExamination($post_id)
  * ・試験日の画面表記を取得                   getViewDate($obj)
- * ・試験時間内が判定                         isNowExamination($post_id)
+ * ・試験時間内か判定                         isNowExamination($post_id)
  * ・申し込み中の試験があり、時間前であること isApplyingExamination($post_id)
  * ・申し込み中の試験（日本語表記）           getApplyingExaminationDate($post_id)
  * ・申し込み中の試験                         getApplyingExamination($post_id)
  * ・開始待ちの試験                           getBeforeExamination($post_id)
  * ・試験に合格済みか                         isPassExamination($post_id)
+ * ・教員用の受講生一覧取得                   getStudents()
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -34,33 +52,55 @@ use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 class LearningtasksUser
 {
     /**
-     * ユーザ情報
+     * ログインしているユーザ情報
      */
-    public $user = null;
+    private $user = null;
+
+    /**
+     * 表示する情報のユーザ（学生の場合は自分、教員の場合は対象学生が入る（未選択時はnull））
+     */
+    private $student_id = null;
 
     /**
      * レポート履歴
      */
-    public $report_statuses = array();
+    private $report_statuses = null;
+
+    /**
+     * 教員用受講者情報
+     */
+    private $students = null;
 
     /**
      * 試験履歴
      */
-    public $examination_statuses = array();
+    private $examination_statuses = null;
 
     /**
      * コンストラクタ
      */
-    public function __construct()
+    public function __construct($request, $page_id, $post = null)
     {
-        // ユーザ
+        // 変数初期化
+        $this->report_statuses = new Collection();
+        $this->students = new Collection();
+        $this->examination_statuses = new Collection();
+
+        // ログインしているユーザ
         $this->user = Auth::user();
 
+        // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
+        if ($this->isStudent()) {
+            $this->student_id = $this->user->id;
+        } elseif ($this->isTeacher() && session('student_id')) {
+            $this->student_id = session('student_id');
+        }
+
         // ユーザーstatusテーブル
-        if (!empty($this->user)) {
+        if (!empty($this->student_id)) {
             // レポートの履歴
             $this->report_statuses = LearningtasksUsersStatuses::where(
-                'user_id', '=', $this->user->id
+                'user_id', '=', $this->student_id
             )->whereIn('task_status', [1, 2, 3])
              ->orderBy('post_id', 'asc')
              ->orderBy('id', 'asc')
@@ -72,12 +112,134 @@ class LearningtasksUser
                 'learningtasks_examinations.start_at',
                 'learningtasks_examinations.end_at'
             )->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
-             ->where('learningtasks_users_statuses.user_id', '=', $this->user->id)
+             ->where('learningtasks_users_statuses.user_id', '=', $this->student_id)
              ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
              ->orderBy('learningtasks_users_statuses.post_id', 'asc')
              ->orderBy('learningtasks_users_statuses.id', 'asc')
              ->get();
         }
+
+        // 受講生一覧の取得
+        if ($this->isTeacher() && !empty($post)) {
+            // ユーザの参加方式によって、対象を取得
+            if ($post->join_flag == 2) {
+                // 配置ページのメンバーシップユーザ全員
+                // ページから参加グループ取得
+                $group_ids = PageRole::select('group_id')
+                                     ->where('page_id', $page_id)
+                                     ->groupBy('group_id')
+                                     ->orderBy('group_id')
+                                     ->get();
+                $group_users = GroupUser::select('user_id')
+                                        ->whereIn('group_id', $group_ids->pluck('group_id'))
+                                        ->groupBy('user_id')
+                                        ->orderBy('user_id')
+                                        ->get();
+                $this->students = User::whereIn('id', $group_users->pluck('user_id'))
+                                      ->orderBy('id')
+                                      ->get();
+
+            } elseif ($post->join_flag == 3) {
+                // 配置ページのメンバーシップユーザから選ぶ
+                $this->students = LearningtasksUsers::select(
+                    'users.*'
+                )->join('users', 'users.id', '=', 'learningtasks_users.user_id')
+                 ->where('learningtasks_users.post_id', $post->id)
+                 ->orderBy('users.id', 'asc')
+                 ->get();
+            }
+        }
+    }
+
+    /**
+     *  評価中の受講生
+     */
+    public function getStudent($default = "")
+    {
+        if (empty($this->student_id)) {
+            return $default;
+        }
+        $student = User::find($this->student_id);
+        if (empty($student)) {
+            return $default;
+        }
+        return $student->name;
+    }
+
+    /**
+     *  教員か
+     */
+    public function isTeacher()
+    {
+        if (empty($this->user) || empty($this->user->user_roles)) {
+            return false;
+        }
+        $user_roles = $this->user->user_roles;
+        if (array_key_exists('original_role', $user_roles) && array_key_exists('teacher', $user_roles['original_role']) && $user_roles['original_role']['teacher'] == 1) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  学生か
+     */
+    public function isStudent()
+    {
+        if (empty($this->user) || empty($this->user->user_roles)) {
+            return false;
+        }
+        $user_roles = $this->user->user_roles;
+        if (array_key_exists('original_role', $user_roles) && array_key_exists('student', $user_roles['original_role']) && $user_roles['original_role']['student'] == 1) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  レポートの履歴有無
+     */
+    public function hasReportStatuses($post_id)
+    {
+        if (empty($post_id)) {
+            return $this->report_statuses;
+        }
+        $report_statuses = $this->getReportStatuses($post_id);
+        if (empty($report_statuses)) {
+            return false;
+        }
+        if ($report_statuses->count() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     *  レポートの表示を行えるか？
+     */
+    public function canReportView($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        if ($this->isTeacher() && empty($this->student_id)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     *  試験の表示を行えるか？
+     */
+    public function canExaminationView($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        if ($this->isTeacher() && empty($this->student_id)) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -97,7 +259,10 @@ class LearningtasksUser
     public function getReportStatus($post_id)
     {
         if (empty($post_id)) {
-            return $this->report_statuses;
+            return "";
+        }
+        if (empty($this->report_statuses)) {
+            return "";
         }
         $report_statuses = $this->report_statuses->where('post_id', $post_id);
         $report_status = $report_statuses->whereIn('task_status', [1, 2])->last();
@@ -111,12 +276,125 @@ class LearningtasksUser
     }
 
     /**
+     * レポートの提出を行えるか？
+     */
+    public function canReportUpload($post_id)
+    {
+        if (!$this->isStudent()) {
+            return false;
+        }
+
+        list($can_ret, $not_message) = $this->canReportUploadImpl($post_id);
+        return $can_ret;
+    }
+
+    /**
+     *  レポートの状況の文言取得
+     */
+    public function getReportUploadMessage($post_id)
+    {
+        list($can_ret, $message) = $this->canReportUploadImpl($post_id);
+        return $message;
+    }
+
+    /**
+     *  レポートの状況取得
+     */
+    private function canReportUploadImpl($post_id)
+    {
+        if (empty($post_id)) {
+            return array(false, 'データがありません。');
+        }
+
+        // 初めはOK。提出済みならNO、再提出があればOK。合格ならその時点でNO
+        $can_report_upload = array(true, '未提出');
+
+        $report_statuses = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2]);
+        foreach ($report_statuses as $report_status) {
+            // レポートで合格のため、提出不可
+            if ($report_status->task_status == 2 && ($report_status->grade == 'A' || $report_status->grade == 'B' || $report_status->grade == 'C')) {
+                return array(false, 'すでに合格しているため、提出不要です。');
+            }
+            // 提出済みがくればfalse、D 評価がくれば再提出でtrue
+            if ($report_status->task_status == 1) {
+                $can_report_upload = array(false, '提出済みのため、現在は提出できません。');
+            } elseif ($report_status->task_status == 2 && $report_status->grade == 'D') {
+                $can_report_upload = array(true, '再提出が必要');
+            }
+        }
+        return $can_report_upload;
+    }
+
+    /**
+     *  レポートの評価を行えるか？
+     */
+    public function canReportEvaluate($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        // レポートの最新ステータスが提出済みか評価済み
+        $last_report_status = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2])->last();
+
+        // 提出済み or 評価済みの最後を取得して、取得したものが提出済みの場合、評価がまだということになる。
+        if (!empty($last_report_status) && $last_report_status->task_status == 1) {
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     *  レポートにコメントを行えるか？
+     */
+    public function canReportComment($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        // レポートの最新ステータスが提出済みか評価済み
+        $last_report_status = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2])->last();
+
+        // 提出済み or 評価済みの最後を取得して、取得したものが提出済みの場合、評価がまだということになる。
+        if (!empty($last_report_status) && $last_report_status->task_status == 1) {
+            return true;
+        }
+
+        // 最後が評価済みで評価がD の場合、まだ完了していないので、コメント可能
+        if (!empty($last_report_status) && $last_report_status->task_status == 2 && $last_report_status->grade == 'D') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  試験の履歴有無
+     */
+    public function hasExaminationStatuses($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        $examination_statuses = $this->getExaminationStatuses($post_id);
+        if (empty($examination_statuses)) {
+            return false;
+        }
+        if ($examination_statuses->count() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      *  試験の履歴取得
      */
     public function getExaminationStatuses($post_id)
     {
         if (empty($post_id)) {
             return $this->examination_statuses;
+        }
+        if (empty($this->examination_statuses)) {
+            return new Collection();
         }
         return $this->examination_statuses->where('post_id', $post_id);
     }
@@ -127,7 +405,10 @@ class LearningtasksUser
     public function getExaminationStatus($post_id)
     {
         if (empty($post_id)) {
-            return $this->examination_statuses;
+            return "";
+        }
+        if (empty($this->examination_statuses)) {
+            return "";
         }
         $examination_statuses = $this->examination_statuses->where('post_id', $post_id);
         $examination_status = $examination_statuses->whereIn('task_status', [5, 6])->last();
@@ -167,6 +448,38 @@ class LearningtasksUser
     }
 
     /**
+     *  試験問題を表示して良いか？
+     */
+    public function canViewExaminationFile($post_id)
+    {
+        // 教員はいつ見ても良い。
+        if ($this->isTeacher()) {
+            return true;
+        }
+        // 学生は試験時間内のみ見ても良い。
+        if ($this->isStudent() && $this->isNowExamination($post_id)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  試験の提出を行えるか？
+     */
+    public function canExaminationUpload($post_id)
+    {
+        // 学生のみ提出可能。
+        if (!$this->isStudent()) {
+            return false;
+        }
+        // 学生は試験時間内のみアップロード可能。
+        if ($this->isStudent() && $this->isNowExamination($post_id)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      *  試験の申込を行えるか？
      */
     private function canExaminationImpl($post_id)
@@ -196,7 +509,12 @@ class LearningtasksUser
         }
 
         // すでに試験に合格している
+        $examination_statuses = $this->examination_statuses->where('post_id', $post_id);
 
+        $ok_examination = $examination_statuses->whereInStrict('grade', ['A', 'B', 'C'])->first();
+        if (empty($ok_examination)) {
+            return array(false, '試験に合格済みです。');
+        }
 
         // 試験の申込OK
         return array(true, '');
@@ -238,7 +556,7 @@ class LearningtasksUser
     }
 
     /**
-     *  試験時間内が判定
+     *  試験時間内か判定
      */
     public function isNowExamination($post_id)
     {
@@ -363,5 +681,21 @@ class LearningtasksUser
             }
         }
         return false;
+    }
+
+    /**
+     *  教員用の受講生一覧取得
+     */
+    public function getStudents()
+    {
+        return $this->students;
+    }
+
+    /**
+     *  教員用の受講生ID取得
+     */
+    public function getStudentId()
+    {
+        return $this->student_id;
     }
 }
