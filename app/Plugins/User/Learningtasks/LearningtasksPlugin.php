@@ -78,7 +78,7 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'editExaminations', 'editUsers'];
+        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'editExaminations', 'editUsers', 'listGrade'];
         $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveUsers', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
         return $functions;
     }
@@ -763,8 +763,8 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題のIDが変わったら、受講生を選びなおす。
         session(['learningtask_post_id' => $post_id]);
 
-        // 詳細画面へ
-        return $this->show($request, $page_id, $frame_id, $post_id);
+        // リダイレクトで詳細画面へ
+        return;
     }
 
     /**
@@ -916,6 +916,41 @@ class LearningtasksPlugin extends UserPluginBase
             //'learningtasks_posts_tags'  => $learningtasks_posts_tags,
             'post_files'                => (array_key_exists($learningtasks_post->id, $post_files)) ? $post_files[$learningtasks_post->id] : null,
             'examinations'              => $examinations,
+            ]
+        );
+    }
+
+    /**
+     * 成績表示（管理者用）
+     */
+    public function listGrade($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題管理データ
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 課題
+        $learningtasks_post = $this->getPost($post_id);
+
+        // 成績
+        $users_statuses = LearningtasksUsersStatuses::select(
+            'learningtasks_users_statuses.*',
+            'users.name'
+        )->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+         ->where('learningtasks_users_statuses.post_id', $post_id)
+         ->orderBy('learningtasks_users_statuses.id', 'asc')
+         ->get();
+
+        // 成績ステータス毎に、最終のものを抜き出す。
+        $statuses = array();
+        foreach ($users_statuses as $users_status) {
+            $statuses[$users_status->user_id][$users_status->task_status] = $users_status;
+        }
+        // 画面を呼び出す。
+        return $this->view(
+            'learningtasks_list_grade', [
+            'learningtask'        => $learningtask,
+            'learningtasks_posts' => $learningtasks_post,
+            'statuses'            => $statuses,
             ]
         );
     }
@@ -1676,11 +1711,18 @@ class LearningtasksPlugin extends UserPluginBase
         // 科目を取得
         //$learningtask_post = $this->getPost($post_id);
 
+        // 進捗ステータスのユーザID（受講生のID）
+        // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)の場合は、教員によるログイン操作のため、セッションから
+        $student_user_id = $student_user_id = $user->id;
+        if ($task_status == 2 || $task_status == 3 || $task_status == 6 || $task_status == 7) {
+            $student_user_id = session('student_id');
+        }
+
         // ユーザーの進捗ステータス保存
         LearningtasksUsersStatuses::create(
             [
              'post_id'        => $post_id,
-             'user_id'        => $user->id,
+             'user_id'        => $student_user_id,
              'task_status'    => $task_status,
              'comment'        => $request->filled('comment') ? $request->comment : null,
              'upload_id'      => empty($upload) ? null : $upload->id,
@@ -1689,7 +1731,8 @@ class LearningtasksPlugin extends UserPluginBase
             ]
         );
 
-        return $this->show($request, $page_id, $frame_id, $post_id);
+        // リダイレクトで詳細画面へ
+        return;
     }
 
     /**

@@ -13,33 +13,42 @@
         </button>
         <div class="navbar-collapse collapse" id="collapsingNavbarLg" style="">
             <ul class="navbar-nav">
-@if ($action == 'edit')
-                <li role="presentation" class="nav-item">
-                    <span class="nav-link"><span class="active">基本項目</span></span>
-                </li>
-@else
-                <li role="presentation" class="nav-item">
-                    <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">基本項目</a>
-                </li>
-@endif
-@if ($action == 'editExaminations')
-                <li role="presentation" class="nav-item">
-                    <span class="nav-link"><span class="active">試験関係</span></span>
-                </li>
-@else
-                <li role="presentation" class="nav-item">
-                    <a href="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">試験関係</a>
-                </li>
-@endif
-@if ($action == 'editUsers')
-                <li role="presentation" class="nav-item">
-                    <span class="nav-link"><span class="active">ユーザ関係</span></span>
-                </li>
-@else
-                <li role="presentation" class="nav-item">
-                    <a href="{{url('/')}}/plugin/learningtasks/editUsers/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">ユーザ関係</a>
-                </li>
-@endif
+                @if ($action == 'edit')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">課題設定</span></span>
+                    </li>
+                @else
+                    <li role="presentation" class="nav-item">
+                        <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">課題設定</a>
+                    </li>
+                @endif
+                @if ($action == 'editUsers')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">ユーザ設定</span></span>
+                    </li>
+                @else
+                    <li role="presentation" class="nav-item">
+                        <a href="{{url('/')}}/plugin/learningtasks/editUsers/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">ユーザ設定</a>
+                    </li>
+                @endif
+                @if ($action == 'editExaminations')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">試験設定</span></span>
+                    </li>
+                @else
+                    <li role="presentation" class="nav-item">
+                        <a href="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">試験設定</a>
+                    </li>
+                @endif
+                @if ($action == 'listGrade')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">成績出力</span></span>
+                    </li>
+                @else
+                    <li role="presentation" class="nav-item">
+                        <a href="{{url('/')}}/plugin/learningtasks/listGrade/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">成績出力</a>
+                    </li>
+                @endif
             </ul>
         </div>
     </nav>

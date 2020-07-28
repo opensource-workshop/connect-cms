@@ -35,6 +35,8 @@ use App\User;
  * ・試験の提出を行えるか？                   canExaminationUpload($post_id)
  * ・試験の申込を行えるか？判定のみ           canExamination($post_id)
  * ・試験の申込を行えるか？理由のみ           reasonExamination($post_id)
+ * ・試験の評価を行えるか？                   canExaminationEvaluate($post_id)
+ * ・試験にコメントを行えるか？               canExaminationComment($post_id)
  * ・試験日の画面表記を取得                   getViewDate($obj)
  * ・試験時間内か判定                         isNowExamination($post_id)
  * ・申し込み中の試験があり、時間前であること isApplyingExamination($post_id)
@@ -472,6 +474,21 @@ class LearningtasksUser
         if (!$this->isStudent()) {
             return false;
         }
+
+        // すでに試験の解答を提出している状態ならアップロード不可
+        $examination_statuses = $this->examination_statuses->where('post_id', $post_id);
+        $examination_status = $examination_statuses->whereIn('task_status', [5, 6])->last();
+        if (empty($examination_status) || $examination_status->task_status == 5) {
+            return false;
+        }
+
+        // すでに合格済みはアップロード不可
+        if ($examination_status->task_status == 6) {
+            if ($examination_status->grade == 'A' || $examination_status->grade == 'B' || $examination_status->grade == 'C') {
+                return false;
+            }
+        }
+
         // 学生は試験時間内のみアップロード可能。
         if ($this->isStudent() && $this->isNowExamination($post_id)) {
             return true;
@@ -512,12 +529,53 @@ class LearningtasksUser
         $examination_statuses = $this->examination_statuses->where('post_id', $post_id);
 
         $ok_examination = $examination_statuses->whereInStrict('grade', ['A', 'B', 'C'])->first();
-        if (empty($ok_examination)) {
+        if (!empty($ok_examination) && $ok_examination->count() > 0) {
             return array(false, '試験に合格済みです。');
         }
 
         // 試験の申込OK
         return array(true, '');
+    }
+
+    /**
+     *  試験の評価を行えるか？
+     */
+    public function canExaminationEvaluate($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        // 試験の最新ステータスが提出済みか評価済み
+        $last_examination_status = $this->examination_statuses->where('post_id', $post_id)->whereIn('task_status', [5, 6])->last();
+
+        // 提出済み or 評価済みの最後を取得して、取得したものが提出済みの場合、評価がまだということになる。
+        if (!empty($last_examination_status) && $last_examination_status->task_status == 5) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  試験にコメントを行えるか？
+     */
+    public function canExaminationComment($post_id)
+    {
+        if (empty($post_id)) {
+            return false;
+        }
+        // 試験の最新ステータスが提出済みか評価済み
+        $last_examination_status = $this->examination_statuses->where('post_id', $post_id)->whereIn('task_status', [5, 6])->last();
+
+        // 提出済み or 評価済みの最後を取得して、取得したものが提出済みの場合、評価がまだということになる。
+        if (!empty($last_examination_status) && $last_examination_status->task_status == 5) {
+            return true;
+        }
+
+        // 最後が評価済みで評価がD の場合、まだ完了していないので、コメント可能
+        if (!empty($last_examination_status) && $last_examination_status->task_status == 6 && $last_examination_status->grade == 'D') {
+            return true;
+        }
+        return false;
     }
 
     /**

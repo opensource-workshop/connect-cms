@@ -88,11 +88,12 @@ class LearningtasksUsersStatuses extends Model
     /**
      * ステータス文言の取得
      */
-    public function getStstusName()
+    public function getStstusName($user_id)
     {
         // "再"提出や"再"評価の判断。
         // 処理するデータ以前に、同じステータスのものがあれば、"再"と判断できる。
         $status_count = LearningtasksUsersStatuses::where('post_id', $this->post_id)
+                                                  ->where('user_id', $user_id)
                                                   ->where('task_status', $this->task_status)
                                                   ->where('id', '<', $this->id)
                                                   ->orderBy('id', 'asc')
