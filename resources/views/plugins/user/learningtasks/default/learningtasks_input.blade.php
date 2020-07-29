@@ -41,7 +41,8 @@
     <div class="form-group row">
         <label class="col-sm-2 control-label">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-sm-10">
-            <textarea name="post_title">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea>
+            <input type="text" name="post_title" value="{{old('post_title', $learningtasks_posts->post_title)}}" class="form-control">
+            {{-- <textarea name="post_title">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea> --}}
             @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
         </div>
     </div>
