@@ -45,6 +45,8 @@ use App\User;
  * ・開始待ちの試験                           getBeforeExamination($post_id)
  * ・試験に合格済みか                         isPassExamination($post_id)
  * ・教員用の受講生一覧取得                   getStudents()
+ * ・レポートの開閉用の属性出力               getReportCollapseAriaControls()
+ * ・試験の開閉用の属性出力                   getExaminationCollapseAriaControls()
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -92,10 +94,10 @@ class LearningtasksUser
         $this->user = Auth::user();
 
         // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
-        if ($this->isStudent()) {
-            $this->student_id = $this->user->id;
-        } elseif ($this->isTeacher() && session('student_id')) {
+        if ($this->isTeacher() && session('student_id')) {
             $this->student_id = session('student_id');
+        } elseif ($this->isStudent()) {
+            $this->student_id = $this->user->id;
         }
 
         // ユーザーstatusテーブル
@@ -757,5 +759,35 @@ class LearningtasksUser
     public function getStudentId()
     {
         return $this->student_id;
+    }
+
+    /**
+     *  レポートの開閉用の属性出力
+     */
+    public function getReportCollapseAriaControls()
+    {
+        if (empty($this->report_statuses)) {
+            return "";
+        }
+        $ret_str_array = array();
+        for ($i = 0; $i < $this->report_statuses->count(); $i++) {
+            $ret_str_array[] = "multiCollapseReport" . $i;
+        }
+        return implode(' ', $ret_str_array);
+    }
+
+    /**
+     *  試験の開閉用の属性出力
+     */
+    public function getExaminationCollapseAriaControls()
+    {
+        if (empty($this->examination_statuses)) {
+            return "";
+        }
+        $ret_str_array = array();
+        for ($i = 0; $i < $this->examination_statuses->count(); $i++) {
+            $ret_str_array[] = "multiCollapseExamination" . $i;
+        }
+        return implode(' ', $ret_str_array);
     }
 }
