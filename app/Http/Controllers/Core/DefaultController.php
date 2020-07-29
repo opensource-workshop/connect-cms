@@ -483,7 +483,12 @@ class DefaultController extends ConnectController
         $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
-        $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
+        $plugin_ret = $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
+
+        // そのまま戻るが指定されている場合はreturn する。
+        if ($request->return_mode == 'asis') {
+            return $plugin_ret;
+        }
 
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";

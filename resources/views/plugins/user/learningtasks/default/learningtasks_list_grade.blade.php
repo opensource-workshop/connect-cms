@@ -12,47 +12,49 @@
 
 @section("plugin_contents_$frame->id")
 
+<div class="row">
+    <div class="col-12">{!!$learningtasks_posts->post_title!!}</div>
+</div>
+
 <table class="table table-bordered">
-<thead>
-    <tr>
-        <th>受講生</th>
-        <th>レポート提出最終日時</th>
-        <th>レポート評価</th>
-        <th>試験提出最終日時</th>
-        <th>試験評価</th>
-    </tr>
-</thead>
-<tbody>
-	@foreach ($statuses as $user)
-    <tr>
-        @empty($user[1])
-            <td>－</td>
+    @foreach ($statuses as $csv_line)
+        @if ($loop->index == 0)
+        <thead>
+            <tr>
+                @foreach ($csv_line as $csv_column)
+                <th>{{$csv_column}}</th>
+                @endforeach
+            </tr>
+        </thead>
         @else
-            <td>{{$user[1]->name}}</td>
-        @endempty
-        @empty($user[1])
-            <td>－</td>
-        @else
-            <td>{{$user[1]->created_at}}</td>
-        @endempty
-        @empty($user[2])
-            <td>－</td>
-        @else
-            <td>{{$user[2]->grade}}</td>
-        @endempty
-        @empty($user[5])
-            <td>－</td>
-        @else
-            <td>{{$user[5]->created_at}}</td>
-        @endempty
-        @empty($user[6])
-            <td>－</td>
-        @else
-            <td>{{$user[6]->grade}}</td>
-        @endempty
-    </tr>
-	@endforeach
-</tbody>
+            @if ($loop->index == 1)
+                <tbody>
+            @endif
+            <tr>
+                @foreach ($csv_line as $csv_column)
+                <td>{{$csv_column}}</td>
+                @endforeach
+            </tr>
+        @endif
+    @endforeach
+    </tbody>
 </table>
+
+<form action="{{url('/')}}/redirect/plugin/learningtasks/downloadGrade/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_users_post">
+    {{ csrf_field() }}
+    <input type="hidden" name="return_mode" value="asis">
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span> キャンセル</span></button>
+                    <input type="hidden" name="bucket_id" value="">
+                    <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('CSV出力します。\nよろしいですか？')"><i class="fas fa-check"></i> CSV出力</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 
 @endsection

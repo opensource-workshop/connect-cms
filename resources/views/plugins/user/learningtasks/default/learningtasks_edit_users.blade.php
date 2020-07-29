@@ -25,6 +25,11 @@
     <input type="hidden" name="redirect_path" value="/plugin/learningtasks/editUsers/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
 
     <div class="form-group row">
+        <label class="col-md-3 control-label">タイトル</label>
+        <div class="col-md-9">{!!$learningtasks_posts->post_title!!}</div>
+    </div>
+
+    <div class="form-group row">
         <label class="col-sm-3">参加方式</label>
         <div class="col-sm-9">
 {{-- 今後の選択肢として保留（ユーザ選択時のインターフェースの考慮）
@@ -90,7 +95,6 @@
             </div>
         </div>
     </div>
-
 
     <div class="form-group">
         <div class="row">

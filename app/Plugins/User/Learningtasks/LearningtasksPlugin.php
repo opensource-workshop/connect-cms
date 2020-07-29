@@ -5,6 +5,7 @@ namespace App\Plugins\User\Learningtasks;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -78,8 +79,8 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'editExaminations', 'editUsers', 'listGrade'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveUsers', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
+        $functions['get']  = ['listCategories', 'editBucketsRoles', 'editExaminations', 'editUsers', 'listGrade'];
+        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveUsers', 'switchUser', 'downloadGrade', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
         return $functions;
     }
 
@@ -90,7 +91,18 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
+        $role_ckeck_table["listCategories"]   = array('role_article');
+        $role_ckeck_table["editBucketsRoles"] = array('role_article');
         $role_ckeck_table["saveExaminations"] = array('role_article');
+        $role_ckeck_table["editUsers"]        = array('role_article');
+        $role_ckeck_table["listGrade"]        = array('role_article');
+        $role_ckeck_table["saveCategories"]   = array('role_article');
+        $role_ckeck_table["deleteCategories"] = array('role_article');
+        $role_ckeck_table["saveBucketsRoles"] = array('role_article');
+        $role_ckeck_table["saveExaminations"] = array('role_article');
+        $role_ckeck_table["saveUsers"]        = array('role_article');
+        $role_ckeck_table["switchUser"]       = array('role_article');
+        $role_ckeck_table["downloadGrade"]    = array('role_article');
         $role_ckeck_table["changeStatus1"]    = array('role_guest');
         $role_ckeck_table["changeStatus2"]    = array('role_article');
         $role_ckeck_table["changeStatus3"]    = array('role_article');
@@ -931,6 +943,54 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題
         $learningtasks_post = $this->getPost($post_id);
 
+        // 成績の配列取得
+        $statuses = $this->downloadGradeImpl($request, $page_id, $frame_id, $post_id);
+
+        // 画面を呼び出す。
+        return $this->view(
+            'learningtasks_list_grade', [
+            'learningtask'        => $learningtask,
+            'learningtasks_posts' => $learningtasks_post,
+            'statuses'            => $statuses,
+            ]
+        );
+    }
+
+    /**
+     * 成績ダウンロード（管理者用）
+     */
+    public function downloadGrade($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題管理データ
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 課題
+        $learningtasks_post = $this->getPost($post_id);
+
+        // 成績の配列取得
+        $statuses = $this->downloadGradeImpl($request, $page_id, $frame_id, $post_id);
+
+        // CSV で出力
+        $stream = fopen('php://temp', 'r+b');
+        foreach ($statuses as $user) {
+            fputcsv($stream, $user);
+        }
+        rewind($stream);
+        $csv = str_replace(PHP_EOL, "\r\n", stream_get_contents($stream));
+        $csv = mb_convert_encoding($csv, 'SJIS-win', 'UTF-8');
+        $clear_str = ["\r\n", "\r", "\n", "\t"];;
+        $headers = array(
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . str_replace($clear_str, '', strip_tags($learningtasks_post->post_title)) . '（成績）.csv"',
+        );
+        return Response::make($csv, 200, $headers);
+    }
+
+    /**
+     * 成績ダウンロード（管理者用）
+     */
+    public function downloadGradeImpl($request, $page_id, $frame_id, $post_id)
+    {
         // 成績
         $users_statuses = LearningtasksUsersStatuses::select(
             'learningtasks_users_statuses.*',
@@ -941,18 +1001,24 @@ class LearningtasksPlugin extends UserPluginBase
          ->get();
 
         // 成績ステータス毎に、最終のものを抜き出す。
-        $statuses = array();
+        $statuses_ojb = array();
         foreach ($users_statuses as $users_status) {
-            $statuses[$users_status->user_id][$users_status->task_status] = $users_status;
+            $statuses_ojb[$users_status->user_id][$users_status->task_status] = $users_status;
         }
-        // 画面を呼び出す。
-        return $this->view(
-            'learningtasks_list_grade', [
-            'learningtask'        => $learningtask,
-            'learningtasks_posts' => $learningtasks_post,
-            'statuses'            => $statuses,
-            ]
-        );
+
+        // 表（含むCSV）のフォーマットに詰めなおす
+        $statuses = array();
+        foreach ($statuses_ojb as $user_id => $status_ojbs) {
+            $statuses[$user_id][0] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->name       : '－';
+            $statuses[$user_id][1] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->created_at : '－';
+            $statuses[$user_id][2] = array_key_exists(2, $status_ojbs) ? $status_ojbs[2]->grade      : '－';
+            $statuses[$user_id][5] = array_key_exists(5, $status_ojbs) ? $status_ojbs[5]->created_at : '－';
+            $statuses[$user_id][6] = array_key_exists(6, $status_ojbs) ? $status_ojbs[6]->grade      : '－';
+        }
+        $csvHeader = ['受講者名', 'レポート提出最終日時', 'レポート評価', '試験提出最終日時	', '試験評価'];
+        array_unshift($statuses, $csvHeader); 
+
+        return $statuses;
     }
 
     /**
@@ -1964,9 +2030,6 @@ EOD;
                 }
             }
         }
-
-//return redirect('http://cms.localhost/plugin/learningtasks/editUsers/37/149/2');
-
         return $this->editUsers($request, $page_id, $frame_id, $post_id);
     }
 }
