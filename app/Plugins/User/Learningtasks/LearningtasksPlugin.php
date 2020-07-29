@@ -101,15 +101,15 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["saveBucketsRoles"] = array('role_article');
         $role_ckeck_table["saveExaminations"] = array('role_article');
         $role_ckeck_table["saveUsers"]        = array('role_article');
-        $role_ckeck_table["switchUser"]       = array('role_article');
         $role_ckeck_table["downloadGrade"]    = array('role_article');
+        $role_ckeck_table["switchUser"]       = array('role_guest');
         $role_ckeck_table["changeStatus1"]    = array('role_guest');
-        $role_ckeck_table["changeStatus2"]    = array('role_article');
-        $role_ckeck_table["changeStatus3"]    = array('role_article');
+        $role_ckeck_table["changeStatus2"]    = array('role_guest');
+        $role_ckeck_table["changeStatus3"]    = array('role_guest');
         $role_ckeck_table["changeStatus4"]    = array('role_guest');
         $role_ckeck_table["changeStatus5"]    = array('role_guest');
-        $role_ckeck_table["changeStatus6"]    = array('role_article');
-        $role_ckeck_table["changeStatus7"]    = array('role_article');
+        $role_ckeck_table["changeStatus6"]    = array('role_guest');
+        $role_ckeck_table["changeStatus7"]    = array('role_guest');
         return $role_ckeck_table;
     }
 

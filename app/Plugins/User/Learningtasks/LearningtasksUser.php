@@ -478,12 +478,14 @@ class LearningtasksUser
         // すでに試験の解答を提出している状態ならアップロード不可
         $examination_statuses = $this->examination_statuses->where('post_id', $post_id);
         $examination_status = $examination_statuses->whereIn('task_status', [5, 6])->last();
-        if (empty($examination_status) || $examination_status->task_status == 5) {
-            return false;
+        if (!empty($examination_status)) {
+            if ($examination_status->count() > 0 && $examination_status->task_status == 5) {
+                return false;
+            }
         }
 
         // すでに合格済みはアップロード不可
-        if ($examination_status->task_status == 6) {
+        if (!empty($examination_status) && $examination_status->task_status == 6) {
             if ($examination_status->grade == 'A' || $examination_status->grade == 'B' || $examination_status->grade == 'C') {
                 return false;
             }
