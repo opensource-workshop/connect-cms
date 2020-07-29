@@ -978,7 +978,7 @@ class LearningtasksPlugin extends UserPluginBase
         rewind($stream);
         $csv = str_replace(PHP_EOL, "\r\n", stream_get_contents($stream));
         $csv = mb_convert_encoding($csv, 'SJIS-win', 'UTF-8');
-        $clear_str = ["\r\n", "\r", "\n", "\t"];;
+        $clear_str = ["\r\n", "\r", "\n", "\t"];
         $headers = array(
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . str_replace($clear_str, '', strip_tags($learningtasks_post->post_title)) . '（成績）.csv"',
@@ -1016,7 +1016,7 @@ class LearningtasksPlugin extends UserPluginBase
             $statuses[$user_id][6] = array_key_exists(6, $status_ojbs) ? $status_ojbs[6]->grade      : '－';
         }
         $csvHeader = ['受講者名', 'レポート提出最終日時', 'レポート評価', '試験提出最終日時	', '試験評価'];
-        array_unshift($statuses, $csvHeader); 
+        array_unshift($statuses, $csvHeader);
 
         return $statuses;
     }
