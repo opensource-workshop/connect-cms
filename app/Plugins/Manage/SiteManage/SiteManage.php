@@ -130,6 +130,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_header_color]
         );
 
+        // センターエリア要素のclass属性
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'center_area_optional_class'],
+            ['category' => 'general',
+             'value'    => $request->center_area_optional_class]
+        );
+
         // 基本のヘッダー固定設定
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_header_fix'],
