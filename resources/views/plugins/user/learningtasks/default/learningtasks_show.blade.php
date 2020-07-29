@@ -82,38 +82,47 @@
         <div class="card-body">
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
+
+            <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getReportCollapseAriaControls()}}">履歴の開閉</button>
+
             @if ($learningtask_user->hasReportStatuses($post->id))
                 <ol class="mb-3">
                     @foreach($learningtask_user->getReportStatuses($post->id) as $report_status)
-                    <li>{{$report_status->getStstusName($learningtask_user->getStudentId())}}
-                    <table class="table table-bordered table-sm report_table">
-                    <tbody>
-                        <tr>
-                            <th>{{$report_status->getStstusPostTimeName()}}</th>
-                            <td>{{$report_status->created_at}}</td>
-                        </tr>
-                        <tr>
-                            <th>{{$report_status->getUploadFileName()}}</th>
-                            @if (empty($report_status->upload_id))
-                            <td>なし</td>
-                            @else
-                            <td><a href="{{url('/')}}/file/{{$report_status->upload_id}}" target="_blank">{{$report_status->upload->client_original_name}}</a></td>
+                    @if (!$loop->last)
+                    <div class="collapse multi-collapse" id="multiCollapseReport{{$loop->iteration}}">
+                    @endif
+                        <li value="{{$loop->iteration}}">{{$report_status->getStstusName($learningtask_user->getStudentId())}}
+                        <table class="table table-bordered table-sm report_table">
+                        <tbody>
+                            <tr>
+                                <th>{{$report_status->getStstusPostTimeName()}}</th>
+                                <td>{{$report_status->created_at}}</td>
+                            </tr>
+                            <tr>
+                                <th>{{$report_status->getUploadFileName()}}</th>
+                                @if (empty($report_status->upload_id))
+                                <td>なし</td>
+                                @else
+                                <td><a href="{{url('/')}}/file/{{$report_status->upload_id}}" target="_blank">{{$report_status->upload->client_original_name}}</a></td>
+                                @endif
+                            </tr>
+                            @if ($report_status->hasGrade())
+                            <tr>
+                                <th>評価</th>
+                                <td><span class="text-danger font-weight-bold">{{$report_status->grade}}</span></td>
+                            </tr>
                             @endif
-                        </tr>
-                        @if ($report_status->hasGrade())
-                        <tr>
-                            <th>評価</th>
-                            <td><span class="text-danger font-weight-bold">{{$report_status->grade}}</span></td>
-                        </tr>
-                        @endif
-                        @if ($report_status->hasComment())
-                        <tr>
-                            <th>コメント</th>
-                            <td>{!!nl2br(e($report_status->comment))!!}</td>
-                        </tr>
-                        @endif
-                    </tbody>
-                    </table>
+                            @if ($report_status->hasComment())
+                            <tr>
+                                <th>コメント</th>
+                                <td>{!!nl2br(e($report_status->comment))!!}</td>
+                            </tr>
+                            @endif
+                        </tbody>
+                        </table>
+                    @if (!$loop->last)
+                    </div>
+                    @endif
                     @endforeach
                 </ol>
             @else
@@ -360,46 +369,54 @@
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
 
+            <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getExaminationCollapseAriaControls()}}">履歴の開閉</button>
+
             @if ($learningtask_user->hasExaminationStatuses($post->id))
                 <ol class="mb-3">
                     @foreach($learningtask_user->getExaminationStatuses($post->id) as $examination_status)
-                        <li>{{$examination_status->getStstusName($learningtask_user->getStudentId())}}
-                        <table class="table table-bordered table-sm report_table">
-                        <tbody>
-                            <tr>
-                                <th>{{$examination_status->getStstusPostTimeName()}}</th>
-                                <td>{{$examination_status->created_at}}</td>
-                            </tr>
-                            @if ($examination_status->hasFile())
-                            <tr>
-                                <th>{{$examination_status->getUploadFileName()}}</th>
-                                @if (empty($examination_status->upload_id))
-                                <td>なし</td>
-                                @else
-                                <td><a href="{{url('/')}}/file/{{$examination_status->upload_id}}" target="_blank">{{$examination_status->upload->client_original_name}}</a></td>
+                        @if (!$loop->last)
+                        <div class="collapse multi-collapse" id="multiCollapseExamination{{$loop->iteration}}">
+                        @endif
+                            <li value="{{$loop->iteration}}">{{$examination_status->getStstusName($learningtask_user->getStudentId())}}
+                            <table class="table table-bordered table-sm report_table">
+                            <tbody>
+                                <tr>
+                                    <th>{{$examination_status->getStstusPostTimeName()}}</th>
+                                    <td>{{$examination_status->created_at}}</td>
+                                </tr>
+                                @if ($examination_status->hasFile())
+                                <tr>
+                                    <th>{{$examination_status->getUploadFileName()}}</th>
+                                    @if (empty($examination_status->upload_id))
+                                    <td>なし</td>
+                                    @else
+                                    <td><a href="{{url('/')}}/file/{{$examination_status->upload_id}}" target="_blank">{{$examination_status->upload->client_original_name}}</a></td>
+                                    @endif
+                                </tr>
                                 @endif
-                            </tr>
-                            @endif
-                            @if ($examination_status->hasExamination())
-                            <tr>
-                                <th>試験日時</th>
-                                <td>{{$learningtask_user->getViewDate($examination_status)}}</td>
-                            </tr>
-                            @endif
-                            @if ($examination_status->hasGrade())
-                            <tr>
-                                <th>評価</th>
-                                <td><span class="text-danger font-weight-bold">{{$examination_status->grade}}</span></td>
-                            </tr>
-                            @endif
-                            @if ($examination_status->hasComment())
-                            <tr>
-                                <th>コメント</th>
-                                <td>{!!nl2br(e($examination_status->comment))!!}</td>
-                            </tr>
-                            @endif
-                        </tbody>
-                        </table>
+                                @if ($examination_status->hasExamination())
+                                <tr>
+                                    <th>試験日時</th>
+                                    <td>{{$learningtask_user->getViewDate($examination_status)}}</td>
+                                </tr>
+                                @endif
+                                @if ($examination_status->hasGrade())
+                                <tr>
+                                    <th>評価</th>
+                                    <td><span class="text-danger font-weight-bold">{{$examination_status->grade}}</span></td>
+                                </tr>
+                                @endif
+                                @if ($examination_status->hasComment())
+                                <tr>
+                                    <th>コメント</th>
+                                    <td>{!!nl2br(e($examination_status->comment))!!}</td>
+                                </tr>
+                                @endif
+                            </tbody>
+                            </table>
+                        @if (!$loop->last)
+                        </div>
+                        @endif
                     @endforeach
                 </ol>
             @else
