@@ -16,5 +16,5 @@ class LearningtasksUsers extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['post_id', 'user_id'];
+    protected $fillable = ['post_id', 'user_id', 'role_name'];
 }

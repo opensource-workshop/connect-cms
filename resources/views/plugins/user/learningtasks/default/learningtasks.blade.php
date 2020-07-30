@@ -82,17 +82,13 @@
     <thead class="bg-light">
     <tr>
         <th scope="col" class="text-nowrap">科目名</th>
-        @if ($learningtask->useReport())
+        @if (Auth::check() && $learningtask->useReport())
             <th scope="col" class="text-nowrap">レポート</th>
         @endif
-        @if ($learningtask->useExamination())
+        @if (Auth::check() && $learningtask->useExamination())
             <th scope="col" class="text-nowrap">試験日時</th>
             <th scope="col" class="text-nowrap">試験評価</th>
         @endif
-{{--
-        <th scope="col" class="text-nowrap">単位数</th>
-        <th scope="col" class="text-nowrap">免許状の種類</th>
---}}
     </tr>
     </thead>
     <tbody>
@@ -100,17 +96,13 @@
 
             <tr>
                 <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
-                 @if ($learningtask->useReport())
+                 @if (Auth::check() && $learningtask->useReport())
                     <td>{{$learningtask_user->getReportStatus($post->id)}}</td>
                 @endif
-                @if ($learningtask->useExamination())
+                @if (Auth::check() && $learningtask->useExamination())
                     <td>{{$learningtask_user->getApplyingExaminationDate($post->id)}}</td>
                     <td>{{$learningtask_user->getExaminationStatus($post->id)}}</td>
                 @endif
-{{--
-                <td>4単位</td>
-                <td>小専免<br />中専免<br />高専免</td>
---}}
             </tr>
         @endforeach
     </tbody>

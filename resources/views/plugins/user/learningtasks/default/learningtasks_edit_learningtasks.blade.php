@@ -100,6 +100,50 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">総合評価機能</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtask->use_evaluate == 0)
+                    <input type="radio" value="0" id="use_evaluate_0" name="use_evaluate" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="use_evaluate_0" name="use_evaluate" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="use_evaluate_0">使用しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtask->use_evaluate == 1)
+                    <input type="radio" value="1" id="use_evaluate_1" name="use_evaluate" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="use_evaluate_1" name="use_evaluate" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="use_evaluate_1">使用する</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ログインユーザのみ課題の閲覧を許可</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtask->need_auth == 0)
+                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="need_auth_0">使用しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtask->need_auth == 1)
+                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="need_auth_1">使用する</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="view_count" value="{{old('view_count', $learningtask->view_count)}}" class="form-control col-sm-3">

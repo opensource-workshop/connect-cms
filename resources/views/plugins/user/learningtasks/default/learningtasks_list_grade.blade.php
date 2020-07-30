@@ -12,8 +12,10 @@
 
 @section("plugin_contents_$frame->id")
 
-<div class="row">
-    <div class="col-12">{!!$learningtasks_posts->post_title!!}</div>
+<div class="card mb-3 border-danger">
+    <div class="card-body">
+        <h5 class="mb-0">{!!$learningtasks_posts->post_title!!}</h5>
+    </div>
 </div>
 
 <table class="table table-bordered">

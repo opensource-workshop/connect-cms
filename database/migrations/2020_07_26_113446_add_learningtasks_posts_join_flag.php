@@ -15,9 +15,9 @@ class AddLearningtasksPostsJoinFlag extends Migration
     {
         Schema::table('learningtasks_posts', function (Blueprint $table) {
             //
-            $table->integer('use_report')->nullable()->default(0)->after('required_canvas_answer')->comment('レポート使用有無');
-            $table->integer('use_examination')->nullable()->default(0)->after('use_report')->comment('試験使用有無');
-            $table->integer('join_flag')->nullable()->default(0)->after('use_examination')->comment('参加方式');
+            $table->integer('use_report')->nullable()->default(null)->after('required_canvas_answer')->comment('レポート使用有無');
+            $table->integer('use_examination')->nullable()->default(null)->after('use_report')->comment('試験使用有無');
+            $table->integer('join_flag')->nullable()->default(0)->after('use_examination')->comment('受講者の参加方式');
         });
     }
 
