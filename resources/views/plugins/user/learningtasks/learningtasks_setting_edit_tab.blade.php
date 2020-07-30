@@ -22,6 +22,15 @@
                         <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">課題設定</a>
                     </li>
                 @endif
+                @if ($action == 'selectFunction')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">機能選択</span></span>
+                    </li>
+                @else
+                    <li role="presentation" class="nav-item">
+                        <a href="{{url('/')}}/plugin/learningtasks/selectFunction/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">機能選択</a>
+                    </li>
+                @endif
                 @if ($action == 'editUsers')
                     <li role="presentation" class="nav-item">
                         <span class="nav-link"><span class="active">ユーザ設定</span></span>

@@ -27,4 +27,16 @@ class Learningtasks extends Model
         }
         return false;
     }
+
+
+    /**
+     *  レポート使用有無の文字列表記
+     */
+    public function strUseReport()
+    {
+        if ($this->use_report == 1) {
+            return "使用する";
+        }
+        return "使用しない";
+    }
 }

@@ -79,8 +79,8 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'editBucketsRoles', 'editExaminations', 'editUsers', 'listGrade'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveUsers', 'switchUser', 'downloadGrade', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
+        $functions['get']  = ['listCategories', 'editBucketsRoles', 'editExaminations', 'selectFunction', 'editUsers', 'listGrade'];
+        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveFunction', 'saveUsers', 'switchUser', 'downloadGrade', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
         return $functions;
     }
 
@@ -308,6 +308,9 @@ class LearningtasksPlugin extends UserPluginBase
         //                                   ->groupBy('categories.display_sequence')
         //                                   ->groupBy('contents_id');
         //                         });
+        // 有効なレコードのみ
+        ->where('learningtasks_id', $learningtasks_frame->id)
+
         // 有効なレコードのみ
         ->where('status', 0);
 
@@ -1961,7 +1964,7 @@ EOD;
         // グループのユーザを取得
         $group_users = GroupUser::select('user_id')->whereIn('group_id', $page_roles->pluck('group_id'))->groupBy('user_id')->get();
 
-        // 学生のみに絞る
+        // 学生のみ取得
         $students = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
                               ->where('target', 'original_role')
                               ->where('role_name', 'student')
@@ -1974,17 +1977,40 @@ EOD;
                                 ->leftJoin('learningtasks_users', function ($join) use ($post) {
                                     $join->on('learningtasks_users.user_id', '=', 'users.id')
                                          ->where('learningtasks_users.post_id', '=', $post->id)
+                                         ->where('learningtasks_users.role_name', 'student')
                                          ->whereNull('learningtasks_users.deleted_at');
                                 })
                                 ->whereIn('users.id', $students->pluck('users_id'))
                                 ->orderBy('id', 'asc')
                                 ->get();
 
+
+        // 教員のみ取得
+        $teachers = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
+                              ->where('target', 'original_role')
+                              ->where('role_name', 'teacher')
+                              ->where('role_value', 1)
+                              ->get();
+
+        // メンバーシップのユーザ情報を取得
+        // この時、すでに権限付与済みのユーザも紐づける。
+        $membership_teacher_users = User::select('users.*', 'learningtasks_users.user_id AS join_user_id')
+                                ->leftJoin('learningtasks_users', function ($join) use ($post) {
+                                    $join->on('learningtasks_users.user_id', '=', 'users.id')
+                                         ->where('learningtasks_users.post_id', '=', $post->id)
+                                         ->where('learningtasks_users.role_name', 'teacher')
+                                         ->whereNull('learningtasks_users.deleted_at');
+                                })
+                                ->whereIn('users.id', $teachers->pluck('users_id'))
+                                ->orderBy('id', 'asc')
+                                ->get();
+
         // 画面を呼び出す。
         return $this->view(
             'learningtasks_edit_users', [
-            'learningtasks_posts'    => $post,
-            'membership_users'       => $membership_users,
+            'learningtasks_posts'      => $post,
+            'membership_users'         => $membership_users,
+            'membership_teacher_users' => $membership_teacher_users,
             ]
         );
     }
@@ -2000,10 +2026,11 @@ EOD;
             return $this->editUsers($request, $page_id, $frame_id, $post_id);
         }
 
-        if ($request->filled('join_flag')) {
-            $post->join_flag = $request->join_flag;
-            $post->save();
-        }
+        $post->student_join_flag = $request->student_join_flag;
+        $post->teacher_join_flag = $request->teacher_join_flag;
+        $post->save();
+
+        // 受講者
 
         // 画面のチェックボックスのユーザIDを一度ローカル変数にしておく。
         // 1件もチェックされていないと、null になり、処理中で毎回、配列化を聞くことになるため、
@@ -2018,6 +2045,7 @@ EOD;
             foreach ($request->page_users as $page_user_id) {
                 $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
                                                          ->where('user_id', $page_user_id)
+                                                         ->where('role_name', 'student')
                                                          ->whereNull('deleted_at')
                                                          ->first();
                 // 参加データの追加・削除
@@ -2026,10 +2054,60 @@ EOD;
                     $learningtasks_users->delete();
                 } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
                     // 追加（参加データはなし、画面のチェックはあり）
-                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id]);
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => 'student']);
                 }
             }
         }
+
+        // 教員
+
+        // 画面のチェックボックスのユーザIDを一度ローカル変数にしておく。
+        // 1件もチェックされていないと、null になり、処理中で毎回、配列化を聞くことになるため、
+        // ここで、nullなら、空の配列にしておく。
+        $join_users = $request->join_teacher_users;
+        if (empty($join_users)) {
+            $join_users = array();
+        }
+
+        // ページ中に1件でもユーザがいる場合はループして処理する。
+        if ($request->filled('page_teacher_users')) {
+            foreach ($request->page_teacher_users as $page_user_id) {
+                $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
+                                                         ->where('user_id', $page_user_id)
+                                                         ->where('role_name', 'teacher')
+                                                         ->whereNull('deleted_at')
+                                                         ->first();
+                // 参加データの追加・削除
+                if (!empty($learningtasks_users) && !in_array($page_user_id, $join_users)) {
+                    // 削除（参加データはあり、画面のチェックはない）
+                    $learningtasks_users->delete();
+                } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
+                    // 追加（参加データはなし、画面のチェックはあり）
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => 'teacher']);
+                }
+            }
+        }
+
         return $this->editUsers($request, $page_id, $frame_id, $post_id);
+    }
+
+    /**
+     * 機能選択編集画面
+     */
+    public function selectFunction($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題管理
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 課題取得
+        $post = $this->getPost($post_id);
+
+        // 画面を呼び出す。
+        return $this->view(
+            'learningtasks_select_function', [
+            'learningtask'      => $learningtask,
+            'learningtasks_posts'      => $post,
+            ]
+        );
     }
 }

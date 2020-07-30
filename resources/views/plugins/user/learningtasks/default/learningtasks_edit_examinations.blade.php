@@ -24,9 +24,10 @@
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
 
-    <div class="form-group row">
-        <label class="col-md-2 control-label">タイトル</label>
-        <div class="col-md-10">{!!$learningtasks_posts->post_title!!}</div>
+    <div class="card mb-3 border-danger">
+        <div class="card-body">
+            <h5 class="mb-0">{!!$learningtasks_posts->post_title!!}</h5>
+        </div>
     </div>
 
     <div class="form-group row">

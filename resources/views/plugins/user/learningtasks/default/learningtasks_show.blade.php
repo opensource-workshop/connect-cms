@@ -83,7 +83,9 @@
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
 
-            <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getReportCollapseAriaControls()}}">履歴の開閉</button>
+            @if ($learningtask_user->hasReportStatuses($post->id))
+                <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getReportCollapseAriaControls()}}">履歴の開閉</button>
+            @endif
 
             @if ($learningtask_user->hasReportStatuses($post->id))
                 <ol class="mb-3">
@@ -369,7 +371,9 @@
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
 
-            <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getExaminationCollapseAriaControls()}}">履歴の開閉</button>
+            @if ($learningtask_user->hasReportStatuses($post->id))
+                <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getExaminationCollapseAriaControls()}}">履歴の開閉</button>
+            @endif
 
             @if ($learningtask_user->hasExaminationStatuses($post->id))
                 <ol class="mb-3">

@@ -126,7 +126,7 @@ class LearningtasksUser
         // 受講生一覧の取得
         if ($this->isTeacher() && !empty($post)) {
             // ユーザの参加方式によって、対象を取得
-            if ($post->join_flag == 2) {
+            if ($post->student_join_flag == 2) {
                 // 配置ページのメンバーシップユーザ全員
                 // ページから参加グループ取得
                 $group_ids = PageRole::select('group_id')
@@ -139,16 +139,23 @@ class LearningtasksUser
                                         ->groupBy('user_id')
                                         ->orderBy('user_id')
                                         ->get();
-                $this->students = User::whereIn('id', $group_users->pluck('user_id'))
-                                      ->orderBy('id')
+                $this->students = User::select('users.*')
+                                      ->whereIn('users.id', $group_users->pluck('user_id'))
+                                      ->join('users_roles', function ($join) {
+                                          $join->on('users_roles.users_id', '=', 'users.id')
+                                               ->where('users_roles.target', '=', 'original_role')
+                                               ->where('users_roles.role_name', '=', 'student');
+                                      })
+                                      ->orderBy('users.id')
                                       ->get();
 
-            } elseif ($post->join_flag == 3) {
+            } elseif ($post->student_join_flag == 3) {
                 // 配置ページのメンバーシップユーザから選ぶ
                 $this->students = LearningtasksUsers::select(
                     'users.*'
                 )->join('users', 'users.id', '=', 'learningtasks_users.user_id')
                  ->where('learningtasks_users.post_id', $post->id)
+                 ->where('learningtasks_users.role_name', 'student')
                  ->orderBy('users.id', 'asc')
                  ->get();
             }
@@ -226,6 +233,9 @@ class LearningtasksUser
         if (empty($post_id)) {
             return false;
         }
+        if (empty($this->user)) {
+            return false;
+        }
         if ($this->isTeacher() && empty($this->student_id)) {
             return false;
         }
@@ -238,6 +248,9 @@ class LearningtasksUser
     public function canExaminationView($post_id)
     {
         if (empty($post_id)) {
+            return false;
+        }
+        if (empty($this->user)) {
             return false;
         }
         if ($this->isTeacher() && empty($this->student_id)) {
