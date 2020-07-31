@@ -276,25 +276,67 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  課題管理記事一覧取得
      */
-    private function getPosts($learningtasks_frame, $option_count = null)
+    private function getPosts($learningtask_user, $option_count = null)
     {
-        //$learningtasks_posts = null;
+        $learningtask = $learningtask_user->getLearningtask();
+        $user_id = $learningtask_user->getUserId();
+
+        // 参照可能な課題を取得
+        // バケツの課題をループ、join_flag と参加ユーザを判定して参照権限をチェック
+//        $posts = null;
+//        $posts_query = LearningtasksPosts::select('learningtasks_posts');
+
+//        if ($learningtask->need_auth == 1) {
+            
+//        }
+
+//where('learningtasks_id', $learningtask->id)
+//                                   ->orderBy('learningtasks_id', 'asc')
+//                                   ->get();
+//        if ($learningtask->need_auth == 0) {
+//            $posts = $post_all->pluck('id');
+//        } else {
+//            foreach ($post_all as $post) {
+//                
+//            }
+//        }
 
         // 件数
-        $count = $learningtasks_frame->view_count;
+        $count = $learningtask->view_count;
         if ($option_count != null) {
             $count = $option_count;
         }
 
-        // 削除されていないデータでグルーピングして、最新のIDで全件
-        $learningtasks_posts = LearningtasksPosts::select(
+        // 課題の一覧
+        $learningtasks_query = LearningtasksPosts::select(
             'learningtasks_posts.*',
             'categories.id as category_id',
             'categories.color as category_color',
             'categories.background_color as category_background_color',
             'categories.category as category'
-        )
-                                 ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+        );
+
+        // 要ログイン
+        if (!$learningtask_user->isRoleArticle() && $learningtask->need_auth == 1) {
+            // 教員権限があれば、教員として見る。（受講生権限を持っていても、一覧はそのまま教員権限で見る）
+            $role = "";
+            if ($learningtask_user->isTeacher()) {
+                $role = "teacher";
+            } elseif ($learningtask_user->isStudent()) {
+                $role = "student";
+            }
+
+            $learningtasks_query->join('learningtasks_users as role', function ($join) use ($user_id, $role) {
+                $join->on('role.post_id', '=', 'learningtasks_posts.id')
+                     ->where('role.user_id', '=', $user_id)
+                     ->where('role.role_name', '=', $role)
+                     ->whereNull('role.deleted_at');
+            });
+        }
+
+
+        $learningtasks_query->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+
         // 履歴の廃止
         //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
         //                             $query->select(DB::raw('MAX(id) As id'))
@@ -309,32 +351,32 @@ class LearningtasksPlugin extends UserPluginBase
         //                                   ->groupBy('contents_id');
         //                         });
         // 有効なレコードのみ
-        ->where('learningtasks_id', $learningtasks_frame->id)
+        ->where('learningtasks_id', $learningtask->id)
 
         // 有効なレコードのみ
         ->where('status', 0);
 
         // カテゴリソート条件追加
-        $learningtasks_posts->orderBy('categories.display_sequence', 'asc');
+        $learningtasks_query->orderBy('categories.display_sequence', 'asc');
 
         // 表示条件に対するソート条件追加
 
-        if ($learningtasks_frame->sequence_conditions == 0) {
+        if ($learningtask->sequence_conditions == 0) {
             // 最新順
-            $learningtasks_posts->orderBy('posted_at', 'desc');
-        } elseif ($learningtasks_frame->sequence_conditions == 1) {
+            $learningtasks_query->orderBy('posted_at', 'desc');
+        } elseif ($learningtask->sequence_conditions == 1) {
             // 投稿順
-            $learningtasks_posts->orderBy('posted_at', 'asc');
-        } elseif ($learningtasks_frame->sequence_conditions == 2) {
+            $learningtasks_query->orderBy('posted_at', 'asc');
+        } elseif ($learningtask->sequence_conditions == 2) {
             // 指定順
-            $learningtasks_posts->orderBy('display_sequence', 'asc');
+            $learningtasks_query->orderBy('display_sequence', 'asc');
         }
 
        // 取得
-        $learningtasks_posts_recored = $learningtasks_posts->orderBy('posted_at', 'desc')
-                           ->paginate($count, ["*"], "frame_{$learningtasks_frame->id}_page");
+        $learningtasks_posts = $learningtasks_query->orderBy('posted_at', 'desc')
+                                                   ->paginate($count, ["*"], "frame_{$learningtask->id}_page");
 
-        return $learningtasks_posts_recored;
+        return $learningtasks_posts;
     }
 
     /**
@@ -643,11 +685,11 @@ class LearningtasksPlugin extends UserPluginBase
             return;
         }
 
-        // 課題管理データ一覧の取得
-        $posts = $this->getPosts($learningtask);
-
         // ユーザー関連情報のまとめ
-        $learningtask_user = new LearningtasksUser($request, $page_id);
+        $learningtask_user = new LearningtasksUser($request, $page_id, $learningtask);
+
+        // 課題管理データ一覧の取得
+        $posts = $this->getPosts($learningtask_user);
 
         // タグ：画面表示するデータのlearningtasks_posts_id を集める
         //$posts_ids = array();
@@ -759,8 +801,11 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function switchUser($request, $page_id, $frame_id, $post_id)
     {
+        // 課題管理
+        $learningtask = $this->getLearningTask($frame_id);
+
         // ユーザー関連情報のまとめ
-        $learningtask_user = new LearningtasksUser($request, $page_id, $this->getPost($post_id));
+        $learningtask_user = new LearningtasksUser($request, $page_id, $learningtask, $this->getPost($post_id));
 
         // 教員のみ
         if (!$learningtask_user->isTeacher()) {
@@ -827,7 +872,7 @@ class LearningtasksPlugin extends UserPluginBase
                                                  ->get();
 
         // ユーザー関連情報のまとめ
-        $learningtask_user = new LearningtasksUser($request, $page_id, $post);
+        $learningtask_user = new LearningtasksUser($request, $page_id, $learningtask, $post);
 
         // 詳細画面を呼び出す。
         return $this->view(
@@ -1311,6 +1356,8 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_name'  => ['required'],
             'use_report'          => ['required'],
             'use_examination'     => ['required'],
+            'use_evaluate'        => ['required'],
+            'need_auth'           => ['required'],
             'view_count'          => ['required'],
             'view_count'          => ['numeric'],
             //'rss_count'           => ['nullable', 'numeric'],
@@ -1320,6 +1367,8 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_name'  => '課題管理名',
             'use_report'          => 'レポート提出機能',
             'use_examination'     => 'レポート試験機能',
+            'use_evaluate'        => '総合評価機能',
+            'need_auth'           => 'ログイン要否',
             'view_count'          => '表示件数',
             //'rss_count'           => 'RSS件数',
             'sequence_conditions' => '順序条件',
@@ -1376,6 +1425,8 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtask->learningtasks_name  = $request->learningtasks_name;
         $learningtask->use_report          = $request->use_report;
         $learningtask->use_examination     = $request->use_examination;
+        $learningtask->use_evaluate        = $request->use_evaluate;
+        $learningtask->need_auth           = $request->need_auth;
         $learningtask->view_count          = $request->view_count;
         // 課題管理にRSS が必要か、再考する。
         //$learningtask->rss                 = $request->rss;

@@ -19,8 +19,11 @@ use App\User;
  * メソッド一覧(public のもの)
  * ・教員か                                   isTeacher()
  * ・学生か                                   isStudent()
+ * ・ユーザIDの取得                           getUserId()
+ * ・課題バケツの取得                         getLearningtask()
  * ・評価中の受講生                           getStudent()
  * ・レポートの表示を行えるか？               canReportView($post_id)
+ * ・課題の表示を行えるか？                   canPostView($post_id)
  * ・試験の表示を行えるか？                   canExaminationView($post_id)
  * ・レポートの履歴有無                       hasReportStatuses($post_id)
  * ・レポートの履歴取得                       getReportStatuses($post_id)
@@ -56,6 +59,11 @@ use App\User;
 class LearningtasksUser
 {
     /**
+     * 課題バケツ
+     */
+    private $learningtask = null;
+
+    /**
      * ログインしているユーザ情報
      */
     private $user = null;
@@ -71,9 +79,14 @@ class LearningtasksUser
     private $report_statuses = null;
 
     /**
-     * 教員用受講者情報
+     * 科目の受講者情報
      */
     private $students = null;
+
+    /**
+     * 科目の教員情報
+     */
+    private $teachers = null;
 
     /**
      * 試験履歴
@@ -83,14 +96,16 @@ class LearningtasksUser
     /**
      * コンストラクタ
      */
-    public function __construct($request, $page_id, $post = null)
+    public function __construct($request, $page_id, $learningtask = null, $post = null)
     {
         // 変数初期化
         $this->report_statuses = new Collection();
         $this->students = new Collection();
         $this->examination_statuses = new Collection();
 
-        // ログインしているユーザ
+        $this->learningtask = $learningtask;
+
+        // ログインしているユーザthis->
         $this->user = Auth::user();
 
         // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
@@ -123,8 +138,8 @@ class LearningtasksUser
              ->get();
         }
 
-        // 受講生一覧の取得
-        if ($this->isTeacher() && !empty($post)) {
+        // 受講生一覧と教員一覧の取得
+        if (!empty($post)) {
             // ユーザの参加方式によって、対象を取得
             if ($post->student_join_flag == 2) {
                 // 配置ページのメンバーシップユーザ全員
@@ -134,11 +149,13 @@ class LearningtasksUser
                                      ->groupBy('group_id')
                                      ->orderBy('group_id')
                                      ->get();
+
                 $group_users = GroupUser::select('user_id')
                                         ->whereIn('group_id', $group_ids->pluck('group_id'))
                                         ->groupBy('user_id')
                                         ->orderBy('user_id')
                                         ->get();
+
                 $this->students = User::select('users.*')
                                       ->whereIn('users.id', $group_users->pluck('user_id'))
                                       ->join('users_roles', function ($join) {
@@ -149,17 +166,54 @@ class LearningtasksUser
                                       ->orderBy('users.id')
                                       ->get();
 
+                $this->teachers = User::select('users.*')
+                                      ->whereIn('users.id', $group_users->pluck('user_id'))
+                                      ->join('users_roles', function ($join) {
+                                          $join->on('users_roles.users_id', '=', 'users.id')
+                                               ->where('users_roles.target', '=', 'original_role')
+                                               ->where('users_roles.role_name', '=', 'teacher');
+                                      })
+                                      ->orderBy('users.id')
+                                      ->get();
+
             } elseif ($post->student_join_flag == 3) {
                 // 配置ページのメンバーシップユーザから選ぶ
                 $this->students = LearningtasksUsers::select(
-                    'users.*'
-                )->join('users', 'users.id', '=', 'learningtasks_users.user_id')
-                 ->where('learningtasks_users.post_id', $post->id)
-                 ->where('learningtasks_users.role_name', 'student')
-                 ->orderBy('users.id', 'asc')
-                 ->get();
+                                                        'users.*'
+                                                    )->join('users', 'users.id', '=', 'learningtasks_users.user_id')
+                                                     ->where('learningtasks_users.post_id', $post->id)
+                                                     ->where('learningtasks_users.role_name', 'student')
+                                                     ->orderBy('users.id', 'asc')
+                                                     ->get();
+
+                $this->teachers = LearningtasksUsers::select(
+                                                        'users.*'
+                                                    )->join('users', 'users.id', '=', 'learningtasks_users.user_id')
+                                                     ->where('learningtasks_users.post_id', $post->id)
+                                                     ->where('learningtasks_users.role_name', 'teacher')
+                                                     ->orderBy('users.id', 'asc')
+                                                     ->get();
             }
         }
+    }
+
+    /**
+     *  ユーザIDの取得
+     */
+    public function getUserId()
+    {
+        if (empty($this->user)) {
+            return null;
+        }
+        return $this->user->id;
+    }
+
+    /**
+     *  課題バケツの取得
+     */
+    public function getLearningtask()
+    {
+        return $this->learningtask;
     }
 
     /**
@@ -203,6 +257,53 @@ class LearningtasksUser
         $user_roles = $this->user->user_roles;
         if (array_key_exists('original_role', $user_roles) && array_key_exists('student', $user_roles['original_role']) && $user_roles['original_role']['student'] == 1) {
             return true;
+        }
+        return false;
+    }
+
+    /**
+     *  モデレータ権限を保持しているか
+     */
+    public function isRoleArticle()
+    {
+        // コンテンツ管理者とモデレータはOK とする。
+        if ($this->user->can('role_article')){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  課題の表示を行えるか？
+     */
+    public function canPostView()
+    {
+        // ログインユーザのみ課題の閲覧を許可？
+        // 0 ならゲストも閲覧OK
+        if ($this->learningtask->need_auth == 0) {
+            return true;
+        }
+
+        // 要ログイン
+        if (empty($this->user)){
+            return false;
+        }
+
+        // コンテンツ管理者とモデレータはOK とする。
+        if ($this->user->can('role_article')){
+            return true;
+        }
+
+        // 教員、受講者として設定されているか。（メンバーシップとしての設定も含む）
+        if ($this->isTeacher()) {
+            if ($this->teachers->where('id', $this->getUserId())->isNotEmpty()) {
+                return true;
+            }
+        }
+        elseif ($this->isStudent()) {
+            if ($this->students->where('id', $this->getUserId())->isNotEmpty()) {
+                return true;
+            }
         }
         return false;
     }

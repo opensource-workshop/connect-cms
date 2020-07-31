@@ -8,6 +8,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+@if ($learningtask_user->canPostView())
 
 <style>
 .custom-file {
@@ -650,4 +651,11 @@ $('.custom-file-input').on('change',function(){
     $(this).next('.custom-file-label').html($(this)[0].files[0].name);
 })
 </script>
+@else
+    <div class="card mb-3 border-danger">
+        <div class="card-body">
+            <h3 class="mb-0">この課題に対する参照権限がありません。</h3>
+        </div>
+    </div>
+@endif
 @endsection
