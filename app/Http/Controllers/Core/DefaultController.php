@@ -511,7 +511,12 @@ class DefaultController extends ConnectController
 
         // redirect_path があれば遷移
         if ($request->redirect_path) {
-            return redirect($request->redirect_path);
+            if($request->flash_message){
+                // フラッシュメッセージの設定があればLaravelのフラッシュデータ保存に連携
+                return redirect($request->redirect_path)->with('flash_message', $request->flash_message);
+            }else{
+                return redirect($request->redirect_path);
+            }
         }
 
         // Page データがあれば、そのページに遷移
