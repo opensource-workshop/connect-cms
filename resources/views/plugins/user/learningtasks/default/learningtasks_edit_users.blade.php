@@ -30,10 +30,41 @@
         </div>
     </div>
 
+    <h5><span class="badge badge-secondary">閲覧条件</span></h5>
+    <div class="form-group row">
+        <label class="col-md-3 text-md-right">ログインの要否</label>
+        <div class="col-md-9">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtasks_posts->need_auth === null)
+                    <input type="radio" value="" id="need_auth_null" name="need_auth" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="" id="need_auth_null" name="need_auth" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="need_auth_null">課題管理設定に従う（XXXXXXXXXXX）</label>
+            </div><br />
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtasks_posts->need_auth === 0)
+                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="need_auth_0">非ログインでも閲覧可能</label>
+            </div><br />
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtasks_posts->need_auth === 1)
+                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="need_auth_1">閲覧にはログインが必要</label>
+            </div>
+        </div>
+    </div>
+
     <h5><span class="badge badge-secondary">受講者</span></h5>
     <div class="form-group row">
-        <label class="col-sm-3">参加方式</label>
-        <div class="col-sm-9">
+        <label class="col-md-3 text-md-right">参加方式</label>
+        <div class="col-md-9">
 {{-- 今後の選択肢として保留（ユーザ選択時のインターフェースの考慮）
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->student_join_flag == 0)
@@ -74,8 +105,8 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-3 control-label">メンバーシップ受講者</label>
-        <div class="col-sm-9">
+        <label class="col-md-3 text-md-right">メンバーシップ受講者</label>
+        <div class="col-md-9">
             <div class="card p-2">
             {{-- チェックなし用の処理では、削除（参加除外）が必要なため、処理用にhidden で画面のユーザを送る ---}}
             @foreach ($membership_users as $membership_user)
@@ -100,8 +131,8 @@
 
     <h5><span class="badge badge-secondary">教員</span></h5>
     <div class="form-group row">
-        <label class="col-sm-3">参加方式</label>
-        <div class="col-sm-9">
+        <label class="col-md-3 text-md-right">参加方式</label>
+        <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->teacher_join_flag == 2)
                     <input type="radio" value="2" id="teacher_join_flag_2" name="teacher_join_flag" class="custom-control-input" checked="checked">
@@ -122,8 +153,8 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-3 control-label">メンバーシップ教員</label>
-        <div class="col-sm-9">
+        <label class="col-md-3 text-md-right">メンバーシップ教員</label>
+        <div class="col-md-9">
             <div class="card p-2">
             {{-- チェックなし用の処理では、削除（参加除外）が必要なため、処理用にhidden で画面のユーザを送る ---}}
             @foreach ($membership_teacher_users as $membership_teacher_user)

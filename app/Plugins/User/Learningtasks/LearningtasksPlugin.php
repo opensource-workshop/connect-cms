@@ -54,6 +54,7 @@ class LearningtasksPlugin extends UserPluginBase
         5 : 試験の解答提出（再提出も同じ。提出アクションが2つ目以降は再提出となるだけ）
         6 : 試験の評価（再評価も同じ）
         7 : 試験のコメント
+        8 : 総合評価
 
         task_status の変更メソッドは 本体を private の changeStatusImpl() とする。
         各ステータス毎に public の入り口メソッドを持ち、権限チェックを行う。
@@ -79,8 +80,8 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'editBucketsRoles', 'editExaminations', 'selectFunction', 'editUsers', 'listGrade'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveFunction', 'saveUsers', 'switchUser', 'downloadGrade', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
+        $functions['get']  = ['listCategories', 'editBucketsRoles', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade'];
+        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveUsers', 'saveReport', 'saveExaminations', 'saveEvaluate', 'downloadGrade', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7', 'changeStatus8'];
         return $functions;
     }
 
@@ -2067,7 +2068,7 @@ EOD;
     }
 
     /**
-     * ユーザ関係保存画面
+     * ユーザ関係保存処理
      */
     public function saveUsers($request, $page_id, $frame_id, $post_id)
     {
@@ -2143,22 +2144,50 @@ EOD;
     }
 
     /**
-     * 機能選択編集画面
+     * レポート関係編集画面
      */
-    public function selectFunction($request, $page_id, $frame_id, $post_id)
+    public function editReport($request, $page_id, $frame_id, $post_id)
     {
-        // 課題管理
-        $learningtask = $this->getLearningTask($frame_id);
-
         // 課題取得
         $post = $this->getPost($post_id);
 
         // 画面を呼び出す。
         return $this->view(
-            'learningtasks_select_function', [
-            'learningtask'      => $learningtask,
+            'learningtasks_edit_report', [
             'learningtasks_posts'      => $post,
             ]
         );
+    }
+
+    /**
+     * レポート関係保存処理
+     */
+    public function saveReport($request, $page_id, $frame_id, $post_id)
+    {
+        return;
+    }
+
+    /**
+     * 総合評価設定編集画面
+     */
+    public function editEvaluate($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題取得
+        $post = $this->getPost($post_id);
+
+        // 画面を呼び出す。
+        return $this->view(
+            'learningtasks_edit_evaluate', [
+            'learningtasks_posts'      => $post,
+            ]
+        );
+    }
+
+    /**
+     * 総合評価設定保存処理
+     */
+    public function saveEvaluate($request, $page_id, $frame_id, $post_id)
+    {
+        return;
     }
 }

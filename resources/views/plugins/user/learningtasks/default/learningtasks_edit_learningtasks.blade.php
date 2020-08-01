@@ -47,99 +47,12 @@
         <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
     @endif
 
+    <h5><span class="badge badge-secondary">基本設定</span></h5>
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">課題管理名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="learningtasks_name" value="{{old('learningtasks_name', $learningtask->learningtasks_name)}}" class="form-control">
             @if ($errors && $errors->has('learningtasks_name')) <div class="text-danger">{{$errors->first('learningtasks_name')}}</div> @endif
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">レポート提出機能</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->use_report == 0)
-                    <input type="radio" value="0" id="use_report_0" name="use_report" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="use_report_0" name="use_report" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_report_0">使用しない</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->use_report == 1)
-                    <input type="radio" value="1" id="use_report_1" name="use_report" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="use_report_1" name="use_report" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_report_1">使用する</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">レポート試験機能</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->use_examination == 0)
-                    <input type="radio" value="0" id="use_examination_0" name="use_examination" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="use_examination_0" name="use_examination" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_0">使用しない</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->use_examination == 1)
-                    <input type="radio" value="1" id="use_examination_1" name="use_examination" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="use_examination_1" name="use_examination" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_1">使用する</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">総合評価機能</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->use_evaluate == 0)
-                    <input type="radio" value="0" id="use_evaluate_0" name="use_evaluate" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="use_evaluate_0" name="use_evaluate" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_evaluate_0">使用しない</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->use_evaluate == 1)
-                    <input type="radio" value="1" id="use_evaluate_1" name="use_evaluate" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="use_evaluate_1" name="use_evaluate" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_evaluate_1">使用する</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ログインユーザのみ課題の閲覧を許可</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->need_auth == 0)
-                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="need_auth_0">使用しない</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->need_auth == 1)
-                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="need_auth_1">使用する</label>
-            </div>
         </div>
     </div>
 
@@ -209,6 +122,227 @@
                     <input type="radio" value="2" id="sequence_conditions_2" name="sequence_conditions" class="custom-control-input">
                 @endif
                 <label class="custom-control-label" for="sequence_conditions_2">指定順</label>
+            </div>
+        </div>
+    </div>
+
+    <h5><span class="badge badge-secondary">参加設定</span></h5>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ログインの要否</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtask->need_auth == 0)
+                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="need_auth_0">非ログインでも閲覧可能</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if($learningtask->need_auth == 1)
+                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="need_auth_1">閲覧にはログインが必要</label>
+            </div>
+        </div>
+    </div>
+
+    <h5><span class="badge badge-secondary">レポート設定</span></h5>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">レポート提出機能</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report" value="1" class="custom-control-input" id="use_report" @if(old("use_report", $learningtask->use_report)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report">提出</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_evaluate" value="1" class="custom-control-input" id="use_report_evaluate" @if(old("use_report_evaluate", $learningtask->use_report_evaluate)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_evaluate">評価</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_comment" value="1" class="custom-control-input" id="use_report_comment" @if(old("use_report_comment", $learningtask->use_report_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_comment">教員から参考資料</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">提出</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_file" value="1" class="custom-control-input" id="use_report_file" @if(old("use_report_file", $learningtask->use_report_file)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_file">アップロード</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_comment" value="1" class="custom-control-input" id="use_report_comment" @if(old("use_report_comment", $learningtask->use_report_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_comment">本文入力</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="use_report_mail" value="1" class="custom-control-input" id="use_report_mail" @if(old("use_report_mail", $learningtask->use_report_mail)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_mail">メール送信（教員宛）</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">評価</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_evaluate_file" value="1" class="custom-control-input" id="use_report_evaluate_file" @if(old("use_report_evaluate_file", $learningtask->use_report_evaluate_file)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_evaluate_file">アップロード</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_evaluate_comment" value="1" class="custom-control-input" id="use_report_evaluate_comment" @if(old("use_report_evaluate_comment", $learningtask->use_report_evaluate_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_evaluate_comment">コメント入力</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="use_report_evaluate_mail" value="1" class="custom-control-input" id="use_report_evaluate_mail" @if(old("use_report_evaluate_mail", $learningtask->use_report_evaluate_mail)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_evaluate_mail">メール送信（受講者宛）</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">教員から参考資料</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_comment_file" value="1" class="custom-control-input" id="use_report_comment_file" @if(old("use_report_comment_file", $learningtask->use_report_comment_file)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_comment_file">アップロード</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_comment_comment" value="1" class="custom-control-input" id="use_report_comment_comment" @if(old("use_report_comment_comment", $learningtask->use_report_comment_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_comment_comment">コメント入力</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="use_report_comment_mail" value="1" class="custom-control-input" id="use_report_comment_mail" @if(old("use_report_comment_mail", $learningtask->use_report_comment_mail)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_comment_mail">メール送信（受講者宛）</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">表示方法</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_report_status_collapse" value="1" class="custom-control-input" id="use_report_status_collapse" @if(old("use_report_status_collapse", $learningtask->use_report_status_collapse)) checked=checked @endif>
+                <label class="custom-control-label" for="use_report_file">履歴を開閉する</label>
+            </div>
+        </div>
+    </div>
+
+    <h5><span class="badge badge-secondary">試験設定</span></h5>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">レポート試験機能</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination" value="1" class="custom-control-input" id="use_examination" @if(old("use_examination", $learningtask->use_examination)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination">提出</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_evaluate" value="1" class="custom-control-input" id="use_examination_evaluate" @if(old("use_examination_evaluate", $learningtask->use_examination_evaluate)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_evaluate">評価</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_comment" value="1" class="custom-control-input" id="use_examination_comment" @if(old("use_examination_comment", $learningtask->use_examination_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_comment">教員から参考資料</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">提出</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_file" value="1" class="custom-control-input" id="use_examination_file" @if(old("use_examination_file", $learningtask->use_examination_file)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_file">アップロード</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_comment" value="1" class="custom-control-input" id="use_examination_comment" @if(old("use_examination_comment", $learningtask->use_examination_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_comment">本文入力</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="use_examination_mail" value="1" class="custom-control-input" id="use_examination_mail" @if(old("use_examination_mail", $learningtask->use_examination_mail)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_mail">メール送信（教員宛）</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">評価</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_evaluate_file" value="1" class="custom-control-input" id="use_examination_evaluate_file" @if(old("use_examination_evaluate_file", $learningtask->use_examination_evaluate_file)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_evaluate_file">アップロード</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_evaluate_comment" value="1" class="custom-control-input" id="use_examination_evaluate_comment" @if(old("use_examination_evaluate_comment", $learningtask->use_examination_evaluate_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_evaluate_comment">コメント入力</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="use_examination_evaluate_mail" value="1" class="custom-control-input" id="use_examination_evaluate_mail" @if(old("use_examination_evaluate_mail", $learningtask->use_examination_evaluate_mail)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_evaluate_mail">メール送信（受講者宛）</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">教員から参考資料</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_comment_file" value="1" class="custom-control-input" id="use_examination_comment_file" @if(old("use_examination_comment_file", $learningtask->use_examination_comment_file)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_comment_file">アップロード</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_comment_comment" value="1" class="custom-control-input" id="use_examination_comment_comment" @if(old("use_examination_comment_comment", $learningtask->use_examination_comment_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_comment_comment">コメント入力</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="use_examination_comment_mail" value="1" class="custom-control-input" id="use_examination_comment_mail" @if(old("use_examination_comment_mail", $learningtask->use_examination_comment_mail)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_comment_mail">メール送信（受講者宛）</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">表示方法</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_examination_status_collapse" value="1" class="custom-control-input" id="use_examination_status_collapse" @if(old("use_examination_status_collapse", $learningtask->use_examination_status_collapse)) checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_status_collapse">履歴を開閉する</label>
+            </div>
+        </div>
+    </div>
+
+    <h5><span class="badge badge-secondary">総合評価設定</span></h5>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">総合評価機能</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_evaluate" value="1" class="custom-control-input" id="use_evaluate" @if(old("use_evaluate", $learningtask->use_evaluate)) checked=checked @endif>
+                <label class="custom-control-label" for="use_evaluate">評価</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">総合評価コメント</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_evaluate_evaluate_file" value="1" class="custom-control-input" id="use_evaluate_evaluate_file" @if(old("use_evaluate_evaluate_file", $learningtask->use_evaluate_evaluate_file)) checked=checked @endif>
+                <label class="custom-control-label" for="use_evaluate_evaluate_file">アップロード</label>
+            </div>
+            <div class="custom-control custom-checkbox mr-3">
+                <input type="checkbox" name="use_evaluate_evaluate_comment" value="1" class="custom-control-input" id="use_evaluate_evaluate_comment" @if(old("use_evaluate_evaluate_comment", $learningtask->use_evaluate_evaluate_comment)) checked=checked @endif>
+                <label class="custom-control-label" for="use_evaluate_evaluate_comment">コメント入力</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="use_evaluate_evaluate_mail" value="1" class="custom-control-input" id="use_evaluate_evaluate_mail" @if(old("use_evaluate_evaluate_mail", $learningtask->use_evaluate_evaluate_mail)) checked=checked @endif>
+                <label class="custom-control-label" for="use_evaluate_evaluate_mail">メール送信（受講者宛）</label>
             </div>
         </div>
     </div>

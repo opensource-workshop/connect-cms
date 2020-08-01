@@ -37,7 +37,7 @@
 
     <h5><span class="badge badge-secondary">受講者選択（教員用）</span></h5>
     <div class="form-group row">
-        <label class="col-sm-3 control-label text-sm-right">評価する受講者</label>
+        <label class="col-sm-3 text-sm-right">評価する受講者</label>
         <div class="col-sm-9">
             <form action="{{url('/')}}/redirect/plugin/learningtasks/switchUser/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST">
                 {{ csrf_field() }}
@@ -145,7 +145,7 @@
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-1">
 
-                            <label class="col-sm-3 control-label text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
+                            <label class="col-sm-3 text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
                             <div class="col-sm-9">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="report_file" name="upload_file">
@@ -155,7 +155,7 @@
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-right"></label>
+                            <label class="col-sm-3 text-right"></label>
                             <div class="col-sm-9">
                                 <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポートを提出します。\nよろしいですか？');">
                                     <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
@@ -179,7 +179,7 @@
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
+                            <label class="col-sm-3 text-sm-right">添削・参考ファイル</label>
                             <div class="col-sm-9">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="status2_file" name="upload_file">
@@ -189,14 +189,14 @@
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                            <label class="col-sm-3 text-sm-right">コメント</label>
                             <div class="col-sm-9">
                                 <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
                             </div>
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
+                            <label class="col-sm-3 text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
                             <div class="col-sm-9">
                                 <select class="form-control mb-1" name="grade">
                                     <option>評価を選んでください。</option>
@@ -209,7 +209,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label class="col-sm-3 control-label text-right"></label>
+                            <label class="col-sm-3 text-right"></label>
                             <div class="col-sm-9">
                                 <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
                                     <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
@@ -233,7 +233,7 @@
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
+                            <label class="col-sm-3 text-sm-right">参考ファイル</label>
                             <div class="col-sm-9">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="status9_file" name="upload_file">
@@ -243,14 +243,14 @@
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                            <label class="col-sm-3 text-sm-right">コメント</label>
                             <div class="col-sm-9">
                                 <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
                             </div>
                         </div>
 
                         <div class="form-group row">
-                            <label class="col-sm-3 control-label text-right"></label>
+                            <label class="col-sm-3 text-right"></label>
                             <div class="col-sm-9">
                                 <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
                                     <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
@@ -298,7 +298,7 @@
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-3">
-                            <label class="col-sm-3 control-label text-sm-right">試験日</label>
+                            <label class="col-sm-3 text-sm-right">試験日</label>
                             <div class="col-sm-9">
                                 @if (count($examinations) > 0)
                                     @foreach ($examinations as $examination)
@@ -440,7 +440,7 @@
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-1">
 
-                            <label class="col-sm-3 control-label text-sm-right">解答ファイル <label class="badge badge-danger">必須</label></label>
+                            <label class="col-sm-3 text-sm-right">解答ファイル <label class="badge badge-danger">必須</label></label>
                             <div class="col-sm-9">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="status5_file" name="upload_file">
@@ -450,7 +450,7 @@
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-right"></label>
+                            <label class="col-sm-3 text-right"></label>
                             <div class="col-sm-9">
                                 <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('試験の解答を提出します。\nよろしいですか？');">
                                     <i class="fas fa-check"></i> <span class="hidden-xs">試験の解答提出</span>
@@ -475,7 +475,7 @@
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">添削・参考ファイル</label>
+                            <label class="col-sm-3 text-sm-right">添削・参考ファイル</label>
                             <div class="col-sm-9">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
@@ -485,14 +485,14 @@
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                            <label class="col-sm-3 text-sm-right">コメント</label>
                             <div class="col-sm-9">
                                 <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
                             </div>
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
+                            <label class="col-sm-3 text-sm-right">評価 <label class="badge badge-danger">必須</label></label>
                             <div class="col-sm-9">
                                 <select class="form-control mb-1" name="grade">
                                     <option>評価を選んでください。</option>
@@ -505,7 +505,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label class="col-sm-3 control-label text-right"></label>
+                            <label class="col-sm-3 text-right"></label>
                             <div class="col-sm-9">
                                 <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
                                     <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
@@ -529,7 +529,7 @@
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">参考ファイル</label>
+                            <label class="col-sm-3 text-sm-right">参考ファイル</label>
                             <div class="col-sm-9">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="status6_file" name="upload_file">
@@ -539,14 +539,14 @@
                         </div>
 
                         <div class="form-group row mb-1">
-                            <label class="col-sm-3 control-label text-sm-right">コメント</label>
+                            <label class="col-sm-3 text-sm-right">コメント</label>
                             <div class="col-sm-9">
                                 <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
                             </div>
                         </div>
 
                         <div class="form-group row">
-                            <label class="col-sm-3 control-label text-right"></label>
+                            <label class="col-sm-3 text-right"></label>
                             <div class="col-sm-9">
                                 <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
                                     <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
