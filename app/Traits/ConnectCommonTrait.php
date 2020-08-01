@@ -782,6 +782,28 @@ trait ConnectCommonTrait
     }
 
     /**
+     *  NetCommons2 からの移行パスワードでの認証
+     */
+    public function authNetCommons2Password($request)
+    {
+        // ログインするユーザの存在を確認
+        $user = User::where('userid', $request['userid'])->first();
+
+        // ユーザが存在しない
+        if (empty($user)) {
+            return false;
+        }
+
+        // パスワードチェック
+        if (Hash::check(md5($request->password), $user->password)) {
+	        // ログイン
+	        Auth::login($user, true);
+	        // トップページへ
+	        return redirect("/");
+        }
+    }
+
+    /**
      *  URLからページIDを取得
      */
     public function getPage($permanent_link, $language = null)
