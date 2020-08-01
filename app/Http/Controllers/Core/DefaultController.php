@@ -141,12 +141,11 @@ class DefaultController extends ConnectController
         //echo $next_language;
 
        // permanent_link の編集
-       // 言語がデフォルト(next_language がnull)＆2nd以降がある場合は、language_or_1stdir はpermanent_link の一部なので、結合する。
         if (empty($next_language) && $link_or_after2nd) {
+            // 言語がデフォルト(next_language がnull)＆2nd以降がある場合は、language_or_1stdir はpermanent_link の一部なので、結合する。
             $permanent_link = $language_or_1stdir . '/' . $link_or_after2nd;
-        }
-       // 言語がデフォルト(next_language がnull)＆2nd以降がない場合は、language_or_1stdir がディレクトリ。
-        elseif (empty($next_language)) {
+        } elseif (empty($next_language)) {
+            // 言語がデフォルト(next_language がnull)＆2nd以降がない場合は、language_or_1stdir がディレクトリ。
             $permanent_link = $language_or_1stdir;
         } else {
             $permanent_link = $link_or_after2nd;
@@ -226,17 +225,15 @@ class DefaultController extends ConnectController
                 //if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
                 $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
                 if (is_dir($template_dir)) {
-                    // テンプレート設定ファイルがある場合
                     if (File::exists($template_dir."/template.ini")) {
-                        // テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
+                        // テンプレート設定ファイルがある場合、テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
                         $template_inis = parse_ini_file($template_dir."/template.ini");
                         $template_name = $template_inis['template_name'];
                         if (empty($template_name)) {
                             $template_name = $file;
                         }
-                    }
-                    // テンプレート設定ファイルがない場合、テンプレートディレクトリ名をテンプレート名とする
-                    else {
+                    } else {
+                        // テンプレート設定ファイルがない場合、テンプレートディレクトリ名をテンプレート名とする
                         $template_name = $file;
                         $template_inis = array();
                     }
@@ -511,10 +508,10 @@ class DefaultController extends ConnectController
 
         // redirect_path があれば遷移
         if ($request->redirect_path) {
-            if($request->flash_message){
+            if ($request->flash_message) {
                 // フラッシュメッセージの設定があればLaravelのフラッシュデータ保存に連携
                 return redirect($request->redirect_path)->with('flash_message', $request->flash_message);
-            }else{
+            } else {
                 return redirect($request->redirect_path);
             }
         }
