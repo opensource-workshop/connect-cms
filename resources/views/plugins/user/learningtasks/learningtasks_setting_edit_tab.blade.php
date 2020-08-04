@@ -5,6 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  --}}
+@if (!empty($learningtasks_posts->id))
 <div class="frame-setting-menu">
     <nav class="navbar navbar-expand-md navbar-light bg-light">
         <span class="d-md-none">編集メニュー</span>
@@ -62,3 +63,4 @@
         </div>
     </nav>
 </div>
+@endif
