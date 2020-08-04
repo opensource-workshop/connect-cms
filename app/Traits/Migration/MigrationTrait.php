@@ -4,6 +4,7 @@ namespace App\Traits\Migration;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 use File;
 use Session;
@@ -15,6 +16,7 @@ use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
+use App\Models\Core\UsersRoles;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Contents\Contents;
@@ -25,6 +27,7 @@ use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputCols;
 use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Menus\Menu;
+use App\User;
 
 use App\Models\Migration\MigrationMapping;
 use App\Models\Migration\Nc2\Nc2Announcement;
@@ -57,6 +60,7 @@ use App\Traits\ConnectCommonTrait;
  * --- インポート
  * connect_page : source_key にインポート用ディレクトリ、destination_key に新ページID。ページ移行時、親を探すのに使用。
  * uploads      : source_key にNC2 のuploads_id、destination_key に新Upload のid。WYSIWYG 移行時に使用。
+ * users        : source_key にNC2 のuserid、destination_key にも同じuserid。インポートの判断はUsers テーブルで行うので、これは履歴のみ。
  * blogs        : source_key にNC2 のblogs_id、destination_key に新Blog のid。新旧のつなぎ＆2回目の実行用。
  * databases    : source_key にNC2 のdatabases_id、destination_key に新Database のid。新旧のつなぎ＆2回目の実行用。
  *
@@ -305,6 +309,12 @@ trait MigrationTrait
             $this->importCommonCategories();
         }
 
+        // ユーザデータの取り込み
+        if ($this->getMigrationConfig('user', 'cc_import_users')) {
+            $this->putMonitor(3, "users import Start.");
+            $this->importUsers();
+        }
+
         // ブログの取り込み
         if ($this->hasMigrationConfig('plugin', 'cc_import_pugins', 'blogs')) {
             $this->putMonitor(3, "blogs import Start.");
@@ -319,12 +329,10 @@ trait MigrationTrait
 
         // 新ページの取り込み
         if ($this->getMigrationConfig('pages', 'cc_import_pages')) {
-            $paths = File::glob(storage_path() . '/app/migration/_*');
+            $paths = File::glob(storage_path() . '/app/migration/@pages/*');
 
             // 新ページのループ
             foreach ($paths as $path) {
-                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
-
                 // ページ指定の有無
                 $cc_import_where_page_dirs = $this->getMigrationConfig('pages', 'cc_import_where_page_dirs');
                 if (!empty($cc_import_where_page_dirs)) {
@@ -332,6 +340,8 @@ trait MigrationTrait
                         continue;
                     }
                 }
+
+                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
 
                 // ページの設定取得
                 $page_ini = parse_ini_file($path. '/page.ini', true);
@@ -474,6 +484,109 @@ trait MigrationTrait
         // 登録したカテゴリをCollection で返す
         $categories = Categories::where('target', $target)->where('plugin_id', $plugin_id)->orderBy('id', 'asc')->get();
         return $categories;
+    }
+
+    /**
+     * Connect-CMS 移行形式のユーザをインポート
+     */
+    private function importUsers()
+    {
+        // ユーザ定義・ファイル定義の取り込み
+        $users_ini = parse_ini_file(storage_path() . '/app/migration/@users/users.ini', true);
+
+        // ユーザ定義のループ
+        if (array_key_exists('users', $users_ini) && array_key_exists('user', $users_ini['users'])) {
+            foreach ($users_ini['users']['user'] as $user_key => $username) {
+                // ユーザ情報
+                $user_item = null;
+                if (array_key_exists($user_key, $users_ini)) {
+                    $user_item = $users_ini[$user_key];
+                } else {
+                    $this->putError(3, 'ユーザデータの詳細なし', "user_key = " . $user_key . " name = " . $username);
+                    continue;
+                }
+
+                // ユーザテーブルの取得
+                $user = User::where('userid', $user_item['userid'])->first();
+
+                // 移行のテスト用（メールアドレスに半角@が含まれていたら、全角＠に変更する。（テスト中の誤送信防止用））
+                $email = $user_item['email'];
+                if ($this->getMigrationConfig('user', 'cc_import_user_test_mail')) {
+                    $email = str_replace('@', '＠', $user_item['email']);
+                }
+                // Duplicate entry 制約があるので、空文字ならnull に変換
+                if ($email == "") {
+                    $email = null;
+                }
+
+                // パスワードのチェック（id とパスワードが同じなら警告）
+                if (md5($user_item['userid']) == $user_item['password']) {
+                    $this->putError(3, 'ログインIDとパスワードが同じ。', "userid = " . $user_item['userid'] . " name = " . $user_item['name']);
+                }
+
+                // ユーザがあるかの確認
+                if (empty($user)) {
+                    // ユーザテーブルがなければ、追加
+                    $user = User::create([
+                        'name'     => $user_item['name'],
+                        'email'    => $email,
+                        'userid'   => $user_item['userid'],
+                        'password' => Hash::make($user_item['password']),
+                    ]);
+
+                    // マッピングテーブルの追加
+                    $mapping = MigrationMapping::create([
+                        'target_source_table'  => 'users',
+                        'source_key'           => $user_item['userid'],
+                        'destination_key'      => $user_item['userid'],
+                    ]);
+                } else {
+                    // ユーザテーブルがあれば、Users テーブルを更新
+                    $user->name      = $user_item['name'];
+                    $user->email     = $email;
+                    $user->userid    = $user_item['userid'];
+                    $user->password  = Hash::make($user_item['password']);
+                    $user->save();
+                }
+                // ユーザー権限をインポートする。
+                $this->importUsersRoles($user, 'base',   $user_item);
+                $this->importUsersRoles($user, 'manage', $user_item);
+            }
+        }
+    }
+
+    /**
+     * Connect-CMS 移行形式のユーザ権限をインポート
+     */
+    private function importUsersRoles($user, $target, $user_item)
+    {
+
+        // 権限の比較と更新
+        $users_roles_records = UsersRoles::select('role_name')->where('users_id', $user->id)->where('target', $target)->get();
+        $users_roles_beings = $users_roles_records->pluck('role_name')->toArray();
+
+        // 対象のターゲットの存在確認
+        if (array_key_exists('users_roles_'. $target, $user_item)) {
+            $users_roles_news = explode('|', $user_item['users_roles_'. $target]);
+        } else {
+            $users_roles_news = array();
+        }
+
+        // 既存にしかないものは削除
+        foreach (array_diff($users_roles_beings, $users_roles_news) as $delete_role) {
+            UsersRoles::where('users_id', $user->id)->where('target', $target)->where('role_name', $delete_role)->delete();
+        }
+
+        // インポートファイルにしかないものは追加
+        foreach (array_diff($users_roles_news, $users_roles_beings) as $insert_role) {
+            UsersRoles::create([
+                'users_id'   => $user->id,
+                'target'     => $target,
+                'role_name'  => $insert_role,
+                'role_value' => 1,
+            ]);
+        }
+        return;
     }
 
     /**
@@ -1033,6 +1146,26 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // NC2 のview_count
+        $view_count = 10; // 初期値
+        if (!empty($database_ini) && array_key_exists('database_base', $database_ini) && array_key_exists('view_count', $database_ini['database_base'])) {
+            $view_count = $database_ini['database_base']['view_count'];
+        }
+
+        // databases_frames 登録
+        if (!empty($databases)) {
+            DatabasesFrames::create([
+                'databases_id'      => $databases->id,
+                'frames_id'         => $frame->id,
+                'use_search_flag'   => 1,
+                'use_select_flag'   => 1,
+                'use_sort_flag'     => null,
+                'default_sort_flag' => null,
+                'view_count'        => $view_count,
+                'default_hide'      => 0,
+            ]);
+        }
     }
 
     /**
@@ -1906,12 +2039,12 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $uploads_path = $uploads_path . '/';
         }
 
-        // uploads データとファイルのエクスポート
+        // アップロード・データとファイルのエクスポート
         if ($this->getMigrationConfig('uploads', 'nc2_export_uploads')) {
             $this->nc2ExportUploads($uploads_path);
         }
 
-        // カテゴリデータのエクスポート
+        // 共通カテゴリデータのエクスポート
         if ($this->getMigrationConfig('categories', 'nc2_export_categories')) {
             $this->nc2ExportCategories();
         }
@@ -1989,10 +2122,10 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
                 // ページディレクトリの作成
                 $new_page_index = $nc2_sort_page->page_id;
-                Storage::makeDirectory('migration/_' . $this->zeroSuppress($new_page_index));
+                Storage::makeDirectory('migration/@pages/' . $this->zeroSuppress($new_page_index));
 
                 // ページ設定ファイルの出力
-                Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
+                Storage::put('migration/@pages/' . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::updateOrCreate(
@@ -2199,18 +2332,19 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             }
             $users_ini .= "\n";
             $users_ini .= "[\"" . $nc2_user->user_id . "\"]\n";
-            $users_ini .= "name        = \"" . $nc2_user->handle . "\"\n";
-            $users_ini .= "email       = \"" . $nc2_user->email . "\"\n";
-            $users_ini .= "userid      = \"" . $nc2_user->login_id . "\"\n";
-            $users_ini .= "password    = \"" . $nc2_user->password . "\"\n";
+            $users_ini .= "name               = \"" . $nc2_user->handle . "\"\n";
+            $users_ini .= "email              = \"" . $nc2_user->email . "\"\n";
+            $users_ini .= "userid             = \"" . $nc2_user->login_id . "\"\n";
+            $users_ini .= "password           = \"" . $nc2_user->password . "\"\n";
             if ($nc2_user->role_authority_id == 1) {
-                $users_ini .= "users_roles = \"role_article_admin|admin_system\"\n";
+                $users_ini .= "users_roles_manage = \"admin_system\"\n";
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc2_user->role_authority_id == 2) {
-                $users_ini .= "users_roles = \"role_article_admin\"\n";
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc2_user->role_authority_id == 3) {
-                $users_ini .= "users_roles = \"role_article\"\n";
+                $users_ini .= "users_roles_base   = \"role_article\"\n";
             } elseif ($nc2_user->role_authority_id == 4) {
-                $users_ini .= "users_roles = \"role_reporter\"\n";
+                $users_ini .= "users_roles_base   = \"role_reporter\"\n";
             }
         }
 
@@ -2681,7 +2815,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $frame_ini .= $frame_nc2;
 
             // フレーム設定ファイルの出力
-            Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+            Storage::put('migration/@pages/' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
 
             //echo $nc2_block->block_name . "\n";
 
@@ -2806,7 +2940,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         }
 
         // WYSIWYG 記事のエクスポート
-        $save_folder = '_' . $this->zeroSuppress($new_page_index);
+        $save_folder = '@pages/' . $this->zeroSuppress($new_page_index);
         $content_filename = "frame_" . $frame_index_str . '.html';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
