@@ -329,12 +329,10 @@ trait MigrationTrait
 
         // 新ページの取り込み
         if ($this->getMigrationConfig('pages', 'cc_import_pages')) {
-            $paths = File::glob(storage_path() . '/app/migration/_*');
+            $paths = File::glob(storage_path() . '/app/migration/@pages/*');
 
             // 新ページのループ
             foreach ($paths as $path) {
-                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
-
                 // ページ指定の有無
                 $cc_import_where_page_dirs = $this->getMigrationConfig('pages', 'cc_import_where_page_dirs');
                 if (!empty($cc_import_where_page_dirs)) {
@@ -342,6 +340,8 @@ trait MigrationTrait
                         continue;
                     }
                 }
+
+                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
 
                 // ページの設定取得
                 $page_ini = parse_ini_file($path. '/page.ini', true);
@@ -1146,6 +1146,26 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // NC2 のview_count
+        $view_count = 10; // 初期値
+        if (!empty($database_ini) && array_key_exists('database_base', $database_ini) && array_key_exists('view_count', $database_ini['database_base'])) {
+            $view_count = $database_ini['database_base']['view_count'];
+        }
+
+        // databases_frames 登録
+        if (!empty($databases)) {
+            DatabasesFrames::create([
+                'databases_id'      => $databases->id,
+                'frames_id'         => $frame->id,
+                'use_search_flag'   => 1,
+                'use_select_flag'   => 1,
+                'use_sort_flag'     => null,
+                'default_sort_flag' => null,
+                'view_count'        => $view_count,
+                'default_hide'      => 0,
+            ]);
+        }
     }
 
     /**
@@ -2102,10 +2122,10 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
                 // ページディレクトリの作成
                 $new_page_index = $nc2_sort_page->page_id;
-                Storage::makeDirectory('migration/_' . $this->zeroSuppress($new_page_index));
+                Storage::makeDirectory('migration/@pages/' . $this->zeroSuppress($new_page_index));
 
                 // ページ設定ファイルの出力
-                Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
+                Storage::put('migration/@pages/' . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::updateOrCreate(
@@ -2795,7 +2815,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $frame_ini .= $frame_nc2;
 
             // フレーム設定ファイルの出力
-            Storage::put('migration/_' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+            Storage::put('migration/@pages/' . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
 
             //echo $nc2_block->block_name . "\n";
 
@@ -2920,7 +2940,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         }
 
         // WYSIWYG 記事のエクスポート
-        $save_folder = '_' . $this->zeroSuppress($new_page_index);
+        $save_folder = '@pages/' . $this->zeroSuppress($new_page_index);
         $content_filename = "frame_" . $frame_index_str . '.html';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
