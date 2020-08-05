@@ -511,9 +511,16 @@ class DefaultController extends ConnectController
 
             $redirect_response = redirect($request->redirect_path);
             if ($request->flash_message) {
-                // フラッシュメッセージの設定があればLaravelのフラッシュデータ保存に連携
+                // フラッシュメッセージの設定があれば、Laravelのフラッシュデータ保存に連携
                 $redirect_response = $redirect_response->with('flash_message', $request->flash_message);
             }
+            if ($request->validator) {
+                // バリデーターの設定があれば（エラーチェックの結果、NGがあれば）、Laravelのバリデータ機能に連携
+                $redirect_response = $redirect_response->withErrors($request->validator->errors());
+                // フラッシュデータとして前画面の入力値を保存
+                $request->session()->flash('_old_input', $request->except('validator'));
+            }
+
             return $redirect_response;
         }
 
