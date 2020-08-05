@@ -2184,16 +2184,16 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
      */
     private function nc2ExportUploads($uploads_path)
     {
-        $this->putMonitor(3, "Start nc2ExportUploads.");
+        $this->putMonitor(3, "Start this->nc2ExportUploads.");
 
         // NC2 アップロードテーブルを移行する。
         $nc2_uploads = Nc2Upload::orderBy('upload_id')->get();
 
         // uploads,ini ファイル
-        $uploads_ini = "[uploads]";
-        Storage::put('migration/@uploads/uploads.ini', $uploads_ini);
+        Storage::put('migration/@uploads/uploads.ini', "[uploads]");
 
         // uploads,ini ファイルの詳細（変数に保持、後でappend。[uploads] セクションが切れないため。）
+        $uploads_ini = "";
         $uploads_ini_detail = "";
 
         // アップロード・ファイルのループ
@@ -2208,6 +2208,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $destination_file_dir = storage_path() . "/app/migration/@uploads";
             $destination_file_name = "upload_" . $this->zeroSuppress($nc2_upload->upload_id, 5);
             $destination_file_path = $destination_file_dir . '/' . $destination_file_name . '.' . $nc2_upload->extension;
+
             if (File::exists($source_file_path)) {
                 if (!File::isDirectory($destination_file_dir)) {
                     File::makeDirectory($destination_file_dir, 0775, true);
@@ -2215,8 +2216,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 File::copy($source_file_path, $destination_file_path);
             }
 
-            $uploads_ini = "upload[" . $nc2_upload->upload_id . "] = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"";
-            Storage::append('migration/@uploads/uploads.ini', $uploads_ini);
+            $uploads_ini .= "upload[" . $nc2_upload->upload_id . "] = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"\n";
 
             $uploads_ini_detail .= "\n";
             $uploads_ini_detail .= "[" . $nc2_upload->upload_id . "]\n";
@@ -2227,10 +2227,11 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $uploads_ini_detail .= "extension = \"" . $nc2_upload->extension . "\"\n";
             $uploads_ini_detail .= "plugin_name = \"" . $this->nc2GetPluginName($nc2_upload->file_path) . "\"\n";
             $uploads_ini_detail .= "page_id = \"0\"\n";
+            $uploads_ini_detail .= "nc2_room_id = \"" . $nc2_upload->room_id . "\"\n";
         }
 
-        // フレーム設定ファイルの出力
-        Storage::append('migration/@uploads/uploads.ini', $uploads_ini_detail);
+        // アップロード一覧の出力
+        Storage::append('migration/@uploads/uploads.ini', $uploads_ini . $uploads_ini_detail);
 
         // uploads のini ファイルの再読み込み
         if (Storage::exists('migration/@uploads/uploads.ini')) {
@@ -2378,6 +2379,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $journals_ini .= "\n";
             $journals_ini .= "[nc2_info]\n";
             $journals_ini .= "journal_id = " . $nc2_journal->journal_id . "\n";
+            $journals_ini .= "room_id = " . $nc2_journal->room_id . "\n";
 
             // NC2日誌のカテゴリ（journal_category）を移行する。
             $journals_ini .= "\n";
@@ -2525,6 +2527,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $multidatabase_ini .= "\n";
             $multidatabase_ini .= "[nc2_info]\n";
             $multidatabase_ini .= "multidatabase_id = " . $nc2_multidatabase->multidatabase_id . "\n";
+            $multidatabase_ini .= "room_id = " . $nc2_multidatabase->room_id . "\n";
 
             // 汎用データベースのカラム情報
             $multidatabase_metadatas = Nc2MultidatabaseMetadata::where('multidatabase_id', $multidatabase_id)
