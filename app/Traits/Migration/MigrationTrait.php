@@ -549,7 +549,7 @@ trait MigrationTrait
                     $user->save();
                 }
                 // ユーザー権限をインポートする。
-                $this->importUsersRoles($user, 'base',   $user_item);
+                $this->importUsersRoles($user, 'base', $user_item);
                 $this->importUsersRoles($user, 'manage', $user_item);
             }
         }
@@ -2303,7 +2303,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         $nc2_users_query = Nc2User::select('users.*', 'users_items_link.content AS email')
                                   ->where('active_flag', 1);
         if (!empty($nc2_mail_item)) {
-            $nc2_users_query->leftJoin('users_items_link', function ($join) use($nc2_mail_item) {
+            $nc2_users_query->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
                 $join->on('users_items_link.user_id', '=', 'users.user_id')
                      ->where('users_items_link.item_id', '=', $nc2_mail_item->item_id);
             });
