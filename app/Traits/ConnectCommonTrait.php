@@ -348,13 +348,12 @@ trait ConnectCommonTrait
             }
 
             // 権限が範囲内か
-            // ロールが入っていない（全対象）の場合は、対象レコードとなるので、設定されている可否を使用
             if (empty($configs_login_permit->role)) {
+                // ロールが入っていない（全対象）の場合は、対象レコードとなるので、設定されている可否を使用
                 //Log::debug("role空で対象：" . $configs_login_permit->reject);
                 $login_reject = $configs_login_permit->reject;
-            }
-            // 許可/拒否設定が自分のロールに合致すれば、対象の許可/拒否設定を反映
-            elseif ($this->check_role($user, $configs_login_permit->role)) {
+            } elseif ($this->check_role($user, $configs_login_permit->role)) {
+                // 許可/拒否設定が自分のロールに合致すれば、対象の許可/拒否設定を反映
                 //Log::debug("role合致で対象：" . $configs_login_permit->reject);
                 $login_reject = $configs_login_permit->reject;
             }
@@ -779,6 +778,28 @@ trait ConnectCommonTrait
             }
         }
         return;
+    }
+
+    /**
+     *  NetCommons2 からの移行パスワードでの認証
+     */
+    public function authNetCommons2Password($request)
+    {
+        // ログインするユーザの存在を確認
+        $user = User::where('userid', $request['userid'])->first();
+
+        // ユーザが存在しない
+        if (empty($user)) {
+            return false;
+        }
+
+        // パスワードチェック
+        if (Hash::check(md5($request->password), $user->password)) {
+            // ログイン
+            Auth::login($user, true);
+            // トップページへ
+            return redirect("/");
+        }
     }
 
     /**
