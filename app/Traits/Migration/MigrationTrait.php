@@ -400,9 +400,28 @@ trait MigrationTrait
         // アップロード・ファイル定義の取り込み
         $uploads_ini = parse_ini_file(storage_path() . '/app/migration/@uploads/uploads.ini', true);
 
+        // ルームの指定（あれば後で使う）
+        $cc_import_uploads_room_ids = $this->getMigrationConfig('uploads', 'cc_import_uploads_room_ids');
+
         // アップロード・ファイルのループ
         if (array_key_exists('uploads', $uploads_ini) && array_key_exists('upload', $uploads_ini['uploads'])) {
             foreach ($uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
+                // ルーム指定を探しておく。。
+                $room_id = null;
+                if (array_key_exists('nc2_room_id', $uploads_ini[$upload_key])) {
+                    $room_id = $uploads_ini[$upload_key]['nc2_room_id'];
+                }
+
+                // ルーム指定があれば、指定されたルームのみ処理する。
+                if (empty($cc_import_uploads_room_ids)) {
+                    // ルーム指定なし。全データの移行
+                } elseif (!empty($room_id) && !empty($cc_import_uploads_room_ids) && in_array($room_id, $cc_import_uploads_room_ids)) {
+                    // ルーム指定あり。指定ルームに合致する。
+                } else {
+                    // ルーム指定あり。条件に合致せず。移行しない。
+                    continue;
+                }
+
                 // マッピングテーブルの取得
                 $mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $upload_key)->first();
 
