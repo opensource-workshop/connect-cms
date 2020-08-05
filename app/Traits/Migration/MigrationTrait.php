@@ -277,6 +277,15 @@ trait MigrationTrait
     }
 
     /**
+     * インポートする際の参照コンテンツ（画像、ファイル）の追加ディレクトリ取得
+     */
+    private function getImportSrcDir($default = '/file/')
+    {
+        $cc_import_add_src_dir = $this->getMigrationConfig('pages', 'cc_import_add_src_dir', '');
+        return $cc_import_add_src_dir . $default ;
+    }
+
+    /**
      * 日時の関数
      */
     private function getCCDatetime($gmt_datetime)
@@ -331,6 +340,9 @@ trait MigrationTrait
         if ($this->getMigrationConfig('pages', 'cc_import_pages')) {
             $paths = File::glob(storage_path() . '/app/migration/@pages/*');
 
+            // ルームの指定（あれば後で使う）
+            $cc_import_page_room_ids = $this->getMigrationConfig('pages', 'cc_import_page_room_ids');
+
             // 新ページのループ
             foreach ($paths as $path) {
                 // ページ指定の有無
@@ -341,11 +353,48 @@ trait MigrationTrait
                     }
                 }
 
-                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
+//                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
 
                 // ページの設定取得
                 $page_ini = parse_ini_file($path. '/page.ini', true);
                 //print_r($page_ini);
+
+                // ルーム指定を探しておく。
+                $room_id = null;
+                if (array_key_exists('page_base', $page_ini) && array_key_exists('nc2_room_id', $page_ini['page_base'])) {
+                    $room_id = $page_ini['page_base']['nc2_room_id'];
+                }
+
+                // ルーム指定があれば、指定されたルームのみ処理する。
+                if (empty($cc_import_page_room_ids)) {
+                    // ルーム指定なし。全データの移行
+                } elseif (!empty($room_id) && !empty($cc_import_page_room_ids) && in_array($room_id, $cc_import_page_room_ids)) {
+                    // ルーム指定あり。指定ルームに合致する。
+                } else {
+                    // ルーム指定あり。条件に合致せず。移行しない。
+                    continue;
+                }
+
+                // インポートする際のURL変更（前方一致）"変更前|変更後"
+                $cc_import_page_url_changes = $this->getMigrationConfig('pages', 'cc_import_page_url_changes');
+                if (!empty($cc_import_page_url_changes)) {
+                    foreach ($cc_import_page_url_changes as $cc_import_page_url_change) {
+                        $url_change_parts = explode('|', $cc_import_page_url_change);
+
+                        // 指定のURLの判定は、完全一致 or 後ろに'/'をつけた状態で前方一致（/test を対象にした際、/test000 は対象にせず、/test/000 は対象にしたいため）
+                        if (array_key_exists('permanent_link', $page_ini['page_base']) &&
+                            !empty($page_ini['page_base']['permanent_link'])) {
+                            // 完全一致の場合は、/ に変換
+                            if ($page_ini['page_base']['permanent_link'] == $url_change_parts[0]) {
+                                $page_ini['page_base']['permanent_link'] = '/';
+                            }
+                            // 前方一致の場合は、指定部分を削除
+                            if (strpos($page_ini['page_base']['permanent_link'], $url_change_parts[0] . '/') === 0) {
+                                $page_ini['page_base']['permanent_link'] = str_replace($url_change_parts[0], '', $page_ini['page_base']['permanent_link']);
+                            }
+                        }
+                    }
+                }
 
                 // 固定リンクでページの存在確認
                 // 同じ固定リンクのページが存在した場合は、そのページを使用する。
@@ -390,6 +439,10 @@ trait MigrationTrait
                 $this->importHtmlImpl($page, $path);
             }
         }
+
+        // シーダーの呼び出し
+        $this->putMonitor(3, "seeder import Start.");
+        $this->importSeeder();
     }
 
     /**
@@ -513,9 +566,28 @@ trait MigrationTrait
         // ユーザ定義・ファイル定義の取り込み
         $users_ini = parse_ini_file(storage_path() . '/app/migration/@users/users.ini', true);
 
+        // ユーザの指定（あれば後で使う）
+        $cc_import_login_users = $this->getMigrationConfig('user', 'cc_import_login_users');
+
         // ユーザ定義のループ
         if (array_key_exists('users', $users_ini) && array_key_exists('user', $users_ini['users'])) {
             foreach ($users_ini['users']['user'] as $user_key => $username) {
+                // ユーザ指定を探しておく。
+                $userid = null;
+                if (array_key_exists('userid', $users_ini[$user_key])) {
+                    $userid = $users_ini[$user_key]['userid'];
+                }
+
+                // ユーザ指定があれば、指定されたユーザのみ処理する。
+                if (empty($cc_import_login_users)) {
+                    // ユーザ指定なし。全ユーザの移行
+                } elseif (!empty($userid) && !empty($cc_import_login_users) && in_array($userid, $cc_import_login_users)) {
+                    // ユーザ指定あり。指定ユーザに合致する。
+                } else {
+                    // ユーザ指定あり。条件に合致せず。移行しない。
+                    continue;
+                }
+
                 // ユーザ情報
                 $user_item = null;
                 if (array_key_exists($user_key, $users_ini)) {
@@ -619,10 +691,29 @@ trait MigrationTrait
         // ブログ定義の取り込み
         $blogs_ini_paths = File::glob(storage_path() . '/app/migration/@blogs/blog_*.ini');
 
+        // ルームの指定（あれば後で使う）
+        $cc_import_blogs_room_ids = $this->getMigrationConfig('blogs', 'cc_import_blogs_room_ids');
+
         // ブログ定義のループ
         foreach ($blogs_ini_paths as $blogs_ini_path) {
             // ini_file の解析
             $blog_ini = parse_ini_file($blogs_ini_path, true);
+
+            // ルーム指定を探しておく。
+            $room_id = null;
+            if (array_key_exists('nc2_info', $blog_ini) && array_key_exists('room_id', $blog_ini['nc2_info'])) {
+                $room_id = $blog_ini['nc2_info']['room_id'];
+            }
+
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($cc_import_blogs_room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_id) && !empty($cc_import_blogs_room_ids) && in_array($room_id, $cc_import_blogs_room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
 
             // nc2 の journal_id
             $nc2_journal_id = 0;
@@ -723,10 +814,29 @@ trait MigrationTrait
         // データベース定義の取り込み
         $databases_ini_paths = File::glob(storage_path() . '/app/migration/@databases/database_*.ini');
 
+        // ルームの指定（あれば後で使う）
+        $cc_import_databases_room_ids = $this->getMigrationConfig('databases', 'cc_import_databases_room_ids');
+
         // データベース定義のループ
         foreach ($databases_ini_paths as $databases_ini_path) {
             // ini_file の解析
             $databases_ini = parse_ini_file($databases_ini_path, true);
+
+            // ルーム指定を探しておく。
+            $room_id = null;
+            if (array_key_exists('nc2_info', $databases_ini) && array_key_exists('room_id', $databases_ini['nc2_info'])) {
+                $room_id = $databases_ini['nc2_info']['room_id'];
+            }
+
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($cc_import_databases_room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_id) && !empty($cc_import_databases_room_ids) && in_array($room_id, $cc_import_databases_room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
 
             // データベース指定の有無
             $cc_import_where_database_ids = $this->getMigrationConfig('databases', 'cc_import_where_database_ids');
@@ -926,6 +1036,35 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     }
 
     /**
+     * シーダーの呼び出し
+     */
+    private function importSeeder()
+    {
+        // とりあえずテスト用
+        $top_page = Page::where('permanent_link', '/')->first();
+        if (!empty($top_page)) {
+            $frame = Frame::create([
+                'page_id'          => $top_page->id,
+                'area_id'          => 1,
+                'frame_title'      => null,
+                'frame_design'     => 'none',
+                'plugin_name'      => 'menus',
+                'frame_col'        => 0,
+                'template'         => 'opencurrenttree',
+                'display_sequence' => 0,
+            ]);
+            Menu::create([
+                'frame_id'          => $frame->id,
+                'select_flag'       => 0,
+                'page_ids'          => '',
+                'folder_close_font' => 0,
+                'folder_open_font'  => 0,
+                'indent_font'       => 0,
+            ]);
+        }
+    }
+
+    /**
      * WYSIWYG 内の画像パスをエクスポート形式からConnect-CMS コンテンツへ変換
      */
     private function changeWYSIWYG($content)
@@ -952,12 +1091,12 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
         // アップロードファイルのパスへ変換
         foreach ($change_list as $image_path) {
-            if (strpos($image_path, '../@uploads') === 0) {
-                $img_filename = str_replace('../@uploads/', '', $image_path);
+            if (strpos($image_path, '../../@uploads') === 0) {
+                $img_filename = str_replace('../../@uploads/', '', $image_path);
                 $nc2_upload_id = array_search($img_filename, $this->uploads_ini['uploads']['upload']);
                 $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $nc2_upload_id)->first();
                 if (!empty($upload_mapping)) {
-                    $content = str_replace($image_path, '/file/' . $upload_mapping->destination_key, $content);
+                    $content = str_replace($image_path, $this->getImportSrcDir() . $upload_mapping->destination_key, $content);
                 } else {
                     // $this->putError(1, 'image path not found mapping', "コンテンツ中のアップロード画像のパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
                 }
@@ -1219,9 +1358,6 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
         $content_html = File::get($html_file_path);
 
-        // Google Analytics タグ部分を削除
-        $content_html = $this->deleteGATag($content_html);
-
         // 対象外の条件を確認
         $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
         foreach ($import_ommit_keywords as $import_ommit_keyword) {
@@ -1229,6 +1365,9 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 return;
             }
         }
+
+        // Google Analytics タグ部分を削除
+        $content_html = $this->deleteGATag($content_html);
 
         // Buckets 登録
         // echo "Buckets 登録\n";
@@ -1252,7 +1391,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         // 2 = "upload_00002.jpg"
         //
         // --- frame_0001.html
-        // img src="../@uploads/upload_00002.jpg"
+        // img src="../../@uploads/upload_00002.jpg"
         //
         if (array_key_exists('upload_images', $frame_ini)) {
             // アップロードファイル定義のループ
@@ -1265,7 +1404,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
                 // コンテンツ中のアップロード画像のパスの修正
                 if (!empty($migration_mapping)) {
-                    $content_html = str_replace($image_path, '/file/' . $migration_mapping->destination_key, $content_html);
+                    $content_html = str_replace($image_path, $this->getImportSrcDir() . $migration_mapping->destination_key, $content_html);
                 } else {
                     // $this->putError(1, 'image path not found mapping', "コンテンツ中のアップロード画像のパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
                 }
@@ -1282,7 +1421,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
                 // コンテンツ中のアップロードファイルのパスの修正
                 if (!empty($migration_mapping)) {
-                    $content_html = str_replace($file_path, '/file/' . $migration_mapping->destination_key, $content_html);
+                    $content_html = str_replace($file_path, $this->getImportSrcDir() . $migration_mapping->destination_key, $content_html);
                 } else {
                     // $this->putError(1, 'file path not found mapping', "コンテンツ中のアップロードファイルのパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
                 }
@@ -1322,7 +1461,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 File::copy($source_file_path, $destination_file_path);
 
                 // 画像のパスの修正
-                $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
+                $content_html = str_replace($filename, $this->getImportSrcDir() . $upload->id, $content_html);
             }
         }
 
@@ -1358,7 +1497,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 File::copy($source_file_path, $destination_file_path);
 
                 // ファイルのパスの修正
-                $content_html = str_replace($filename, '/file/' . $upload->id, $content_html);
+                $content_html = str_replace($filename, $this->getImportSrcDir() . $upload->id, $content_html);
             }
         }
 
@@ -2117,7 +2256,10 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             // NC2 のページID を使うことにした。
             //// 新規ページ用のインデックス
             //// 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
-            //// $new_page_index = 0;
+
+            // エクスポートしたページフォルダは連番にした。
+            // NC2 のページID を使うと、順番がおかしくなるため。
+            $new_page_index = 0;
 
             // ページのループ
             $this->putMonitor(1, "Page loop.");
@@ -2129,6 +2271,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
                 $page_ini .= "permanent_link = \"/" . $nc2_sort_page->permalink . "\"\n";
                 $page_ini .= "base_display_flag = 1\n";
+                $page_ini .= "nc2_room_id = \"" . $nc2_sort_page->room_id . "\"\n";
 
                 // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
                 if ($nc2_sort_page->parent_id > 1) {
@@ -2140,7 +2283,8 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 }
 
                 // ページディレクトリの作成
-                $new_page_index = $nc2_sort_page->page_id;
+                //$new_page_index = $nc2_sort_page->page_id;
+                $new_page_index++;
                 Storage::makeDirectory('migration/@pages/' . $this->zeroSuppress($new_page_index));
 
                 // ページ設定ファイルの出力
@@ -2743,6 +2887,12 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $nc2_blocks_query->whereNotIn('block_id', $export_ommit_blocks);
         }
 
+        // メニューが対象外なら除外する。
+        $export_ommit_menu = $this->getMigrationConfig('menus', 'export_ommit_menu');
+        if ($export_ommit_menu) {
+            $nc2_blocks_query->where('action_name', '<>', 'menu_view_main_init');
+        }
+
         $nc2_blocks = $nc2_blocks_query->orderBy('thread_num')
                                        ->orderBy('row_num')
                                        ->orderBy('col_num')
@@ -2992,7 +3142,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         if (!empty($img_srcs)) {
             $img_srcs = array_unique($img_srcs);
             foreach ($img_srcs as $img_src) {
-                if (stripos($img_src, '../@uploads') !== false && stripos($img_src, 'class=') === false) {
+                if (stripos($img_src, '../../@uploads') !== false && stripos($img_src, 'class=') === false) {
                     $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
                     $content = str_replace($img_src, $new_img_src, $content);
                 }
@@ -3074,7 +3224,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 //                        // 移行したアップロードファイルをini ファイルから探す
 //                        if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
 //                            // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
-//                            $export_path = '../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
+//                            $export_path = '../../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
 //
 //                            // [upload_images] or [upload_files] 内の画像情報の追記
 //                            $ini_text .= $param_split[1] . " = \"" . $export_path . "\"\n";
@@ -3125,7 +3275,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                         // 移行したアップロードファイルをini ファイルから探す
                         if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
                             // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
-                            $export_path = '../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
+                            $export_path = '../../@uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
 
                             // [upload_images] or [upload_files] 内の画像情報の追記
                             $export_paths[$param_split[1]] = $export_path;
