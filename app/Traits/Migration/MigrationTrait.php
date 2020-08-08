@@ -433,7 +433,7 @@ trait MigrationTrait
                     }
                 }
 
-                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
+                $this->putMonitor(1, "Page data loop.", "dir = " . basename($path));
 
                 // ページの設定取得
                 $page_ini = parse_ini_file($path. '/page.ini', true);
@@ -483,7 +483,7 @@ trait MigrationTrait
 
                 // 対象のURL がなかった場合はページの作成
                 if (empty($page)) {
-                    $this->putMonitor(3, "Page create.");
+                    $this->putMonitor(1, "Page create.");
 
                     // ページの作成
                     $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
