@@ -2388,7 +2388,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         $this->migrationInit();
 
         // uploads_path の最後に / がなければ追加
-        $uploads_path = $this->getMigrationConfig('uploads', 'nc2_export_uploads_path');
+        $uploads_path = config('migration.NC2_EXPORT_UPLOADS_PATH');
         if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
             $uploads_path = $uploads_path . '/';
         }
