@@ -2,6 +2,9 @@
 
 return [
 
+    // MIGRATION_CONFIG ファイルのパス
+    'MIGRATION_CONFIG_PATH' => env('MIGRATION_CONFIG_PATH'),
+
     // 移行処理の標準出力への出力
     'MIGRATION_JOB_MONITOR' => env('MIGRATION_JOB_MONITOR', true),
 

@@ -289,8 +289,11 @@ trait MigrationTrait
     private function migrationInit()
     {
         // 環境ごとの移行設定の読み込み
-        if (Storage::exists('migration_config/migration_config.ini')) {
-            $this->migration_config = parse_ini_file(storage_path() . '/app/migration_config/migration_config.ini', true);
+        //if (Storage::exists('migration_config/migration_config.ini')) {
+        //    $this->migration_config = parse_ini_file(storage_path() . '/app/migration_config/migration_config.ini', true);
+        //}
+        if (File::exists(config('migration.MIGRATION_CONFIG_PATH'))) {
+            $this->migration_config = parse_ini_file(config('migration.MIGRATION_CONFIG_PATH'), true);
         }
 
         // uploads のini ファイルの読み込み
