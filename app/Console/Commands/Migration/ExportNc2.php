@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 use App\Traits\Migration\MigrationTrait;
 
-class FromNc2 extends Command
+class ExportNc2 extends Command
 {
 
     use MigrationTrait;
@@ -16,7 +16,7 @@ class FromNc2 extends Command
      *
      * @var string
      */
-    protected $signature = 'command:MigrationFromNc2';
+    protected $signature = 'command:ExportNc2 {target?} {target_plugin?}';
 
     /**
      * The console command description.
@@ -43,6 +43,6 @@ class FromNc2 extends Command
     public function handle()
     {
         // NC2 をデータベースから移行する
-        $this->migrationNC2();
+        $this->exportNc2($this->argument("target"), $this->argument("target_plugin"));
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 
+use DB;
 use File;
 use Session;
 use Storage;
@@ -56,10 +57,11 @@ use App\Traits\ConnectCommonTrait;
  *
  * [MigrationMapping]テーブルの target_source_table の説明
  * --- エクスポート
- * nc2_pages    : source_key にNC2 のpage_id、destination_key にエクスポート用ページフォルダID（連番）
+ * nc2_pages    : source_key にNC2 のpage_id、destination_key にエクスポート用ページフォルダID（連番）：ページの階層調査用
  * --- インポート
  * connect_page : source_key にインポート用ディレクトリ、destination_key に新ページID。ページ移行時、親を探すのに使用。
- * uploads      : source_key にNC2 のuploads_id、destination_key に新Upload のid。WYSIWYG 移行時に使用。
+ * uploads      : source_key に共通部分は新たに採番したキー、オリジナル部分はNC2 のjournal_category のcategory_id
+ * categories   : source_key にNC2 のuploads_id、destination_key に新Upload のid。WYSIWYG 移行時に使用。
  * users        : source_key にNC2 のuserid、destination_key にも同じuserid。インポートの判断はUsers テーブルで行うので、これは履歴のみ。
  * blogs        : source_key にNC2 のblogs_id、destination_key に新Blog のid。新旧のつなぎ＆2回目の実行用。
  * databases    : source_key にNC2 のdatabases_id、destination_key に新Database のid。新旧のつなぎ＆2回目の実行用。
@@ -153,11 +155,71 @@ trait MigrationTrait
     ];
 
     /**
+     * バッチの対象（処理する対象 all or uploads など）
+     */
+    private $target = null;
+
+    /**
+     * バッチの対象プラグイン
+     */
+    private $target_plugin = null;
+
+    /**
      * テストメソッド
      */
     private function getTestStr()
     {
         return "This is MigrationTrait test.";
+    }
+
+    /**
+     * 処理対象の判定
+     */
+    private function isTarget($command, $target, $target_plugin = null)
+    {
+        // 変数説明
+        // $this->target = コマンドで指定された対象
+        // $target       = プログラム中で順次、処理対象か確認している、対象
+
+        // 対象外の条件をチェックして、対象外ならfalse を返す。最後まで到達すれば対象。
+        if ($this->target == 'all') {
+            // 全てなので、続き
+        } elseif ($this->target == $target) {
+            // 対象の処理なので、続き
+        } else {
+            // 対象外
+            return false;
+        }
+
+        // プラグインの場合は、プラグイン指定をチェック
+        if ($this->target == 'plugins') {
+            if ($this->target_plugin == 'all') {
+                // 全てなので、続き
+            } elseif ($this->target_plugin == $target_plugin) {
+                // 対象の処理なので、続き
+            } else {
+                // 対象外
+                return false;
+            }
+        }
+
+        // migration_config のチェック
+        if ($target == 'plugins') {
+            if ($this->hasMigrationConfig($target, $command . '_plugins', $target_plugin)) {
+                // 対象の処理が実行するように指定されているので、続き
+            } else {
+                return false;
+            }
+        } else {
+            if ($this->getMigrationConfig($target, $command . '_' . $target)) {
+                // 対象の処理が実行するように指定されているので、続き
+            } else {
+                return false;
+            }
+        }
+
+        // 対象
+        return true;
     }
 
     /**
@@ -300,44 +362,62 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のHTML をインポート
      */
-    private function importSite()
+    private function importSite($target, $target_plugin, $redo = null)
     {
+        if (empty(trim($target))) {
+            echo "\n";
+            echo "---------------------------------------------\n";
+            echo "処理の対象を指定してください。\n";
+            echo "すべて処理する場合は all を指定してください。\n";
+            echo "---------------------------------------------\n";
+            return;
+        }
+
+        $this->target        = $target;
+        $this->target_plugin = $target_plugin;
+
         $this->putMonitor(3, "importSite() Start.");
 
         // 移行の初期処理
         $this->migrationInit();
 
         // アップロード・ファイルの取り込み
-        if ($this->getMigrationConfig('uploads', 'cc_import_uploads')) {
-            $this->putMonitor(3, "uploads import Start.");
-            $this->importUploads();
+        if ($this->isTarget('cc_import', 'uploads')) {
+            $this->importUploads($redo);
         }
 
         // 共通カテゴリの取り込み
-        if ($this->getMigrationConfig('categories', 'cc_import_categories')) {
-            $this->importCommonCategories();
+        if ($this->isTarget('cc_import', 'categories')) {
+            $this->importCommonCategories($redo);
         }
 
         // ユーザデータの取り込み
-        if ($this->getMigrationConfig('user', 'cc_import_users')) {
-            $this->putMonitor(3, "users import Start.");
-            $this->importUsers();
+        if ($this->isTarget('cc_import', 'users')) {
+            $this->importUsers($redo);
         }
 
         // ブログの取り込み
-        if ($this->hasMigrationConfig('plugin', 'cc_import_pugins', 'blogs')) {
-            $this->putMonitor(3, "blogs import Start.");
-            $this->importBlogs();
+        if ($this->isTarget('cc_import', 'plugins', 'blogs')) {
+            $this->importBlogs($redo);
         }
 
         // データベースの取り込み
-        if ($this->hasMigrationConfig('plugin', 'cc_import_pugins', 'databases')) {
-            $this->putMonitor(3, "databases import Start.");
-            $this->importDatabases();
+        if ($this->isTarget('cc_import', 'plugins', 'databases')) {
+            $this->importDatabases($redo);
         }
 
         // 新ページの取り込み
-        if ($this->getMigrationConfig('pages', 'cc_import_pages')) {
+        if ($this->isTarget('cc_import', 'pages')) {
+            // データクリア
+            if ($redo === true) {
+                // トップページ以外の削除
+                Page::where('permanent_link', '<>', '/')->delete();
+                Frame::truncate();
+                Contents::truncate();
+                Buckets::where('plugin_name', 'contents')->delete();
+                MigrationMapping::where('target_source_table', 'connect_page')->delete();
+            }
+
             $paths = File::glob(storage_path() . '/app/migration/@pages/*');
 
             // ルームの指定（あれば後で使う）
@@ -353,7 +433,7 @@ trait MigrationTrait
                     }
                 }
 
-//                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
+                $this->putMonitor(3, "Page data loop.", "dir = " . basename($path));
 
                 // ページの設定取得
                 $page_ini = parse_ini_file($path. '/page.ini', true);
@@ -448,8 +528,18 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のアップロード・ファイルをインポート
      */
-    private function importUploads()
+    private function importUploads($redo)
     {
+        $this->putMonitor(3, "uploads import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            // アップロードテーブルのtruncate とmigration_mappings のuploads の削除、アップロードファイルの削除
+            Uploads::truncate();
+            MigrationMapping::where('target_source_table', 'uploads')->delete();
+            Storage::deleteDirectory(config('connect.directory_base'));
+        }
+
         // アップロード・ファイル定義の取り込み
         $uploads_ini = parse_ini_file(storage_path() . '/app/migration/@uploads/uploads.ini', true);
 
@@ -530,8 +620,17 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のカテゴリをインポート
      */
-    private function importCommonCategories()
+    private function importCommonCategories($redo)
     {
+        $this->putMonitor(3, "Categories import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            // カテゴリテーブルのtruncate とmigration_mappings のcategories の削除
+            Categories::truncate();
+            MigrationMapping::where('target_source_table', 'categories')->delete();
+        }
+
         // 共通カテゴリのファイル読み込み
         $source_file_path = 'migration/@categories/categories.ini';
         if (Storage::exists($source_file_path)) {
@@ -548,9 +647,47 @@ trait MigrationTrait
     private function importCategories($categories, $target = null, $plugin_id = null)
     {
         $display_sequence = 0;
-        foreach ($categories as $category) {
-            $display_sequence++;
-            $category = Categories::create(['classname' => 'category_default', 'category' => $category, 'color' => '#ffffff', 'background_color' => '#606060', 'target' => $target, 'plugin_id' => $plugin_id, 'display_sequence' => $display_sequence]);
+        foreach ($categories as $category_id => $category_name) {
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'categories')->where('source_key', $category_id)->first();
+
+            // マッピングテーブルの確認
+            if (empty($mapping)) {
+                // マッピングテーブルがなければ、Categories テーブルとマッピングテーブルを追加
+
+                $display_sequence++;
+                $category = Categories::create([
+                    'classname'        => 'category_default',
+                    'category'         => $category_name,
+                    'color'            => '#ffffff',
+                    'background_color' => '#606060',
+                    'target'           => $target,
+                    'plugin_id'        => $plugin_id,
+                    'display_sequence' => $display_sequence
+                ]);
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'categories',
+                    'source_key'           => $category_id,
+                    'destination_key'      => $category->id,
+                ]);
+            } else {
+                // マッピングテーブルがあれば、Categories テーブルを更新
+                $category = Categories::find($mapping->destination_key);
+                if (empty($category)) {
+                    $this->putMonitor(1, "No Mapping target = category", "destination_key = " . $mapping->destination_key);
+                } else {
+                    $category->classname        = 'category_default';
+                    $category->category         = $category_name;
+                    $category->color            = '#ffffff';
+                    $category->background_color = '#606060';
+                    $category->target           = $target;
+                    $category->plugin_id        = $plugin_id;
+                    $category->display_sequence = $display_sequence;
+                    $category->save();
+                }
+            }
         }
 
         // 登録したカテゴリをCollection で返す
@@ -561,13 +698,24 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のユーザをインポート
      */
-    private function importUsers()
+    private function importUsers($redo)
     {
+        $this->putMonitor(3, "Users import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            // 最初のユーザ以外の削除、migration_mappings のusers の削除
+            $first_user = User::orderBy('id', 'asc')->first();
+            UsersRoles::where('users_id', '<>', $first_user->id)->delete();
+            User::where('id', '<>', $first_user->id)->delete();
+            MigrationMapping::where('target_source_table', 'users')->delete();
+        }
+
         // ユーザ定義・ファイル定義の取り込み
         $users_ini = parse_ini_file(storage_path() . '/app/migration/@users/users.ini', true);
 
         // ユーザの指定（あれば後で使う）
-        $cc_import_login_users = $this->getMigrationConfig('user', 'cc_import_login_users');
+        $cc_import_login_users = $this->getMigrationConfig('users', 'cc_import_login_users');
 
         // ユーザ定義のループ
         if (array_key_exists('users', $users_ini) && array_key_exists('user', $users_ini['users'])) {
@@ -602,7 +750,7 @@ trait MigrationTrait
 
                 // 移行のテスト用（メールアドレスに半角@が含まれていたら、全角＠に変更する。（テスト中の誤送信防止用））
                 $email = $user_item['email'];
-                if ($this->getMigrationConfig('user', 'cc_import_user_test_mail')) {
+                if ($this->getMigrationConfig('users', 'cc_import_user_test_mail')) {
                     $email = str_replace('@', '＠', $user_item['email']);
                 }
                 // Duplicate entry 制約があるので、空文字ならnull に変換
@@ -683,8 +831,18 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のブログをインポート
      */
-    private function importBlogs()
+    private function importBlogs($redo)
     {
+        $this->putMonitor(3, "Blogs import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            // blogs、blogs_posts のtruncate
+            Blogs::truncate();
+            BlogsPosts::truncate();
+            MigrationMapping::where('target_source_table', 'blogs')->delete();
+        }
+
         // 共通カテゴリの取得
         $common_categories = Categories::whereNull('target')->whereNull('plugin_id')->orderBy('id', 'asc')->get();
 
@@ -809,8 +967,21 @@ trait MigrationTrait
     /**
      * Connect-CMS 移行形式のデータベースをインポート
      */
-    private function importDatabases()
+    private function importDatabases($redo)
     {
+        $this->putMonitor(3, "Databases import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            // databases、databases_columns、databases_columns_selects、databases_inputs、databases_input_cols のtruncate
+            Databases::truncate();
+            DatabasesColumns::truncate();
+            DatabasesColumnsSelects::truncate();
+            DatabasesInputs::truncate();
+            DatabasesInputCols::truncate();
+            MigrationMapping::where('target_source_table', 'databases')->delete();
+        }
+
         // データベース定義の取り込み
         $databases_ini_paths = File::glob(storage_path() . '/app/migration/@databases/database_*.ini');
 
@@ -1000,6 +1171,10 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                     $databases_input = DatabasesInputs::create(['databases_id' => $database->id, 'created_at' => $created_at, 'updated_at' => $updated_at]);
 
                     $databases_columns_id_idx = 0; // 処理カラムのloop index
+
+                    // データベースのバルクINSERT対応
+                    $bulks = array();
+
                     foreach ($database_tsv_cols as $database_tsv_col) {
                         // created_at、updated_at はカラムとしては読み飛ばす
                         if ($databases_columns_id_idx == $created_at_idx || $databases_columns_id_idx == $updated_at_idx) {
@@ -1018,6 +1193,12 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                             }
 
                             // セルデータの追加
+                            $bulks[] = ['databases_inputs_id'  => $databases_input->id,
+                                'databases_columns_id' => $column_ids[$databases_columns_id_idx],
+                                'value'                => $database_tsv_col,
+                                'created_at'           => $created_at,
+                                'updated_at'           => $updated_at];
+                            /*
                             $databases_input_cols = DatabasesInputCols::create([
                                 'databases_inputs_id'  => $databases_input->id,
                                 'databases_columns_id' => $column_ids[$databases_columns_id_idx],
@@ -1025,11 +1206,14 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                                 'created_at'           => $created_at,
                                 'updated_at'           => $updated_at,
                             ]);
+                            */
                         } else {
                             $this->putError(3, 'データベース詳細インポートエラー', "databases_columns_id_idx = " . $databases_columns_id_idx);
                         }
                         $databases_columns_id_idx++;
                     }
+                    // バルクINSERT
+                    DB::table('databases_input_cols')->insert($bulks);
                 }
             }
         }
@@ -1169,7 +1353,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         $plugin_name = $frame_ini['frame_base']['plugin_name'];
 
         // インポートするプラグインに指定されているか確認して、対象とする。
-        if (!$this->hasMigrationConfig('frames', 'import_frame_pugins', $plugin_name)) {
+        if (!$this->hasMigrationConfig('frames', 'import_frame_plugins', $plugin_name)) {
             return;
         }
 
@@ -1358,6 +1542,9 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
         $content_html = File::get($html_file_path);
 
+        // Google Analytics タグ部分を削除
+        $content_html = $this->deleteGATag($content_html);
+
         // 対象外の条件を確認
         $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
         foreach ($import_ommit_keywords as $import_ommit_keyword) {
@@ -1365,9 +1552,6 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 return;
             }
         }
-
-        // Google Analytics タグ部分を削除
-        $content_html = $this->deleteGATag($content_html);
 
         // Buckets 登録
         // echo "Buckets 登録\n";
@@ -2156,25 +2340,37 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
      * NC2_DB_PREFIX=netcommons2_ (例)
      *
      * 【実行コマンド】
-     * php artisan command:MigrationFromNc2
+     * php artisan command:ExportNc2
      *
      * 【ブロック・ツリーのCSV】
-     * migrationNC2() 関数の最後で echo $this->frame_tree; しています。
+     * exportNc2() 関数の最後で echo $this->frame_tree; しています。
      * これをコマンドでファイルに出力すればCSV になります。
      *
      * 【移行データ】
      * storage\app\migration にNC2 をエクスポートしたデータが入ります。
      *
      * 【ログ】
-     * migration/migrationNC2_{His}.log
+     * migration/exportNc2{His}.log
      *
      * 【画像】
      * src にhttp 指定などで、移行しなかった画像はログに出力
      *
      *
      */
-    private function migrationNC2()
+    private function exportNc2($target, $target_plugin)
     {
+        if (empty(trim($target))) {
+            echo "\n";
+            echo "---------------------------------------------\n";
+            echo "処理の対象を指定してください。\n";
+            echo "すべて処理する場合は all を指定してください。\n";
+            echo "---------------------------------------------\n";
+            return;
+        }
+
+        $this->target        = $target;
+        $this->target_plugin = $target_plugin;
+
         // NetCommons2 のページデータの取得
 
         // 【対象】
@@ -2186,7 +2382,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         // space_type でソートする。（パブリック、グループ）
         // thread_num, display_sequence でソートする。
 
-        $this->putMonitor(3, "Start migrationNC2.");
+        $this->putMonitor(3, "Start exportNc2.");
 
         // 移行の初期処理
         $this->migrationInit();
@@ -2198,32 +2394,32 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         }
 
         // アップロード・データとファイルのエクスポート
-        if ($this->getMigrationConfig('uploads', 'nc2_export_uploads')) {
+        if ($this->isTarget('nc2_export', 'uploads')) {
             $this->nc2ExportUploads($uploads_path);
         }
 
         // 共通カテゴリデータのエクスポート
-        if ($this->getMigrationConfig('categories', 'nc2_export_categories')) {
+        if ($this->isTarget('nc2_export', 'categories')) {
             $this->nc2ExportCategories();
         }
 
         // ユーザデータのエクスポート
-        if ($this->getMigrationConfig('user', 'nc2_export_users')) {
+        if ($this->isTarget('nc2_export', 'users')) {
             $this->nc2ExportUsers();
         }
 
         // NC2 日誌（journal）データのエクスポート
-        if ($this->hasMigrationConfig('plugin', 'nc2_export_pugins', 'blogs')) {
+        if ($this->isTarget('nc2_export', 'plugins', 'blogs')) {
             $this->nc2ExportJournal();
         }
 
         // NC2 汎用データベース（multidatabase）データのエクスポート
-        if ($this->hasMigrationConfig('plugin', 'nc2_export_pugins', 'databases')) {
+        if ($this->isTarget('nc2_export', 'plugins', 'databases')) {
             $this->nc2ExportMultidatabase();
         }
 
         // pages データとファイルのエクスポート
-        if ($this->getMigrationConfig('pages', 'nc2_export_pages')) {
+        if ($this->isTarget('nc2_export', 'pages')) {
             // NC2 のページデータ
             $nc2_pages_query = Nc2Page::where('private_flag', 0)
                                       ->where('root_id', '<>', 0)
@@ -2818,17 +3014,20 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $content_id = 0;
             $tsv_record = $tsv_cols;
             Storage::delete('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv');
+            $tsv = '';
             foreach ($multidatabase_metadata_contents as $multidatabase_metadata_content) {
                 // レコードのID が変わった＝コントロールブレイク
                 if ($content_id != $multidatabase_metadata_content->content_id) {
                     if ($content_id == 0) {
-                        Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv_header);
+                        //Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv_header);
+                        $tsv .= $tsv_header . "\n";
                     } else {
                         // 登録日時、更新日時
                         $tsv_record['insert_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_insert_time);
                         $tsv_record['update_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_update_time);
                         // データ行の書き出し
-                        Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
+                        //Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
+                        $tsv .= implode("\t", $tsv_record) . "\n";
                     }
                     $content_id = $multidatabase_metadata_content->content_id;
                     $tsv_record = $tsv_cols;
@@ -2865,8 +3064,10 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             // 登録日時、更新日時
             $tsv_record['insert_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_insert_time);
             $tsv_record['update_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_update_time);
+
             // データ行の書き出し
-            Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
+            //Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
+            Storage::append('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
 
             // detabase の設定
             Storage::put('migration/@databases/database_' . $this->zeroSuppress($multidatabase_id) . '.ini', $multidatabase_ini);
