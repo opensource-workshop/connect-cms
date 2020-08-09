@@ -33,6 +33,7 @@ use App\User;
 use App\Models\Migration\MigrationMapping;
 use App\Models\Migration\Nc2\Nc2Announcement;
 use App\Models\Migration\Nc2\Nc2Block;
+use App\Models\Migration\Nc2\Nc2Config;
 use App\Models\Migration\Nc2\Nc2Item;
 use App\Models\Migration\Nc2\Nc2Journal;
 use App\Models\Migration\Nc2\Nc2JournalBlock;
@@ -384,6 +385,11 @@ trait MigrationTrait
         // 移行の初期処理
         $this->migrationInit();
 
+        // サイト基本設定ファイルの取り込み
+        if ($this->isTarget('cc_import', 'basic')) {
+            $this->importBasic($redo);
+        }
+
         // アップロード・ファイルの取り込み
         if ($this->isTarget('cc_import', 'uploads')) {
             $this->importUploads($redo);
@@ -526,6 +532,30 @@ trait MigrationTrait
         // シーダーの呼び出し
         $this->putMonitor(3, "seeder import Start.");
         $this->importSeeder();
+    }
+
+    /**
+     * サイト基本設定をインポート
+     */
+    private function importBasic($redo)
+    {
+        $this->putMonitor(3, "Basic import Start.");
+
+        // サイト基本設定ファイル読み込み
+        $basic_file_path = 'migration/@basic/basic.ini';
+        if (Storage::exists($basic_file_path)) {
+            $basic_ini = parse_ini_file(storage_path() . '/app/' . $basic_file_path, true);
+
+            // サイト名
+            if (array_key_exists('basic', $basic_ini) && array_key_exists('site_name', $basic_ini['basic'])) {
+                $config = Configs::updateOrCreate(
+                    ['name'     => 'base_site_name'],
+                    ['name'     => 'base_site_name',
+                     'value'    => $basic_ini['basic']['site_name'],
+                     'category' => 'general']
+                );
+            }
+        }
     }
 
     /**
@@ -2396,6 +2426,11 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $uploads_path = $uploads_path . '/';
         }
 
+        // サイト基本設定のエクスポート
+        if ($this->isTarget('nc2_export', 'basic')) {
+            $this->nc2ExportBasic($uploads_path);
+        }
+
         // アップロード・データとファイルのエクスポート
         if ($this->isTarget('nc2_export', 'uploads')) {
             $this->nc2ExportUploads($uploads_path);
@@ -2522,6 +2557,28 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             return $this->plugin_name[$module_name];
         }
         return 'NotFound';
+    }
+
+    /**
+     *  NC2 の基本情報をエクスポートする。
+     */
+    private function nc2ExportBasic($uploads_path)
+    {
+        $this->putMonitor(3, "Start this->nc2ExportBasic.");
+
+        // config テーブルの取得
+        $configs = Nc2Config::get();
+
+        // site,ini ファイル編集
+        $basic_ini = "[basic]\n";
+
+        // サイト名
+        $sitename = $configs->where('conf_name', 'sitename')->first();
+        $sitename = empty($sitename) ? '' : $sitename->conf_value;
+        $basic_ini .= "site_name = \"" . $sitename . "\"\n";
+
+        // site,ini ファイル保存
+        Storage::put('migration/@basic/basic.ini', $basic_ini);
     }
 
     /**
