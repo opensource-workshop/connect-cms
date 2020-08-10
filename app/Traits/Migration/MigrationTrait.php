@@ -61,6 +61,8 @@ use App\Traits\ConnectCommonTrait;
  * nc2_pages    : source_key にNC2 のpage_id、destination_key にエクスポート用ページフォルダID（連番）：ページの階層調査用
  * --- インポート
  * connect_page : source_key にインポート用ディレクトリ、destination_key に新ページID。ページ移行時、親を探すのに使用。
+ * frames       : source_key にNC2 のblock_id、destination_key に新 frame_id
+ * menus        : source_key にNC2 のblock_id or 追加キー、destination_key に新 menu_id
  * uploads      : source_key に共通部分は新たに採番したキー、オリジナル部分はNC2 のjournal_category のcategory_id
  * categories   : source_key にNC2 のuploads_id、destination_key に新Upload のid。WYSIWYG 移行時に使用。
  * users        : source_key にNC2 のuserid、destination_key にも同じuserid。インポートの判断はUsers テーブルで行うので、これは履歴のみ。
@@ -285,6 +287,25 @@ trait MigrationTrait
     }
 
     /**
+     * 配列の値の取得
+     */
+    private function getArrayValue($array, $key1, $key2 = null)
+    {
+        $value1 = "";
+        if (array_key_exists($key1, $array)) {
+            $value1 = $array[$key1];
+        }
+        if (empty($key2)) {
+            return $value1;
+        }
+        $value2 = "";
+        if (array_key_exists($key2, $value1)) {
+            $value2 = $value1[$key2];
+        }
+        return $value2;
+    }
+
+    /**
      * インポートの初期処理
      */
     private function migrationInit()
@@ -422,6 +443,7 @@ trait MigrationTrait
                 // トップページ以外の削除
                 Page::where('permanent_link', '<>', '/')->delete();
                 Frame::truncate();
+                Menu::truncate();
                 Contents::truncate();
                 Buckets::where('plugin_name', 'contents')->delete();
                 MigrationMapping::where('target_source_table', 'connect_page')->delete();
@@ -530,8 +552,9 @@ trait MigrationTrait
         }
 
         // シーダーの呼び出し
-        $this->putMonitor(3, "seeder import Start.");
-        $this->importSeeder();
+        if ($this->isTarget('cc_import', 'addition')) {
+            $this->importSeeder($redo);
+        }
     }
 
     /**
@@ -1255,29 +1278,40 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     /**
      * シーダーの呼び出し
      */
-    private function importSeeder()
+    private function importSeeder($redo)
     {
-        // とりあえずテスト用
-        $top_page = Page::where('permanent_link', '/')->first();
-        if (!empty($top_page)) {
-            $frame = Frame::create([
-                'page_id'          => $top_page->id,
-                'area_id'          => 1,
-                'frame_title'      => null,
-                'frame_design'     => 'none',
-                'plugin_name'      => 'menus',
-                'frame_col'        => 0,
-                'template'         => 'opencurrenttree',
-                'display_sequence' => 0,
-            ]);
-            Menu::create([
-                'frame_id'          => $frame->id,
-                'select_flag'       => 0,
-                'page_ids'          => '',
-                'folder_close_font' => 0,
-                'folder_open_font'  => 0,
-                'indent_font'       => 0,
-            ]);
+        $this->putMonitor(3, "seeder import Start.");
+
+        // メニューの処理
+        $this->importSeederMenu($redo);
+    }
+
+    /**
+     * シーダー（メニュー）の呼び出し
+     */
+    private function importSeederMenu($redo)
+    {
+        // メニュー追加ファイル読み込み
+        $frame_ini_paths = File::glob(storage_path() . '/app/migration/@addition/menus/menu*.ini');
+
+        foreach ($frame_ini_paths as $frame_ini_path) {
+            // フレーム毎のini_file の解析
+            $frame_ini = parse_ini_file($frame_ini_path, true);
+
+            // ページ
+            $page_id = $this->getArrayValue($frame_ini, 'frame_base', 'page_id');
+            if (empty($page_id)) {
+                $this->putError(3, 'メニューの追加でpage_id なし', "frame_ini_path = " . $frame_ini_path);
+            } elseif ($page_id == '{top_page_id}') {
+                $page = Page::where('permanent_link', '/')->first();
+            } else {
+                $page = Page::get('id', $page_id)->first();
+            }
+
+            // その他パラメータ
+            $page_dir = null;
+            $display_sequence = $this->getArrayValue($frame_ini, 'frame_base', 'display_sequence');
+            $this->importPluginMenus($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -1411,24 +1445,50 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
      */
     private function importPluginMenus($page, $page_dir, $frame_ini, $display_sequence)
     {
-        // メニューオプション（エリア）の確認
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
-            // フレームの指定と＆オプションの位置指定が両方OKなら、インポートする。
-            if (($frame_ini['frame_base']['area_id'] == 0 && $this->hasMigrationConfig('menus', 'import_menu_area', 'header')) ||
-                ($frame_ini['frame_base']['area_id'] == 1 && $this->hasMigrationConfig('menus', 'import_menu_area', 'left')) ||
-                ($frame_ini['frame_base']['area_id'] == 2 && $this->hasMigrationConfig('menus', 'import_menu_area', 'main')) ||
-                ($frame_ini['frame_base']['area_id'] == 3 && $this->hasMigrationConfig('menus', 'import_menu_area', 'right')) ||
-                ($frame_ini['frame_base']['area_id'] == 4 && $this->hasMigrationConfig('menus', 'import_menu_area', 'footer'))) {
-            } else {
-                return;
+        // 追加じゃない場合は、migration_config のメニューのインポート条件を見る。
+        if (!array_key_exists('addition', $frame_ini)) {
+            // メニューオプション（エリア）の確認
+            if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
+                // フレームの指定と＆オプションの位置指定が両方OKなら、インポートする。
+                if (($frame_ini['frame_base']['area_id'] == 0 && $this->hasMigrationConfig('menus', 'import_menu_area', 'header')) ||
+                    ($frame_ini['frame_base']['area_id'] == 1 && $this->hasMigrationConfig('menus', 'import_menu_area', 'left')) ||
+                    ($frame_ini['frame_base']['area_id'] == 2 && $this->hasMigrationConfig('menus', 'import_menu_area', 'main')) ||
+                    ($frame_ini['frame_base']['area_id'] == 3 && $this->hasMigrationConfig('menus', 'import_menu_area', 'right')) ||
+                    ($frame_ini['frame_base']['area_id'] == 4 && $this->hasMigrationConfig('menus', 'import_menu_area', 'footer'))) {
+                } else {
+                    return;
+                }
             }
         }
+
+        // migration_mapping 確認
+        if (array_key_exists('addition', $frame_ini)) {
+            $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
+        } else {
+            $source_key = $this->getArrayValue($frame_ini, 'nc2_info', 'nc2_block_id');
+        }
+        $migration_mappings = MigrationMapping::where('target_source_table', 'menus')->where('source_key', $source_key)->first();
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence);
 
-        // Menus 登録
-        $menus = Menu::create(['frame_id' => $frame->id, 'page_ids' => '']);
+        // Menus 登録 or 更新
+        $menus = Menu::updateOrCreate(
+            ['frame_id' => $frame->id],
+            ['frame_id'          => $frame->id,
+            'page_ids'          => $this->getArrayValue($frame_ini, 'menu', 'page_ids'),
+            'folder_close_font' => intval($this->getArrayValue($frame_ini, 'menu', 'folder_close_font')),
+            'folder_open_font'  => intval($this->getArrayValue($frame_ini, 'menu', 'folder_open_font')),
+            'indent_font'       => intval($this->getArrayValue($frame_ini, 'menu', 'indent_font'))]
+        );
+
+        // マップ 登録 or 更新
+        $mapping = MigrationMapping::updateOrCreate(
+            ['target_source_table' => 'menus', 'source_key' => $source_key],
+            ['target_source_table' => 'menus',
+             'source_key'          => $source_key,
+             'destination_key'     => $menus->id]
+        );
     }
 
     /**
@@ -1777,16 +1837,36 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $bucket_id = $bucket->id;
         }
 
-        $frame = Frame::create(['page_id'          => $page->id,
-                                'area_id'          => $frame_area_id,
-                                'frame_title'      => $frame_title,
-                                'frame_design'     => $frame_design,
-                                'plugin_name'      => $plugin_name,
-                                'frame_col'        => $frame_col,
-                                'template'         => $template,
-                                'bucket_id'        => $bucket_id,
-                                'display_sequence' => $display_sequence,
-                               ]);
+        // migration_mapping 取得
+        if (array_key_exists('addition', $frame_ini)) {
+            $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
+        } else {
+            $source_key = $this->getArrayValue($frame_ini, 'nc2_info', 'nc2_block_id');
+        }
+
+        // firstOrNew しておき、後でframe_id を追加してsave
+        $migration_mappings = MigrationMapping::firstOrNew(
+            ['target_source_table' => 'frames', 'source_key' => $source_key],
+            ['target_source_table' => 'frames', 'source_key' => $source_key]
+        );
+
+        // frame の追加 or 更新
+        $frame = Frame::updateOrCreate(
+            ['id'               => $migration_mappings->destination_key],
+            ['page_id'          => $page->id,
+             'area_id'          => $frame_area_id,
+             'frame_title'      => $frame_title,
+             'frame_design'     => $frame_design,
+             'plugin_name'      => $plugin_name,
+             'frame_col'        => $frame_col,
+             'template'         => $template,
+             'bucket_id'        => $bucket_id,
+             'display_sequence' => $display_sequence]
+        );
+
+        $migration_mappings->destination_key = $frame->id;
+        $migration_mappings->save();
+
         return $frame;
     }
 
