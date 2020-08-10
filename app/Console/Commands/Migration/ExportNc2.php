@@ -16,7 +16,7 @@ class ExportNc2 extends Command
      *
      * @var string
      */
-    protected $signature = 'command:ExportNc2 {target?} {target_plugin?}';
+    protected $signature = 'command:ExportNc2 {target?} {second_param?} {third_param?}';
 
     /**
      * The console command description.
@@ -42,7 +42,21 @@ class ExportNc2 extends Command
      */
     public function handle()
     {
+        // 引数の解釈
+        $target = $this->argument("target");
+        $target_plugin = null;
+        $redo = null;
+
+        // target が plugins の場合のみ、2番目が target_plugin、3番目が redoになる。
+        // その他の場合は、2番目が redoになる。
+        if ($target == 'plugins') {
+            $target_plugin = $this->argument("second_param");
+            $redo = $this->argument("third_param") == 'redo' ? true : false;
+        } else {
+            $redo = $this->argument("second_param") == 'redo' ? true : false;
+        }
+
         // NC2 をデータベースから移行する
-        $this->exportNc2($this->argument("target"), $this->argument("target_plugin"));
+        $this->exportNc2($target, $target_plugin, $redo);
     }
 }

@@ -339,7 +339,7 @@ trait MigrationTrait
     /**
      * 移行設定の取得
      */
-    private function hasMigrationConfig($section, $key, $value)
+    private function hasMigrationConfig($section, $key, $value = null)
     {
         // 設定の取得
         $config_value = $this->getMigrationConfig($section, $key);
@@ -452,7 +452,7 @@ trait MigrationTrait
             $paths = File::glob(storage_path() . '/app/migration/@pages/*');
 
             // ルームの指定（あれば後で使う）
-            $cc_import_page_room_ids = $this->getMigrationConfig('pages', 'cc_import_page_room_ids');
+            //$cc_import_page_room_ids = $this->getMigrationConfig('pages', 'cc_import_page_room_ids');
 
             // 新ページのループ
             foreach ($paths as $path) {
@@ -477,14 +477,14 @@ trait MigrationTrait
                 }
 
                 // ルーム指定があれば、指定されたルームのみ処理する。
-                if (empty($cc_import_page_room_ids)) {
-                    // ルーム指定なし。全データの移行
-                } elseif (!empty($room_id) && !empty($cc_import_page_room_ids) && in_array($room_id, $cc_import_page_room_ids)) {
-                    // ルーム指定あり。指定ルームに合致する。
-                } else {
-                    // ルーム指定あり。条件に合致せず。移行しない。
-                    continue;
-                }
+                //if (empty($cc_import_page_room_ids)) {
+                //    // ルーム指定なし。全データの移行
+                //} elseif (!empty($room_id) && !empty($cc_import_page_room_ids) && in_array($room_id, $cc_import_page_room_ids)) {
+                //    // ルーム指定あり。指定ルームに合致する。
+                //} else {
+                //    // ルーム指定あり。条件に合致せず。移行しない。
+                //    continue;
+                //}
 
                 // インポートする際のURL変更（前方一致）"変更前|変更後"
                 $cc_import_page_url_changes = $this->getMigrationConfig('pages', 'cc_import_page_url_changes');
@@ -600,7 +600,7 @@ trait MigrationTrait
         $uploads_ini = parse_ini_file(storage_path() . '/app/migration/@uploads/uploads.ini', true);
 
         // ルームの指定（あれば後で使う）
-        $cc_import_uploads_room_ids = $this->getMigrationConfig('uploads', 'cc_import_uploads_room_ids');
+        // $cc_import_uploads_room_ids = $this->getMigrationConfig('uploads', 'cc_import_uploads_room_ids');
 
         // アップロード・ファイルのループ
         if (array_key_exists('uploads', $uploads_ini) && array_key_exists('upload', $uploads_ini['uploads'])) {
@@ -612,14 +612,14 @@ trait MigrationTrait
                 }
 
                 // ルーム指定があれば、指定されたルームのみ処理する。
-                if (empty($cc_import_uploads_room_ids)) {
-                    // ルーム指定なし。全データの移行
-                } elseif (!empty($room_id) && !empty($cc_import_uploads_room_ids) && in_array($room_id, $cc_import_uploads_room_ids)) {
-                    // ルーム指定あり。指定ルームに合致する。
-                } else {
-                    // ルーム指定あり。条件に合致せず。移行しない。
-                    continue;
-                }
+                //if (empty($cc_import_uploads_room_ids)) {
+                //    // ルーム指定なし。全データの移行
+                //} elseif (!empty($room_id) && !empty($cc_import_uploads_room_ids) && in_array($room_id, $cc_import_uploads_room_ids)) {
+                //    // ルーム指定あり。指定ルームに合致する。
+                //} else {
+                //    // ルーム指定あり。条件に合致せず。移行しない。
+                //    continue;
+                //}
 
                 // マッピングテーブルの取得
                 $mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $upload_key)->first();
@@ -906,7 +906,7 @@ trait MigrationTrait
         $blogs_ini_paths = File::glob(storage_path() . '/app/migration/@blogs/blog_*.ini');
 
         // ルームの指定（あれば後で使う）
-        $cc_import_blogs_room_ids = $this->getMigrationConfig('blogs', 'cc_import_blogs_room_ids');
+        //$cc_import_blogs_room_ids = $this->getMigrationConfig('blogs', 'cc_import_blogs_room_ids');
 
         // ブログ定義のループ
         foreach ($blogs_ini_paths as $blogs_ini_path) {
@@ -920,14 +920,14 @@ trait MigrationTrait
             }
 
             // ルーム指定があれば、指定されたルームのみ処理する。
-            if (empty($cc_import_blogs_room_ids)) {
-                // ルーム指定なし。全データの移行
-            } elseif (!empty($room_id) && !empty($cc_import_blogs_room_ids) && in_array($room_id, $cc_import_blogs_room_ids)) {
-                // ルーム指定あり。指定ルームに合致する。
-            } else {
-                // ルーム指定あり。条件に合致せず。移行しない。
-                continue;
-            }
+            //if (empty($cc_import_blogs_room_ids)) {
+            //    // ルーム指定なし。全データの移行
+            //} elseif (!empty($room_id) && !empty($cc_import_blogs_room_ids) && in_array($room_id, $cc_import_blogs_room_ids)) {
+            //    // ルーム指定あり。指定ルームに合致する。
+            //} else {
+            //    // ルーム指定あり。条件に合致せず。移行しない。
+            //    continue;
+            //}
 
             // nc2 の journal_id
             $nc2_journal_id = 0;
@@ -1042,7 +1042,7 @@ trait MigrationTrait
         $databases_ini_paths = File::glob(storage_path() . '/app/migration/@databases/database_*.ini');
 
         // ルームの指定（あれば後で使う）
-        $cc_import_databases_room_ids = $this->getMigrationConfig('databases', 'cc_import_databases_room_ids');
+        //$cc_import_databases_room_ids = $this->getMigrationConfig('databases', 'cc_import_databases_room_ids');
 
         // データベース定義のループ
         foreach ($databases_ini_paths as $databases_ini_path) {
@@ -1055,15 +1055,15 @@ trait MigrationTrait
                 $room_id = $databases_ini['nc2_info']['room_id'];
             }
 
-            // ルーム指定があれば、指定されたルームのみ処理する。
-            if (empty($cc_import_databases_room_ids)) {
-                // ルーム指定なし。全データの移行
-            } elseif (!empty($room_id) && !empty($cc_import_databases_room_ids) && in_array($room_id, $cc_import_databases_room_ids)) {
-                // ルーム指定あり。指定ルームに合致する。
-            } else {
-                // ルーム指定あり。条件に合致せず。移行しない。
-                continue;
-            }
+            //// ルーム指定があれば、指定されたルームのみ処理する。
+            //if (empty($cc_import_databases_room_ids)) {
+            //    // ルーム指定なし。全データの移行
+            //} elseif (!empty($room_id) && !empty($cc_import_databases_room_ids) && in_array($room_id, $cc_import_databases_room_ids)) {
+            //    // ルーム指定あり。指定ルームに合致する。
+            //} else {
+            //    // ルーム指定あり。条件に合致せず。移行しない。
+            //    continue;
+            //}
 
             // データベース指定の有無
             $cc_import_where_database_ids = $this->getMigrationConfig('databases', 'cc_import_where_database_ids');
@@ -2470,7 +2470,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
      *
      *
      */
-    private function exportNc2($target, $target_plugin)
+    private function exportNc2($target, $target_plugin, $redo = null)
     {
         if (empty(trim($target))) {
             echo "\n";
@@ -2513,31 +2513,38 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
         // アップロード・データとファイルのエクスポート
         if ($this->isTarget('nc2_export', 'uploads')) {
-            $this->nc2ExportUploads($uploads_path);
+            $this->nc2ExportUploads($uploads_path, $redo);
         }
 
         // 共通カテゴリデータのエクスポート
         if ($this->isTarget('nc2_export', 'categories')) {
-            $this->nc2ExportCategories();
+            $this->nc2ExportCategories($redo);
         }
 
         // ユーザデータのエクスポート
         if ($this->isTarget('nc2_export', 'users')) {
-            $this->nc2ExportUsers();
+            $this->nc2ExportUsers($redo);
         }
 
         // NC2 日誌（journal）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'blogs')) {
-            $this->nc2ExportJournal();
+            $this->nc2ExportJournal($redo);
         }
 
         // NC2 汎用データベース（multidatabase）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'databases')) {
-            $this->nc2ExportMultidatabase();
+            $this->nc2ExportMultidatabase($redo);
         }
 
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc2_export', 'pages')) {
+            // データクリア
+            if ($redo === true) {
+                MigrationMapping::where('target_source_table', 'nc2_pages')->delete();
+                // 移行用ファイルの削除
+                Storage::deleteDirectory('migration/@pages/');
+            }
+
             // NC2 のページデータ
             $nc2_pages_query = Nc2Page::where('private_flag', 0)
                                       ->where('root_id', '<>', 0)
@@ -2579,6 +2586,17 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $this->putMonitor(1, "Page loop.");
             foreach ($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
                 $this->putMonitor(3, "Page", "page_id = " . $nc2_sort_page->page_id);
+
+                $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+                // ルーム指定があれば、指定されたルームのみ処理する。
+                if (empty($room_ids)) {
+                    // ルーム指定なし。全データの移行
+                } elseif (!empty($room_ids) && in_array($nc2_sort_page->room_id, $room_ids)) {
+                    // ルーム指定あり。指定ルームに合致する。
+                } else {
+                    // ルーム指定あり。条件に合致せず。移行しない。
+                    continue;
+                }
 
                 // ページ設定の保存用変数
                 $page_ini = "[page_base]\n";
@@ -2681,9 +2699,17 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
      * [upload_00002]
      * ・・・
      */
-    private function nc2ExportUploads($uploads_path)
+    private function nc2ExportUploads($uploads_path, $redo)
     {
         $this->putMonitor(3, "Start this->nc2ExportUploads.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory('migration/@uploads/');
+            // アップロードファイルの削除
+            Storage::deleteDirectory(config('connect.directory_base'));
+        }
 
         // NC2 アップロードテーブルを移行する。
         $nc2_uploads = Nc2Upload::orderBy('upload_id')->get();
@@ -2699,6 +2725,17 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         foreach ($nc2_uploads as $nc2_upload) {
             // NC2 バックアップは対象外
             if ($nc2_upload->file_path == 'backup/') {
+                continue;
+            }
+
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_upload->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
 
@@ -2741,9 +2778,15 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     /**
      * NC2：カテゴリの移行
      */
-    private function nc2ExportCategories()
+    private function nc2ExportCategories($redo)
     {
         $this->putMonitor(3, "Start nc2ExportCategories.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory('migration/@categories/');
+        }
 
         // categories,ini ファイル
         $uploads_ini = "[categories]";
@@ -2764,9 +2807,15 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     /**
      * NC2：ユーザの移行
      */
-    private function nc2ExportUsers()
+    private function nc2ExportUsers($redo)
     {
         $this->putMonitor(3, "Start nc2ExportUsers.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory('migration/@users/');
+        }
 
         /*
             移行項目：login_id、password、handle、role_authority_id、system_flag
@@ -2855,9 +2904,15 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     /**
      * NC2：日誌（Journal）の移行
      */
-    private function nc2ExportJournal()
+    private function nc2ExportJournal($redo)
     {
         $this->putMonitor(3, "Start nc2ExportJournal.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory('migration/@blogs/');
+        }
 
         // NC2日誌（Journal）を移行する。
         $nc2_journals = Nc2Journal::orderBy('journal_id')->get();
@@ -2869,6 +2924,17 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
         // NC2日誌（Journal）のループ
         foreach ($nc2_journals as $nc2_journal) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_journal->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
@@ -2986,9 +3052,15 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     /**
      * NC2：汎用データベース（Databases）の移行
      */
-    private function nc2ExportMultidatabase()
+    private function nc2ExportMultidatabase($redo)
     {
         $this->putMonitor(3, "Start nc2ExportMultidatabase.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory('migration/@databases/');
+        }
 
         // NC2汎用データベース（Multidatabase）を移行する。
         $nc2_export_where_multidatabase_ids = $this->getMigrationConfig('databases', 'nc2_export_where_multidatabase_ids');
@@ -3006,6 +3078,17 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
         // NC2汎用データベース（Multidatabase）のループ
         foreach ($nc2_multidatabases as $nc2_multidatabase) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_multidatabase->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
             $multidatabase_id = $nc2_multidatabase->multidatabase_id;
 
             // データベース設定
