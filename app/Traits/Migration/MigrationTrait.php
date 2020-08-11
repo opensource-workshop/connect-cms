@@ -1851,10 +1851,10 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         );
 
         // frame の追加 or 更新
-// 要調査
-//        $frame = Frame::updateOrCreate(
-//            ['id'               => $migration_mappings->destination_key],
-        $frame = Frame::create(
+        // $frame = Frame::create(
+        // 追加のみの方式から、あれば更新へ変更
+        $frame = Frame::updateOrCreate(
+            ['id'               => $migration_mappings->destination_key],
             ['page_id'          => $page->id,
              'area_id'          => $frame_area_id,
              'frame_title'      => $frame_title,
