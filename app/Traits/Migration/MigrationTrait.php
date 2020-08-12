@@ -27,6 +27,11 @@ use App\Models\User\Databases\DatabasesColumnsSelects;
 use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputCols;
 use App\Models\User\Databases\DatabasesInputs;
+use App\Models\User\Forms\Forms;
+use App\Models\User\Forms\FormsColumns;
+use App\Models\User\Forms\FormsColumnsSelects;
+use App\Models\User\Forms\FormsInputCols;
+use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Menus\Menu;
 use App\User;
 
@@ -44,6 +49,11 @@ use App\Models\Migration\Nc2\Nc2MultidatabaseBlock;
 use App\Models\Migration\Nc2\Nc2MultidatabaseMetadata;
 use App\Models\Migration\Nc2\Nc2MultidatabaseMetadataContent;
 use App\Models\Migration\Nc2\Nc2Page;
+use App\Models\Migration\Nc2\Nc2Registration;
+use App\Models\Migration\Nc2\Nc2RegistrationBlock;
+use App\Models\Migration\Nc2\Nc2RegistrationData;
+use App\Models\Migration\Nc2\Nc2RegistrationItem;
+use App\Models\Migration\Nc2\Nc2RegistrationItemData;
 use App\Models\Migration\Nc2\Nc2Upload;
 use App\Models\Migration\Nc2\Nc2User;
 
@@ -168,11 +178,82 @@ trait MigrationTrait
     private $target_plugin = null;
 
     /**
+     * クリア
+     */
+    private $redo = null;
+
+    /**
      * テストメソッド
      */
     private function getTestStr()
     {
         return "This is MigrationTrait test.";
+    }
+
+    /**
+     * データのクリア
+     */
+    private function clearData($target)
+    {
+        if ($target == 'pages' || $target == 'all') {
+            // トップページ以外の削除
+            Page::where('permanent_link', '<>', '/')->delete();
+            Frame::truncate();
+            Menu::truncate();
+            Contents::truncate();
+            Buckets::where('plugin_name', 'contents')->delete();
+            MigrationMapping::where('target_source_table', 'connect_page')->delete();
+        }
+
+        if ($target == 'uploads' || $target == 'all') {
+            // アップロードテーブルのtruncate とmigration_mappings のuploads の削除、アップロードファイルの削除
+            Uploads::truncate();
+            MigrationMapping::where('target_source_table', 'uploads')->delete();
+            Storage::deleteDirectory(config('connect.directory_base'));
+        }
+
+        if ($target == 'categories' || $target == 'all') {
+            // アップロードテーブルのtruncate とmigration_mappings のuploads の削除、アップロードファイルの削除
+            Categories::truncate();
+            MigrationMapping::where('target_source_table', 'categories')->delete();
+        }
+
+        if ($target == 'users' || $target == 'all') {
+            // 最初のユーザ以外の削除、migration_mappings のusers の削除
+            $first_user = User::orderBy('id', 'asc')->first();
+            UsersRoles::where('users_id', '<>', $first_user->id)->delete();
+            User::where('id', '<>', $first_user->id)->delete();
+            MigrationMapping::where('target_source_table', 'users')->delete();
+        }
+
+        if ($target == 'blogs' || $target == 'all') {
+            // blogs、blogs_posts のtruncate
+            Blogs::truncate();
+            BlogsPosts::truncate();
+            Buckets::where('plugin_name', 'blogs')->delete();
+            MigrationMapping::where('target_source_table', 'blogs')->delete();
+        }
+
+        if ($target == 'databases' || $target == 'all') {
+            // databases、databases_columns、databases_columns_selects、databases_inputs、databases_input_cols のtruncate
+            Databases::truncate();
+            DatabasesColumns::truncate();
+            DatabasesColumnsSelects::truncate();
+            DatabasesInputs::truncate();
+            DatabasesInputCols::truncate();
+            Buckets::where('plugin_name', 'databases')->delete();
+            MigrationMapping::where('target_source_table', 'databases')->delete();
+        }
+
+        if ($target == 'forms' || $target == 'all') {
+            Forms::truncate();
+            FormsColumns::truncate();
+            FormsColumnsSelects::truncate();
+            FormsInputCols::truncate();
+            FormsInputs::truncate();
+            Buckets::where('plugin_name', 'forms')->delete();
+            MigrationMapping::where('target_source_table', 'forms')->delete();
+        }
     }
 
     /**
@@ -310,6 +391,10 @@ trait MigrationTrait
      */
     private function migrationInit()
     {
+        // 全やり直しの場合
+        if ($this->target == 'all' && $this->redo == 'redo') {
+        }
+
         // 環境ごとの移行設定の読み込み
         //if (Storage::exists('migration_config/migration_config.ini')) {
         //    $this->migration_config = parse_ini_file(storage_path() . '/app/migration_config/migration_config.ini', true);
@@ -400,6 +485,7 @@ trait MigrationTrait
 
         $this->target        = $target;
         $this->target_plugin = $target_plugin;
+        $this->redo          = $redo;
 
         $this->putMonitor(3, "importSite() Start.");
 
@@ -436,17 +522,17 @@ trait MigrationTrait
             $this->importDatabases($redo);
         }
 
+        // フォームの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'forms')) {
+            $this->importForms($redo);
+        }
+
         // 新ページの取り込み
         if ($this->isTarget('cc_import', 'pages')) {
             // データクリア
             if ($redo === true) {
                 // トップページ以外の削除
-                Page::where('permanent_link', '<>', '/')->delete();
-                Frame::truncate();
-                Menu::truncate();
-                Contents::truncate();
-                Buckets::where('plugin_name', 'contents')->delete();
-                MigrationMapping::where('target_source_table', 'connect_page')->delete();
+                $this->clearData('pages');
             }
 
             $paths = File::glob(storage_path() . '/app/migration/@pages/*');
@@ -543,7 +629,7 @@ trait MigrationTrait
                         'destination_key'      => $page->id]
                     );
                 } else {
-                    $this->putMonitor(3, "Page found. Use existing page.");
+                    $this->putMonitor(3, "Page found. Use existing page. url=" . $page_ini['page_base']['permanent_link']);
                 }
 
                 // ページの中身の作成
@@ -591,9 +677,7 @@ trait MigrationTrait
         // データクリア
         if ($redo === true) {
             // アップロードテーブルのtruncate とmigration_mappings のuploads の削除、アップロードファイルの削除
-            Uploads::truncate();
-            MigrationMapping::where('target_source_table', 'uploads')->delete();
-            Storage::deleteDirectory(config('connect.directory_base'));
+            $this->clearData('uploads');
         }
 
         // アップロード・ファイル定義の取り込み
@@ -683,8 +767,7 @@ trait MigrationTrait
         // データクリア
         if ($redo === true) {
             // カテゴリテーブルのtruncate とmigration_mappings のcategories の削除
-            Categories::truncate();
-            MigrationMapping::where('target_source_table', 'categories')->delete();
+            $this->clearData('categories');
         }
 
         // 共通カテゴリのファイル読み込み
@@ -761,10 +844,7 @@ trait MigrationTrait
         // データクリア
         if ($redo === true) {
             // 最初のユーザ以外の削除、migration_mappings のusers の削除
-            $first_user = User::orderBy('id', 'asc')->first();
-            UsersRoles::where('users_id', '<>', $first_user->id)->delete();
-            User::where('id', '<>', $first_user->id)->delete();
-            MigrationMapping::where('target_source_table', 'users')->delete();
+            $this->clearData('users');
         }
 
         // ユーザ定義・ファイル定義の取り込み
@@ -894,9 +974,7 @@ trait MigrationTrait
         // データクリア
         if ($redo === true) {
             // blogs、blogs_posts のtruncate
-            Blogs::truncate();
-            BlogsPosts::truncate();
-            MigrationMapping::where('target_source_table', 'blogs')->delete();
+            $this->clearData('blogs');
         }
 
         // 共通カテゴリの取得
@@ -1030,12 +1108,7 @@ trait MigrationTrait
         // データクリア
         if ($redo === true) {
             // databases、databases_columns、databases_columns_selects、databases_inputs、databases_input_cols のtruncate
-            Databases::truncate();
-            DatabasesColumns::truncate();
-            DatabasesColumnsSelects::truncate();
-            DatabasesInputs::truncate();
-            DatabasesInputCols::truncate();
-            MigrationMapping::where('target_source_table', 'databases')->delete();
+            $this->clearData('databases');
         }
 
         // データベース定義の取り込み
@@ -1276,6 +1349,167 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     }
 
     /**
+     * Connect-CMS 移行形式のフォームをインポート
+     */
+    private function importForms($redo)
+    {
+        $this->putMonitor(3, "Forms import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('forms');
+        }
+
+        // フォーム定義の取り込み
+        $form_ini_paths = File::glob(storage_path() . '/app/migration/@forms/form_*.ini');
+
+        // データベース定義のループ
+        foreach ($form_ini_paths as $form_ini_path) {
+            // ini_file の解析
+            $form_ini = parse_ini_file($form_ini_path, true);
+
+            // ルーム指定を探しておく。
+            $room_id = null;
+            if (array_key_exists('nc2_info', $form_ini) && array_key_exists('room_id', $form_ini['nc2_info'])) {
+                $room_id = $form_ini['nc2_info']['room_id'];
+            }
+
+            // nc2 の registration_id
+            $nc2_registration_id = 0;
+            if (array_key_exists('nc2_info', $form_ini) && array_key_exists('registration_id', $form_ini['nc2_info'])) {
+                $nc2_registration_id = $form_ini['nc2_info']['registration_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'forms')->where('source_key', $nc2_registration_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // form 取得。この情報から紐づけて、消すものを消してゆく。
+                $form = Forms::where('id', $mapping->destination_key)->first();
+                // form カラム情報取得
+                $forms_columns = FormsColumns::where('forms_id', $mapping->destination_key)->get();
+                // form データ行情報取得
+                $forms_inputs = FormsInputs::where('forms_id', $mapping->destination_key)->get();
+
+                // 登録データ詳細削除
+                FormsInputCols::whereIn('forms_inputs_id', $forms_inputs->pluck('id'))->delete();
+                // 登録データ行削除
+                FormsInputs::where('forms_id', $mapping->destination_key)->get();
+                // カラム選択肢削除
+                FormsColumnsSelects::whereIn('forms_columns_id', $forms_columns->pluck('id'))->delete();
+                // カラム削除
+                FormsColumns::where('id', $mapping->destination_key)->delete();
+
+                if (!empty($form)) {
+                    // Buckets 削除
+                    Buckets::where('id', $form->bucket_id)->delete();
+                    // フォーム削除
+                    $form->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            // Buckets テーブルと Forms テーブル、マッピングテーブルを追加
+            $form_name = '無題';
+            if (array_key_exists('form_base', $form_ini) && array_key_exists('forms_name', $form_ini['form_base'])) {
+                $form_name = $form_ini['form_base']['forms_name'];
+            }
+            $bucket = Buckets::create(['bucket_name' => $form_name, 'plugin_name' => 'forms']);
+
+            $form = Forms::create([
+                'bucket_id'           => $bucket->id,
+                'forms_name'          => $form_name,
+                'mail_send_flag'      => $form_ini['form_base']['mail_send_flag'],
+                'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
+                'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],
+                'mail_subject'        => $form_ini['form_base']['mail_subject'],
+                'mail_format'         => str_replace('\n', "\n", $form_ini['form_base']['mail_format']),
+                'data_save_flag'      => $form_ini['form_base']['data_save_flag'],
+                'after_message'       => str_replace('\n', "\n", $form_ini['form_base']['after_message']),
+                'numbering_use_flag'  => $form_ini['form_base']['numbering_use_flag'],
+                'numbering_prefix'    => $form_ini['form_base']['numbering_prefix'],
+            ]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'forms',
+                'source_key'           => $nc2_registration_id,
+                'destination_key'      => $form->id,
+            ]);
+
+            // カラムID のNC2, Connect-CMS 変換テーブル（項目データの登録時に使うため）
+            $column_ids = array();
+
+            // カラムテーブルとカラム選択肢テーブルの追加
+            $display_sequence_column = 0;
+            foreach ($form_ini['form_columns']['form_column'] as $item_id => $item_name) {
+                $form_column = FormsColumns::create([
+                    'forms_id'                   => $form->id,
+                    'column_type'                => $form_ini[$item_id]['column_type'],
+                    'column_name'                => $form_ini[$item_id]['column_name'],
+                    'required'                   => $form_ini[$item_id]['required'],
+                    'frame_col'                  => $form_ini[$item_id]['frame_col'],
+                    'caption'                    => $form_ini[$item_id]['caption'],
+                    'caption_color'              => $form_ini[$item_id]['caption_color'],
+                    'minutes_increments'         => $form_ini[$item_id]['minutes_increments'],
+                    'minutes_increments_from'    => $form_ini[$item_id]['minutes_increments_from'],
+                    'minutes_increments_to'      => $form_ini[$item_id]['minutes_increments_to'],
+                    'rule_allowed_numeric'       => $form_ini[$item_id]['rule_allowed_numeric'],
+                    'rule_allowed_alpha_numeric' => $form_ini[$item_id]['rule_allowed_alpha_numeric'],
+                    'rule_digits_or_less'        => $form_ini[$item_id]['rule_digits_or_less'],
+                    'rule_max'                   => $form_ini[$item_id]['rule_max'],
+                    'rule_min'                   => $form_ini[$item_id]['rule_min'],
+                    'rule_word_count'            => $form_ini[$item_id]['rule_word_count'],
+                    'rule_date_after_equal'      => $form_ini[$item_id]['rule_date_after_equal'],
+                    'display_sequence'           => $display_sequence_column++,
+                ]);
+
+                $column_ids[$item_id] = $form_column->id;
+
+                if (!empty($form_ini[$item_id]['option_value'])) {
+                    $column_selects = explode('|', $form_ini[$item_id]['option_value']);
+
+                    if (!empty($column_selects)) {
+                        $display_sequence_column_select = 0;
+                        foreach ($column_selects as $column_select) {
+                            $form_column_select = FormsColumnsSelects::create([
+                                'forms_columns_id' => $form_column->id,
+                                'value'            => $column_select,
+                                'caption'          => null,
+                                'default'          => null,
+                                'display_sequence' => $display_sequence_column_select++,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // データ行と登録データの移行
+
+            // 登録データの取り込み
+            $data_txt_ini = parse_ini_file(str_replace('.ini', '.txt', $form_ini_path), true);
+
+            // 行のループ
+            foreach ($data_txt_ini['form_inputs']['input'] as $data_id => $null) {
+                $forms_inputs = FormsInputs::create([
+                    'forms_id' => $form->id,
+                ]);
+
+                // 項目データのループ
+                foreach ($data_txt_ini[$data_id] as $item_id => $data) {
+                    $forms_inputs_cols = FormsInputCols::create([
+                        'forms_inputs_id'  => $forms_inputs->id,
+                        'forms_columns_id' => $column_ids[$item_id],
+                        'value'            => $data,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     private function importSeeder($redo)
@@ -1297,6 +1531,18 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         foreach ($frame_ini_paths as $frame_ini_path) {
             // フレーム毎のini_file の解析
             $frame_ini = parse_ini_file($frame_ini_path, true);
+
+            // redo でマッピングがあれば削除
+            if (!empty($this->getArrayValue($frame_ini, 'addition', 'source_key')) && !empty($this->getArrayValue($frame_ini, 'frame_base', 'plugin_name'))) {
+                // plugin のマップを削除
+                MigrationMapping::where('target_source_table', $this->getArrayValue($frame_ini, 'frame_base', 'plugin_name'))
+                                ->where('source_key', $this->getArrayValue($frame_ini, 'addition', 'source_key'))
+                                ->delete();
+                // frame のマップを削除
+                MigrationMapping::where('target_source_table', 'frames')
+                                ->where('source_key', $this->getArrayValue($frame_ini, 'addition', 'source_key'))
+                                ->delete();
+            }
 
             // ページ
             $page_id = $this->getArrayValue($frame_ini, 'frame_base', 'page_id');
@@ -1437,6 +1683,9 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         } elseif ($plugin_name == 'databases') {
             // データベース
             $this->importPluginDatabases($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'forms') {
+            // フォーム
+            $this->importPluginForms($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -1601,6 +1850,48 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 'default_hide'      => 0,
             ]);
         }
+    }
+
+    /**
+     * フォームプラグインの登録処理
+     */
+    private function importPluginForms($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $form_id = null;
+        $form_ini = null;
+        $registration_id = null;
+        $migration_mappings = null;
+        $forms = null;
+        $bucket = null;
+
+        // エクスポートファイルの form_id 取得（エクスポート時の連番）
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('form_id', $frame_ini['frame_base'])) {
+            $form_id = $frame_ini['frame_base']['form_id'];
+        }
+        // フォームの情報取得
+        if (!empty($form_id) && Storage::exists('migration/@forms/form_' . $form_id . '.ini')) {
+            $form_ini = parse_ini_file(storage_path() . '/app/migration/@forms/form_' . $form_id . '.ini', true);
+        }
+        // NC2 の registration_id でマップ確認
+        if (!empty($form_ini) && array_key_exists('nc2_info', $form_ini) && array_key_exists('registration_id', $form_ini['nc2_info'])) {
+            $registration_id = $form_ini['nc2_info']['registration_id'];
+            $migration_mappings = MigrationMapping::where('target_source_table', 'forms')->where('source_key', $registration_id)->first();
+        }
+        // マップから新Form を取得
+        if (!empty($migration_mappings)) {
+            $forms = Forms::find($migration_mappings->destination_key);
+        }
+        // 新Form からBucket ID を取得
+        if (!empty($forms)) {
+            $bucket = Buckets::find($forms->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (!empty($bucket)) {
+            $this->putError(1, 'Form フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
     }
 
     /**
@@ -1844,6 +2135,41 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $source_key = $this->getArrayValue($frame_ini, 'nc2_info', 'nc2_block_id');
         }
 
+        // map 確認
+/*
+        $migration_mappings = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $source_key)->first();
+        if (empty($migration_mappings)) {
+            $frame = Frame::create([
+                'page_id'          => $page->id,
+                'area_id'          => $frame_area_id,
+                'frame_title'      => $frame_title,
+                'frame_design'     => $frame_design,
+                'plugin_name'      => $plugin_name,
+                'frame_col'        => $frame_col,
+                'template'         => $template,
+                'bucket_id'        => $bucket_id,
+                'display_sequence' => $display_sequence,
+            ]);
+            $migration_mappings = MigrationMapping::create([
+                'target_source_table' => 'frames',
+                'source_key' => $source_key,
+                'destination_key' => $frame->id,
+            ]);
+        } else {
+echo $migration_mappings->destination_key;
+            $frame = Frame::find($migration_mappings->destination_key);
+            $frame->page_id          = $page->id;
+            $frame->area_id          = $frame_area_id;
+            $frame->frame_title      = $frame_title;
+            $frame->frame_design     = $frame_design;
+            $frame->plugin_name      = $plugin_name;
+            $frame->frame_col        = $frame_col;
+            $frame->template         = $template;
+            $frame->bucket_id        = $bucket_id;
+            $frame->display_sequence = $display_sequence;
+            $frame->save();
+        }
+*/
         // firstOrNew しておき、後でframe_id を追加してsave
         $migration_mappings = MigrationMapping::firstOrNew(
             ['target_source_table' => 'frames', 'source_key' => $source_key],
@@ -1865,7 +2191,6 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
              'bucket_id'        => $bucket_id,
              'display_sequence' => $display_sequence]
         );
-
         $migration_mappings->destination_key = $frame->id;
         $migration_mappings->save();
 
@@ -2536,6 +2861,11 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         // NC2 汎用データベース（multidatabase）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'databases')) {
             $this->nc2ExportMultidatabase($redo);
+        }
+
+        // NC2 登録フォーム（registration）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'forms')) {
+            $this->nc2ExportRegistration($redo);
         }
 
         // pages データとファイルのエクスポート
@@ -3300,6 +3630,165 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     }
 
     /**
+     * NC2：登録フォーム（Registration）の移行
+     */
+    private function nc2ExportRegistration($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportRegistration.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory('migration/@forms/');
+        }
+
+        // NC2登録フォーム（Registration）を移行する。
+        $nc2_export_where_registration_ids = $this->getMigrationConfig('forms', 'nc2_export_where_registration_ids');
+
+        if (empty($nc2_export_where_registration_ids)) {
+            $nc2_registrations = Nc2Registration::orderBy('registration_id')->get();
+        } else {
+            $nc2_registrations = Nc2Registration::whereIn('registration_id', $nc2_export_where_registration_ids)->orderBy('registration_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_registrations->isEmpty()) {
+            return;
+        }
+
+        // NC2登録フォーム（Registration）のループ
+        foreach ($nc2_registrations as $nc2_registration) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_registration->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            $registration_id = $nc2_registration->registration_id;
+
+            // 登録フォーム設定
+            $registration_ini = "";
+            $registration_ini .= "[form_base]\n";
+            $registration_ini .= "forms_name = \""        . $nc2_registration->registration_name . "\"\n";
+            $registration_ini .= "mail_send_flag = "      . $nc2_registration->mail_send . "\n";
+            $registration_ini .= "mail_send_address = \"" . $nc2_registration->rcpt_to . "\"\n";
+            $registration_ini .= "user_mail_send_flag = " . $nc2_registration->regist_user_send . "\n";
+            $registration_ini .= "mail_subject = \""      . $nc2_registration->mail_subject . "\"\n";
+            $registration_ini .= "mail_format = \""       . str_replace("\n", '\n', $nc2_registration->mail_body) . "\"\n";
+            $registration_ini .= "data_save_flag = 1\n";
+            $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc2_registration->accept_message) . "\"\n";
+            $registration_ini .= "numbering_use_flag = 0\n";
+            $registration_ini .= "numbering_prefix = null\n";
+
+            // NC2 情報
+            $registration_ini .= "\n";
+            $registration_ini .= "[nc2_info]\n";
+            $registration_ini .= "registration_id = " . $nc2_registration->registration_id . "\n";
+            $registration_ini .= "room_id = "         . $nc2_registration->room_id . "\n";
+
+            // 登録フォームのカラム情報
+            $registration_items = Nc2RegistrationItem::where('registration_id', $registration_id)
+                                                               ->orderBy('item_sequence', 'asc')
+                                                               ->get();
+            if (empty($registration_items)) {
+                continue;
+            }
+
+            // カラム情報出力
+            $registration_ini .= "\n";
+            $registration_ini .= "[form_columns]\n";
+
+            // カラム情報
+            //$forms_columns_rows = array();
+            foreach ($registration_items as $registration_item) {
+                $registration_ini .= "form_column[" . $registration_item->item_id . "] = \"" . $registration_item->item_name . "\"\n";
+            }
+            $registration_ini .= "\n";
+
+            // カラム詳細情報
+            foreach ($registration_items as $registration_item) {
+                $item_id = $registration_item->item_id;
+
+                $registration_ini .= "[" . $item_id . "]" . "\n";
+
+                // type
+                if ($registration_item->item_type == 1) {
+                    $column_type = "text";
+                } elseif ($registration_item->item_type == 2) {
+                    $column_type = "checkbox";
+                } elseif ($registration_item->item_type == 3) {
+                    $column_type = "radio";
+                } elseif ($registration_item->item_type == 4) {
+                    $column_type = "select";
+                } elseif ($registration_item->item_type == 5) {
+                    $column_type = "textarea";
+                } elseif ($registration_item->item_type == 6) {
+                    $column_type = "mail";
+                } elseif ($registration_item->item_type == 7) {
+                    $column_type = "file";
+                }
+
+                $item_id = $registration_item->item_id;
+                $registration_ini .= "column_type                = \"" . $column_type                     . "\"\n";
+                $registration_ini .= "column_name                = \"" . $registration_item->item_name    . "\"\n";
+                $registration_ini .= "option_value               = \"" . $registration_item->option_value . "\"\n";
+                $registration_ini .= "required                   = "   . $registration_item->require_flag . "\n";
+                $registration_ini .= "frame_col                  = "   . 0                                . "\n";
+                $registration_ini .= "caption                    = \"" . $registration_item->description  . "\"\n";
+                $registration_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
+                $registration_ini .= "minutes_increments         = "   . 10                               . "\n";
+                $registration_ini .= "minutes_increments_from    = "   . 10                               . "\n";
+                $registration_ini .= "minutes_increments_to      = "   . 10                               . "\n";
+                $registration_ini .= "rule_allowed_numeric       = null\n";
+                $registration_ini .= "rule_allowed_alpha_numeric = null\n";
+                $registration_ini .= "rule_digits_or_less        = null\n";
+                $registration_ini .= "rule_max                   = null\n";
+                $registration_ini .= "rule_min                   = null\n";
+                $registration_ini .= "rule_word_count            = null\n";
+                $registration_ini .= "rule_date_after_equal      = null\n";
+                $registration_ini .= "\n";
+            }
+
+            // フォーム の設定
+            Storage::put('migration/@forms/form_' . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
+
+            // 登録データもエクスポートする場合
+            if ($this->hasMigrationConfig('forms', 'nc2_export_registration_data', true)) {
+
+                // データ部
+                $registration_data_header = "[form_inputs]\n";
+                $registration_data = "";
+                $registration_item_datas = Nc2RegistrationItemData::select('registration_item_data.*')
+                                                                 ->join('registration_item', function ($join) {
+                                                                     $join->on('registration_item.registration_id', '=', 'registration_item_data.registration_id')
+                                                                          ->on('registration_item.item_id', '=', 'registration_item_data.item_id');
+                                                                 })
+                                                                 ->where('registration_item_data.registration_id', $registration_id)
+                                                                 ->orderBy('registration_item_data.data_id', 'asc')
+                                                                 ->orderBy('registration_item.item_sequence', 'asc')
+                                                                 ->get();
+
+                $data_id = null;
+                foreach ($registration_item_datas as $registration_item_data) {
+                    if ($registration_item_data->data_id != $data_id) {
+                        $registration_data_header .= "input[" . $registration_item_data->data_id . "] = \"\"\n";
+                        $registration_data .= "\n[" . $registration_item_data->data_id . "]\n";
+                        $data_id = $registration_item_data->data_id;
+                    }
+                    $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
+                }
+                // フォーム の登録データ
+                Storage::put('migration/@forms/form_' . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
+            }
+        }
+    }
+
+    /**
      * NC2：ページ内のブロックをループ
      */
     private function nc2Block($nc2_page, $new_page_index)
@@ -3425,7 +3914,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
             // Connect-CMS のプラグイン名の取得
             $plugin_name = $nc2_block->getPluginName();
-            if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'forms' || $plugin_name == 'reservations' || $plugin_name == 'searchs' || $plugin_name == 'whatsnews') {
+            if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'reservations' || $plugin_name == 'searchs' || $plugin_name == 'whatsnews') {
                 // 移行できなかったモジュール
                 $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
             }
@@ -3449,6 +3938,9 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             } else {
                 $ret = "database_id = \"" . $this->zeroSuppress($nc2_multidatabase_block->multidatabase_id) . "\"\n";
             }
+        } elseif ($module_name == 'registration') {
+            $nc2_registration_block = Nc2RegistrationBlock::where('block_id', $nc2_block->block_id)->first();
+            $ret = "form_id = \"" . $this->zeroSuppress($nc2_registration_block->registration_id) . "\"\n";
         } elseif ($module_name == 'menu') {
             $ret .= "\n";
             $ret .= "[menu]\n";
