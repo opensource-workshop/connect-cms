@@ -1491,6 +1491,11 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             // 登録データの取り込み
             $data_txt_ini = parse_ini_file(str_replace('.ini', '.txt', $form_ini_path), true);
 
+            // データがなければ戻る
+            if (!array_key_exists('form_inputs', $data_txt_ini) || !array_key_exists('input', $data_txt_ini['form_inputs'])) {
+                return;
+            }
+
             // 行のループ
             foreach ($data_txt_ini['form_inputs']['input'] as $data_id => $null) {
                 $forms_inputs = FormsInputs::create([
