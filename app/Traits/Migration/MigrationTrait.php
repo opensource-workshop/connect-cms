@@ -1618,6 +1618,38 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
     }
 
     /**
+     * frame_9999.ini を読んで解析する。上書き設定も反映する。
+     */
+    private function parseIni($ini_path)
+    {
+        // フレーム毎のini_file の解析
+        $ini = parse_ini_file($ini_path, true);
+
+        // NC2 用の上書き設定があるか確認
+        $nc2_block_id = $this->getArrayValue($ini, 'nc2_info', 'nc2_block_id');
+        if (empty($nc2_block_id)) {
+            return $ini;
+        }
+        $nc2_block_overwrite_path = 'migration/@addition/nc2_blocks/block_overwrite_' . $nc2_block_id . '.ini';
+        if (Storage::exists($nc2_block_overwrite_path)) {
+            $overwrite_ini = parse_ini_file(storage_path() . '/app/' . $nc2_block_overwrite_path, true);
+            $marge_ini = array();
+            // 第1階層のsection があるか確認して、あれば第2階層をマージ。
+            // array_merge_recursive だと、勝手に階層が変わったりするので、
+            foreach ($ini as $section_key => $ini_section) {
+                if (array_key_exists($section_key, $overwrite_ini)) {
+                    $marge_ini[$section_key] = array_merge($ini_section, $overwrite_ini[$section_key]);
+                } else {
+                    $marge_ini[$section_key] = $ini_section;
+                }
+            }
+            return $marge_ini;
+        }
+        // overwrite ファイルがないので、元のまま。
+        return $ini;
+    }
+
+    /**
      * Connect-CMS 移行形式のHTML をインポート
      */
     private function importHtmlImpl($page, $dir = null)
@@ -1649,7 +1681,8 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $display_sequence++;
 
             // フレーム毎のini_file の解析
-            $frame_ini = parse_ini_file($frame_ini_path, true);
+            //$frame_ini = parse_ini_file($frame_ini_path, true);
+            $frame_ini = $this->parseIni($frame_ini_path);
             //print_r($ini_array);
 
             // プラグイン毎の登録処理へ
