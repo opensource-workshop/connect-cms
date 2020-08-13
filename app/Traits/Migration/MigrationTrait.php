@@ -203,6 +203,7 @@ trait MigrationTrait
             Contents::truncate();
             Buckets::where('plugin_name', 'contents')->delete();
             MigrationMapping::where('target_source_table', 'connect_page')->delete();
+            MigrationMapping::where('target_source_table', 'frames')->delete();
         }
 
         if ($target == 'uploads' || $target == 'all') {
@@ -1493,7 +1494,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
             // データがなければ戻る
             if (!array_key_exists('form_inputs', $data_txt_ini) || !array_key_exists('input', $data_txt_ini['form_inputs'])) {
-                return;
+                continue;
             }
 
             // 行のループ
@@ -2141,7 +2142,6 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         }
 
         // map 確認
-/*
         $migration_mappings = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $source_key)->first();
         if (empty($migration_mappings)) {
             $frame = Frame::create([
@@ -2161,7 +2161,6 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 'destination_key' => $frame->id,
             ]);
         } else {
-echo $migration_mappings->destination_key;
             $frame = Frame::find($migration_mappings->destination_key);
             $frame->page_id          = $page->id;
             $frame->area_id          = $frame_area_id;
@@ -2174,16 +2173,20 @@ echo $migration_mappings->destination_key;
             $frame->display_sequence = $display_sequence;
             $frame->save();
         }
-*/
+
         // firstOrNew しておき、後でframe_id を追加してsave
+        /*
         $migration_mappings = MigrationMapping::firstOrNew(
             ['target_source_table' => 'frames', 'source_key' => $source_key],
             ['target_source_table' => 'frames', 'source_key' => $source_key]
         );
+        */
 
         // frame の追加 or 更新
         // $frame = Frame::create(
         // 追加のみの方式から、あれば更新へ変更
+        // ※ destination_key が空の場合がある。空で作って、次のフレームで上書きになっている。
+        /*
         $frame = Frame::updateOrCreate(
             ['id'               => $migration_mappings->destination_key],
             ['page_id'          => $page->id,
@@ -2198,6 +2201,7 @@ echo $migration_mappings->destination_key;
         );
         $migration_mappings->destination_key = $frame->id;
         $migration_mappings->save();
+        */
 
         return $frame;
     }
@@ -3945,7 +3949,10 @@ echo $migration_mappings->destination_key;
             }
         } elseif ($module_name == 'registration') {
             $nc2_registration_block = Nc2RegistrationBlock::where('block_id', $nc2_block->block_id)->first();
-            $ret = "form_id = \"" . $this->zeroSuppress($nc2_registration_block->registration_id) . "\"\n";
+            // ブロックがあり、登録フォームがない場合は対象外
+            if (!empty($nc2_registration_block)) {
+                $ret = "form_id = \"" . $this->zeroSuppress($nc2_registration_block->registration_id) . "\"\n";
+            }
         } elseif ($module_name == 'menu') {
             $ret .= "\n";
             $ret .= "[menu]\n";
