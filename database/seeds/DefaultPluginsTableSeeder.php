@@ -50,6 +50,14 @@ class DefaultPluginsTableSeeder extends Seeder
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
                     [
+                        'plugin_name'=>'Databases',
+                        'plugin_name_full'=>'データベース',
+                        'display_flag'=>1,
+                        'display_sequence'=>0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
                         'plugin_name'=>'Reservations',
                         'plugin_name_full'=>'施設予約',
                         'display_flag'=>1,

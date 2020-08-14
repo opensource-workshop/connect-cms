@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 
 {{-- エラーメッセージ --}}
-@if (empty($learningtasks_frame) || empty($learningtasks_frame->learningtasks_id))
+@if (empty($learningtask) || empty($learningtask->id))
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用する課題管理を選択するか、作成してください。
@@ -51,7 +51,7 @@
     }
 </script>
 
-<form action="{{url('/')}}/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group table-responsive">

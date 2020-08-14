@@ -70,10 +70,18 @@ $(function(){
     @endif
 
     {{-- 中央エリア --}}
+    @php
+        // センターエリア任意クラスを抽出（カンマ設定時はランダムで１つ設定）
+        $center_area_optional_class = null;
+        if(isset($configs_array['center_area_optional_class'])){
+            $classes = explode(',', $configs_array['center_area_optional_class']->value);
+            $center_area_optional_class = $classes[array_rand($classes)];
+        }
+    @endphp
         @if (isset($configs_array['browser_width_center']) && $configs_array['browser_width_center']->value == '100%')
-    <div id="ccCenterArea" class="ccCenterArea row mx-auto p-0 d-flex align-items-start">
+    <div id="ccCenterArea" class="ccCenterArea row mx-auto p-0 d-flex align-items-start {{ $center_area_optional_class }}">
         @else
-    <div id="ccCenterArea" class="ccCenterArea row container mx-auto p-0 d-flex align-items-start">
+    <div id="ccCenterArea" class="ccCenterArea row container mx-auto p-0 d-flex align-items-start {{ $center_area_optional_class }}">
         @endif
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])

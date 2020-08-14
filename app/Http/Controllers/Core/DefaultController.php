@@ -141,12 +141,11 @@ class DefaultController extends ConnectController
         //echo $next_language;
 
        // permanent_link の編集
-       // 言語がデフォルト(next_language がnull)＆2nd以降がある場合は、language_or_1stdir はpermanent_link の一部なので、結合する。
         if (empty($next_language) && $link_or_after2nd) {
+            // 言語がデフォルト(next_language がnull)＆2nd以降がある場合は、language_or_1stdir はpermanent_link の一部なので、結合する。
             $permanent_link = $language_or_1stdir . '/' . $link_or_after2nd;
-        }
-       // 言語がデフォルト(next_language がnull)＆2nd以降がない場合は、language_or_1stdir がディレクトリ。
-        elseif (empty($next_language)) {
+        } elseif (empty($next_language)) {
+            // 言語がデフォルト(next_language がnull)＆2nd以降がない場合は、language_or_1stdir がディレクトリ。
             $permanent_link = $language_or_1stdir;
         } else {
             $permanent_link = $link_or_after2nd;
@@ -226,17 +225,15 @@ class DefaultController extends ConnectController
                 //if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
                 $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
                 if (is_dir($template_dir)) {
-                    // テンプレート設定ファイルがある場合
                     if (File::exists($template_dir."/template.ini")) {
-                        // テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
+                        // テンプレート設定ファイルがある場合、テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
                         $template_inis = parse_ini_file($template_dir."/template.ini");
                         $template_name = $template_inis['template_name'];
                         if (empty($template_name)) {
                             $template_name = $file;
                         }
-                    }
-                    // テンプレート設定ファイルがない場合、テンプレートディレクトリ名をテンプレート名とする
-                    else {
+                    } else {
+                        // テンプレート設定ファイルがない場合、テンプレートディレクトリ名をテンプレート名とする
                         $template_name = $file;
                         $template_inis = array();
                     }
@@ -483,7 +480,12 @@ class DefaultController extends ConnectController
         $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
-        $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
+        $plugin_ret = $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
+
+        // そのまま戻るが指定されている場合はreturn する。
+        if ($request->return_mode == 'asis') {
+            return $plugin_ret;
+        }
 
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";
@@ -506,7 +508,20 @@ class DefaultController extends ConnectController
 
         // redirect_path があれば遷移
         if ($request->redirect_path) {
-            return redirect($request->redirect_path);
+
+            $redirect_response = redirect($request->redirect_path);
+            if ($request->flash_message) {
+                // フラッシュメッセージの設定があれば、Laravelのフラッシュデータ保存に連携
+                $redirect_response = $redirect_response->with('flash_message', $request->flash_message);
+            }
+            if ($request->validator) {
+                // バリデーターの設定があれば（エラーチェックの結果、NGがあれば）、Laravelのバリデータ機能に連携
+                $redirect_response = $redirect_response->withErrors($request->validator->errors());
+                // フラッシュデータとして前画面の入力値を保存
+                $request->session()->flash('_old_input', $request->except('validator'));
+            }
+
+            return $redirect_response;
         }
 
         // Page データがあれば、そのページに遷移

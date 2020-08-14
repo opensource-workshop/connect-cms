@@ -59,7 +59,7 @@
             <table class="table table-hover" style="margin-bottom: 0;">
             <thead>
                 <tr>
-                    <th nowrap class="col-1">表示順</th>
+                    <th nowrap>表示順</th>
                     <th nowrap>定義名（半角英数字）</th>
                     <th nowrap>表示名</th>
                     <th nowrap><i class="fas fa-trash-alt"></i></th>

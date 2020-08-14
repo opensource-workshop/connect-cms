@@ -10,6 +10,9 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+// ログインエラーをCatch するために追加。
+use Illuminate\Validation\ValidationException;
+
 class LoginController extends Controller
 {
     /*
@@ -69,6 +72,16 @@ class LoginController extends Controller
         $this->authMethod($request);
 
         // 以下はもともとのAuthenticatesUsers@login 処理
-        return $this->laravelLogin($request);
+        //return $this->laravelLogin($request);
+
+        // ログインエラーの場合、NetCommons2 からの移行ユーザとして再度認証する。
+        try {
+            return $this->laravelLogin($request);
+        } catch (ValidationException $e) {
+            // 認証OK なら関数内でリダイレクトする。
+            $this->authNetCommons2Password($request);
+            // ここに来るということは、NetCommons2 認証もNG
+            throw $e;
+        }
     }
 }

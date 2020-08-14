@@ -620,6 +620,10 @@ WHERE status = 0
                                                              ->where('contents_id', '<', $blogs_post->contents_id);
                                                   });
                                        })
+                                        // 表示設定を見て抽出範囲のwhereを追加する
+                                        ->where(function ($query_setting) use ($blog_frame) {
+                                            $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                                        })
                                        ->orderBy('posted_at', 'desc')
                                        ->orderBy('contents_id', 'desc')
                                        ->first();
@@ -644,6 +648,10 @@ WHERE status = 0
                                                              ->where('contents_id', '>', $blogs_post->contents_id);
                                                   });
                                        })
+                                        // 表示設定を見て抽出範囲のwhereを追加する
+                                        ->where(function ($query_setting) use ($blog_frame) {
+                                            $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                                        })
                                        ->orderBy('posted_at', 'asc')
                                        ->orderBy('contents_id', 'asc')
                                        ->first();

@@ -13,7 +13,7 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-<form action="{{url('/')}}/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group">
@@ -27,9 +27,9 @@
         </thead>
         <tbody>
         @foreach($learningtasks as $learningtask)
-            <tr @if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) class="cc-active-tr"@endif>
+            <tr @if ($frame->bucket_id == $learningtask->bucket_id) class="cc-active-tr"@endif>
                 <td>
-                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) checked @endif>
+                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($frame->bucket_id == $learningtask->bucket_id) checked @endif>
                     <span class="{{$frame->getSettingCaptionClass()}}">{{$learningtask->learningtasks_name}}</span>
                 </td>
                 <td class="{{$frame->getNarrowDisplayNone()}}">{{$learningtask->learningtasks_name}}</td>

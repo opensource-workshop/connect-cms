@@ -5,23 +5,32 @@ namespace App\Plugins\User\Learningtasks;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
+use Session;
+use App\Plugins\User\Learningtasks\LearningtasksUser;
 
 use App\Models\Core\Configs;
+use App\Models\Core\UsersRoles;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
+use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\User\Learningtasks\Learningtasks;
 use App\Models\User\Learningtasks\LearningtasksCategories;
+use App\Models\User\Learningtasks\LearningtasksExaminations;
 use App\Models\User\Learningtasks\LearningtasksPosts;
 use App\Models\User\Learningtasks\LearningtasksPostsTags;
 use App\Models\User\Learningtasks\LearningtasksPostsFiles;
+use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
+use App\User;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -35,6 +44,24 @@ use App\Plugins\User\UserPluginBase;
  */
 class LearningtasksPlugin extends UserPluginBase
 {
+    /*
+        task_status : 科目＆ユーザに対するアクションの履歴
+        0 : 何もしていない状態。（レコードなしと同じ？）
+        1 : レポートの課題提出（再提出も同じ。提出アクションが2つ目以降は再提出となるだけ）
+        2 : レポートの評価（再評価も同じ）
+        3 : レポートのコメント
+        4 : 試験申し込み
+        5 : 試験の解答提出（再提出も同じ。提出アクションが2つ目以降は再提出となるだけ）
+        6 : 試験の評価（再評価も同じ）
+        7 : 試験のコメント
+
+        task_status の変更メソッドは 本体を private の changeStatusImpl() とする。
+        各ステータス毎に public の入り口メソッドを持ち、権限チェックを行う。
+        メソッド内では、科目に対するユーザの権限など、さらにチェックを行う。
+
+        取り消し : 取り消しは各ステータス毎の public の入り口メソッドに Cancel をつけたメソッドを用意する。
+                   権限チェックとログにアクションを残すため。
+    */
 
     /* オブジェクト変数 */
 
@@ -52,9 +79,38 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'changeStatus'];
+        $functions['get']  = ['listCategories', 'editBucketsRoles', 'editExaminations', 'selectFunction', 'editUsers', 'listGrade'];
+        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveExaminations', 'saveFunction', 'saveUsers', 'switchUser', 'downloadGrade', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7'];
         return $functions;
+    }
+
+    /**
+     *  権限定義
+     */
+    public function declareRole()
+    {
+        // 権限チェックテーブル
+        $role_ckeck_table = array();
+        $role_ckeck_table["listCategories"]   = array('role_article');
+        $role_ckeck_table["editBucketsRoles"] = array('role_article');
+        $role_ckeck_table["saveExaminations"] = array('role_article');
+        $role_ckeck_table["editUsers"]        = array('role_article');
+        $role_ckeck_table["listGrade"]        = array('role_article');
+        $role_ckeck_table["saveCategories"]   = array('role_article');
+        $role_ckeck_table["deleteCategories"] = array('role_article');
+        $role_ckeck_table["saveBucketsRoles"] = array('role_article');
+        $role_ckeck_table["saveExaminations"] = array('role_article');
+        $role_ckeck_table["saveUsers"]        = array('role_article');
+        $role_ckeck_table["downloadGrade"]    = array('role_article');
+        $role_ckeck_table["switchUser"]       = array('role_guest');
+        $role_ckeck_table["changeStatus1"]    = array('role_guest');
+        $role_ckeck_table["changeStatus2"]    = array('role_guest');
+        $role_ckeck_table["changeStatus3"]    = array('role_guest');
+        $role_ckeck_table["changeStatus4"]    = array('role_guest');
+        $role_ckeck_table["changeStatus5"]    = array('role_guest');
+        $role_ckeck_table["changeStatus6"]    = array('role_guest');
+        $role_ckeck_table["changeStatus7"]    = array('role_guest');
+        return $role_ckeck_table;
     }
 
     /**
@@ -73,6 +129,10 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function getPost($id, $action = null)
     {
+        // id がない場合は処理しない。
+        if (empty($id)) {
+            return null;
+        }
 
         // deleteCategories の場合は、Learningtasks_posts のオブジェクトではないので、nullで返す。
         if ($action == 'deleteCategories') {
@@ -85,20 +145,25 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
-        $arg_post = LearningtasksPosts::where('id', $id)->first();
+        // 履歴の廃止
+        //$arg_post = LearningtasksPosts::where('id', $id)->first();
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
         $this->post = LearningtasksPosts::select(
             'learningtasks_posts.*',
+            'learningtasks.bucket_id',
             'categories.color as category_color',
             'categories.background_color as category_background_color',
             'categories.category as category'
         )
+                                ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
                                 ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-                                ->where('contents_id', $arg_post->contents_id)
-                                ->where(function ($query) {
-                                      $query = $this->appendAuthWhere($query);
-                                })
+                                ->where('learningtasks_posts.id', $id)
+                                // 履歴の廃止
+                                //->where('contents_id', $arg_post->contents_id)
+                                //->where(function ($query) {
+                                //      $query = $this->appendAuthWhere($query);
+                                //})
                                 ->orderBy('id', 'desc')
                                 ->first();
         return $this->post;
@@ -109,30 +174,36 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  紐づく課題管理ID とフレームデータの取得
      */
-    private function getLearningTaskFrame($frame_id)
+    private function getLearningTask($frame_id)
     {
+        $learningtask = Learningtasks::select('learningtasks.*')
+                                    ->join('frames', 'frames.bucket_id', '=', 'learningtasks.bucket_id')
+                                    ->where('frames.id', $frame_id)
+                                    ->first();
+        return $learningtask;
+
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'learningtasks.id as learningtasks_id', 'learningtasks.learningtasks_name', 'learningtasks.view_count', 'learningtasks.rss', 'learningtasks.rss_count', 'learningtasks.sequence_conditions')
-                 ->leftJoin('learningtasks', 'learningtasks.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
-        return $frame;
+        //$frame = DB::table('frames')
+        //         ->select('frames.*', 'learningtasks.id as learningtask_id', 'learningtasks.learningtasks_name', 'learningtasks.view_count', 'learningtasks.rss', 'learningtasks.rss_count', 'learningtasks.sequence_conditions')
+        //         ->leftJoin('learningtasks', 'learningtasks.bucket_id', '=', 'frames.bucket_id')
+        //         ->where('frames.id', $frame_id)
+        //         ->first();
+        //return $frame;
     }
 
     /**
      *  カテゴリデータの取得
      */
-    private function getLearningtasksCategories($learningtasks_id)
+    private function getLearningtasksCategories($learningtask_id)
     {
         $learningtasks_categories = Categories::select('categories.*')
-                          ->join('learningtasks_categories', function ($join) use ($learningtasks_id) {
+                          ->join('learningtasks_categories', function ($join) use ($learningtask_id) {
                               $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
-                                   ->where('learningtasks_categories.learningtasks_id', '=', $learningtasks_id)
+                                   ->where('learningtasks_categories.learningtasks_id', '=', $learningtask_id)
                                    ->where('learningtasks_categories.view_flag', 1);
                           })
                           ->whereNull('plugin_id')
-                          ->orWhere('plugin_id', $learningtasks_id)
+                          ->orWhere('plugin_id', $learningtask_id)
                           ->orderBy('target', 'asc')
                           ->orderBy('display_sequence', 'asc')
                           ->get();
@@ -160,27 +231,28 @@ class LearningtasksPlugin extends UserPluginBase
 
     /**
      *  記事の取得権限に対する条件追加
+     *  履歴の廃止
      */
-    private function appendAuthWhere($query)
-    {
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 記事修正権限、コンテンツ管理者の場合、全件取得のため、追加条件なしで戻る。
-        } elseif ($this->isCan('role_approval')) {
-            // 承認権限の場合、Active ＋ 承認待ちの取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('status', '=', 2);
-        } elseif ($this->isCan('role_reporter')) {
-            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('learningtasks_posts.created_id', '=', Auth::user()->id);
-        } else {
-            // その他（ゲスト）
-            $query->where('status', 0);
-            $query->where('learningtasks_posts.posted_at', '<=', Carbon::now());
-        }
-
-        return $query;
-    }
+    //private function appendAuthWhere($query)
+    //{
+    //    if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+    //        // 記事修正権限、コンテンツ管理者の場合、全件取得のため、追加条件なしで戻る。
+    //    } elseif ($this->isCan('role_approval')) {
+    //        // 承認権限の場合、Active ＋ 承認待ちの取得
+    //        $query->Where('status', '=', 0)
+    //              ->orWhere('status', '=', 2);
+    //    } elseif ($this->isCan('role_reporter')) {
+    //        // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
+    //        $query->Where('status', '=', 0)
+    //              ->orWhere('learningtasks_posts.created_id', '=', Auth::user()->id);
+    //    } else {
+    //        // その他（ゲスト）
+    //        $query->where('status', 0);
+    //        $query->where('learningtasks_posts.posted_at', '<=', Carbon::now());
+    //    }
+    //
+    //    return $query;
+    //}
 
     /**
      *  表示条件に対するソート条件追加
@@ -223,18 +295,25 @@ class LearningtasksPlugin extends UserPluginBase
             'categories.category as category'
         )
                                  ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-                                 ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
-                                     $query->select(DB::raw('MAX(id) As id'))
-                                           ->from('learningtasks_posts')
-                                           ->where('learningtasks_id', $learningtasks_frame->learningtasks_id)
-                                           ->where('deleted_at', null)
-                                           // 権限を見てWhere を付与する。
-                                           ->where(function ($query_auth) {
-                                               $query_auth = $this->appendAuthWhere($query_auth);
-                                           })
-                                           ->groupBy('categories.display_sequence')
-                                           ->groupBy('contents_id');
-                                 });
+        // 履歴の廃止
+        //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
+        //                             $query->select(DB::raw('MAX(id) As id'))
+        //                                   ->from('learningtasks_posts')
+        //                                   ->where('learningtasks_id', $learningtasks_frame->learningtasks_id)
+        //                                   ->where('deleted_at', null)
+        //                                   // 権限を見てWhere を付与する。
+        //                                   ->where(function ($query_auth) {
+        //                                       $query_auth = $this->appendAuthWhere($query_auth);
+        //                                   })
+        //                                   ->groupBy('categories.display_sequence')
+        //                                   ->groupBy('contents_id');
+        //                         });
+        // 有効なレコードのみ
+        ->where('learningtasks_id', $learningtasks_frame->id)
+
+        // 有効なレコードのみ
+        ->where('status', 0);
+
         // カテゴリソート条件追加
         $learningtasks_posts->orderBy('categories.display_sequence', 'asc');
 
@@ -266,7 +345,7 @@ class LearningtasksPlugin extends UserPluginBase
         return $this->buckets->needApprovalUser(Auth::user());
 
 //        // 承認の要否確認とステータス処理
-//        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
+//        $learningtasks_frame = $this->getLearningTask($frame_id);
 //        if ($learningtasks_frame->approval_flag == 1) {
 //
 //            // 記事修正、コンテンツ管理者権限がない場合は要承認
@@ -277,27 +356,27 @@ class LearningtasksPlugin extends UserPluginBase
 //        return false;
     }
 
-    /**
-     *  タグの保存
-     */
-    private function saveTag($request, $learningtasks_post, $old_learningtasks_post)
-    {
-        // タグの保存
-        if ($request->tags) {
-            $tags = explode(',', $request->tags);
-            foreach ($tags as $tag) {
-                // 新規オブジェクト生成
-                $learningtasks_posts_tags = new LearningtasksPostsTags();
+//    /**
+//     *  タグの保存
+//     */
+//    private function saveTag($request, $learningtasks_post, $old_learningtasks_post)
+//    {
+//        // タグの保存
+//        if ($request->tags) {
+//            $tags = explode(',', $request->tags);
+//            foreach ($tags as $tag) {
+//                // 新規オブジェクト生成
+//                $learningtasks_posts_tags = new LearningtasksPostsTags();
 
-                // タグ登録
-                $learningtasks_posts_tags->created_id     = $learningtasks_post->created_id;
-                $learningtasks_posts_tags->learningtasks_posts_id = $learningtasks_post->id;
-                $learningtasks_posts_tags->tags           = $tag;
-                $learningtasks_posts_tags->save();
-            }
-        }
-        return;
-    }
+//                // タグ登録
+//                $learningtasks_posts_tags->created_id     = $learningtasks_post->created_id;
+//                $learningtasks_posts_tags->learningtasks_posts_id = $learningtasks_post->id;
+//                $learningtasks_posts_tags->tags           = $tag;
+//                $learningtasks_posts_tags->save();
+//            }
+//        }
+//        return;
+//    }
 
     /**
      *  タグのコピー
@@ -318,12 +397,13 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  課題ファイルの保存
      */
-    private function saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post)
+    //sprivate function saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post)
+    private function saveTaskFile($request, $page_id, $post_id, $task_flag)
     {
         // 旧データがある場合は、履歴のためにコピーする。
-        if (!empty($old_learningtasks_post) && !empty($old_learningtasks_post->id)) {
-            $this->copyTaskFile($request, $old_learningtasks_post, $learningtasks_post);
-        }
+        //if (!empty($old_learningtasks_post) && !empty($old_learningtasks_post->id)) {
+        //    $this->copyTaskFile($request, $old_learningtasks_post, $learningtasks_post);
+        //}
 
         // 課題ファイルがアップロードされた。
         if ($request->hasFile('add_task_file')) {
@@ -358,8 +438,9 @@ class LearningtasksPlugin extends UserPluginBase
 
             // learningtasks_posts_files テーブルに情報追加
             $learningtasks_posts_files = LearningtasksPostsFiles::create([
-                'learningtasks_posts_id' => $learningtasks_post->id,
-                'task_file_uploads_id'   => $upload->id,
+                'post_id'   => $post_id,
+                'task_flag' => $task_flag,
+                'upload_id' => $upload->id,
              ]);
 
             // 課題ファイル保存
@@ -370,33 +451,61 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  課題ファイル情報のコピー
+     *  課題ファイルの削除
      */
-    private function copyTaskFile($request, $from_post, $to_post)
+    private function deleteTaskFile($request)
     {
-        // 課題ファイル情報の保存
-        $learningtasks_posts_files = LearningtasksPostsFiles::where('learningtasks_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
-        foreach ($learningtasks_posts_files as $learningtasks_posts_file) {
-            // 削除対象のファイルはデータをコピーしない
-            if ($request->del_task_file) {
-                if (array_key_exists($learningtasks_posts_file->id, $request->del_task_file)) {
-                    continue;
-                }
+        // 課題ファイルの削除が指示された。
+        if ($request->filled('del_task_file')) {
+            foreach ($request->del_task_file as $task_file_uploads_id => $value) {
+                // 削除する課題ファイルのレコード取得
+                $learningtasks_posts_file = LearningtasksPostsFiles::find($task_file_uploads_id);
+
+                // アップロードテーブルの取得
+                $upload = Uploads::find($learningtasks_posts_file->upload_id);
+
+                // アップロードファイルの削除
+                $directory = $this->getDirectory($upload->id);
+                Storage::delete($directory . '/' . $upload->id . "." . $upload->extension);
+
+                // アップロードテーブルの削除
+                $upload->delete();
+
+                // 課題ファイルテーブルの削除
+                $learningtasks_posts_file->delete();
             }
-
-            // レコードコピー
-            $new_file = $learningtasks_posts_file->replicate();
-            $new_file->learningtasks_posts_id = $to_post->id;
-            $new_file->save();
         }
-
         return;
     }
 
     /**
+     *  課題ファイル情報のコピー
+     */
+    //private function copyTaskFile($request, $from_post, $to_post)
+    //{
+    //    // 課題ファイル情報の保存
+    //    $learningtasks_posts_files = LearningtasksPostsFiles::where('learningtasks_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
+    //    foreach ($learningtasks_posts_files as $learningtasks_posts_file) {
+    //        // 削除対象のファイルはデータをコピーしない
+    //        if ($request->del_task_file) {
+    //            if (array_key_exists($learningtasks_posts_file->id, $request->del_task_file)) {
+    //                continue;
+    //            }
+    //        }
+
+    //        // レコードコピー
+    //        $new_file = $learningtasks_posts_file->replicate();
+    //        $new_file->learningtasks_posts_id = $to_post->id;
+    //        $new_file->save();
+    //    }
+
+    //    return;
+    //}
+
+    /**
      *  紐づく課題ファイルの取得
      */
-    private function getTaskFile($posts_ids)
+    private function getTaskFile($post_ids, $task_flag = 0)
     {
         // 課題ファイルテーブル
         $posts_files_db
@@ -404,14 +513,15 @@ class LearningtasksPlugin extends UserPluginBase
                 'learningtasks_posts_files.*',
                 'uploads.id as uploads_id', 'uploads.client_original_name', 'uploads.download_count'
             )
-                 ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.task_file_uploads_id')
-                 ->whereIn('learningtasks_posts_files.learningtasks_posts_id', $posts_ids)
+                 ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+                 ->whereIn('learningtasks_posts_files.post_id', $post_ids)
+                 ->where('learningtasks_posts_files.task_flag', $task_flag)
                  ->get();
 
         // 課題ファイル詰めなおし（課題管理データの一覧にあてるための外配列）
         $learningtasks_posts_files = array();
         foreach ($posts_files_db as $record) {
-            $learningtasks_posts_files[$record->learningtasks_posts_id][] = $record;
+            $learningtasks_posts_files[$record->post_id][] = $record;
         }
 
         return $learningtasks_posts_files;
@@ -420,28 +530,28 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  紐づくユーザーstatusの取得
      */
-    private function getUserStatus($contents_ids)
-    {
-        // ユーザ
-        $user = Auth::user();
-        if (empty($user)) {
-            return null;
-        }
+    //private function getUserStatus($contents_ids)
+    //{
+    //    // ユーザ
+    //    $user = Auth::user();
+    //    if (empty($user)) {
+    //        return null;
+    //    }
 
-        // ユーザーstatusテーブル
-        $users_statuses
-            = LearningtasksUsersStatuses::whereIn('learningtasks_users_statuses.contents_id', $contents_ids)
-                                        ->where('user_id', '=', $user->id)
-                                        ->get();
+    //    // ユーザーstatusテーブル
+    //    $users_statuses
+    //        = LearningtasksUsersStatuses::whereIn('learningtasks_users_statuses.contents_id', $contents_ids)
+    //                                    ->where('user_id', '=', $user->id)
+    //                                    ->get();
 
-        // ユーザーstatusテーブル詰めなおし（課題管理データの一覧にあてるための配列）
-        $learningtasks_users_statuses = array();
-        foreach ($users_statuses as $record) {
-            $learningtasks_users_statuses[$record->contents_id] = $record;
-        }
+    //    // ユーザーstatusテーブル詰めなおし（課題管理データの一覧にあてるための配列）
+    //    $learningtasks_users_statuses = array();
+    //    foreach ($users_statuses as $record) {
+    //        $learningtasks_users_statuses[$record->contents_id] = $record;
+    //    }
 
-        return $learningtasks_users_statuses;
-    }
+    //    return $learningtasks_users_statuses;
+    //}
 
     /* スタティック関数 */
 
@@ -527,85 +637,86 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
-        // 課題管理＆フレームデータ
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
-        if (empty($learningtasks_frame)) {
+        // 課題管理データ
+        $learningtask = $this->getLearningTask($frame_id);
+        if (empty($learningtask)) {
             return;
         }
 
-        // Page データ
-        $page = Page::where('id', $page_id)->first();
-
-        // 認証されているユーザの取得
-        $user = Auth::user();
-
         // 課題管理データ一覧の取得
-        $learningtasks_posts = $this->getPosts($learningtasks_frame);
+        $posts = $this->getPosts($learningtask);
+
+        // ユーザー関連情報のまとめ
+        $learningtask_user = new LearningtasksUser($request, $page_id);
 
         // タグ：画面表示するデータのlearningtasks_posts_id を集める
-        $posts_ids = array();
-        foreach ($learningtasks_posts as $learningtasks_post) {
-            $posts_ids[] = $learningtasks_post->id;
-        }
+        //$posts_ids = array();
+        //foreach ($posts as $learningtasks_post) {
+        //    $posts_ids[] = $learningtasks_post->id;
+        //}
 
         // タグ：タグデータ取得
-        $learningtasks_posts_tags_row = LearningtasksPostsTags::whereIn('learningtasks_posts_id', $posts_ids)->get();
+        //$learningtasks_posts_tags_row = LearningtasksPostsTags::whereIn('learningtasks_posts_id', $posts_ids)->get();
 
         // タグ：タグデータ詰めなおし（課題管理データの一覧にあてるための外配列）
-        $learningtasks_posts_tags = array();
-        foreach ($learningtasks_posts_tags_row as $record) {
-            $learningtasks_posts_tags[$record->learningtasks_posts_id][] = $record->tags;
-        }
+        //$learningtasks_posts_tags = array();
+        //foreach ($learningtasks_posts_tags_row as $record) {
+        //    $learningtasks_posts_tags[$record->learningtasks_posts_id][] = $record->tags;
+        //}
 
         // タグ：タグデータをポストデータに紐づけ
-        foreach ($learningtasks_posts as &$learningtasks_post) {
-            if (array_key_exists($learningtasks_post->id, $learningtasks_posts_tags)) {
-                $learningtasks_post->tags = $learningtasks_posts_tags[$learningtasks_post->id];
-            }
-        }
+        //foreach ($learningtasks_posts as &$learningtasks_post) {
+        //    if (array_key_exists($learningtasks_post->id, $learningtasks_posts_tags)) {
+        //        $learningtasks_post->tags = $learningtasks_posts_tags[$learningtasks_post->id];
+        //    }
+        //}
 
-        // 課題管理データを取得
-        $learningtasks_posts_files = $this->getTaskFile($posts_ids);
+        // 課題ファイルを取得
+        $posts_files = $this->getTaskFile($posts->pluck('id'));
 
-        // 課題管理データをポストデータに紐づけ
-        foreach ($learningtasks_posts as &$learningtasks_post) {
-            if (array_key_exists($learningtasks_post->id, $learningtasks_posts_files)) {
-                $learningtasks_post->task_files = $learningtasks_posts_files[$learningtasks_post->id];
+        // 課題ファイルをポストデータに紐づけ
+        foreach ($posts as &$post) {
+            if (array_key_exists($post->id, $posts_files)) {
+                $post->task_files = $posts_files[$post->id];
             }
         }
 
         // ユーザーstatus：画面表示するデータのcontents_id を集める
-        $contents_ids = array();
-        foreach ($learningtasks_posts as $learningtasks_post) {
-            $contents_ids[] = $learningtasks_post->contents_id;
-        }
+//        $contents_ids = array();
+//        foreach ($posts as $post) {
+//            $contents_ids[] = $post->contents_id;
+//        }
+
+        // 認証されているユーザの取得
+        //$user = Auth::user();
 
         // ユーザーstatusテーブルを取得
-        $learningtasks_users_statuses = $this->getUserStatus($contents_ids);
+//        $users_statuses = $this->getUserStatus($posts->pluck('id'));
 
-        // ユーザーstatusテーブルをポストデータに紐づけ
-        foreach ($learningtasks_posts as &$learningtasks_post) {
-            if ($learningtasks_users_statuses && array_key_exists($learningtasks_post->contents_id, $learningtasks_users_statuses)) {
-                $learningtasks_post->user_task_status = $learningtasks_users_statuses[$learningtasks_post->contents_id]->task_status;
-                $learningtasks_post->canvas_answer_file_id = $learningtasks_users_statuses[$learningtasks_post->contents_id]->canvas_answer_file_id;
-            }
-        }
+//        // ユーザーstatusテーブルをポストデータに紐づけ
+//        foreach ($posts as &$post) {
+//            if ($learningtasks_users_statuses && array_key_exists($post->contents_id, $learningtasks_users_statuses)) {
+//                $post->user_task_status = $learningtasks_users_statuses[$post->contents_id]->task_status;
+//                $post->upload_id = $learningtasks_users_statuses[$post->contents_id]->upload_id;
+//            }
+//        }
 
         // カテゴリごとにまとめる＆カテゴリの配列も作る
         $categories_and_posts = array();
         $categories = array();
-        foreach ($learningtasks_posts as $learningtasks_post) {
-            $categories_and_posts[$learningtasks_post->categories_id][] = $learningtasks_post;
-            $categories[$learningtasks_post->categories_id] = $learningtasks_post;
+        foreach ($posts as $post) {
+            $categories_and_posts[$post->categories_id][] = $post;
+            $categories[$post->categories_id] = $post;
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'learningtasks', [
-            'learningtasks_posts'  => $learningtasks_posts,
+            'learningtask'         => $learningtask,
+            'posts'                => $posts,
+            'learningtask_user'    => $learningtask_user,
             'categories_and_posts' => $categories_and_posts,
             'categories'           => $categories,
-            'learningtasks_frame'  => $learningtasks_frame,
             ]
         );
     }
@@ -613,20 +724,20 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  新規記事画面
      */
-    public function create($request, $page_id, $frame_id, $learningtasks_posts_id = null, $errors = null)
+    public function create($request, $page_id, $frame_id, $learningtasks_posts_id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        //$request->flash();
 
         // 課題管理＆フレームデータ
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
+        $learningtask = $this->getLearningTask($frame_id);
 
         // 空のデータ(画面で初期値設定で使用するため)
         $learningtasks_posts = new LearningtasksPosts();
         $learningtasks_posts->posted_at = date('Y-m-d H:i:00');
 
         // カテゴリ
-        $learningtasks_categories = $this->getLearningtasksCategories($learningtasks_frame->learningtasks_id);
+        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
 
         // タグ
         $learningtasks_posts_tags = "";
@@ -634,75 +745,99 @@ class LearningtasksPlugin extends UserPluginBase
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'learningtasks_input', [
-            'learningtasks_frame'       => $learningtasks_frame,
+            'learningtask'             => $learningtask,
             'learningtasks_posts'      => $learningtasks_posts,
             'learningtasks_categories' => $learningtasks_categories,
             'learningtasks_posts_tags' => $learningtasks_posts_tags,
-            'errors'           => $errors,
+            //'errors'           => $errors,
             ]
         )->withInput($request->all);
     }
 
     /**
+     *  教員用、ユーザ切り替え
+     */
+    public function switchUser($request, $page_id, $frame_id, $post_id)
+    {
+        // ユーザー関連情報のまとめ
+        $learningtask_user = new LearningtasksUser($request, $page_id, $this->getPost($post_id));
+
+        // 教員のみ
+        if (!$learningtask_user->isTeacher()) {
+            $this->index($request, $page_id, $frame_id);
+        }
+
+        // 受講生のID
+        if (empty($request->student_id)) {
+             session()->forget('student_id');
+        } else {
+            session(['student_id' => $request->student_id]);
+        }
+
+        // 課題のIDもセッションに保持する。
+        // 課題のIDが変わったら、受講生を選びなおす。
+        session(['learningtask_post_id' => $post_id]);
+
+        // リダイレクトで詳細画面へ
+        return;
+    }
+
+    /**
      *  詳細表示関数
      */
-    public function show($request, $page_id, $frame_id, $learningtasks_posts_id = null)
+    public function show($request, $page_id, $frame_id, $post_id)
     {
-        // Frame データ
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
+        // 課題のIDが変わったら、受講生を選びなおす。
+        if (session('learningtask_post_id') != $post_id) {
+             session()->forget('student_id');
+             session()->forget('learningtask_post_id');
+        }
+
+        // 課題管理
+        $learningtask = $this->getLearningTask($frame_id);
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
-        $learningtasks_post = $this->getPost($learningtasks_posts_id);
-        if (empty($learningtasks_post)) {
+        $post = $this->getPost($post_id);
+        if (empty($post)) {
             return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
-        // タグ取得
-        // タグ：タグデータ取得
-        $learningtasks_post_tags = new LearningtasksPostsTags();
-        if ($learningtasks_post) {
-            $learningtasks_post_tags = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
-        }
+        // 課題の添付ファイル（学習指導書など）を取得
+        $post_files = LearningtasksPostsFiles::select(
+            'learningtasks_posts_files.*',
+            'uploads.id as uploads_id', 'uploads.client_original_name'
+        )->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+         ->where('post_id', $post->id)
+         ->where('task_flag', 0)
+         ->get();
 
-        // 課題管理データを取得
-        $learningtasks_posts_files
-            = LearningtasksPostsFiles::select(
-                'learningtasks_posts_files.*',
-                'uploads.id as uploads_id', 'uploads.client_original_name'
-            )
-                 ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.task_file_uploads_id')
-                 ->where('learningtasks_posts_id', $learningtasks_post->id)
-                 ->get();
+        // 試験の添付ファイル（試験問題、解答用ファイルなど）を取得
+        $examination_files = LearningtasksPostsFiles::select(
+            'learningtasks_posts_files.*',
+            'uploads.id as uploads_id', 'uploads.client_original_name'
+        )->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+         ->where('post_id', $post->id)
+         ->where('task_flag', 1)
+         ->get();
 
-        // ひとつ前、ひとつ後の記事
-        $before_post = null;
-        $after_post = null;
-        if ($learningtasks_post) {
-            $before_post = LearningtasksPosts::where('learningtasks_id', $learningtasks_post->learningtasks_id)
-                                     ->where('posted_at', '<', $learningtasks_post->posted_at)
-                                     ->where(function ($query) {
-                                         $query = $this->appendAuthWhere($query);
-                                     })
-                                     ->orderBy('posted_at', 'desc')
-                                     ->first();
-            $after_post = LearningtasksPosts::where('learningtasks_id', $learningtasks_post->learningtasks_id)
-                                     ->where('posted_at', '>', $learningtasks_post->posted_at)
-                                     ->where(function ($query) {
-                                         $query = $this->appendAuthWhere($query);
-                                     })
-                                     ->orderBy('posted_at', 'asc')
-                                     ->first();
-        }
+        // 試験情報(申し込み可能な分 = 終了日時が現在より後のもの)
+        $examinations = LearningtasksExaminations::where('post_id', $post->id)
+                                                 ->where('end_at', '>=', date('Y-m-d H:i:00'))
+                                                 ->orderBy('start_at', 'asc')
+                                                 ->get();
+
+        // ユーザー関連情報のまとめ
+        $learningtask_user = new LearningtasksUser($request, $page_id, $post);
 
         // 詳細画面を呼び出す。
         return $this->view(
             'learningtasks_show', [
-            'learningtasks_frame'  => $learningtasks_frame,
-            'post'        => $learningtasks_post,
-            'post_tags'   => $learningtasks_post_tags,
-            'post_files'  => $learningtasks_posts_files,
-            'before_post' => $before_post,
-            'after_post'  => $after_post,
+            'learningtask'      => $learningtask,
+            'post'              => $post,
+            'post_files'        => $post_files,
+            'examination_files' => $examination_files,
+            'examinations'      => $examinations,
+            'learningtask_user' => $learningtask_user,
             ]
         );
     }
@@ -710,22 +845,22 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      * 記事編集画面
      */
-    public function edit($request, $page_id, $frame_id, $learningtasks_posts_id = null, $errors = null)
+    public function edit($request, $page_id, $frame_id, $learningtasks_posts_id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        //$request->flash();
 
-        // Frame データ
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
+        // 課題管理データ
+        $learningtask = $this->getLearningTask($frame_id);
 
-        // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+        // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
         if (empty($learningtasks_post)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // カテゴリ
-        $learningtasks_categories = $this->getLearningtasksCategories($learningtasks_frame->learningtasks_id);
+        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
 
         // タグ取得
         $learningtasks_posts_tags_array = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
@@ -741,175 +876,327 @@ class LearningtasksPlugin extends UserPluginBase
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'learningtasks_input', [
-            'learningtasks_frame'       => $learningtasks_frame,
+            'learningtask'              => $learningtask,
             'learningtasks_posts'       => $learningtasks_post,
             'learningtasks_categories'  => $learningtasks_categories,
             'learningtasks_posts_tags'  => $learningtasks_posts_tags,
             'learningtasks_posts_files' => (array_key_exists($learningtasks_post->id, $learningtasks_posts_files)) ? $learningtasks_posts_files[$learningtasks_post->id] : null,
-            'errors'           => $errors,
+            //'errors'           => $errors,
             ]
-        )->withInput($request->all);
+        );
+    }
+
+    /**
+     * 試験関係編集画面
+     */
+    public function editExaminations($request, $page_id, $frame_id, $post_id = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        //$request->flash();
+
+        // 課題管理データ
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+        $learningtasks_post = $this->getPost($post_id);
+        if (empty($learningtasks_post)) {
+            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+        }
+
+        // カテゴリ
+        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
+
+        // タグ取得
+        //$learningtasks_posts_tags_array = LearningtasksPostsTags::where('post_id', $learningtasks_post->id)->get();
+        //$learningtasks_posts_tags = "";
+        //foreach ($learningtasks_posts_tags_array as $learningtasks_posts_tags_item) {
+        //    $learningtasks_posts_tags .= ',' . $learningtasks_posts_tags_item->tags;
+        //}
+        //$learningtasks_posts_tags = trim($learningtasks_posts_tags, ',');
+
+        // 課題管理データを取得
+        $post_files = $this->getTaskFile([$learningtasks_post->id], 1);
+
+        // 試験設定データを取得
+        $examinations = LearningtasksExaminations::where('post_id', $learningtasks_post->id)
+                                                 ->orderBy('start_at', 'asc')
+                                                 ->get();
+
+        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
+        return $this->view(
+            'learningtasks_edit_examinations', [
+            'learningtask'              => $learningtask,
+            'learningtasks_posts'       => $learningtasks_post,
+            'learningtasks_categories'  => $learningtasks_categories,
+            //'learningtasks_posts_tags'  => $learningtasks_posts_tags,
+            'post_files'                => (array_key_exists($learningtasks_post->id, $post_files)) ? $post_files[$learningtasks_post->id] : null,
+            'examinations'              => $examinations,
+            ]
+        );
+    }
+
+    /**
+     * 成績表示（管理者用）
+     */
+    public function listGrade($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題管理データ
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 課題
+        $learningtasks_post = $this->getPost($post_id);
+
+        // 成績の配列取得
+        $statuses = $this->downloadGradeImpl($request, $page_id, $frame_id, $post_id);
+
+        // 画面を呼び出す。
+        return $this->view(
+            'learningtasks_list_grade', [
+            'learningtask'        => $learningtask,
+            'learningtasks_posts' => $learningtasks_post,
+            'statuses'            => $statuses,
+            ]
+        );
+    }
+
+    /**
+     * 成績ダウンロード（管理者用）
+     */
+    public function downloadGrade($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題管理データ
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 課題
+        $learningtasks_post = $this->getPost($post_id);
+
+        // 成績の配列取得
+        $statuses = $this->downloadGradeImpl($request, $page_id, $frame_id, $post_id);
+
+        // CSV で出力
+        $stream = fopen('php://temp', 'r+b');
+        foreach ($statuses as $user) {
+            fputcsv($stream, $user);
+        }
+        rewind($stream);
+        $csv = str_replace(PHP_EOL, "\r\n", stream_get_contents($stream));
+        $csv = mb_convert_encoding($csv, 'SJIS-win', 'UTF-8');
+        $clear_str = ["\r\n", "\r", "\n", "\t"];
+        $headers = array(
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . str_replace($clear_str, '', strip_tags($learningtasks_post->post_title)) . '（成績）.csv"',
+        );
+        return Response::make($csv, 200, $headers);
+    }
+
+    /**
+     * 成績ダウンロード（管理者用）
+     */
+    public function downloadGradeImpl($request, $page_id, $frame_id, $post_id)
+    {
+        // 成績
+        $users_statuses = LearningtasksUsersStatuses::select(
+            'learningtasks_users_statuses.*',
+            'users.name'
+        )->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+         ->where('learningtasks_users_statuses.post_id', $post_id)
+         ->orderBy('learningtasks_users_statuses.id', 'asc')
+         ->get();
+
+        // 成績ステータス毎に、最終のものを抜き出す。
+        $statuses_ojb = array();
+        foreach ($users_statuses as $users_status) {
+            $statuses_ojb[$users_status->user_id][$users_status->task_status] = $users_status;
+        }
+
+        // 表（含むCSV）のフォーマットに詰めなおす
+        $statuses = array();
+        foreach ($statuses_ojb as $user_id => $status_ojbs) {
+            $statuses[$user_id][0] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->name       : '－';
+            $statuses[$user_id][1] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->created_at : '－';
+            $statuses[$user_id][2] = array_key_exists(2, $status_ojbs) ? $status_ojbs[2]->grade      : '－';
+            $statuses[$user_id][5] = array_key_exists(5, $status_ojbs) ? $status_ojbs[5]->created_at : '－';
+            $statuses[$user_id][6] = array_key_exists(6, $status_ojbs) ? $status_ojbs[6]->grade      : '－';
+        }
+        $csvHeader = ['受講者名', 'レポート提出最終日時', 'レポート評価', '試験提出最終日時	', '試験評価'];
+        array_unshift($statuses, $csvHeader);
+
+        return $statuses;
     }
 
     /**
      *  課題管理記事登録処理
      */
-    public function save($request, $page_id, $frame_id, $learningtasks_posts_id = null)
+    public function save($request, $page_id, $frame_id, $post_id = null)
     {
         // 項目のエラーチェック
         $validator = $this->makeValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            if ($learningtasks_posts_id) {
-                return ( $this->edit($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
-            } else {
-                return ( $this->create($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
-            }
+            return redirect()->back()->withErrors($validator)->withInput();
+            //if ($post_id) {
+            //    return ( $this->edit($request, $page_id, $frame_id, $post_id, $validator->errors()) );
+            //} else {
+            //    return ( $this->create($request, $page_id, $frame_id, $post_id, $validator->errors()) );
+            //}
         }
 
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
-        $old_learningtasks_post = null;
-        if (!empty($learningtasks_posts_id)) {
-            // 指定されたID のデータ
-            $old_learningtasks_post = LearningtasksPosts::where('id', $learningtasks_posts_id)->first();
+        //$old_learningtasks_post = null;
+        //if (!empty($learningtasks_posts_id)) {
+        //    // 指定されたID のデータ
+        //    $old_learningtasks_post = LearningtasksPosts::where('id', $learningtasks_posts_id)->first();
 
-            // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
-            $check_learningtasks_post = $this->getPost($learningtasks_posts_id);
+        //    // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+        //    $check_learningtasks_post = $this->getPost($learningtasks_posts_id);
 
-            // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $old_learningtasks_post->id) {
-                return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
-            }
+        //    // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
+        //    if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $old_learningtasks_post->id) {
+        //        return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+        //    }
+        //}
+
+        // オブジェクト取得 or 生成
+        if (empty($post_id)) {
+            $post = new LearningtasksPosts();
+        } else {
+            $post = LearningtasksPosts::firstOrNew(['id' => $post_id]);
         }
-
-        // 新規オブジェクト生成
-        $learningtasks_post = new LearningtasksPosts();
 
         // 課題管理記事設定
-        $learningtasks_post->learningtasks_id          = $request->learningtasks_id;
-        $learningtasks_post->post_title       = $request->post_title;
-        $learningtasks_post->categories_id    = $request->categories_id;
-        $learningtasks_post->important        = $request->important;
-        $learningtasks_post->posted_at        = $request->posted_at . ':00';
-        $learningtasks_post->post_text        = $request->post_text;
-        $learningtasks_post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
+        $post->learningtasks_id = $request->learningtask_id;
+        $post->post_title       = $request->post_title;
+        $post->categories_id    = $request->categories_id;
+        $post->important        = $request->important;
+        $post->posted_at        = $request->posted_at . ':00';
+        $post->post_text        = $request->post_text;
+        $post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
+        $post->save();
 
         // 承認の要否確認とステータス処理
-        if ($this->isApproval($frame_id)) {
-            $learningtasks_post->status = 2;
-        }
+        //if ($this->isApproval($frame_id)) {
+        //    $learningtasks_post->status = 2;
+        //}
 
-        if (empty($learningtasks_posts_id)) {
-            // 新規
-            // 登録ユーザ
-            $learningtasks_post->created_id  = Auth::user()->id;
+        //if (empty($learningtasks_posts_id)) {
+        //    // 新規
+        //    // 登録ユーザ
+        //    $learningtasks_post->created_id  = Auth::user()->id;
 
-            // データ保存
-            $learningtasks_post->save();
+        //    // データ保存
+        //    $learningtasks_post->save();
 
-            // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
-            LearningtasksPosts::where('id', $learningtasks_post->id)->update(['contents_id' => $learningtasks_post->id]);
-        } else {
-            // 更新
-            // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
-            $learningtasks_post->contents_id = $old_learningtasks_post->contents_id;
+        //    // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
+        //    LearningtasksPosts::where('id', $learningtasks_post->id)->update(['contents_id' => $learningtasks_post->id]);
+        //} else {
+        //    // 更新
+        //    // 変更処理の場合、contents_id を旧レコードのcontents_id と同じにする。
+        //    $learningtasks_post->contents_id = $old_learningtasks_post->contents_id;
 
-            // 登録ユーザ
-            $learningtasks_post->created_id  = $old_learningtasks_post->created_id;
+        //    // 登録ユーザ
+        //    $learningtasks_post->created_id  = $old_learningtasks_post->created_id;
 
-            // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
-            if ($learningtasks_post->status != 2) {
-                LearningtasksPosts::where('contents_id', $old_learningtasks_post->contents_id)->where('status', 0)->update(['status' => 9]);
-            }
+        //    // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
+        //    if ($learningtasks_post->status != 2) {
+        //        LearningtasksPosts::where('contents_id', $old_learningtasks_post->contents_id)->where('status', 0)->update(['status' => 9]);
+        //    }
 
-            // データ保存
-            $learningtasks_post->save();
-        }
+        //    // データ保存
+        //    $learningtasks_post->save();
+        //}
 
-        // タグの保存
-        $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
+        //// タグの保存
+        //$this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
 
         // 課題ファイルの保存
-        $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
+        $this->saveTaskFile($request, $page_id, $post->id, 0);
+
+        // 課題ファイルの削除
+        $this->deleteTaskFile($request);
+
+        // 登録後はリダイレクト処理を呼ぶため、ここでは、view は呼ばない。
+        // 新規登録後は、登録したデータの edit 画面を開きたいため、フォームで指定したリクエストの redirect_path を置き換える。
+        $request->merge(['redirect_path' => '/plugin/learningtasks/edit/' . $page_id . '/' . $frame_id . '/' . $post->id . '#frame-' . $frame_id]);
 
         // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
+        //return $this->index($request, $page_id, $frame_id);
     }
 
    /**
     * データ一時保存関数
     */
-    public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // 項目のエラーチェック
-        $validator = $this->makeValidator($request);
+    //public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
+    //{
+    //    // 項目のエラーチェック
+    //    $validator = $this->makeValidator($request);
 
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
-        }
+    //    // エラーがあった場合は入力画面に戻る。
+    //    if ($validator->fails()) {
+    //        return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
+    //    }
 
-        // 新規オブジェクト生成
-        if (empty($id)) {
-            $learningtasks_post = new LearningtasksPosts();
+    //    // 新規オブジェクト生成
+    //    if (empty($id)) {
+    //        $learningtasks_post = new LearningtasksPosts();
 
-            // 登録ユーザ
-            $learningtasks_post->created_id  = Auth::user()->id;
-        } else {
-            $learningtasks_post = LearningtasksPosts::find($id)->replicate();
+    //        // 登録ユーザ
+    //        $learningtasks_post->created_id  = Auth::user()->id;
+    //    } else {
+    //        $learningtasks_post = LearningtasksPosts::find($id)->replicate();
  
-            // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
-            $check_learningtasks_post = $this->getPost($id);
+    //        // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+    //        $check_learningtasks_post = $this->getPost($id);
 
-            // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $id) {
-                return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
-            }
-        }
+    //        // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
+    //        if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $id) {
+    //            return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
+    //        }
+    //    }
 
-        // 課題管理記事設定
-        $learningtasks_post->status = 1;
-        $learningtasks_post->learningtasks_id          = $request->learningtasks_id;
-        $learningtasks_post->post_title       = $request->post_title;
-        $learningtasks_post->important        = $request->important;
-        $learningtasks_post->posted_at        = $request->posted_at . ':00';
-        $learningtasks_post->post_text        = $request->post_text;
-        $learningtasks_post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
+    //    // 課題管理記事設定
+    //    $learningtasks_post->status = 1;
+    //    $learningtasks_post->learningtasks_id          = $request->learningtasks_id;
+    //    $learningtasks_post->post_title       = $request->post_title;
+    //    $learningtasks_post->important        = $request->important;
+    //    $learningtasks_post->posted_at        = $request->posted_at . ':00';
+    //    $learningtasks_post->post_text        = $request->post_text;
+    //    $learningtasks_post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
 
-        $learningtasks_post->save();
+    //    $learningtasks_post->save();
 
-        if (empty($id)) {
-            // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
-            LearningtasksPosts::where('id', $learningtasks_post->id)->update(['contents_id' => $learningtasks_post->id]);
-        }
+    //    if (empty($id)) {
+    //        // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
+    //        LearningtasksPosts::where('id', $learningtasks_post->id)->update(['contents_id' => $learningtasks_post->id]);
+    //    }
 
-        // タグの保存
-        $this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
+    //    // タグの保存
+    //    //$this->this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
 
-        // 課題ファイルの保存
-        $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
+    //    // 課題ファイルの保存
+    //    $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
 
-        // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
-    }
+    //    // 登録後は表示用の初期処理を呼ぶ。
+    //    return $this->index($request, $page_id, $frame_id);
+    //}
 
     /**
      *  削除処理
      */
-    public function delete($request, $page_id, $frame_id, $learningtasks_posts_id)
+    public function delete($request, $page_id, $frame_id, $post_id)
     {
-        // id がある場合、データを削除
-        if ($learningtasks_posts_id) {
+        // id が渡された場合、データを削除
+        if ($post_id) {
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
-            $post = LearningtasksPosts::where('id', $learningtasks_posts_id)->first();
+            //$post = LearningtasksPosts::where('id', $learningtasks_posts_id)->first();
 
             // 削除ユーザ、削除日を設定する。（複数レコード更新のため、自動的には入らない）
-            LearningtasksPosts::where('contents_id', $post->contents_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
+            //LearningtasksPosts::where('id', $post->post_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
 
             // データを削除する。
-            LearningtasksPosts::where('contents_id', $post->contents_id)->delete();
+            LearningtasksPosts::find($post_id)->delete();
         }
+
         // 削除後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
     }
@@ -917,35 +1204,35 @@ class LearningtasksPlugin extends UserPluginBase
    /**
     * 承認
     */
-    public function approval($request, $page_id = null, $frame_id = null, $id = null)
-    {
-        // 新規オブジェクト生成
-        $learningtasks_post = LearningtasksPosts::find($id)->replicate();
+    //public function approval($request, $page_id = null, $frame_id = null, $id = null)
+    //{
+    //    // 新規オブジェクト生成
+    //    $learningtasks_post = LearningtasksPosts::find($id)->replicate();
 
-        // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
-        $check_learningtasks_post = $this->getPost($id);
+    //    // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+    //    $check_learningtasks_post = $this->getPost($id);
 
-        // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-        if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $id) {
-            return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
-        }
+    //    // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
+    //    if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $id) {
+    //        return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
+    //    }
 
-        // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
-        LearningtasksPosts::where('contents_id', $learningtasks_post->contents_id)->where('status', 0)->update(['status' => 9]);
+    //    // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
+    //    LearningtasksPosts::where('contents_id', $learningtasks_post->contents_id)->where('status', 0)->update(['status' => 9]);
 
-        // 課題管理記事設定
-        $learningtasks_post->status = 0;
-        $learningtasks_post->save();
+    //    // 課題管理記事設定
+    //    $learningtasks_post->status = 0;
+    //    $learningtasks_post->save();
 
-        // タグもコピー
-        $this->copyTag($check_learningtasks_post, $learningtasks_post);
+    //    // タグもコピー
+    //    $this->copyTag($check_learningtasks_post, $learningtasks_post);
 
-        // 課題ファイル情報もコピー
-        $this->copyTaskFile($request, $check_learningtasks_post, $learningtasks_post);
+    //    // 課題ファイル情報もコピー
+    //    $this->copyTaskFile($request, $check_learningtasks_post, $learningtasks_post);
 
-        // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
-    }
+    //    // 登録後は表示用の初期処理を呼ぶ。
+    //    return $this->index($request, $page_id, $frame_id);
+    //}
 
     /**
      * データ選択表示関数
@@ -966,7 +1253,7 @@ class LearningtasksPlugin extends UserPluginBase
         return $this->view(
             'learningtasks_list_buckets', [
             'learningtasks_frame' => $learningtasks_frame,
-            'learningtasks'      => $learningtasks,
+            'learningtasks'       => $learningtasks,
             ]
         );
     }
@@ -974,84 +1261,88 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      * 課題管理新規作成画面
      */
-    public function createBuckets($request, $page_id, $frame_id, $learningtasks_id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $learningtask_id = null, $create_flag = false, $message = null)
     {
         // 新規作成フラグを付けて課題管理設定変更画面を呼ぶ
         $create_flag = true;
-        return $this->editBuckets($request, $page_id, $frame_id, $learningtasks_id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag, $message);
     }
 
     /**
      * 課題管理設定変更画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $learningtasks_id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $learningtask_id = null, $create_flag = false, $message = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        //$request->flash();
 
-        // 課題管理＆フレームデータ
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
+        // Frame
+        $frame = Frame::find($frame_id);
 
         // 課題管理データ
-        $learningtasks = new Learningtasks();
+        $learningtask = new Learningtasks();
 
-        if (!empty($learningtasks_id)) {
-            // learningtasks_id が渡ってくればlearningtasks_id が対象
-            $learningtasks = Learningtasks::where('id', $learningtasks_id)->first();
-        } elseif (!empty($learningtasks_frame->bucket_id) && $create_flag == false) {
+        if (!empty($learningtask_id)) {
+            // learningtask_id が渡ってくればlearningtask_id が対象
+            $learningtask = Learningtasks::where('id', $learningtask_id)->first();
+        } elseif (!empty($frame->bucket_id) && $create_flag == false) {
             // Frame のbucket_id があれば、bucket_id から課題管理データ取得、なければ、新規作成か選択へ誘導
-            $learningtasks = Learningtasks::where('bucket_id', $learningtasks_frame->bucket_id)->first();
+            $learningtask = Learningtasks::where('bucket_id', $frame->bucket_id)->first();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
             'learningtasks_edit_learningtasks', [
-            'learningtasks_frame'  => $learningtasks_frame,
-            'learningtasks'        => $learningtasks,
-            'create_flag' => $create_flag,
-            'message'     => $message,
-            'errors'      => $errors,
+            'learningtask'  => $learningtask,
+            'create_flag'   => $create_flag,
+            'message'       => $message,
+            //'errors'        => $errors,
             ]
-        )->withInput($request->all);
+        );
     }
 
     /**
      *  課題管理登録処理
      */
-    public function saveBuckets($request, $page_id, $frame_id, $learningtasks_id = null)
+    public function saveBuckets($request, $page_id, $frame_id, $learningtask_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'learningtasks_name'            => ['required'],
+            'learningtasks_name'  => ['required'],
+            'use_report'          => ['required'],
+            'use_examination'     => ['required'],
             'view_count'          => ['required'],
             'view_count'          => ['numeric'],
-            'rss_count'           => ['nullable', 'numeric'],
+            //'rss_count'           => ['nullable', 'numeric'],
             'sequence_conditions' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'learningtasks_name'            => '課題管理名',
+            'learningtasks_name'  => '課題管理名',
+            'use_report'          => 'レポート提出機能',
+            'use_examination'     => 'レポート試験機能',
             'view_count'          => '表示件数',
-            'rss_count'           => 'RSS件数',
+            //'rss_count'           => 'RSS件数',
             'sequence_conditions' => '順序条件',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($learningtasks_id)) {
-                $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $learningtasks_id, $create_flag, $message, $validator->errors());
-            } else {
-                $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $learningtasks_id, $create_flag, $message, $validator->errors());
-            }
+            return redirect()->back()->withErrors($validator)->withInput();
+            //if (empty($learningtask_id)) {
+            //    $create_flag = true;
+            //    return $this->createBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag, $message, $validator->errors());
+            //} else {
+            //    $create_flag = false;
+            //    return $this->editBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag, $message, $validator->errors());
+            //}
         }
 
         // 更新後のメッセージ
         $message = null;
 
-        if (empty($request->learningtasks_id)) {
-            // 画面から渡ってくるlearningtasks_id が空ならバケツと課題管理を新規登録
+        if (empty($request->learningtask_id)) {
+            // 画面から渡ってくるlearningtask_id が空ならバケツと課題管理を新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
                   'bucket_name' => $request->learningtasks_name,
@@ -1059,8 +1350,8 @@ class LearningtasksPlugin extends UserPluginBase
             ]);
 
             // 課題管理データ新規オブジェクト
-            $learningtasks = new Learningtasks();
-            $learningtasks->bucket_id = $bucket_id;
+            $learningtask = new Learningtasks();
+            $learningtask->bucket_id = $bucket_id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆課題管理作成
@@ -1074,48 +1365,53 @@ class LearningtasksPlugin extends UserPluginBase
 
             $message = '課題管理設定を追加しました。';
         } else {
-            // learningtasks_id があれば、課題管理を更新
+            // learningtask_id があれば、課題管理を更新
             // 課題管理データ取得
-            $learningtasks = Learningtasks::where('id', $request->learningtasks_id)->first();
+            $learningtask = Learningtasks::where('id', $request->learningtask_id)->first();
 
             $message = '課題管理設定を変更しました。';
         }
 
         // 課題管理設定
-        $learningtasks->learningtasks_name            = $request->learningtasks_name;
-        $learningtasks->view_count          = $request->view_count;
-        $learningtasks->rss                 = $request->rss;
-        $learningtasks->rss_count           = $request->rss_count;
-        $learningtasks->sequence_conditions = intval($request->sequence_conditions);
-        //$learningtasks->approval_flag = $request->approval_flag;
+        $learningtask->learningtasks_name  = $request->learningtasks_name;
+        $learningtask->use_report          = $request->use_report;
+        $learningtask->use_examination     = $request->use_examination;
+        $learningtask->view_count          = $request->view_count;
+        // 課題管理にRSS が必要か、再考する。
+        //$learningtask->rss                 = $request->rss;
+        //$learningtask->rss_count           = $request->rss_count;
+        $learningtask->rss                 = 0;
+        $learningtask->rss_count           = 0;
+        $learningtask->sequence_conditions = intval($request->sequence_conditions);
+        //$learningtask->approval_flag = $request->approval_flag;
 
         // データ保存
-        $learningtasks->save();
+        $learningtask->save();
 
         // 課題管理名で、Buckets名も更新する
-        Buckets::where('id', $learningtasks->bucket_id)->update(['bucket_name' => $request->learningtasks_name]);
+        Buckets::where('id', $learningtask->bucket_id)->update(['bucket_name' => $request->learningtasks_name]);
 
         // 課題管理名で、Buckets名も更新する
-        //Log::debug($learningtasks->bucket_id);
+        //Log::debug($learningtask->bucket_id);
         //Log::debug($request->learningtasks_name);
 
         // 新規作成フラグを付けて課題管理設定変更画面を呼ぶ
         $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $learningtasks_id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag, $message);
     }
 
     /**
      *  削除処理
      */
-    public function destroyBuckets($request, $page_id, $frame_id, $learningtasks_id)
+    public function destroyBuckets($request, $page_id, $frame_id, $learningtask_id)
     {
         // learningtasks_id がある場合、データを削除
-        if ($learningtasks_id) {
+        if ($learningtask_id) {
             // 記事データを削除する。
-            LearningtasksPosts::where('learningtasks_id', $learningtasks_id)->delete();
+            LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
 
             // 課題管理設定を削除する。
-            Learningtasks::destroy($learningtasks_id);
+            Learningtasks::destroy($learningtask_id);
 
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
@@ -1159,24 +1455,24 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 課題管理
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
+        $learningtask = $this->getLearningTask($frame_id);
 
         // カテゴリ（全体）
         $general_categories = Categories::select('categories.*', 'learningtasks_categories.id as learningtasks_categories_id', 'learningtasks_categories.categories_id', 'learningtasks_categories.view_flag')
-                                        ->leftJoin('learningtasks_categories', function ($join) use ($learningtasks_frame) {
+                                        ->leftJoin('learningtasks_categories', function ($join) use ($learningtask) {
                                             $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
-                                                 ->where('learningtasks_categories.learningtasks_id', '=', $learningtasks_frame->learningtasks_id);
+                                                 ->where('learningtasks_categories.learningtasks_id', '=', $learningtask->id);
                                         })
                                         ->where('target', null)
                                         ->orderBy('display_sequence', 'asc')
                                         ->get();
         // カテゴリ（この課題管理）
         $plugin_categories = null;
-        if ($learningtasks_frame->learningtasks_id) {
+        if ($learningtask->id) {
             $plugin_categories = Categories::select('categories.*', 'learningtasks_categories.id as learningtasks_categories_id', 'learningtasks_categories.categories_id', 'learningtasks_categories.view_flag')
                                            ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
                                            ->where('target', 'learningtasks')
-                                           ->where('plugin_id', $learningtasks_frame->learningtasks_id)
+                                           ->where('plugin_id', $learningtask->id)
                                            ->orderBy('display_sequence', 'asc')
                                            ->get();
         }
@@ -1186,7 +1482,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_list_categories', [
             'general_categories' => $general_categories,
             'plugin_categories'  => $plugin_categories,
-            'learningtasks_frame'         => $learningtasks_frame,
+            'learningtask'       => $learningtask,
             'errors'             => $errors,
             'create_flag'        => $create_flag,
             ]
@@ -1254,7 +1550,7 @@ class LearningtasksPlugin extends UserPluginBase
         ------------------------------------ */
 
         // 課題管理
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
+        $learningtask = $this->getLearningTask($frame_id);
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
@@ -1264,11 +1560,11 @@ class LearningtasksPlugin extends UserPluginBase
                                 'color'            => $request->add_color,
                                 'background_color' => $request->add_background_color,
                                 'target'           => 'learningtasks',
-                                'plugin_id'        => $learningtasks_frame->learningtasks_id,
+                                'plugin_id'        => $learningtask->id,
                                 'display_sequence' => intval($request->add_display_sequence),
                              ]);
             LearningtasksCategories::create([
-                                'learningtasks_id'         => $learningtasks_frame->learningtasks_id,
+                                'learningtasks_id' => $learningtask->id,
                                 'categories_id'    => $add_category->id,
                                 'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
                                 'display_sequence' => intval($request->add_display_sequence),
@@ -1287,7 +1583,7 @@ class LearningtasksPlugin extends UserPluginBase
                 $category->color            = $request->plugin_color[$plugin_categories_id];
                 $category->background_color = $request->plugin_background_color[$plugin_categories_id];
                 $category->target           = 'learningtasks';
-                $category->plugin_id        = $learningtasks_frame->learningtasks_id;
+                $category->plugin_id        = $learningtask->id;
                 $category->display_sequence = $request->plugin_display_sequence[$plugin_categories_id];
 
                 // 保存
@@ -1301,11 +1597,11 @@ class LearningtasksPlugin extends UserPluginBase
             foreach ($request->general_categories_id as $general_categories_id) {
                 // 課題管理プラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 LearningtasksCategories::updateOrCreate(
-                    ['categories_id' => $general_categories_id, 'learningtasks_id' => $learningtasks_frame->learningtasks_id],
+                    ['categories_id'    => $general_categories_id, 'learningtasks_id' => $learningtask->id],
                     [
-                     'learningtasks_id' => $learningtasks_frame->learningtasks_id,
-                     'categories_id' => $general_categories_id,
-                     'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
+                     'learningtasks_id' => $learningtask->id,
+                     'categories_id'    => $general_categories_id,
+                     'view_flag'        => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
                      'display_sequence' => $request->general_display_sequence[$general_categories_id],
                     ]
                 );
@@ -1318,11 +1614,11 @@ class LearningtasksPlugin extends UserPluginBase
             foreach ($request->plugin_categories_id as $plugin_categories_id) {
                 // 課題管理プラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 LearningtasksCategories::updateOrCreate(
-                    ['categories_id' => $plugin_categories_id, 'learningtasks_id' => $learningtasks_frame->learningtasks_id],
+                    ['categories_id'    => $plugin_categories_id, 'learningtasks_id' => $learningtask->id],
                     [
-                     'learningtasks_id' => $learningtasks_frame->learningtasks_id,
-                     'categories_id' => $plugin_categories_id,
-                     'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
+                     'learningtasks_id' => $learningtask->id,
+                     'categories_id'    => $plugin_categories_id,
+                     'view_flag'        => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
                      'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
                     ]
                 );
@@ -1352,9 +1648,107 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
+     *  試験登録処理
+     */
+    public function saveExaminations($request, $page_id, $frame_id, $post_id)
+    {
+        // 削除対象の試験を削除する。
+        if ($request->del_examinations) {
+            foreach ($request->del_examinations as $examination_id => $examination_value) {
+                LearningtasksExaminations::find($examination_id)->delete();
+            }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at'],
+            'end_at'   => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at'],
+        ]);
+        $validator->setAttributeNames([
+            'start_at' => '開始日時',
+            'end_at'   => '終了日時',
+        ]);
+        if ($validator->fails()) {
+            // エラー時はエラー内容を引き継いで入力画面に戻る
+            return redirect()->back()->withErrors($validator)->withInput();
+            //return $this->editExaminations($request, $page_id, $frame_id, $post_id)->withErrors($validator);
+        }
+
+        // 試験関係ファイルの保存
+        $this->saveTaskFile($request, $page_id, $post_id, 1);
+
+        // 試験登録
+        if ($request->filled('start_at') && $request->filled('end_at')) {
+            LearningtasksExaminations::create(['post_id' => $post_id, 'start_at' => $request->start_at . ':00', 'end_at' => $request->end_at . ':00']);
+        }
+
+        // 課題ファイルの削除
+        $this->deleteTaskFile($request);
+
+        // 編集画面を開く
+        return $this->editExaminations($request, $page_id, $frame_id, $post_id);
+    }
+
+    /**
+     *  レポートの課題提出
+     */
+    public function changeStatus1($request, $page_id, $frame_id, $post_id)
+    {
+        return $this->changeStatus($request, $page_id, $frame_id, $post_id, 1);
+    }
+
+    /**
+     *  レポートの課題評価
+     */
+    public function changeStatus2($request, $page_id, $frame_id, $post_id)
+    {
+        return $this->changeStatus($request, $page_id, $frame_id, $post_id, 2);
+    }
+
+    /**
+     *  レポートのコメント
+     */
+    public function changeStatus3($request, $page_id, $frame_id, $post_id)
+    {
+        return $this->changeStatus($request, $page_id, $frame_id, $post_id, 3);
+    }
+
+    /**
+     *  試験申し込み
+     */
+    public function changeStatus4($request, $page_id, $frame_id, $post_id)
+    {
+        return $this->changeStatus($request, $page_id, $frame_id, $post_id, 4);
+    }
+
+    /**
+     *  試験の解答提出
+     */
+    public function changeStatus5($request, $page_id, $frame_id, $post_id)
+    {
+        return $this->changeStatus($request, $page_id, $frame_id, $post_id, 5);
+    }
+
+    /**
+     *  試験の評価
+     */
+    public function changeStatus6($request, $page_id, $frame_id, $post_id)
+    {
+        return $this->changeStatus($request, $page_id, $frame_id, $post_id, 6);
+    }
+
+    /**
+     *  試験のコメント
+     */
+    public function changeStatus7($request, $page_id, $frame_id, $post_id)
+    {
+        return $this->changeStatus($request, $page_id, $frame_id, $post_id, 7);
+    }
+
+    /**
      *  進捗ステータス更新
      */
-    public function changeStatus($request, $page_id, $frame_id, $id = null)
+    private function changeStatus($request, $page_id, $frame_id, $post_id, $task_status)
     {
         // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
         $user = Auth::user();
@@ -1365,16 +1759,14 @@ class LearningtasksPlugin extends UserPluginBase
         // upload 用変数
         $upload = null;
 
-        // 「修了」の場合に手書き画像があれば保存する。
-        if ($request->task_status == "1" && $request->has('handwriting') && !empty($request->get('handwriting'))) {
-            $imagedata = base64_decode($request->get('handwriting'));
-
+        // アップロードファイルがあれば保存する。
+        if ($request->hasFile('upload_file')) {
             // uploads テーブルに情報追加、ファイルのid を取得する
             $upload = Uploads::create([
-                'client_original_name' => '手書き回答.png',
-                'mimetype'             => 'image/png',
-                'extension'            => 'png',
-                'size'                 => strlen($imagedata),
+                'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
+                'mimetype'             => $request->file('upload_file')->getClientMimeType(),
+                'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
+                'size'                 => $request->file('upload_file')->getClientSize(),
                 'plugin_name'          => 'learningtasks',
                 'page_id'              => $page_id,
                 'private'              => 1,
@@ -1382,35 +1774,96 @@ class LearningtasksPlugin extends UserPluginBase
 
             // 課題ファイル保存
             $directory = $this->getDirectory($upload->id);
-            Storage::put($directory . '/' . $upload->id . ".png", $imagedata);
+            $request->file('upload_file')->storeAs($directory, $upload->id . '.' . $request->file('upload_file')->getClientOriginalExtension());
         }
 
-        // 「取り消し」の場合に手書き画像があれば削除する。
-        if ($request->task_status == "0") {
-            $learningtasks_users_status = LearningtasksUsersStatuses::where('contents_id', $id)->where('user_id', $user->id)->first();
-            // 手書き画像ファイルの確認
-            if ($learningtasks_users_status->canvas_answer_file_id) {
-                // アップロードテーブルの削除
-                Uploads::destroy($learningtasks_users_status->canvas_answer_file_id);
-                // アップロードファイルの削除
-                $directory = $this->getDirectory($learningtasks_users_status->canvas_answer_file_id);
-                Storage::delete($directory . '/' . $learningtasks_users_status->canvas_answer_file_id . ".png");
-            }
+        // 科目を取得
+        //$learningtask_post = $this->getPost($post_id);
+
+        // 進捗ステータスのユーザID（受講生のID）
+        // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)の場合は、教員によるログイン操作のため、セッションから
+        $student_user_id = $student_user_id = $user->id;
+        if ($task_status == 2 || $task_status == 3 || $task_status == 6 || $task_status == 7) {
+            $student_user_id = session('student_id');
         }
 
-        // ユーザーの進捗ステータス
-        LearningtasksUsersStatuses::updateOrCreate(
-            ['contents_id' => $id, 'user_id' => $user->id],
+        // ユーザーの進捗ステータス保存
+        LearningtasksUsersStatuses::create(
             [
-             'contents_id' => $id,
-             'user_id'     => $user->id,
-             'task_status' => $request->task_status,
-             'canvas_answer_file_id' => empty($upload) ? null : $upload->id,
+             'post_id'        => $post_id,
+             'user_id'        => $student_user_id,
+             'task_status'    => $task_status,
+             'comment'        => $request->filled('comment') ? $request->comment : null,
+             'upload_id'      => empty($upload) ? null : $upload->id,
+             'examination_id' => $request->filled('examination_id') ? $request->examination_id : null,
+             'grade'          => $request->filled('grade') ? $request->grade : null,
             ]
         );
 
-        return $this->index($request, $page_id, $frame_id);
+        // リダイレクトで詳細画面へ
+        return;
     }
+
+    /**
+     *  進捗ステータス更新
+     */
+    //public function changeStatus___($request, $page_id, $frame_id, $id = null)
+    //{
+    //    // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
+    //    $user = Auth::user();
+    //    if (empty($user)) {
+    //        return $this->view_error("403_inframe", null, "ログインしないとできない処理です。");
+    //    }
+
+    //    // upload 用変数
+    //    $upload = null;
+
+    //    // 「修了」の場合に手書き画像があれば保存する。
+    //    if ($request->task_status == "1" && $request->has('handwriting') && !empty($request->get('handwriting'))) {
+    //        $imagedata = base64_decode($request->get('handwriting'));
+
+    //        // uploads テーブルに情報追加、ファイルのid を取得する
+    //        $upload = Uploads::create([
+    //            'client_original_name' => '手書き回答.png',
+    //            'mimetype'             => 'image/png',
+    //            'extension'            => 'png',
+    //            'size'                 => strlen($imagedata),
+    //            'plugin_name'          => 'learningtasks',
+    //            'page_id'              => $page_id,
+    //            'private'              => 1,
+    //         ]);
+
+    //        // 課題ファイル保存
+    //        $directory = $this->getDirectory($upload->id);
+    //        Storage::put($directory . '/' . $upload->id . ".png", $imagedata);
+    //    }
+
+    //    // 「取り消し」の場合に手書き画像があれば削除する。
+    //    if ($request->task_status == "0") {
+    //        $learningtasks_users_status = LearningtasksUsersStatuses::where('contents_id', $id)->where('user_id', $user->id)->first();
+    //        // 手書き画像ファイルの確認
+    //        if ($learningtasks_users_status->upload_id) {
+    //            // アップロードテーブルの削除
+    //            Uploads::destroy($learningtasks_users_status->upload_id);
+    //            // アップロードファイルの削除
+    //            $directory = $this->getDirectory($learningtasks_users_status->upload_id);
+    //            Storage::delete($directory . '/' . $learningtasks_users_status->upload_id . ".png");
+    //        }
+    //    }
+
+    //    // ユーザーの進捗ステータス
+    //    LearningtasksUsersStatuses::updateOrCreate(
+    //        ['contents_id' => $id, 'user_id' => $user->id],
+    //        [
+    //         'contents_id' => $id,
+    //         'user_id'     => $user->id,
+    //         'task_status' => $request->task_status,
+    //         'upload_id'   => empty($upload) ? null : $upload->id,
+    //        ]
+    //    );
+
+    //    return $this->index($request, $page_id, $frame_id);
+    //}
 
     /**
      *  RSS配信
@@ -1418,8 +1871,8 @@ class LearningtasksPlugin extends UserPluginBase
     public function rss($request, $page_id, $frame_id, $id = null)
     {
         // 課題管理＆フレームデータ
-        $learningtasks_frame = $this->getLearningTaskFrame($frame_id);
-        if (empty($learningtasks_frame)) {
+        $learningtask = $this->getLearningTask($frame_id);
+        if (empty($learningtask)) {
             return;
         }
 
@@ -1435,14 +1888,14 @@ class LearningtasksPlugin extends UserPluginBase
         echo <<<EOD
 <rss xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
 <channel>
-<title>[{$base_site_name->value}]{$learningtasks_frame->learningtasks_name}</title>
+<title>[{$base_site_name->value}]{$learningtask->learningtasks_name}</title>
 <description></description>
 <link>
 {$url}
 </link>
 EOD;
 
-        $learningtasks_posts = $this->getPosts($learningtasks_frame, $learningtasks_frame->rss_count);
+        $learningtasks_posts = $this->getPosts($learningtask, $learningtask->rss_count);
         foreach ($learningtasks_posts as $learningtasks_post) {
             $title = $learningtasks_post->post_title;
             $link = url("/plugin/learningtasks/show/" . $page_id . "/" . $frame_id . "/" . $learningtasks_post->id);
@@ -1484,5 +1937,177 @@ EOD;
 EOD;
 
         exit;
+    }
+
+    /**
+     * ユーザ関係編集画面
+     */
+    public function editUsers($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題取得
+        $post = $this->getPost($post_id);
+
+        // 配置されているページのメンバーシップの対象ユーザ取得
+        // 複数のページにプラグインは配置されている可能性を考慮
+        $pages = Page::select('pages.*')
+                     ->join('frames', function ($join) use ($post) {
+                         $join->on('frames.page_id', '=', 'pages.id')
+                              ->where('frames.bucket_id', '=', $post->bucket_id);
+                     })
+                     ->where('pages.membership_flag', 1)
+                     ->orderBy('pages._lft')
+                     ->get();
+
+        // グループID 取得のために、配置されているページRoleを取得
+        $page_roles = PageRole::select('group_id')->whereIn('page_id', $pages->pluck('id'))->groupBy('group_id')->get();
+
+        // グループのユーザを取得
+        $group_users = GroupUser::select('user_id')->whereIn('group_id', $page_roles->pluck('group_id'))->groupBy('user_id')->get();
+
+        // 学生のみ取得
+        $students = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
+                              ->where('target', 'original_role')
+                              ->where('role_name', 'student')
+                              ->where('role_value', 1)
+                              ->get();
+
+        // メンバーシップのユーザ情報を取得
+        // この時、すでに権限付与済みのユーザも紐づける。
+        $membership_users = User::select('users.*', 'learningtasks_users.user_id AS join_user_id')
+                                ->leftJoin('learningtasks_users', function ($join) use ($post) {
+                                    $join->on('learningtasks_users.user_id', '=', 'users.id')
+                                         ->where('learningtasks_users.post_id', '=', $post->id)
+                                         ->where('learningtasks_users.role_name', 'student')
+                                         ->whereNull('learningtasks_users.deleted_at');
+                                })
+                                ->whereIn('users.id', $students->pluck('users_id'))
+                                ->orderBy('id', 'asc')
+                                ->get();
+
+
+        // 教員のみ取得
+        $teachers = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
+                              ->where('target', 'original_role')
+                              ->where('role_name', 'teacher')
+                              ->where('role_value', 1)
+                              ->get();
+
+        // メンバーシップのユーザ情報を取得
+        // この時、すでに権限付与済みのユーザも紐づける。
+        $membership_teacher_users = User::select('users.*', 'learningtasks_users.user_id AS join_user_id')
+                                ->leftJoin('learningtasks_users', function ($join) use ($post) {
+                                    $join->on('learningtasks_users.user_id', '=', 'users.id')
+                                         ->where('learningtasks_users.post_id', '=', $post->id)
+                                         ->where('learningtasks_users.role_name', 'teacher')
+                                         ->whereNull('learningtasks_users.deleted_at');
+                                })
+                                ->whereIn('users.id', $teachers->pluck('users_id'))
+                                ->orderBy('id', 'asc')
+                                ->get();
+
+        // 画面を呼び出す。
+        return $this->view(
+            'learningtasks_edit_users', [
+            'learningtasks_posts'      => $post,
+            'membership_users'         => $membership_users,
+            'membership_teacher_users' => $membership_teacher_users,
+            ]
+        );
+    }
+
+    /**
+     * ユーザ関係保存画面
+     */
+    public function saveUsers($request, $page_id, $frame_id, $post_id)
+    {
+        // 参加方式の更新
+        $post = LearningtasksPosts::find($post_id);
+        if (empty($post)) {
+            return $this->editUsers($request, $page_id, $frame_id, $post_id);
+        }
+
+        $post->student_join_flag = $request->student_join_flag;
+        $post->teacher_join_flag = $request->teacher_join_flag;
+        $post->save();
+
+        // 受講者
+
+        // 画面のチェックボックスのユーザIDを一度ローカル変数にしておく。
+        // 1件もチェックされていないと、null になり、処理中で毎回、配列化を聞くことになるため、
+        // ここで、nullなら、空の配列にしておく。
+        $join_users = $request->join_users;
+        if (empty($join_users)) {
+            $join_users = array();
+        }
+
+        // ページ中に1件でもユーザがいる場合はループして処理する。
+        if ($request->filled('page_users')) {
+            foreach ($request->page_users as $page_user_id) {
+                $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
+                                                         ->where('user_id', $page_user_id)
+                                                         ->where('role_name', 'student')
+                                                         ->whereNull('deleted_at')
+                                                         ->first();
+                // 参加データの追加・削除
+                if (!empty($learningtasks_users) && !in_array($page_user_id, $join_users)) {
+                    // 削除（参加データはあり、画面のチェックはない）
+                    $learningtasks_users->delete();
+                } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
+                    // 追加（参加データはなし、画面のチェックはあり）
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => 'student']);
+                }
+            }
+        }
+
+        // 教員
+
+        // 画面のチェックボックスのユーザIDを一度ローカル変数にしておく。
+        // 1件もチェックされていないと、null になり、処理中で毎回、配列化を聞くことになるため、
+        // ここで、nullなら、空の配列にしておく。
+        $join_users = $request->join_teacher_users;
+        if (empty($join_users)) {
+            $join_users = array();
+        }
+
+        // ページ中に1件でもユーザがいる場合はループして処理する。
+        if ($request->filled('page_teacher_users')) {
+            foreach ($request->page_teacher_users as $page_user_id) {
+                $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
+                                                         ->where('user_id', $page_user_id)
+                                                         ->where('role_name', 'teacher')
+                                                         ->whereNull('deleted_at')
+                                                         ->first();
+                // 参加データの追加・削除
+                if (!empty($learningtasks_users) && !in_array($page_user_id, $join_users)) {
+                    // 削除（参加データはあり、画面のチェックはない）
+                    $learningtasks_users->delete();
+                } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
+                    // 追加（参加データはなし、画面のチェックはあり）
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => 'teacher']);
+                }
+            }
+        }
+
+        return $this->editUsers($request, $page_id, $frame_id, $post_id);
+    }
+
+    /**
+     * 機能選択編集画面
+     */
+    public function selectFunction($request, $page_id, $frame_id, $post_id)
+    {
+        // 課題管理
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 課題取得
+        $post = $this->getPost($post_id);
+
+        // 画面を呼び出す。
+        return $this->view(
+            'learningtasks_select_function', [
+            'learningtask'      => $learningtask,
+            'learningtasks_posts'      => $post,
+            ]
+        );
     }
 }
