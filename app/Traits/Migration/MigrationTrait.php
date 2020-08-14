@@ -1817,7 +1817,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $bucket = Buckets::find($blogs->bucket_id);
         }
         // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
-        if (!empty($bucket)) {
+        if (empty($bucket)) {
             $this->putError(1, 'Blog フレームのみで実体なし', "page_dir = " . $page_dir);
         }
 
@@ -1863,7 +1863,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $bucket = Buckets::find($databases->bucket_id);
         }
         // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
-        if (!empty($bucket)) {
+        if (empty($bucket)) {
             $this->putError(1, 'Database フレームのみで実体なし', "page_dir = " . $page_dir);
         }
 
@@ -1926,7 +1926,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $bucket = Buckets::find($forms->bucket_id);
         }
         // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
-        if (!empty($bucket)) {
+        if (empty($bucket)) {
             $this->putError(1, 'Form フレームのみで実体なし', "page_dir = " . $page_dir);
         }
         // Frames 登録
@@ -2977,6 +2977,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
                 $page_ini .= "permanent_link = \"/" . $nc2_sort_page->permalink . "\"\n";
                 $page_ini .= "base_display_flag = 1\n";
+                $page_ini .= "nc2_page_id = \"" . $nc2_sort_page->page_id . "\"\n";
                 $page_ini .= "nc2_room_id = \"" . $nc2_sort_page->room_id . "\"\n";
 
                 // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
@@ -3685,6 +3686,165 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         }
 
         // NC2登録フォーム（Registration）を移行する。
+        $nc2_export_where_registration_ids = $this->getMigrationConfig('forms', 'nc2_export_where_registration_ids');
+
+        if (empty($nc2_export_where_registration_ids)) {
+            $nc2_registrations = Nc2Registration::orderBy('registration_id')->get();
+        } else {
+            $nc2_registrations = Nc2Registration::whereIn('registration_id', $nc2_export_where_registration_ids)->orderBy('registration_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_registrations->isEmpty()) {
+            return;
+        }
+
+        // NC2登録フォーム（Registration）のループ
+        foreach ($nc2_registrations as $nc2_registration) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_registration->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            $registration_id = $nc2_registration->registration_id;
+
+            // 登録フォーム設定
+            $registration_ini = "";
+            $registration_ini .= "[form_base]\n";
+            $registration_ini .= "forms_name = \""        . $nc2_registration->registration_name . "\"\n";
+            $registration_ini .= "mail_send_flag = "      . $nc2_registration->mail_send . "\n";
+            $registration_ini .= "mail_send_address = \"" . $nc2_registration->rcpt_to . "\"\n";
+            $registration_ini .= "user_mail_send_flag = " . $nc2_registration->regist_user_send . "\n";
+            $registration_ini .= "mail_subject = \""      . $nc2_registration->mail_subject . "\"\n";
+            $registration_ini .= "mail_format = \""       . str_replace("\n", '\n', $nc2_registration->mail_body) . "\"\n";
+            $registration_ini .= "data_save_flag = 1\n";
+            $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc2_registration->accept_message) . "\"\n";
+            $registration_ini .= "numbering_use_flag = 0\n";
+            $registration_ini .= "numbering_prefix = null\n";
+
+            // NC2 情報
+            $registration_ini .= "\n";
+            $registration_ini .= "[nc2_info]\n";
+            $registration_ini .= "registration_id = " . $nc2_registration->registration_id . "\n";
+            $registration_ini .= "room_id = "         . $nc2_registration->room_id . "\n";
+
+            // 登録フォームのカラム情報
+            $registration_items = Nc2RegistrationItem::where('registration_id', $registration_id)
+                                                               ->orderBy('item_sequence', 'asc')
+                                                               ->get();
+            if (empty($registration_items)) {
+                continue;
+            }
+
+            // カラム情報出力
+            $registration_ini .= "\n";
+            $registration_ini .= "[form_columns]\n";
+
+            // カラム情報
+            //$forms_columns_rows = array();
+            foreach ($registration_items as $registration_item) {
+                $registration_ini .= "form_column[" . $registration_item->item_id . "] = \"" . $registration_item->item_name . "\"\n";
+            }
+            $registration_ini .= "\n";
+
+            // カラム詳細情報
+            foreach ($registration_items as $registration_item) {
+                $item_id = $registration_item->item_id;
+
+                $registration_ini .= "[" . $item_id . "]" . "\n";
+
+                // type
+                if ($registration_item->item_type == 1) {
+                    $column_type = "text";
+                } elseif ($registration_item->item_type == 2) {
+                    $column_type = "checkbox";
+                } elseif ($registration_item->item_type == 3) {
+                    $column_type = "radio";
+                } elseif ($registration_item->item_type == 4) {
+                    $column_type = "select";
+                } elseif ($registration_item->item_type == 5) {
+                    $column_type = "textarea";
+                } elseif ($registration_item->item_type == 6) {
+                    $column_type = "mail";
+                } elseif ($registration_item->item_type == 7) {
+                    $column_type = "file";
+                }
+
+                $item_id = $registration_item->item_id;
+                $registration_ini .= "column_type                = \"" . $column_type                     . "\"\n";
+                $registration_ini .= "column_name                = \"" . $registration_item->item_name    . "\"\n";
+                $registration_ini .= "option_value               = \"" . $registration_item->option_value . "\"\n";
+                $registration_ini .= "required                   = "   . $registration_item->require_flag . "\n";
+                $registration_ini .= "frame_col                  = "   . 0                                . "\n";
+                $registration_ini .= "caption                    = \"" . $registration_item->description  . "\"\n";
+                $registration_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
+                $registration_ini .= "minutes_increments         = "   . 10                               . "\n";
+                $registration_ini .= "minutes_increments_from    = "   . 10                               . "\n";
+                $registration_ini .= "minutes_increments_to      = "   . 10                               . "\n";
+                $registration_ini .= "rule_allowed_numeric       = null\n";
+                $registration_ini .= "rule_allowed_alpha_numeric = null\n";
+                $registration_ini .= "rule_digits_or_less        = null\n";
+                $registration_ini .= "rule_max                   = null\n";
+                $registration_ini .= "rule_min                   = null\n";
+                $registration_ini .= "rule_word_count            = null\n";
+                $registration_ini .= "rule_date_after_equal      = null\n";
+                $registration_ini .= "\n";
+            }
+
+            // フォーム の設定
+            Storage::put('migration/@forms/form_' . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
+
+            // 登録データもエクスポートする場合
+            if ($this->hasMigrationConfig('forms', 'nc2_export_registration_data', true)) {
+
+                // データ部
+                $registration_data_header = "[form_inputs]\n";
+                $registration_data = "";
+                $registration_item_datas = Nc2RegistrationItemData::select('registration_item_data.*')
+                                                                 ->join('registration_item', function ($join) {
+                                                                     $join->on('registration_item.registration_id', '=', 'registration_item_data.registration_id')
+                                                                          ->on('registration_item.item_id', '=', 'registration_item_data.item_id');
+                                                                 })
+                                                                 ->where('registration_item_data.registration_id', $registration_id)
+                                                                 ->orderBy('registration_item_data.data_id', 'asc')
+                                                                 ->orderBy('registration_item.item_sequence', 'asc')
+                                                                 ->get();
+
+                $data_id = null;
+                foreach ($registration_item_datas as $registration_item_data) {
+                    if ($registration_item_data->data_id != $data_id) {
+                        $registration_data_header .= "input[" . $registration_item_data->data_id . "] = \"\"\n";
+                        $registration_data .= "\n[" . $registration_item_data->data_id . "]\n";
+                        $data_id = $registration_item_data->data_id;
+                    }
+                    $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
+                }
+                // フォーム の登録データ
+                Storage::put('migration/@forms/form_' . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
+            }
+        }
+    }
+
+    /**
+     * NC2：新着情報（Whatsnew）の移行
+     */
+    private function nc2ExportWhatsnew($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportWhatsnew.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory('migration/@whatsnew/');
+        }
+
+        // NC2新着情報（Whatsnew）を移行する。
         $nc2_export_where_registration_ids = $this->getMigrationConfig('forms', 'nc2_export_where_registration_ids');
 
         if (empty($nc2_export_where_registration_ids)) {
