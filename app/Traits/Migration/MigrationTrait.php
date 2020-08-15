@@ -878,8 +878,13 @@ trait MigrationTrait
             $this->clearData('users');
         }
 
-        // ユーザ定義・ファイル定義の取り込み
-        $users_ini = parse_ini_file(storage_path() . '/app/migration/@users/users.ini', true);
+        // ユーザ定義・ファイルの存在確認
+        if (!Storage::exists($this->getImportPath('users/users.ini'))) {
+            return;
+        }
+
+        // ユーザ定義・ファイルの取り込み
+        $users_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('users/users.ini'), true);
 
         // ユーザの指定（あれば後で使う）
         $cc_import_login_users = $this->getMigrationConfig('users', 'cc_import_login_users');
@@ -3243,7 +3248,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         // データクリア
         if ($redo === true) {
             // 移行用ファイルの削除
-            Storage::deleteDirectory('migration/@users/');
+            Storage::deleteDirectory($this->getImportPath('users/'));
         }
 
         /*
@@ -3327,7 +3332,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         }
 
         // Userデータの出力
-        Storage::put('migration/@users/users.ini', $users_ini);
+        Storage::put($this->getImportPath('users/users.ini'), $users_ini);
     }
 
     /**
