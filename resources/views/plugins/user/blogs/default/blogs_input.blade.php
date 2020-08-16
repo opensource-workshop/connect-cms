@@ -16,19 +16,19 @@
 <script type="text/javascript">
     function save_action() {
         @if (empty($blogs_posts->id))
-            form_blogs_posts.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}";
         @else
-            form_blogs_posts.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}";
         @endif
-        form_blogs_posts.submit();
+        form_blogs_posts{{$frame_id}}.submit();
     }
 </script>
 
 {{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_blogs_posts">
+    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="" name="form_blogs_posts">
+    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
