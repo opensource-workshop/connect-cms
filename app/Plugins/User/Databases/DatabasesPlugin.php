@@ -1106,16 +1106,20 @@ class DatabasesPlugin extends UserPluginBase
     /**
      * データ登録
      */
-    public function publicStore($request, $page_id, $frame_id, $id = null)
+    public function publicStore($request, $page_id, $frame_id, $id = null, $isTemporary = false)
     {
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
-        // 承認の要否確認とステータス処理
-        if ($this->buckets->needApprovalUser(Auth::user())) {
-            $status = 2;  // 承認待ち
+        if ($isTemporary) {
+            $status = 1;  // 一時保存
         } else {
-            $status = 0;  // 公開
+            // 承認の要否確認とステータス処理
+            if ($this->buckets->needApprovalUser(Auth::user())) {
+                $status = 2;  // 承認待ち
+            } else {
+                $status = 0;  // 公開
+            }
         }
 
         // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
@@ -2574,5 +2578,15 @@ class DatabasesPlugin extends UserPluginBase
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * 一時保存
+     */
+    public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 一時保存
+        $isTemporary = true;
+        $this->publicStore($request, $page_id, $frame_id, $id, $isTemporary);
     }
 }
