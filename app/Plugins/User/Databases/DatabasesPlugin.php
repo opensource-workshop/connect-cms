@@ -1241,25 +1241,28 @@ class DatabasesPlugin extends UserPluginBase
         // 登録後メッセージ内の採番文字列を置換
         // $after_message = str_replace('[[number]]', $number, $database->after_message);
 
-        // メール送信
-        if ($database->mail_send_flag) {
-            // メール本文の組み立て
-            $mail_databaseat = $database->mail_databaseat;
-            $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
+        // 一時保存 以外（一時保存はメール送らない）
+        if (! $isTemporary) {
+            // メール送信
+            if ($database->mail_send_flag) {
+                // メール本文の組み立て
+                $mail_databaseat = $database->mail_databaseat;
+                $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
 
-            // メール本文内の採番文字列を置換
-            $mail_text = str_replace('[[number]]', $number, $mail_text);
+                // メール本文内の採番文字列を置換
+                $mail_text = str_replace('[[number]]', $number, $mail_text);
 
-            // メール送信（管理者側）
-            $mail_addresses = explode(',', $database->mail_send_address);
-            foreach ($mail_addresses as $mail_address) {
-                Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-            }
+                // メール送信（管理者側）
+                $mail_addresses = explode(',', $database->mail_send_address);
+                foreach ($mail_addresses as $mail_address) {
+                    Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                }
 
-            // メール送信（ユーザー側）
-            foreach ($user_mailaddresses as $user_mailaddress) {
-                if (!empty($user_mailaddress)) {
-                    Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                // メール送信（ユーザー側）
+                foreach ($user_mailaddresses as $user_mailaddress) {
+                    if (!empty($user_mailaddress)) {
+                        Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    }
                 }
             }
         }
