@@ -156,9 +156,17 @@
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_databases_cancel();"><i class="fas fa-times"></i> キャンセル</button>
         @if($id)
-            <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 変更確定</button>
+            @if ($buckets->needApprovalUser(Auth::user()))
+                <button type="submit" class="btn btn-success" onclick="javascript:submit_databases_store();"><i class="far fa-edit"></i> 変更申請</button>
+            @else
+                <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 変更確定</button>
+            @endif
         @else
-            <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 登録確定</button>
+            @if ($buckets->needApprovalUser(Auth::user()))
+                <button type="submit" class="btn btn-success" onclick="javascript:submit_databases_store();"><i class="far fa-edit"></i> 登録申請</button>
+            @else
+                <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 登録確定</button>
+            @endif
         @endif
     </div>
 </form>

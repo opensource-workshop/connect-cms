@@ -7,12 +7,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Schema;
 
 use DB;
+use Carbon\Carbon;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
+//use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
@@ -339,17 +341,21 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
+            // ソートなし or ソートするカラムIDが数値じゃない（=入力なしと同じ扱いにする）
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
                 $inputs_query = DatabasesInputs::where('databases_id', $database->id);
             } else {
+                // ソートあり
                 $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
-
                                                 ->leftjoin('databases_input_cols', function ($join) use ($sort_column_id) {
                                                     $join->on('databases_input_cols.databases_inputs_id', '=', 'databases_inputs.id')
                                                          ->where('databases_input_cols.databases_columns_id', '=', $sort_column_id);
                                                 })
                                                ->where('databases_id', $database->id);
             }
+
+            // 権限によって表示する記事を絞る
+            $inputs_query = $this->appendAuthWhere($inputs_query, 'databases_inputs');
 
             // 権限のよって非表示columのdatabases_columns_id配列を取得する
             $hide_columns_ids = $this->getHideColumnsIds($columns, 'list_detail_display_flag');
@@ -737,7 +743,8 @@ class DatabasesPlugin extends UserPluginBase
         $database = $this->getDatabases($frame_id);
 
         // 登録データ行の取得
-        $inputs = DatabasesInputs::where('id', $id)->first();
+        // $inputs = DatabasesInputs::where('id', $id)->first();
+        $inputs = $this->getDatabasesInputs($id);
 
         // データがあることを確認
         if (empty($inputs)) {
@@ -791,7 +798,7 @@ class DatabasesPlugin extends UserPluginBase
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
-        // データベースのカラムデータ ※ まとめ行の設定が不正な場合はリテラル「frame_setting_error」が返る
+        // データベースのカラムデータ
         $databases_columns = $this->getDatabasesColumns($database);
 
         // 権限のよって登録・編集の非表示columnsを取り除く
@@ -805,8 +812,23 @@ class DatabasesPlugin extends UserPluginBase
 
         // データ詳細の取得
         if (empty($id)) {
+            // idなし=登録時
             $input_cols = null;
         } else {
+            // idあり=編集時
+            // 登録データ行の取得
+            $inputs = $this->getDatabasesInputs($id);
+
+            // データがあることを確認
+            if (empty($inputs)) {
+                return;
+            }
+
+            // 権限チェック
+            if ($this->can('posts.update', $inputs, $this->frame->plugin_name, $this->buckets)) {
+                return $this->view_error(403);
+            }
+
             // データ詳細の取得
             $input_cols = $this->getDatabasesInputCols($id);
         }
@@ -1091,15 +1113,24 @@ class DatabasesPlugin extends UserPluginBase
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
+        // 承認の要否確認とステータス処理
+        if ($this->buckets->needApprovalUser(Auth::user())) {
+            $status = 2;  // 承認待ち
+        } else {
+            $status = 0;  // 公開
+        }
+
         // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
         if (empty($id)) {
             $databases_inputs = new DatabasesInputs();
             $databases_inputs->databases_id = $database->id;
+            $databases_inputs->status = $status;
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
             // 更新されたら、行レコードの updated_at を更新したいので、update()
             $databases_inputs->updated_at = now();
+            $databases_inputs->status = $status;
             $databases_inputs->update();
         }
 
@@ -2441,24 +2472,110 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     * 権限設定変更 画面
-     * [TODO] 一時的に承認権限を使わない設定で修正する。今後承認機能を実装したら、当メソッドを削除する。
+     * 登録データ行の取得
      */
-    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    private function getDatabasesInputs($id)
     {
-        // 承認を使わない設定にして、親クラスの同メソッドを呼ぶ
-        $use_approval = false;
-        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
+        // 登録データ行の取得
+        // $inputs = DatabasesInputs::where('id', $id)->first();
+        $inputs = DatabasesInputs::where('id', $id)
+                                    ->where(function ($query) {
+                                        // 権限によって表示する記事を絞る
+                                        $query = $this->appendAuthWhere($query, 'databases_inputs');
+                                    })
+                                    ->first();
+
+        return $inputs;
     }
 
     /**
-     * 権限設定 保存処理
-     * [TODO] 一時的に承認権限を使わない設定で修正する。今後承認機能を実装したら、当メソッドを削除する。
+     * 権限によって表示する記事を絞る
+     *
+     * 基本：
+     *   - 承認機能を実装するには指定したテーブル($table_name)に status, created_id カラムがある事
+     * オプション：
+     *   - テーブルに posted_at(投稿日時) カラムがある場合、投稿日時前＋権限なし or 未ログインなら表示しない
+     *
+     * status = 0:公開(Active)
+     * status = 1:Temporary（一時保存）
+     * status = 2:Approval pending（承認待ち）
+     * status = 9:History（履歴・データ削除）
+     * 参考) https://github.com/opensource-workshop/connect-cms/wiki/Data-history-policy（データ履歴の方針）
+     *
+     * コンテンツ管理者(role_article_admin): 無条件に全記事見れる
+     * モデレータ(role_article):            無条件に全記事見れる
+     * 承認者(role_approval):               0:公開(Active) or 2:承認待ち の全記事見れる
+     * 編集者(role_reporter):               0:公開(Active) or 自分の作成した記事 見れる
+     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) 記事見れる
+     *
+     * [オプション：posted_at(投稿日時) カラムがある]
+     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) and 投稿日時前 記事見れる
+     *
+     * 例) $table_name = 'blogs_posts';
+     * 例) $table_name = 'databases_inputs';
      */
-    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    protected function appendAuthWhere($query, $table_name)
     {
-        // 承認を使わない設定にして、親クラスの同メソッドを呼ぶ
-        $use_approval = false;
-        return parent::saveBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
+        if (empty($query)) {
+            // 空なら何もしない
+            return $query;
+        }
+
+        // モデレータ(記事修正, role_article)権限
+        // コンテンツ管理者(role_article_admin)   = 全記事の取得
+        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+            // 全件取得のため、追加条件なしで戻る。
+            return $query;
+        }
+
+        if ($this->isCan('role_approval')) {
+            //
+            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
+            //
+            // [TODO] status Enum作成したほうがよさそう。コードの意味の全体が把握できないため
+            $query->Where($table_name . '.status', '=', 0)
+                    ->orWhere($table_name . '.status', '=', 2);
+        } elseif ($this->isCan('role_reporter')) {
+            //
+            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
+            //
+            $query->Where($table_name . '.status', '=', 0)
+                    ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+        } else {
+            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
+            // 未ログイン
+            $query->where($table_name . '.status', 0);
+
+            // DBカラム posted_at(投稿日時) 存在するか
+            if (Schema::hasColumn($table_name, 'posted_at')) {
+                $query->where($table_name . '.posted_at', '<=', Carbon::now());
+            }
+        }
+
+        // var_dump($query->get());
+        return $query;
     }
+
+    /**
+     * 承認
+     */
+    public function approval($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // 登録データ行の取得
+        $databases_inputs = $this->getDatabasesInputs($id);
+
+        // データがあることを確認
+        if (empty($databases_inputs)) {
+            return;
+        }
+
+        // 更新されたら、行レコードの updated_at を更新したいので、update()
+        $databases_inputs->updated_at = now();
+        $databases_inputs->status = 0;  // 公開
+        $databases_inputs->update();
+
+        // 登録後は表示用の初期処理を呼ぶ。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
 }
