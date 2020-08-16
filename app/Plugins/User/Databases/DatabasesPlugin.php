@@ -902,26 +902,24 @@ class DatabasesPlugin extends UserPluginBase
                 $search = array_keys($replace_defs);
                 $replace = array_values($replace_defs);
 
-                if (
-                        is_numeric(
-                            mb_convert_kana(
-                                str_replace(
-                                    $search, 
-                                    $replace, 
-                                    $request->databases_columns_value[$databases_column->id]
-                                ),
-                                'n'
-                            )
-                        )
-                    ) {
+                if (is_numeric(
+                    mb_convert_kana(
+                        str_replace(
+                            $search,
+                            $replace,
+                            $request->databases_columns_value[$databases_column->id]
+                        ),
+                        'n'
+                    )
+                )) {
                     // 全角→半角変換した結果が数値の場合
                     $tmp_array = $request->databases_columns_value;
                     // 全角→半角へ丸める
-                    $tmp_array[$databases_column->id] = 
+                    $tmp_array[$databases_column->id] =
                         mb_convert_kana(
                             str_replace(
-                                $search, 
-                                $replace, 
+                                $search,
+                                $replace,
                                 $request->databases_columns_value[$databases_column->id]
                             ),
                             'n'
@@ -2577,5 +2575,4 @@ class DatabasesPlugin extends UserPluginBase
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
     }
-
 }
