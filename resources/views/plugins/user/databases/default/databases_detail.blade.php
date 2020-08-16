@@ -49,6 +49,11 @@
                 </form>
             @endcan
         @endif
+        @can('posts.update',[[$inputs, $frame->plugin_name, $buckets]])
+            @if ($inputs->status == 1)
+                <span class="badge badge-warning align-bottom">一時保存</span>
+            @endif
+        @endcan
 
         <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}'">
             <i class="far fa-edit"></i> 編集
