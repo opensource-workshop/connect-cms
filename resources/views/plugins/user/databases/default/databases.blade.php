@@ -57,6 +57,11 @@
                                 </form>
                             @endcan
                         @endif
+                        @can('posts.update',[[$input, $frame->plugin_name, $buckets]])
+                            @if ($input->status == 1)
+                                <span class="badge badge-warning align-bottom">一時保存</span>
+                            @endif
+                        @endcan
 
                         <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
                             <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>

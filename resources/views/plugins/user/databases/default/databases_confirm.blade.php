@@ -29,6 +29,15 @@
         @endif
         databases_store{{$frame_id}}.submit();
     }
+    {{-- 一時保存ボタンのアクション --}}
+    function submit_databases_temporary() {
+        @if($id)
+            databases_store{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/databases/temporarysave/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
+        @else
+            databases_store{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/databases/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        @endif
+        databases_store{{$frame_id}}.submit();
+    }
 </script>
 
 <form action="" name="databases_store{{$frame_id}}" method="POST">
@@ -154,18 +163,19 @@
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_databases_cancel();"><i class="fas fa-times"></i> キャンセル</button>
+        <button type="button" class="btn btn-secondary mr-2" onclick="submit_databases_cancel();"><i class="fas fa-times"></i> キャンセル</button>
+        <button type="button" class="btn btn-info mr-2" onclick="submit_databases_temporary();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
         @if($id)
             @if ($buckets->needApprovalUser(Auth::user()))
-                <button type="submit" class="btn btn-success" onclick="javascript:submit_databases_store();"><i class="far fa-edit"></i> 変更申請</button>
+                <button type="submit" class="btn btn-success" onclick="submit_databases_store();"><i class="far fa-edit"></i> 変更申請</button>
             @else
-                <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 変更確定</button>
+                <button type="submit" class="btn btn-primary" onclick="submit_databases_store();"><i class="fas fa-check"></i> 変更確定</button>
             @endif
         @else
             @if ($buckets->needApprovalUser(Auth::user()))
-                <button type="submit" class="btn btn-success" onclick="javascript:submit_databases_store();"><i class="far fa-edit"></i> 登録申請</button>
+                <button type="submit" class="btn btn-success" onclick="submit_databases_store();"><i class="far fa-edit"></i> 登録申請</button>
             @else
-                <button type="submit" class="btn btn-primary" onclick="javascript:submit_databases_store();"><i class="fas fa-check"></i> 登録確定</button>
+                <button type="submit" class="btn btn-primary" onclick="submit_databases_store();"><i class="fas fa-check"></i> 登録確定</button>
             @endif
         @endif
     </div>
