@@ -1184,11 +1184,12 @@ class DatabasesPlugin extends UserPluginBase
                                                 ->orderBy('display_sequence')
                                                 ->get();
 
-        // メールの送信文字列
-        $contents_text = '';
+        // delete: フォームの名残で残っていたメール送信処理をコメントアウト
+        // // メールの送信文字列
+        // $contents_text = '';
 
-        // 登録者のメールアドレス
-        $user_mailaddresses = array();
+        // // 登録者のメールアドレス
+        // $user_mailaddresses = array();
 
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
@@ -1223,49 +1224,48 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
-            // メールの内容
-            $contents_text .= $databases_column->column_name . "：" . $value . "\n";
+            // delete: フォームの名残で残っていたメール送信処理をコメントアウト
+            // // メールの内容
+            // $contents_text .= $databases_column->column_name . "：" . $value . "\n";
 
-            // メール型
-            if ($databases_column->column_type == \DatabaseColumnType::mail) {
-                $user_mailaddresses[] = $value;
-            }
+            // // メール型
+            // if ($databases_column->column_type == \DatabaseColumnType::mail) {
+            //     $user_mailaddresses[] = $value;
+            // }
         }
 
-        // 最後の改行を除去
-        $contents_text = trim($contents_text);
+        // delete: フォームの名残で残っていたメール送信処理をコメントアウト
+        // // 最後の改行を除去
+        // $contents_text = trim($contents_text);
 
-        // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-        $number = $database->numbering_use_flag ? $database->numbering_prefix . sprintf('%06d', $this->getNo('databases', $database->bucket_id, $database->numbering_prefix)) : null;
+        // // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
+        // $number = $database->numbering_use_flag ? $database->numbering_prefix . sprintf('%06d', $this->getNo('databases', $database->bucket_id, $database->numbering_prefix)) : null;
 
-        // 登録後メッセージ内の採番文字列を置換
-        // $after_message = str_replace('[[number]]', $number, $database->after_message);
+        // // 登録後メッセージ内の採番文字列を置換
+        // // $after_message = str_replace('[[number]]', $number, $database->after_message);
 
-        // 一時保存 以外（一時保存はメール送らない）
-        if (! $isTemporary) {
-            // メール送信
-            if ($database->mail_send_flag) {
-                // メール本文の組み立て
-                $mail_databaseat = $database->mail_databaseat;
-                $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
+        // // メール送信
+        // if ($database->mail_send_flag) {
+        //     // メール本文の組み立て
+        //     $mail_databaseat = $database->mail_databaseat;
+        //     $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
 
-                // メール本文内の採番文字列を置換
-                $mail_text = str_replace('[[number]]', $number, $mail_text);
+        //     // メール本文内の採番文字列を置換
+        //     $mail_text = str_replace('[[number]]', $number, $mail_text);
 
-                // メール送信（管理者側）
-                $mail_addresses = explode(',', $database->mail_send_address);
-                foreach ($mail_addresses as $mail_address) {
-                    Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-                }
+        //     // メール送信（管理者側）
+        //     $mail_addresses = explode(',', $database->mail_send_address);
+        //     foreach ($mail_addresses as $mail_address) {
+        //         Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+        //     }
 
-                // メール送信（ユーザー側）
-                foreach ($user_mailaddresses as $user_mailaddress) {
-                    if (!empty($user_mailaddress)) {
-                        Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-                    }
-                }
-            }
-        }
+        //     // メール送信（ユーザー側）
+        //     foreach ($user_mailaddresses as $user_mailaddress) {
+        //         if (!empty($user_mailaddress)) {
+        //             Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+        //         }
+        //     }
+        // }
 
         // 登録時のAction を/redirect/plugin にしたため、ここでreturn しなくてよい。
 
