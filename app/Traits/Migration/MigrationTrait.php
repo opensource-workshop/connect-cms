@@ -33,6 +33,7 @@ use App\Models\User\Forms\FormsColumnsSelects;
 use App\Models\User\Forms\FormsInputCols;
 use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Menus\Menu;
+use App\Models\User\Whatsnews\Whatsnews;
 use App\User;
 
 use App\Models\Migration\MigrationMapping;
@@ -276,6 +277,12 @@ trait MigrationTrait
             FormsInputs::truncate();
             Buckets::where('plugin_name', 'forms')->delete();
             MigrationMapping::where('target_source_table', 'forms')->delete();
+        }
+
+        if ($target == 'whatsnews' || $target == 'all') {
+            Whatsnews::truncate();
+            Buckets::where('plugin_name', 'whatsnews')->delete();
+            MigrationMapping::where('target_source_table', 'whatsnews')->delete();
         }
     }
 
@@ -554,6 +561,11 @@ trait MigrationTrait
         // フォームの取り込み
         if ($this->isTarget('cc_import', 'plugins', 'forms')) {
             $this->importForms($redo);
+        }
+
+        // 新着情報の取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'whatsnews')) {
+            $this->importWhatsnews($redo);
         }
 
         // 新ページの取り込み
@@ -1401,7 +1413,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         // フォーム定義の取り込み
         $form_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('forms/form_*.ini'));
 
-        // データベース定義のループ
+        // フォーム定義のループ
         foreach ($form_ini_paths as $form_ini_path) {
             // ini_file の解析
             $form_ini = parse_ini_file($form_ini_path, true);
@@ -1549,6 +1561,87 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                     ]);
                 }
             }
+        }
+    }
+
+
+    /**
+     * Connect-CMS 移行形式の新着情報をインポート
+     */
+    private function importWhatsnews($redo)
+    {
+        $this->putMonitor(3, "Whatsnews import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('whatsnews');
+        }
+
+        // 新着情報定義の取り込み
+        $whatsnew_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('whatsnews/whatsnew_*.ini'));
+
+        // 新着情報定義のループ
+        foreach ($whatsnew_ini_paths as $whatsnew_ini_paths) {
+            // ini_file の解析
+            $whatsnew_ini = parse_ini_file($whatsnew_ini_paths, true);
+
+            // ルーム指定を探しておく。
+            $room_id = null;
+            if (array_key_exists('source_info', $whatsnew_ini) && array_key_exists('room_id', $whatsnew_ini['source_info'])) {
+                $room_id = $whatsnew_ini['source_info']['room_id'];
+            }
+
+            // nc2 の whatsnew_block_id
+            $nc2_whatsnew_block_id = 0;
+            if (array_key_exists('source_info', $whatsnew_ini) && array_key_exists('whatsnew_block_id', $whatsnew_ini['source_info'])) {
+                $nc2_whatsnew_block_id = $whatsnew_ini['source_info']['whatsnew_block_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'whatsnews')->where('source_key', $nc2_whatsnew_block_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // whatsnews 取得。この情報から紐づけて、消すものを消してゆく。
+                $whatsnew = Whatsnews::where('id', $mapping->destination_key)->first();
+
+                if (!empty($whatsnew)) {
+                    // Buckets 削除
+                    Buckets::where('id', $whatsnew->bucket_id)->delete();
+                    // 新着情報削除
+                    $whatsnew->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            // Buckets テーブルと Whatsnew テーブル、マッピングテーブルを追加
+            $whatsnew_name = '無題';
+            if (array_key_exists('whatsnew_base', $whatsnew_ini) && array_key_exists('whatsnew_name', $whatsnew_ini['whatsnew_base'])) {
+                $whatsnew_name = $whatsnew_ini['whatsnew_base']['whatsnew_name'];
+            }
+            $bucket = Buckets::create(['bucket_name' => $whatsnew_name, 'plugin_name' => 'whatsnews']);
+
+            $whatsnew = Whatsnews::create([
+                'bucket_id'        => $bucket->id,
+                'whatsnew_name'    => $whatsnew_name,
+                'view_pattern'     => $whatsnew_ini['whatsnew_base']['view_pattern'],
+                'count'            => $whatsnew_ini['whatsnew_base']['count'],
+                'days'             => $whatsnew_ini['whatsnew_base']['days'],
+                'rss'              => $whatsnew_ini['whatsnew_base']['rss'],
+                'rss_count'        => $whatsnew_ini['whatsnew_base']['rss_count'],
+                'view_posted_name' => $whatsnew_ini['whatsnew_base']['view_posted_name'],
+                'view_posted_at'   => $whatsnew_ini['whatsnew_base']['view_posted_at'],
+                'target_plugins'   => $whatsnew_ini['whatsnew_base']['target_plugins'],
+                'frame_select'     => $whatsnew_ini['whatsnew_base']['frame_select'],
+            ]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'whatsnews',
+                'source_key'           => $nc2_whatsnew_block_id,
+                'destination_key'      => $whatsnew->id,
+            ]);
         }
     }
 
@@ -1768,6 +1861,9 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         } elseif ($plugin_name == 'forms') {
             // フォーム
             $this->importPluginForms($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'whatsnews') {
+            // 新着情報
+            $this->importPluginWhatsnews($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -1971,6 +2067,51 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
         if (empty($bucket)) {
             $this->putError(1, 'Form フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+    /**
+     * 新着情報プラグインの登録処理
+     */
+    private function importPluginWhatsnews($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // ページ移行の中の、フレーム（ブロック）移行。
+        // フレーム（ブロック）で指定されている内容から、移行した新しいバケツを探して、フレーム作成処理へつなげる。
+
+        // 変数定義
+        $nc2_whatsnew_block_id = null;
+        $whatsnew_ini = null;
+        $registration_id = null;
+        $migration_mappings = null;
+        $whatsnew = null;
+        $bucket = null;
+
+        // フレームのエクスポートファイルから、NC2 の新着情報のID 取得
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('whatsnew_block_id', $frame_ini['frame_base'])) {
+            $nc2_whatsnew_block_id = $frame_ini['frame_base']['whatsnew_block_id'];
+        }
+        // エクスポートした新着情報の設定内容の取得
+        if (!empty($nc2_whatsnew_block_id) && Storage::exists($this->getImportPath('whatsnews/whatsnew_') . $nc2_whatsnew_block_id . '.ini')) {
+            $whatsnew_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('whatsnews/whatsnew_') . $nc2_whatsnew_block_id . '.ini', true);
+        }
+        // NC2 の whatsnew_block_id でマップ確認
+        if (!empty($whatsnew_ini) && array_key_exists('source_info', $whatsnew_ini) && array_key_exists('whatsnew_block_id', $whatsnew_ini['source_info'])) {
+            $whatsnew_block_id = $whatsnew_ini['source_info']['whatsnew_block_id'];
+            $migration_mappings = MigrationMapping::where('target_source_table', 'whatsnews')->where('source_key', $whatsnew_block_id)->first();
+        }
+        // マップから新・新着情報 を取得
+        if (!empty($migration_mappings)) {
+            $whatsnew = Whatsnews::find($migration_mappings->destination_key);
+        }
+        // 新・新着情報 からBucket ID を取得
+        if (!empty($whatsnew)) {
+            $bucket = Buckets::find($whatsnew->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Whatsnew フレームのみで実体なし', "page_dir = " . $page_dir);
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
@@ -2972,7 +3113,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         }
 
         // NC2 新着情報（whatsnew）データのエクスポート
-        if ($this->isTarget('nc2_export', 'plugins', 'whsatnews')) {
+        if ($this->isTarget('nc2_export', 'plugins', 'whatsnews')) {
             $this->nc2ExportWhatsnew($redo);
         }
 
@@ -3973,7 +4114,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             }
 
             $whatsnew_ini .= "whatsnew_name = \""  . $whatsnew_name . "\"\n";
-            $whatsnew_ini .= "view_pattern = "     . ($nc2_whatsnew_block->display_type == 1 ? 0 : 1) . "\n"; // NC2: 0=日数, 1=件数 Connect-CMS: 0=件数, 1=日数
+            $whatsnew_ini .= "view_pattern = "     . ($nc2_whatsnew_block->display_flag == 1 ? 0 : 1) . "\n"; // NC2: 0=日数, 1=件数 Connect-CMS: 0=件数, 1=日数
             $whatsnew_ini .= "count = "            . $nc2_whatsnew_block->display_number . "\n";
             $whatsnew_ini .= "days = "             . $nc2_whatsnew_block->display_days . "\n";
             $whatsnew_ini .= "rss = "              . $nc2_whatsnew_block->allow_rss_feed . "\n";
@@ -4160,6 +4301,9 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             if (!empty($nc2_registration_block)) {
                 $ret = "form_id = \"" . $this->zeroSuppress($nc2_registration_block->registration_id) . "\"\n";
             }
+        } elseif ($module_name == 'whatsnew') {
+            $nc2_whatsnew_block = Nc2WhatsnewBlock::where('block_id', $nc2_block->block_id)->first();
+            $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc2_whatsnew_block->block_id) . "\"\n";
         } elseif ($module_name == 'menu') {
             $ret .= "\n";
             $ret .= "[menu]\n";
