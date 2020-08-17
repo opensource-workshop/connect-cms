@@ -4412,13 +4412,13 @@ trait MigrationTrait
         // デフォルトの表示順
         $default_sort_flag = '';
         if ($nc2_multidatabase_block->default_sort == 'seq') {
-            $this->putError(3, 'データベースのソートが未対応順（カスタマイズ順）', "nc2_multidatabase_block = " . $nc2_multidatabase_block);
+            $this->putError(3, 'データベースのソートが未対応順（カスタマイズ順）', "nc2_multidatabase_block = " . $nc2_multidatabase_block->block_id);
         } elseif ($nc2_multidatabase_block->default_sort == 'date') {
             $default_sort_flag = 'created_desc';
         } elseif ($nc2_multidatabase_block->default_sort == 'date_asc') {
             $default_sort_flag = 'created_asc';
         } else {
-            $this->putError(3, 'データベースのソートが未対応順', "nc2_multidatabase_block = " . $nc2_multidatabase_block);
+            $this->putError(3, 'データベースのソートが未対応順', "nc2_multidatabase_block = " . $nc2_multidatabase_block->block_id);
         }
         $frame_ini .= "default_sort_flag = \"" . $default_sort_flag . "\"\n";
         $frame_ini .= "view_count = "          . $nc2_multidatabase_block->visible_item . "\n";
