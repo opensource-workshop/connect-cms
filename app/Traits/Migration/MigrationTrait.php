@@ -186,6 +186,11 @@ trait MigrationTrait
     private $redo = null;
 
     /**
+     * 追加処理
+     */
+    private $added = false;
+
+    /**
      * migration_base
      */
     private $migration_base = 'migration/';
@@ -405,6 +410,8 @@ trait MigrationTrait
         $value1 = $default;
         if (array_key_exists($key1, $array)) {
             $value1 = $array[$key1];
+        } else {
+            return $default;
         }
         if (empty($key2)) {
             return $value1;
@@ -500,15 +507,15 @@ trait MigrationTrait
      */
     private function importSite($target, $target_plugin, $redo = null)
     {
-        $this->importSiteImpl($target, $target_plugin, $redo);
+        $this->importSiteImpl($target, $target_plugin, false, $redo);
         $this->import_base = '@insert/';
-        $this->importSiteImpl($target, $target_plugin);
+        $this->importSiteImpl($target, $target_plugin, true);
     }
 
     /**
      * Connect-CMS 移行形式のHTML をインポート
      */
-    private function importSiteImpl($target, $target_plugin, $redo = null)
+    private function importSiteImpl($target, $target_plugin, $added, $redo = null)
     {
         if (empty(trim($target))) {
             echo "\n";
@@ -522,6 +529,7 @@ trait MigrationTrait
         $this->target        = $target;
         $this->target_plugin = $target_plugin;
         $this->redo          = $redo;
+        $this->added         = $added;
 
         $this->putMonitor(3, "importSite() Start.");
 
@@ -1766,7 +1774,7 @@ trait MigrationTrait
         //if (Storage::exists($nc2_block_overwrite_path)) {
         //    $overwrite_ini = parse_ini_file(storage_path() . '/app/' . $nc2_block_overwrite_path, true);
         $overwrite_ini_laravel_path = substr($overwrite_ini_path, strpos($overwrite_ini_path, 'migration/'));
-        if (Storage::exists($overwrite_ini_laravel_path)) {
+        if ($this->added == false && Storage::exists($overwrite_ini_laravel_path)) {
             $overwrite_ini = parse_ini_file($overwrite_ini_path, true);
             $marge_ini = array();
             // 第1階層のsection があるか確認して、あれば第2階層をマージ。
@@ -1818,7 +1826,7 @@ trait MigrationTrait
             // フレーム毎のini_file の解析
             //$frame_ini = parse_ini_file($frame_ini_path, true);
             $frame_ini = $this->parseIni($frame_ini_path);
-            //print_r($ini_array);
+            //print_r($frame_ini);
 
             // プラグイン毎の登録処理へ
             $this->importPlugin($page, dirname($frame_ini_path), $frame_ini, $display_sequence);
@@ -2139,6 +2147,7 @@ trait MigrationTrait
      */
     private function importPluginContents($page, $page_dir, $frame_ini, $display_sequence)
     {
+//print_r($frame_ini);
         // コンテンツが指定されていない場合は戻る
         if (!array_key_exists('contents', $frame_ini) || !array_key_exists('contents_file', $frame_ini['contents'])) {
             return;
@@ -2183,10 +2192,11 @@ trait MigrationTrait
         // --- frame_0001.html
         // img src="../../uploads/upload_00002.jpg"
         //
-        if (array_key_exists('upload_images', $frame_ini)) {
+        if (array_key_exists('upload_images', $frame_ini) && array_key_exists('upload', $frame_ini['upload_images'])) {
             // アップロードファイル定義のループ
-
-            foreach ($frame_ini['upload_images'] as $nc2_upload_id => $image_path) {
+            foreach ($frame_ini['upload_images']['upload'] as $nc2_upload_id => $image_path) {
+//print_r($frame_ini);
+//echo $nc2_upload_id . "\n";
                 // 画像のパスの修正
                 // ini ファイルのID はNC2 のアップロードID が入っている。
                 // マッピングテーブルから新ID を取得して、変換する。
@@ -2202,8 +2212,8 @@ trait MigrationTrait
         }
 
         // NC2 から移行した場合：[upload_files] のファイルを登録
-        if (array_key_exists('upload_files', $frame_ini)) {
-            foreach ($frame_ini['upload_files'] as $nc2_upload_id => $file_path) {
+        if (array_key_exists('upload_files', $frame_ini) && array_key_exists('upload', $frame_ini['upload_files'])) {
+            foreach ($frame_ini['upload_files']['upload'] as $nc2_upload_id => $file_path) {
                 // アップロードファイルのパスの修正
                 // ini ファイルのID はNC2 のアップロードID が入っている。
                 // マッピングテーブルから新ID を取得して、変換する。
@@ -2355,6 +2365,14 @@ trait MigrationTrait
             $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
         } else {
             $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
+        }
+
+        // display_sequence（順番）確定
+        // オプションの display_sequence が指定されている場合は、それ以降のフレームを +1 してから追加する。
+        $option_display_sequence = $this->getArrayValue($frame_ini, 'frame_option', 'display_sequence');
+        if (!empty($option_display_sequence)) {
+            Frame::where('page_id', $page->id)->where('display_sequence', '>=', $option_display_sequence)->increment('display_sequence');
+            $display_sequence = $option_display_sequence;
         }
 
         // map 確認
@@ -4547,7 +4565,7 @@ trait MigrationTrait
         // フレーム設定ファイルの追記
         $ini_text = $section_name . "\n";
         foreach ($export_paths as $export_key => $export_path) {
-            $ini_text .= $export_key . " = \"" . $export_path . "\"\n";
+            $ini_text .= 'upload[' . $export_key . "] = \"" . $export_path . "\"\n";
         }
 
         // 記事ごとにini ファイルが必要な場合のみ出力する。
