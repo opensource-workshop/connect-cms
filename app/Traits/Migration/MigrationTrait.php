@@ -44,6 +44,7 @@ use App\Models\Migration\Nc2\Nc2Journal;
 use App\Models\Migration\Nc2\Nc2JournalBlock;
 use App\Models\Migration\Nc2\Nc2JournalCategory;
 use App\Models\Migration\Nc2\Nc2JournalPost;
+use App\Models\Migration\Nc2\Nc2Modules;
 use App\Models\Migration\Nc2\Nc2Multidatabase;
 use App\Models\Migration\Nc2\Nc2MultidatabaseBlock;
 use App\Models\Migration\Nc2\Nc2MultidatabaseMetadata;
@@ -56,6 +57,7 @@ use App\Models\Migration\Nc2\Nc2RegistrationItem;
 use App\Models\Migration\Nc2\Nc2RegistrationItemData;
 use App\Models\Migration\Nc2\Nc2Upload;
 use App\Models\Migration\Nc2\Nc2User;
+use App\Models\Migration\Nc2\Nc2WhatsnewBlock;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -2969,6 +2971,11 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $this->nc2ExportRegistration($redo);
         }
 
+        // NC2 新着情報（whatsnew）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'whsatnews')) {
+            $this->nc2ExportWhatsnew($redo);
+        }
+
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc2_export', 'pages')) {
             // データクリア
@@ -3089,6 +3096,27 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             return $this->plugin_name[$module_name];
         }
         return 'NotFound';
+    }
+
+    /**
+     *  NC2モジュール名の取得
+     */
+    public function nc2GetModuleNames($action_names, $connect_change = true)
+    {
+        $ret = array();
+        foreach ($action_names as $action_name) {
+            $action_name_parts = explode('_', $action_name);
+            // Connect-CMS のプラグイン名に変換
+            if ($connect_change == true && array_key_exists($action_name_parts[0], $this->plugin_name)) {
+                $connect_plugin_name = $this->plugin_name[$action_name_parts[0]];
+                if ($connect_plugin_name == 'Development' || $connect_plugin_name == 'Development') {
+                    $this->putError(3, '新着：未開発プラグイン', "action_names = " . $action_name_parts[0]);
+                } else {
+                    $ret[] = $connect_plugin_name;
+                }
+            }
+        }
+        return implode(',', $ret);
     }
 
     /**
@@ -3861,7 +3889,6 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
             // 登録データもエクスポートする場合
             if ($this->hasMigrationConfig('forms', 'nc2_export_registration_data', true)) {
-
                 // データ部
                 $registration_data_header = "[form_inputs]\n";
                 $registration_data = "";
@@ -3900,152 +3927,75 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         // データクリア
         if ($redo === true) {
             // 移行用ファイルの削除
-            Storage::deleteDirectory('migration/@whatsnew/');
+            Storage::deleteDirectory($this->getImportPath('whatsnews/'));
         }
 
         // NC2新着情報（Whatsnew）を移行する。
-        $nc2_export_where_registration_ids = $this->getMigrationConfig('forms', 'nc2_export_where_registration_ids');
-
-        if (empty($nc2_export_where_registration_ids)) {
-            $nc2_registrations = Nc2Registration::orderBy('registration_id')->get();
-        } else {
-            $nc2_registrations = Nc2Registration::whereIn('registration_id', $nc2_export_where_registration_ids)->orderBy('registration_id')->get();
-        }
+        $nc2_whatsnew_blocks_query = Nc2WhatsnewBlock::select('whatsnew_block.*', 'blocks.block_name', 'pages.page_name')
+                                                     ->join('blocks', 'blocks.block_id', '=', 'whatsnew_block.block_id');
+        $nc2_whatsnew_blocks_query->join('pages', function ($join) {
+            $join->on('pages.page_id', '=', 'blocks.page_id')
+                 ->where('pages.private_flag', '=', 0);
+        });
+        $nc2_whatsnew_blocks = $nc2_whatsnew_blocks_query->orderBy('block_id')->get();
 
         // 空なら戻る
-        if ($nc2_registrations->isEmpty()) {
+        if ($nc2_whatsnew_blocks->isEmpty()) {
             return;
         }
 
-        // NC2登録フォーム（Registration）のループ
-        foreach ($nc2_registrations as $nc2_registration) {
+        // NC2新着情報（Whatsnew）のループ
+        foreach ($nc2_whatsnew_blocks as $nc2_whatsnew_block) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
             // ルーム指定があれば、指定されたルームのみ処理する。
             if (empty($room_ids)) {
                 // ルーム指定なし。全データの移行
-            } elseif (!empty($room_ids) && in_array($nc2_registration->room_id, $room_ids)) {
+            } elseif (!empty($room_ids) && in_array($nc2_whatsnew_block->room_id, $room_ids)) {
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
 
-            $registration_id = $nc2_registration->registration_id;
+            $whatsnew_block_id = $nc2_whatsnew_block->block_id;
 
-            // 登録フォーム設定
-            $registration_ini = "";
-            $registration_ini .= "[form_base]\n";
-            $registration_ini .= "forms_name = \""        . $nc2_registration->registration_name . "\"\n";
-            $registration_ini .= "mail_send_flag = "      . $nc2_registration->mail_send . "\n";
-            $registration_ini .= "mail_send_address = \"" . $nc2_registration->rcpt_to . "\"\n";
-            $registration_ini .= "user_mail_send_flag = " . $nc2_registration->regist_user_send . "\n";
-            $registration_ini .= "mail_subject = \""      . $nc2_registration->mail_subject . "\"\n";
-            $registration_ini .= "mail_format = \""       . str_replace("\n", '\n', $nc2_registration->mail_body) . "\"\n";
-            $registration_ini .= "data_save_flag = 1\n";
-            $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc2_registration->accept_message) . "\"\n";
-            $registration_ini .= "numbering_use_flag = 0\n";
-            $registration_ini .= "numbering_prefix = null\n";
+            // 新着情報設定
+            $whatsnew_ini = "";
+            $whatsnew_ini .= "[whatsnew_base]\n";
+
+            // 新着情報の名前は、ブロックタイトルがあればブロックタイトル。なければページ名＋「の新着情報」。
+            $whatsnew_name = '無題';
+            if (!empty($nc2_whatsnew_block->page_name)) {
+                $whatsnew_name = $nc2_whatsnew_block->page_name;
+            }
+            if (!empty($nc2_whatsnew_block->block_name)) {
+                $whatsnew_name = $nc2_whatsnew_block->block_name;
+            }
+
+            $whatsnew_ini .= "whatsnew_name = \""  . $whatsnew_name . "\"\n";
+            $whatsnew_ini .= "view_pattern = "     . ($nc2_whatsnew_block->display_type == 1 ? 0 : 1) . "\n"; // NC2: 0=日数, 1=件数 Connect-CMS: 0=件数, 1=日数
+            $whatsnew_ini .= "count = "            . $nc2_whatsnew_block->display_number . "\n";
+            $whatsnew_ini .= "days = "             . $nc2_whatsnew_block->display_days . "\n";
+            $whatsnew_ini .= "rss = "              . $nc2_whatsnew_block->allow_rss_feed . "\n";
+            $whatsnew_ini .= "rss_count = "        . $nc2_whatsnew_block->display_number . "\n";
+            $whatsnew_ini .= "view_posted_name = " . $nc2_whatsnew_block->display_user_name    . "\n";
+            $whatsnew_ini .= "view_posted_at = "   . $nc2_whatsnew_block->display_insert_time . "\n";
+
+            // 対象のプラグインを取得（Connect-CMS にまだないものは除外＆ログ出力）
+            $display_modules = explode(',', $nc2_whatsnew_block->display_modules);
+            $nc2_modules = Nc2Modules::whereIn('module_id', $display_modules)->orderBy('module_id', 'asc')->get();
+            $whatsnew_ini .= "target_plugins = \"" . $this->nc2GetModuleNames($nc2_modules->pluck('action_name')) . "\"\n";
+
+            $whatsnew_ini .= "frame_select = 0\n";
 
             // NC2 情報
-            $registration_ini .= "\n";
-            $registration_ini .= "[source_info]\n";
-            $registration_ini .= "registration_id = " . $nc2_registration->registration_id . "\n";
-            $registration_ini .= "room_id = "         . $nc2_registration->room_id . "\n";
+            $whatsnew_ini .= "\n";
+            $whatsnew_ini .= "[source_info]\n";
+            $whatsnew_ini .= "whatsnew_block_id = " . $whatsnew_block_id . "\n";
+            $whatsnew_ini .= "room_id = "           . $nc2_whatsnew_block->room_id . "\n";
 
-            // 登録フォームのカラム情報
-            $registration_items = Nc2RegistrationItem::where('registration_id', $registration_id)
-                                                               ->orderBy('item_sequence', 'asc')
-                                                               ->get();
-            if (empty($registration_items)) {
-                continue;
-            }
-
-            // カラム情報出力
-            $registration_ini .= "\n";
-            $registration_ini .= "[form_columns]\n";
-
-            // カラム情報
-            //$forms_columns_rows = array();
-            foreach ($registration_items as $registration_item) {
-                $registration_ini .= "form_column[" . $registration_item->item_id . "] = \"" . $registration_item->item_name . "\"\n";
-            }
-            $registration_ini .= "\n";
-
-            // カラム詳細情報
-            foreach ($registration_items as $registration_item) {
-                $item_id = $registration_item->item_id;
-
-                $registration_ini .= "[" . $item_id . "]" . "\n";
-
-                // type
-                if ($registration_item->item_type == 1) {
-                    $column_type = "text";
-                } elseif ($registration_item->item_type == 2) {
-                    $column_type = "checkbox";
-                } elseif ($registration_item->item_type == 3) {
-                    $column_type = "radio";
-                } elseif ($registration_item->item_type == 4) {
-                    $column_type = "select";
-                } elseif ($registration_item->item_type == 5) {
-                    $column_type = "textarea";
-                } elseif ($registration_item->item_type == 6) {
-                    $column_type = "mail";
-                } elseif ($registration_item->item_type == 7) {
-                    $column_type = "file";
-                }
-
-                $item_id = $registration_item->item_id;
-                $registration_ini .= "column_type                = \"" . $column_type                     . "\"\n";
-                $registration_ini .= "column_name                = \"" . $registration_item->item_name    . "\"\n";
-                $registration_ini .= "option_value               = \"" . $registration_item->option_value . "\"\n";
-                $registration_ini .= "required                   = "   . $registration_item->require_flag . "\n";
-                $registration_ini .= "frame_col                  = "   . 0                                . "\n";
-                $registration_ini .= "caption                    = \"" . $registration_item->description  . "\"\n";
-                $registration_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
-                $registration_ini .= "minutes_increments         = "   . 10                               . "\n";
-                $registration_ini .= "minutes_increments_from    = "   . 10                               . "\n";
-                $registration_ini .= "minutes_increments_to      = "   . 10                               . "\n";
-                $registration_ini .= "rule_allowed_numeric       = null\n";
-                $registration_ini .= "rule_allowed_alpha_numeric = null\n";
-                $registration_ini .= "rule_digits_or_less        = null\n";
-                $registration_ini .= "rule_max                   = null\n";
-                $registration_ini .= "rule_min                   = null\n";
-                $registration_ini .= "rule_word_count            = null\n";
-                $registration_ini .= "rule_date_after_equal      = null\n";
-                $registration_ini .= "\n";
-            }
-
-            // フォーム の設定
-            Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
-
-            // 登録データもエクスポートする場合
-            if ($this->hasMigrationConfig('forms', 'nc2_export_registration_data', true)) {
-
-                // データ部
-                $registration_data_header = "[form_inputs]\n";
-                $registration_data = "";
-                $registration_item_datas = Nc2RegistrationItemData::select('registration_item_data.*')
-                                                                 ->join('registration_item', function ($join) {
-                                                                     $join->on('registration_item.registration_id', '=', 'registration_item_data.registration_id')
-                                                                          ->on('registration_item.item_id', '=', 'registration_item_data.item_id');
-                                                                 })
-                                                                 ->where('registration_item_data.registration_id', $registration_id)
-                                                                 ->orderBy('registration_item_data.data_id', 'asc')
-                                                                 ->orderBy('registration_item.item_sequence', 'asc')
-                                                                 ->get();
-
-                $data_id = null;
-                foreach ($registration_item_datas as $registration_item_data) {
-                    if ($registration_item_data->data_id != $data_id) {
-                        $registration_data_header .= "input[" . $registration_item_data->data_id . "] = \"\"\n";
-                        $registration_data .= "\n[" . $registration_item_data->data_id . "]\n";
-                        $data_id = $registration_item_data->data_id;
-                    }
-                    $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
-                }
-                // フォーム の登録データ
-                Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
-            }
+            // 新着情報の設定を出力
+            Storage::put($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
         }
     }
 
@@ -4180,7 +4130,7 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
             // Connect-CMS のプラグイン名の取得
             $plugin_name = $nc2_block->getPluginName();
-            if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'reservations' || $plugin_name == 'searchs' || $plugin_name == 'whatsnews') {
+            if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'reservations' || $plugin_name == 'searchs') {
                 // 移行できなかったモジュール
                 $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
             }
