@@ -3893,9 +3893,12 @@ trait MigrationTrait
                 $old_metadata_content = $multidatabase_metadata_content;
             }
             // 最後の行の登録日時、更新日時
-            $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-            $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
-            $tsv .= implode("\t", $tsv_record);
+            // レコードがない場合もあり得る。
+            if (!empty($old_metadata_content)) {
+                $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+                $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
+                $tsv .= implode("\t", $tsv_record);
+            }
 
             // データ行の書き出し
             //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
