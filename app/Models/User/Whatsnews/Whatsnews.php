@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Whatsnews extends Model
 {
+    // 更新する項目の定義
+    protected $fillable = ['bucket_id', 'whatsnew_name', 'view_pattern', 'count', 'days', 'rss', 'rss_count', 'view_posted_name', 'view_posted_at', 'target_plugins', 'frame_select'];
+
     /**
      *  表示するプラグインの配列を返却
      *
