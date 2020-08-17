@@ -231,6 +231,17 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     * frame 取得
+     */
+    protected function getBucketId()
+    {
+        if (empty($this->buckets)) {
+            return null;
+        }
+        return $this->buckets->id;
+    }
+
+    /**
      * 記載されているメソッドすべての権限を有することをチェック
      *
      * @return view 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
