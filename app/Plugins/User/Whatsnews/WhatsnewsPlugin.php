@@ -143,7 +143,7 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getWhatsnews($whatsnews_frame, $method = null)
     {
-//DB::enableQueryLog();
+        //DB::enableQueryLog();
         // 新着情報がまだできていない場合
         if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
             return array(null, null, null);
@@ -156,6 +156,11 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // ターゲットプラグインをループ
         $target_plugins = explode(',', $whatsnews_frame->target_plugins);
+
+        // ターゲットが指定されていない場合は空を返す。
+        if (empty(array_filter($target_plugins))) {
+            return [null, null, null];
+        }
 
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
