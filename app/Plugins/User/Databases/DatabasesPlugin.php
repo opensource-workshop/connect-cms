@@ -552,6 +552,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // 行グループ・列グループの配列に置き換えたcolumns
         $group_rows_cols_columns = [];
+        $group_rows_cols_null_columns = [];
 
         // 権限のよって非表示columのdatabases_columns_id配列を取得する
         $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'list_detail_display_flag');
@@ -572,12 +573,23 @@ class DatabasesPlugin extends UserPluginBase
                 // ※ arrayの配列keyにnullをセットすると、keyは''になるため、''をkeyに使用してます。
                 $group_cols_columns = null;                         // 初期化
                 $group_cols_columns[''][0] = $databases_column;     // column_group = ''としてセット
-                $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
+
+                // bugfix: row_groupを連番[]でセットすると、0,1,2と続くため、row_group =1とかあると、row_group =nullがそのグループに含まれてしまうので
+                // 行グループ・列グループどっちも設定なしグループは、お尻にくっつけるよう見直し
+                // $group_rows_cols_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
+                $group_rows_cols_null_columns[] = $group_cols_columns;   // row_groupは連番にするため、[]を使用
             } else {
                 // 行グループ・列グループどっちか設定あり
                 $group_rows_cols_columns[$databases_column->row_group][$databases_column->column_group][] = $databases_column;
             }
         }
+        // Log::debug(var_export($group_rows_cols_columns, true));
+
+        // 行グループ・列グループどっちも設定なし配列を、設定あり配列のお尻に追加し直す
+        foreach ($group_rows_cols_null_columns as $group_rows_cols_null_column) {
+            $group_rows_cols_columns[] = $group_rows_cols_null_column;
+        }
+
         return $group_rows_cols_columns;
     }
 
