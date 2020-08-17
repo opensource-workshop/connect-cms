@@ -400,16 +400,16 @@ trait MigrationTrait
     /**
      * 配列の値の取得
      */
-    private function getArrayValue($array, $key1, $key2 = null)
+    private function getArrayValue($array, $key1, $key2 = null, $default = "")
     {
-        $value1 = "";
+        $value1 = $default;
         if (array_key_exists($key1, $array)) {
             $value1 = $array[$key1];
         }
         if (empty($key2)) {
             return $value1;
         }
-        $value2 = "";
+        $value2 = $default;
         if (array_key_exists($key2, $value1)) {
             $value2 = $value1[$key2];
         }
@@ -1321,7 +1321,6 @@ trait MigrationTrait
                         }
                         continue;
                     }
-
                     // 行データをタブで項目に分割
                     $database_tsv_cols = explode("\t", trim($database_tsv_line, "\n\r"));
 
@@ -1329,19 +1328,19 @@ trait MigrationTrait
                     // created_at、updated_at のカラムがない or データが空の場合は、処理時間を入れる。
                     if ($created_at_idx != 0 && array_key_exists($created_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$created_at_idx])) {
                         $created_at = $database_tsv_cols[$created_at_idx];
-if (!\DateTime::createFromFormat('Y-m-d H:i:s', $created_at)) {
-    $this->putError(1, '日付エラー', "created_at = " . $created_at);
-    $created_at = date('Y-m-d H:i:s');
-}
+                        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $created_at)) {
+                            $this->putError(3, '日付エラー', "created_at = " . $created_at);
+                            $created_at = date('Y-m-d H:i:s');
+                        }
                     } else {
                         $created_at = date('Y-m-d H:i:s');
                     }
                     if ($updated_at_idx != 0 && array_key_exists($updated_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$updated_at_idx])) {
                         $updated_at = $database_tsv_cols[$updated_at_idx];
-if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
-    $this->putError(1, '日付エラー', "updated_at = " . $updated_at);
-    $updated_at = date('Y-m-d H:i:s');
-}
+                        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
+                            $this->putError(3, '日付エラー', "updated_at = " . $updated_at);
+                            $updated_at = date('Y-m-d H:i:s');
+                        }
                     } else {
                         $updated_at = date('Y-m-d H:i:s');
                     }
@@ -2011,8 +2010,8 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
 
         // NC2 のview_count
         $view_count = 10; // 初期値
-        if (!empty($database_ini) && array_key_exists('database_base', $database_ini) && array_key_exists('view_count', $database_ini['database_base'])) {
-            $view_count = $database_ini['database_base']['view_count'];
+        if (!empty($database_ini) && array_key_exists('database', $database_ini) && array_key_exists('view_count', $database_ini['database'])) {
+            $view_count = $database_ini['database']['view_count'];
         }
 
         // databases_frames 登録
@@ -2020,10 +2019,10 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             DatabasesFrames::create([
                 'databases_id'      => $databases->id,
                 'frames_id'         => $frame->id,
-                'use_search_flag'   => 1,
-                'use_select_flag'   => 1,
-                'use_sort_flag'     => null,
-                'default_sort_flag' => null,
+                'use_search_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_search_flag', 1),
+                'use_select_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_select_flag', 1),
+                'use_sort_flag'     => $this->getArrayValue($frame_ini, 'database', 'use_sort_flag', null),
+                'default_sort_flag' => $this->getArrayValue($frame_ini, 'database', 'default_sort_flag', null),
                 'view_count'        => $view_count,
                 'default_hide'      => 0,
             ]);
@@ -3250,10 +3249,12 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             // Connect-CMS のプラグイン名に変換
             if ($connect_change == true && array_key_exists($action_name_parts[0], $this->plugin_name)) {
                 $connect_plugin_name = $this->plugin_name[$action_name_parts[0]];
-                if ($connect_plugin_name == 'Development' || $connect_plugin_name == 'Development') {
+                if ($connect_plugin_name == 'Development') {
                     $this->putError(3, '新着：未開発プラグイン', "action_names = " . $action_name_parts[0]);
-                } else {
+                } elseif ($connect_plugin_name == 'blogs') {
                     $ret[] = $connect_plugin_name;
+                } else {
+                    $this->putError(3, '新着：未対応プラグイン', "action_names = " . $action_name_parts[0]);
                 }
             }
         }
@@ -3841,16 +3842,19 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
             $tsv_record = $tsv_cols;
             Storage::delete($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv');
             $tsv = '';
+            $old_metadata_content = null; // コントロールブレイク用、一つ前のレコード（追加・更新日時で使用）
             foreach ($multidatabase_metadata_contents as $multidatabase_metadata_content) {
                 // レコードのID が変わった＝コントロールブレイク
                 if ($content_id != $multidatabase_metadata_content->content_id) {
                     if ($content_id == 0) {
+                        // 最初の1件
                         //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv_header);
+                        $old_metadata_content = $multidatabase_metadata_content;
                         $tsv .= $tsv_header . "\n";
                     } else {
                         // 登録日時、更新日時
-                        $tsv_record['insert_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_insert_time);
-                        $tsv_record['update_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_update_time);
+                        $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+                        $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
                         // データ行の書き出し
                         //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
                         $tsv .= implode("\t", $tsv_record) . "\n";
@@ -3886,10 +3890,12 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
                 }
 
                 $tsv_record[$multidatabase_metadata_content->metadata_id] = $content;
+                $old_metadata_content = $multidatabase_metadata_content;
             }
-            // 登録日時、更新日時
-            $tsv_record['insert_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_insert_time);
-            $tsv_record['update_time'] = $this->getCCDatetime($multidatabase_metadata_content->multidatabase_content_update_time);
+            // 最後の行の登録日時、更新日時
+            $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+            $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
+            $tsv .= implode("\t", $tsv_record);
 
             // データ行の書き出し
             //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
@@ -4377,7 +4383,46 @@ if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
         } elseif ($plugin_name == 'menus') {
             // メニュー
             // 今のところ、メニューの追加設定はなし。
+        } elseif ($plugin_name == 'databases') {
+            // データベース
+            $this->nc2ExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
+    }
+
+    /**
+     * NC2：汎用データベースのブロック特有部分のエクスポート
+     */
+    private function nc2ExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // NC2 ブロック設定の取得
+        $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc2_block->block_id)->first();
+        if (empty($nc2_multidatabase_block)) {
+            return;
+        }
+
+        // 
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[database]\n";
+        $frame_ini .= "use_search_flag = 1\n";
+        $frame_ini .= "use_select_flag = 1\n";
+        $frame_ini .= "use_sort_flag = \"\"\n";
+        // デフォルトの表示順
+        $default_sort_flag = '';
+        if ($nc2_multidatabase_block->default_sort == 'seq') {
+            $this->putError(3, 'データベースのソートが未対応順（カスタマイズ順）', "nc2_multidatabase_block = " . $nc2_multidatabase_block);
+        } elseif ($nc2_multidatabase_block->default_sort == 'date') {
+            $default_sort_flag = 'created_desc';
+        } elseif ($nc2_multidatabase_block->default_sort == 'date_asc') {
+            $default_sort_flag = 'created_asc';
+        } else {
+            $this->putError(3, 'データベースのソートが未対応順', "nc2_multidatabase_block = " . $nc2_multidatabase_block);
+        }
+        $frame_ini .= "default_sort_flag = \"" . $default_sort_flag . "\"\n";
+        $frame_ini .= "view_count = "          . $nc2_multidatabase_block->visible_item . "\n";
+        Storage::append($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
     /**
