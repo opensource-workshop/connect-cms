@@ -36,6 +36,25 @@
 @can('posts.update', [[$inputs, $frame->plugin_name, $buckets]])
 <div class="row mt-2">
     <div class="col-12 text-right mb-1">
+        @if ($inputs->status == 2)
+            @can('role_update_or_approval',[[$inputs, $frame->plugin_name, $buckets]])
+                <span class="badge badge-warning align-bottom">承認待ち</span>
+            @endcan
+            @can('posts.approval',[[$inputs, $frame->plugin_name, $buckets]])
+                <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}" method="post" name="form_approval" class="d-inline">
+                    {{ csrf_field() }}
+                    <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
+                        <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                    </button>
+                </form>
+            @endcan
+        @endif
+        @can('posts.update',[[$inputs, $frame->plugin_name, $buckets]])
+            @if ($inputs->status == 1)
+                <span class="badge badge-warning align-bottom">一時保存</span>
+            @endif
+        @endcan
+
         <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}'">
             <i class="far fa-edit"></i> 編集
         </button>

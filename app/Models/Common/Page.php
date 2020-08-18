@@ -445,12 +445,15 @@ class Page extends Model
         if (empty($page_tree)) {
             $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
         }
-//Log::debug(json_encode( $page_tree, JSON_UNESCAPED_UNICODE));
+        //Log::debug(json_encode( $page_tree, JSON_UNESCAPED_UNICODE));
 
-//        // ページに閲覧パスワードが設定されていなければ戻る
-//        if (empty($this->password)) {
-//            return false;
-//        }
+        // トップページを取得
+        $top_page = Page::orderBy('_lft', 'asc')->first();
+
+        // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
+        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
+            $page_tree->push($top_page);
+        }
 
         // 自分及び先祖ページに閲覧パスワードが設定されていなければ戻る
         $check_page = null;
@@ -465,7 +468,6 @@ class Page extends Model
         }
 
         // セッション中に該当ページの認証情報があるかチェック
-        //if ( $request->session()->has('page_auth.'.$this->id) && $request->session()->get('page_auth.'.$this->id) == 'authed') {
         if ($request->session()->has('page_auth.'.$check_page->id) && $request->session()->get('page_auth.'.$check_page->id) == 'authed') {
             // すでに認証されているので、問題なし
             return false;
@@ -480,10 +482,13 @@ class Page extends Model
      */
     public function checkPassword($password, $page_tree)
     {
-        // パスワードチェック
-        //if ($this->password == $password) {
-        //    return true;
-        //}
+        // トップページを取得
+        $top_page = Page::orderBy('_lft', 'asc')->first();
+
+        // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
+        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
+            $page_tree->push($top_page);
+        }
 
         // パスワードチェック
         foreach ($page_tree as $page) {

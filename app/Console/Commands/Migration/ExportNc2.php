@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 use App\Traits\Migration\MigrationTrait;
 
-class ImportSite extends Command
+class ExportNc2 extends Command
 {
 
     use MigrationTrait;
@@ -16,7 +16,7 @@ class ImportSite extends Command
      *
      * @var string
      */
-    protected $signature = 'command:ImportSite {target?} {second_param?} {third_param?}';
+    protected $signature = 'command:ExportNc2 {target?} {second_param?} {third_param?}';
 
     /**
      * The console command description.
@@ -56,7 +56,7 @@ class ImportSite extends Command
             $redo = $this->argument("second_param") == 'redo' ? true : false;
         }
 
-        // Connect-CMS 移行形式のHTML(Site全部) をインポートする
-        $this->importSite($target, $target_plugin, $redo);
+        // NC2 をデータベースから移行する
+        $this->exportNc2($target, $target_plugin, $redo);
     }
 }
