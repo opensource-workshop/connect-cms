@@ -35,28 +35,28 @@
         <label class="col-md-3 text-md-right">試験提出機能</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination === null)
-                    <input type="radio" value="" id="examination_null" name="use_examination" class="custom-control-input" checked="checked">
+                @if(empty($tool->getFunction('post_examination_setting', true)))
+                    <input type="radio" value="" id="examination_null" name="post_examination_setting" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="" id="examination_null" name="use_examination" class="custom-control-input">
+                    <input type="radio" value="" id="examination_null" name="post_examination_setting" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="examination_null">課題管理設定に従う（XXXXXXXXXXXXXXXXXX）</label>
+                <label class="custom-control-label" for="examination_null">課題管理設定に従う</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination === 0)
-                    <input type="radio" value="0" id="use_examination_0" name="use_examination" class="custom-control-input" checked="checked">
+                @if($tool->getFunction('post_examination_setting', true) == 'off')
+                    <input type="radio" value="off" id="use_examination_off" name="post_examination_setting" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="0" id="use_examination_0" name="use_examination" class="custom-control-input">
+                    <input type="radio" value="off" id="use_examination_off" name="post_examination_setting" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="use_examination_0">使用しない</label>
+                <label class="custom-control-label" for="use_examination_off">使用しない</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination === 1)
-                    <input type="radio" value="1" id="use_examination_1" name="use_examination" class="custom-control-input" checked="checked">
+                @if($tool->getFunction('post_examination_setting', true) == 'on')
+                    <input type="radio" value="on" id="use_examination_on" name="post_examination_setting" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="1" id="use_examination_1" name="use_examination" class="custom-control-input">
+                    <input type="radio" value="on" id="use_examination_on" name="post_examination_setting" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="use_examination_1">この課題独自に設定する</label>
+                <label class="custom-control-label" for="use_examination_on">この課題独自に設定する</label>
             </div>
         </div>
     </div>
@@ -67,15 +67,15 @@
         <div class="col-md-9 d-md-flex">
 
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination" value="1" class="custom-control-input" id="use_examination" @if(old("use_examination", $learningtasks_posts->use_examination)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination]" value="on" class="custom-control-input" id="use_examination" @if(old("use_examination", $tool->getFunction('use_examination', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination">提出</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_evaluate" value="1" class="custom-control-input" id="use_examination_evaluate" @if(old("use_examination_evaluate", $learningtasks_posts->use_examination_evaluate)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_evaluate]" value="on" class="custom-control-input" id="use_examination_evaluate" @if(old("use_examination_evaluate", $tool->getFunction('use_examination_evaluate', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_evaluate">評価</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_comment" value="1" class="custom-control-input" id="use_examination_comment" @if(old("use_examination_comment", $learningtasks_posts->use_examination_comment)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_comment]" value="on" class="custom-control-input" id="use_examination_comment" @if(old("use_examination_comment", $tool->getFunction('use_examination_comment', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_comment">教員から参考資料</label>
             </div>
         </div>
@@ -86,15 +86,15 @@
         <div class="col-md-9 d-md-flex">
 
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_file" value="1" class="custom-control-input" id="use_examination_file" @if(old("use_examination_file", $learningtasks_posts->use_examination_file)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_file]" value="on" class="custom-control-input" id="use_examination_file" @if(old("use_examination_file", $tool->getFunction('use_examination_file', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_file" value="1" class="custom-control-input" id="use_examination_file" @if(old("use_examination_file", $learningtasks_posts->use_examination_file)) checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_file">本文入力</label>
+                <input type="checkbox" name="post_settings[use_examination_text]" value="on" class="custom-control-input" id="use_examination_text" @if(old("use_examination_text", $tool->getFunction('use_examination_text', true)) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_text">本文入力</label>
             </div>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="use_examination_mail" value="1" class="custom-control-input" id="use_examination_mail" @if(old("use_examination_mail", $learningtasks_posts->use_examination_mail)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_mail]" value="on" class="custom-control-input" id="use_examination_mail" @if(old("use_examination_mail", $tool->getFunction('use_examination_mail', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_mail">メール送信（教員宛）</label>
             </div>
         </div>
@@ -104,15 +104,15 @@
         <label class="col-md-3 text-md-right">評価</label>
         <div class="col-md-9 d-md-flex">
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_evaluate_file" value="1" class="custom-control-input" id="use_examination_evaluate_file" @if(old("use_examination_evaluate_file", $learningtasks_posts->use_examination_evaluate_file)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_evaluate_file]" value="on" class="custom-control-input" id="use_examination_evaluate_file" @if(old("use_examination_evaluate_file", $tool->getFunction('use_examination_evaluate_file', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_evaluate_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_evaluate_comment" value="1" class="custom-control-input" id="use_examination_evaluate_comment" @if(old("use_examination_evaluate_comment", $learningtasks_posts->use_examination_evaluate_comment)) checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_evaluate_comment">コメント入力</label>
+                <input type="checkbox" name="post_settings[use_examination_evaluate_text]" value="on" class="custom-control-input" id="use_examination_evaluate_text" @if(old("use_examination_evaluate_text", $tool->getFunction('use_examination_evaluate_text', true)) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_evaluate_text">コメント入力</label>
             </div>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="use_examination_evaluate_mail" value="1" class="custom-control-input" id="use_examination_evaluate_mail" @if(old("use_examination_evaluate_mail", $learningtasks_posts->use_examination_evaluate_mail)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_evaluate_mail]" value="on" class="custom-control-input" id="use_examination_evaluate_mail" @if(old("use_examination_evaluate_mail", $tool->getFunction('use_examination_evaluate_mail', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_evaluate_mail">メール送信（受講者宛）</label>
             </div>
         </div>
@@ -122,15 +122,15 @@
         <label class="col-md-3 text-md-right">教員から参考資料</label>
         <div class="col-md-9 d-md-flex">
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_comment_file" value="1" class="custom-control-input" id="use_examination_comment_file" @if(old("use_examination_comment_file", $learningtasks_posts->use_examination_comment_file)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_comment_file]" value="on" class="custom-control-input" id="use_examination_comment_file" @if(old("use_examination_comment_file", $tool->getFunction('use_examination_comment_file', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_comment_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_comment_comment" value="1" class="custom-control-input" id="use_examination_comment_comment" @if(old("use_examination_comment_comment", $learningtasks_posts->use_examination_comment_comment)) checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_comment_comment">コメント入力</label>
+                <input type="checkbox" name="post_settings[use_examination_comment_text]" value="on" class="custom-control-input" id="use_examination_comment_text" @if(old("use_examination_comment_text", $tool->getFunction('use_examination_comment_text', true)) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_comment_text">コメント入力</label>
             </div>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="use_examination_comment_mail" value="1" class="custom-control-input" id="use_examination_comment_mail" @if(old("use_examination_comment_mail", $learningtasks_posts->use_examination_comment_mail)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_comment_mail]" value="on" class="custom-control-input" id="use_examination_comment_mail" @if(old("use_examination_comment_mail", $tool->getFunction('use_examination_comment_mail', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_comment_mail">メール送信（受講者宛）</label>
             </div>
         </div>
@@ -140,306 +140,39 @@
         <label class="col-md-3 text-md-right">表示方法</label>
         <div class="col-md-9 d-md-flex">
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="use_examination_status_collapse" value="1" class="custom-control-input" id="use_examination_status_collapse" @if(old("use_examination_status_collapse", $learningtasks_posts->use_examination_status_collapse)) checked=checked @endif>
+                <input type="checkbox" name="post_settings[use_examination_status_collapse]" value="on" class="custom-control-input" id="use_examination_status_collapse" @if(old("use_examination_status_collapse", $tool->getFunction('use_examination_status_collapse', true)) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_examination_status_collapse">履歴を開閉する</label>
             </div>
         </div>
     </div>
-
-{{--
-    <h5><span class="badge badge-secondary">使用設定</span></h5>
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">レポート試験機能</label>
-        <div class="col-md-9">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination === null)
-                    <input type="radio" value="" id="use_examination_null" name="use_examination" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="" id="use_examination_null" name="use_examination" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_null">課題管理設定に従う（XXXXXXXXXXX）</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination === 0)
-                    <input type="radio" value="0" id="use_examination_0" name="use_examination" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="use_examination_0" name="use_examination" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_0">使用しない</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination === 1)
-                    <input type="radio" value="1" id="use_examination_1" name="use_examination" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="use_examination_1" name="use_examination" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_1">使用する</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">添削アップロード</label>
-        <div class="col-md-9">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_correction === null)
-                    <input type="radio" value="" id="use_examination_correction_null" name="use_examination_correction" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="" id="use_examination_correction_null" name="use_examination_correction" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_correction_null">課題管理設定に従う（XXXXXXXXXXX）</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_correction === 0)
-                    <input type="radio" value="0" id="use_examination_correction_0" name="use_examination_correction" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="use_examination_correction_0" name="use_examination_correction" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_correction_0">使用しない</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_correction === 1)
-                    <input type="radio" value="1" id="use_examination_correction_1" name="use_examination_correction" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="use_examination_correction_1" name="use_examination_correction" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_correction_1">使用する</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">試験コメント</label>
-        <div class="col-md-9">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_comment === null)
-                    <input type="radio" value="" id="use_examination_comment_null" name="use_examination_comment" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="" id="use_examination_comment_null" name="use_examination_comment" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_comment_null">課題管理設定に従う（XXXXXXXXXXX）</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_comment === 0)
-                    <input type="radio" value="0" id="use_examination_comment_0" name="use_examination_comment" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="use_examination_comment_0" name="use_examination_comment" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_comment_0">使用しない</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_comment === 1)
-                    <input type="radio" value="1" id="use_examination_comment_1" name="use_examination_comment" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="use_examination_comment_1" name="use_examination_comment" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_comment_1">使用する</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">履歴の開閉</label>
-        <div class="col-md-9">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_status_collapse === null)
-                    <input type="radio" value="" id="use_examination_status_collapse_null" name="use_examination_status_collapse" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="" id="use_examination_status_collapse_null" name="use_examination_status_collapse" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_status_collapse_null">課題管理設定に従う（XXXXXXXXXXXXXXXXXX）</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_status_collapse === 0)
-                    <input type="radio" value="0" id="use_examination_status_collapse_0" name="use_examination_status_collapse" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="use_examination_status_collapse_0" name="use_examination_status_collapse" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_status_collapse_0">使用しない</label>
-            </div><br />
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->use_examination_status_collapse === 1)
-                    <input type="radio" value="1" id="use_examination_status_collapse_1" name="use_examination_status_collapse" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="use_examination_status_collapse_1" name="use_examination_status_collapse" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="use_examination_status_collapse_1">使用する</label>
-            </div>
-        </div>
-    </div>
-
-    <h5><span class="badge badge-secondary">教員への提出通知</span></h5>
-
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">メール送信</label>
-        <div class="col-md-9">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_upload_mail_use == 0)
-                    <input type="radio" value="0" id="examination_upload_mail_use_0" name="examination_upload_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_upload.show" checked="checked">
-                @else
-                    <input type="radio" value="0" id="examination_upload_mail_use_0" name="examination_upload_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_upload.show">
-                @endif
-                <label class="custom-control-label" for="examination_upload_mail_use_0">送信しない</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_upload_mail_use == 1)
-                    <input type="radio" value="1" id="examination_upload_mail_use_1" name="examination_upload_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_upload:not(.show)" aria-expanded="true" aria-controls="collapse_examination_upload" checked="checked">
-                @else
-                    <input type="radio" value="1" id="examination_upload_mail_use_1" name="examination_upload_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_upload:not(.show)" aria-expanded="true" aria-controls="collapse_examination_upload">
-                @endif
-                <label class="custom-control-label" for="examination_upload_mail_use_1">送信する</label>
-            </div><br />
-        </div>
-    </div>
-
-    <div class="collapse collapse_examination_upload" id ="collapse_examination_upload">
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">定型文</label>
-            <div class="col-md-9">
-                <button class="btn btn-primary btn-sm" type="button">定型文の挿入</button>
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">メール件名<label class="badge badge-danger">必須</label></label>
-            <div class="col-md-9">
-                <input type="text" name="examination_upload_mail_subject" value="{{old('examination_upload_mail_subject', $learningtasks_posts->examination_upload_mail_subject)}}" class="form-control">
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">メール本文<label class="badge badge-danger">必須</label></label>
-            <div class="col-md-9">
-                <textarea name="examination_upload_mail_text" class="form-control" rows="4">{!!old('examination_upload_mail_text', $learningtasks_posts->examination_upload_mail_text)!!}</textarea>
-                @if ($errors && $errors->has('examination_upload_mail_text')) <div class="text-danger">{{$errors->first('examination_upload_mail_text')}}</div> @endif
-            </div>
-        </div>
-    </div>
-
-    <h5><span class="badge badge-secondary">受講生への評価通知</span></h5>
-
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">メール送信</label>
-        <div class="col-md-9">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_evaluate_mail_use == 0)
-                    <input type="radio" value="0" id="examination_evaluate_mail_use_0" name="examination_evaluate_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_evaluate.show" checked="checked">
-                @else
-                    <input type="radio" value="0" id="examination_evaluate_mail_use_0" name="examination_evaluate_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_evaluate.show">
-                @endif
-                <label class="custom-control-label" for="examination_evaluate_mail_use_0">送信しない</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_evaluate_mail_use == 1)
-                    <input type="radio" value="1" id="examination_evaluate_mail_use_1" name="examination_evaluate_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_evaluate:not(.show)" aria-expanded="true" aria-controls="collapse_examination_evaluate" checked="checked">
-                @else
-                    <input type="radio" value="1" id="examination_evaluate_mail_use_1" name="examination_evaluate_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_evaluate:not(.show)" aria-expanded="true" aria-controls="collapse_examination_evaluate">
-                @endif
-                <label class="custom-control-label" for="examination_evaluate_mail_use_1">送信する</label>
-            </div><br />
-        </div>
-    </div>
-
-    <div class="collapse collapse_examination_evaluate" id ="collapse_examination_evaluate">
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">定型文</label>
-            <div class="col-md-9">
-                <button class="btn btn-primary btn-sm" type="button">定型文の挿入</button>
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">メール件名<label class="badge badge-danger">必須</label></label>
-            <div class="col-md-9">
-                <input type="text" name="examination_evaluate_mail_subject" value="{{old('examination_evaluate_mail_subject', $learningtasks_posts->examination_evaluate_mail_subject)}}" class="form-control">
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">メール本文<label class="badge badge-danger">必須</label></label>
-            <div class="col-md-9">
-                <textarea name="examination_evaluate_mail_text" class="form-control" rows="4">{!!old('examination_evaluate_mail_text', $learningtasks_posts->examination_evaluate_mail_text)!!}</textarea>
-                @if ($errors && $errors->has('examination_evaluate_mail_text')) <div class="text-danger">{{$errors->first('examination_evaluate_mail_text')}}</div> @endif
-            </div>
-        </div>
-    </div>
-
-    <h5><span class="badge badge-secondary">受講生へのコメント通知</span></h5>
-
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">メール送信</label>
-        <div class="col-md-9">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_comment_mail_use == 0)
-                    <input type="radio" value="0" id="examination_comment_mail_use_0" name="examination_comment_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_comment.show" checked="checked">
-                @else
-                    <input type="radio" value="0" id="examination_comment_mail_use_0" name="examination_comment_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_comment.show">
-                @endif
-                <label class="custom-control-label" for="examination_comment_mail_use_0">送信しない</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_comment_mail_use == 1)
-                    <input type="radio" value="1" id="examination_comment_mail_use_1" name="examination_comment_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_comment:not(.show)" aria-expanded="true" aria-controls="collapse_examination_comment" checked="checked">
-                @else
-                    <input type="radio" value="1" id="examination_comment_mail_use_1" name="examination_comment_mail_use" class="custom-control-input" data-toggle="collapse" data-target="#collapse_examination_comment:not(.show)" aria-expanded="true" aria-controls="collapse_examination_comment">
-                @endif
-                <label class="custom-control-label" for="examination_comment_mail_use_1">送信する</label>
-            </div><br />
-        </div>
-    </div>
-
-    <div class="collapse collapse_examination_comment" id ="collapse_examination_comment">
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">定型文</label>
-            <div class="col-md-9">
-                <button class="btn btn-primary btn-sm" type="button">定型文の挿入</button>
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">メール件名<label class="badge badge-danger">必須</label></label>
-            <div class="col-md-9">
-                <input type="text" name="examination_comment_mail_subject" value="{{old('examination_comment_mail_subject', $learningtasks_posts->examination_comment_mail_subject)}}" class="form-control">
-            </div>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">メール本文<label class="badge badge-danger">必須</label></label>
-            <div class="col-md-9">
-                <textarea name="examination_comment_mail_text" class="form-control" rows="4">{!!old('examination_comment_mail_text', $learningtasks_posts->examination_comment_mail_text)!!}</textarea>
-                @if ($errors && $errors->has('examination_comment_mail_text')) <div class="text-danger">{{$errors->first('examination_comment_mail_text')}}</div> @endif
-            </div>
-        </div>
-    </div>
---}}
 
     <h5><span class="badge badge-secondary">申し込み設定</span></h5>
     <div class="form-group row">
         <label class="col-md-3 text-md-right">申し込み可能判定</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_timing == 0)
-                    <input type="radio" value="0" id="examination_timing_0" name="examination_timing" class="custom-control-input" checked="checked">
+                @if(empty($tool->getFunction('post_examination_timing', true)))
+                    <input type="radio" value="" id="post_examination_timing_null" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="0" id="examination_timing_0" name="examination_timing" class="custom-control-input">
+                    <input type="radio" value="" id="post_examination_timing_null" name="post_examination_timing" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="examination_timing_0">レポートが合格してから</label>
+                <label class="custom-control-label" for="post_examination_timing_null">レポートが合格してから</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_timing == 1)
-                    <input type="radio" value="1" id="examination_timing_1" name="examination_timing" class="custom-control-input" checked="checked">
+                @if($tool->getFunction('post_examination_timing', true) == 'one')
+                    <input type="radio" value="one" id="post_examination_timing_one" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="1" id="examination_timing_1" name="examination_timing" class="custom-control-input">
+                    <input type="radio" value="one" id="post_examination_timing_one" name="post_examination_timing" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="examination_timing_1">レポートが1回でも提出済みなら（合否のチェックはしない）</label>
+                <label class="custom-control-label" for="post_examination_timing_one">レポートが1回でも提出済みなら（合否のチェックはしない）</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->examination_timing == 2)
-                    <input type="radio" value="2" id="examination_timing_2" name="examination_timing" class="custom-control-input" checked="checked">
+                @if($tool->getFunction('post_examination_timing', true) == 'no_fail')
+                    <input type="radio" value="no_fail" id="examination_timing_no_fail" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="2" id="examination_timing_2" name="examination_timing" class="custom-control-input">
+                    <input type="radio" value="no_fail" id="examination_timing_no_fail" name="post_examination_timing" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="examination_timing_2">レポートが提出済み＆最新が不合格ではない（合格のチェックはしない）</label>
+                <label class="custom-control-label" for="examination_timing_no_fail">レポートが提出済み＆最新が不合格ではない（合格のチェックはしない）</label>
             </div>
         </div>
     </div>

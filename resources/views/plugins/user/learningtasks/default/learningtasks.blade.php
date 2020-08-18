@@ -97,11 +97,11 @@
             <tr>
                 <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
                  @if (Auth::check() && $learningtask->useReport())
-                    <td>{{$learningtask_user->getReportStatus($post->id)}}</td>
+                    <td>{{$tool->getReportStatus($post->id)}}</td>
                 @endif
                 @if (Auth::check() && $learningtask->useExamination())
-                    <td>{{$learningtask_user->getApplyingExaminationDate($post->id)}}</td>
-                    <td>{{$learningtask_user->getExaminationStatus($post->id)}}</td>
+                    <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
+                    <td>{{$tool->getExaminationStatus($post->id)}}</td>
                 @endif
             </tr>
         @endforeach

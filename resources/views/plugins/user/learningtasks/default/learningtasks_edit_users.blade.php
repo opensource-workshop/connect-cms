@@ -35,28 +35,28 @@
         <label class="col-md-3 text-md-right">ログインの要否</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->need_auth === null)
-                    <input type="radio" value="" id="need_auth_null" name="need_auth" class="custom-control-input" checked="checked">
+                @if(empty($tool->getFunction('use_need_auth', true)))
+                    <input type="radio" value="" id="use_need_auth_null" name="use_need_auth" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="" id="need_auth_null" name="need_auth" class="custom-control-input">
+                    <input type="radio" value="" id="use_need_auth_null" name="use_need_auth" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="need_auth_null">課題管理設定に従う（XXXXXXXXXXX）</label>
+                <label class="custom-control-label" for="use_need_auth_null">課題管理設定に従う</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->need_auth === 0)
-                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input" checked="checked">
+                @if($tool->getFunction('use_need_auth', true) == 'off')
+                    <input type="radio" value="off" id="use_need_auth_off" name="use_need_auth" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="0" id="need_auth_0" name="need_auth" class="custom-control-input">
+                    <input type="radio" value="off" id="use_need_auth_off" name="use_need_auth" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="need_auth_0">非ログインでも閲覧可能</label>
+                <label class="custom-control-label" for="use_need_auth_off">非ログインでも閲覧可能</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->need_auth === 1)
-                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input" checked="checked">
+                @if($tool->getFunction('use_need_auth', true) == 'on')
+                    <input type="radio" value="on" id="use_need_auth_on" name="use_need_auth" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="1" id="need_auth_1" name="need_auth" class="custom-control-input">
+                    <input type="radio" value="on" id="use_need_auth_on" name="use_need_auth" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="need_auth_1">閲覧にはログインが必要</label>
+                <label class="custom-control-label" for="use_need_auth_on">閲覧にはログインが必要</label>
             </div>
         </div>
     </div>

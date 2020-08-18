@@ -8,7 +8,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-@if ($learningtask_user->canPostView())
+@if ($tool->canPostView())
 
 <style>
 .custom-file {
@@ -27,11 +27,11 @@
 <h2>{!!$post->post_title!!}</h2>
 
 {{-- 受講者選択：教員機能 --}}
-@if ($learningtask_user->isTeacher())
+@if ($tool->isTeacher())
     <h5><span class="badge badge-warning">評価中の受講者</span></h5>
     <div class="card mb-3 border-danger">
         <div class="card-body">
-            <h3 class="mb-0">{{$learningtask_user->getStudent('受講者を選んでください。')}}</h3>
+            <h3 class="mb-0">{{$tool->getStudent('受講者を選んでください。')}}</h3>
         </div>
     </div>
 
@@ -44,8 +44,8 @@
                 <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                 <select class="form-control mb-1" name="student_id" onchange="javascript:submit(this.form);">
                     <option value="">評価する受講者を選んでください。</option>
-                    @foreach ($learningtask_user->getStudents() as $student)
-                    <option value="{{$student->id}}"@if ($learningtask_user->getStudentId() == $student->id) selected @endif>{{$student->name}}</option>
+                    @foreach ($tool->getStudents() as $student)
+                    <option value="{{$student->id}}"@if ($tool->getStudentId() == $student->id) selected @endif>{{$student->name}}</option>
                     @endforeach
                 </select>
             </form>
@@ -77,24 +77,24 @@
     @endif
 
     {{-- レポート --}}
-    @if ($learningtask->useReport() && $learningtask_user->canReportView($post->id))
+    @if ($tool->checkFunction('use_report') && $tool->canReportView($post->id))
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">レポート</span></h5>
     <div class="card">
         <div class="card-body">
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
 
-            @if ($learningtask_user->hasReportStatuses($post->id))
-                <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getReportCollapseAriaControls()}}">履歴の開閉</button>
+            @if ($tool->hasReportStatuses($post->id))
+                <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$tool->getReportCollapseAriaControls()}}">履歴の開閉</button>
             @endif
 
-            @if ($learningtask_user->hasReportStatuses($post->id))
+            @if ($tool->hasReportStatuses($post->id))
                 <ol class="mb-3">
-                    @foreach($learningtask_user->getReportStatuses($post->id) as $report_status)
+                    @foreach($tool->getReportStatuses($post->id) as $report_status)
                     @if (!$loop->last)
                     <div class="collapse multi-collapse" id="multiCollapseReport{{$loop->iteration}}">
                     @endif
-                        <li value="{{$loop->iteration}}">{{$report_status->getStstusName($learningtask_user->getStudentId())}}
+                        <li value="{{$loop->iteration}}">{{$report_status->getStstusName($tool->getStudentId())}}
                         <table class="table table-bordered table-sm report_table">
                         <tbody>
                             <tr>
@@ -136,10 +136,10 @@
                 </div>
             @endif
 
-            @if ($learningtask_user->isStudent())
+            @if ($tool->isStudent())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
 
-                @if ($learningtask_user->canReportUpload($post->id))
+                @if ($tool->canReportUpload($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
@@ -166,15 +166,15 @@
                 @else
                     <div class="card mb-3">
                         <div class="card-body p-3">
-                            {{$learningtask_user->getReportUploadMessage($post->id)}}
+                            {{$tool->getReportUploadMessage($post->id)}}
                         </div>
                     </div>
                 @endif
             @endif
 
-            @if ($learningtask_user->isTeacher())
+            @if ($tool->isTeacher())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status2">評価・添削（教員用）</span></h5>
-                @if ($learningtask_user->canReportEvaluate($post->id))
+                @if ($tool->canReportEvaluate($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus2/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status2" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
@@ -226,9 +226,9 @@
                 @endif
             @endif
 
-            @if ($learningtask_user->isTeacher())
+            @if ($tool->isTeacher())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status3">受講生へのコメント（教員用）</span></h5>
-                @if ($learningtask_user->canReportComment($post->id))
+                @if ($tool->canReportComment($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus3/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status3" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
@@ -271,29 +271,29 @@
     @endif
 
     {{-- 試験 --}}
-    @if ($learningtask->useExamination() && $learningtask_user->canExaminationView($post->id))
+    @if ($learningtask->useExamination() && $tool->canExaminationView($post->id))
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">試験</span></h5>
     <div class="card">
         <div class="card-body">
             {{-- 試験に合格済み --}}
-            @if ($learningtask_user->isPassExamination($post->id))
+            @if ($tool->isPassExamination($post->id))
                 <div class="card mb-3">
                     <div class="card-body">
                         試験に合格済みです。
                     </div>
                 </div>
             {{-- 試験に申し込み済み --}}
-            @elseif ($learningtask_user->getApplyingExamination($post->id))
+            @elseif ($tool->getApplyingExamination($post->id))
                 <h5><span class="badge badge-secondary">申し込み済の試験日</span></h5>
                 <div class="card mb-3">
                     <div class="card-body">
-                        試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate($post->id)}}</span> です。
+                        試験日時は <span class="font-weight-bold">{{$tool->getApplyingExaminationDate($post->id)}}</span> です。
                     </div>
                 </div>
             {{-- 試験に申し込みまだ --}}
             @else
                 <h5><span class="badge badge-secondary">試験申し込み</span></h5>
-                @if ($learningtask_user->canExamination($post->id))
+                @if ($tool->canExamination($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus4/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status4">
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
@@ -304,7 +304,7 @@
                                     @foreach ($examinations as $examination)
                                     <div class="custom-control custom-radio">
                                         <input type="radio" id="examination_{{$loop->index}}" name="examination_id" class="custom-control-input" value="{{$examination->id}}">
-                                        <label class="custom-control-label" for="examination_{{$loop->index}}">{{$learningtask_user->getViewDate($examination)}}</label>
+                                        <label class="custom-control-label" for="examination_{{$loop->index}}">{{$tool->getViewDate($examination)}}</label>
                                     </div>
                                     @endforeach
 
@@ -325,18 +325,18 @@
                     <div class="card border-danger mb-3">
                         <div class="card-body">
                             試験に申し込む条件が不足しています。<br />
-                            {{$learningtask_user->reasonExamination($post->id)}}
+                            {{$tool->reasonExamination($post->id)}}
                         </div>
                     </div>
                 @endif
             @endif
 
             {{-- 試験前 --}}
-            @if ($learningtask_user->isApplyingExamination($post->id))
+            @if ($tool->isApplyingExamination($post->id))
                 <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
                 <div class="card border-danger mb-3">
                     <div class="card-body">
-                        試験日時は <span class="font-weight-bold">{{$learningtask_user->getApplyingExaminationDate($post->id)}}</span> です。<br />
+                        試験日時は <span class="font-weight-bold">{{$tool->getApplyingExaminationDate($post->id)}}</span> です。<br />
                         開始時間以降にこのページを開くと、ここに試験ファイルのリンクが表示され、ダウンロードできるようになります。<br />
                         ※ 時間になっても、ダウンロードが表示されない場合は、画面を再読み込みしてみてください。
                     </div>
@@ -344,7 +344,7 @@
             @endif
 
             {{-- 試験中 --}}
-            @if ($learningtask_user->canViewExaminationFile($post->id))
+            @if ($tool->canViewExaminationFile($post->id))
                 <h5><span class="badge badge-secondary">試験問題・解答用ファイル</span></h5>
 
                 {{-- 試験用ファイル --}}
@@ -357,7 +357,7 @@
                             @endforeach
                             </ul>
                         </div>
-                        @if ($learningtask_user->isTeacher())
+                        @if ($tool->isTeacher())
                             <h5><span class="badge badge-warning ml-4">※ 受講生は試験時間内のみ参照できます。</span></h5>
                         @endif
                     </div>
@@ -372,17 +372,17 @@
 
             <h5><span class="badge badge-secondary">履歴</span></h5>
 
-            @if ($learningtask_user->hasReportStatuses($post->id))
-                <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$learningtask_user->getExaminationCollapseAriaControls()}}">履歴の開閉</button>
+            @if ($tool->hasReportStatuses($post->id))
+                <button class="btn btn-primary btn-sm ml-4 mb-1" type="button" data-toggle="collapse" data-target=".multi-collapse" aria-expanded="false" aria-controls="{{$tool->getExaminationCollapseAriaControls()}}">履歴の開閉</button>
             @endif
 
-            @if ($learningtask_user->hasExaminationStatuses($post->id))
+            @if ($tool->hasExaminationStatuses($post->id))
                 <ol class="mb-3">
-                    @foreach($learningtask_user->getExaminationStatuses($post->id) as $examination_status)
+                    @foreach($tool->getExaminationStatuses($post->id) as $examination_status)
                         @if (!$loop->last)
                         <div class="collapse multi-collapse" id="multiCollapseExamination{{$loop->iteration}}">
                         @endif
-                            <li value="{{$loop->iteration}}">{{$examination_status->getStstusName($learningtask_user->getStudentId())}}
+                            <li value="{{$loop->iteration}}">{{$examination_status->getStstusName($tool->getStudentId())}}
                             <table class="table table-bordered table-sm report_table">
                             <tbody>
                                 <tr>
@@ -402,7 +402,7 @@
                                 @if ($examination_status->hasExamination())
                                 <tr>
                                     <th>試験日時</th>
-                                    <td>{{$learningtask_user->getViewDate($examination_status)}}</td>
+                                    <td>{{$tool->getViewDate($examination_status)}}</td>
                                 </tr>
                                 @endif
                                 @if ($examination_status->hasGrade())
@@ -432,9 +432,9 @@
                 </div>
             @endif
 
-            @if ($learningtask_user->isStudent())
+            @if ($tool->isStudent())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status5">解答</span></h5>
-                @if ($learningtask_user->canExaminationUpload($post->id))
+                @if ($tool->canExaminationUpload($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus5/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status5" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
@@ -467,10 +467,10 @@
                 @endif
             @endif
 
-            @if ($learningtask_user->isTeacher())
+            @if ($tool->isTeacher())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status6">評価・添削（教員用）</span></h5>
 
-                @if ($learningtask_user->canExaminationEvaluate($post->id))
+                @if ($tool->canExaminationEvaluate($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus6/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status6" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
@@ -522,9 +522,9 @@
                 @endif
             @endif
 
-            @if ($learningtask_user->isTeacher())
+            @if ($tool->isTeacher())
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status7">受講生へのコメント（教員用）</span></h5>
-                @if ($learningtask_user->canExaminationComment($post->id))
+                @if ($tool->canExaminationComment($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus7/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status7" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">

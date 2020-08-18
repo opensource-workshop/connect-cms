@@ -11,6 +11,7 @@ use App\Models\Common\PageRole;
 use App\Models\Common\GroupUser;
 use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
+use App\Models\User\Learningtasks\LearningtasksUseSettings;
 use App\User;
 
 /**
@@ -56,12 +57,17 @@ use App\User;
  * @category 課題管理プラグイン
  * @package Contoroller
  */
-class LearningtasksUser
+class LearningtasksTool
 {
     /**
      * 課題バケツ
      */
     private $learningtask = null;
+
+    /**
+     * 課題
+     */
+    private $post = null;
 
     /**
      * ログインしているユーザ情報
@@ -94,9 +100,19 @@ class LearningtasksUser
     private $examination_statuses = null;
 
     /**
+     * 使用機能(課題セット)
+     */
+    private $base_use_functions = null;
+
+    /**
+     * 使用機能(課題)
+     */
+    private $post_use_functions = null;
+
+    /**
      * コンストラクタ
      */
-    public function __construct($request, $page_id, $learningtask = null, $post = null)
+    public function __construct($request, $page_id, $learningtask, $post = null)
     {
         // 変数初期化
         $this->report_statuses = new Collection();
@@ -104,9 +120,18 @@ class LearningtasksUser
         $this->examination_statuses = new Collection();
 
         $this->learningtask = $learningtask;
+        $this->post = $post;
 
         // ログインしているユーザthis->
         $this->user = Auth::user();
+
+        // 使用する機能
+        if (!empty($this->learningtask)) {
+            $this->base_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', 0)->get();
+        }
+        if (!empty($this->learningtask) && !empty($this->post)) {
+            $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', $this->post->id)->get();
+        }
 
         // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
         if ($this->isTeacher() && session('student_id')) {
@@ -139,9 +164,9 @@ class LearningtasksUser
         }
 
         // 受講生一覧と教員一覧の取得
-        if (!empty($post)) {
+        if (!empty($this->post)) {
             // ユーザの参加方式によって、対象を取得
-            if ($post->student_join_flag == 2) {
+            if ($this->post->student_join_flag == 2) {
                 // 配置ページのメンバーシップユーザ全員
                 // ページから参加グループ取得
                 $group_ids = PageRole::select('group_id')
@@ -176,12 +201,12 @@ class LearningtasksUser
                                       ->orderBy('users.id')
                                       ->get();
 
-            } elseif ($post->student_join_flag == 3) {
+            } elseif ($this->post->student_join_flag == 3) {
                 // 配置ページのメンバーシップユーザから選ぶ
                 $this->students = LearningtasksUsers::select(
                                                         'users.*'
                                                     )->join('users', 'users.id', '=', 'learningtasks_users.user_id')
-                                                     ->where('learningtasks_users.post_id', $post->id)
+                                                     ->where('learningtasks_users.post_id', $this->post->id)
                                                      ->where('learningtasks_users.role_name', 'student')
                                                      ->orderBy('users.id', 'asc')
                                                      ->get();
@@ -189,12 +214,88 @@ class LearningtasksUser
                 $this->teachers = LearningtasksUsers::select(
                                                         'users.*'
                                                     )->join('users', 'users.id', '=', 'learningtasks_users.user_id')
-                                                     ->where('learningtasks_users.post_id', $post->id)
+                                                     ->where('learningtasks_users.post_id', $this->post->id)
                                                      ->where('learningtasks_users.role_name', 'teacher')
                                                      ->orderBy('users.id', 'asc')
                                                      ->get();
             }
         }
+    }
+
+    /**
+     *  使用機能の取得
+     */
+    public function getFunction($function, $post_check = false)
+    {
+        $setting_value = null;
+        if ($post_check == false) {
+            $setting_obj = $this->base_use_functions->where('use_function', $function)->first();
+        } else {
+            $setting_obj = $this->post_use_functions->where('use_function', $function)->first();
+        }
+        // 該当機能の設定がないと、空なので、チェックしてから値を取得
+        if (!empty($setting_obj)) {
+            $setting_value = $setting_obj->value;
+        }
+        return $setting_value;
+    }
+
+    /**
+     *  使用機能のチェック
+     */
+    public function checkFunction($function)
+    {
+        $function_parts = explode('_', $function);
+        // 課題ごとの設定がある場合。
+        if (!empty($this->post_use_functions)) {
+            // 課題独自設定の有無
+            $category_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts[1] . '_setting')->first();
+            if (empty($category_setting)) {
+                $category_setting_value = null;
+            } else {
+                $category_setting_value = $category_setting->value;
+            }
+
+            if (empty($category_setting_value)) {
+                // 課題セットの方を参照するので、このまま続きへ
+            } elseif ($category_setting_value == 'off') {
+                // この機能を使わないため、false
+                return false;
+            } elseif ($category_setting_value == 'on') {
+                // 機能判定
+                $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
+                if ($post_setting_value == 'on') {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        // 課題セットの設定を確認
+        $category_setting = $this->base_use_functions->where('use_function', 'post_' . $function_parts[0] . '_setting')->first;
+        if (empty($category_setting)) {
+            $category_setting_value = null;
+        } else {
+            $category_setting_value = $category_setting->value;
+        }
+
+        if (empty($category_setting_value)) {
+            // 設定がない＝false
+            return false;
+        } elseif ($category_setting_value == 'off') {
+            // この機能を使わないため、false
+            return false;
+        } elseif ($category_setting_value == 'on') {
+            // 機能判定
+            $post_setting_value = $this->base_use_functions->where('use_function', $function)->value;
+            if ($post_setting_value == 'on') {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**
@@ -328,6 +429,7 @@ class LearningtasksUser
 
     /**
      *  レポートの表示を行えるか？
+     *  
      */
     public function canReportView($post_id)
     {
