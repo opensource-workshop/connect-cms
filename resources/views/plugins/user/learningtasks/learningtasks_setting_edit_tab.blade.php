@@ -23,22 +23,22 @@
                         <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">課題設定</a>
                     </li>
                 @endif
-                @if ($action == 'selectFunction')
-                    <li role="presentation" class="nav-item">
-                        <span class="nav-link"><span class="active">機能選択</span></span>
-                    </li>
-                @else
-                    <li role="presentation" class="nav-item">
-                        <a href="{{url('/')}}/plugin/learningtasks/selectFunction/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">機能選択</a>
-                    </li>
-                @endif
                 @if ($action == 'editUsers')
                     <li role="presentation" class="nav-item">
-                        <span class="nav-link"><span class="active">ユーザ設定</span></span>
+                        <span class="nav-link"><span class="active">参加設定</span></span>
                     </li>
                 @else
                     <li role="presentation" class="nav-item">
-                        <a href="{{url('/')}}/plugin/learningtasks/editUsers/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">ユーザ設定</a>
+                        <a href="{{url('/')}}/plugin/learningtasks/editUsers/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">参加設定</a>
+                    </li>
+                @endif
+                @if ($action == 'editReport')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">レポート設定</span></span>
+                    </li>
+                @else
+                    <li role="presentation" class="nav-item">
+                        <a href="{{url('/')}}/plugin/learningtasks/editReport/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">レポート設定</a>
                     </li>
                 @endif
                 @if ($action == 'editExaminations')
@@ -50,6 +50,17 @@
                         <a href="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">試験設定</a>
                     </li>
                 @endif
+                @if ($action == 'editEvaluate')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">総合評価設定</span></span>
+                    </li>
+                @else
+                    <li role="presentation" class="nav-item">
+                        <a href="{{url('/')}}/plugin/learningtasks/editEvaluate/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">総合評価設定</a>
+                    </li>
+                @endif
+
+
                 @if ($action == 'listGrade')
                     <li role="presentation" class="nav-item">
                         <span class="nav-link"><span class="active">成績出力</span></span>

@@ -78,6 +78,33 @@
     <div class="accordion @if (!$loop->first) mt-3 @endif" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
         <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
 
+{{--
+@if ($tool->isTeacher())
+<h5><span class="badge badge-secondary">教員用　必要な処理一覧</span></h5>
+	@if ($teacher_tasks)
+	<table class="table table-bordered">
+	    <thead>
+	        <tr>
+	            <th>科目名</th>
+	            <th>受講者</th>
+	            <th>必要な評価</th>
+	        </tr>
+	    </thead>
+	    <tbody>
+	    @foreach ($teacher_tasks as $teacher_task)
+	        <tr>
+<td>{{$teacher_task->post_id}}</td>
+<td>{{$teacher_task->user_name}}</td>
+<td>{{$teacher_task->task_status}}</td>
+	        </tr>
+	    @endforeach
+	    </tbody>
+	</table>
+	@endif
+@endif
+--}}
+
+<h5><span class="badge badge-secondary">課題一覧</span></h5>
 <table class="table table-bordered">
     <thead class="bg-light">
     <tr>
@@ -97,11 +124,11 @@
             <tr>
                 <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
                  @if (Auth::check() && $learningtask->useReport())
-                    <td>{{$learningtask_user->getReportStatus($post->id)}}</td>
+                    <td>{{$tool->getReportStatus($post->id)}}</td>
                 @endif
                 @if (Auth::check() && $learningtask->useExamination())
-                    <td>{{$learningtask_user->getApplyingExaminationDate($post->id)}}</td>
-                    <td>{{$learningtask_user->getExaminationStatus($post->id)}}</td>
+                    <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
+                    <td>{{$tool->getExaminationStatus($post->id)}}</td>
                 @endif
             </tr>
         @endforeach
