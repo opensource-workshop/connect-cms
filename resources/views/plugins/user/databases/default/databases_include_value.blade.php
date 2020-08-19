@@ -53,6 +53,10 @@
     elseif ($column->column_type == DatabaseColumnType::updated) {
         $value = $input->updated_at;
     }
+    // 公開日型
+    elseif ($column->column_type == DatabaseColumnType::posted) {
+        $value = $input->posted_at;
+    }
     // その他の型
     else {
         $value = $obj ? $obj->value : "";

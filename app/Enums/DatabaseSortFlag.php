@@ -9,13 +9,34 @@ use App\Enums\EnumsBase;
  */
 final class DatabaseSortFlag extends EnumsBase
 {
+    // 定数メンバの'_'の前半. $sort_column_id
+    const created = 'created';
+    const updated = 'updated';
+    const posted  = 'posted';
+    const random  = 'random';
+
+    // 定数メンバの'_'の後半. $sort_column_order
+    const order_asc     = 'asc';
+    const order_desc    = 'desc';
+    const order_session = 'session';
+    const order_every   = 'every';
+
     // 定数メンバ
-    const created_asc    = 'created_asc';
-    const created_desc   = 'created_desc';
-    const updated_asc    = 'updated_asc';
-    const updated_desc   = 'updated_desc';
-    const random_session = 'random_session';
-    const random_every   = 'random_every';
+    // const created_asc    = 'created_asc';
+    // const created_desc   = 'created_desc';
+    // const updated_asc    = 'updated_asc';
+    // const updated_desc   = 'updated_desc';
+    // const random_session = 'random_session';
+    // const random_every   = 'random_every';
+    // PHP 5.6.0 以降はconstで文字連結可能 https://www.php.net/manual/ja/language.oop5.constants.php
+    const created_asc    = self::created . '_' . self::order_asc;
+    const created_desc   = self::created . '_' . self::order_desc;
+    const updated_asc    = self::updated . '_' . self::order_asc;
+    const updated_desc   = self::updated . '_' . self::order_desc;
+    const posted_asc     = self::posted . '_' . self::order_asc;
+    const posted_desc    = self::posted . '_' . self::order_desc;
+    const random_session = self::random . '_' . self::order_session;
+    const random_every   = self::random . '_' . self::order_every;
     const column         = 'column';
 
     // key/valueの連想配列
@@ -24,6 +45,8 @@ final class DatabaseSortFlag extends EnumsBase
         self::created_desc   => '登録日（新しい順）',
         self::updated_asc    => '更新日（古い順）',
         self::updated_desc   => '更新日（新しい順）',
+        self::posted_asc     => '公開日（古い順）',
+        self::posted_desc    => '公開日（新しい順）',
         self::random_session => 'ランダム（セッション）',
         self::random_every   => 'ランダム（毎回）',
         self::column         => '各カラム設定',

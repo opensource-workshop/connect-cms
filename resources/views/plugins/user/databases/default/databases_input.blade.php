@@ -1,14 +1,32 @@
 {{--
  * 登録画面テンプレート。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
 @if (empty($setting_error_messages))
+
+    <script type="text/javascript">
+        /**
+         * 公開日時のカレンダーボタン押下
+         */
+        $(function () {
+            $('#posted_at{{$frame_id}}').datetimepicker({
+                @if (App::getLocale() == ConnectLocale::ja)
+                    dayViewHeaderFormat: 'YYYY年 M月',
+                @endif
+                locale: '{{ App::getLocale() }}',
+                sideBySide: true,
+                format: 'YYYY-MM-DD HH:mm'
+            });
+        });
+    </script>
 
     @if (isset($id))
     <form action="{{URL::to('/')}}/plugin/databases/publicConfirm/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}" name="database_add_column{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
@@ -27,6 +45,7 @@
             {{-- 登録日型・更新日型は入力表示しない --}}
             @case(DatabaseColumnType::created)
             @case(DatabaseColumnType::updated)
+            @case(DatabaseColumnType::posted)
                 @break
             {{-- 通常の項目 --}}
             @default
@@ -39,6 +58,22 @@
                 </div>
             @endswitch
         @endforeach
+
+        {{-- 固定項目エリア --}}
+        <hr>
+        <div class="form-group row">
+            <label class="col-sm-3 control-label">公開日時 <label class="badge badge-danger">必須</label></label>
+            <div class="col-sm-9">
+                <div class="input-group date" id="posted_at{{$frame_id}}" data-target-input="nearest">
+                    <input type="text" name="posted_at" value="{{old('posted_at', $inputs->posted_at)}}" class="form-control datetimepicker-input" data-target="#posted_at{{$frame_id}}">
+                    <div class="input-group-append" data-target="#posted_at{{$frame_id}}" data-toggle="datetimepicker">
+                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+                @if ($errors && $errors->has('posted_at')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('posted_at')}}</div> @endif
+            </div>
+        </div>
+
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
             <div class="row">
