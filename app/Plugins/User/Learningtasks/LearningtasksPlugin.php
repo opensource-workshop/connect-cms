@@ -751,35 +751,52 @@ class LearningtasksPlugin extends UserPluginBase
         // posts はログインしている教員が見るべき課題に絞られているため、使用する。
         $teacher_tasks = array();
         foreach ($posts as $post) {
-            $users_statuses = LearningtasksUsersStatuses::select('learningtasks_users_statuses.*', 'users.name as user_name')
-                                                        ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-                                                        ->where('post_id', $post->id)
-//                                                        ->groupBy('users.id')
-                                                        ->orderBy('id', 'desc')
-                                                        ->get();
-            // レポートの評価が必要か。(レポートの提出と評価の最後を見る)
-            $last_report_task = $users_statuses->whereIn('task_status', [1, 2])->last();
-            // 最後が 1 なら、レポートの評価が必要
-            if (!empty($last_report_task) && $last_report_task->task_status == 1) {
-                $teacher_tasks[] = $last_report_task;
-            }
+            $users_statuses_tmp = LearningtasksUsersStatuses::select(
+                'learningtasks_users_statuses.*',
+                'users.id as user_id',
+                'learningtasks_posts.post_title',
+                'users.name as user_name'
+            )
+            ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+            ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+            ->where('post_id', $post->id)
+            ->orderBy('id', 'asc')
+            ->get();
 
-            // 試験の評価が必要か。(試験の提出と評価の最後を見る)
-            $last_examination_task = $users_statuses->whereIn('task_status', [5, 6])->last();
-            // 最後が 5 なら、試験の評価が必要
-            if (!empty($last_examination_task) && $last_examination_task->task_status == 5) {
-                $teacher_tasks[] = $last_examination_task;
-            }
+            // Collection の機能でユーザ毎に分割する。
+            $users_statuses = $users_statuses_tmp->groupBy('user_id');
 
-            // 総合評価が必要か。(レポートが合格、試験が合格、総合評価なしの場合)
-            $last_evaluate_task = $users_statuses->whereIn('task_status', [8])->last();
+            foreach ($users_statuses as $users_status) {
+                // レポートの評価が必要か。(レポートの提出と評価の最後を見る)
+                $last_report_task = $users_status->whereIn('task_status', [1, 2])->last();
+                // 最後が 1 なら、レポートの評価が必要
+                if (!empty($last_report_task) && $last_report_task->task_status == 1) {
+                    $teacher_tasks[] = $last_report_task;
+                }
 
-            if (!empty($last_report_task) && $last_report_task->task_status == 2 &&
-                (($last_report_task->grade == 'A') || ($last_report_task->grade == 'B') || ($last_report_task->grade == 'C')) &&
-                !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
-                (($last_examination_task->grade == 'A') || ($last_examination_task->grade == 'B') || ($last_examination_task->grade == 'C')) &&
-                (empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
-                $teacher_tasks[] = $last_evaluate_task;
+                // 試験の評価が必要か。(試験の提出と評価の最後を見る)
+                $last_examination_task = $users_status->whereIn('task_status', [5, 6])->last();
+                // 最後が 5 なら、試験の評価が必要
+                if (!empty($last_examination_task) && $last_examination_task->task_status == 5) {
+                    $teacher_tasks[] = $last_examination_task;
+                }
+
+                // 総合評価が必要か。(レポートが合格、試験が合格、総合評価なしの場合)
+                $last_evaluate_task = $users_status->whereIn('task_status', [8])->last();
+
+                // 上で取得したレポートのステータスが合格＆上で取得した試験のステータスが合格＆総合評価がまだない場合
+                if (!empty($last_report_task) && $last_report_task->task_status == 2 &&
+                    (($last_report_task->grade == 'A') || ($last_report_task->grade == 'B') || ($last_report_task->grade == 'C')) &&
+                    !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
+                    (($last_examination_task->grade == 'A') || ($last_examination_task->grade == 'B') || ($last_examination_task->grade == 'C')) &&
+                    (empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
+
+                    // 総合評価の条件に合致。ただし、この条件では、総合評価のデータはまだない。
+                    // データがないと画面表示に際に判定できないため、試験結果をオブジェクトコピーし、ステータスを 8 にしておく。
+                    $last_evaluate_task = clone $last_examination_task;
+                    $last_evaluate_task->task_status = 8;
+                    $teacher_tasks[] = $last_evaluate_task;
+                }
             }
         }
         return $teacher_tasks;
@@ -838,24 +855,24 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // ユーザーstatus：画面表示するデータのcontents_id を集める
-//        $contents_ids = array();
-//        foreach ($posts as $post) {
-//            $contents_ids[] = $post->contents_id;
-//        }
+        //$contents_ids = array();
+        //foreach ($posts as $post) {
+        //    $contents_ids[] = $post->contents_id;
+        //}
 
         // 認証されているユーザの取得
         //$user = Auth::user();
 
         // ユーザーstatusテーブルを取得
-//        $users_statuses = $this->getUserStatus($posts->pluck('id'));
+        //$users_statuses = $this->getUserStatus($posts->pluck('id'));
 
-//        // ユーザーstatusテーブルをポストデータに紐づけ
-//        foreach ($posts as &$post) {
-//            if ($learningtasks_users_statuses && array_key_exists($post->contents_id, $learningtasks_users_statuses)) {
-//                $post->user_task_status = $learningtasks_users_statuses[$post->contents_id]->task_status;
-//                $post->upload_id = $learningtasks_users_statuses[$post->contents_id]->upload_id;
-//            }
-//        }
+        //// ユーザーstatusテーブルをポストデータに紐づけ
+        //foreach ($posts as &$post) {
+        //    if ($learningtasks_users_statuses && array_key_exists($post->contents_id, $learningtasks_users_statuses)) {
+        //        $post->user_task_status = $learningtasks_users_statuses[$post->contents_id]->task_status;
+        //        $post->upload_id = $learningtasks_users_statuses[$post->contents_id]->upload_id;
+        //    }
+        //}
 
         // カテゴリごとにまとめる＆カテゴリの配列も作る
         $categories_and_posts = array();
