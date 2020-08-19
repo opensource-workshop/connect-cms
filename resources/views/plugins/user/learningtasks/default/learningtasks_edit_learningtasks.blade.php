@@ -163,8 +163,8 @@
                 <label class="custom-control-label" for="use_report_evaluate">評価</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_report_comment]" value="on" class="custom-control-input" id="use_report_comment" @if(old("use_report_evaluate.use_report_comment", $tool->getFunction('use_report_comment')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment">教員から参考資料</label>
+                <input type="checkbox" name="base_settings[use_report_reference]" value="on" class="custom-control-input" id="use_report_reference" @if(old("use_report_evaluate.use_report_reference", $tool->getFunction('use_report_reference')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_report_reference">教員から参考資料</label>
             </div>
         </div>
     </div>
@@ -177,8 +177,8 @@
                 <label class="custom-control-label" for="use_report_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_report_text]" value="on" class="custom-control-input" id="use_report_text" @if(old("base_settings.use_report_text", $tool->getFunction('use_report_text')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_text">本文入力</label>
+                <input type="checkbox" name="base_settings[use_report_comment]" value="on" class="custom-control-input" id="use_report_comment" @if(old("base_settings.use_report_comment", $tool->getFunction('use_report_comment')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_report_comment">本文入力</label>
             </div>
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="base_settings[use_report_mail]" value="on" class="custom-control-input" id="use_report_mail" @if(old("base_settings.use_report_mail", $tool->getFunction('use_report_mail')) == 'on') checked=checked @endif>
@@ -195,8 +195,8 @@
                 <label class="custom-control-label" for="use_report_evaluate_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_report_evaluate_text]" value="on" class="custom-control-input" id="use_report_evaluate_text" @if(old("base_settings.use_report_evaluate_text", $tool->getFunction('use_report_evaluate_text')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_evaluate_text">コメント入力</label>
+                <input type="checkbox" name="base_settings[use_report_evaluate_comment]" value="on" class="custom-control-input" id="use_report_evaluate_comment" @if(old("base_settings.use_report_evaluate_comment", $tool->getFunction('use_report_evaluate_comment')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_report_evaluate_comment">コメント入力</label>
             </div>
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="base_settings[use_report_evaluate_mail]" value="on" class="custom-control-input" id="use_report_evaluate_mail" @if(old("base_settings.use_report_evaluate_mail", $tool->getFunction('use_report_evaluate_mail')) == 'on') checked=checked @endif>
@@ -209,16 +209,16 @@
         <label class="{{$frame->getSettingLabelClass()}}">教員から参考資料</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_report_comment_file]" value="on" class="custom-control-input" id="use_report_comment_file" @if(old("base_settings.use_report_comment_file", $tool->getFunction('use_report_comment_file')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment_file">アップロード</label>
+                <input type="checkbox" name="base_settings[use_report_reference_file]" value="on" class="custom-control-input" id="use_report_reference_file" @if(old("base_settings.use_report_reference_file", $tool->getFunction('use_report_reference_file')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_report_reference_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_report_comment_text]" value="on" class="custom-control-input" id="use_report_comment_text" @if(old("base_settings.use_report_comment_text", $tool->getFunction('use_report_comment_text')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment_text">コメント入力</label>
+                <input type="checkbox" name="base_settings[use_report_reference_comment]" value="on" class="custom-control-input" id="use_report_reference_comment" @if(old("base_settings.use_report_reference_comment", $tool->getFunction('use_report_reference_comment')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_report_reference_comment">コメント入力</label>
             </div>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="base_settings[use_report_comment_mail]" value="on" class="custom-control-input" id="use_report_comment_mail" @if(old("base_settings.use_report_comment_mail", $tool->getFunction('use_report_comment_mail')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment_mail">メール送信（受講者宛）</label>
+                <input type="checkbox" name="base_settings[use_report_reference_mail]" value="on" class="custom-control-input" id="use_report_reference_mail" @if(old("base_settings.use_report_reference_mail", $tool->getFunction('use_report_reference_mail')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_report_reference_mail">メール送信（受講者宛）</label>
             </div>
         </div>
     </div>
@@ -247,8 +247,8 @@
                 <label class="custom-control-label" for="use_examination_evaluate">評価</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_examination_comment]" value="on" class="custom-control-input" id="use_examination_comment" @if(old("base_settings.use_examination_comment", $tool->getFunction('use_examination_comment')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_comment">教員から参考資料</label>
+                <input type="checkbox" name="base_settings[use_examination_reference]" value="on" class="custom-control-input" id="use_examination_reference" @if(old("base_settings.use_examination_reference", $tool->getFunction('use_examination_reference')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_reference">教員から参考資料</label>
             </div>
         </div>
     </div>
@@ -261,8 +261,8 @@
                 <label class="custom-control-label" for="use_examination_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_examination_text]" value="on" class="custom-control-input" id="use_examination_text" @if(old("base_settings.use_examination_text", $tool->getFunction('use_examination_text')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_text">本文入力</label>
+                <input type="checkbox" name="base_settings[use_examination_comment]" value="on" class="custom-control-input" id="use_examination_comment" @if(old("base_settings.use_examination_comment", $tool->getFunction('use_examination_comment')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_comment">本文入力</label>
             </div>
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="base_settings[use_examination_mail]" value="on" class="custom-control-input" id="use_examination_mail" @if(old("base_settings.use_examination_mail", $tool->getFunction('use_examination_mail')) == 'on') checked=checked @endif>
@@ -279,8 +279,8 @@
                 <label class="custom-control-label" for="use_examination_evaluate_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_examination_evaluate_text]" value="on" class="custom-control-input" id="use_examination_evaluate_text" @if(old("base_settings.use_examination_evaluate_text", $tool->getFunction('use_examination_evaluate_text')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_evaluate_text">コメント入力</label>
+                <input type="checkbox" name="base_settings[use_examination_evaluate_comment]" value="on" class="custom-control-input" id="use_examination_evaluate_comment" @if(old("base_settings.use_examination_evaluate_comment", $tool->getFunction('use_examination_evaluate_comment')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_evaluate_comment">コメント入力</label>
             </div>
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="base_settings[use_examination_evaluate_mail]" value="on" class="custom-control-input" id="use_examination_evaluate_mail" @if(old("base_settings.use_examination_evaluate_mail", $tool->getFunction('use_examination_evaluate_mail')) == 'on') checked=checked @endif>
@@ -293,16 +293,16 @@
         <label class="{{$frame->getSettingLabelClass()}}">教員から参考資料</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_examination_comment_file]" value="on" class="custom-control-input" id="use_examination_comment_file" @if(old("base_settings.use_examination_comment_file", $tool->getFunction('use_examination_comment_file')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_comment_file">アップロード</label>
+                <input type="checkbox" name="base_settings[use_examination_reference_file]" value="on" class="custom-control-input" id="use_examination_reference_file" @if(old("base_settings.use_examination_reference_file", $tool->getFunction('use_examination_reference_file')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_reference_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_examination_comment_text]" value="on" class="custom-control-input" id="use_examination_comment_text" @if(old("base_settings.use_examination_comment_text", $tool->getFunction('use_examination_comment_text')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_comment_text">コメント入力</label>
+                <input type="checkbox" name="base_settings[use_examination_reference_comment]" value="on" class="custom-control-input" id="use_examination_reference_comment" @if(old("base_settings.use_examination_reference_comment", $tool->getFunction('use_examination_reference_comment')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_reference_comment">コメント入力</label>
             </div>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="base_settings[use_examination_comment_mail]" value="on" class="custom-control-input" id="use_examination_comment_mail" @if(old("base_settings.use_examination_comment_mail", $tool->getFunction('use_examination_comment_mail')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_examination_comment_mail">メール送信（受講者宛）</label>
+                <input type="checkbox" name="base_settings[use_examination_reference_mail]" value="on" class="custom-control-input" id="use_examination_reference_mail" @if(old("base_settings.use_examination_reference_mail", $tool->getFunction('use_examination_reference_mail')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_examination_reference_mail">メール送信（受講者宛）</label>
             </div>
         </div>
     </div>

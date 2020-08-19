@@ -30,7 +30,7 @@
         </div>
     </div>
 
-    <h5><span class="badge badge-secondary">使用設定</span></h5>
+    <h5><span class="badge badge-secondary">使用項目の設定</span></h5>
     <div class="form-group row">
         <label class="col-md-3 text-md-right">レポート提出機能</label>
         <div class="col-md-9">
@@ -38,7 +38,7 @@
                 @if(empty($tool->getFunction('post_report_setting', true)))
                     <input type="radio" value="" id="post_report_setting_null" name="post_report_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_report.show">
                 @else
-                    <input type="radio" value="" id="post_report_setting_null" name="post_report_setting" class="custom-control-input" data-target="#collapse_post_report.show">
+                    <input type="radio" value="" id="post_report_setting_null" name="post_report_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_report.show">
                 @endif
                 <label class="custom-control-label" for="post_report_setting_null">課題管理設定に従う</label>
             </div><br />
@@ -61,92 +61,93 @@
         </div>
     </div>
 
-<div class="collapse collapse_post_report" id="collapse_post_report">
-    <h5><span class="badge badge-secondary">課題独自設定</span></h5>
-    <div class="form-group row mb-0">
-        <label class="col-md-3 text-md-right">レポート提出機能</label>
-        <div class="col-md-9 d-md-flex">
+    {{-- 独自設定の場合のみ表示、その他は隠す --}}
+    <div class="collapse {{$tool->getSettingShowstr("post_report_setting")}} collapse_post_report" id="collapse_post_report">
+        <h5><span class="badge badge-secondary">課題独自の項目設定</span></h5>
+        <div class="form-group row mb-0">
+            <label class="col-md-3 text-md-right">レポート提出機能</label>
+            <div class="col-md-9 d-md-flex">
 
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report]" value="on" class="custom-control-input" id="use_report" @if(old("post_settings.use_report", $tool->getFunction('use_report', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report">提出</label>
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report]" value="on" class="custom-control-input" id="use_report" @if(old("post_settings.use_report", $tool->getFunction('use_report', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report">提出</label>
+                </div>
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_evaluate]" value="on" class="custom-control-input" id="use_report_evaluate" @if(old("post_settings.use_report_evaluate", $tool->getFunction('use_report_evaluate', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_evaluate">評価</label>
+                </div>
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_reference]" value="on" class="custom-control-input" id="use_report_reference" @if(old("post_settings.use_report_reference", $tool->getFunction('use_report_reference', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_reference">教員から参考資料</label>
+                </div>
             </div>
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_evaluate]" value="on" class="custom-control-input" id="use_report_evaluate" @if(old("post_settings.use_report_evaluate", $tool->getFunction('use_report_evaluate', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_evaluate">評価</label>
+        </div>
+
+        <div class="form-group row mb-0">
+            <label class="col-md-3 text-md-right">提出</label>
+            <div class="col-md-9 d-md-flex">
+
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_file]" value="on" class="custom-control-input" id="use_report_file" @if(old("post_settings.use_report_file", $tool->getFunction('use_report_file', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_file">アップロード</label>
+                </div>
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_comment]" value="on" class="custom-control-input" id="use_report_comment" @if(old("post_settings.use_report_comment", $tool->getFunction('use_report_comment', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_comment">本文入力</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" name="post_settings[use_report_mail]" value="on" class="custom-control-input" id="use_report_mail" @if(old("post_settings.use_report_mail", $tool->getFunction('use_report_mail', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_mail">メール送信（教員宛）</label>
+                </div>
             </div>
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_comment]" value="on" class="custom-control-input" id="use_report_comment" @if(old("post_settings.use_report_comment", $tool->getFunction('use_report_comment', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment">教員から参考資料</label>
+        </div>
+
+        <div class="form-group row mb-0">
+            <label class="col-md-3 text-md-right">評価</label>
+            <div class="col-md-9 d-md-flex">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_evaluate_file]" value="on" class="custom-control-input" id="use_report_evaluate_file" @if(old("post_settings.use_report_evaluate_file", $tool->getFunction('use_report_evaluate_file', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_evaluate_file">アップロード</label>
+                </div>
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_evaluate_comment]" value="on" class="custom-control-input" id="use_report_evaluate_comment" @if(old("post_settings.use_report_evaluate_comment", $tool->getFunction('use_report_evaluate_comment', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_evaluate_comment">コメント入力</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" name="post_settings[use_report_evaluate_mail]" value="on" class="custom-control-input" id="use_report_evaluate_mail" @if(old("post_settings.use_report_evaluate_mail", $tool->getFunction('use_report_evaluate_mail', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_evaluate_mail">メール送信（受講者宛）</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row mb-0">
+            <label class="col-md-3 text-md-right">教員から参考資料</label>
+            <div class="col-md-9 d-md-flex">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_reference_file]" value="on" class="custom-control-input" id="use_report_reference_file" @if(old("post_settings.use_report_reference_file", $tool->getFunction('use_report_reference_file', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_reference_file">アップロード</label>
+                </div>
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_reference_comment]" value="on" class="custom-control-input" id="use_report_reference_comment" @if(old("post_settings.use_report_reference_comment", $tool->getFunction('use_report_reference_comment', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_reference_comment">コメント入力</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" name="post_settings[use_report_reference_mail]" value="on" class="custom-control-input" id="use_report_reference_mail" @if(old("post_settings.use_report_reference_mail", $tool->getFunction('use_report_reference_mail', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_reference_mail">メール送信（受講者宛）</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-md-3 text-md-right">表示方法</label>
+            <div class="col-md-9 d-md-flex">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_report_status_collapse]" value="on" class="custom-control-input" id="use_report_status_collapse" @if(old("post_settings.use_report_status_collapse", $tool->getFunction('use_report_status_collapse', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_status_collapse">履歴を開閉する</label>
+                </div>
             </div>
         </div>
     </div>
-
-    <div class="form-group row mb-0">
-        <label class="col-md-3 text-md-right">提出</label>
-        <div class="col-md-9 d-md-flex">
-
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_file]" value="on" class="custom-control-input" id="use_report_file" @if(old("post_settings.use_report_file", $tool->getFunction('use_report_file', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_file">アップロード</label>
-            </div>
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_text]" value="on" class="custom-control-input" id="use_report_text" @if(old("post_settings.use_report_text", $tool->getFunction('use_report_text', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_text">本文入力</label>
-            </div>
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="post_settings[use_report_mail]" value="on" class="custom-control-input" id="use_report_mail" @if(old("post_settings.use_report_mail", $tool->getFunction('use_report_mail', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_mail">メール送信（教員宛）</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row mb-0">
-        <label class="col-md-3 text-md-right">評価</label>
-        <div class="col-md-9 d-md-flex">
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_evaluate_file]" value="on" class="custom-control-input" id="use_report_evaluate_file" @if(old("post_settings.use_report_evaluate_file", $tool->getFunction('use_report_evaluate_file', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_evaluate_file">アップロード</label>
-            </div>
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_evaluate_text]" value="on" class="custom-control-input" id="use_report_evaluate_text" @if(old("post_settings.use_report_evaluate_text", $tool->getFunction('use_report_evaluate_text', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_evaluate_text">コメント入力</label>
-            </div>
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="post_settings[use_report_evaluate_mail]" value="on" class="custom-control-input" id="use_report_evaluate_mail" @if(old("post_settings.use_report_evaluate_mail", $tool->getFunction('use_report_evaluate_mail', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_evaluate_mail">メール送信（受講者宛）</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row mb-0">
-        <label class="col-md-3 text-md-right">教員から参考資料</label>
-        <div class="col-md-9 d-md-flex">
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_comment_file]" value="on" class="custom-control-input" id="use_report_comment_file" @if(old("post_settings.use_report_comment_file", $tool->getFunction('use_report_comment_file', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment_file">アップロード</label>
-            </div>
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_comment_text]" value="on" class="custom-control-input" id="use_report_comment_text" @if(old("post_settings.use_report_comment_text", $tool->getFunction('use_report_comment_text', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment_text">コメント入力</label>
-            </div>
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="post_settings[use_report_comment_mail]" value="on" class="custom-control-input" id="use_report_comment_mail" @if(old("post_settings.use_report_comment_mail", $tool->getFunction('use_report_comment_mail', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_comment_mail">メール送信（受講者宛）</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">表示方法</label>
-        <div class="col-md-9 d-md-flex">
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_report_status_collapse]" value="on" class="custom-control-input" id="use_report_status_collapse" @if(old("post_settings.use_report_status_collapse", $tool->getFunction('use_report_status_collapse', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_report_status_collapse">履歴を開閉する</label>
-            </div>
-        </div>
-    </div>
-</div>
 
     <div class="form-group">
         <div class="row">

@@ -30,53 +30,56 @@
         </div>
     </div>
 
-    <h5><span class="badge badge-secondary">使用設定</span></h5>
+    <h5><span class="badge badge-secondary">使用項目の設定</span></h5>
     <div class="form-group row">
         <label class="col-md-3 text-md-right">総合評価機能</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
                 @if(empty($tool->getFunction('post_evaluate_setting', true)))
-                    <input type="radio" value="" id="post_evaluate_setting_null" name="post_evaluate_setting" class="custom-control-input" checked="checked">
+                    <input type="radio" value="" id="post_evaluate_setting_null" name="post_evaluate_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_evaluate_setting.show">
                 @else
-                    <input type="radio" value="" id="post_evaluate_setting_null" name="post_evaluate_setting" class="custom-control-input">
+                    <input type="radio" value="" id="post_evaluate_setting_null" name="post_evaluate_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_evaluate_setting.show">
                 @endif
                 <label class="custom-control-label" for="post_evaluate_setting_null">課題管理設定に従う</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
                 @if($tool->getFunction('post_evaluate_setting', true) == 'off')
-                    <input type="radio" value="off" id="post_evaluate_setting_off" name="post_evaluate_setting" class="custom-control-input" checked="checked">
+                    <input type="radio" value="off" id="post_evaluate_setting_off" name="post_evaluate_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_evaluate_setting.show">
                 @else
-                    <input type="radio" value="off" id="post_evaluate_setting_off" name="post_evaluate_setting" class="custom-control-input">
+                    <input type="radio" value="off" id="post_evaluate_setting_off" name="post_evaluate_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_evaluate_setting.show">
                 @endif
                 <label class="custom-control-label" for="post_evaluate_setting_off">使用しない</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
                 @if($tool->getFunction('post_evaluate_setting', true) == 'on')
-                    <input type="radio" value="on" id="post_evaluate_setting_on" name="post_evaluate_setting" class="custom-control-input" checked="checked">
+                    <input type="radio" value="on" id="post_evaluate_setting_on" name="post_evaluate_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_evaluate_setting:not(.show)" aria-expanded="true" aria-controls="collapse_post_evaluate_setting">
                 @else
-                    <input type="radio" value="on" id="post_evaluate_setting_on" name="post_evaluate_setting" class="custom-control-input">
+                    <input type="radio" value="on" id="post_evaluate_setting_on" name="post_evaluate_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_evaluate_setting:not(.show)" aria-expanded="true" aria-controls="collapse_post_evaluate_setting">
                 @endif
                 <label class="custom-control-label" for="post_evaluate_setting_on">この課題独自に設定する</label>
             </div>
         </div>
     </div>
 
-    <h5><span class="badge badge-secondary">課題独自設定</span></h5>
+    {{-- 独自設定の場合のみ表示、その他は隠す --}}
+    <div class="collapse {{$tool->getSettingShowstr("post_evaluate_setting")}} collapse_post_evaluate_setting" id="collapse_post_evaluate_setting">
+        <h5><span class="badge badge-secondary">課題独自の項目設定</span></h5>
 
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">評価</label>
-        <div class="col-md-9 d-md-flex">
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_evaluate_evaluate_file]" value="on" class="custom-control-input" id="use_evaluate_evaluate_file" @if(old("post_settings.use_evaluate_evaluate_file", $tool->getFunction('use_evaluate_evaluate_file', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_evaluate_evaluate_file">アップロード</label>
-            </div>
-            <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="post_settings[use_evaluate_evaluate_comment]" value="on" class="custom-control-input" id="use_evaluate_evaluate_comment" @if(old("post_settings.use_evaluate_evaluate_comment", $tool->getFunction('use_evaluate_evaluate_comment', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_evaluate_evaluate_comment">コメント入力</label>
-            </div>
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="post_settings[use_evaluate_evaluate_mail]" value="on" class="custom-control-input" id="use_evaluate_evaluate_mail" @if(old("post_settings.use_evaluate_evaluate_mail", $tool->getFunction('use_evaluate_evaluate_mail', true)) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_evaluate_evaluate_mail">メール送信（受講者宛）</label>
+        <div class="form-group row">
+            <label class="col-md-3 text-md-right">評価</label>
+            <div class="col-md-9 d-md-flex">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_evaluate_file]" value="on" class="custom-control-input" id="use_evaluate_file" @if(old("post_settings.use_evaluate_file", $tool->getFunction('use_evaluate_file', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_evaluate_file">アップロード</label>
+                </div>
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_evaluate_comment]" value="on" class="custom-control-input" id="use_evaluate_comment" @if(old("post_settings.use_evaluate_comment", $tool->getFunction('use_evaluate_comment', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_evaluate_comment">コメント入力</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" name="post_settings[use_evaluate_mail]" value="on" class="custom-control-input" id="use_evaluate_mail" @if(old("post_settings.use_evaluate_mail", $tool->getFunction('use_evaluate_mail', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_evaluate_mail">メール送信（受講者宛）</label>
+                </div>
             </div>
         </div>
     </div>

@@ -87,44 +87,49 @@
 --}}
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->student_join_flag == 2)
-                    <input type="radio" value="2" id="student_join_flag_2" name="student_join_flag" class="custom-control-input" checked="checked">
+                    <input type="radio" value="2" id="student_join_flag_2" name="student_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_user.show">
                 @else
-                    <input type="radio" value="2" id="student_join_flag_2" name="student_join_flag" class="custom-control-input">
+                    <input type="radio" value="2" id="student_join_flag_2" name="student_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_user.show">
                 @endif
                 <label class="custom-control-label" for="student_join_flag_2">配置ページのメンバーシップ受講者全員</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->student_join_flag == 3)
-                    <input type="radio" value="3" id="student_join_flag_3" name="student_join_flag" class="custom-control-input" checked="checked">
+                    <input type="radio" value="3" id="student_join_flag_3" name="student_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_user">
                 @else
-                    <input type="radio" value="3" id="student_join_flag_3" name="student_join_flag" class="custom-control-input">
+                    <input type="radio" value="3" id="student_join_flag_3" name="student_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_user">
                 @endif
                 <label class="custom-control-label" for="student_join_flag_3">配置ページのメンバーシップ受講者から選ぶ</label>
             </div>
         </div>
     </div>
+    @if ($learningtasks_posts->student_join_flag == 3)
+    <div class="collapse collapse_membership_user show" id="collapse_membership_user">
+    @else
+    <div class="collapse collapse_membership_user" id="collapse_membership_user">
+    @endif
+        <div class="form-group row">
+            <label class="col-md-3 text-md-right">受講者</label>
+            <div class="col-md-9">
+                <div class="card p-2">
+                {{-- チェックなし用の処理では、削除（参加除外）が必要なため、処理用にhidden で画面のユーザを送る ---}}
+                @foreach ($membership_users as $membership_user)
+                    <input type="hidden" name="page_users[{{$membership_user->id}}]" value="{{$membership_user->id}}">
+                @endforeach
 
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">メンバーシップ受講者</label>
-        <div class="col-md-9">
-            <div class="card p-2">
-            {{-- チェックなし用の処理では、削除（参加除外）が必要なため、処理用にhidden で画面のユーザを送る ---}}
-            @foreach ($membership_users as $membership_user)
-                <input type="hidden" name="page_users[{{$membership_user->id}}]" value="{{$membership_user->id}}">
-            @endforeach
-
-            @if ($membership_users->count() == 0)
-                ※ 参照権限のあるユーザはいません。
-            @else
-            @foreach ($membership_users as $membership_user)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" name="join_users[{{$membership_user->id}}]" value="{{$membership_user->id}}" class="custom-control-input" id="join_users[{{$loop->index}}]" @if($membership_user->id == $membership_user->join_user_id) checked=checked @endif>
-                    <label class="custom-control-label" for="join_users[{{$loop->index}}]">
-                        {{$membership_user->name}}
-                    </label>
+                @if ($membership_users->count() == 0)
+                    ※ 参照権限のあるユーザはいません。
+                @else
+                @foreach ($membership_users as $membership_user)
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" name="join_users[{{$membership_user->id}}]" value="{{$membership_user->id}}" class="custom-control-input" id="join_users[{{$loop->index}}]" @if($membership_user->id == $membership_user->join_user_id) checked=checked @endif>
+                        <label class="custom-control-label" for="join_users[{{$loop->index}}]">
+                            {{$membership_user->name}}
+                        </label>
+                    </div>
+                @endforeach
+                @endif
                 </div>
-            @endforeach
-            @endif
             </div>
         </div>
     </div>
@@ -135,44 +140,50 @@
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->teacher_join_flag == 2)
-                    <input type="radio" value="2" id="teacher_join_flag_2" name="teacher_join_flag" class="custom-control-input" checked="checked">
+                    <input type="radio" value="2" id="teacher_join_flag_2" name="teacher_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_teacher_user.show">
                 @else
-                    <input type="radio" value="2" id="teacher_join_flag_2" name="teacher_join_flag" class="custom-control-input">
+                    <input type="radio" value="2" id="teacher_join_flag_2" name="teacher_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_teacher_user.show">
                 @endif
                 <label class="custom-control-label" for="teacher_join_flag_2">配置ページのメンバーシップ教員全員</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
                 @if($learningtasks_posts->teacher_join_flag == 3)
-                    <input type="radio" value="3" id="teacher_join_flag_3" name="teacher_join_flag" class="custom-control-input" checked="checked">
+                    <input type="radio" value="3" id="teacher_join_flag_3" name="teacher_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_teacher_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_teacher_user">
                 @else
-                    <input type="radio" value="3" id="teacher_join_flag_3" name="teacher_join_flag" class="custom-control-input">
+                    <input type="radio" value="3" id="teacher_join_flag_3" name="teacher_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_teacher_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_teacher_user">
                 @endif
                 <label class="custom-control-label" for="teacher_join_flag_3">配置ページのメンバーシップ教員から選ぶ</label>
             </div>
         </div>
     </div>
 
-    <div class="form-group row">
-        <label class="col-md-3 text-md-right">メンバーシップ教員</label>
-        <div class="col-md-9">
-            <div class="card p-2">
-            {{-- チェックなし用の処理では、削除（参加除外）が必要なため、処理用にhidden で画面のユーザを送る ---}}
-            @foreach ($membership_teacher_users as $membership_teacher_user)
-                <input type="hidden" name="page_teacher_users[{{$membership_teacher_user->id}}]" value="{{$membership_teacher_user->id}}">
-            @endforeach
+    @if ($learningtasks_posts->teacher_join_flag == 3)
+    <div class="collapse collapse_membership_teacher_user show" id="collapse_membership_teacher_user">
+    @else
+    <div class="collapse collapse_membership_teacher_user" id="collapse_membership_teacher_user">
+    @endif
+        <div class="form-group row">
+            <label class="col-md-3 text-md-right">教員</label>
+            <div class="col-md-9">
+                <div class="card p-2">
+                {{-- チェックなし用の処理では、削除（参加除外）が必要なため、処理用にhidden で画面のユーザを送る ---}}
+                @foreach ($membership_teacher_users as $membership_teacher_user)
+                    <input type="hidden" name="page_teacher_users[{{$membership_teacher_user->id}}]" value="{{$membership_teacher_user->id}}">
+                @endforeach
 
-            @if ($membership_teacher_users->count() == 0)
-                ※ 参照権限のあるユーザはいません。
-            @else
-            @foreach ($membership_teacher_users as $membership_teacher_user)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" name="join_teacher_users[{{$membership_teacher_user->id}}]" value="{{$membership_teacher_user->id}}" class="custom-control-input" id="join_teacher_users[{{$loop->index}}]" @if($membership_teacher_user->id == $membership_teacher_user->join_user_id) checked=checked @endif>
-                    <label class="custom-control-label" for="join_teacher_users[{{$loop->index}}]">
-                        {{$membership_teacher_user->name}}
-                    </label>
+                @if ($membership_teacher_users->count() == 0)
+                    ※ 参照権限のあるユーザはいません。
+                @else
+                @foreach ($membership_teacher_users as $membership_teacher_user)
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" name="join_teacher_users[{{$membership_teacher_user->id}}]" value="{{$membership_teacher_user->id}}" class="custom-control-input" id="join_teacher_users[{{$loop->index}}]" @if($membership_teacher_user->id == $membership_teacher_user->join_user_id) checked=checked @endif>
+                        <label class="custom-control-label" for="join_teacher_users[{{$loop->index}}]">
+                            {{$membership_teacher_user->name}}
+                        </label>
+                    </div>
+                @endforeach
+                @endif
                 </div>
-            @endforeach
-            @endif
             </div>
         </div>
     </div>
