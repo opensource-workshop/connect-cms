@@ -355,9 +355,7 @@
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass()}}">内容 </label>
                     <div class="{{$frame->getSettingInputClass()}}">
-                        <textarea name="caption" class="form-control" rows="3">
-                            {{old('caption', $column->caption)}}
-                        </textarea>
+                        <textarea name="caption" class="form-control" rows="3">{{old('caption', $column->caption)}}</textarea>
                     </div>
                 </div>
 

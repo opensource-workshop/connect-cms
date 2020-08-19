@@ -27,8 +27,9 @@ final class DatabaseColumnType extends EnumsBase
     const wysiwyg = 'wysiwyg';
     // delete:「行グループ」「列グループ」追加に伴い、機能してない 項目の型「まとめ行」を廃止
     // const group = 'group';
-    const created    = 'created';
-    const updated    = 'updated';
+    const created = 'created';
+    const updated = 'updated';
+    const posted = 'posted';
 
     // key/valueの連想配列
     const enum = [
@@ -49,7 +50,8 @@ final class DatabaseColumnType extends EnumsBase
         self::wysiwyg=>'ウィジウィグ型',
         // delete:「行グループ」「列グループ」追加に伴い、機能してない 項目の型「まとめ行」を廃止
         // self::group=>'まとめ行',
-        self::created    => '登録日型（自動更新）',
-        self::updated    => '更新日型（自動更新）',
+        self::created => '登録日型（自動更新）',
+        self::updated => '更新日型（自動更新）',
+        self::posted => '公開日型（表示のみ）',
     ];
 }
