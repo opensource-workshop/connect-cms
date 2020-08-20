@@ -15,7 +15,11 @@ class AddPostedAtDatabasesInputsTable extends Migration
     public function up()
     {
         Schema::table('databases_inputs', function (Blueprint $table) {
-            $table->dateTime('posted_at')->comment('公開日時')->after('status');
+            // bugfix: MySQL5.7以降では、strictモードがデフォルトで有効になったため、0000-00-00 00:00:00が有効な日付として取り扱われなくなりました。
+            //         そのため、Not NullでdateTimeを定義すると、初期値に0000-00-00 00:00:00がセットされエラーになるので、->default(DB::raw('CURRENT_TIMESTAMP'))を使って、
+            //         日時をセットしました。
+            //$table->dateTime('posted_at')->comment('公開日時')->after('status');
+            $table->dateTime('posted_at')->default(DB::raw('CURRENT_TIMESTAMP'))->comment('公開日時')->after('status');
         });
 
         // 公開日時(投稿日時)のカラム追加時の初期値は、更新日時をセット
