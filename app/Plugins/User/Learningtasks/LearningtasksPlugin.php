@@ -789,7 +789,9 @@ class LearningtasksPlugin extends UserPluginBase
                     (($last_report_task->grade == 'A') || ($last_report_task->grade == 'B') || ($last_report_task->grade == 'C')) &&
                     !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
                     (($last_examination_task->grade == 'A') || ($last_examination_task->grade == 'B') || ($last_examination_task->grade == 'C')) &&
-                    (empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
+                    (empty($last_evaluate_task))) {
+
+                    //(empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
 
                     // 総合評価の条件に合致。ただし、この条件では、総合評価のデータはまだない。
                     // データがないと画面表示に際に判定できないため、試験結果をオブジェクトコピーし、ステータスを 8 にしておく。
