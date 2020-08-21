@@ -2354,6 +2354,12 @@ trait MigrationTrait
             $plugin_name = $frame_ini['frame_base']['plugin_name'];
         }
 
+        // classname
+        $classname = '';
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('classname', $frame_ini['frame_base'])) {
+            $classname = $frame_ini['frame_base']['classname'];
+        }
+
         // bucket_id
         $bucket_id = null;
         if ($bucket) {
@@ -2386,6 +2392,7 @@ trait MigrationTrait
                 'plugin_name'      => $plugin_name,
                 'frame_col'        => $frame_col,
                 'template'         => $template,
+                'classname'        => $classname,
                 'bucket_id'        => $bucket_id,
                 'display_sequence' => $display_sequence,
             ]);
@@ -2403,6 +2410,7 @@ trait MigrationTrait
             $frame->plugin_name      = $plugin_name;
             $frame->frame_col        = $frame_col;
             $frame->template         = $template;
+            $frame->classname        = $classname;
             $frame->bucket_id        = $bucket_id;
             $frame->display_sequence = $display_sequence;
             $frame->save();
@@ -4421,7 +4429,6 @@ trait MigrationTrait
             return;
         }
 
-        // 
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
         $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
