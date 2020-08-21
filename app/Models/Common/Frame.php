@@ -21,6 +21,7 @@ class Frame extends Model
         'plugin_name',
         'frame_col',
         'template',
+        'classname',
         'bucket_id',
         'display_sequence',
     ];
