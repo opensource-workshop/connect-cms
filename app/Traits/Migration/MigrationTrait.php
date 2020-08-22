@@ -668,18 +668,18 @@ trait MigrationTrait
                             $parent_page->appendNode($page);
                         }
                     }
-
-                    // マッピングテーブルの追加
-                    $mapping = MigrationMapping::updateOrCreate(
-                        ['target_source_table' => 'connect_page',
-                        'source_key' => ltrim(basename($path), '_')],
-                        ['target_source_table'  => 'connect_page',
-                        'source_key'           => ltrim(basename($path), '_'),
-                        'destination_key'      => $page->id]
-                    );
                 } else {
                     $this->putMonitor(3, "Page found. Use existing page. url=" . $page_ini['page_base']['permanent_link']);
                 }
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::updateOrCreate(
+                    ['target_source_table' => 'connect_page',
+                    'source_key' => ltrim(basename($path), '_')],
+                    ['target_source_table'  => 'connect_page',
+                    'source_key'           => ltrim(basename($path), '_'),
+                    'destination_key'      => $page->id]
+                );
 
                 // ページの中身の作成
                 $this->importHtmlImpl($page, $path);
@@ -690,6 +690,19 @@ trait MigrationTrait
         //if ($this->isTarget('cc_import', 'addition')) {
         //    $this->importSeeder($redo);
         //}
+    }
+
+    /**
+     * ommit 設定を確認
+     */
+    private function isOmmit($section, $arg_name, $check_id)
+    {
+        // 対象外のブロックがあれば加味する。
+        $ommit_settings = $this->getMigrationConfig($section, $arg_name);
+        if (!empty($ommit_settings) && in_array($check_id, $ommit_settings)) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1559,14 +1572,24 @@ trait MigrationTrait
                     'forms_id' => $form->id,
                 ]);
 
+                // データベースのバルクINSERT対応
+                $bulks = array();
+
                 // 項目データのループ
                 foreach ($data_txt_ini[$data_id] as $item_id => $data) {
+                    $bulks[] = ['forms_inputs_id'  => $forms_inputs->id,
+                        'forms_columns_id' => $column_ids[$item_id],
+                        'value'            => $data];
+                    /*
                     $forms_inputs_cols = FormsInputCols::create([
                         'forms_inputs_id'  => $forms_inputs->id,
                         'forms_columns_id' => $column_ids[$item_id],
                         'value'            => $data,
                     ]);
+                    */
                 }
+                // バルクINSERT
+                DB::table('forms_input_cols')->insert($bulks);
             }
         }
     }
@@ -1879,28 +1902,33 @@ trait MigrationTrait
      */
     private function importPluginMenus($page, $page_dir, $frame_ini, $display_sequence)
     {
-        // 追加じゃない場合は、migration_config のメニューのインポート条件を見る。
-        if (!array_key_exists('addition', $frame_ini)) {
-            // メニューオプション（エリア）の確認
-            if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
-                // フレームの指定と＆オプションの位置指定が両方OKなら、インポートする。
-                if (($frame_ini['frame_base']['area_id'] == 0 && $this->hasMigrationConfig('menus', 'import_menu_area', 'header')) ||
-                    ($frame_ini['frame_base']['area_id'] == 1 && $this->hasMigrationConfig('menus', 'import_menu_area', 'left')) ||
-                    ($frame_ini['frame_base']['area_id'] == 2 && $this->hasMigrationConfig('menus', 'import_menu_area', 'main')) ||
-                    ($frame_ini['frame_base']['area_id'] == 3 && $this->hasMigrationConfig('menus', 'import_menu_area', 'right')) ||
-                    ($frame_ini['frame_base']['area_id'] == 4 && $this->hasMigrationConfig('menus', 'import_menu_area', 'footer'))) {
-                } else {
-                    return;
-                }
+        //// 追加じゃない場合は、migration_config のメニューのインポート条件を見る。
+        //if (!array_key_exists('addition', $frame_ini)) {
+        // addition はやめた
+
+        // メニューオプション（エリア）の確認
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
+            // フレームの指定と＆オプションの位置指定が両方OKなら、インポートする。
+            if (($frame_ini['frame_base']['area_id'] == 0 && $this->hasMigrationConfig('menus', 'import_menu_area', 'header')) ||
+                ($frame_ini['frame_base']['area_id'] == 1 && $this->hasMigrationConfig('menus', 'import_menu_area', 'left')) ||
+                ($frame_ini['frame_base']['area_id'] == 2 && $this->hasMigrationConfig('menus', 'import_menu_area', 'main')) ||
+                ($frame_ini['frame_base']['area_id'] == 3 && $this->hasMigrationConfig('menus', 'import_menu_area', 'right')) ||
+                ($frame_ini['frame_base']['area_id'] == 4 && $this->hasMigrationConfig('menus', 'import_menu_area', 'footer'))) {
+            } else {
+                return;
             }
         }
+        //}
 
         // migration_mapping 確認
-        if (array_key_exists('addition', $frame_ini)) {
-            $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
-        } else {
-            $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
-        }
+        // if (array_key_exists('addition', $frame_ini)) {
+        //     $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
+        // } else {
+        //     $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
+        // }
+
+        // migration_mapping 確認
+        $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
         $migration_mappings = MigrationMapping::where('target_source_table', 'menus')->where('source_key', $source_key)->first();
 
         // Frames 登録
@@ -3972,6 +4000,11 @@ trait MigrationTrait
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // 対象外指定があれば、読み飛ばす
+            if ($this->isOmmit('forms', 'export_ommit_registration_ids', $nc2_registration->registration_id)) {
                 continue;
             }
 
