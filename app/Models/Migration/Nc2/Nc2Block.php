@@ -139,14 +139,14 @@ class Nc2Block extends Model
     /**
      *  フレームテンプレートの変換
      */
-    public function getFrameDesign()
+    public function getFrameDesign($default = 'default')
     {
         // NC2 テンプレート変換配列にあれば、その値。
         // なければ default を返す。
         if (array_key_exists($this->theme_name, $this->frame_designs)) {
             return $this->frame_designs[$this->theme_name];
         }
-        return 'default';
+        return $default;
     }
 
     /**
