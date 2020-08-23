@@ -482,6 +482,21 @@ trait MigrationTrait
     }
 
     /**
+     * 記事内に p タグがなければ、p タグで囲む
+     */
+    private function addParagraph($target, $value)
+    {
+        $return_value = $value;
+        if ($this->hasMigrationConfig($target, 'cc_import_add_if_not_p', true)) {
+            $pattern = '/<p.*?>/i';
+            if (!empty(trim($return_value)) && !preg_match($pattern, $value, $matches)) {
+                $return_value = '<p>' . $return_value . '</p>';
+            }
+        }
+        return $return_value;
+    }
+
+    /**
      * インポートする際の参照コンテンツ（画像、ファイル）の追加ディレクトリ取得
      */
     private function getImportSrcDir($default = '/file/')
@@ -1151,8 +1166,11 @@ trait MigrationTrait
 
                         // 本文
                         $post_text = $this->changeWYSIWYG($blog_tsv_cols[5]);
+                        $post_text = $this->addParagraph('blogs', $post_text);
+
                         // 本文2
                         $post_text2 = $this->changeWYSIWYG($blog_tsv_cols[6]);
+                        $post_text2 = $this->addParagraph('blogs', $post_text2);
 
                         // ブログ記事テーブル追加
                         $blogs_posts = BlogsPosts::create(['blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[4], 'post_text' => $post_text, 'post_text2' => $post_text2, 'categories_id' => $categories_id, 'important' => null, 'status' => 0, 'posted_at' => $posted_at]);
@@ -2900,6 +2918,24 @@ trait MigrationTrait
     }
 
     /**
+     * HTML からiframe タグの src 属性を取得
+     */
+    private function getIframeSrc($content)
+    {
+        $pattern = '/<iframe.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+
+        if (preg_match_all($pattern, $content, $matches)) {
+            if (is_array($matches) && isset($matches[1])) {
+                return $matches[1];
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * HTML からa タグの href 属性を取得
      */
     private function getContentAnchor($content)
@@ -3333,7 +3369,12 @@ trait MigrationTrait
         $sitename = empty($sitename) ? '' : $sitename->conf_value;
         $basic_ini .= "site_name = \"" . $sitename . "\"\n";
 
-        // site,ini ファイル保存
+        // 基本デザイン（パブリック）
+        $default_theme_public = $configs->where('conf_name', 'default_theme_public')->first();
+        $default_theme_public = empty($default_theme_public) ? '' : $default_theme_public->conf_value;
+        $basic_ini .= "default_theme_public = \"" . $default_theme_public . "\"\n";
+
+        // basic,ini ファイル保存
         Storage::put($this->getImportPath('basic/basic.ini'), $basic_ini);
     }
 
@@ -4302,7 +4343,7 @@ trait MigrationTrait
             $frame_ini = "[frame_base]\n";
             $frame_ini .= "area_id = " . $this->nc2BlockArea($nc2_block) . "\n";
             $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
-            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign() . "\"\n";
+            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
             $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
 
             // グルーピングされているブロックの考慮
@@ -4556,17 +4597,20 @@ trait MigrationTrait
             }
         }
 
-        // iframeのwidth設定を探し、width を100% に変換する。
-        //$img_styles = $this->getIframeStyle($content);
-        //if (!empty($img_styles)) {
-        //    $img_styles = array_unique($img_styles);
-        //    //Log::debug($img_styles);
-        //    foreach ($img_styles as $img_style) {
-        //        $new_img_style = str_replace('height', 'max-height', $img_style);
-        //        $new_img_style = str_replace('max-max-height', 'max-height', $new_img_style);
-        //        $content = str_replace($img_style, $new_img_style, $content);
-        //    }
-        //}
+        // Google Map 埋め込み時のスマホ用対応。widthを 100% に変更
+        $iframe_srces = $this->getIframeSrc($content);
+        if (!empty($iframe_srces)) {
+            // iFrame のsrc を取得（複数の可能性もあり）
+            $iframe_styles = $this->getIframeStyle($content);
+            foreach ($iframe_styles as $iframe_style) {
+                $width_pos = strpos($iframe_style, 'width');
+                $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
+                $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
+                if (!empty($iframe_style_width)) {
+                    $content = str_replace($iframe_style_width, "width:100%;", $content);
+                }
+            }
+        }
 
         // 添付ファイルを探す
         $anchors = $this->getContentAnchor($content);
