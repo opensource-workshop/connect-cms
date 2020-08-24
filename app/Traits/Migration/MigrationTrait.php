@@ -684,6 +684,11 @@ trait MigrationTrait
                         }
                     }
                 } else {
+                    // 対象のURL があった場合はページの更新
+                    $page->page_name         = $page_ini['page_base']['page_name'];
+                    $page->base_display_flag = $page_ini['page_base']['base_display_flag'];
+                    $page->save();
+
                     $this->putMonitor(3, "Page found. Use existing page. url=" . $page_ini['page_base']['permanent_link']);
                 }
 
@@ -4732,7 +4737,9 @@ trait MigrationTrait
                             $export_paths[$param_split[1]] = $export_path;
 
                             // ファイルのパスの修正
-                            $content = str_replace($path, $export_path, $content);
+                            // ファイル指定の前後の " も含めないと、upload_id=1 を変換した際、 upload_id=14 も含まれる。
+                            //$content = str_replace($path, $export_path, $content);
+                            $content = str_replace('"' . $path . '"', '"' .$export_path . '"', $content);
                         } else {
                             // 移行しなかったファイルのimg or a タグとしてログに記録
                             $this->putError(1, "no migrate img", "src = " . $path, $nc2_block);
