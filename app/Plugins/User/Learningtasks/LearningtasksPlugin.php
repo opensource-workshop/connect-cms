@@ -2259,23 +2259,31 @@ class LearningtasksPlugin extends UserPluginBase
     {
         $send_user = null;  // 送信するユーザオブジェクト
         $mail_subjects = array(
-            1 => 'レポートが提出されました。',
-            2 => 'レポートの評価が登録されました。',
-            3 => 'レポートにコメントが登録されました。',
-            5 => '試験の解答が提出されました。',
-            6 => '試験の評価が登録されました。',
-            7 => '試験のコメントが登録されました。',
-            8 => '総合評価が登録されました。',
+            1 => config('connect.CC_LEARNING_TITLE') . '　レポートが提出されました。',
+            2 => config('connect.CC_LEARNING_TITLE') . '　レポートの評価が登録されました。',
+            3 => config('connect.CC_LEARNING_TITLE') . '　レポートにコメントが登録されました。',
+            5 => config('connect.CC_LEARNING_TITLE') . '　試験の解答が提出されました。',
+            6 => config('connect.CC_LEARNING_TITLE') . '　試験の評価が登録されました。',
+            7 => config('connect.CC_LEARNING_TITLE') . '　試験のコメントが登録されました。',
+            8 => config('connect.CC_LEARNING_TITLE') . '　総合評価が登録されました。',
         );
         $mail_texts = array(
-            1 => "「{post_title}」のレポートが提出されました。\n評価をお願いします。",
-            2 => "「{post_title}」の評価が登録されました。\n確認をお願いします。",
-            3 => "「{post_title}」にコメントが登録されました。\n確認をお願いします。",
-            5 => "「{post_title}」に試験の解答が提出されました。\n評価をお願いします。",
-            6 => "「{post_title}」の試験の評価が登録されました。\n確認をお願いします。",
-            7 => "「{post_title}」に試験のコメントが登録されました。\n確認をお願いします。",
-            8 => "「{post_title}」の総合評価が登録されました。\n確認をお願いします。",
+            1 => "「{post_title}」のレポートが提出されました。\n評価をお願いします。\n",
+            2 => "「{post_title}」のレポートの評価が登録されました。\n確認をお願いします。\n",
+            3 => "「{post_title}」にコメントが登録されました。\n確認をお願いします。\n",
+            5 => "「{post_title}」に試験の解答が提出されました。\n評価をお願いします。\n",
+            6 => "「{post_title}」の試験の評価が登録されました。\n確認をお願いします。\n",
+            7 => "「{post_title}」に試験のコメントが登録されました。\n確認をお願いします。\n",
+            8 => "「{post_title}」の総合評価が登録されました。\n確認をお願いします。\n",
         );
+
+        $mail_text2  = "\n";
+        $mail_text2 .= "受講生：{student_name}\n";
+        $mail_text2 .= "担当教員：{teacher_name}\n";
+        $mail_text2 .= "科目名：{post_title}\n";
+
+        $mail_footer  = "\n" . config('connect.CC_LEARNING_FOOTER1') . "\n" . config('connect.CC_LEARNING_FOOTER2') . "\n" . config('connect.CC_LEARNING_FOOTER3') . "\n" . config('connect.CC_LEARNING_FOOTER4');
+
 
         // 教員へメールを送信。レポートの提出(1)、試験の提出(5)
         if ($task_status == 1 || $task_status == 5) {
@@ -2290,12 +2298,23 @@ class LearningtasksPlugin extends UserPluginBase
         $mail_text = $mail_texts[$task_status];
         $mail_text = str_replace('{post_title}', strip_tags($post->post_title), $mail_text);
 
+        $mail_text2 = str_replace('{student_name}', $tool->getStudent(), $mail_text2);
+        $mail_text2 = str_replace('{teacher_name}', $tool->getTeachersName('role_article_admin'), $mail_text2);
+        $mail_text2 = str_replace('{post_title}', strip_tags($post->post_title), $mail_text2);
+
+        $mail_text = $mail_text . $mail_text2 . $mail_footer;
+
         foreach ($send_users as $send_user) {
             // メールアドレスがなければ終了
             if (empty($send_user->email)) {
                 continue;
             }
-            Mail::to(trim($send_user->email))->send(new ConnectMail(['subject' => $mail_subjects[$task_status], 'template' => 'mail.send'], ['content' => $mail_text]));
+            try {
+                Mail::to(trim($send_user->email))->send(new ConnectMail(['subject' => $mail_subjects[$task_status], 'template' => 'mail.send'], ['content' => $mail_text]));
+                session()->flash('plugin_errors', 'メール送信OK');
+            } catch (\Exception $e) {
+                session()->flash('plugin_errors', 'メール送信に失敗しました。<br />運営組織に連絡をお願いいたします。');
+            }
         }
         return;
     }

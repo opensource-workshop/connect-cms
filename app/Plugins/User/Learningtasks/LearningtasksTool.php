@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Enums\DayOfWeek;
 use App\Models\Common\PageRole;
 use App\Models\Common\GroupUser;
+use App\Models\Core\UsersRoles;
 use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 use App\Models\User\Learningtasks\LearningtasksUseSettings;
@@ -240,6 +241,34 @@ class LearningtasksTool
     public function getTeachers()
     {
         return $this->teachers;
+    }
+
+    /**
+     *  教員名の取得
+     */
+    public function getTeachersName($ommit_role = null)
+    {
+        // ommit_role が指定されていれば、ommit_role の関連権限を取得
+        $cc_role_hierarchys = config('cc_role.CC_ROLE_HIERARCHY');
+        $omit_role_hierarchy = null;
+        if (!empty($ommit_role)) {
+            $omit_role_hierarchy = $cc_role_hierarchys[$ommit_role];
+        }
+
+        $teacher_names = array();
+        foreach ($this->teachers as $teacher) {
+            // ommit_role の指定に合致すれば対象外（システムの管理者などを除外するのが目的）
+            if (!empty($omit_role_hierarchy)) {
+                $users_roles = UsersRoles::where('users_id', $teacher->id)->get();
+                foreach ($users_roles as $users_role) {
+                    if (in_array($users_role, $omit_role_hierarchy)) {
+                        continue 2;
+                    }
+                }
+            }
+            $teacher_names[] = $teacher->name;
+        }
+        return implode('，', $teacher_names);
     }
 
     /**
