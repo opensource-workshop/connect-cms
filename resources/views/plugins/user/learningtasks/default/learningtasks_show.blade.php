@@ -23,6 +23,14 @@
 }
 </style>
 
+@if (session('plugin_errors'))
+    <div class="card mb-3 border-danger">
+        <div class="card-body">
+            <h3 class="mb-0">{!!session('plugin_errors')!!}</h3>
+        </div>
+    </div>
+@endif
+
 {{-- タイトル --}}
 <h2>{!!$post->post_title!!}</h2>
 
