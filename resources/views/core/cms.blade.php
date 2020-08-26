@@ -129,11 +129,19 @@ $(function(){
     </div>{{-- /row --}}
 
     {{-- フッターエリア --}}
+    @php
+        // フッターエリア任意クラスを抽出（カンマ設定時はランダムで１つ設定）
+        $footer_area_optional_class = null;
+        if(isset($configs_array['footer_area_optional_class'])){
+            $classes = explode(',', $configs_array['footer_area_optional_class']->value);
+            $footer_area_optional_class = $classes[array_rand($classes)];
+        }
+    @endphp
     @if ($layouts_info[4]['exists'])
         @if (isset($configs_array['browser_width_footer']) && $configs_array['browser_width_footer']->value == '100%')
-    <div id="ccFooterArea" class="ccFooterArea row p-0 mx-auto">
+    <div id="ccFooterArea" class="ccFooterArea row p-0 mx-auto {{ $footer_area_optional_class }}">
         @else
-    <div id="ccFooterArea" class="ccFooterArea row container p-0 mx-auto">
+    <div id="ccFooterArea" class="ccFooterArea row container p-0 mx-auto {{ $footer_area_optional_class }}">
         @endif
         {{-- フッターフレームのループ --}}
         @isset($layouts_info[4]['frames'])
