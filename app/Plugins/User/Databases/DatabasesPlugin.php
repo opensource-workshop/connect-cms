@@ -2449,7 +2449,7 @@ class DatabasesPlugin extends UserPluginBase
         $request->flash();
 
         // デフォルトで必須
-        $validator_values['view_count'] = ['required'];
+        $validator_values['view_count'] = ['required', 'numeric'];
         $validator_attributes['view_count'] = '表示件数';
 
         //半角数字
