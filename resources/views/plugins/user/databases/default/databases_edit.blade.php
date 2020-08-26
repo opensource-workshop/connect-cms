@@ -23,18 +23,17 @@
             </div>
         @else
             <script type="text/javascript">
-
                 /**
-                * 項目の追加ボタン押下
-                */
+                 * 項目の追加ボタン押下
+                 */
                 function submit_add_column() {
                     database_columns.action = "{{url('/')}}/plugin/databases/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
                     database_columns.submit();
                 }
 
                 /**
-                * 項目の削除ボタン押下
-                */
+                 * 項目の削除ボタン押下
+                 */
                 function submit_delete_column(column_id) {
                     if(confirm('項目を削除します。\nよろしいですか？')){
                         database_columns.action = "{{url('/')}}/plugin/databases/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
@@ -45,8 +44,8 @@
                 }
 
                 /**
-                * 項目の更新ボタン押下
-                */
+                 * 項目の更新ボタン押下
+                 */
                 function submit_update_column(column_id) {
                     database_columns.action = "{{url('/')}}/plugin/databases/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
                     database_columns.column_id.value = column_id;
@@ -54,8 +53,8 @@
                 }
 
                 /**
-                * 項目の表示順操作ボタン押下
-                */
+                 * 項目の表示順操作ボタン押下
+                 */
                 function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
                     database_columns.action = "{{url('/')}}/plugin/databases/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
                     database_columns.column_id.value = column_id;
@@ -65,8 +64,8 @@
                 }
 
                 /**
-                * ツールチップ
-                */
+                 * ツールチップ
+                 */
                 $(function () {
                     // 有効化
                     $('[data-toggle="tooltip"]').tooltip()
@@ -97,6 +96,14 @@
                         {{ $message ? $message : 'ユーザが登録時の項目を設定します。' }}
                     </div>
 
+                    {{-- ワーニングメッセージエリア --}}
+                    @if (! $title_flag)
+                        <div class="alert alert-warning mt-2">
+                            <i class="fas fa-exclamation-circle"></i>
+                            新着情報等でタイトル表示する項目が未設定です。いずれかの項目の「詳細」よりタイトル設定をしてください。
+                        </div>
+                    @endif
+
                     {{-- エラーメッセージエリア --}}
                     @if ($errors && $errors->any())
                         <div class="alert alert-danger mt-2">
@@ -116,8 +123,8 @@
                                     <th class="text-center text-nowrap" style="min-width: 165px;">項目名</th>
                                     <th class="text-center text-nowrap" style="min-width: 165px;">型</th>
                                     <th class="text-center text-nowrap">必須</th>
-                                    <th class="text-center">行<a href="#" data-toggle="tooltip" data-placement="top" title="行グループ">...</a></th>
-                                    <th class="text-center">列<a href="#" data-toggle="tooltip" data-placement="top" title="列グループ">...</a></th>
+                                    <th class="text-center">行<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="行グループ">...</a></th>
+                                    <th class="text-center">列<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="列グループ">...</a></th>
                                     <th class="text-center text-nowrap">詳細
                                         <a href="https://connect-cms.jp/manual/user/database#frame-125" target="_brank">
                                             <i class="fas fa-info-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i>

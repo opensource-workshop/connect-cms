@@ -2,9 +2,10 @@
  * 新着情報編集画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -133,14 +134,14 @@
         <label class="{{$frame->getSettingLabelClass()}}">ページ送りの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                <input 
-                    type="radio" value="1" id="page_method_1" name="page_method" 
+                <input
+                    type="radio" value="1" id="page_method_1" name="page_method"
                     class="custom-control-input" {{ $whatsnew->page_method == 1 ? 'checked' : '' }}
                 >
                 <label class="custom-control-label" for="page_method_1">表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                <input type="radio" value="0" id="page_method_0" name="page_method" 
+                <input type="radio" value="0" id="page_method_0" name="page_method"
                     class="custom-control-input" {{ $whatsnew->page_method == 0 ? 'checked' : '' }}
                 >
                 <label class="custom-control-label" for="page_method_0">表示しない</label>
@@ -239,40 +240,40 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-        @foreach($whatsnew->getTargetPlugins() as $target_plugin => $use_flag)
-            <div class="custom-control custom-checkbox custom-control-inline">
-                <input type="checkbox" name="target_plugin[{{$target_plugin}}]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
-                <label class="custom-control-label" for="target_plugin_{{$target_plugin}}">{{$target_plugin}}</label>
-            </div>
-        @endforeach
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach($whatsnew->getTargetPlugins() as $target_plugin => $use_flag)
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" name="target_plugin[{{$target_plugin}}]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
+                    <label class="custom-control-label" for="target_plugin_{{$target_plugin}}">{{$target_plugin}}</label>
+                </div>
+            @endforeach
+            @if ($errors && $errors->has('target_plugin')) <div class="text-danger float-none">{{$errors->first('target_plugin')}}</div> @endif
         </div>
-        @if ($errors && $errors->has('target_plugin')) <div class="text-danger">{{$errors->first('target_plugin')}}</div> @endif
     </div>
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                <input 
-                    type="radio" 
-                    value="0" 
-                    id="frame_select_0" 
-                    name="frame_select" 
-                    class="custom-control-input" 
+                <input
+                    type="radio"
+                    value="0"
+                    id="frame_select_0"
+                    name="frame_select"
+                    class="custom-control-input"
                     {{ $whatsnew->frame_select == 0 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(0)"
                 >
                 <label class="custom-control-label" for="frame_select_0">全て表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                <input 
-                    type="radio" 
-                    value="1" 
-                    id="frame_select_1" 
-                    name="frame_select" 
-                    class="custom-control-input" 
+                <input
+                    type="radio"
+                    value="1"
+                    id="frame_select_1"
+                    name="frame_select"
+                    class="custom-control-input"
                     {{ $whatsnew->frame_select == 1 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(1)"
                 >
@@ -283,18 +284,38 @@
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
-        <div class="card {{$frame->getSettingInputClass(false, true)}}">
-            <div class="card-body py-2 pl-0">
-            @foreach($target_plugins_frames as $target_plugins_frame)
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $whatsnew->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
-                <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->bucket_name}}</label>
-            </div>
-            @endforeach
-            @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
-        </div>
-    </div>
+        <div class="{{$frame->getSettingInputClass(false, true)}}">
+            <ul class="nav nav-pills" role="tablist">
+                @foreach(WhatsnewsTargetPlugin::getMembers() as $target_plugin => $target_plugin_full)
+                    {{--
+                    <li class="nav-item">
+                        <a href="#blogs{{frame->id}}" class="nav-link active" data-toggle="tab" role="tab">ブログ</a>
+                    </li>
+                    --}}
+                    <li class="nav-item">
+                        <a href="#{{$target_plugin}}{{$frame->id}}" class="nav-link @if($loop->first) active @endif" data-toggle="tab" role="tab">{{$target_plugin_full}}</a>
+                    </li>
+                @endforeach
+            </ul>
 
+            <div class="tab-content">
+                @foreach(WhatsnewsTargetPlugin::getMembers() as $target_plugin => $target_plugin_full)
+                    <div id="{{$target_plugin}}{{$frame->id}}" class="tab-pane card @if($loop->first) active @endif" role="tabpanel">
+                        <div class="card-body py-2 pl-3">
+                            @foreach($target_plugins_frames as $target_plugins_frame)
+                                @if ($target_plugins_frame->plugin_name == $target_plugin)
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $whatsnew->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
+                                        <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->bucket_name}}</label>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+                @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
+            </div>
+        </div>
     </div>
 
     {{-- Submitボタン --}}
