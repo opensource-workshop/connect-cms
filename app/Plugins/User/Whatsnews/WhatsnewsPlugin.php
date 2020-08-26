@@ -2,11 +2,11 @@
 
 namespace App\Plugins\User\Whatsnews;
 
-use Illuminate\Support\Facades\Auth;
+// use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use Carbon\Carbon;
+// use Carbon\Carbon;
 
 use DB;
 
@@ -112,14 +112,20 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getTargetPluginsFrames()
     {
+        // debug:確認したいSQLの前にこれを仕込んで
+        //DB::enableQueryLog();
+
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                       ->whereIn('frames.plugin_name', array('blogs'))
-                       ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
-                       ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
-                       ->where('disable_whatsnews', 0)
-                       ->orderBy('pages._lft', 'asc')
-                       ->get();
+                        ->whereIn('frames.plugin_name', array('blogs', 'databases'))
+                        ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+                        ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+                        ->where('disable_whatsnews', 0)
+                        ->orderBy('pages._lft', 'asc')
+                        ->get();
+
+        // sql debug
+        //Log::debug(var_export(DB::getQueryLog(), true));
         return $frames;
     }
 
@@ -143,7 +149,7 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getWhatsnews($whatsnews_frame, $method = null)
     {
-        //DB::enableQueryLog();
+        // DB::enableQueryLog();
         // 新着情報がまだできていない場合
         if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
             return array(null, null, null);
@@ -164,6 +170,8 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
+        $link_pattern = array();
+        $link_base = array();
         foreach ($target_plugins as $target_plugin) {
             // クラスファイルの存在チェック。
             $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
@@ -242,14 +250,20 @@ class WhatsnewsPlugin extends UserPluginBase
             if ($where_date) {
                 $union_sql->where('posted_at', '>=', $where_date);
             }
-            // 重要なもののみ
-            if ($whatsnews_frame->important == 'important_only') {
-                $union_sql->where('important', 1);
-            }
-            // 重要なものを除外
-            if ($whatsnews_frame->important == 'not_important') {
-                $union_sql->whereNull('important');
-            }
+
+            // move: (importantカラムはプラグインによって存在しないため、結果取得後、コレクションクラスにより絞り込む)
+            // // カラムあるか
+            // if (Schema::hasColumn($post_db_table_names[$target_plugin], 'important')) {
+            //     // 重要なもののみ
+            //     if ($whatsnews_frame->important == 'important_only') {
+            //         $union_sql->where('important', 1);
+            //     }
+            //     // 重要なものを除外
+            //     if ($whatsnews_frame->important == 'not_important') {
+            //         $union_sql->whereNull('important');
+            //     }
+            // }
+
             // フレームの選択が行われる場合
             if ($whatsnews_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
@@ -274,23 +288,53 @@ class WhatsnewsPlugin extends UserPluginBase
         }
         $whatsnews_sql->orderBy('posted_at', 'desc');
 
-        // 件数制限
-        if ($method == 'rss') {
-            // 「RSS件数」で制限
-            $whatsnews_sql->limit($whatsnews_frame->rss_count);
-        } elseif ($whatsnews_frame->view_pattern == 0) {
-            // 「表示件数」で制限
-            $whatsnews_sql->limit($whatsnews_frame->count);
-        } else {
-            // 「表示日数」で制限
-            $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
-        }
+        // move: importantカラムの制御を取得後に移動したため、例えばSQLで3件で件数制限すると、まず3件で取得し、その後で重要な記事が含まれて無いと0件表示になる
+        //       そのため、取得後に移動する。
+        // // 件数制限
+        // if ($method == 'rss') {
+        //     // 「RSS件数」で制限
+        //     // $whatsnews_sql->limit($whatsnews_frame->rss_count);
+        // } elseif ($whatsnews_frame->view_pattern == 0) {
+        //     // 「表示件数」で制限
+        //     // $whatsnews_sql->limit($whatsnews_frame->count);
+        // } else {
+        //     // 「表示日数」で制限
+        //     $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
+        // }
 
         // 取得
         $whatsnews = $whatsnews_sql->get();
-//Log::debug(DB::getQueryLog());
+        // Log::debug(DB::getQueryLog());
+        // Log::debug($whatsnews);
 
-//Log::debug($whatsnews);
+
+        // 取得後の絞り込み
+
+        // 重要なもののみ
+        if ($whatsnews_frame->important == 'important_only') {
+            // $union_sql->where('important', 1);
+            $whatsnews = $whatsnews->where('important', 1);
+        }
+        // 重要なものを除外
+        if ($whatsnews_frame->important == 'not_important') {
+            // $union_sql->whereNull('important');
+            $whatsnews = $whatsnews->where('important', null);
+        }
+
+        // 件数制限
+        if ($method == 'rss') {
+            // 「RSS件数」で制限
+            // $whatsnews_sql->limit($whatsnews_frame->rss_count);
+            $whatsnews = $whatsnews->slice(0, $whatsnews_frame->rss_count);
+        } elseif ($whatsnews_frame->view_pattern == 0) {
+            // 「表示件数」で制限
+            // $whatsnews_sql->limit($whatsnews_frame->count);
+            $whatsnews = $whatsnews->slice(0, $whatsnews_frame->count);
+        } else {
+            // 「表示日数」で制限
+            // $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
+            $whatsnews = $whatsnews->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
+        }
 
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
         $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
@@ -312,6 +356,8 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 新着の一覧取得
         list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
+        // Log::debug(var_export($whatsnews, true));
+        // Log::debug(var_export($link_pattern, true));
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -436,8 +482,9 @@ class WhatsnewsPlugin extends UserPluginBase
             // 画面から渡ってくるwhatsnews_id が空ならバケツと設定データを新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'whatsnews'
+                // 'bucket_name' => '無題',
+                'bucket_name' => $request->whatsnew_name,
+                'plugin_name' => 'whatsnews'
             ]);
 
             // 新着情報設定データ新規オブジェクト
@@ -448,6 +495,7 @@ class WhatsnewsPlugin extends UserPluginBase
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆新着情報設定作成
             // Frame にBuckets が設定されている ＞ 既存のフレーム＆新着情報設定更新
             // （新着情報設定選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
+            $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
@@ -458,6 +506,9 @@ class WhatsnewsPlugin extends UserPluginBase
             // whatsnews_id があれば、新着情報設定を更新
             // 新着情報設定の取得
             $whatsnews = Whatsnews::where('id', $request->whatsnews_id)->first();
+
+            // 新着情報名で、Buckets名も更新する
+            Buckets::where('id', $whatsnews->bucket_id)->update(['bucket_name' => $request->whatsnew_name]);
 
             $message = '新着情報設定を変更しました。';
         }
@@ -509,9 +560,9 @@ class WhatsnewsPlugin extends UserPluginBase
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
