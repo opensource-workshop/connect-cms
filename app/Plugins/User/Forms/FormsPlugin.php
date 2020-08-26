@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
+use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
@@ -541,6 +542,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
             // メール本文内の採番文字列を置換
             $mail_text = str_replace('[[number]]', $number, $mail_text);
+
+            // メール本文内のサイト名文字列を置換
+            $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
 
             // メール送信（管理者側）
             if ($form->mail_send_flag) {
