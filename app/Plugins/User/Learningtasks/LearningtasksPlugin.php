@@ -25,6 +25,7 @@ use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\User\Learningtasks\Learningtasks;
 use App\Models\User\Learningtasks\LearningtasksCategories;
+use App\Models\User\Learningtasks\LearningtasksConfigs;
 use App\Models\User\Learningtasks\LearningtasksExaminations;
 use App\Models\User\Learningtasks\LearningtasksPosts;
 use App\Models\User\Learningtasks\LearningtasksPostsTags;
@@ -83,8 +84,8 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'editBucketsRoles', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveUsers', 'saveReport', 'saveExaminations', 'saveEvaluate', 'downloadGrade', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7', 'changeStatus8'];
+        $functions['get']  = ['editMail', 'listCategories', 'editBucketsRoles', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade'];
+        $functions['post'] = ['saveMail', 'saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveUsers', 'saveReport', 'saveExaminations', 'saveEvaluate', 'downloadGrade', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7', 'changeStatus8'];
         return $functions;
     }
 
@@ -95,6 +96,7 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
+        $role_ckeck_table["editMail"]         = array('role_article');
         $role_ckeck_table["listCategories"]   = array('role_article');
         $role_ckeck_table["editBucketsRoles"] = array('role_article');
         $role_ckeck_table["editUsers"]        = array('role_article');
@@ -103,6 +105,7 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["editEvaluate"]     = array('role_article');
         $role_ckeck_table["listGrade"]        = array('role_article');
 
+        $role_ckeck_table["saveMail"]         = array('role_article');
         $role_ckeck_table["saveCategories"]   = array('role_article');
         $role_ckeck_table["deleteCategories"] = array('role_article');
         $role_ckeck_table["saveBucketsRoles"] = array('role_article');
@@ -790,7 +793,6 @@ class LearningtasksPlugin extends UserPluginBase
                     !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
                     (($last_examination_task->grade == 'A') || ($last_examination_task->grade == 'B') || ($last_examination_task->grade == 'C')) &&
                     (empty($last_evaluate_task))) {
-
                     //(empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
 
                     // 総合評価の条件に合致。ただし、この条件では、総合評価のデータはまだない。
@@ -1333,8 +1335,10 @@ class LearningtasksPlugin extends UserPluginBase
         // 成績
         $users_statuses = LearningtasksUsersStatuses::select(
             'learningtasks_users_statuses.*',
+            'learningtasks_posts.post_title',
             'users.name'
-        )->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+        )->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+         ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
          ->where('learningtasks_users_statuses.post_id', $post_id)
          ->orderBy('learningtasks_users_statuses.id', 'asc')
          ->get();
@@ -1348,14 +1352,15 @@ class LearningtasksPlugin extends UserPluginBase
         // 表（含むCSV）のフォーマットに詰めなおす
         $statuses = array();
         foreach ($statuses_ojb as $user_id => $status_ojbs) {
-            $statuses[$user_id][0] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->name       : '－';
-            $statuses[$user_id][1] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->created_at : '－';
-            $statuses[$user_id][2] = array_key_exists(2, $status_ojbs) ? $status_ojbs[2]->grade      : '－';
-            $statuses[$user_id][5] = array_key_exists(5, $status_ojbs) ? $status_ojbs[5]->created_at : '－';
-            $statuses[$user_id][6] = array_key_exists(6, $status_ojbs) ? $status_ojbs[6]->grade      : '－';
-            $statuses[$user_id][8] = array_key_exists(8, $status_ojbs) ? $status_ojbs[8]->grade      : '－';
+            $statuses[$user_id][0] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->post_title : '－';
+            $statuses[$user_id][1] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->name       : '－';
+            $statuses[$user_id][2] = array_key_exists(1, $status_ojbs) ? $status_ojbs[1]->created_at : '－';
+            $statuses[$user_id][3] = array_key_exists(2, $status_ojbs) ? $status_ojbs[2]->grade      : '－';
+            $statuses[$user_id][4] = array_key_exists(5, $status_ojbs) ? $status_ojbs[5]->created_at : '－';
+            $statuses[$user_id][5] = array_key_exists(6, $status_ojbs) ? $status_ojbs[6]->grade      : '－';
+            $statuses[$user_id][6] = array_key_exists(8, $status_ojbs) ? $status_ojbs[8]->grade      : '－';
         }
-        $csvHeader = ['受講者名', 'レポート提出最終日時', 'レポート評価', '試験提出最終日時', '試験評価', '総合評価'];
+        $csvHeader = ['課題名', '受講者名', 'レポート提出最終日時', 'レポート評価', '試験提出最終日時', '試験評価', '総合評価'];
         array_unshift($statuses, $csvHeader);
 
         return $statuses;
@@ -1788,6 +1793,92 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 表示課題管理選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * メール設定表示関数
+     */
+    public function editMail($request, $page_id, $frame_id, $post_id = null)
+    {
+        // 課題管理
+        $learningtask = $this->getLearningTask($frame_id);
+
+        // 課題取得
+        $post = $this->getPost($post_id);
+
+        // 課題管理ツール
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'learningtasks_edit_mail', [
+            'learningtask'        => $learningtask,
+            'learningtasks_posts' => $post,
+            'tool'                => $tool,
+            ]
+        );
+    }
+
+    /**
+     * メール設定表示関数
+     */
+    public function saveMail($request, $page_id, $frame_id, $post_id = null)
+    {
+        // 課題管理
+        $learningtask = $this->getLearningTask($frame_id);
+        if (empty($learningtask)) {
+            return $this->editMail($request, $page_id, $frame_id, $post_id);
+        }
+
+        // 課題取得
+        $post = $this->getPost($post_id);
+
+        // 課題管理ツール
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
+
+        // 設定内容を保存（一旦削除して新たに保存）
+        LearningtasksConfigs::where('learningtasks_id', $learningtask->id)
+                            ->where('post_id', 0)
+                            ->delete();
+
+        // 件名保存
+        if ($request->filled('subjects')) {
+            $subjects = $request->subjects;
+            foreach ($subjects as $task_status => $subject) {
+                LearningtasksConfigs::create([
+                    'learningtasks_id' => $learningtask->id,
+                    'post_id'          => 0,
+                    'type'             => "subject",
+                    'task_status'      => $task_status,
+                    'value'            => $subject,
+                ]);
+            }
+        }
+        // 本文保存
+        if ($request->filled('bodys')) {
+            $bodys = $request->bodys;
+            foreach ($bodys as $task_status => $body) {
+                LearningtasksConfigs::create([
+                    'learningtasks_id' => $learningtask->id,
+                    'post_id'          => 0,
+                    'type'             => "body",
+                    'task_status'      => $task_status,
+                    'value'            => $body,
+                ]);
+            }
+        }
+        // フッター保存
+        if ($request->filled('footer')) {
+            LearningtasksConfigs::create([
+                'learningtasks_id' => $learningtask->id,
+                'post_id'          => 0,
+                'type'             => "footer",
+                'task_status'      => 0,
+                'value'            => $request->footer,
+            ]);
+        }
+
+        return $this->editMail($request, $page_id, $frame_id, $post_id);
     }
 
     /**
@@ -2253,37 +2344,54 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
+     *  差し込み文章変換
+     */
+    private function replaceMailText($subject, $tool, $post)
+    {
+        $mail_text = str_replace('{student_name}', $tool->getStudent(), $subject);
+        $mail_text = str_replace('{teacher_name}', $tool->getTeachersName('role_article_admin'), $mail_text);
+        $mail_text = str_replace('{post_title}', strip_tags($post->post_title), $mail_text);
+        return $mail_text;
+    }
+
+    /**
+     *  メール文面
+     */
+    private function getMailFormat($post, $task_status, $tool)
+    {
+        // 初期値
+        $mail_subjects = array(
+            1 => $tool->getMailConfig('subject', $task_status, 0, 'レポートが提出されました。'),
+            2 => $tool->getMailConfig('subject', $task_status, 0, 'レポートの評価が登録されました。'),
+            3 => $tool->getMailConfig('subject', $task_status, 0, 'レポートにコメントが登録されました。'),
+            5 => $tool->getMailConfig('subject', $task_status, 0, '試験の解答が提出されました。'),
+            6 => $tool->getMailConfig('subject', $task_status, 0, '試験の評価が登録されました。'),
+            7 => $tool->getMailConfig('subject', $task_status, 0, '試験のコメントが登録されました。'),
+            8 => $tool->getMailConfig('subject', $task_status, 0, '総合評価が登録されました。'),
+        );
+        $mail_bodys = array(
+            1 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」のレポートが提出されました。\n評価をお願いします。\n"),
+            2 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」のレポートの評価が登録されました。\n確認をお願いします。\n"),
+            3 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」にコメントが登録されました。\n確認をお願いします。\n"),
+            5 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」に試験の解答が提出されました。\n評価をお願いします。\n"),
+            6 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」の試験の評価が登録されました。\n確認をお願いします。\n"),
+            7 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」に試験のコメントが登録されました。\n確認をお願いします。\n"),
+            8 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」の総合評価が登録されました。\n確認をお願いします。\n"),
+        );
+        return array($mail_subjects, $mail_bodys);
+    }
+
+    /**
      *  メール送信
      */
     private function sendMail($post, $task_status, $tool, $login_user, $student_user_id)
     {
-        $send_user = null;  // 送信するユーザオブジェクト
-        $mail_subjects = array(
-            1 => config('connect.CC_LEARNING_TITLE') . '　レポートが提出されました。',
-            2 => config('connect.CC_LEARNING_TITLE') . '　レポートの評価が登録されました。',
-            3 => config('connect.CC_LEARNING_TITLE') . '　レポートにコメントが登録されました。',
-            5 => config('connect.CC_LEARNING_TITLE') . '　試験の解答が提出されました。',
-            6 => config('connect.CC_LEARNING_TITLE') . '　試験の評価が登録されました。',
-            7 => config('connect.CC_LEARNING_TITLE') . '　試験のコメントが登録されました。',
-            8 => config('connect.CC_LEARNING_TITLE') . '　総合評価が登録されました。',
-        );
-        $mail_texts = array(
-            1 => "「{post_title}」のレポートが提出されました。\n評価をお願いします。\n",
-            2 => "「{post_title}」のレポートの評価が登録されました。\n確認をお願いします。\n",
-            3 => "「{post_title}」にコメントが登録されました。\n確認をお願いします。\n",
-            5 => "「{post_title}」に試験の解答が提出されました。\n評価をお願いします。\n",
-            6 => "「{post_title}」の試験の評価が登録されました。\n確認をお願いします。\n",
-            7 => "「{post_title}」に試験のコメントが登録されました。\n確認をお願いします。\n",
-            8 => "「{post_title}」の総合評価が登録されました。\n確認をお願いします。\n",
-        );
+        // 送信するユーザオブジェクト
+        $send_user = null;
 
-        $mail_text2  = "\n";
-        $mail_text2 .= "受講生：{student_name}\n";
-        $mail_text2 .= "担当教員：{teacher_name}\n";
-        $mail_text2 .= "科目名：{post_title}\n";
-
-        $mail_footer  = "\n" . config('connect.CC_LEARNING_FOOTER1') . "\n" . config('connect.CC_LEARNING_FOOTER2') . "\n" . config('connect.CC_LEARNING_FOOTER3') . "\n" . config('connect.CC_LEARNING_FOOTER4');
-
+        // メールの定型文取得
+        list($mail_subjects, $mail_bodys) = $this->getMailFormat($post, $task_status, $tool);
+        $mail_footer = $tool->getMailConfig('footer', 0);
 
         // 教員へメールを送信。レポートの提出(1)、試験の提出(5)
         if ($task_status == 1 || $task_status == 5) {
@@ -2294,15 +2402,10 @@ class LearningtasksPlugin extends UserPluginBase
             $send_users = User::where('id', $student_user_id)->get();
         }
 
-        // 本文の変換
-        $mail_text = $mail_texts[$task_status];
-        $mail_text = str_replace('{post_title}', strip_tags($post->post_title), $mail_text);
-
-        $mail_text2 = str_replace('{student_name}', $tool->getStudent(), $mail_text2);
-        $mail_text2 = str_replace('{teacher_name}', $tool->getTeachersName('role_article_admin'), $mail_text2);
-        $mail_text2 = str_replace('{post_title}', strip_tags($post->post_title), $mail_text2);
-
-        $mail_text = $mail_text . $mail_text2 . $mail_footer;
+        // 件名、本文、フッターの変換
+        $mail_body = $this->replaceMailText($mail_bodys[$task_status], $tool, $post);
+        $mail_body = $mail_body . "\n" . $this->replaceMailText($mail_footer, $tool, $post);
+        $mail_subject = $this->replaceMailText($mail_subjects[$task_status], $tool, $post);
 
         foreach ($send_users as $send_user) {
             // メールアドレスがなければ終了
@@ -2310,7 +2413,7 @@ class LearningtasksPlugin extends UserPluginBase
                 continue;
             }
             try {
-                Mail::to(trim($send_user->email))->send(new ConnectMail(['subject' => $mail_subjects[$task_status], 'template' => 'mail.send'], ['content' => $mail_text]));
+                Mail::to(trim($send_user->email))->send(new ConnectMail(['subject' => $mail_subject, 'template' => 'mail.send'], ['content' => $mail_body]));
                 session()->flash('plugin_errors', 'メール送信OK');
             } catch (\Exception $e) {
                 session()->flash('plugin_errors', 'メール送信に失敗しました。<br />運営組織に連絡をお願いいたします。');

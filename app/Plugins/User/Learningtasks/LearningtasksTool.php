@@ -10,6 +10,7 @@ use App\Enums\DayOfWeek;
 use App\Models\Common\PageRole;
 use App\Models\Common\GroupUser;
 use App\Models\Core\UsersRoles;
+use App\Models\User\Learningtasks\LearningtasksConfigs;
 use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 use App\Models\User\Learningtasks\LearningtasksUseSettings;
@@ -117,6 +118,11 @@ class LearningtasksTool
     private $post_use_functions = null;
 
     /**
+     * 課題設定
+     */
+    private $configs = null;
+
+    /**
      * コンストラクタ
      */
     public function __construct($request, $page_id, $learningtask, $post = null)
@@ -139,6 +145,11 @@ class LearningtasksTool
         }
         if (!empty($this->learningtask) && !empty($this->post)) {
             $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', $this->post->id)->get();
+        }
+
+        // メール設定
+        if (!empty($this->learningtask)) {
+            $this->configs = LearningtasksConfigs::where('learningtasks_id', $this->learningtask->id)->where('post_id', 0)->get();
         }
 
         // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
@@ -233,6 +244,23 @@ class LearningtasksTool
                                                     ->get();
             }
         }
+    }
+
+    /**
+     *  メール設定取得
+     */
+    public function getMailConfig($type, $task_status, $post_id = 0, $default = "")
+    {
+        if (empty($this->configs)) {
+            return $default;
+        }
+
+        $mail_config = $this->configs->where("post_id", $post_id)->where("type", $type)->where("task_status", $task_status)->first();
+
+        if (empty($mail_config)) {
+            return $default;
+        }
+        return $mail_config->value;
     }
 
     /**
