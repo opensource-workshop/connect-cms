@@ -94,7 +94,11 @@
                 {{$request->databases_columns_value[$database_column->id]}}
                 <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
                 @break
-            @case("date")
+            @case(DatabaseColumnType::date)
+                {{$request->databases_columns_value[$database_column->id]}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case(DatabaseColumnType::dates_ym)
                 {{$request->databases_columns_value[$database_column->id]}}
                 <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
                 @break

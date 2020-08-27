@@ -482,6 +482,21 @@ trait MigrationTrait
     }
 
     /**
+     * 記事内に p タグがなければ、p タグで囲む
+     */
+    private function addParagraph($target, $value)
+    {
+        $return_value = $value;
+        if ($this->hasMigrationConfig($target, 'cc_import_add_if_not_p', true)) {
+            $pattern = '/<p.*?>/i';
+            if (!empty(trim($return_value)) && !preg_match($pattern, $value, $matches)) {
+                $return_value = '<p>' . $return_value . '</p>';
+            }
+        }
+        return $return_value;
+    }
+
+    /**
      * インポートする際の参照コンテンツ（画像、ファイル）の追加ディレクトリ取得
      */
     private function getImportSrcDir($default = '/file/')
@@ -668,18 +683,23 @@ trait MigrationTrait
                             $parent_page->appendNode($page);
                         }
                     }
-
-                    // マッピングテーブルの追加
-                    $mapping = MigrationMapping::updateOrCreate(
-                        ['target_source_table' => 'connect_page',
-                        'source_key' => ltrim(basename($path), '_')],
-                        ['target_source_table'  => 'connect_page',
-                        'source_key'           => ltrim(basename($path), '_'),
-                        'destination_key'      => $page->id]
-                    );
                 } else {
+                    // 対象のURL があった場合はページの更新
+                    $page->page_name         = $page_ini['page_base']['page_name'];
+                    $page->base_display_flag = $page_ini['page_base']['base_display_flag'];
+                    $page->save();
+
                     $this->putMonitor(3, "Page found. Use existing page. url=" . $page_ini['page_base']['permanent_link']);
                 }
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::updateOrCreate(
+                    ['target_source_table' => 'connect_page',
+                    'source_key' => ltrim(basename($path), '_')],
+                    ['target_source_table'  => 'connect_page',
+                    'source_key'           => ltrim(basename($path), '_'),
+                    'destination_key'      => $page->id]
+                );
 
                 // ページの中身の作成
                 $this->importHtmlImpl($page, $path);
@@ -690,6 +710,19 @@ trait MigrationTrait
         //if ($this->isTarget('cc_import', 'addition')) {
         //    $this->importSeeder($redo);
         //}
+    }
+
+    /**
+     * ommit 設定を確認
+     */
+    private function isOmmit($section, $arg_name, $check_id)
+    {
+        // 対象外のブロックがあれば加味する。
+        $ommit_settings = $this->getMigrationConfig($section, $arg_name);
+        if (!empty($ommit_settings) && in_array($check_id, $ommit_settings)) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1138,8 +1171,11 @@ trait MigrationTrait
 
                         // 本文
                         $post_text = $this->changeWYSIWYG($blog_tsv_cols[5]);
+                        $post_text = $this->addParagraph('blogs', $post_text);
+
                         // 本文2
                         $post_text2 = $this->changeWYSIWYG($blog_tsv_cols[6]);
+                        $post_text2 = $this->addParagraph('blogs', $post_text2);
 
                         // ブログ記事テーブル追加
                         $blogs_posts = BlogsPosts::create(['blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[4], 'post_text' => $post_text, 'post_text2' => $post_text2, 'categories_id' => $categories_id, 'important' => null, 'status' => 0, 'posted_at' => $posted_at]);
@@ -1559,14 +1595,24 @@ trait MigrationTrait
                     'forms_id' => $form->id,
                 ]);
 
+                // データベースのバルクINSERT対応
+                $bulks = array();
+
                 // 項目データのループ
                 foreach ($data_txt_ini[$data_id] as $item_id => $data) {
+                    $bulks[] = ['forms_inputs_id'  => $forms_inputs->id,
+                        'forms_columns_id' => $column_ids[$item_id],
+                        'value'            => $data];
+                    /*
                     $forms_inputs_cols = FormsInputCols::create([
                         'forms_inputs_id'  => $forms_inputs->id,
                         'forms_columns_id' => $column_ids[$item_id],
                         'value'            => $data,
                     ]);
+                    */
                 }
+                // バルクINSERT
+                DB::table('forms_input_cols')->insert($bulks);
             }
         }
     }
@@ -1879,28 +1925,33 @@ trait MigrationTrait
      */
     private function importPluginMenus($page, $page_dir, $frame_ini, $display_sequence)
     {
-        // 追加じゃない場合は、migration_config のメニューのインポート条件を見る。
-        if (!array_key_exists('addition', $frame_ini)) {
-            // メニューオプション（エリア）の確認
-            if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
-                // フレームの指定と＆オプションの位置指定が両方OKなら、インポートする。
-                if (($frame_ini['frame_base']['area_id'] == 0 && $this->hasMigrationConfig('menus', 'import_menu_area', 'header')) ||
-                    ($frame_ini['frame_base']['area_id'] == 1 && $this->hasMigrationConfig('menus', 'import_menu_area', 'left')) ||
-                    ($frame_ini['frame_base']['area_id'] == 2 && $this->hasMigrationConfig('menus', 'import_menu_area', 'main')) ||
-                    ($frame_ini['frame_base']['area_id'] == 3 && $this->hasMigrationConfig('menus', 'import_menu_area', 'right')) ||
-                    ($frame_ini['frame_base']['area_id'] == 4 && $this->hasMigrationConfig('menus', 'import_menu_area', 'footer'))) {
-                } else {
-                    return;
-                }
+        //// 追加じゃない場合は、migration_config のメニューのインポート条件を見る。
+        //if (!array_key_exists('addition', $frame_ini)) {
+        // addition はやめた
+
+        // メニューオプション（エリア）の確認
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
+            // フレームの指定と＆オプションの位置指定が両方OKなら、インポートする。
+            if (($frame_ini['frame_base']['area_id'] == 0 && $this->hasMigrationConfig('menus', 'import_menu_area', 'header')) ||
+                ($frame_ini['frame_base']['area_id'] == 1 && $this->hasMigrationConfig('menus', 'import_menu_area', 'left')) ||
+                ($frame_ini['frame_base']['area_id'] == 2 && $this->hasMigrationConfig('menus', 'import_menu_area', 'main')) ||
+                ($frame_ini['frame_base']['area_id'] == 3 && $this->hasMigrationConfig('menus', 'import_menu_area', 'right')) ||
+                ($frame_ini['frame_base']['area_id'] == 4 && $this->hasMigrationConfig('menus', 'import_menu_area', 'footer'))) {
+            } else {
+                return;
             }
         }
+        //}
 
         // migration_mapping 確認
-        if (array_key_exists('addition', $frame_ini)) {
-            $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
-        } else {
-            $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
-        }
+        // if (array_key_exists('addition', $frame_ini)) {
+        //     $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
+        // } else {
+        //     $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
+        // }
+
+        // migration_mapping 確認
+        $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
         $migration_mappings = MigrationMapping::where('target_source_table', 'menus')->where('source_key', $source_key)->first();
 
         // Frames 登録
@@ -2354,6 +2405,12 @@ trait MigrationTrait
             $plugin_name = $frame_ini['frame_base']['plugin_name'];
         }
 
+        // classname
+        $classname = '';
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('classname', $frame_ini['frame_base'])) {
+            $classname = $frame_ini['frame_base']['classname'];
+        }
+
         // bucket_id
         $bucket_id = null;
         if ($bucket) {
@@ -2386,6 +2443,7 @@ trait MigrationTrait
                 'plugin_name'      => $plugin_name,
                 'frame_col'        => $frame_col,
                 'template'         => $template,
+                'classname'        => $classname,
                 'bucket_id'        => $bucket_id,
                 'display_sequence' => $display_sequence,
             ]);
@@ -2403,6 +2461,7 @@ trait MigrationTrait
             $frame->plugin_name      = $plugin_name;
             $frame->frame_col        = $frame_col;
             $frame->template         = $template;
+            $frame->classname        = $classname;
             $frame->bucket_id        = $bucket_id;
             $frame->display_sequence = $display_sequence;
             $frame->save();
@@ -2864,6 +2923,24 @@ trait MigrationTrait
     }
 
     /**
+     * HTML からiframe タグの src 属性を取得
+     */
+    private function getIframeSrc($content)
+    {
+        $pattern = '/<iframe.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+
+        if (preg_match_all($pattern, $content, $matches)) {
+            if (is_array($matches) && isset($matches[1])) {
+                return $matches[1];
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * HTML からa タグの href 属性を取得
      */
     private function getContentAnchor($content)
@@ -3297,7 +3374,12 @@ trait MigrationTrait
         $sitename = empty($sitename) ? '' : $sitename->conf_value;
         $basic_ini .= "site_name = \"" . $sitename . "\"\n";
 
-        // site,ini ファイル保存
+        // 基本デザイン（パブリック）
+        $default_theme_public = $configs->where('conf_name', 'default_theme_public')->first();
+        $default_theme_public = empty($default_theme_public) ? '' : $default_theme_public->conf_value;
+        $basic_ini .= "default_theme_public = \"" . $default_theme_public . "\"\n";
+
+        // basic,ini ファイル保存
         Storage::put($this->getImportPath('basic/basic.ini'), $basic_ini);
     }
 
@@ -3967,6 +4049,11 @@ trait MigrationTrait
                 continue;
             }
 
+            // 対象外指定があれば、読み飛ばす
+            if ($this->isOmmit('forms', 'export_ommit_registration_ids', $nc2_registration->registration_id)) {
+                continue;
+            }
+
             $registration_id = $nc2_registration->registration_id;
 
             // 登録フォーム設定
@@ -4261,7 +4348,7 @@ trait MigrationTrait
             $frame_ini = "[frame_base]\n";
             $frame_ini .= "area_id = " . $this->nc2BlockArea($nc2_block) . "\n";
             $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
-            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign() . "\"\n";
+            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
             $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
 
             // グルーピングされているブロックの考慮
@@ -4421,7 +4508,6 @@ trait MigrationTrait
             return;
         }
 
-        // 
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
         $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
@@ -4516,17 +4602,20 @@ trait MigrationTrait
             }
         }
 
-        // iframeのwidth設定を探し、width を100% に変換する。
-        //$img_styles = $this->getIframeStyle($content);
-        //if (!empty($img_styles)) {
-        //    $img_styles = array_unique($img_styles);
-        //    //Log::debug($img_styles);
-        //    foreach ($img_styles as $img_style) {
-        //        $new_img_style = str_replace('height', 'max-height', $img_style);
-        //        $new_img_style = str_replace('max-max-height', 'max-height', $new_img_style);
-        //        $content = str_replace($img_style, $new_img_style, $content);
-        //    }
-        //}
+        // Google Map 埋め込み時のスマホ用対応。widthを 100% に変更
+        $iframe_srces = $this->getIframeSrc($content);
+        if (!empty($iframe_srces)) {
+            // iFrame のsrc を取得（複数の可能性もあり）
+            $iframe_styles = $this->getIframeStyle($content);
+            foreach ($iframe_styles as $iframe_style) {
+                $width_pos = strpos($iframe_style, 'width');
+                $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
+                $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
+                if (!empty($iframe_style_width)) {
+                    $content = str_replace($iframe_style_width, "width:100%;", $content);
+                }
+            }
+        }
 
         // 添付ファイルを探す
         $anchors = $this->getContentAnchor($content);
@@ -4648,7 +4737,9 @@ trait MigrationTrait
                             $export_paths[$param_split[1]] = $export_path;
 
                             // ファイルのパスの修正
-                            $content = str_replace($path, $export_path, $content);
+                            // ファイル指定の前後の " も含めないと、upload_id=1 を変換した際、 upload_id=14 も含まれる。
+                            //$content = str_replace($path, $export_path, $content);
+                            $content = str_replace('"' . $path . '"', '"' .$export_path . '"', $content);
                         } else {
                             // 移行しなかったファイルのimg or a タグとしてログに記録
                             $this->putError(1, "no migrate img", "src = " . $path, $nc2_block);

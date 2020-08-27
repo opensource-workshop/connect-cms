@@ -101,7 +101,8 @@
     $column->column_type == DatabaseColumnType::radio ||
     $column->column_type == DatabaseColumnType::checkbox ||
     $column->column_type == DatabaseColumnType::select ||
-    $column->caption
+    $column->caption ||
+    $column->title_flag
     )
     <tr>
         <td class="pt-2 border border-0"></td>
@@ -114,7 +115,8 @@
                 </div>
             @elseif(!$column->caption && $column->select_count == 0)
                 {{-- 選択肢データがなく、キャプションの設定もない場合はツールチップ分、余白として改行する --}}
-                <br>
+                {{-- change: <td>タグ内に表示するもがなければ<td>タグ自体が無視されるので、改行不要 --}}
+                {{--<br>--}}
             @endif
 
             @if ($column->caption)
@@ -122,6 +124,13 @@
                 <div class="small {{ $column->caption_color }}">
                     <i class="fas fa-pen"></i>
                     {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}
+                </div>
+            @endif
+
+            @if ($column->title_flag)
+                {{-- タイトル指定が設定されている場合、タイトル指定を表示する --}}
+                <div class="small text-primary">
+                    <i class="fas fa-toggle-on"></i> タイトル指定
                 </div>
             @endif
         </td>

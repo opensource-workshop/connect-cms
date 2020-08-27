@@ -242,6 +242,7 @@ return [
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
         'ConnectLocale' => \App\Enums\ConnectLocale::class,
         'GroupType' => \App\Enums\GroupType::class,
+        'WhatsnewsTargetPlugin' => \App\Enums\WhatsnewsTargetPlugin::class,
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
