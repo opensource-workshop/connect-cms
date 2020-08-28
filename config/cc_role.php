@@ -155,6 +155,7 @@ return [
         'saveColumn'          => ['buckets.saveColumn'],
         'downloadCsv'         => ['buckets.downloadCsv'],
         'import'              => ['buckets.uploadCsv'],
+        'downloadCsvFormat'   => ['buckets.uploadCsv'],
         'uploadCsv'           => ['buckets.uploadCsv'],
     ],
 
@@ -196,6 +197,7 @@ return [
         'saveColumn'          => ['post'],
         'downloadCsv'         => ['post'],
         'import'              => ['get'],
+        'downloadCsvFormat'   => ['post'],
         'uploadCsv'           => ['post'],
     ],
 
