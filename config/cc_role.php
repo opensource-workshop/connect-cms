@@ -51,6 +51,7 @@ return [
         'buckets.downColumnSequence' => ['role_arrangement', 'role_article_admin'],
         'buckets.saveColumn'         => ['role_arrangement', 'role_article_admin'],
         'buckets.downloadCsv'        => ['role_arrangement', 'role_article_admin'],
+        'buckets.uploadCsv'          => ['role_arrangement', 'role_article_admin'],
 
         // 記事(記入の初期値は管理者のみ)
         'posts.create'               => ['role_article_admin'],
@@ -144,7 +145,7 @@ return [
         'changeBuckets'       => ['frames.change'],
         'editBucketsRoles'    => ['frames.edit'],
         'saveBucketsRoles'    => ['frames.edit'],
-        
+
         'addColumn'           => ['buckets.addColumn'],
         'editColumn'          => ['buckets.editColumn'],
         'deleteColumn'        => ['buckets.deleteColumn'],
@@ -153,6 +154,8 @@ return [
         'downColumnSequence'  => ['buckets.downColumnSequence'],
         'saveColumn'          => ['buckets.saveColumn'],
         'downloadCsv'         => ['buckets.downloadCsv'],
+        'import'              => ['buckets.uploadCsv'],
+        'uploadCsv'           => ['buckets.uploadCsv'],
     ],
 
     'CC_METHOD_REQUEST_METHOD' => [
@@ -192,6 +195,8 @@ return [
         'downColumnSequence'  => ['post'],
         'saveColumn'          => ['post'],
         'downloadCsv'         => ['post'],
+        'import'              => ['get'],
+        'uploadCsv'           => ['post'],
     ],
 
 ];
