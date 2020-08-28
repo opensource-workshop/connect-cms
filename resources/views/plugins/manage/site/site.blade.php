@@ -90,6 +90,14 @@
                 <small class="form-text text-muted">センターエリア要素に任意のclass属性を設定します。カンマ区切りで複数設定した場合、いづれかのクラスをランダムで設定します。</small>
                 <small class="form-text text-muted">（用例）センターエリアCSSのランダム適用等</small>
             </div>
+
+            {{-- フッターエリア任意クラス --}}
+            <div class="form-group">
+                <label class="col-form-label">フッターエリア任意クラス</label>
+                <input type="text" name="footer_area_optional_class" id="footer_area_optional_class" value="{{$configs["footer_area_optional_class"]}}" class="form-control">
+                <small class="form-text text-muted">フッターエリア要素に任意のclass属性を設定します。カンマ区切りで複数設定した場合、いづれかのクラスをランダムで設定します。</small>
+                <small class="form-text text-muted">（用例）フッターエリアCSSのランダム適用等</small>
+            </div>
         </div>
         {{-- ヘッダーの表示指定 --}}
         <div class="form-group">

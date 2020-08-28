@@ -50,11 +50,4 @@ return [
 
     // OSWS 翻訳サービス使用の有無
     'OSWS_TRANSLATE_AGREEMENT' => env('OSWS_TRANSLATE_AGREEMENT', false),
-
-    // 一時的なもの。課題管理のタイトル
-    'CC_LEARNING_TITLE' => env('CC_LEARNING_TITLE', ''),
-    'CC_LEARNING_FOOTER1' => env('CC_LEARNING_FOOTER1', ''),
-    'CC_LEARNING_FOOTER2' => env('CC_LEARNING_FOOTER2', ''),
-    'CC_LEARNING_FOOTER3' => env('CC_LEARNING_FOOTER3', ''),
-    'CC_LEARNING_FOOTER4' => env('CC_LEARNING_FOOTER4', ''),
 ];

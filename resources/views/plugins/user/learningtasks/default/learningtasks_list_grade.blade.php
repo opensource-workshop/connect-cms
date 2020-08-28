@@ -24,7 +24,9 @@
         <thead>
             <tr>
                 @foreach ($csv_line as $csv_column)
+                @if (!$loop->first)
                 <th>{{$csv_column}}</th>
+                @endif
                 @endforeach
             </tr>
         </thead>
@@ -34,7 +36,9 @@
             @endif
             <tr>
                 @foreach ($csv_line as $csv_column)
+                @if (!$loop->first)
                 <td>{{$csv_column}}</td>
+                @endif
                 @endforeach
             </tr>
         @endif
