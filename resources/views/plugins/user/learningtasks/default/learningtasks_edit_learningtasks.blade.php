@@ -333,16 +333,16 @@
         <label class="{{$frame->getSettingLabelClass()}}">総合評価コメント</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_evaluate_evaluate_file]" value="on" class="custom-control-input" id="use_evaluate_evaluate_file" @if(old("base_settings.use_evaluate_evaluate_file", $tool->getFunction('use_evaluate_evaluate_file')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_evaluate_evaluate_file">アップロード</label>
+                <input type="checkbox" name="base_settings[use_evaluate_file]" value="on" class="custom-control-input" id="use_evaluate_file" @if(old("base_settings.use_evaluate_file", $tool->getFunction('use_evaluate_file')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_evaluate_file">アップロード</label>
             </div>
             <div class="custom-control custom-checkbox mr-3">
-                <input type="checkbox" name="base_settings[use_evaluate_evaluate_text]" value="on" class="custom-control-input" id="use_evaluate_evaluate_text" @if(old("base_settings.use_evaluate_evaluate_text", $tool->getFunction('use_evaluate_evaluate_text')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_evaluate_evaluate_text">コメント入力</label>
+                <input type="checkbox" name="base_settings[use_evaluate_comment]" value="on" class="custom-control-input" id="use_evaluate_comment" @if(old("base_settings.use_evaluate_comment", $tool->getFunction('use_evaluate_comment')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_evaluate_comment">コメント入力</label>
             </div>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="base_settings[use_evaluate_evaluate_mail]" value="on" class="custom-control-input" id="use_evaluate_evaluate_mail" @if(old("base_settings.use_evaluate_evaluate_mail", $tool->getFunction('use_evaluate_evaluate_mail')) == 'on') checked=checked @endif>
-                <label class="custom-control-label" for="use_evaluate_evaluate_mail">メール送信（受講者宛）</label>
+                <input type="checkbox" name="base_settings[use_evaluate_mail]" value="on" class="custom-control-input" id="use_evaluate_mail" @if(old("base_settings.use_evaluate_mail", $tool->getFunction('use_evaluate_mail')) == 'on') checked=checked @endif>
+                <label class="custom-control-label" for="use_evaluate_mail">メール送信（受講者宛）</label>
             </div>
         </div>
     </div>

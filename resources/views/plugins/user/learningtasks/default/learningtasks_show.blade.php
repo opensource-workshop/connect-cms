@@ -627,11 +627,45 @@
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">総合評価</span></h5>
     <div class="card">
         <div class="card-body">
-            <div class="card mb-3">
-                <div class="card-body">
-                    {{$tool->getEvaluateStatus($post->id)}}
-                </div>
-            </div>
+
+            @foreach($tool->getEvaluateStatuses($post->id) as $evaluate_status)
+            <table class="table table-bordered table-sm report_table">
+            <tbody>
+                <tr>
+                    <th>{{$evaluate_status->getStstusPostTimeName()}}</th>
+                    <td>{{$evaluate_status->created_at}}</td>
+                </tr>
+                @if ($tool->isUseFunction($evaluate_status->task_status, 'file'))
+                <tr>
+                    <th>{{$evaluate_status->getUploadFileName()}}</th>
+                    @if (empty($evaluate_status->upload_id))
+                    <td>なし</td>
+                    @else
+                    <td><a href="{{url('/')}}/file/{{$evaluate_status->upload_id}}" target="_blank">{{$evaluate_status->upload->client_original_name}}</a></td>
+                    @endif
+                </tr>
+                @endif
+                @if ($evaluate_status->hasExamination())
+                <tr>
+                    <th>試験日時</th>
+                    <td>{{$tool->getViewDate($evaluate_status)}}</td>
+                </tr>
+                @endif
+                @if ($evaluate_status->hasGrade())
+                <tr>
+                    <th>評価</th>
+                    <td><span class="text-danger font-weight-bold">{{$evaluate_status->grade}}</span></td>
+                </tr>
+                @endif
+                @if ($tool->isUseFunction($evaluate_status->task_status, 'comment'))
+                <tr>
+                    <th>コメント</th>
+                    <td>{!!nl2br(e($evaluate_status->comment))!!}</td>
+                </tr>
+                @endif
+            </tbody>
+            </table>
+            @endforeach
 
             @if ($tool->checkFunction('use_evaluate') && $tool->isTeacher() && $tool->canEvaluateView($post))
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status8">評価</span></h5>
