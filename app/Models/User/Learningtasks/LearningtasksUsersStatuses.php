@@ -83,6 +83,14 @@ class LearningtasksUsersStatuses extends Model
               'has_examination'  => false,
               'has_grade'        => false,
               'has_comment'      => true],
+        // 総合評価
+        8 => ['ststus_name'      => '総合評価',
+              'post_time_name'   => '評価日時',
+              'upload_file_name' => '添削・参考ファイル',
+              'has_file'         => true,
+              'has_examination'  => false,
+              'has_grade'        => true,
+              'has_comment'      => true],
     ];
 
     /**

@@ -20,40 +20,55 @@ use App\User;
  * 課題管理のユーザ情報保持クラス
  *
  * メソッド一覧(public のもの)
- * ・教員か                                   isTeacher()
- * ・学生か                                   isStudent()
- * ・ユーザIDの取得                           getUserId()
- * ・課題バケツの取得                         getLearningtask()
- * ・評価中の受講生                           getStudent()
- * ・レポートの表示を行えるか？               canReportView($post_id)
- * ・課題の表示を行えるか？                   canPostView($post_id)
- * ・試験の表示を行えるか？                   canExaminationView($post_id)
- * ・総合評価の表示を行えるか？               canEvaluateView($post_id)
- * ・レポートの履歴有無                       hasReportStatuses($post_id)
- * ・レポートの履歴取得                       getReportStatuses($post_id)
- * ・レポートの状況取得                       getReportStatus($post_id)
- * ・レポートの提出を行えるか？               canReportUpload($post_id)
- * ・レポートの評価を行えるか？               canReportEvaluate($post_id)
- * ・レポートにコメントを行えるか？           canReportComment($post_id)
- * ・試験の履歴有無                           hasExaminationStatuses($post_id)
- * ・試験の履歴取得                           getExaminationStatuses($post_id)
- * ・試験の状況取得                           getExaminationStatus($post_id)
- * ・試験問題を表示して良いか？               canViewExaminationFile($post_id)
- * ・試験の提出を行えるか？                   canExaminationUpload($post)
- * ・試験の申込を行えるか？判定のみ           canExamination($post)
- * ・試験の申込を行えるか？理由のみ           reasonExamination($post)
- * ・試験の評価を行えるか？                   canExaminationEvaluate($post)
- * ・試験にコメントを行えるか？               canExaminationComment($post)
- * ・試験日の画面表記を取得                   getViewDate($obj)
- * ・試験時間内か判定                         isNowExamination($post_id)
- * ・申し込み中の試験があり、時間前であること isApplyingExamination($post_id)
- * ・申し込み中の試験（日本語表記）           getApplyingExaminationDate($post_id)
- * ・申し込み中の試験                         getApplyingExamination($post_id)
- * ・開始待ちの試験                           getBeforeExamination($post_id)
- * ・試験に合格済みか                         isPassExamination($post_id)
- * ・教員用の受講生一覧取得                   getStudents()
- * ・レポートの開閉用の属性出力               getReportCollapseAriaControls()
- * ・試験の開閉用の属性出力                   getExaminationCollapseAriaControls()
+ * ・教員か                                               isTeacher()
+ * ・学生か                                               isStudent()
+ * ・教員の一覧取得                                       getTeachers()
+ * ・教員名の取得                                         getTeachersName()
+ * ・ユーザIDの取得                                       getUserId()
+ * ・課題バケツの取得                                     getLearningtask()
+ * ・評価中の受講生                                       getStudent()
+ * ・レポートの表示を行えるか？                           canReportView($post_id)
+ * ・課題の表示を行えるか？                               canPostView($post_id)
+ * ・試験の表示を行えるか？                               canExaminationView($post_id)
+ * ・総合評価を行えるか？                                 canEvaluate($post_id)
+ * ・総合評価の表示を行えるか？                           canEvaluateView($post_id)
+ * ・レポートの履歴有無                                   hasReportStatuses($post_id)
+ * ・レポートの件数                                       countReportStatuses()
+ * ・レポートの履歴取得                                   getReportStatuses($post_id)
+ * ・レポートの状況取得                                   getReportStatus($post_id)
+ * ・レポートの提出を行えるか？                           canReportUpload($post_id)
+ * ・レポートの状況の文言取得                             getReportUploadMessage()
+ * ・レポートの評価を行えるか？                           canReportEvaluate($post_id)
+ * ・レポートにコメントを行えるか？                       canReportComment($post_id)
+ * ・試験の履歴有無                                       hasExaminationStatuses($post_id)
+ * ・試験の履歴取得                                       getExaminationStatuses($post_id)
+ * ・試験の状況取得                                       getExaminationStatus($post_id)
+ * ・試験問題を表示して良いか？                           canViewExaminationFile($post_id)
+ * ・試験の提出を行えるか？                               canExaminationUpload($post)
+ * ・試験の申込を行えるか？判定のみ                       canExamination($post)
+ * ・試験の申込を行えるか？理由のみ                       reasonExamination($post)
+ * ・試験の評価を行えるか？                               canExaminationEvaluate($post)
+ * ・試験にコメントを行えるか？                           canExaminationComment($post)
+ * ・試験日の画面表記を取得                               getViewDate($obj)
+ * ・試験時間内か判定                                     isNowExamination($post_id)
+ * ・試験の件数                                           countExaminationStatuses()
+ * ・申し込み中の試験があり、時間前であること             isApplyingExamination($post_id)
+ * ・申し込み中の試験（日本語表記）                       getApplyingExaminationDate($post_id)
+ * ・申し込み中の試験                                     getApplyingExamination($post_id)
+ * ・開始待ちの試験                                       getBeforeExamination($post_id)
+ * ・試験に合格済みか                                     isPassExamination($post_id)
+ * ・教員用の受講生一覧取得                               getStudents()
+ * ・教員用の受講生ID取得                                 getStudentId()
+ * ・レポートの開閉用の属性出力                           getReportCollapseAriaControls()
+ * ・試験の開閉用の属性出力                               getExaminationCollapseAriaControls()
+ * ・総合評価の状況取得                                   getEvaluateStatus()
+ * ・使用機能の取得                                       getFunction()
+ * ・使用機能のチェック                                   checkFunction()
+ * ・メール設定取得                                       getMailConfig()
+ * ・指定されたステータスを機能名に変換                   changeStatus2FunctionName()
+ * ・指定されたステータスで指定した機能が使用できるか。   isUseFunction()
+ * ・指定されたステータスでファイルアップロードが必要か。 isRequreUploadFile()
+ * ・課題ごとの使用機能設定のCollapse CSS を返す          getSettingShowstr()
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -473,7 +488,7 @@ class LearningtasksTool
     {
         // ログインユーザのみ課題の閲覧を許可？
         // 0 ならゲストも閲覧OK
-        if ($this->learningtask->need_auth == 0) {
+        if (!$this->checkFunction('use_need_auth')) {
             return true;
         }
 
@@ -1251,6 +1266,20 @@ class LearningtasksTool
             return $evaluate_status->grade;
         }
         return $base_message;
+    }
+
+    /**
+     *  総合評価の履歴取得
+     */
+    public function getEvaluateStatuses($post_id)
+    {
+        if (empty($post_id)) {
+            return $this->evaluate_statuses;
+        }
+        if (empty($this->evaluate_statuses)) {
+            return new Collection();
+        }
+        return $this->evaluate_statuses->where('post_id', $post_id);
     }
 
     /**
