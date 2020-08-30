@@ -728,6 +728,25 @@ trait MigrationTrait
     /**
      * サイト基本設定をインポート
      */
+    private function updateConfig($name, $ini, $category = 'general')
+    {
+        if (!array_key_exists('basic', $ini)) {
+            return;
+        }
+
+        if (array_key_exists($name, $ini['basic'])) {
+            $config = Configs::updateOrCreate(
+                ['name'     => $name],
+                ['name'     => $name,
+                 'value'    => $ini['basic'][$name],
+                 'category' => $category]
+            );
+        }
+    }
+
+    /**
+     * サイト基本設定をインポート
+     */
     private function importBasic($redo)
     {
         $this->putMonitor(3, "Basic import Start.");
@@ -738,14 +757,10 @@ trait MigrationTrait
             $basic_ini = parse_ini_file(storage_path() . '/app/' . $basic_file_path, true);
 
             // サイト名
-            if (array_key_exists('basic', $basic_ini) && array_key_exists('site_name', $basic_ini['basic'])) {
-                $config = Configs::updateOrCreate(
-                    ['name'     => 'base_site_name'],
-                    ['name'     => 'base_site_name',
-                     'value'    => $basic_ini['basic']['site_name'],
-                     'category' => 'general']
-                );
-            }
+            $this->updateConfig('base_site_name', $basic_ini);
+
+            // フッター幅
+            $this->updateConfig('browser_width_footer', $basic_ini);
         }
     }
 
@@ -3372,7 +3387,7 @@ trait MigrationTrait
         // サイト名
         $sitename = $configs->where('conf_name', 'sitename')->first();
         $sitename = empty($sitename) ? '' : $sitename->conf_value;
-        $basic_ini .= "site_name = \"" . $sitename . "\"\n";
+        $basic_ini .= "base_site_name = \"" . $sitename . "\"\n";
 
         // 基本デザイン（パブリック）
         $default_theme_public = $configs->where('conf_name', 'default_theme_public')->first();
