@@ -365,12 +365,12 @@ class LinklistsPlugin extends UserPluginBase
 
         // フレームから linklist_id 取得
         $linklist_frame = $this->getPluginFrame($frame_id);
-Log::debug($frame_id);
-Log::debug($linklist_frame);
+
         // 値のセット
         $post->linklist_id      = $linklist_frame->linklist_id;
         $post->title            = $request->title;
         $post->url              = $request->url;
+        $post->description      = $request->description;
         $post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
 
         // データ保存
@@ -484,14 +484,17 @@ Log::debug($linklist_frame);
         // フレームにバケツの紐づけ
         $frame = Frame::find($frame_id)->update(['bucket_id' => $bucket->id]);
 
-        // プラグインバケツの取得(なければ新規オブジェクト)
+        // プラグインバケツを取得(なければ新規オブジェクト)
+        // プラグインバケツにデータを設定して保存
         $linklist = $this->getPluginBucket($bucket->id);
-
-        // プラグインバケツにデータ設定
         $linklist->name = $request->name;
-
-        // データ保存
         $linklist->save();
+
+        // プラグインフレームを作成 or 更新
+        $linklist_frame = LinklistFrame::updateOrCreate(
+           ['frame_id' => $frame_id],
+           ['linklist_id' => $linklist->id, 'frame_id' => $frame_id],
+        );
 
         // 登録後はリダイレクトされて編集ページが開く。
         return;

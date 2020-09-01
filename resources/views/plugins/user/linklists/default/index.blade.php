@@ -26,31 +26,31 @@
         <div class="row">
             <p class="text-right col-12">
                 {{-- 新規登録ボタン --}}
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
+                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
         </div>
     @endif
 @endcan
 
-{{-- FAQ表示 --}}
+{{-- リンク表示 --}}
 @if (isset($posts))
     <ul>
     @foreach($posts as $post)
-        @if (empty($post->url))
         <li>
             @can('posts.update',[[null, 'linklists', $buckets]])
-                <span class="badge badge-primary"><i class="far fa-edit"></i></span>
+                <a href="{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}"><i class="far fa-edit"></a></i>
             @endcan
-            {{$post->title}}
+            @if (empty($post->url))
+                {{$post->title}}
+            @else
+                <a href="{{$post->url}}" target="_blank">{{$post->title}}</a>
+            @endif
+            @if (!empty($post->description))
+                <div class="alert alert-secondary" role="alert">
+                  {{$post->description}}
+                </div>
+            @endif
         </li>
-        @else
-        <li>
-            @can('posts.update',[[null, 'linklists', $buckets]])
-                <span class="badge badge-primary"><i class="far fa-edit"></i></span>
-            @endcan
-            <a href="{{$post->url}}" target="_blank">{{$post->title}}</a>
-        </li>
-        @endif
     @endforeach
     </ul>
 @endif
