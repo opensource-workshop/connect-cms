@@ -63,7 +63,7 @@
         {{-- 詳細ボタン --}}
         <button
             type="button"
-            class="btn btn-primary btn-xs cc-font-90 text-nowrap"
+            class="btn btn-success btn-xs cc-font-90 text-nowrap"
             {{-- 選択肢を保持する項目、且つ、選択肢の設定がない場合のみツールチップを表示 --}}
             @if (
                 ($column->column_type == DatabaseColumnType::radio ||
