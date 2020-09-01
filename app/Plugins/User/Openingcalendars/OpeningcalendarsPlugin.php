@@ -168,9 +168,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
         //print_r($patterns);
 
         // 過去・未来の表示年月
-        $view_before_ym = date("Y-m", strtotime(" - " . $openingcalendar_frame->view_before_month . " month"));
-        $view_after_ym = date("Y-m", strtotime(" + " . $openingcalendar_frame->view_after_month . " month"));
-
+        $view_before_ym = Carbon::now()->subMonthsNoOverflow($openingcalendar_frame->view_before_month)->format('Y-m');
+        $view_after_ym = Carbon::now()->addMonthsNoOverflow($openingcalendar_frame->view_after_month)->format('Y-m');
         // リクエストパラメータ方式を検討したが、STOP。同じページに複数の開館カレンダーを配置する＆それぞれがデータの登録状況が異なるため。
 
         //// 表示候補（過去の表示月数、未来の表示月数の範囲で年月取得）

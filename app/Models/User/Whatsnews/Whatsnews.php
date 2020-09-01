@@ -18,7 +18,15 @@ class Whatsnews extends Model
     public function getTargetPlugins()
     {
         // 新着情報として対象としているプラグインの定義
-        $target_plugins = array("blogs" => false);
+        // $target_plugins = array(
+        //     "blogs" => false,
+        //     "databases" => false,
+        // );
+        $target_plugins = array();
+        $target_plugin_keys = \WhatsnewsTargetPlugin::getMemberKeys();
+        foreach ($target_plugin_keys as $target_plugin_key) {
+            $target_plugins[$target_plugin_key] = false;
+        }
 
         // 表示ON になっているプラグインの情報を付与して返却
         if (!empty($this->target_plugins)) {

@@ -11,16 +11,27 @@ class DatabasesInputs extends Model
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
 
+    // Carbonインスタンス（日付）に自動的に変換
+    protected $dates = ['posted_at'];
+
     // 更新する項目の定義
-    protected $fillable = ['databases_id', 'databases_inputs_id', 'databases_columns_id', 'value', 'created_at', 'updated_at'];
+    protected $fillable = [
+        'databases_id',
+        'databases_inputs_id',
+        'databases_columns_id',
+        'value',
+        'posted_at',
+        'created_at',
+        'updated_at'
+    ];
 
     /**
-    *  指定したタイプの項目があるか判定
-    */
+     *  指定したタイプの項目があるか判定
+     */
     public function hasType($columns, $_type)
     {
         $_types = array();
-        
+
         if ($_type && is_string($_type)) {
             //文字列で項目のタイプが指定されていたとき
             $_types = $this->getColumnTypeAry($_type);
@@ -43,32 +54,32 @@ class DatabasesInputs extends Model
     }
 
     /**
-    *  テキスト項目があるか判定
-    */
+     *  テキスト項目があるか判定
+     */
     public function hasTitleType($columns)
     {
         return $this->hasType($columns, 'title');
     }
 
     /**
-    *  画像項目があるか判定
-    */
+     *  画像項目があるか判定
+     */
     public function hasImageType($columns)
     {
         return $this->hasType($columns, 'image');
     }
 
     /**
-    *  文章の項目があるか判定
-    */
+     *  文章の項目があるか判定
+     */
     public function hasSentenceType($columns)
     {
         return $this->hasType($columns, 'sentence');
     }
 
     /**
-    *  n番目の画像型の値があるか判定
-    */
+     *  n番目の画像型の値があるか判定
+     */
     public function hasThImage($columns, $input_cols)
     {
         if ($this->getThImage($columns, $input_cols)) {
@@ -78,8 +89,8 @@ class DatabasesInputs extends Model
     }
 
     /**
-    *  タイプを指定して、表示するデータの番号を返す
-    */
+     *  タイプを指定して、表示するデータの番号を返す
+     */
     public function getNumType($columns, $type, $th_no = 1)
     {
         //コラムのデータを１行づつ確認する。
@@ -101,8 +112,8 @@ class DatabasesInputs extends Model
     }
 
     /**
-    *  コラムをソートして返す（オブジェクトのままソートした方がいい？）
-    */
+     *  コラムをソートして返す（オブジェクトのままソートした方がいい？）
+     */
     public function getColumns($columns, $_hide = null)
     {
         $_columns = json_decode(json_encode($columns, JSON_UNESCAPED_UNICODE, 10), true);
@@ -125,8 +136,8 @@ class DatabasesInputs extends Model
     }
 
     /**
-    *  コラムのデータを配置しやすいように整理する
-    */
+     *  コラムのデータを配置しやすいように整理する
+     */
     private function getColumnsSet($columns, $hide)
     {
         if ($hide != 'list' && $hide != 'detail') {
@@ -189,8 +200,8 @@ class DatabasesInputs extends Model
     }
 
     /**
-    *  指定した番号のコラムの値を返す
-    */
+     *  指定した番号のコラムの値を返す
+     */
     public function getVolue($input_cols, $column_id, $col = '')
     {
 
@@ -210,8 +221,8 @@ class DatabasesInputs extends Model
     }
 
     /**
-    *  グループ化された項目のタイプ
-    */
+     *  グループ化された項目のタイプ
+     */
     private function getColumnTypeAry($_type)
     {
         //入力値が文字列以外なら偽を返す。
@@ -233,8 +244,8 @@ class DatabasesInputs extends Model
     }
 
     /**
-    *  タイプに合わせた value をソースを返す
-    */
+     *  タイプに合わせた value をソースを返す
+     */
     public function getTagType($input_cols, $column, $notag = null)
     {
 
@@ -273,8 +284,8 @@ class DatabasesInputs extends Model
     }
 
     /**
-    * メニュー用のリンクを返す
-    */
+     * メニュー用のリンクを返す
+     */
     public function getPageFrameLink($frames, $pageid, $frameid)
     {
         //データベースが存在するフレーム設定を読み込む

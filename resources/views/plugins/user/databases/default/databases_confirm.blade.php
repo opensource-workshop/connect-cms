@@ -44,9 +44,10 @@
     {{ csrf_field() }}
     @foreach($databases_columns as $database_column)
 
-        {{-- 登録日型・更新日型は入力表示しない --}}
+        {{-- 登録日型・更新日型・公開日型は入力表示しない --}}
         @if($database_column->column_type == DatabaseColumnType::created ||
-            $database_column->column_type == DatabaseColumnType::updated)
+            $database_column->column_type == DatabaseColumnType::updated ||
+            $database_column->column_type == DatabaseColumnType::posted)
             @continue
         @endif
 
@@ -93,7 +94,11 @@
                 {{$request->databases_columns_value[$database_column->id]}}
                 <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
                 @break
-            @case("date")
+            @case(DatabaseColumnType::date)
+                {{$request->databases_columns_value[$database_column->id]}}
+                <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
+                @break
+            @case(DatabaseColumnType::dates_ym)
                 {{$request->databases_columns_value[$database_column->id]}}
                 <input name="databases_columns_value[{{$database_column->id}}]" class="form-control" type="hidden" value="{{$request->databases_columns_value[$database_column->id]}}">
                 @break
@@ -160,6 +165,18 @@
     @foreach($delete_upload_column_ids as $delete_upload_column_id)
         <input name="delete_upload_column_ids[{{$delete_upload_column_id}}]" type="hidden" value="{{$delete_upload_column_id}}">
     @endforeach
+
+    {{-- 固定項目エリア --}}
+    <hr>
+    <div class="form-group container-fluid row">
+        {{-- ラベル --}}
+        <label class="col-sm-2 control-label text-nowrap">公開日時</label>
+        {{-- 項目 --}}
+        <div class="col-sm-10">
+            {{$request->posted_at}}
+            <input name="posted_at" class="form-control" type="hidden" value="{{$request->posted_at}}">
+        </div>
+    </div>
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">

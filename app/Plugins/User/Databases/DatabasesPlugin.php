@@ -26,6 +26,7 @@ use App\Models\User\Databases\DatabasesInputCols;
 
 use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
+use App\Rules\CustomVali_DatesYm;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
@@ -154,6 +155,7 @@ class DatabasesPlugin extends UserPluginBase
         $databases_columns = [];
         if (!empty($database)) {
             $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
+            // 2020-08-19: 下記はフォームプラグインの名残。現状データベースではuser_mail_send_flagを使っていないが、DBにカラム存在するため、とりあえずそのままにする
             if ($database->user_mail_send_flag == '1' && empty($databases_columns->where('column_type', \DatabaseColumnType::mail)->first())) {
                 return 'mail_setting_error';
             }
@@ -449,21 +451,37 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
-            if ($sort_column_id == 'random' && $sort_column_order == 'session') {
+            // if ($sort_column_id == 'random' && $sort_column_order == 'session') {
+            //     $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
+            // } elseif ($sort_column_id == 'random' && $sort_column_order == 'every') {
+            //     $inputs_query->inRandomOrder();
+            // } elseif ($sort_column_id == 'created' && $sort_column_order == 'asc') {
+            //     $inputs_query->orderBy('databases_inputs.created_at', 'asc');
+            // } elseif ($sort_column_id == 'created' && $sort_column_order == 'desc') {
+            //     $inputs_query->orderBy('databases_inputs.created_at', 'desc');
+            // } elseif ($sort_column_id == 'updated' && $sort_column_order == 'asc') {
+            //     $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
+            // } elseif ($sort_column_id == 'updated' && $sort_column_order == 'desc') {
+            //     $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
+            if ($sort_column_id == \DatabaseSortFlag::random && $sort_column_order == \DatabaseSortFlag::order_session) {
                 $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
-            } elseif ($sort_column_id == 'random' && $sort_column_order == 'every') {
+            } elseif ($sort_column_id == \DatabaseSortFlag::random && $sort_column_order == \DatabaseSortFlag::order_every) {
                 $inputs_query->inRandomOrder();
-            } elseif ($sort_column_id == 'created' && $sort_column_order == 'asc') {
+            } elseif ($sort_column_id == \DatabaseSortFlag::created && $sort_column_order == \DatabaseSortFlag::order_asc) {
                 $inputs_query->orderBy('databases_inputs.created_at', 'asc');
-            } elseif ($sort_column_id == 'created' && $sort_column_order == 'desc') {
+            } elseif ($sort_column_id == \DatabaseSortFlag::created && $sort_column_order == \DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.created_at', 'desc');
-            } elseif ($sort_column_id == 'updated' && $sort_column_order == 'asc') {
+            } elseif ($sort_column_id == \DatabaseSortFlag::updated && $sort_column_order == \DatabaseSortFlag::order_asc) {
                 $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
-            } elseif ($sort_column_id == 'updated' && $sort_column_order == 'desc') {
+            } elseif ($sort_column_id == \DatabaseSortFlag::updated && $sort_column_order == \DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
-            } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'asc') {
+            } elseif ($sort_column_id == \DatabaseSortFlag::posted && $sort_column_order == \DatabaseSortFlag::order_asc) {
+                $inputs_query->orderBy('databases_inputs.posted_at', 'asc');
+            } elseif ($sort_column_id == \DatabaseSortFlag::posted && $sort_column_order == \DatabaseSortFlag::order_desc) {
+                $inputs_query->orderBy('databases_inputs.posted_at', 'desc');
+            } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == \DatabaseSortFlag::order_asc) {
                 $inputs_query->orderBy('databases_input_cols.value', 'asc');
-            } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == 'desc') {
+            } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == \DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_input_cols.value', 'desc');
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
@@ -826,6 +844,8 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($id)) {
             // idなし=登録時
             $input_cols = null;
+            $inputs = new DatabasesInputs();
+            $inputs->posted_at = date('Y-m-d H:i:00');
         } else {
             // idあり=編集時
             // 登録データ行の取得
@@ -856,6 +876,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns' => $databases_columns,
                 'databases_columns_id_select' => $databases_columns_id_select,
                 'input_cols'  => $input_cols,
+                'inputs'      => $inputs,
                 'errors'      => $errors,
             ]
         )->withInput($request->all);
@@ -889,6 +910,12 @@ class DatabasesPlugin extends UserPluginBase
      */
     private function getValidatorRule($validator_array, $databases_column, $request)
     {
+        // 登録日型・更新日型・公開日型は入力表示しないため、バリデータチェックしない
+        if ($databases_column->column_type == \DatabaseColumnType::created ||
+                $databases_column->column_type == \DatabaseColumnType::updated ||
+                $databases_column->column_type == \DatabaseColumnType::posted) {
+            return $validator_array;
+        }
 
         $validator_rule = null;
         // 必須チェック
@@ -976,9 +1003,14 @@ class DatabasesPlugin extends UserPluginBase
             $validator_rule[] = 'after_or_equal:' . $comparison_date;
         }
         // 日付チェック
-        if ($databases_column->column_type == \FormColumnType::date) {
+        if ($databases_column->column_type == \DatabaseColumnType::date) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'date';
+        }
+        // 複数年月型（テキスト入力）チェック
+        if ($databases_column->column_type == \DatabaseColumnType::dates_ym) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = new CustomVali_DatesYm();
         }
         // バリデータールールをセット
         if ($validator_rule) {
@@ -1010,19 +1042,16 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // エラーチェック配列
-        $validator_array = array( 'column' => array(), 'message' => array());
+        $validator_array = array('column' => array(), 'message' => array());
 
         foreach ($databases_columns as $databases_column) {
-            // まとめ行であれば、ネストされた配列をさらに展開
-            if ($databases_column->group) {
-                foreach ($databases_column->group as $group_item) {
-                    // まとめ行で指定している項目について、バリデータールールをセット
-                    $validator_array = self::getValidatorRule($validator_array, $group_item, $request);
-                }
-            }
-            // まとめ行以外の項目について、バリデータールールをセット
-            $validator_array = self::getValidatorRule($validator_array, $databases_column, $request);
+            // バリデータールールをセット
+            $validator_array = $this->getValidatorRule($validator_array, $databases_column, $request);
         }
+
+        // 固定項目エリア
+        $validator_array['column']['posted_at'] = ['required', 'date_format:Y-m-d H:i'];
+        $validator_array['message']['posted_at'] = '公開日時';
 
         // 入力値をトリム
         $request->merge(self::trimInput($request->all()));
@@ -1034,6 +1063,9 @@ class DatabasesPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
+            // var_dump($validator->errors()->first("posted_at"));
+            // Log::debug(var_export($request->posted_at, true));
+
             return $this->input($request, $page_id, $frame_id, $id, $validator->errors());
         }
 
@@ -1139,12 +1171,14 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs = new DatabasesInputs();
             $databases_inputs->databases_id = $database->id;
             $databases_inputs->status = $status;
+            $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
             // 更新されたら、行レコードの updated_at を更新したいので、update()
             $databases_inputs->updated_at = now();
             $databases_inputs->status = $status;
+            $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->update();
         }
 
@@ -1205,9 +1239,10 @@ class DatabasesPlugin extends UserPluginBase
 
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
-            // 登録日型・更新日型は、databases_inputsテーブルの登録日・更新日を利用するため、登録しない
+            // 登録日型・更新日型・公開日型は、databases_inputsテーブルの登録日・更新日・公開日を利用するため、登録しない
             if ($databases_column->column_type == \DatabaseColumnType::created ||
-                    $databases_column->column_type == \DatabaseColumnType::updated) {
+                    $databases_column->column_type == \DatabaseColumnType::updated ||
+                    $databases_column->column_type == \DatabaseColumnType::posted) {
                 continue;
             }
 
@@ -1578,7 +1613,8 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($request->databases_id)) {
             // バケツの登録
             $bucket = new Buckets();
-            $bucket->bucket_name = '無題';
+            // $bucket->bucket_name = '無題';
+            $bucket->bucket_name = $request->databases_name;
             $bucket->plugin_name = 'databases';
             $bucket->save();
 
@@ -1606,21 +1642,24 @@ class DatabasesPlugin extends UserPluginBase
             // データベースデータ取得
             $databases = Databases::where('id', $request->databases_id)->first();
 
+            // データベース名で、Buckets名も更新する
+            Buckets::where('id', $databases->bucket_id)->update(['bucket_name' => $request->databases_name]);
+
             $message = 'データベース設定を変更しました。';
         }
 
         // データベース設定
-        $databases->databases_name          = $request->databases_name;
+        $databases->databases_name      = $request->databases_name;
         $databases->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $databases->mail_send_address   = $request->mail_send_address;
         $databases->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;
         $databases->from_mail_name      = $request->from_mail_name;
         $databases->mail_subject        = $request->mail_subject;
-        $databases->mail_databaseat         = $request->mail_databaseat;
+        $databases->mail_databaseat     = $request->mail_databaseat;
         $databases->data_save_flag      = (empty($request->data_save_flag))      ? 0 : $request->data_save_flag;
         $databases->after_message       = $request->after_message;
-        $databases->numbering_use_flag  = (empty($request->numbering_use_flag))      ? 0 : $request->numbering_use_flag;
-        $databases->numbering_prefix   = $request->numbering_prefix;
+        $databases->numbering_use_flag  = (empty($request->numbering_use_flag))  ? 0 : $request->numbering_use_flag;
+        $databases->numbering_prefix    = $request->numbering_prefix;
 
         // データ保存
         $databases->save();
@@ -1717,6 +1756,12 @@ class DatabasesPlugin extends UserPluginBase
         $column->required = $request->required ? \Required::on : \Required::off;
         $column->display_sequence = $max_display_sequence;
         $column->caption_color = \Bs4TextColor::dark;
+
+        // 複数年月型（テキスト入力）は、デフォルトでキャプションをセットする
+        if (\DatabaseColumnType::dates_ym == $request->column_type) {
+            $column->caption = \DatabaseColumnType::dates_ym_caption;
+        }
+
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を追加しました。';
 
@@ -1803,6 +1848,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.column_name',
                 'databases_columns.required',
                 'databases_columns.frame_col',
+                'databases_columns.title_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
                 'databases_columns.classname',
@@ -1824,6 +1870,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.column_name',
                 'databases_columns.required',
                 'databases_columns.frame_col',
+                'databases_columns.title_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
                 'databases_columns.classname',
@@ -1834,12 +1881,22 @@ class DatabasesPlugin extends UserPluginBase
             ->orderby('databases_columns.display_sequence')
             ->get();
 
+        // 新着等のタイトル指定 が設定されているか（データベース毎に１つ設定）
+        $title_flag = 0;
+        foreach ($columns as $column) {
+            if ($column->title_flag) {
+                $title_flag = 1;
+                break;
+            }
+        }
+
         // 編集画面テンプレートを呼び出す。
         return $this->view(
             'databases_edit',
             [
                 'databases_id'   => $databases_id,
                 'columns'    => $columns,
+                'title_flag' => $title_flag,
                 'message'    => $message,
                 'errors'     => $errors,
             ]
@@ -1911,6 +1968,13 @@ class DatabasesPlugin extends UserPluginBase
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
         $column->required = $request->required ? \Required::on : \Required::off;
+
+        // 複数年月型（テキスト入力）は、キャプションが空なら定型文をセットする
+        if (\DatabaseColumnType::dates_ym == $request->column_type &&
+                !$column->caption) {
+            $column->caption = \DatabaseColumnType::dates_ym_caption;
+        }
+
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を更新しました。';
 
@@ -2024,6 +2088,19 @@ class DatabasesPlugin extends UserPluginBase
                 return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, null, $errors);
             }
         }
+
+        // タイトル指定
+        $title_flag = (empty($request->title_flag)) ? 0 : $request->title_flag;
+        if ($title_flag) {
+            // title_flagはデータベース内で１つだけ ON にする項目
+            // そのため title_flag = 1 なら データベース内の title_flag = 1 を一度 0 に更新する。
+            DatabasesColumns::where('databases_id', $request->databases_id)
+                    ->where('title_flag', 1)
+                    ->update(['title_flag' => 0]);
+        }
+
+        // タイトル指定
+        $column->title_flag = $title_flag;
 
         // 項目の更新処理
         $column->caption = $request->caption;
@@ -2401,10 +2478,11 @@ class DatabasesPlugin extends UserPluginBase
         $request->flash();
 
         // デフォルトで必須
-        $validator_values['view_count'] = ['required'];
+        $validator_values['view_count'] = ['required', 'numeric'];
         $validator_attributes['view_count'] = '表示件数';
 
-        //半角数字
+        // menuテンプレートでのみ使われる項目
+        // 半角数字
         $validator_values['view_page_id'] = ['numeric'];
         $validator_attributes['view_page_id'] = '表示するページID';
         $validator_values['view_frame_id'] = ['numeric'];
@@ -2603,5 +2681,75 @@ class DatabasesPlugin extends UserPluginBase
         // 一時保存
         $isTemporary = true;
         $this->publicStore($request, $page_id, $frame_id, $id, $isTemporary);
+    }
+
+    /* スタティック関数 */
+
+    /**
+     *  新着情報用メソッド
+     */
+    public static function getWhatsnewArgs()
+    {
+        // 戻り値('sql_method'、link_pattern'、'link_base')
+        // 新着側でユニオンしてるため、selectで指定する項目は全必須。プラグイン側にない項目はNULLで返す。
+
+/*
+SELECT
+    frames.page_id                as page_id,
+    frames.id                     as frame_id,
+    databases_inputs.id           as post_id,
+    databases_input_cols.`value`  as post_title,
+    null                          as important,
+    databases_inputs.posted_at    as posted_at,
+    databases_inputs.created_name as posted_name,
+    null                          as classname,
+    null                          as category
+FROM
+    frames,
+    `databases`,
+    databases_inputs
+    LEFT JOIN databases_columns
+        ON databases_inputs.databases_id = databases_columns.databases_id
+        AND databases_columns.title_flag = 1
+    LEFT JOIN databases_input_cols
+        ON databases_inputs.id = databases_input_cols.databases_inputs_id
+        AND databases_columns.id = databases_input_cols.databases_columns_id
+WHERE
+    frames.bucket_id = `databases`.bucket_id
+AND `databases`.id = databases_inputs.databases_id
+AND databases_inputs.status = 0
+AND databases_inputs.posted_at <= NOW()
+;
+*/
+        // データ詳細の取得
+        $return[] = DatabasesInputs::select(
+            'frames.page_id                as page_id',
+            'frames.id                     as frame_id',
+            'databases_inputs.id           as post_id,',
+            'databases_input_cols.value    as post_title,',
+            DB::raw('null                  as important'),
+            'databases_inputs.posted_at    as posted_at',
+            'databases_inputs.created_name as posted_name',
+            DB::raw('null                  as classname'),
+            DB::raw('null                  as category'),
+            DB::raw('"databases"           as plugin_name')
+        )
+                ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
+                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+                ->leftJoin('databases_columns', function ($leftJoin) {
+                    $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                                ->where('databases_columns.title_flag', 1);
+                })
+                ->leftJoin('databases_input_cols', function ($leftJoin) {
+                    $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+                })
+                ->where('databases_inputs.status', 0)
+                ->where('databases_inputs.posted_at', '<=', Carbon::now());
+
+        $return[] = 'show_page_frame_post';
+        $return[] = '/plugin/databases/detail';
+
+        return $return;
     }
 }

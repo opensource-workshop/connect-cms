@@ -99,6 +99,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">メールフォーマット</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <textarea name="mail_format" class="form-control" rows=5 placeholder="（例）受付内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('mail_format', $form->mail_format)}}</textarea>
+            <small class="text-muted">※ [[site_name]] を記述すると該当部分にサイト名が入ります。</small><br>
             <small class="text-muted">※ [[body]] を記述すると該当部分に登録内容が入ります。</small><br>
             <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
         </div>

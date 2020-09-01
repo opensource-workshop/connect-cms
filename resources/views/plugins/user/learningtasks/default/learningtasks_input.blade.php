@@ -39,8 +39,8 @@
     <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
 
     <div class="form-group row">
-        <label class="col-sm-2 control-label">タイトル <label class="badge badge-danger">必須</label></label>
-        <div class="col-sm-10">
+        <label class="col-md-2">タイトル <label class="badge badge-danger">必須</label></label>
+        <div class="col-md-10">
             <input type="text" name="post_title" value="{{old('post_title', $learningtasks_posts->post_title)}}" class="form-control">
             {{-- <textarea name="post_title">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea> --}}
             @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
@@ -48,16 +48,16 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-2 control-label">本文 <label class="badge badge-danger">必須</label></label>
-        <div class="col-sm-10">
+        <label class="col-md-2">本文 <label class="badge badge-danger">必須</label></label>
+        <div class="col-md-10">
             <textarea name="post_text">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
             @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
         </div>
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-2" for="add_task_file">課題ファイル</label>
-        <div class="col-sm-10">
+        <label class="col-md-2" for="add_task_file">課題ファイル</label>
+        <div class="col-md-10">
             <div class="custom-file">
                 <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
                 <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
@@ -66,8 +66,8 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-2 control-label">ファイル一覧</label>
-        <div class="col-sm-10">
+        <label class="col-md-2">ファイル一覧</label>
+        <div class="col-md-10">
             <div class="card p-2">
             @isset($learningtasks_posts_files)
             @foreach($learningtasks_posts_files as $posts_file)
@@ -83,8 +83,8 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-2 control-label">投稿日時 <label class="badge badge-danger">必須</label></label>
-        <div class="col-sm-10">
+        <label class="col-md-2">投稿日時 <label class="badge badge-danger">必須</label></label>
+        <div class="col-md-10">
             <div class="input-group date" id="posted_at" data-target-input="nearest">
                 <input type="text" name="posted_at" value="{{old('posted_at', $learningtasks_posts->posted_at)}}" class="form-control datetimepicker-input  col-md-3" data-target="#posted_at">
                 <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
@@ -106,8 +106,8 @@
     </script>
 
     <div class="form-group row">
-        <label class="col-sm-2 control-label">重要記事</label>
-        <div class="col-sm-10">
+        <label class="col-md-2">重要記事</label>
+        <div class="col-md-10">
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="important" value="1" class="custom-control-input" id="important" @if(old('important', $learningtasks_posts->important)) checked=checked @endif>
                 <label class="custom-control-label" for="important">チェックすると、新着に表示し続けることができます。</label>
@@ -116,16 +116,16 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-2 control-label">表示SEQ</label>
-        <div class="col-sm-10">
+        <label class="col-md-2">表示SEQ</label>
+        <div class="col-md-10">
             <input type="text" name="display_sequence" value="{{old('display_sequence', $learningtasks_posts->display_sequence)}}" class="form-control">
             @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
         </div>
     </div>
 
     <div class="form-group row">
-        <label class="col-sm-2 control-label">カテゴリ</label>
-        <div class="col-sm-10">
+        <label class="col-md-2">カテゴリ</label>
+        <div class="col-md-10">
             <select class="form-control" name="categories_id" class="form-control">
                 <option value=""></option>
                 @foreach($learningtasks_categories as $category)
@@ -138,8 +138,8 @@
 
     {{--
     <div class="form-group row">
-        <label class="col-sm-2 control-label">タグ</label>
-        <div class="col-sm-10">
+        <label class="col-md-2">タグ</label>
+        <div class="col-md-10">
             <input type="text" name="tags" value="{{old('tags', $learningtasks_posts_tags)}}" class="form-control">
             @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif
             <small class="form-text text-muted">カンマ区切りで複数指定可能</small>
