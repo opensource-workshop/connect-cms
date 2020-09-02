@@ -79,11 +79,7 @@
             <div class="row">
                 <div class="col-xl-3"></div>
                 <div class="col-9 col-xl-6">
-                    @if($id)
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-                    @else
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-                    @endif
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
                     <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> 確認画面へ</button>
                 </div>
                 @if (!empty($id))
