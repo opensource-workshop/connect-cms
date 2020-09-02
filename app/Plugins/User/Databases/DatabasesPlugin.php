@@ -608,6 +608,13 @@ class DatabasesPlugin extends UserPluginBase
         }
         // Log::debug(var_export($group_rows_cols_columns, true));
 
+        // 行を数値でソート
+        ksort($group_rows_cols_columns, SORT_NUMERIC);
+        foreach ($group_rows_cols_columns as &$group_row_column) {
+            // 列を数値でソート
+            ksort($group_row_column, SORT_NUMERIC);
+        }
+
         // 行グループ・列グループどっちも設定なし配列を、設定あり配列のお尻に追加し直す
         foreach ($group_rows_cols_null_columns as $group_rows_cols_null_column) {
             $group_rows_cols_columns[] = $group_rows_cols_null_column;
