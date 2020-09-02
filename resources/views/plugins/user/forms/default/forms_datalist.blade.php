@@ -68,10 +68,10 @@
                     <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
                     <td nowrap>{{$plugin->plugin_bucket_name}}</td>
                     <td nowrap>
-                        <button class="btn btn-primary btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}'">
+                        <button class="btn btn-success btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
                             <i class="far fa-edit"></i> 設定変更
                         </button>
-                        <button type="button" class="btn btn-success btn-sm" onclick="javascript:submit_download({{$plugin->id}});">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="javascript:submit_download({{$plugin->id}});">
                             <i class="fas fa-file-download"></i> ダウンロード
                         </button>
                     </td>
@@ -83,10 +83,10 @@
         </div>
 
         <div class="text-center">
-            {{ $plugins->links() }}
+            {{ $plugins->fragment('frame-' . $frame_id)->links() }}
         </div>
 
-        <div class="form-group text-center">
+        <div class="form-group text-center mt-3">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
         </div>
