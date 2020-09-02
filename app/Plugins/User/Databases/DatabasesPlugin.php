@@ -2776,12 +2776,12 @@ class DatabasesPlugin extends UserPluginBase
         if (!empty($shortness)) {
             // Log::debug(var_export($header_column_format, true));
             // Log::debug(var_export($header_columns, true));
-            return array("ヘッダー行に " . implode(",", $shortness) . " が不足しています。");
+            return array("1行目に " . implode(",", $shortness) . " が不足しています。");
         }
         // 項目の不要チェック
         $excess = array_diff($header_columns, $header_column_format);
         if (!empty($excess)) {
-            return array("ヘッダー行に " . implode(",", $excess) . " は不要です。");
+            return array("1行目に " . implode(",", $excess) . " は不要です。");
         }
 
         return array();
