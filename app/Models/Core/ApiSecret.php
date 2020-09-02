@@ -18,7 +18,7 @@ class ApiSecret extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['secret_name', 'secret_code', 'apis'];
+    protected $fillable = ['secret_name', 'secret_code', 'apis', 'ip_address'];
 
     /**
      * 使用するAPI の配列を返す

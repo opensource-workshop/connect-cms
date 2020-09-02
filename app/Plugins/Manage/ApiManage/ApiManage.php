@@ -96,13 +96,14 @@ class ApiManage extends ManagePluginBase
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'secret_name' => ['required_with:secret_code,apis'],
-            'secret_code' => ['required_with:secret_name,apis'],
+            'secret_name' => ['required_with:secret_code,apis,ip_address'],
+            'secret_code' => ['required_with:secret_name,apis,ip_address'],
         ]);
         $validator->setAttributeNames([
             'secret_name' => '利用名',
             'secret_code' => '秘密コード',
-            'apis' => '使用API',
+            'ip_address'  => 'IPアドレス',
+            'apis'        => '使用API',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -120,7 +121,7 @@ class ApiManage extends ManagePluginBase
 
                 $api_secret = ApiSecret::updateOrCreate(
                     ['secret_name' => $api_secret['secret_name'], 'secret_code' => $api_secret['secret_code']],
-                    ['secret_name' => $api_secret['secret_name'], 'secret_code' => $api_secret['secret_code'], 'apis' => $apis]
+                    ['secret_name' => $api_secret['secret_name'], 'secret_code' => $api_secret['secret_code'], 'apis' => $apis, 'ip_address' => $api_secret['ip_address']]
                 );
             }
         }
@@ -134,7 +135,7 @@ class ApiManage extends ManagePluginBase
 
             $api_secret = ApiSecret::updateOrCreate(
                 ['secret_name' => $request->secret_name, 'secret_code' => $request->secret_code],
-                ['secret_name' => $request->secret_name, 'secret_code' => $request->secret_code, 'apis' => $apis]
+                ['secret_name' => $request->secret_name, 'secret_code' => $request->secret_code, 'apis' => $apis, 'ip_address' => $request->ip_address]
             );
         }
 
