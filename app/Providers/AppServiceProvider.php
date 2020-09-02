@@ -178,7 +178,7 @@ class AppServiceProvider extends AuthServiceProvider
             return $this->check_authority($user, 'buckets.downloadCsv', $args);
         });
 
-        // CSVアップロード
+        // CSVアップロード（CSVインポート）
         Gate::define('buckets.uploadCsv', function ($user, $args = null) {
             return $this->check_authority($user, 'buckets.uploadCsv', $args);
         });
