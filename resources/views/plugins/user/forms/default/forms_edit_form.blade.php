@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォームプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -36,7 +36,7 @@
 
 @if (!$form->id && !$create_flag)
 @else
-<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにforms_id を空にする --}}
