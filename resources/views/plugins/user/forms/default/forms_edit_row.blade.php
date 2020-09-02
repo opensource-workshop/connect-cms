@@ -74,7 +74,7 @@
             class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
         >
-            <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
+            <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
         </button>
     </td>
     {{-- 削除ボタン --}}
