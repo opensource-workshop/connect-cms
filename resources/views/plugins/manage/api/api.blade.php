@@ -38,6 +38,7 @@
         <thead>
             <th nowrap>利用名</th>
             <th nowrap>秘密コード</th>
+            <th nowrap>制限IPアドレス</th>
             <th nowrap>使用API</th>
             <th nowrap><i class="fas fa-trash-alt"></i></th>
         </thead>
@@ -50,9 +51,14 @@
                         <input type="text" name="api_secrets[{{$loop->iteration}}][secret_name]" value="{{$api_secret->secret_name}}" class="form-control">
                     </div>
                 </td>
-                <td class="table-text col-1 p-1 w-25">
+                <td class="table-text col-1 p-1 w-auto">
                     <div class="form-group mb-0">
                         <input type="text" name="api_secrets[{{$loop->iteration}}][secret_code]" value="{{$api_secret->secret_code}}" class="form-control">
+                    </div>
+                </td>
+                <td class="table-text col-1 p-1 w-auto">
+                    <div class="form-group mb-0">
+                        <input type="text" name="api_secrets[{{$loop->iteration}}][ip_address]" value="{{$api_secret->ip_address}}" class="form-control">
                     </div>
                 </td>
                 <td class="table-text p-1 w-auto">
@@ -64,7 +70,7 @@
                                 @else
                                     <input type="checkbox" name="api_secrets[{{$loop->parent->iteration}}][apis][{{$api_name}}]" value="{{$api_name}}" id="apis_{{$loop->parent->iteration}}_{{$api_name}}" class="custom-control-input">
                                 @endif
-                                <label class="custom-control-label" for="apis_{{$loop->parent->iteration}}_{{$api_name}}">{{$api_check['plugin_name_full']}}</label>
+                                <label class="custom-control-label text-nowrap" for="apis_{{$loop->parent->iteration}}_{{$api_name}}">{{$api_check['plugin_name_full']}}</label>
                             </div>
                         @endforeach
                     </div>
@@ -83,6 +89,11 @@
                 <td class="table-text col-1 p-1 w-auto">
                     <div class="form-group mb-0">
                         <input type="text" name="secret_code" value="{{old('secret_code')}}" class="form-control">
+                    </div>
+                </td>
+                <td class="table-text col-1 p-1 w-auto">
+                    <div class="form-group mb-0">
+                        <input type="text" name="ip_address" value="{{old('ip_address')}}" class="form-control">
                     </div>
                 </td>
                 <td class="table-text p-1 w-auto" nowrap>
@@ -104,6 +115,7 @@
         </table>
         @if ($errors && $errors->has('secret_name')) <div class="text-danger">{{$errors->first('secret_name')}}</div> @endif
         @if ($errors && $errors->has('secret_code')) <div class="text-danger">{{$errors->first('secret_code')}}</div> @endif
+        @if ($errors && $errors->has('ip_address')) <div class="text-danger">{{$errors->first('ip_address')}}</div> @endif
 
         {{-- Submitボタン --}}
         <div class="form-group text-center">
