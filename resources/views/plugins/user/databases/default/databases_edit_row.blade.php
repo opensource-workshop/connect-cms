@@ -113,10 +113,9 @@
                     <i class="far fa-list-alt"></i>
                     {{ $column->select_names }}
                 </div>
-            @elseif(!$column->caption && $column->select_count == 0)
-                {{-- 選択肢データがなく、キャプションの設定もない場合はツールチップ分、余白として改行する --}}
-                {{-- change: <td>タグ内に表示するもがなければ<td>タグ自体が無視されるので、改行不要 --}}
-                {{--<br>--}}
+            @elseif(!$column->caption && !$column->title_flag && $column->select_count == 0)
+                {{-- 選択肢データがなく、キャプションの設定・タイトル指定もない場合はツールチップ分、余白として改行する --}}
+                <br>
             @endif
 
             @if ($column->caption)
