@@ -281,6 +281,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
+        // Log::debug(var_export($database, true));
+        // -> DB->first();でデータなしの場合、NULLが返る
+        // -> [2020-09-02 18:05:43] local.DEBUG: NULL
 
 
         $setting_error_messages = null;
@@ -294,11 +297,22 @@ class DatabasesPlugin extends UserPluginBase
              * ※データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合はリテラル「mail_setting_error」が返る
              */
             $databases_columns = $this->getDatabasesColumns($database);
+            // Log::debug(var_export($databases_columns, true));
+            // -> DB->get();でデータなしの場合、Collectionクラスが返る
+            // ->
+            // [2020-09-02 18:02:46] local.DEBUG: Illuminate\Database\Eloquent\Collection::__set_state(array(
+            //    'items' =>
+            //    array (
+            //    ),
+            //  ))
 
             if ($databases_columns == 'mail_setting_error') {
+                // memo: フォームの名残。データベース設定画面に「登録者にメール送信する」項目はないため、ここに入る事をはない想定。
                 // データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合
                 $setting_error_messages[] = 'メールアドレス型の項目を設定してください。（データベースの設定「登録者にメール送信する」と関連）';
-            } elseif (!$databases_columns) {
+            // bugfix: DB->get();でデータなしの場合、Collectionクラスが返るため、CollectionクラスのisEmpty()を使う
+            // } elseif (!$databases_columns) {
+            } elseif ($databases_columns->isEmpty()) {
                 // 項目データがない場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
