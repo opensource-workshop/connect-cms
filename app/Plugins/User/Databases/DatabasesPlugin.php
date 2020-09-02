@@ -269,8 +269,11 @@ class DatabasesPlugin extends UserPluginBase
         $request->flash();
 
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-        if ($request->has('page')) {
-            $request->session()->put('page_no.'.$frame_id, $request->page);
+        // if ($request->has('page')) {
+        //     $request->session()->put('page_no.'.$frame_id, $request->page);
+        $frame_page = "frame_{$frame_id}_page";
+        if ($request->has($frame_page)) {
+                $request->session()->put('page_no.'.$frame_id, $request->$frame_page);
         } else {
             // 指定がなければセッションから削除
             $request->session()->forget('page_no.'.$frame_id);
