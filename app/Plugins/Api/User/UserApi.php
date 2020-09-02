@@ -39,6 +39,19 @@ class UserApi extends ApiPluginBase
         // 返すデータ取得
         $user = User::where('userid', $userid)->first();
         if (empty($user)) {
+            // ユーザがいない場合は、外部認証ユーザを探しに行く。
+            $user_info = $this->getOtherAuthUser($request, $userid);
+            if ($user_info['code'] == 200) {
+                $ret = array('code' => 200, 'message' => '', 'userid' => $userid, 'name' => $user_info['name']);
+                return $this->encodeJson($ret, $request);
+            }
+            if ($user_info['code'] == 100) {
+                // 続き
+            } else {
+                $ret = array('code' => $user_info['code'], 'message' => $user_info['message']);
+                return $this->encodeJson($ret, $request);
+            }
+
             $ret = array('code' => 404, 'message' => '指定されたユーザが存在しません。');
             return $this->encodeJson($ret, $request);
         }

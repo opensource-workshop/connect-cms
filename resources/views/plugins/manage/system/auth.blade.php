@@ -80,6 +80,15 @@
         </div>
     </div>
 
+    {{-- 管理者操作用パスワード --}}
+    <div class="form-group row">
+        <div class="col-1"></div>
+        <div class="col-10 col-sm-6 col-md-4">
+            <label class="col-form-label">管理者操作用パスワード</label>
+            <input type="text" name="auth_netcomons2_admin_password" value="{{$config->additional5}}" class="form-control">
+        </div>
+    </div>
+
     <div class="form-group text-center">
         <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
     </div>
