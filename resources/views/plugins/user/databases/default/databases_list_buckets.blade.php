@@ -74,6 +74,9 @@
                         <button type="button" class="btn btn-primary btn-sm" onclick="submit_download({{$plugin->id}});">
                             <i class="fas fa-file-download"></i> ダウンロード
                         </button>
+                        <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/import/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
+                            <i class="fas fa-file-upload"></i> インポート
+                        </button>
                     </td>
                     <td nowrap>{{$plugin->created_at}}</td>
                 </tr>
