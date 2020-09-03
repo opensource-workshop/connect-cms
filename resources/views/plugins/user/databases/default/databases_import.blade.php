@@ -90,10 +90,13 @@
         <label class="{{$frame->getSettingLabelClass()}}">文字コード</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <select name="character_code" class="form-control">
-                @foreach (CsvCharacterCode::getMembers() as $character_code => $character_code_display)
+                @foreach (CsvCharacterCode::getSelectMembers() as $character_code => $character_code_display)
                     <option value="{{$character_code}}"@if(old('character_code') == $character_code) selected @endif>{{$character_code_display}}</option>
                 @endforeach
             </select>
+            <small class="text-muted">
+                ※ UTF-8はBOM付・BOMなしどちらにも対応しています。<br>
+            </small>
             @if ($errors && $errors->has('character_code')) <div class="text-danger">{{$errors->first('character_code')}}</div> @endif
         </div>
     </div>
