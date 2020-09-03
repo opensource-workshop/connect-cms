@@ -2637,8 +2637,8 @@ class DatabasesPlugin extends UserPluginBase
                 // 一時ファイルの削除
                 Storage::delete($path);
 
-                $error_msgs = "文字コードの自動検出ができませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getDescription(\CsvCharacterCode::sjis_win) .
-                            ", " . \CsvCharacterCode::getDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
+                            ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
 
                 return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
             }

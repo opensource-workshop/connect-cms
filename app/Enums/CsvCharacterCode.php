@@ -31,4 +31,13 @@ final class CsvCharacterCode extends EnumsBase
         $enum[self::utf_8] = 'UTF-8';
         return $enum;
     }
+
+    /**
+     * セレクトボックスに対応した和名を返す
+     */
+    public static function getSelectMembersDescription($key): string
+    {
+        $enum = self::getSelectMembers();
+        return $enum[$key];
+    }
 }
