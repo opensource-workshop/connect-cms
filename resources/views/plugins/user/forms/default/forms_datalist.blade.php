@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン共通
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -37,15 +37,25 @@
     {{-- ダウンロード用フォーム --}}
     <form action="" method="post" name="form_download" class="d-inline">
         {{ csrf_field() }}
+        <input type="hidden" name="character_code" value="">
     </form>
 
     <script type="text/javascript">
         {{-- ダウンロードのsubmit JavaScript --}}
-        function submit_download(id) {
-            if( !confirm('登録データをダウンロードします。\nよろしいですか？') ) {
+        function submit_download_shift_jis(id) {
+            if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で登録データをダウンロードします。\nよろしいですか？') ) {
                 return;
             }
             form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
+            form_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+            form_download.submit();
+        }
+        function submit_download_utf_8(id) {
+            if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で登録データをダウンロードします。\nよろしいですか？') ) {
+                return;
+            }
+            form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
+            form_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
             form_download.submit();
         }
     </script>
@@ -71,9 +81,19 @@
                         <button class="btn btn-success btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
                             <i class="far fa-edit"></i> 設定変更
                         </button>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="javascript:submit_download({{$plugin->id}});">
-                            <i class="fas fa-file-download"></i> ダウンロード
-                        </button>
+
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
+                                <i class="fas fa-file-download"></i> ダウンロード
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">ドロップダウンボタン</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#" onclick="submit_download_shift_jis({{$plugin->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                                <a class="dropdown-item" href="#" onclick="submit_download_utf_8({{$plugin->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                            </div>
+                        </div>
                     </td>
                     <td nowrap>{{$plugin->created_at}}</td>
                 </tr>
@@ -87,7 +107,7 @@
         </div>
 
         <div class="form-group text-center mt-3">
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
         </div>
     </form>

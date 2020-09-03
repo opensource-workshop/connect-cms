@@ -1361,7 +1361,14 @@ ORDER BY forms_inputs_id, forms_columns_id
         }
 
         // 文字コード変換
-        $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
+        // $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            //「UTF-8」の「BOM」であるコード「0xEF」「0xBB」「0xBF」をカンマ区切りにされた文字列の先頭に連結
+            $csv_data = pack('C*', 0xEF, 0xBB, 0xBF) . $csv_data;
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
 
         return response()->make($csv_data, 200, $headers);
     }
