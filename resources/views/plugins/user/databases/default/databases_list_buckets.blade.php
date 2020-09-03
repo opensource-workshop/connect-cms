@@ -37,15 +37,25 @@
     {{-- ダウンロード用フォーム --}}
     <form action="" method="post" name="database_download" class="d-inline">
         {{ csrf_field() }}
+        <input type="hidden" name="character_code" value="">
     </form>
 
     <script type="text/javascript">
         {{-- ダウンロードのsubmit JavaScript --}}
-        function submit_download(id) {
-            if( !confirm('登録データをダウンロードします。\nよろしいですか？') ) {
+        function submit_download_shift_jis(id) {
+            if( !confirm('Shift-JISで登録データをダウンロードします。\nよろしいですか？') ) {
                 return;
             }
             database_download.action = "{{url('/')}}/download/plugin/databases/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
+            database_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+            database_download.submit();
+        }
+        function submit_download_utf_8(id) {
+            if( !confirm('UTF-8 BOM付きで登録データをダウンロードします。\nよろしいですか？') ) {
+                return;
+            }
+            database_download.action = "{{url('/')}}/download/plugin/databases/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
+            database_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
             database_download.submit();
         }
     </script>
@@ -71,9 +81,22 @@
                         <button class="btn btn-success btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
                             <i class="far fa-edit"></i> 設定変更
                         </button>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="submit_download({{$plugin->id}});">
-                            <i class="fas fa-file-download"></i> ダウンロード
-                        </button>
+
+                        <div class="btn-group mr-1">
+                            <!-- <button type="button" class="btn btn-danger">Action</button> -->
+                            <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
+                                <i class="fas fa-file-download"></i> ダウンロード
+                            </button>
+
+                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">ドロップダウンボタン</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#" onclick="submit_download_shift_jis({{$plugin->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                                <a class="dropdown-item" href="#" onclick="submit_download_utf_8({{$plugin->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                            </div>
+                        </div>
+
                         <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/import/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
                             <i class="fas fa-file-upload"></i> インポート
                         </button>
@@ -90,7 +113,7 @@
         </div>
 
         <div class="form-group text-center mt-3">
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
         </div>
     </form>

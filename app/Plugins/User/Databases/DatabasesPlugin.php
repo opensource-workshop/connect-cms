@@ -912,7 +912,7 @@ class DatabasesPlugin extends UserPluginBase
      * （再帰関数）入力値の前後をトリムする
      *
      * @param $request
-     * @return void
+     * @return array|string
      */
     private static function trimInput($value)
     {
@@ -920,6 +920,7 @@ class DatabasesPlugin extends UserPluginBase
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
             $value = array_map(['self', 'trimInput'], $value);
         } elseif (is_string($value)) {
+            // /u = UTF-8 として処理
             $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
         }
 
@@ -2554,8 +2555,17 @@ class DatabasesPlugin extends UserPluginBase
             $csv_data .= "\n";
         }
 
+        // Log::debug(var_export($request->character_code, true));
+
         // 文字コード変換
-        $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
+        // $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            //「UTF-8」の「BOM」であるコード「0xEF」「0xBB」「0xBF」をカンマ区切りにされた文字列の先頭に連結
+            $csv_data = pack('C*', 0xEF, 0xBB, 0xBF) . $csv_data;
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
 
         return response()->make($csv_data, 200, $headers);
     }
@@ -2604,22 +2614,55 @@ class DatabasesPlugin extends UserPluginBase
         }
 
 
-        // ストリームフィルタとして登録. 5C問題対応
-        // 参考：https://qiita.com/suin/items/3edfb9cb15e26bffba11
-        stream_filter_register(
-            'sjis_to_utf8_encoding_filter',
-            SjisToUtf8EncodingFilter::class
-        );
-
-        // CSVファイル一時保孫
+        // CSVファイル一時保存
         $path = $request->file('databases_csv')->store('tmp');
 
-        // 一行目（ヘッダ）読み込み
-        $fp = fopen(storage_path('app/') . $path, 'r');
-        // ファイル読み込み時に使うストリームフィルタを指定. 5C問題対応
-        stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
+        // 文字コード
+        $character_code = $request->character_code;
 
+        // 文字コード自動検出
+        if ($character_code == \CsvCharacterCode::auto) {
+            // 全体ではなく0～1024までを取得
+            $contents = file_get_contents(storage_path('app/') . $path, null, null, 0, 1024);
+
+            // 文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る
+            $character_code = mb_detect_encoding($contents, \CsvCharacterCode::sjis_win.", ".\CsvCharacterCode::utf_8);
+            // Log::debug(var_export($char, true));
+            if (!$character_code) {
+                // 一時ファイルの削除
+                Storage::delete($path);
+
+                $error_msgs = "文字コードの自動検出ができませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getDescription(\CsvCharacterCode::sjis_win) .
+                            ", " . \CsvCharacterCode::getDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+
+                return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
+            }
+        }
+
+        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
+        if ($character_code == \CsvCharacterCode::sjis_win) {
+            // ストリームフィルタとして登録.
+            // 5C問題対応：https://qiita.com/suin/items/3edfb9cb15e26bffba11
+            // 5C問題 詳細：https://qiita.com/Kohei-Sato-1221/items/c050bb23436f35666165
+            stream_filter_register(
+                'sjis_to_utf8_encoding_filter',
+                SjisToUtf8EncodingFilter::class
+            );
+        }
+
+        // 読み込み
+        $fp = fopen(storage_path('app/') . $path, 'r');
+        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
+        if ($character_code == \CsvCharacterCode::sjis_win) {
+            // ファイル読み込み時に使うストリームフィルタを指定.
+            // ストリームフィルタ内で、Shift-JIS -> UTF-8変換してる。UTF-8変換で5C問題対応になる
+            stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
+        }
+
+        // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ",");
+        // UTF-8のみBOMコードを取り除く
+        $header_columns = $this->removeUtf8Bom($header_columns, $character_code);
         //dd(storage_path('app/') . $path);
         // Log::debug('$header_columns:'. var_export($header_columns, true));
 
@@ -2663,9 +2706,16 @@ class DatabasesPlugin extends UserPluginBase
         // ファイルを閉じて、開きなおす
         fclose($fp);
         $fp = fopen(storage_path('app/') . $path, 'r');
+        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
+        if ($character_code == \CsvCharacterCode::sjis_win) {
+            // ファイル読み込み時に使うストリームフィルタを指定.
+            stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
+        }
 
         // ヘッダー
         $header_columns = fgetcsv($fp, 0, ",");
+        // UTF-8のみBOMコードを取り除く
+        $header_columns = $this->removeUtf8Bom($header_columns, $character_code);
 
         // データベースの取得
         $database = Databases::where('id', $id)->first();
@@ -2673,11 +2723,12 @@ class DatabasesPlugin extends UserPluginBase
         // データ
         while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
             // --- 入力値変換
-            foreach ($csv_columns as $col => &$csv_column) {
-                // 入力値をトリム
-                // $request->merge(self::trimInput($request->all()));
-                $csv_column = self::trimInput($csv_column);
 
+            // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
+            // $request->merge(self::trimInput($request->all()));
+            $csv_columns = self::trimInput($csv_columns);
+
+            foreach ($csv_columns as $col => &$csv_column) {
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
                 if (isset($databases_columns[$col])) {
@@ -2689,6 +2740,7 @@ class DatabasesPlugin extends UserPluginBase
                     }
                 }
             }
+            // Log::debug('$csv_columns:'. var_export($csv_columns, true));
 
             // 配列の末尾から要素(公開日時)を取り除いて取得
             // CSVのデータ行の末尾は、必ず固定項目の公開日時の想定
@@ -2878,6 +2930,23 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         return $errors;
+    }
+
+    /**
+     * UTF-8のみBOMコードを取り除く
+     */
+    private function removeUtf8Bom($header_columns, $character_code)
+    {
+        // CSVファイル：UTF-8のみ
+        if ($character_code == \CsvCharacterCode::utf_8) {
+            if (isset($header_columns[0])) {
+                // UTF-8 BOMありなしに関わらず、先頭3バイトのBOMコードを置換して取り除く
+                // BOMなしは、置換対象がないのでそのまま値が返る
+                $header_columns[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header_columns[0]);
+            }
+        }
+        return $header_columns;
+
     }
 
     /**
