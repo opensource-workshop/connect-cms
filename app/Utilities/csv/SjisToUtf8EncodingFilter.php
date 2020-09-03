@@ -2,6 +2,8 @@
 
 namespace App\Utilities\csv;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Shift-JIS から UTF-8 変換するストリームフィルタ
  * CSV読み込み時に使用して、5C問題対応
@@ -51,6 +53,8 @@ final class SjisToUtf8EncodingFilter extends \php_user_filter
 
             if ($data) { // ここに来た段階で $data は区切りが良いSJIS文字列になっている
                 $bucket->data = $this->encode($data);
+                // Log::debug(var_export($data, true));
+                // Log::debug(var_export($bucket->data, true));
                 \stream_bucket_append($out, $bucket);
                 $isBucketAppended = true;
             }
@@ -68,12 +72,14 @@ final class SjisToUtf8EncodingFilter extends \php_user_filter
 
     private function isValidEncoding(string $string): bool
     {
-        return \mb_check_encoding($string, 'SJIS-win');
+        // return \mb_check_encoding($string, 'SJIS-win');
+        return \mb_check_encoding($string, \CsvCharacterCode::sjis_win);
     }
 
     private function encode(string $string): string
     {
-        return \mb_convert_encoding($string, 'UTF-8', 'SJIS-win');
+        // return \mb_convert_encoding($string, 'UTF-8', 'SJIS-win');
+        return \mb_convert_encoding($string, \CsvCharacterCode::utf_8, \CsvCharacterCode::sjis_win);
     }
 
     private function assertBufferSizeIsSmallEnough(): void

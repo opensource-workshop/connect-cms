@@ -14,11 +14,6 @@
 
 @section("plugin_setting_$frame->id")
 
-{{-- ダウンロード用フォーム --}}
-<form action="{{url('/')}}/download/plugin/databases/downloadCsvFormat/{{$page->id}}/{{$frame_id}}/{{$database->id}}" method="post" name="database_download_csv_format">
-    {{ csrf_field() }}
-</form>
-
 @if (session('flash_message'))
     <div class="alert alert-success">
         {{ session('flash_message') }}
@@ -31,6 +26,24 @@
     </ul>
 </div>
 
+{{-- ダウンロード用フォーム --}}
+<form action="{{url('/')}}/download/plugin/databases/downloadCsvFormat/{{$page->id}}/{{$frame_id}}/{{$database->id}}" method="post" name="database_download_csv_format">
+    {{ csrf_field() }}
+    <input type="hidden" name="character_code" value="">
+</form>
+
+<script type="text/javascript">
+    {{-- ダウンロードのsubmit JavaScript --}}
+    function submit_download_csv_format_shift_jis() {
+        database_download_csv_format.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+        database_download_csv_format.submit();
+    }
+    function submit_download_csv_format_utf_8() {
+        database_download_csv_format.character_code.value = '{{CsvCharacterCode::utf_8}}';
+        database_download_csv_format.submit();
+    }
+</script>
+
 {{-- post先 --}}
 <form action="{{url('/')}}/redirect/plugin/databases/uploadCsv/{{$page->id}}/{{$frame_id}}/{{$database->id}}#frame-{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
     {{ csrf_field() }}
@@ -39,9 +52,18 @@
 
     <div class="form-group row">
         <div class="col text-right">
-            <a href="#frame-{{$frame_id}}" onclick="database_download_csv_format.submit();">
-                CSVファイルのフォーマット
-            </a>
+            <div class="btn-group">
+                <a href="#" onclick="submit_download_csv_format_shift_jis(); return false;">
+                    CSVファイルのフォーマット
+                </a>
+                <button type="button" class="btn btn-sm btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="sr-only">ドロップダウンボタン</span>
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" onclick="submit_download_csv_format_shift_jis(); return false;">CSVファイルのフォーマット（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                    <a class="dropdown-item" href="#" onclick="submit_download_csv_format_utf_8(); return false;">CSVファイルのフォーマット（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -64,12 +86,24 @@
         </div>
     </div>
 
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">文字コード</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <select name="character_code" class="form-control">
+                @foreach (CsvCharacterCode::getMembers() as $character_code => $character_code_display)
+                    <option value="{{$character_code}}"@if(old('character_code') == $character_code) selected @endif>{{$character_code_display}}</option>
+                @endforeach
+            </select>
+            @if ($errors && $errors->has('character_code')) <div class="text-danger">{{$errors->first('character_code')}}</div> @endif
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
                 <button type="submit" class="btn btn-primary">
