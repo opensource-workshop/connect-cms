@@ -2729,6 +2729,9 @@ class DatabasesPlugin extends UserPluginBase
             $csv_columns = self::trimInput($csv_columns);
 
             foreach ($csv_columns as $col => &$csv_column) {
+                // 空文字をnullに変換
+                $csv_column = $this->convertEmptyStringsToNull($csv_column);
+
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
                 if (isset($databases_columns[$col])) {
@@ -2800,11 +2803,12 @@ class DatabasesPlugin extends UserPluginBase
                         continue;
                     }
 
-                    // ファイルタイプがファイル系の場合は、登録しない（[TODO] 今後登録できるように見直し）
-                    if (($databases_columns[$col]->column_type == \DatabaseColumnType::file)  ||
-                        ($databases_columns[$col]->column_type == \DatabaseColumnType::image) ||
-                        ($databases_columns[$col]->column_type == \DatabaseColumnType::video)) {
-                        continue;
+                    // ファイルタイプがファイル系の場合は、登録しないためnullをセット. nullだとno_image画像が表示される
+                    // [TODO] 今後登録できるように見直し
+                    if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
+                            $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
+                            $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
+                        $csv_column = null;
                     }
 
                     // change: データ登録フラグは、フォームの名残で残っているだけのため、フラグ見ないようする
@@ -2946,6 +2950,19 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
         return $header_columns;
+    }
+
+    /**
+     * 空文字をnullに変換
+     * Laravel公式のリクエストを自動トリムする処理と同じ処理
+     * copy by Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::transform()
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */
+    private function convertEmptyStringsToNull($value)
+    {
+        return is_string($value) && $value === '' ? null : $value;
     }
 
     /**
