@@ -2946,7 +2946,6 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
         return $header_columns;
-
     }
 
     /**
