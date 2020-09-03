@@ -43,7 +43,7 @@
     <script type="text/javascript">
         {{-- ダウンロードのsubmit JavaScript --}}
         function submit_download_shift_jis(id) {
-            if( !confirm('Shift-JISで登録データをダウンロードします。\nよろしいですか？') ) {
+            if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で登録データをダウンロードします。\nよろしいですか？') ) {
                 return;
             }
             database_download.action = "{{url('/')}}/download/plugin/databases/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
@@ -51,7 +51,7 @@
             database_download.submit();
         }
         function submit_download_utf_8(id) {
-            if( !confirm('UTF-8 BOM付きで登録データをダウンロードします。\nよろしいですか？') ) {
+            if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で登録データをダウンロードします。\nよろしいですか？') ) {
                 return;
             }
             database_download.action = "{{url('/')}}/download/plugin/databases/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
