@@ -83,11 +83,9 @@
                         </button>
 
                         <div class="btn-group mr-1">
-                            <!-- <button type="button" class="btn btn-danger">Action</button> -->
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
                                 <i class="fas fa-file-download"></i> ダウンロード
                             </button>
-
                             <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="sr-only">ドロップダウンボタン</span>
                             </button>
