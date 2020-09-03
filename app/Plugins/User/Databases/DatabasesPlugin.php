@@ -2479,16 +2479,19 @@ class DatabasesPlugin extends UserPluginBase
         // データ行用の空配列
         $copy_base = array();
 
+        // 見出し行-頭（固定項目）
+        $csv_array[0]['id'] = 'id';
+        $copy_base['id'] = '';
         // 見出し行
         foreach ($columns as $column) {
             $csv_array[0][$column->id] = $column->column_name;
             $copy_base[$column->id] = '';
         }
-
-        // 固定項目
+        // 見出し行-末尾（固定項目）
         $csv_array[0]['posted_at'] = '公開日時';
         $copy_base['posted_at'] = '';
 
+        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
         if ($data_output_flag) {
             // 登録データの取得
             $input_cols = DatabasesInputCols::
@@ -2514,6 +2517,8 @@ class DatabasesPlugin extends UserPluginBase
                     $csv_array[$input_col->databases_inputs_id][$input_col->databases_columns_id] = $input_col->inputs_posted_at;
 
                     // 初回で固定項目をセット
+                    $csv_array[$input_col->databases_inputs_id]['id'] = $input_col->databases_inputs_id;
+
                     $databases_inputs = DatabasesInputs::where('id', $input_col->databases_inputs_id)->first();
                     // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
                     // $csv_array[$input_col->databases_inputs_id]['posted_at'] = $databases_inputs->posted_at->format('Y/m/d H:i');
@@ -2669,10 +2674,12 @@ class DatabasesPlugin extends UserPluginBase
         // カラムの取得
         $databases_columns = DatabasesColumns::where('databases_id', $id)->orderBy('display_sequence', 'asc')->get();
         $databases_column_names = [];
+        // ヘッダ行-頭（固定項目）
+        $databases_column_names[] = 'id';
         foreach ($databases_columns as $databases_column) {
             $databases_column_names[] = $databases_column->column_name;
         }
-        // 固定項目
+        // ヘッダ行-末尾（固定項目）
         $databases_column_names[] = '公開日時';
         // Log::debug('$databases_columns:'. var_export($databases_columns, true));
 
@@ -2728,6 +2735,12 @@ class DatabasesPlugin extends UserPluginBase
             // $request->merge(self::trimInput($request->all()));
             $csv_columns = self::trimInput($csv_columns);
 
+            // 配列の頭から要素(id)を取り除いて取得
+            // CSVのデータ行の頭は、必ず固定項目のidの想定
+            $databases_inputs_id = array_shift($csv_columns);
+            // 空文字をnullに変換
+            $databases_inputs_id = $this->convertEmptyStringsToNull($databases_inputs_id);
+
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
                 $csv_column = $this->convertEmptyStringsToNull($csv_column);
@@ -2757,13 +2770,29 @@ class DatabasesPlugin extends UserPluginBase
             // Storage::delete($path);
             // dd('ここまで' . $posted_at);
 
-            // --- データ行の親データ、及び公開日時登録
-            $databases_inputs = new DatabasesInputs();
-            $databases_inputs->databases_id = $database->id;
-            $databases_inputs->status = $status;
-            // $databases_inputs->posted_at = $posted_at . ':00';
-            $databases_inputs->posted_at = $posted_at;
-            $databases_inputs->save();
+            if (empty($databases_inputs_id)) {
+                // 登録
+
+                $databases_inputs = new DatabasesInputs();
+                $databases_inputs->databases_id = $database->id;
+                $databases_inputs->status = $status;
+                // 公開日時
+                // $databases_inputs->posted_at = $posted_at . ':00';
+                $databases_inputs->posted_at = $posted_at;
+                $databases_inputs->save();
+            } else {
+                // 更新
+
+                // databases_inputs_idはバリデートでDatabasesInputs存在チェック済みなので、必ずデータある想定
+                $databases_inputs = DatabasesInputs::where('id', $databases_inputs_id)->first();
+                // 更新されたら、行レコードの updated_at を更新したいので、update()
+                $databases_inputs->updated_at = now();
+                // インポートで更新時に status は更新しない
+                // $databases_inputs->status = $status;
+                // 公開日時
+                $databases_inputs->posted_at = $posted_at;
+                $databases_inputs->update();
+            }
 
             // // ファイル（uploadsテーブル＆実ファイル）の削除。データ登録前に削除する。（後からだと内容が変わっていてまずい）
             // if (!empty($id) && $request->has('delete_upload_column_ids')) {
@@ -2791,6 +2820,26 @@ class DatabasesPlugin extends UserPluginBase
             //     }
             // }
 
+            // databases_inputs_id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
+            if (!empty($databases_inputs_id)) {
+                // 更新
+
+                $file_columns_ids = [];
+                foreach ($databases_columns as $databases_column) {
+                    // ファイルタイプ
+                    if ($databases_column->column_type == \DatabaseColumnType::file  ||
+                            $databases_column->column_type == \DatabaseColumnType::image ||
+                            $databases_column->column_type == \DatabaseColumnType::video) {
+                        $file_columns_ids[] = $databases_column->id;
+                    }
+                }
+
+                // delete -> insertで、CSVインポートではファイルタイプを登録できないため、消さずに残す。
+                DatabasesInputCols::where('databases_inputs_id', $databases_inputs_id)
+                                    ->whereNotIn('databases_columns_id', $file_columns_ids)
+                                    ->delete();
+            }
+
             // --- データ行の各項目登録
             foreach ($csv_columns as $col => $csv_column) {
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
@@ -2803,12 +2852,18 @@ class DatabasesPlugin extends UserPluginBase
                         continue;
                     }
 
-                    // ファイルタイプがファイル系の場合は、登録しないためnullをセット. nullだとno_image画像が表示される
+                    // ファイルタイプ
                     // [TODO] 今後登録できるように見直し
                     if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
                             $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
                             $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
-                        $csv_column = null;
+                        if (empty($databases_inputs_id)) {
+                            // 登録: nullをセット. nullだとno_image画像が表示される
+                            $csv_column = null;
+                        } else {
+                            // 更新: 消さずに残してあるため、continue で何も処理させない
+                            continue;
+                        }
                     }
 
                     // change: データ登録フラグは、フォームの名残で残っているだけのため、フラグ見ないようする
@@ -2877,6 +2932,11 @@ class DatabasesPlugin extends UserPluginBase
         //     0 => [],
         //     1 => ['required'],
         // ];
+
+        // 行頭（固定項目）
+        // id
+        $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
+
         $attribute_names = [];
 
         // エラーチェック配列
@@ -2892,17 +2952,19 @@ class DatabasesPlugin extends UserPluginBase
             // バリデータールールあるか
             // if (array_key_exists('databases_columns_value.' . $databases_column->id, $validator_array['column'])) {
             if (isset($validator_array['column']['databases_columns_value.' . $databases_column->id])) {
-                $rules[$col] = $validator_array['column']['databases_columns_value.' . $databases_column->id];
+                // 行頭（固定項目）の id 分　col をずらすため、+1
+                $rules[$col + 1] = $validator_array['column']['databases_columns_value.' . $databases_column->id];
             } else {
                 // ルールなしは空配列入れないと、バリデーション項目がずれるのでセット
-                $rules[$col] = [];
+                $rules[$col + 1] = [];
             }
         }
-        // 固定項目エリア
+        // 行末（固定項目）
         // 公開日時
         // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
         // $rules[$col + 1] = ['required', 'date_format:Y-m-d H:i'];
-        $rules[$col + 1] = ['required', 'date_format:Y/n/j H:i'];
+        // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
+        $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
 
         // ヘッダー行が1行目なので、2行目からデータ始まる
         $line_count = 2;
@@ -2914,13 +2976,18 @@ class DatabasesPlugin extends UserPluginBase
             // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
             // Log::debug(var_export($rules, true));
 
-            // 行数＋項目名
             $attribute_names = [];
+            // 行頭（固定項目）
+            // id
+            $attribute_names[0] = $line_count . '行目のid';
             foreach ($databases_columns as $col => $databases_column) {
-                $attribute_names[$col] = $line_count . '行目の' . $databases_column->column_name;
+                // 行数＋項目名
+                // 頭-固定項目 の id 分　col をずらすため、+1
+                $attribute_names[$col + 1] = $line_count . '行目の' . $databases_column->column_name;
             }
-            // 固定項目
-            $attribute_names[$col + 1] = $line_count . '行目の公開日時';
+            // 行末（固定項目）
+            // 行頭（固定項目）の id 分で+1, 行末に追加で+1 = col+2ずらす
+            $attribute_names[$col + 2] = $line_count . '行目の公開日時';
 
             $validator->setAttributeNames($attribute_names);
             // Log::debug(var_export($attribute_names, true));
