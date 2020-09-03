@@ -186,7 +186,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      *  返却期限を取得
      */
-    private function getReturnMaxDate($opac, $users_roles, $opac_configs)
+    public static function getReturnMaxDate($opac, $users_roles, $opac_configs)
     {
         // 返却値
         $ret = 0;
@@ -218,7 +218,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      *  貸し出し冊数を取得
      */
-    private function getReturnMaxLentCount($opac, $users_roles, $opac_configs)
+    public static function getReturnMaxLentCount($opac, $users_roles, $opac_configs)
     {
         // 返却値
         $ret = 0;
@@ -252,7 +252,7 @@ class OpacsPlugin extends UserPluginBase
      *
      * @return view
      */
-    public function indexMyOpac($request, $page_id, $frame_id, $errors = null, $messages)
+    public function indexMyOpac($request, $page_id, $frame_id, $errors = null, $messages = null)
     {
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
@@ -287,11 +287,11 @@ class OpacsPlugin extends UserPluginBase
                                  ->get();
 
         // 返却期限
-        $lent_max_ts = $this->getReturnMaxDate($opac_frame, $users_roles, $opac_configs);
+        $lent_max_ts = self::getReturnMaxDate($opac_frame, $users_roles, $opac_configs);
         $lent_max_date = date('Y年m月d日', $lent_max_ts);
 
         // 貸出最大冊数
-        $lent_max_count = $this->getReturnMaxLentCount($opac_frame, $users_roles, $opac_configs);
+        $lent_max_count = self::getReturnMaxLentCount($opac_frame, $users_roles, $opac_configs);
 
         // 書籍の貸出OKの判定
         // モデレータ以上の場合はOK
@@ -750,7 +750,7 @@ class OpacsPlugin extends UserPluginBase
                                      ->get();
 
             // 返却期限
-            $lent_max_ts = $this->getReturnMaxDate($opac_frame, $users_roles, $opac_configs);
+            $lent_max_ts = self::getReturnMaxDate($opac_frame, $users_roles, $opac_configs);
             $lent_max_date = date('Y年m月d日', $lent_max_ts);
         }
 
@@ -939,7 +939,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      *  メール送信
      */
-    private function sendMail($opacs, $subject, $content)
+    public static function sendMail($opacs, $subject, $content)
     {
         if (empty($opacs)) {
             return;
@@ -1128,7 +1128,7 @@ class OpacsPlugin extends UserPluginBase
                                  ->get();
 
         // 返却期限
-        $lent_max_ts = $this->getReturnMaxDate($opac_frame, $users_roles, $opac_configs);
+        $lent_max_ts = self::getReturnMaxDate($opac_frame, $users_roles, $opac_configs);
         $lent_max_date = date('Y-m-d', $lent_max_ts);
 
         // 権限で異なる項目の編集
@@ -1162,7 +1162,7 @@ class OpacsPlugin extends UserPluginBase
         $content .= '返却期限日：' . $return_scheduled . "\n";
 
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
-        $this->sendMail($opacs, $subject, $content);
+        self::sendMail($opacs, $subject, $content);
 
         // MyOpac画面へ遷移
         return $this->index($request, $page_id, $frame_id, null, ['貸し出し処理が完了しました。']);
@@ -1232,7 +1232,7 @@ class OpacsPlugin extends UserPluginBase
         $content .= '連絡先メールアドレス：' . $request->req_email . "\n";
 
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
-        $this->sendMail($opacs, $subject, $content);
+        self::sendMail($opacs, $subject, $content);
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
@@ -1358,7 +1358,7 @@ class OpacsPlugin extends UserPluginBase
         $content .= '返却日：' . $books_lents->return_date . "\n";
 
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
-        $this->sendMail($opacs, $subject, $content);
+        self::sendMail($opacs, $subject, $content);
 
         // MyOpac画面へ遷移
         //return redirect($this->page->permanent_link)->with('flash_message_'.$frame_id, '投稿が完了しました');
