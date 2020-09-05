@@ -19,6 +19,7 @@ class CreateLinklistPosts extends Migration
             $table->string('title')->comment('タイトル');
             $table->string('url')->nullable()->comment('URL');
             $table->text('description')->nullable()->comment('説明');
+            $table->integer('target_blank_flag')->nullable()->comment('新規ウィンドウで表示');
             $table->integer('display_sequence')->comment('表示順');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();

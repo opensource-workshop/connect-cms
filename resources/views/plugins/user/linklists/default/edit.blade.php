@@ -12,12 +12,12 @@
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))
     <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_post{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
     <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="POST" class="" name="form_post{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}">
-
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
@@ -35,10 +35,33 @@
     </div>
 
     <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">ターゲット</label>
+        <div class="col-md-10">
+            <div class="custom-control custom-checkbox">
+                @if(old('target_blank_flag', $post->target_blank_flag) || empty($post->id))
+                    <input type="checkbox" name="target_blank_flag" value="1" class="custom-control-input" id="target_blank_flag" checked=checked>
+                @else
+                    <input type="checkbox" name="target_blank_flag" value="1" class="custom-control-input" id="target_blank_flag">
+                @endif
+                <label class="custom-control-label" for="target_blank_flag">チェックすると、新規ウィンドウで開きます。</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">説明</label>
         <div class="col-md-10">
-            <input type="text" name="description" value="{{old('description', $post->description)}}" class="form-control">
+            <textarea name="description" class="form-control" rows=2>{!!old('description', $post->description)!!}</textarea>
             @if ($errors && $errors->has('description')) <div class="text-danger">{{$errors->first('description')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">表示順</label>
+        <div class="col-md-10">
+            <input type="text" name="display_sequence" value="{{old('display_sequence', $post->display_sequence)}}" class="form-control">
+            <small class="text-muted">※ 未指定時は最後に追加されます。</small>
+            @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
         </div>
     </div>
 

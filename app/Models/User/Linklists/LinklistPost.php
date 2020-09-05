@@ -16,5 +16,5 @@ class LinklistPost extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['linklist_id', 'title', 'url', 'description', 'display_sequence'];
+    protected $fillable = ['linklist_id', 'title', 'url', 'description', 'target_blank_flag', 'display_sequence'];
 }

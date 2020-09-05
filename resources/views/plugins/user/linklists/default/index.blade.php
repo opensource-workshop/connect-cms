@@ -43,11 +43,15 @@
             @if (empty($post->url))
                 {{$post->title}}
             @else
-                <a href="{{$post->url}}" target="_blank">{{$post->title}}</a>
+                @if ($post->target_blank_flag)
+                    <a href="{{$post->url}}" target="_blank">{{$post->title}}</a>
+                @else
+                    <a href="{{$post->url}}">{{$post->title}}</a>
+                @endif
             @endif
             @if (!empty($post->description))
-                <div class="alert alert-secondary" role="alert">
-                  {{$post->description}}
+                <div class="alert alert-secondary bg-light mt-2" role="alert">
+                  {!!nl2br(e($post->description))!!}
                 </div>
             @endif
         </li>

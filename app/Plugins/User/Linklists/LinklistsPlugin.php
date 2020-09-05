@@ -2,17 +2,15 @@
 
 namespace App\Plugins\User\Linklists;
 
-use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
 
-use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
 use App\Models\User\Linklists\Linklist;
 use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
@@ -91,40 +89,11 @@ class LinklistsPlugin extends UserPluginBase
     /* private関数 */
 
     /**
-     * プラグインのフレームにコアのフレーム情報を付加して取得
+     * プラグインのフレーム
      */
     private function getPluginFrame($frame_id)
     {
-/*
         return LinklistFrame::firstOrNew(['frame_id' => $frame_id]);
-*/
-        $linklist_frame = LinklistFrame::select('linklist_frames.*', 'frames.bucket_id')
-                                       ->join('frames', 'frames.id', '=', 'linklist_frames.frame_id')
-                                       ->where('linklist_frames.frame_id', $frame_id)
-                                       ->whereNull('linklist_frames.deleted_at')
-                                       ->first();
-        if (empty($linklist_frame)) {
-            $linklist_frame = new LinklistFrame();
-        }
-        return $linklist_frame;
-    }
-
-    /**
-     * フレームに紐づけられたリンクリストの取得
-     */
-    private function getLinklist($frame_id)
-    {
-        // linklists データ
-        return Linklist::where('frame_id', $frame_id)->first();
-    }
-
-    /**
-     * プラグインのバケツ取得関数
-     */
-    public function getPluginBuckets()
-    {
-        // プラグインのメインデータを取得する。
-        return Linklist::orderBy('created_at', 'desc')->paginate(10);
     }
 
     /**
@@ -137,63 +106,19 @@ class LinklistsPlugin extends UserPluginBase
     }
 
     /**
-     *  POST チェック設定
-     */
-    private function makeValidator($request)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'title'            => ['required'],
-            'display_sequence' => ['nullable', 'numeric'],
-        ]);
-        $validator->setAttributeNames([
-            'title'            => 'タイトル',
-            'display_sequence' => '表示順',
-        ]);
-        return $validator;
-    }
-
-    /**
-     *  表示条件に対するソート条件追加
-     */
-    private function appendOrder($query, $linklists_frame)
-    {
-        if ($linklists_frame->sequence_conditions == 0) {
-            // 最新順
-            $query->orderBy('created_at', 'desc');
-        } elseif ($linklists_frame->sequence_conditions == 1) {
-            // 投稿順
-            $query->orderBy('created_at', 'asc');
-        } elseif ($linklists_frame->sequence_conditions == 2) {
-            // 指定順
-            $query->orderBy('display_sequence', 'asc');
-        }
-
-        return $query;
-    }
-
-    /**
      *  POST一覧取得
      */
-    private function getPosts($linklist_frame, $option_count = null)
+    private function getPosts($linklist_frame)
     {
-        // 件数
-        $count = $linklist_frame->view_count;
-        if ($option_count != null) {
-            $count = $option_count;
-        }
-
         // データ取得
         $posts_query = LinklistPost::select('linklist_posts.*')
-                                   ->join('linklists', function ($join) use ($linklist_frame) {
+                                   ->join('linklists', function ($join) {
                                        $join->on('linklists.id', '=', 'linklist_posts.linklist_id')
-                                          ->where('linklists.bucket_id', '=', $linklist_frame->bucket_id);
+                                          ->where('linklists.bucket_id', '=', $this->frame->bucket_id);
                                    })
                                    ->whereNull('linklist_posts.deleted_at')
-                                   ->orderBy('created_at', 'desc');
-
-        // 表示条件に対するソート条件追加
-        $posts_query = $this->appendOrder($posts_query, $linklist_frame);
+                                   ->orderBy('display_sequence', 'asc')
+                                   ->orderBy('created_at', 'asc');
 
         // 取得
         return $posts_query->paginate($linklist_frame->view_count);
@@ -220,7 +145,7 @@ class LinklistsPlugin extends UserPluginBase
                           DB::raw("null                 as category"),
                           DB::raw('"linklists"          as plugin_name')
                       )
-                      ->join('linklists', 'linklists.id',  '=', 'linklists_posts.linklists_id')
+                      ->join('linklists', 'linklists.id', '=', 'linklists_posts.linklists_id')
                       ->join('frames', 'frames.bucket_id', '=', 'linklists.bucket_id')
                       ->where('frames.disable_whatsnews', 0)
                       ->whereNull('linklists_posts.deleted_at');
@@ -286,65 +211,39 @@ class LinklistsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-            'plugin_frame' => $plugin_frame,
-            'posts'        => $posts,
+            'posts' => $posts,
         ]);
     }
 
     /**
-     *  新規記事画面
-     */
-/*
-    public function create($request, $page_id, $frame_id)
-    {
-        // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
-
-        // 空のデータ(画面で初期値設定で使用するため)
-        $post = new LinklistsPosts();
-
-        // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view('input', [
-            'plugin_frame' => $plugin_frame,
-            'post'         => $post,
-        ])->withInput($request->all);
-    }
-*/
-
-    /**
      *  詳細表示関数
      */
+    /*
+    新着と検索で呼ばれたときの詳細画面のイメージ
     public function show($request, $page_id, $frame_id, $post_id)
     {
-        // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
-
         // 記事取得
         $post = $this->getPost($post_id);
 
         // 詳細画面を呼び出す。
         return $this->view('show', [
-            'plugin_frame' => $plugin_frame,
             'post'         => $post,
         ]);
     }
+    */
 
     /**
      * 記事編集画面
      */
     public function edit($request, $page_id, $frame_id, $post_id = null)
     {
-        // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
-
         // 記事取得
         $post = $this->getPost($post_id);
 
-        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
+        // 変更画面を呼び出す。
         return $this->view('edit', [
-            'plugin_frame' => $plugin_frame,
-            'post'         => $post,
-        ])->withInput($request->all);
+            'post' => $post,
+        ]);
     }
 
     /**
@@ -353,11 +252,18 @@ class LinklistsPlugin extends UserPluginBase
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
         // 項目のエラーチェック
-        $validator = $this->makeValidator($request);
+        $validator = Validator::make($request->all(), [
+            'title'            => ['required'],
+            'display_sequence' => ['nullable', 'numeric'],
+        ]);
+        $validator->setAttributeNames([
+            'title'            => 'タイトル',
+            'display_sequence' => '表示順',
+        ]);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return back()->withErrors($validator)->withInput();
         }
 
         // POSTデータのモデル取得
@@ -366,18 +272,27 @@ class LinklistsPlugin extends UserPluginBase
         // フレームから linklist_id 取得
         $linklist_frame = $this->getPluginFrame($frame_id);
 
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        if ($request->filled('display_sequence')) {
+            $display_sequence = intval($request->display_sequence);
+        } else {
+            $max_display_sequence = LinklistPost::where('linklist_id', $linklist_frame->linklist_id)->where('id', '<>', $post_id)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+        }
+
         // 値のセット
-        $post->linklist_id      = $linklist_frame->linklist_id;
-        $post->title            = $request->title;
-        $post->url              = $request->url;
-        $post->description      = $request->description;
-        $post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
+        $post->linklist_id       = $linklist_frame->linklist_id;
+        $post->title             = $request->title;
+        $post->url               = $request->url;
+        $post->target_blank_flag = $request->target_blank_flag;
+        $post->description       = $request->description;
+        $post->display_sequence  = $display_sequence;
 
         // データ保存
         $post->save();
 
-        // 登録後はリダイレクトされて編集画面が開く。
-        return;
+        // 登録後はリダイレクトして編集画面を開く。
+        return new Collection(['redirect_path' => "/plugin/linklists/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
     }
 
     /**
@@ -388,20 +303,19 @@ class LinklistsPlugin extends UserPluginBase
         // id がある場合、データを削除
         if ($post_id) {
             // データを削除する。
-            LinklistsPosts::where('linklists_id', $post_id)->delete();
+            LinklistPost::where('id', $post_id)->delete();
         }
-        // 削除後はリダイレクトされて表示ページが開く。
         return;
     }
 
     /**
      * プラグインのバケツ選択表示関数
      */
-    public function listBuckets($request, $page_id, $frame_id, $id = NULL)
+    public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // 表示テンプレートを呼び出す。
         return $this->view('list_buckets', [
-            'plugin_buckets' => $this->getPluginBuckets(),
+            'plugin_buckets' => Linklist::orderBy('created_at', 'desc')->paginate(10),
         ]);
     }
 
@@ -424,7 +338,7 @@ class LinklistsPlugin extends UserPluginBase
             // 表示中のバケツデータ
             'linklist'       => $this->getPluginBucket($this->getBucketId()),
             'linklist_frame' => $this->getPluginFrame($frame_id),
-        ])->withInput($request->all);
+        ]);
     }
 
     /**
@@ -432,13 +346,25 @@ class LinklistsPlugin extends UserPluginBase
      */
     public function saveView($request, $page_id, $frame_id, $linklist_id)
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'view_count' => ['nullable', 'numeric'],
+        ]);
+        $validator->setAttributeNames([
+            'view_count' => '表示件数',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
         // フレームごとの表示設定の更新
-        $linklist_frame = $this->LinklistFrame::updateOrCreate(
-           ['linklist_id' => $linklist_id, 'frame_id' => $frame_id],
-           ['view_count' => $request->view_count],
+        $linklist_frame = LinklistFrame::updateOrCreate(
+            ['linklist_id' => $linklist_id, 'frame_id' => $frame_id],
+            ['view_count'  => $request->view_count],
         );
 
-        // 削除後はリダイレクトされてバケツ一覧ページが開く。
         return;
     }
 
@@ -448,13 +374,17 @@ class LinklistsPlugin extends UserPluginBase
     public function editBuckets($request, $page_id, $frame_id)
     {
         // コアがbucket_id なしで呼び出してくるため、bucket_id は frame_id から探す。
-        $bucket_id = $this->getBucketId();
+        if ($this->action == 'createBuckets') {
+            $bucket_id = null;
+        } else {
+            $bucket_id = $this->getBucketId();
+        }
 
         // 表示テンプレートを呼び出す。
         return $this->view('bucket', [
             // 表示中のバケツデータ
             'linklist' => $this->getPluginBucket($bucket_id),
-        ])->withInput($request->all);
+        ]);
     }
 
     /**
@@ -472,13 +402,13 @@ class LinklistsPlugin extends UserPluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return back()->withErrors($validator)->withInput();
         }
 
         // バケツの取得。なければ登録。
         $bucket = Buckets::updateOrCreate(
-           ['id' => $bucket_id],
-           ['bucket_name' => $request->name, 'plugin_name' => 'linklists'],
+            ['id' => $bucket_id],
+            ['bucket_name' => $request->name, 'plugin_name' => 'linklists'],
         );
 
         // フレームにバケツの紐づけ
@@ -492,12 +422,12 @@ class LinklistsPlugin extends UserPluginBase
 
         // プラグインフレームを作成 or 更新
         $linklist_frame = LinklistFrame::updateOrCreate(
-           ['frame_id' => $frame_id],
-           ['linklist_id' => $linklist->id, 'frame_id' => $frame_id],
+            ['frame_id' => $frame_id],
+            ['linklist_id' => $linklist->id, 'frame_id' => $frame_id],
         );
 
-        // 登録後はリダイレクトされて編集ページが開く。
-        return;
+        // 登録後はリダイレクトして編集ページを開く。
+        return new Collection(['redirect_path' => "/plugin/linklists/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
     }
 
     /**
@@ -511,11 +441,15 @@ class LinklistsPlugin extends UserPluginBase
             return;
         }
 
-        // POSTデータ削除
+        // POSTデータ削除(一気にDelete なので、deleted_id は入らない)
         LinklistPost::where('linklist_id', $linklist->id)->delete();
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+
+        // プラグインフレームデータの削除(deleted_id を記録するために1回読んでから削除)
+        $linklist_frame = LinklistFrame::where('frame_id', $frame_id)->first();
+        $linklist_frame->delete();
 
         // バケツ削除
         Buckets::find($linklist->bucket_id)->delete();
@@ -523,7 +457,6 @@ class LinklistsPlugin extends UserPluginBase
         // プラグインデータ削除
         $linklist->delete();
 
-        // 削除後はリダイレクトされてバケツ一覧ページが開く。
         return;
     }
 
@@ -533,8 +466,7 @@ class LinklistsPlugin extends UserPluginBase
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+        Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
 
         // Linklists の特定
         $plugin_bucket = $this->getPluginBucket($request->select_bucket);
@@ -545,7 +477,6 @@ class LinklistsPlugin extends UserPluginBase
         $linklist_frame->frame_id = $frame_id;
         $linklist_frame->save();
 
-        // 削除後はリダイレクトされてバケツ一覧ページが開く。
         return;
     }
 }

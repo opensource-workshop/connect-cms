@@ -487,6 +487,13 @@ class DefaultController extends ConnectController
             return $plugin_ret;
         }
 
+        // 戻り値にredirect_path が含まれていたら、そこにredirectする。
+        if (is_a($plugin_ret, 'Illuminate\Support\Collection')) {
+            if ($plugin_ret->has('redirect_path')) {
+                $request->redirect_path = $plugin_ret->get('redirect_path');
+            }
+        }
+
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";
         // bugfix: 表示ページのパラメータ ?page= は、?frame_{$frame_id}_page= に修正
@@ -515,7 +522,6 @@ class DefaultController extends ConnectController
 
         // redirect_path があれば遷移
         if ($request->redirect_path) {
-
             $redirect_response = redirect($request->redirect_path);
             if ($request->flash_message) {
                 // フラッシュメッセージの設定があれば、Laravelのフラッシュデータ保存に連携
