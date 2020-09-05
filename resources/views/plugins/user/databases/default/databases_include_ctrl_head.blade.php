@@ -13,14 +13,14 @@
     <div class="row">
         <p class="text-right col-12">
             {{-- 新規登録ボタン --}}
-            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
+            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}'">
                 <i class="far fa-edit"></i> 新規登録
             </button>
         </p>
     </div>
 @endcan
 
-<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- 検索 --}}

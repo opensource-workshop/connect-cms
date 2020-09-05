@@ -489,13 +489,20 @@ class DefaultController extends ConnectController
 
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";
+        // bugfix: 表示ページのパラメータ ?page= は、?frame_{$frame_id}_page= に修正
+        //         同じページに複数のページ送りがある時に対応して、既にパラメータ名が変更されていてたため
+        $frame_page = "frame_{$frame_id}_page";
         // セッションにあれば使用する。
         if ($request->session()->has('page_no.'.$frame_id)) {
-            $page_no_link = "page=" . $request->session()->get('page_no.'.$frame_id);
+            // $page_no_link = "page=" . $request->session()->get('page_no.'.$frame_id);
+            $page_no_link = "{$frame_page}=" . $request->session()->get('page_no.'.$frame_id);
         }
         // リクエストにあれば優先で使用する。
-        if ($request->page) {
-            $page_no_link = "page=" . $request->page;
+        // if ($request->page) {
+        //     $page_no_link = "page=" . $request->page;
+        // }
+        if ($request->$frame_page) {
+            $page_no_link = "{$frame_page}=" . $request->$frame_page;
         }
 
         // return_frame_action があれば、編集中ページに遷移

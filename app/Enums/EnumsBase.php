@@ -17,7 +17,7 @@ class EnumsBase
     // key/valueの連想配列
     const enum = [];
 
-    /*
+    /**
      * 対応した和名を返す
      */
     public static function getDescription($key): string
@@ -25,7 +25,7 @@ class EnumsBase
         return static::enum[$key];
     }
 
-    /*
+    /**
      * key/valueの連想配列を返す
      */
     public static function getMembers()

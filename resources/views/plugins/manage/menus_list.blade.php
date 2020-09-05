@@ -59,6 +59,13 @@
             <a href="{{url('/')}}/manage/system" class="list-group-item">システム管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'api')
+            <a href="{{url('/')}}/manage/api" class="list-group-item active">API管理</a>
+        @else
+            <a href="{{url('/')}}/manage/api" class="list-group-item">API管理</a>
+        @endif
+    @endif
     <div class="list-group-item text-secondary bg-light">データ管理系</div>
     @if (Auth::user()->can('admin_site'))
         @if (isset($plugin_name) && $plugin_name == 'theme')

@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
+--}}
 <tr>
     {{-- 表示順 --}}
     <td nowrap>
@@ -47,14 +47,14 @@
     {{-- 詳細設定 --}}
     <td class="text-center">
         {{-- 詳細ボタン --}}
-        <button 
-            type="button" 
-            class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
+        <button
+            type="button"
+            class="btn btn-success btn-xs cc-font-90 text-nowrap"
             {{-- 選択肢を保持する項目、且つ、選択肢の設定がない場合のみツールチップを表示 --}}
             @if (
-                ($column->column_type == FormColumnType::radio || 
-                $column->column_type == FormColumnType::checkbox || 
-                $column->column_type == FormColumnType::select) && 
+                ($column->column_type == FormColumnType::radio ||
+                $column->column_type == FormColumnType::checkbox ||
+                $column->column_type == FormColumnType::select) &&
                 $column->select_count == 0
                 )
                 id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
@@ -70,11 +70,11 @@
     </td>
     {{-- 更新ボタン --}}
     <td class="text-center">
-        <button 
-            class="btn btn-primary cc-font-90 text-nowrap" 
+        <button
+            class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
         >
-            <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
+            <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
         </button>
     </td>
     {{-- 削除ボタン --}}
@@ -84,8 +84,8 @@
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
 @if (
-    $column->column_type == FormColumnType::radio || 
-    $column->column_type == FormColumnType::checkbox || 
+    $column->column_type == FormColumnType::radio ||
+    $column->column_type == FormColumnType::checkbox ||
     $column->column_type == FormColumnType::select ||
     $column->column_type == FormColumnType::group ||
     $column->caption
@@ -93,7 +93,7 @@
     <tr>
         <td class="pt-0 border border-0"></td>
         <td class="pt-0 border border-0" colspan="7">
-        
+
         @if ($column->column_type != FormColumnType::group && $column->select_count > 0)
             {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
             <div class="small"><i class="far fa-list-alt"></i> {{ $column->select_names }}</div>

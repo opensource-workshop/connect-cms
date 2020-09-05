@@ -37,7 +37,7 @@
 <div class="row">
     <div class="col-12 text-center mt-3">
         @if(Session::has('page_no.'.$frame_id))
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}?page={{Session::get('page_no.'.$frame_id)}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}?frame_{{$frame_id}}_page={{Session::get('page_no.'.$frame_id)}}#frame-{{$frame_id}}">
         @else
         <a href="{{url('/')}}{{$page->getLinkUrl()}}">
         @endif

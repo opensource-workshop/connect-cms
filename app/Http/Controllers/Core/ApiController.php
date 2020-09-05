@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Core\ConnectController;
 use App\Http\Requests;
 
+use File;
+
 use App\User;
 
 /**
@@ -32,13 +34,27 @@ class ApiController extends ConnectController
      */
     private static function createApiInstance($plugin_name)
     {
+        // クラス名。初期値はプラグイン名
+        $class_name = $plugin_name;
+
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
         $file_path = base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php";
+
+        if (!File::exists($file_path)) {
+            $file_path = base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . "Api.php";
+            if (File::exists($file_path)) {
+                $class_name = $plugin_name . 'Api';
+            } else {
+                // 指定されたファイルがない
+                return false;
+            }
+        }
+
         require $file_path;
 
         /// 引数のアクションと同じメソッドを呼び出す。
-        $class_name = "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name);
-        $plugin_instance = new $class_name;
+        $class_path = "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($class_name);
+        $plugin_instance = new $class_path;
         return new $plugin_instance;
     }
 
@@ -52,22 +68,6 @@ class ApiController extends ConnectController
     {
         // インスタンス生成
         $plugin_instance = self::createApiInstance($plugin_name);
-
-//        // 権限定義メソッドの有無確認
-//        if (!method_exists($plugin_instance, 'declareRole')) {
-//            abort(403, '権限定義メソッド(declareRole)がありません。');
-//        }
-
-//        // 権限エラー
-//        $role_ckeck_table = $plugin_instance->declareRole();
-//        if (array_key_exists($action, $role_ckeck_table)) {
-//            if (!in_array($user->role, $role_ckeck_table[$action])) {
-//                abort(403, 'ユーザーにメソッドに対する権限がありません。');
-//            }
-//        }
-//        else {
-//            abort(403, 'メソッドに権限がありません。');
-//        }
 
         // 指定されたアクションを呼ぶ。
         return $plugin_instance->$action($request, $arg1, $arg2, $arg3, $arg4, $arg5);
