@@ -89,3 +89,14 @@
         @endif
     @endif
 </div>
+
+<div class="list-group mt-3">
+    <div class="list-group-item bg-light border-primary">契約・サポート</div>
+    @if (Auth::user()->can('role_manage_on'))
+        @if (isset($plugin_name) && $plugin_name == 'contract')
+            <a href="{{url('/')}}/manage/contract" class="list-group-item border-primary active">契約状況</a>
+        @else
+            <a href="{{url('/')}}/manage/contract" class="list-group-item border-primary">契約状況</a>
+        @endif
+    @endif
+</div>
