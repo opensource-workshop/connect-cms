@@ -338,5 +338,49 @@
     @endif
     @endauth
 
+    {{-- 初回確認メッセージの表示モーダル --}}
+    @php
+        // Configsテーブルから設定値を取得
+        $message_first_show_type = isset($configs_array['message_first_show_type']) ? $configs_array['message_first_show_type']->value : 0;
+        $message_first_permission_type = isset($configs_array['message_first_permission_type']) ? $configs_array['message_first_permission_type']->value : 0;
+        $message_first_exclued_urls = isset($configs_array['message_first_exclued_url']) ? explode(',' ,$configs_array['message_first_exclued_url']->value) : array();
+        $message_first_optional_class = isset($configs_array['message_first_optional_class']) ? $configs_array['message_first_optional_class']->value : '';
+    @endphp
+    {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、同意していない（Cookie未セット）場合にメッセージ表示 --}}
+    @if($message_first_show_type == ShowType::show && !in_array($page->permanent_link ,$message_first_exclued_urls) && Cookie::get('connect_cookie_message_first') != 'agreed')
+
+        <!-- 初回確認メッセージ表示用のモーダルウィンドウ -->
+        <div class="modal {{ $message_first_optional_class }}" id="first_message_modal" tabindex="-1" role="dialog" aria-labelledby="first_message_modal_label" aria-hidden="true" data-backdrop="{{ $message_first_permission_type == PermissionType::not_allowed ? 'static' : 'true' }}">
+            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {{-- メッセージ内容 --}}
+                        {!! $configs_array['message_first_content']->value !!}
+                    </div>
+                    <div class="modal-footer">
+                        <form action="{{url('/core/cookie/setCookieForMessageFirst')}}/{{$page->id}}" name="form_set_cookie" id="form_set_cookie" method="POST">
+                            {{ csrf_field() }}
+
+                            {{-- ボタン --}}
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="submit_form_set_cookie();">
+                                {{ $configs_array['message_first_button_name']->value }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            // 画面ロード時にモーダル表示
+            window.onload = function() {
+                $('#first_message_modal').modal();
+            };
+            // cookieセット処理リクエスト
+            function submit_form_set_cookie() {
+                form_set_cookie.submit();
+            }
+        </script>
+    @endif
+
 </body>
 </html>
