@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Filesystem\Filesystem;
 
 use DB;
 use Carbon\Carbon;
@@ -32,6 +33,8 @@ use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\csv\SjisToUtf8EncodingFilter;
+use App\Utilities\csv\Csv;
+use App\Utilities\zip\UnZip;
 
 /**
  * データベース・プラグイン
@@ -2566,8 +2569,8 @@ class DatabasesPlugin extends UserPluginBase
         // $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
         if ($request->character_code == \CsvCharacterCode::utf_8) {
             $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
-            //「UTF-8」の「BOM」であるコード「0xEF」「0xBB」「0xBF」をカンマ区切りにされた文字列の先頭に連結
-            $csv_data = pack('C*', 0xEF, 0xBB, 0xBF) . $csv_data;
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = Csv::addUtf8Bom($csv_data);
         } else {
             $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
         }
@@ -2599,15 +2602,31 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function uploadCsv($request, $page_id, $frame_id, $id)
     {
+        // クラスを使用する前に、それが存在するかどうかを調べます
+        if (UnZip::useZipArchive()) {
+            // zip or csv
+            $rules = [
+                'databases_csv'  => [
+                    'required',
+                    'file',
+                    'mimes:csv,txt,zip', // mimesの都合上text/csvなのでtxtも許可が必要
+                    'mimetypes:text/plain,application/zip',
+                ],
+            ];
+        } else {
+            // csv
+            $rules = [
+                'databases_csv'  => [
+                    'required',
+                    'file',
+                    'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
+                    'mimetypes:text/plain',
+                ],
+            ];
+        }
+
         // 画面エラーチェック
-        $validator = Validator::make($request->all(), [
-            'databases_csv'  => [
-                'required',
-                'file',
-                'mimes:csv,txt,zip', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain,application/zip',
-            ],
-        ]);
+        $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
             'databases_csv'  => 'CSVファイル',
         ]);
@@ -2621,21 +2640,77 @@ class DatabasesPlugin extends UserPluginBase
 
         // CSVファイル一時保存
         $path = $request->file('databases_csv')->store('tmp');
+        // Log::debug(var_export(storage_path('app/') . $path, true));
+        $csv_full_path = storage_path('app/') . $path;
+        $unzip_dir_full_path = null;
+
+        // ファイル拡張子取得
+        $file_extension = $request->file('databases_csv')->getClientOriginalExtension();
+        // 小文字に変換
+        $file_extension = strtolower($file_extension);
+        // Log::debug(var_export($file_extension, true));
+
+        if ($file_extension == 'zip') {
+            // クラスを使用する前に、それが存在するかどうかを調べます
+            // if (class_exists('ZipArchive')) {
+            if (UnZip::useZipArchive()) {
+                $zip_full_path = storage_path('app/') . $path;
+
+                // 一時的な解凍フォルダ名
+                // $tmp_dir = uniqid('', true);
+                $tmp_dir = UnZip::getTmpDir();
+                $unzip_dir_full_path = storage_path('app/') . "tmp/database/{$tmp_dir}/";
+
+                $error_msg = UnZip::unzip($zip_full_path, $unzip_dir_full_path);
+                if ($error_msg !== true) {
+                    // 一時ファイルの削除
+                    $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+                    return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
+                }
+
+                // パターンにマッチするパス名を探す。 csvは１つの想定
+                // winの標準機能でzip圧縮すると、zip内にフォルダが１つでき、その中にファイルが格納されているため、
+                // zip内１つ下のフォルダを検索
+                // $csv_full_path = $unzip_dir_full_path . "database/database.csv";
+                // $csv_full_paths = glob($unzip_dir_full_path . "database/*.csv");
+                $csv_full_paths = glob($unzip_dir_full_path . "*/*.csv");
+                // Log::debug(var_export($csv_full_paths, true));
+
+                if (empty($csv_full_paths)) {
+                    // 「エラー」zipファイルにcsvを含めてください。csv0個
+                    // 一時ファイルの削除
+                    $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+                    $error_msg = "ZIPファイルにCSVを含めてください。";
+                    return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
+                }
+                if (count($csv_full_paths) >= 2) {
+                    // 「エラー」zipファイルに含めるcsvは１つにしてください。csv2個以上
+                    // 一時ファイルの削除
+                    $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+                    $error_msg = "ZIPファイルに含めるCSVは１つにしてください。";
+                    return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
+                }
+                $csv_full_path = $csv_full_paths[0];
+
+                // 一時ファイルの削除
+                // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+                // dd('ここまで');
+            }
+        }
 
         // 文字コード
         $character_code = $request->character_code;
 
         // 文字コード自動検出
         if ($character_code == \CsvCharacterCode::auto) {
-            // 全体ではなく0～1024までを取得
-            $contents = file_get_contents(storage_path('app/') . $path, null, null, 0, 1024);
-
-            // 文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る
-            $character_code = mb_detect_encoding($contents, \CsvCharacterCode::sjis_win.", ".\CsvCharacterCode::utf_8);
-            // Log::debug(var_export($char, true));
+            // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
+            $character_code = Csv::getCharacterCodeAuto($csv_full_path);
             if (!$character_code) {
                 // 一時ファイルの削除
-                Storage::delete($path);
+                $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
                 $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
                             ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
@@ -2644,6 +2719,8 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
+        // 読み込み
+        $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
         if ($character_code == \CsvCharacterCode::sjis_win) {
             // ストリームフィルタとして登録.
@@ -2653,12 +2730,7 @@ class DatabasesPlugin extends UserPluginBase
                 'sjis_to_utf8_encoding_filter',
                 SjisToUtf8EncodingFilter::class
             );
-        }
 
-        // 読み込み
-        $fp = fopen(storage_path('app/') . $path, 'r');
-        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == \CsvCharacterCode::sjis_win) {
             // ファイル読み込み時に使うストリームフィルタを指定.
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換してる。UTF-8変換で5C問題対応になる
             stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
@@ -2667,8 +2739,11 @@ class DatabasesPlugin extends UserPluginBase
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ",");
         // UTF-8のみBOMコードを取り除く
-        $header_columns = $this->removeUtf8Bom($header_columns, $character_code);
-        //dd(storage_path('app/') . $path);
+        // CSVファイル：UTF-8のみ
+        if ($character_code == \CsvCharacterCode::utf_8) {
+            $header_columns = Csv::removeUtf8Bom($header_columns);
+        }
+        // dd($csv_full_path);
         // Log::debug('$header_columns:'. var_export($header_columns, true));
 
         // カラムの取得
@@ -2688,7 +2763,7 @@ class DatabasesPlugin extends UserPluginBase
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
-            Storage::delete($path);
+            $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
             // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
@@ -2699,30 +2774,97 @@ class DatabasesPlugin extends UserPluginBase
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
-            Storage::delete($path);
+            $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
             // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
         }
 
+        // if ($file_extension == 'zip') {
+        //     // クラスを使用する前に、それが存在するかどうかを調べます
+        //     if (class_exists('ZipArchive')) {
+        //         // [TODO] csvあるか
+        //         // [TODO] zipフォルダ内のフォルダ構成
+        //         // [TODO] データ行のファイルが全てあるか
+        //         // [TODO] ファイル名のバリデーション
+        //         // [TODO] 添付ファイルの種類バリデーション
+        //     }
+        // }
+
+        if ($file_extension == 'zip') {
+            // クラスを使用する前に、それが存在するかどうかを調べます
+            if (class_exists('ZipArchive')) {
+                // １．全ファイルアップロード
+                //     uploadsフォルダを全アップロード、変数にアップロードIDもつ
+                //     使われないファイルがアップロードされる事もあるが、temporary_flag = 1で残るので後から判別可能（今後ファイルクリーアップ作って綺麗にする方向かなぁ）
+
+                // パターンにマッチするパス名を探す。 csvは１つの想定
+                // $unzip_uploads_full_paths = glob($unzip_dir_full_path . "database/uploads/*");
+                $unzip_uploads_full_paths = glob($unzip_dir_full_path . "*/uploads/*");
+                // Log::debug(var_export($unzip_uploads_full_paths, true));
+                $filesystem = new Filesystem();
+
+                // アップロードしたzipのアップロードファイル
+                // $unzip_uploadeds = [
+                //     991 => 'uploads/filename1.jpg',
+                //     992 => 'uploads/filename2.jpg',
+                //     993 => 'uploads/filename3.jpg',
+                // ];
+                $unzip_uploadeds = [];
+
+                foreach ($unzip_uploads_full_paths as $unzip_uploads_full_path) {
+                    // uploads テーブルに情報追加、ファイルのid を取得する
+                    $upload = Uploads::create([
+                        // 'client_original_name' => $request->file($req_filename)->getClientOriginalName(),
+                        // 'mimetype'             => $request->file($req_filename)->getClientMimeType(),
+                        // 'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
+                        // 'size'                 => $request->file($req_filename)->getClientSize(),
+                        'client_original_name' => $filesystem->basename($unzip_uploads_full_path),
+                        'mimetype'             => $filesystem->mimeType($unzip_uploads_full_path),
+                        'extension'            => $filesystem->extension($unzip_uploads_full_path),
+                        'size'                 => $filesystem->size($unzip_uploads_full_path),
+                        'plugin_name'          => 'databasess',
+                        'page_id'              => $page_id,
+                        'temporary_flag'       => 1,
+                        'created_id'           => Auth::user()->id,
+                    ]);
+                    // Log::debug(var_export($filesystem->mimeType($unzip_uploads_full_path), true));
+                    // Log::debug(var_export($filesystem->basename($unzip_uploads_full_path), true));
+                    // Log::debug(var_export($filesystem->extension($unzip_uploads_full_path), true));
+                    // Log::debug(var_export($filesystem->size($unzip_uploads_full_path), true));
+
+                    // ファイル保存
+                    $directory = $this->getDirectory($upload->id);
+
+                    // // 一時ファイルの削除
+                    // fclose($fp);
+                    // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+                    // dd('ここまで');
+
+                    // $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
+                    // 一時ディレクトリから、uploadsディレクトリに移動
+                    $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . '.' . $filesystem->extension($unzip_uploads_full_path));
+
+                    $unzip_uploadeds[$upload->id] = 'uploads/' . $filesystem->basename($unzip_uploads_full_path);
+                }
+            }
+        }
+
         // // 一時ファイルの削除
         // fclose($fp);
-        // Storage::delete($path);
+        // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
         // dd('ここまで');
 
-        // ファイルを閉じて、開きなおす
-        fclose($fp);
-        $fp = fopen(storage_path('app/') . $path, 'r');
-        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == \CsvCharacterCode::sjis_win) {
-            // ファイル読み込み時に使うストリームフィルタを指定.
-            stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
-        }
+        // ファイルポインタの位置を先頭に戻す
+        rewind($fp);
 
         // ヘッダー
         $header_columns = fgetcsv($fp, 0, ",");
-        // UTF-8のみBOMコードを取り除く
-        $header_columns = $this->removeUtf8Bom($header_columns, $character_code);
+        // CSVファイル：UTF-8のみ
+        if ($character_code == \CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
+            $header_columns = Csv::removeUtf8Bom($header_columns);
+        }
 
         // データベースの取得
         $database = Databases::where('id', $id)->first();
@@ -2739,11 +2881,11 @@ class DatabasesPlugin extends UserPluginBase
             // CSVのデータ行の頭は、必ず固定項目のidの想定
             $databases_inputs_id = array_shift($csv_columns);
             // 空文字をnullに変換
-            $databases_inputs_id = $this->convertEmptyStringsToNull($databases_inputs_id);
+            $databases_inputs_id = Csv::convertEmptyStringsToNull($databases_inputs_id);
 
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
-                $csv_column = $this->convertEmptyStringsToNull($csv_column);
+                $csv_column = Csv::convertEmptyStringsToNull($csv_column);
 
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
@@ -2753,6 +2895,53 @@ class DatabasesPlugin extends UserPluginBase
                     if ($databases_columns[$col]->rule_allowed_numeric) {
                         // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
                         $csv_column = $this->convertNumericAndMinusZenkakuToHankaku($csv_column);
+                    }
+
+                    // ファイルタイプ
+                    if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
+                            $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
+                            $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
+                        // csv値あり
+                        if ($csv_column) {
+                            // パスをアップロードIDに書き換える。
+                            $csv_column = array_search($csv_column, $unzip_uploadeds);
+                            $csv_column = $csv_column === false ? null : $csv_column;
+
+                            if (!empty($databases_inputs_id)) {
+                                // 更新
+
+                                // アップロードIDあり
+                                if ($csv_column) {
+                                    // Uploadファイル削除
+                                    // Uploadデータ削除
+                                    // ファイル系データ削除
+
+                                    // 削除するファイル情報が入っている詳細データの特定
+                                    $del_databases_input_cols = DatabasesInputCols::where('databases_inputs_id', $databases_inputs_id)
+                                                                                ->where('databases_columns_id', $databases_columns[$col]->id)
+                                                                                ->first();
+                                    // ファイルが添付されていた場合
+                                    if ($del_databases_input_cols && $del_databases_input_cols->value) {
+                                        // 削除するファイルデータ
+                                        $delete_upload = Uploads::find($del_databases_input_cols->value);
+
+                                        // ファイルの削除
+                                        if ($delete_upload) {
+                                            $directory = $this->getDirectory($delete_upload->id);
+                                            Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                                            // データベースの削除
+                                            $delete_upload->delete();
+                                        }
+                                    }
+
+                                    // DatabasesInputColsのデータありのファイルタイプは、ここで消す
+                                    DatabasesInputCols::where('databases_inputs_id', $databases_inputs_id)
+                                                        ->where('databases_columns_id', $databases_columns[$col]->id)
+                                                        ->delete();
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -2792,38 +2981,8 @@ class DatabasesPlugin extends UserPluginBase
                 // 公開日時
                 $databases_inputs->posted_at = $posted_at;
                 $databases_inputs->update();
-            }
 
-            // // ファイル（uploadsテーブル＆実ファイル）の削除。データ登録前に削除する。（後からだと内容が変わっていてまずい）
-            // if (!empty($id) && $request->has('delete_upload_column_ids')) {
-            //     foreach ($request->delete_upload_column_ids as $delete_upload_column_id) {
-            //         if ($delete_upload_column_id) {
-            //             // 削除するファイル情報が入っている詳細データの特定
-            //             $del_databases_input_cols = DatabasesInputCols::where('databases_inputs_id', $id)
-            //                                                         ->where('databases_columns_id', $delete_upload_column_id)
-            //                                                         ->first();
-            //             // ファイルが添付されていた場合
-            //             if ($del_databases_input_cols && $del_databases_input_cols->value) {
-            //                 // 削除するファイルデータ
-            //                 $delete_upload = Uploads::find($del_databases_input_cols->value);
-
-            //                 // ファイルの削除
-            //                 if ($delete_upload) {
-            //                     $directory = $this->getDirectory($delete_upload->id);
-            //                     Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
-
-            //                     // データベースの削除
-            //                     $delete_upload->delete();
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-
-            // databases_inputs_id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
-            if (!empty($databases_inputs_id)) {
-                // 更新
-
+                // databases_inputs_id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
                 $file_columns_ids = [];
                 foreach ($databases_columns as $databases_column) {
                     // ファイルタイプ
@@ -2834,7 +2993,7 @@ class DatabasesPlugin extends UserPluginBase
                     }
                 }
 
-                // delete -> insertで、CSVインポートではファイルタイプを登録できないため、消さずに残す。
+                // delete -> insertでファイルタイプは、ここでは消さずに残す。
                 DatabasesInputCols::where('databases_inputs_id', $databases_inputs_id)
                                     ->whereNotIn('databases_columns_id', $file_columns_ids)
                                     ->delete();
@@ -2853,20 +3012,27 @@ class DatabasesPlugin extends UserPluginBase
                     }
 
                     // ファイルタイプ
-                    // [TODO] 今後登録できるように見直し
                     if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
                             $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
                             $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
                         if (empty($databases_inputs_id)) {
-                            // 登録: nullをセット. nullだとno_image画像が表示される
-                            $csv_column = null;
+                            // 登録: ファイルなしは既に$csv_columnにnullをセット済みのため、何もしない.（nullだとno_image画像が表示される）
+                            // $csv_column = null;
                         } else {
-                            // 更新: 消さずに残してあるため、continue で何も処理させない
-                            continue;
+                            // 更新
+                            if (empty($csv_column)) {
+                                // 空(null)は、データを消さずに残してあるため、continue で何も処理させない
+                                continue;
+                            } else {
+                                // データありは、新しいアップロードIDが格納されているため、そのまま登録させる。
+                                // uploads テーブルの一時フラグを更新
+                                // $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
+                                $uploads_count = Uploads::where('id', $csv_column)->update(['temporary_flag' => 0]);
+                            }
                         }
                     }
 
-                    // change: データ登録フラグは、フォームの名残で残っているだけのため、フラグ見ないようする
+                    // change: データ登録フラグ（data_save_flag）は、フォームの名残で残っているだけのため、フラグ見ないようする
                     // データ登録フラグを見て登録
                     // if ($database->data_save_flag) {
                     $databases_input_cols = new DatabasesInputCols();
@@ -2875,14 +3041,6 @@ class DatabasesPlugin extends UserPluginBase
                     // $databases_input_cols->value = $value;
                     $databases_input_cols->value = $csv_column;
                     $databases_input_cols->save();
-
-                        // // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                        // if (($databases_columns[$col]->column_type == \DatabaseColumnType::file)  ||
-                        //     ($databases_columns[$col]->column_type == \DatabaseColumnType::image) ||
-                        //     ($databases_columns[$col]->column_type == \DatabaseColumnType::video)) {
-                        //     // $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
-                        //     $uploads_count = Uploads::where('id', $csv_column)->update(['temporary_flag' => 0]);
-                        // }
                     // }
                 }
             }
@@ -2890,7 +3048,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // 一時ファイルの削除
         fclose($fp);
-        Storage::delete($path);
+        $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
         $request->flash_message = 'インポートしました。';
 
@@ -3004,32 +3162,18 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     * UTF-8のみBOMコードを取り除く
+     * インポート時の一時ファイル削除
      */
-    private function removeUtf8Bom($header_columns, $character_code)
+    private function rmImportTmpFile($path, $file_extension, $unzip_dir_full_path = null)
     {
-        // CSVファイル：UTF-8のみ
-        if ($character_code == \CsvCharacterCode::utf_8) {
-            if (isset($header_columns[0])) {
-                // UTF-8 BOMありなしに関わらず、先頭3バイトのBOMコードを置換して取り除く
-                // BOMなしは、置換対象がないのでそのまま値が返る
-                $header_columns[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header_columns[0]);
-            }
+        if ($file_extension == 'zip') {
+            // 空でないディレクトリを削除
+            Unzip::rmdirNotEmpty($unzip_dir_full_path);
+            // Storage::deleteDirectory($unzip_dir_full_path);
         }
-        return $header_columns;
-    }
 
-    /**
-     * 空文字をnullに変換
-     * Laravel公式のリクエストを自動トリムする処理と同じ処理
-     * copy by Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::transform()
-     *
-     * @param  mixed  $value
-     * @return mixed
-     */
-    private function convertEmptyStringsToNull($value)
-    {
-        return is_string($value) && $value === '' ? null : $value;
+        // 一時ファイルの削除
+        Storage::delete($path);
     }
 
     /**
