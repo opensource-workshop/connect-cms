@@ -108,6 +108,13 @@ class MessageManage extends ManagePluginBase
              'value'    => $request->message_first_exclued_url]
         );
 
+        // 初回確認メッセージ（メッセージウィンドウ任意クラス）
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'message_first_optional_class'],
+            ['category' => 'message',
+             'value'    => $request->message_first_optional_class]
+        );
+
         // ページ管理画面に戻る
         return redirect("/manage/message");
     }
