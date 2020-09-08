@@ -28,6 +28,8 @@ use App\Models\User\Databases\DatabasesInputCols;
 use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
 use App\Rules\CustomVali_DatesYm;
+use App\Rules\CustomVali_CsvImage;
+use App\Rules\CustomVali_CsvExtensions;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
@@ -1045,6 +1047,16 @@ class DatabasesPlugin extends UserPluginBase
         if ($databases_column->column_type == \DatabaseColumnType::dates_ym) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = new CustomVali_DatesYm();
+        }
+        // 画像チェック
+        if ($databases_column->column_type == \DatabaseColumnType::image) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'image';
+        }
+        // 動画チェック
+        if ($databases_column->column_type == \DatabaseColumnType::video) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'mimes:mp4';
         }
         // バリデータールールをセット
         if ($validator_rule) {
@@ -2650,10 +2662,10 @@ class DatabasesPlugin extends UserPluginBase
         $file_extension = strtolower($file_extension);
         // Log::debug(var_export($file_extension, true));
 
-        if ($file_extension == 'zip') {
-            // クラスを使用する前に、それが存在するかどうかを調べます
-            // if (class_exists('ZipArchive')) {
-            if (UnZip::useZipArchive()) {
+        // クラスを使用する前に、それが存在するかどうかを調べます
+        // if (class_exists('ZipArchive')) {
+        if (UnZip::useZipArchive()) {
+            if ($file_extension == 'zip') {
                 $zip_full_path = storage_path('app/') . $path;
 
                 // 一時的な解凍フォルダ名
@@ -2737,10 +2749,10 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 一行目（ヘッダ）
-        $header_columns = fgetcsv($fp, 0, ",");
-        // UTF-8のみBOMコードを取り除く
+        $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
         if ($character_code == \CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
             $header_columns = Csv::removeUtf8Bom($header_columns);
         }
         // dd($csv_full_path);
@@ -2748,18 +2760,10 @@ class DatabasesPlugin extends UserPluginBase
 
         // カラムの取得
         $databases_columns = DatabasesColumns::where('databases_id', $id)->orderBy('display_sequence', 'asc')->get();
-        $databases_column_names = [];
-        // ヘッダ行-頭（固定項目）
-        $databases_column_names[] = 'id';
-        foreach ($databases_columns as $databases_column) {
-            $databases_column_names[] = $databases_column->column_name;
-        }
-        // ヘッダ行-末尾（固定項目）
-        $databases_column_names[] = '公開日時';
         // Log::debug('$databases_columns:'. var_export($databases_columns, true));
 
         // ヘッダー項目のエラーチェック
-        $error_msgs = $this->checkCsvHeader($header_columns, $databases_column_names);
+        $error_msgs = $this->checkCsvHeader($header_columns, $databases_columns);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -2770,7 +2774,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // データ項目のエラーチェック
-        $error_msgs = $this->checkCvslines($fp, $databases_columns);
+        $error_msgs = $this->checkCvslines($fp, $databases_columns, $file_extension, $unzip_dir_full_path);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -2780,25 +2784,14 @@ class DatabasesPlugin extends UserPluginBase
             return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
         }
 
-        // if ($file_extension == 'zip') {
-        //     // クラスを使用する前に、それが存在するかどうかを調べます
-        //     if (class_exists('ZipArchive')) {
-        //         // [TODO] csvあるか
-        //         // [TODO] zipフォルダ内のフォルダ構成
-        //         // [TODO] データ行のファイルが全てあるか
-        //         // [TODO] ファイル名のバリデーション
-        //         // [TODO] 添付ファイルの種類バリデーション
-        //     }
-        // }
-
-        if ($file_extension == 'zip') {
-            // クラスを使用する前に、それが存在するかどうかを調べます
-            if (class_exists('ZipArchive')) {
+        // クラスを使用する前に、それが存在するかどうかを調べます
+        if (UnZip::useZipArchive()) {
+            if ($file_extension == 'zip') {
                 // １．全ファイルアップロード
                 //     uploadsフォルダを全アップロード、変数にアップロードIDもつ
                 //     使われないファイルがアップロードされる事もあるが、temporary_flag = 1で残るので後から判別可能（今後ファイルクリーアップ作って綺麗にする方向かなぁ）
 
-                // パターンにマッチするパス名を探す。 csvは１つの想定
+                // パターンにマッチするパス名を探す。
                 // $unzip_uploads_full_paths = glob($unzip_dir_full_path . "database/uploads/*");
                 $unzip_uploads_full_paths = glob($unzip_dir_full_path . "*/uploads/*");
                 // Log::debug(var_export($unzip_uploads_full_paths, true));
@@ -2859,7 +2852,7 @@ class DatabasesPlugin extends UserPluginBase
         rewind($fp);
 
         // ヘッダー
-        $header_columns = fgetcsv($fp, 0, ",");
+        $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
         if ($character_code == \CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
@@ -2870,7 +2863,7 @@ class DatabasesPlugin extends UserPluginBase
         $database = Databases::where('id', $id)->first();
 
         // データ
-        while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
             // --- 入力値変換
 
             // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
@@ -3058,11 +3051,20 @@ class DatabasesPlugin extends UserPluginBase
     /**
      * CSVヘッダーチェック
      */
-    private function checkCsvHeader($header_columns, $header_column_format)
+    private function checkCsvHeader($header_columns, $databases_columns)
     {
         if (empty($header_columns)) {
             return array("CSVファイルが空です。");
         }
+
+        $header_column_format = [];
+        // ヘッダ行-頭（固定項目）
+        $header_column_format[] = 'id';
+        foreach ($databases_columns as $databases_column) {
+            $header_column_format[] = $databases_column->column_name;
+        }
+        // ヘッダ行-末尾（固定項目）
+        $header_column_format[] = '公開日時';
 
         // 項目の不足チェック
         $shortness = array_diff($header_column_format, $header_columns);
@@ -3083,7 +3085,7 @@ class DatabasesPlugin extends UserPluginBase
     /**
      * CSVデータ行チェック
      */
-    private function checkCvslines($fp, $databases_columns)
+    private function checkCvslines($fp, $databases_columns, $file_extension, $unzip_dir_full_path)
     {
         $rules = [];
         // $rules = [
@@ -3112,6 +3114,38 @@ class DatabasesPlugin extends UserPluginBase
             if (isset($validator_array['column']['databases_columns_value.' . $databases_column->id])) {
                 // 行頭（固定項目）の id 分　col をずらすため、+1
                 $rules[$col + 1] = $validator_array['column']['databases_columns_value.' . $databases_column->id];
+
+                if ($file_extension == 'csv') {
+                    // ファイルタイプ
+                    if ($databases_column->column_type == \DatabaseColumnType::file  ||
+                            $databases_column->column_type == \DatabaseColumnType::image ||
+                            $databases_column->column_type == \DatabaseColumnType::video) {
+                        // csv単体のインポートでは、ファイルタイプはインポートできないため、バリデーションルールをチェックなしで上書き。
+                        // 登録時の値は別途 null に変換してる。
+                        $rules[$col + 1] = [];
+                    }
+                } elseif ($file_extension == 'zip') {
+                    // zipのファイルタイプのバリデーションは、Laravelのそのまま使えなかった。
+                    // 【対応】
+                    // csv用の画像、動画バリデーションを作成して上書きする
+                    // 【原因】
+                    // 画像 = image = mimes:jpeg,png,gif,bmp,svg
+                    // 動画 = mimes:mp4
+                    // のmimesチェックは、Symfony\Component\HttpFoundation\File\UploadedFileクラスの値をチェックするが、
+                    // UploadedFile::isValid() 内で php標準の is_uploaded_file() でHTTP POST でアップロードされたファイルかどうかを調べていて、
+                    // 無理くり添付ファイルをUploadedFileクラスで newして作った変数では、is_uploaded_file() で false になり「アップロード失敗しました」とバリデーションエラーに必ずなるため。
+
+                    if ($databases_column->column_type == \DatabaseColumnType::file) {
+                        // バリデーション元々なし（バリデーションがないため、ここには到達しない想定）
+                        $rules[$col + 1] = [];
+                    } elseif ($databases_column->column_type == \DatabaseColumnType::image) {
+                        // csv用のバリデーションで上書き
+                        $rules[$col + 1] = ['nullable', new CustomVali_CsvImage()];
+                    } elseif ($databases_column->column_type == \DatabaseColumnType::video) {
+                        // csv用のバリデーションで上書き
+                        $rules[$col + 1] = ['nullable', new CustomVali_CsvExtensions(['mp4'])];
+                    }
+                }
             } else {
                 // ルールなしは空配列入れないと、バリデーション項目がずれるのでセット
                 $rules[$col + 1] = [];
@@ -3128,7 +3162,57 @@ class DatabasesPlugin extends UserPluginBase
         $line_count = 2;
         $errors = [];
 
-        while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+        $filesystem = new Filesystem();
+        $unzip_uploads_full_paths2 = [];
+        // $unzip_uploads_full_paths2 = [
+        //     'uploads/MP4_test_movie.mp4' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/MP4_test_movie.mp4',
+        //     'uploads/file2.jpg' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/file2.jpg'
+        // ];
+
+        if ($file_extension == 'zip') {
+            // パターンにマッチするパス名を探す。
+            $unzip_uploads_full_paths = glob($unzip_dir_full_path . "*/uploads/*");
+
+            foreach ($unzip_uploads_full_paths as $unzip_uploads_full_path) {
+                $unzip_uploads_full_paths2['uploads/' . $filesystem->basename($unzip_uploads_full_path)] = $unzip_uploads_full_path;
+            }
+        }
+
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // 配列の頭から要素(id)を取り除いて取得
+            // CSVのデータ行の頭は、必ず固定項目のidの想定
+            $databases_inputs_id = array_shift($csv_columns);
+
+            foreach ($csv_columns as $col => &$csv_column) {
+                // 空文字をnullに変換
+                $csv_column = Csv::convertEmptyStringsToNull($csv_column);
+
+                // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
+                // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
+                if (isset($databases_columns[$col])) {
+                    // ファイルタイプ
+                    if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
+                            $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
+                            $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
+
+                        // csv値あり
+                        if ($csv_column) {
+                            // バリデーションのためだけに、一時的にパスをフルパスに書き換える。
+                            if (isset($unzip_uploads_full_paths2[$csv_column])) {
+                                $csv_column = $unzip_uploads_full_paths2[$csv_column];
+                            } else {
+                                // 対応するパスが無いため、エラー
+                                $csv_column = null;
+                                $errors[] = $line_count . '行目の' . $databases_columns[$col]->column_name . 'のファイルが見つかりません。';
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 頭のIDをarrayに戻す
+            array_unshift($csv_columns, $databases_inputs_id);
+
             // バリデーション
             $validator = Validator::make($csv_columns, $rules);
             // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
