@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
+@php
+use App\Utilities\zip\UnZip;
+@endphp
+
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -78,6 +82,11 @@
         <label class="{{$frame->getSettingLabelClass()}} pt-0">CSVファイル <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="file" name="databases_csv" class="form-control-file">
+            @if (UnZip::useZipArchive())
+                <small class="text-muted">
+                    ※ CSVファイル・ZIPファイルに対応しています。
+                </small>
+            @endif
             @if ($errors && $errors->has('databases_csv'))
                 @foreach ($errors->get('databases_csv') as $message)
                     <div class="text-danger">{{$message}}</div>
@@ -95,7 +104,7 @@
                 @endforeach
             </select>
             <small class="text-muted">
-                ※ UTF-8はBOM付・BOMなしどちらにも対応しています。<br>
+                ※ UTF-8はBOM付・BOMなしどちらにも対応しています。
             </small>
             @if ($errors && $errors->has('character_code')) <div class="text-danger">{{$errors->first('character_code')}}</div> @endif
         </div>
