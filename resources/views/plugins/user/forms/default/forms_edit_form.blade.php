@@ -36,21 +36,29 @@
 
 @if (!$form->id && !$create_flag)
 @else
-<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
-    {{ csrf_field() }}
 
-    {{-- create_flag がtrue の場合、新規作成するためにforms_id を空にする --}}
-    @if ($create_flag)
-        <input type="hidden" name="forms_id" value="">
-    @else
-        <input type="hidden" name="forms_id" value="{{$form->id}}">
-    @endif
+{{-- create_flag がtrue の場合、新規作成するためにforms_id を空にする --}}
+@if ($create_flag)
+<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+@else
+<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$form->id}}#frame-{{$frame_id}}" method="POST" class="">
+@endif
+    {{ csrf_field() }}
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">フォーム名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="forms_name" value="{{old('forms_name', $form->forms_name)}}" class="form-control">
             @if ($errors && $errors->has('forms_name')) <div class="text-danger">{{$errors->first('forms_name')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">登録制限数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="entry_limit" value="{{old('entry_limit', $form->entry_limit)}}" class="form-control">
+            <small class="text-muted">※ 未入力か 0 の場合、登録数を制限しません。</small><br>
+            @if ($errors && $errors->has('entry_limit')) <div class="text-danger">{{$errors->first('entry_limit')}}</div> @endif
         </div>
     </div>
 
