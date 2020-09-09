@@ -917,7 +917,7 @@ class DatabasesPlugin extends UserPluginBase
     /**
      * （再帰関数）入力値の前後をトリムする
      *
-     * @param $request
+     * @param $value
      * @return array|string
      */
     private static function trimInput($value)
