@@ -1737,7 +1737,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $databases_id = null)
     {
-
         // デフォルトで必須
         $validator_values['databases_name'] = ['required'];
         $validator_attributes['databases_name'] = 'データベース名';
@@ -1778,8 +1777,19 @@ class DatabasesPlugin extends UserPluginBase
             $bucket->plugin_name = 'databases';
             $bucket->save();
 
-            // ブログデータ新規オブジェクト
-            $databases = new Databases();
+            if (empty($request->copy_databases_id)) {
+                // 登録
+
+                // データベース新規オブジェクト
+                $databases = new Databases();
+            } else {
+                // コピー
+
+                // コピー元IDで、データベースデータ取得
+                $copy_databases = Databases::where('id', $request->copy_databases_id)->first();
+                // ID消して複製
+                $databases = $copy_databases->replicate();
+            }
             $databases->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
@@ -1823,6 +1833,47 @@ class DatabasesPlugin extends UserPluginBase
 
         // データ保存
         $databases->save();
+
+        // 登録
+        if (empty($request->databases_id)) {
+            // コピーIDあり
+            if ($request->copy_databases_id) {
+                // 【DBカラムコピー】
+                $copy_databases_columns = DatabasesColumns::where('databases_id', $request->copy_databases_id)->get();
+                foreach ($copy_databases_columns as $copy_databases_column) {
+                    // ID消して複製
+                    $databases_column = $copy_databases_column->replicate();
+                    $databases_column->databases_id = $databases->id;
+                    $databases_column->save();
+
+                    // 【DBカラムの権限表示指定コピー】
+                    $copy_databases_columns_roles = DatabasesColumnsRole::where('databases_id', $request->copy_databases_id)
+                                                                        ->where('databases_columns_id', $copy_databases_column->id)
+                                                                        ->get();
+                    foreach ($copy_databases_columns_roles as $copy_databases_columns_role) {
+                        // ID消して複製
+                        $databases_columns_role = $copy_databases_columns_role->replicate();
+                        $databases_columns_role->databases_id = $databases->id;
+                        $databases_columns_role->databases_columns_id = $databases_column->id;
+                        $databases_columns_role->save();
+                    }
+
+                    // 選択肢カラム
+                    if ($copy_databases_column->column_type == \DatabaseColumnType::radio ||
+                            $copy_databases_column->column_type == \DatabaseColumnType::checkbox ||
+                            $copy_databases_column->column_type == \DatabaseColumnType::select) {
+                        // 【DBカラム選択肢コピー】
+                        $copy_databases_columns_selects = DatabasesColumnsSelects::where('databases_columns_id', $copy_databases_column->id)->get();
+                        foreach ($copy_databases_columns_selects as $copy_databases_columns_select) {
+                            // ID消して複製
+                            $databases_columns_select = $copy_databases_columns_select->replicate();
+                            $databases_columns_select->databases_columns_id = $databases_column->id;
+                            $databases_columns_select->save();
+                        }
+                    }
+                }
+            }
+        }
 
         // 新規作成フラグを付けてデータベース設定変更画面を呼ぶ
         $create_flag = false;
