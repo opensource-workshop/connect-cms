@@ -1769,7 +1769,7 @@ class DatabasesPlugin extends UserPluginBase
         $message = null;
 
         // 画面から渡ってくるdatabases_id が空ならバケツとブログを新規登録
-        if (empty($request->databases_id)) {
+        if (empty($databases_id)) {
             // バケツの登録
             $bucket = new Buckets();
             // $bucket->bucket_name = '無題';
@@ -1810,7 +1810,7 @@ class DatabasesPlugin extends UserPluginBase
         } else {
             // databases_id があれば、データベースを更新
             // データベースデータ取得
-            $databases = Databases::where('id', $request->databases_id)->first();
+            $databases = Databases::where('id', $databases_id)->first();
 
             // データベース名で、Buckets名も更新する
             Buckets::where('id', $databases->bucket_id)->update(['bucket_name' => $request->databases_name]);
@@ -1835,7 +1835,7 @@ class DatabasesPlugin extends UserPluginBase
         $databases->save();
 
         // 登録
-        if (empty($request->databases_id)) {
+        if (empty($databases_id)) {
             // コピーIDあり
             if ($request->copy_databases_id) {
                 // 【DBカラムコピー】
