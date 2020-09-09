@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Validation\Rule;
 
 use DB;
 use Carbon\Carbon;
@@ -1058,6 +1059,40 @@ class DatabasesPlugin extends UserPluginBase
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'mimes:mp4';
         }
+        // 単一選択チェック
+        // 複数選択チェック
+        // リストボックスチェック
+        if ($databases_column->column_type == \DatabaseColumnType::radio ||
+                $databases_column->column_type == \DatabaseColumnType::checkbox ||
+                $databases_column->column_type == \DatabaseColumnType::select) {
+            // カラムの選択肢用データ
+            $selects = DatabasesColumnsSelects::where('databases_columns_id', $databases_column->id)
+                                            ->orderBy('databases_columns_id', 'asc')
+                                            ->orderBy('display_sequence', 'asc')
+                                            ->pluck('value')
+                                            ->toArray();
+
+            // 単一選択チェック
+            if ($databases_column->column_type == \DatabaseColumnType::radio) {
+                $validator_rule[] = 'nullable';
+                // Rule::inのみで、selectsの中の１つが入ってるかチェック
+                $validator_rule[] = Rule::in($selects);
+            }
+            // 複数選択チェック
+            if ($databases_column->column_type == \DatabaseColumnType::checkbox) {
+                $validator_rule[] = 'nullable';
+                // array & Rule::in で、selectsの中の値に存在しているかチェック
+                $validator_rule[] = 'array';
+                $validator_rule[] = Rule::in($selects);
+            }
+            // リストボックスチェック
+            if ($databases_column->column_type == \DatabaseColumnType::select) {
+                $validator_rule[] = 'nullable';
+                // Rule::inのみで、selectsの中の１つが入ってるかチェック
+                $validator_rule[] = Rule::in($selects);
+            }
+        }
+
         // バリデータールールをセット
         if ($validator_rule) {
             $validator_array['column']['databases_columns_value.' . $databases_column->id] = $validator_rule;
@@ -1121,6 +1156,8 @@ class DatabasesPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
         $validator->setAttributeNames($validator_array['message']);
+        // Log::debug(var_export($request->all(), true));
+        // Log::debug(var_export($validator_array, true));
 
         // エラーがあった場合は入力画面に戻る。
         // $message = null;
@@ -2836,7 +2873,10 @@ class DatabasesPlugin extends UserPluginBase
 
                     // $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
                     // 一時ディレクトリから、uploadsディレクトリに移動
-                    $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . '.' . $filesystem->extension($unzip_uploads_full_path));
+                    // 拡張子なしに対応
+                    // $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . '.' . $filesystem->extension($unzip_uploads_full_path));
+                    $unzip_extension = $filesystem->extension($unzip_uploads_full_path) ? '.'.$filesystem->extension($unzip_uploads_full_path) : '';
+                    $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . $unzip_extension);
 
                     $unzip_uploadeds[$upload->id] = 'uploads/' . $filesystem->basename($unzip_uploads_full_path);
                 }
@@ -2865,6 +2905,7 @@ class DatabasesPlugin extends UserPluginBase
         // データ
         while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
             // --- 入力値変換
+            // Log::debug(var_export($csv_columns, true));
 
             // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
             // $request->merge(self::trimInput($request->all()));
@@ -2890,12 +2931,12 @@ class DatabasesPlugin extends UserPluginBase
                         $csv_column = $this->convertNumericAndMinusZenkakuToHankaku($csv_column);
                     }
 
-                    // ファイルタイプ
-                    if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
-                            $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
-                            $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
-                        // csv値あり
-                        if ($csv_column) {
+                    // csv値あり
+                    if ($csv_column) {
+                        // ファイルタイプ
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
+                                $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
+                                $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
                             // パスをアップロードIDに書き換える。
                             $csv_column = array_search($csv_column, $unzip_uploadeds);
                             $csv_column = $csv_column === false ? null : $csv_column;
@@ -2934,6 +2975,22 @@ class DatabasesPlugin extends UserPluginBase
                                                         ->delete();
                                 }
                             }
+                        }
+                        // 複数選択型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
+                            // 一度配列にして、trim後、また文字列に戻す。
+                            $csv_column = explode(',', $csv_column);
+                            // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+                            $csv_column = self::trimInput($csv_column);
+                            $csv_column = implode(',', $csv_column);
+                        }
+                        // 日付型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::date) {
+                            // Excelのcsvで日付を入力すると、2020/1/1形式になるため、2020/01/01形式に変換する
+                            // バリデーションで無効な日付は排除済み。
+                            // csv値ありのみ。
+                            $dt = new Carbon($csv_column);
+                            $csv_column = $dt->format('Y/m/d');
                         }
                     }
                 }
@@ -3179,6 +3236,9 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+            $csv_columns = self::trimInput($csv_columns);
+
             // 配列の頭から要素(id)を取り除いて取得
             // CSVのデータ行の頭は、必ず固定項目のidの想定
             $databases_inputs_id = array_shift($csv_columns);
@@ -3190,13 +3250,12 @@ class DatabasesPlugin extends UserPluginBase
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
                 if (isset($databases_columns[$col])) {
-                    // ファイルタイプ
-                    if ($databases_columns[$col]->column_type == \DatabaseColumnType::file  ||
-                            $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
-                            $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
-
-                        // csv値あり
-                        if ($csv_column) {
+                    // csv値あり
+                    if ($csv_column) {
+                        // ファイルタイプ
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::file ||
+                                $databases_columns[$col]->column_type == \DatabaseColumnType::image ||
+                                $databases_columns[$col]->column_type == \DatabaseColumnType::video) {
                             // バリデーションのためだけに、一時的にパスをフルパスに書き換える。
                             if (isset($unzip_uploads_full_paths2[$csv_column])) {
                                 $csv_column = $unzip_uploads_full_paths2[$csv_column];
@@ -3205,6 +3264,14 @@ class DatabasesPlugin extends UserPluginBase
                                 $csv_column = null;
                                 $errors[] = $line_count . '行目の' . $databases_columns[$col]->column_name . 'のファイルが見つかりません。';
                             }
+                        }
+                        // 複数選択型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
+                            // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
+                            $csv_column = explode(',', $csv_column);
+                            // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+                            $csv_column = self::trimInput($csv_column);
+                            // Log::debug(var_export($csv_column, true));
                         }
                     }
                 }
