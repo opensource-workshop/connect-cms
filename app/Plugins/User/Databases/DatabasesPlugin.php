@@ -934,6 +934,19 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
+     * カンマ区切りの文字列を、一度配列にして、trim後、また文字列に戻す
+     */
+    private static function trimInputKanma(string $kanma_value): string
+    {
+        // 一度配列にして、trim後、また文字列に戻す。
+        $tmp_array = explode(',', $kanma_value);
+        // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+        $tmp_array = self::trimInput($tmp_array);
+        $kanma_value2 = implode(', ', $tmp_array);
+        return $kanma_value2;
+    }
+
+    /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
      * @param [array] $validator_array 二次元配列
@@ -1147,6 +1160,17 @@ class DatabasesPlugin extends UserPluginBase
 
                 $tmp_array = $request->databases_columns_value;
                 $tmp_array[$databases_column->id] = $tmp_numeric_columns_value;
+                $request->merge([
+                    "databases_columns_value" => $tmp_array,
+                ]);
+            }
+            // 複数年月型
+            if ($databases_column->column_type == \DatabaseColumnType::dates_ym) {
+                // 一度配列にして、trim後、また文字列に戻す。
+                $tmp_columns_value = self::trimInputKanma($request->databases_columns_value[$databases_column->id]);
+
+                $tmp_array = $request->databases_columns_value;
+                $tmp_array[$databases_column->id] = $tmp_columns_value;
                 $request->merge([
                     "databases_columns_value" => $tmp_array,
                 ]);
@@ -2979,10 +3003,12 @@ class DatabasesPlugin extends UserPluginBase
                         // 複数選択型
                         if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
                             // 一度配列にして、trim後、また文字列に戻す。
-                            $csv_column = explode(',', $csv_column);
-                            // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-                            $csv_column = self::trimInput($csv_column);
-                            $csv_column = implode(',', $csv_column);
+                            $csv_column = self::trimInputKanma($csv_column);
+                        }
+                        // 複数年月型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::dates_ym) {
+                            // 一度配列にして、trim後、また文字列に戻す。
+                            $csv_column = self::trimInputKanma($csv_column);
                         }
                         // 日付型
                         if ($databases_columns[$col]->column_type == \DatabaseColumnType::date) {
