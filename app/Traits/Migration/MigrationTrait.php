@@ -45,6 +45,7 @@ use App\Models\Migration\Nc2\Nc2Journal;
 use App\Models\Migration\Nc2\Nc2JournalBlock;
 use App\Models\Migration\Nc2\Nc2JournalCategory;
 use App\Models\Migration\Nc2\Nc2JournalPost;
+use App\Models\Migration\Nc2\Nc2MenuDetail;
 use App\Models\Migration\Nc2\Nc2Modules;
 use App\Models\Migration\Nc2\Nc2Multidatabase;
 use App\Models\Migration\Nc2\Nc2MultidatabaseBlock;
@@ -221,8 +222,14 @@ trait MigrationTrait
     /**
      * データのクリア
      */
-    private function clearData($target)
+    private function clearData($target, $initial = false)
     {
+        if ($target == 'all' && $initial == true) {
+            // 全クリア
+            Buckets::truncate();
+            Page::truncate();
+        }
+
         if ($target == 'pages' || $target == 'all') {
             // トップページ以外の削除
             Page::where('permanent_link', '<>', '/')->delete();
@@ -547,6 +554,11 @@ trait MigrationTrait
         $this->added         = $added;
 
         $this->putMonitor(3, "importSite() Start.");
+
+        // 移行の初期処理
+        if ($added == false) {
+            $this->clearData($target, true);
+        }
 
         // 移行の初期処理
         $this->migrationInit();
@@ -1971,6 +1983,13 @@ trait MigrationTrait
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence);
+
+        // NC2 からの移行時の非表示設定の反映
+        $ommit_page_ids_nc2 = $this->getArrayValue($frame_ini, 'menu', 'ommit_page_ids_nc2');
+        if (!empty($ommit_page_ids_nc2)) {
+//            foreach () {
+//            }
+        }
 
         // Menus 登録 or 更新
         $menus = Menu::updateOrCreate(
@@ -4434,13 +4453,45 @@ trait MigrationTrait
             $nc2_whatsnew_block = Nc2WhatsnewBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc2_whatsnew_block->block_id) . "\"\n";
         } elseif ($module_name == 'menu') {
-            $ret .= "\n";
-            $ret .= "[menu]\n";
-            $ret .= "select_flag       = \"0\"\n";
-            $ret .= "page_ids          = \"\"\n";
-            $ret .= "folder_close_font = \"0\"\n";
-            $ret .= "folder_open_font  = \"0\"\n";
-            $ret .= "indent_font       = \"0\"\n";
+            // メニューの詳細設定（非表示設定が入っている）があれば、設定を加味する。
+            $nc2_menu_details = Nc2MenuDetail::select('menu_detail.*', 'pages.permalink')
+                                             ->join('pages', 'pages.page_id', '=', 'menu_detail.page_id')
+                                             ->where("block_id", $nc2_block->block_id)
+                                             ->orderBy('page_id', 'asc')
+                                             ->get();
+            if (empty($nc2_menu_details)) {
+                $ret .= "\n";
+                $ret .= "[menu]\n";
+                $ret .= "select_flag       = \"0\"\n";
+                $ret .= "page_ids          = \"\"\n";
+                $ret .= "folder_close_font = \"0\"\n";
+                $ret .= "folder_open_font  = \"0\"\n";
+                $ret .= "indent_font       = \"0\"\n";
+            } else {
+                // この時点では、ページはエクスポート途中のため、新との変換はできない。
+                // そのため、旧データで対象外を記載しておき、import の際に変換する。
+
+                // 選択しないページを除外
+                $ommit_nc2_pages = array();
+                foreach ($nc2_menu_details as $nc2_menu_detail) {
+                    // 下層ページを含めて取得
+                    $ommit_pages = Nc2Page::where('permalink', 'like', $nc2_menu_detail->permalink . '%')->get();
+                    if ($ommit_pages->isNotEmpty()) {
+                        $ommit_nc2_pages = $ommit_nc2_pages + $ommit_pages->pluck('page_id')->toArray();
+                    }
+                }
+                $ret .= "\n";
+                $ret .= "[menu]\n";
+                $ret .= "select_flag        = \"1\"\n";
+                $ret .= "page_ids           = \"\"\n";
+                $ret .= "folder_close_font  = \"0\"\n";
+                $ret .= "folder_open_font   = \"0\"\n";
+                $ret .= "indent_font        = \"0\"\n";
+                if (!empty($ommit_nc2_pages)) {
+                    asort($ommit_nc2_pages);
+                    $ret .= "ommit_page_ids_nc2 = \"" . implode(",", $ommit_nc2_pages) . "\"\n";
+                }
+            }
         }
         return $ret;
     }
