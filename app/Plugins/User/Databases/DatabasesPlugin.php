@@ -3382,7 +3382,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // Frames > Buckets > Database で特定
         if (empty($database_frame->bucket_id)) {
-            $database = null;
+            // bugfix: DBが選択されていない状態で「表示設定」タブを選択するとエラーとなる不具合対応
+            // $database = null;
+            $database = new Databases();
             $columns = null;
         } else {
             $database = Databases::where('bucket_id', $database_frame->bucket_id)->first();
