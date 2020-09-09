@@ -49,7 +49,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingOpacFrame'];
+        $functions['get']  = ['settingOpacFrame', 'rentlist'];
         $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame'];
         return $functions;
     }
@@ -1428,5 +1428,31 @@ class OpacsPlugin extends UserPluginBase
         );
 
         return;
+    }
+
+    /**
+     *  貸し出し中一覧
+     */
+    public function rentlist($request, $page_id, $frame_id)
+    {
+        // 権限チェック
+        if ($this->can('role_article')) {
+            return $this->view_error(403);
+        }
+
+        // 貸し出し中一覧取得
+        $books_lents = OpacsBooksLents::select('opacs_books_lents.*', 'users.name', 'opacs_books.title')
+                                      ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
+                                      ->leftJoin('users', 'users.userid', '=', 'opacs_books_lents.student_no')
+                                      ->whereNull('opacs_books_lents.return_date')
+                                      ->orderBy('opacs_books_lents.return_scheduled', 'asc')
+                                      ->get();
+
+        // Opacフレーム設定画面を呼び出す。
+        return $this->view(
+            'opacs_rentlist', [
+            'books_lents' => $books_lents,
+            ]
+        );
     }
 }

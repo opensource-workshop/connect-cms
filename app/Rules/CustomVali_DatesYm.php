@@ -59,6 +59,7 @@ class CustomVali_DatesYm implements Rule
      */
     public function message()
     {
-        return ':attributeには正しい形式の日付を指定してください。';
+        // return ':attributeには正しい形式の日付を指定してください。';
+        return ':attributeにはyyyy/mm形式で年月を入力してください。また複数入力したい場合は、カンマ「,」区切りで入力してください。';
     }
 }
