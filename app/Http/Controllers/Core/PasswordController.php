@@ -64,6 +64,13 @@ class PasswordController extends ConnectController
      */
     public function auth($request, $page_id)
     {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            $validator = Validator::make($request->all(), []);
+            $validator->errors()->add('password', '許可されていない処理です。');
+            return $this->input($request, $page_id)->withErrors($validator);
+        }
+
         if (!$this->page) {
             // ページがなければチェック失敗
             return false;

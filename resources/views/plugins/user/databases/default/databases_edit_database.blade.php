@@ -41,14 +41,16 @@
 
 @if (!$database->id && !$create_flag)
 @else
-<form action="{{url('/')}}/plugin/databases/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/databases/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにdatabases_id を空にする --}}
     @if ($create_flag)
         <input type="hidden" name="databases_id" value="">
+        <input type="hidden" name="copy_databases_id" value="{{old('copy_databases_id', $database->id)}}">
     @else
         <input type="hidden" name="databases_id" value="{{$database->id}}">
+        <input type="hidden" name="copy_databases_id" value="">
     @endif
 
     <div class="form-group row">

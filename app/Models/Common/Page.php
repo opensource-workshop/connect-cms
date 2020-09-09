@@ -492,6 +492,10 @@ class Page extends Model
 
         // パスワードチェック
         foreach ($page_tree as $page) {
+            // パスワードがあるページをチェックする。
+            if (empty($page->password)) {
+                continue;
+            }
             if ($page->password == $password) {
                 return true;
             }

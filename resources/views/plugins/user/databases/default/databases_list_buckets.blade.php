@@ -60,7 +60,7 @@
         }
     </script>
 
-    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
         {{ csrf_field() }}
         <div class="form-group">
             <table class="table table-hover table-responsive">
@@ -78,9 +78,17 @@
                     <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
                     <td nowrap>{{$plugin->plugin_bucket_name}}</td>
                     <td nowrap>
-                        <button class="btn btn-success btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
-                            <i class="far fa-edit"></i> 設定変更
-                        </button>
+                        <div class="btn-group mr-1">
+                            <button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
+                                <i class="far fa-edit"></i> 設定変更
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">ドロップダウンボタン</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="{{url('/')}}/plugin/databases/createBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">コピーしてDB作成へ</a>
+                            </div>
+                        </div>
 
                         <div class="btn-group mr-1">
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
