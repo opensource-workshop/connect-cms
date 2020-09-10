@@ -298,7 +298,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      * @param [array] $validator_array 二次元配列
      * @param [App\Models\User\Forms\FormsColumns] $forms_column
      * @param Request $request
-     * @return void
+     * @return array
      */
     private function getValidatorRule($validator_array, $forms_column, $request)
     {
@@ -416,11 +416,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($forms_column->group) {
                 foreach ($forms_column->group as $group_item) {
                     // まとめ行で指定している項目について、バリデータールールをセット
-                    $validator_array = self::getValidatorRule($validator_array, $group_item, $request);
+                    $validator_array = $this->getValidatorRule($validator_array, $group_item, $request);
                 }
             }
             // まとめ行以外の項目について、バリデータールールをセット
-            $validator_array = self::getValidatorRule($validator_array, $forms_column, $request);
+            $validator_array = $this->getValidatorRule($validator_array, $forms_column, $request);
         }
 
         // 入力値をトリム
@@ -639,10 +639,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // 入力値変換
         // ・登録制限数
-        if (is_numeric($request->entry_limit)) {
+        //   全角→半角変換
+        $entry_limit = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->entry_limit);
+        if (is_numeric($entry_limit)) {
             $request->merge([
                 // 小終点の入力があったら、小数点切り捨てて整数に
-                "entry_limit" => floor($request->entry_limit),
+                "entry_limit" => floor($entry_limit),
             ]);
         }
 
