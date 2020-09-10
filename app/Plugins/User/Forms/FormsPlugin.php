@@ -316,59 +316,18 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
-            if ($request->forms_columns_value[$forms_column->id]) {
-                // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）
-                $replace_defs = [
-                    'ー' => '-',
-                    '－' => '-',
-                    '―' => '-'
-                ];
-                $search = array_keys($replace_defs);
-                $replace = array_values($replace_defs);
+            // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
+            $tmp_numeric_columns_value = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->forms_columns_value[$forms_column->id]);
 
-                // 全角→半角へ丸めて、一時変数に保持
-                $tmp_numeric_columns_value = mb_convert_kana(
-                    str_replace(
-                        $search,
-                        $replace,
-                        $request->forms_columns_value[$forms_column->id]
-                    ),
-                    'n'
-                );
+            $tmp_array = $request->forms_columns_value;
+            $tmp_array[$forms_column->id] = $tmp_numeric_columns_value;
 
-                // if (is_numeric(
-                //     mb_convert_kana(
-                //         str_replace(
-                //             $search,
-                //             $replace,
-                //             $request->forms_columns_value[$forms_column->id]
-                //         ),
-                //         'n'
-                //     )
-                // )) {
-                if (is_numeric($tmp_numeric_columns_value)) {
-                    // 全角→半角変換した結果が数値の場合
-                    $tmp_array = $request->forms_columns_value;
-                    // // 全角→半角へ丸める
-                    // $tmp_array[$forms_column->id] =
-                    //     mb_convert_kana(
-                    //         str_replace(
-                    //             $search,
-                    //             $replace,
-                    //             $request->forms_columns_value[$forms_column->id]
-                    //         ),
-                    //         'n'
-                    //     );
-                    $tmp_array[$forms_column->id] = $tmp_numeric_columns_value;
+            $request->merge([
+                "forms_columns_value" => $tmp_array,
+            ]);
 
-                    $request->merge([
-                        "forms_columns_value" => $tmp_array,
-                    ]);
-                } else {
-                    // 全角→半角変換した結果が数値ではない場合
-                    $validator_rule[] = 'numeric';
-                }
-            }
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'numeric';
         }
         // 英数値チェック
         if ($forms_column->rule_allowed_alpha_numeric) {
