@@ -30,19 +30,6 @@ class CsvUtils
     }
 
     /**
-     * 空文字をnullに変換
-     * Laravel公式のリクエストを自動トリムする処理と同じ処理
-     * copy by Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::transform()
-     *
-     * @param  mixed  $value
-     * @return mixed
-     */
-    public static function convertEmptyStringsToNull($value)
-    {
-        return is_string($value) && $value === '' ? null : $value;
-    }
-
-    /**
      * 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
      */
     public static function getCharacterCodeAuto($csv_full_path)

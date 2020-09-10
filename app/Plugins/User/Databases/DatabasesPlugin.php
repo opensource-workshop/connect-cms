@@ -2922,11 +2922,11 @@ class DatabasesPlugin extends UserPluginBase
             // CSVのデータ行の頭は、必ず固定項目のidの想定
             $databases_inputs_id = array_shift($csv_columns);
             // 空文字をnullに変換
-            $databases_inputs_id = CsvUtils::convertEmptyStringsToNull($databases_inputs_id);
+            $databases_inputs_id = StringUtils::convertEmptyStringsToNull($databases_inputs_id);
 
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
-                $csv_column = CsvUtils::convertEmptyStringsToNull($csv_column);
+                $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
 
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
@@ -3254,7 +3254,7 @@ class DatabasesPlugin extends UserPluginBase
 
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
-                $csv_column = CsvUtils::convertEmptyStringsToNull($csv_column);
+                $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
 
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
