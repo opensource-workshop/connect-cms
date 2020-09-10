@@ -38,6 +38,7 @@ use App\Plugins\User\UserPluginBase;
 use App\Utilities\csv\SjisToUtf8EncodingFilter;
 use App\Utilities\csv\Csv;
 use App\Utilities\zip\UnZip;
+use App\Utilities\String\StringUtils;
 
 /**
  * データベース・プラグイン
@@ -915,38 +916,6 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     * （再帰関数）入力値の前後をトリムする
-     *
-     * @param $value
-     * @return array|string
-     */
-    private static function trimInput($value)
-    {
-        if (is_array($value)) {
-            // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
-            $value = array_map(['self', 'trimInput'], $value);
-        } elseif (is_string($value)) {
-            // /u = UTF-8 として処理
-            $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
-        }
-
-        return $value;
-    }
-
-    /**
-     * カンマ区切りの文字列を、一度配列にして、trim後、また文字列に戻す
-     */
-    private static function trimInputKanma(string $kanma_value): string
-    {
-        // 一度配列にして、trim後、また文字列に戻す。
-        $tmp_array = explode(',', $kanma_value);
-        // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-        $tmp_array = self::trimInput($tmp_array);
-        $kanma_value2 = implode(', ', $tmp_array);
-        return $kanma_value2;
-    }
-
-    /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
      * @param [array] $validator_array 二次元配列
@@ -1150,7 +1119,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // --- 入力値変換
         // 入力値をトリム
-        $request->merge(self::trimInput($request->all()));
+        $request->merge(StringUtils::trimInput($request->all()));
 
         foreach ($databases_columns as $databases_column) {
             // 数値チェック
@@ -1167,7 +1136,7 @@ class DatabasesPlugin extends UserPluginBase
             // 複数年月型
             if ($databases_column->column_type == \DatabaseColumnType::dates_ym) {
                 // 一度配列にして、trim後、また文字列に戻す。
-                $tmp_columns_value = self::trimInputKanma($request->databases_columns_value[$databases_column->id]);
+                $tmp_columns_value = StringUtils::trimInputKanma($request->databases_columns_value[$databases_column->id]);
 
                 $tmp_array = $request->databases_columns_value;
                 $tmp_array[$databases_column->id] = $tmp_columns_value;
@@ -2984,7 +2953,7 @@ class DatabasesPlugin extends UserPluginBase
 
             // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
             // $request->merge(self::trimInput($request->all()));
-            $csv_columns = self::trimInput($csv_columns);
+            $csv_columns = StringUtils::trimInput($csv_columns);
 
             // 配列の頭から要素(id)を取り除いて取得
             // CSVのデータ行の頭は、必ず固定項目のidの想定
@@ -3054,12 +3023,12 @@ class DatabasesPlugin extends UserPluginBase
                         // 複数選択型
                         if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
                             // 一度配列にして、trim後、また文字列に戻す。
-                            $csv_column = self::trimInputKanma($csv_column);
+                            $csv_column = StringUtils::trimInputKanma($csv_column);
                         }
                         // 複数年月型
                         if ($databases_columns[$col]->column_type == \DatabaseColumnType::dates_ym) {
                             // 一度配列にして、trim後、また文字列に戻す。
-                            $csv_column = self::trimInputKanma($csv_column);
+                            $csv_column = StringUtils::trimInputKanma($csv_column);
                         }
                         // 日付型
                         if ($databases_columns[$col]->column_type == \DatabaseColumnType::date) {
@@ -3314,7 +3283,7 @@ class DatabasesPlugin extends UserPluginBase
 
         while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
             // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-            $csv_columns = self::trimInput($csv_columns);
+            $csv_columns = StringUtils::trimInput($csv_columns);
 
             // 配列の頭から要素(id)を取り除いて取得
             // CSVのデータ行の頭は、必ず固定項目のidの想定
@@ -3347,7 +3316,7 @@ class DatabasesPlugin extends UserPluginBase
                             // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
                             $csv_column = explode(',', $csv_column);
                             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-                            $csv_column = self::trimInput($csv_column);
+                            $csv_column = StringUtils::trimInput($csv_column);
                             // Log::debug(var_export($csv_column, true));
                         }
                     }

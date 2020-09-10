@@ -28,6 +28,8 @@ use App\Rules\CustomVali_BothRequired;
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
+use App\Utilities\String\StringUtils;
+
 /**
  * フォーム・プラグイン
  *
@@ -291,24 +293,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     }
 
     /**
-     * （再帰関数）入力値の前後をトリムする
-     *
-     * @param $value
-     * @return array|string
-     */
-    public static function trimInput($value)
-    {
-        if (is_array($value)) {
-            // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
-            $value = array_map(['self', 'trimInput'], $value);
-        } elseif (is_string($value)) {
-            $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
-        }
-
-        return $value;
-    }
-
-    /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
      * @param [array] $validator_array 二次元配列
@@ -481,7 +465,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
 
         // 入力値をトリム
-        $request->merge(self::trimInput($request->all()));
+        $request->merge(StringUtils::trimInput($request->all()));
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
