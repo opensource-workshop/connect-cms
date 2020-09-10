@@ -1125,7 +1125,7 @@ class DatabasesPlugin extends UserPluginBase
             // 数値チェック
             if ($databases_column->rule_allowed_numeric) {
                 // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
-                $tmp_numeric_columns_value = $this->convertNumericAndMinusZenkakuToHankaku($request->databases_columns_value[$databases_column->id]);
+                $tmp_numeric_columns_value = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->databases_columns_value[$databases_column->id]);
 
                 $tmp_array = $request->databases_columns_value;
                 $tmp_array[$databases_column->id] = $tmp_numeric_columns_value;
@@ -1237,43 +1237,6 @@ class DatabasesPlugin extends UserPluginBase
             'delete_upload_column_ids' => $delete_upload_column_ids,
             ]
         );
-    }
-
-    /**
-     * 数値項目に使う事を想定。
-     * 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
-     * 郵便場合（111-2222）、電話番号（111-2222-3333）の入力は対応してない。
-     */
-    private function convertNumericAndMinusZenkakuToHankaku($columns_value)
-    {
-        if ($columns_value) {
-            // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）
-            // －１, －１等のマイナス１の入力を丸める。
-            $replace_defs = [
-                'ー' => '-',
-                '－' => '-',
-                '―' => '-'
-            ];
-            $search = array_keys($replace_defs);
-            $replace = array_values($replace_defs);
-
-            // 全角→半角へ丸めて、一時変数に保持
-            $tmp_numeric_columns_value = mb_convert_kana(
-                str_replace(
-                    $search,
-                    $replace,
-                    $columns_value
-                ),
-                'n'
-            );
-
-            if (is_numeric($tmp_numeric_columns_value)) {
-                // 全角→半角変換した結果が数値の場合
-                return $tmp_numeric_columns_value;
-            }
-        }
-
-        return $columns_value;
     }
 
     /**
@@ -2972,7 +2935,7 @@ class DatabasesPlugin extends UserPluginBase
                     // if ($databases_column->rule_allowed_numeric) {
                     if ($databases_columns[$col]->rule_allowed_numeric) {
                         // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
-                        $csv_column = $this->convertNumericAndMinusZenkakuToHankaku($csv_column);
+                        $csv_column = StringUtils::convertNumericAndMinusZenkakuToHankaku($csv_column);
                     }
 
                     // csv値あり

@@ -52,4 +52,41 @@ class StringUtils
         $kanma_value2 = implode(', ', $tmp_array);
         return $kanma_value2;
     }
+
+    /**
+     * 数値項目に使う事を想定。
+     * 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
+     * 郵便場合（111-2222）、電話番号（111-2222-3333）の入力は対応してない。
+     */
+    public static function convertNumericAndMinusZenkakuToHankaku($columns_value)
+    {
+        if ($columns_value) {
+            // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）
+            // －１, －１等のマイナス１の入力を丸める。
+            $replace_defs = [
+                'ー' => '-',
+                '－' => '-',
+                '―' => '-'
+            ];
+            $search = array_keys($replace_defs);
+            $replace = array_values($replace_defs);
+
+            // 全角→半角へ丸めて、一時変数に保持
+            $tmp_numeric_columns_value = mb_convert_kana(
+                str_replace(
+                    $search,
+                    $replace,
+                    $columns_value
+                ),
+                'n'
+            );
+
+            if (is_numeric($tmp_numeric_columns_value)) {
+                // 全角→半角変換した結果が数値の場合
+                return $tmp_numeric_columns_value;
+            }
+        }
+
+        return $columns_value;
+    }
 }
