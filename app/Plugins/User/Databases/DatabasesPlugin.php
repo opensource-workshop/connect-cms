@@ -37,7 +37,7 @@ use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\csv\SjisToUtf8EncodingFilter;
 use App\Utilities\csv\Csv;
-use App\Utilities\zip\UnZip;
+use App\Utilities\Zip\UnzipUtils;
 use App\Utilities\String\StringUtils;
 
 /**
@@ -2659,7 +2659,7 @@ class DatabasesPlugin extends UserPluginBase
     public function uploadCsv($request, $page_id, $frame_id, $id)
     {
         // クラスを使用する前に、それが存在するかどうかを調べます
-        if (UnZip::useZipArchive()) {
+        if (UnzipUtils::useZipArchive()) {
             // zip or csv
             $rules = [
                 'databases_csv'  => [
@@ -2708,16 +2708,16 @@ class DatabasesPlugin extends UserPluginBase
 
         // クラスを使用する前に、それが存在するかどうかを調べます
         // if (class_exists('ZipArchive')) {
-        if (UnZip::useZipArchive()) {
+        if (UnzipUtils::useZipArchive()) {
             if ($file_extension == 'zip') {
                 $zip_full_path = storage_path('app/') . $path;
 
                 // 一時的な解凍フォルダ名
                 // $tmp_dir = uniqid('', true);
-                $tmp_dir = UnZip::getTmpDir();
+                $tmp_dir = UnzipUtils::getTmpDir();
                 $unzip_dir_full_path = storage_path('app/') . "tmp/database/{$tmp_dir}/";
 
-                $error_msg = UnZip::unzip($zip_full_path, $unzip_dir_full_path);
+                $error_msg = UnzipUtils::unzip($zip_full_path, $unzip_dir_full_path);
                 if ($error_msg !== true) {
                     // 一時ファイルの削除
                     $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
@@ -2829,7 +2829,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // クラスを使用する前に、それが存在するかどうかを調べます
-        if (UnZip::useZipArchive()) {
+        if (UnzipUtils::useZipArchive()) {
             if ($file_extension == 'zip') {
                 // １．全ファイルアップロード
                 //     uploadsフォルダを全アップロード、変数にアップロードIDもつ
@@ -3328,7 +3328,7 @@ class DatabasesPlugin extends UserPluginBase
     {
         if ($file_extension == 'zip') {
             // 空でないディレクトリを削除
-            Unzip::rmdirNotEmpty($unzip_dir_full_path);
+            UnzipUtils::rmdirNotEmpty($unzip_dir_full_path);
             // Storage::deleteDirectory($unzip_dir_full_path);
         }
 

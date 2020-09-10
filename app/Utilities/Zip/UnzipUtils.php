@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Utilities\zip;
+namespace App\Utilities\Zip;
 
 use Illuminate\Support\Facades\Log;
 
-class Unzip
+class UnzipUtils
 {
     /**
      * ZipArchiveクラスが使えるか

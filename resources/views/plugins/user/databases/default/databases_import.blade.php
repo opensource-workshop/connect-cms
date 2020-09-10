@@ -6,7 +6,7 @@
  * @category データベース・プラグイン
 --}}
 @php
-use App\Utilities\zip\UnZip;
+use App\Utilities\Zip\UnzipUtils;
 @endphp
 
 @extends('core.cms_frame_base_setting')
@@ -82,7 +82,7 @@ use App\Utilities\zip\UnZip;
         <label class="{{$frame->getSettingLabelClass()}} pt-0">CSVファイル <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="file" name="databases_csv" class="form-control-file">
-            @if (UnZip::useZipArchive())
+            @if (UnzipUtils::useZipArchive())
                 <small class="text-muted">
                     ※ CSVファイル・ZIPファイルに対応しています。
                 </small>
