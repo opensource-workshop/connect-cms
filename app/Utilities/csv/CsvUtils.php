@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Utilities\csv;
+namespace App\Utilities\Csv;
 
 use Illuminate\Support\Facades\Log;
 
-class Csv
+class CsvUtils
 {
     /**
      * UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)

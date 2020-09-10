@@ -35,8 +35,8 @@ use App\Rules\CustomVali_CsvExtensions;
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
-use App\Utilities\csv\SjisToUtf8EncodingFilter;
-use App\Utilities\csv\Csv;
+use App\Utilities\Csv\SjisToUtf8EncodingFilter;
+use App\Utilities\Csv\CsvUtils;
 use App\Utilities\Zip\UnzipUtils;
 use App\Utilities\String\StringUtils;
 
@@ -2626,7 +2626,7 @@ class DatabasesPlugin extends UserPluginBase
         if ($request->character_code == \CsvCharacterCode::utf_8) {
             $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
             // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = Csv::addUtf8Bom($csv_data);
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
         } else {
             $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
         }
@@ -2763,7 +2763,7 @@ class DatabasesPlugin extends UserPluginBase
         // 文字コード自動検出
         if ($character_code == \CsvCharacterCode::auto) {
             // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
-            $character_code = Csv::getCharacterCodeAuto($csv_full_path);
+            $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
             if (!$character_code) {
                 // 一時ファイルの削除
                 $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
@@ -2797,7 +2797,7 @@ class DatabasesPlugin extends UserPluginBase
         // CSVファイル：UTF-8のみ
         if ($character_code == \CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
-            $header_columns = Csv::removeUtf8Bom($header_columns);
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
         // dd($csv_full_path);
         // Log::debug('$header_columns:'. var_export($header_columns, true));
@@ -2903,7 +2903,7 @@ class DatabasesPlugin extends UserPluginBase
         // CSVファイル：UTF-8のみ
         if ($character_code == \CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
-            $header_columns = Csv::removeUtf8Bom($header_columns);
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
 
         // データベースの取得
@@ -2922,11 +2922,11 @@ class DatabasesPlugin extends UserPluginBase
             // CSVのデータ行の頭は、必ず固定項目のidの想定
             $databases_inputs_id = array_shift($csv_columns);
             // 空文字をnullに変換
-            $databases_inputs_id = Csv::convertEmptyStringsToNull($databases_inputs_id);
+            $databases_inputs_id = CsvUtils::convertEmptyStringsToNull($databases_inputs_id);
 
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
-                $csv_column = Csv::convertEmptyStringsToNull($csv_column);
+                $csv_column = CsvUtils::convertEmptyStringsToNull($csv_column);
 
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
@@ -3254,7 +3254,7 @@ class DatabasesPlugin extends UserPluginBase
 
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
-                $csv_column = Csv::convertEmptyStringsToNull($csv_column);
+                $csv_column = CsvUtils::convertEmptyStringsToNull($csv_column);
 
                 // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。

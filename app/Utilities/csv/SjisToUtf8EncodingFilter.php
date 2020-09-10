@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Utilities\csv;
+namespace App\Utilities\Csv;
 
 use Illuminate\Support\Facades\Log;
 
