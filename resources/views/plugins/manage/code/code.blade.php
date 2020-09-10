@@ -35,7 +35,7 @@
             <i class="fa fa-times"></i>
         </button>
         <div class="input-group-append">
-            <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i> 検索</button>
+            <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
         </div>
         <div class="ml-2">
             <a data-toggle="collapse" href="#collapse-search-help">
