@@ -4,10 +4,6 @@ namespace App\Utilities\csv;
 
 use Illuminate\Support\Facades\Log;
 
-/**
- * Shift-JIS から UTF-8 変換するストリームフィルタ
- * CSV読み込み時に使用して、5C問題対応
- */
 class Csv
 {
     /**

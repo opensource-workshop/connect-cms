@@ -4,12 +4,6 @@ namespace App\Utilities\zip;
 
 use Illuminate\Support\Facades\Log;
 
-/**
- * Shift-JIS から UTF-8 変換するストリームフィルタ
- * CSV読み込み時に使用して、5C問題対応
- *
- * 参照：https://qiita.com/suin/items/3edfb9cb15e26bffba11
- */
 class Unzip
 {
     /**
