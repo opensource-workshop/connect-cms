@@ -1605,10 +1605,28 @@ class DatabasesPlugin extends UserPluginBase
                             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
+        // $plugins = DB::table($plugin_name)
+        //                ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
+        //                ->orderBy('created_at', 'desc')
+        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $plugins = DB::table($plugin_name)
-                       ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
+                        ->select(
+                            $plugin_name . '.id',
+                            $plugin_name . '.bucket_id',
+                            $plugin_name . '.created_at',
+                            $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                            DB::raw('count(databases_inputs.databases_id) as entry_count')
+                        )
+                        ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
+                        ->groupBy(
+                            $plugin_name . '.id',
+                            $plugin_name . '.bucket_id',
+                            $plugin_name . '.created_at',
+                            $plugin_name . '.' . $plugin_name . '_name',
+                            'databases_inputs.databases_id'
+                        )
+                        ->orderBy($plugin_name . '.created_at', 'desc')
+                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
