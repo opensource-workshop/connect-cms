@@ -43,7 +43,7 @@ class StringUtils
     /**
      * カンマ区切りの文字列を、一度配列にして、trim後、また文字列に戻す
      */
-    public static function trimInputKanma(string $kanma_value): string
+    public static function trimInputKanma($kanma_value): string
     {
         // 一度配列にして、trim後、また文字列に戻す。
         $tmp_array = explode(',', $kanma_value);
