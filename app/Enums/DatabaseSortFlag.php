@@ -10,9 +10,11 @@ use App\Enums\EnumsBase;
 final class DatabaseSortFlag extends EnumsBase
 {
     // 定数メンバの'_'の前半. $sort_column_id
+    // 注意：_ は区切り文字に使っているため、const内に _ を含めない事
     const created = 'created';
     const updated = 'updated';
     const posted  = 'posted';
+    const display = 'display';
     const random  = 'random';
 
     // 定数メンバの'_'の後半. $sort_column_order
@@ -35,6 +37,8 @@ final class DatabaseSortFlag extends EnumsBase
     const updated_desc   = self::updated . '_' . self::order_desc;
     const posted_asc     = self::posted . '_' . self::order_asc;
     const posted_desc    = self::posted . '_' . self::order_desc;
+    const display_asc    = self::display . '_' . self::order_asc;
+    const display_desc   = self::display . '_' . self::order_desc;
     const random_session = self::random . '_' . self::order_session;
     const random_every   = self::random . '_' . self::order_every;
     const column         = 'column';
@@ -47,6 +51,8 @@ final class DatabaseSortFlag extends EnumsBase
         self::updated_desc   => '更新日（新しい順）',
         self::posted_asc     => '公開日（古い順）',
         self::posted_desc    => '公開日（新しい順）',
+        self::display_asc    => '表示順（昇順）',
+        self::display_desc   => '表示順（降順）',
         self::random_session => 'ランダム（セッション）',
         self::random_every   => 'ランダム（毎回）',
         self::column         => '各カラム設定',

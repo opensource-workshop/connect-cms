@@ -58,6 +58,10 @@
     elseif ($column->column_type == DatabaseColumnType::posted) {
         $value = $inputs->posted_at;
     }
+    // 表示順型
+    elseif ($column->column_type == DatabaseColumnType::display) {
+        $value = $inputs->display_sequence;
+    }
     // その他の型
     else {
         $value = $obj ? $obj->value : "";

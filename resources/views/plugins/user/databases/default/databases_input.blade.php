@@ -7,6 +7,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
+@php
+use App\Models\User\Databases\DatabasesColumns;
+@endphp
+
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -41,22 +45,19 @@
 --}}
 
         @foreach($databases_columns as $database_column)
-            @switch($database_column->column_type)
-            {{-- 登録日型・更新日型は入力表示しない --}}
-            @case(DatabaseColumnType::created)
-            @case(DatabaseColumnType::updated)
-            @case(DatabaseColumnType::posted)
-                @break
+            {{-- 入力しないカラム型は表示しない --}}
+            @if (DatabasesColumns::isNotInputColumnType($database_column->column_type))
+                @continue
+            @endif
+
             {{-- 通常の項目 --}}
-            @default
-                <div class="form-group row">
-                    <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
-                    <div class="col-sm-9">
-                        @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
-                        <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
-                    </div>
+            <div class="form-group row">
+                <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<label class="badge badge-danger">必須</label> @endif</label>
+                <div class="col-sm-9">
+                    @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
+                    <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
                 </div>
-            @endswitch
+            </div>
         @endforeach
 
         {{-- 固定項目エリア --}}
@@ -71,6 +72,15 @@
                     </div>
                 </div>
                 @if ($errors && $errors->has('posted_at')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('posted_at')}}</div> @endif
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-sm-3 control-label">表示順</label>
+            <div class="col-sm-9">
+                <input type="text" name="display_sequence" value="{{old('display_sequence', $inputs->display_sequence)}}" class="form-control">
+                <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
+                @if ($errors && $errors->has('display_sequence')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('display_sequence')}}</div> @endif
             </div>
         </div>
 
