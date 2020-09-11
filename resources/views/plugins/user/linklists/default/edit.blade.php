@@ -60,7 +60,7 @@
         <label class="col-md-2 control-label text-md-right">表示順</label>
         <div class="col-md-10">
             <input type="text" name="display_sequence" value="{{old('display_sequence', $post->display_sequence)}}" class="form-control">
-            <small class="text-muted">※ 未指定時は最後に追加されます。</small>
+            <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
             @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
         </div>
     </div>
