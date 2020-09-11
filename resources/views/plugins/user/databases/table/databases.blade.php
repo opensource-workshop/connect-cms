@@ -40,7 +40,7 @@
                 @if($column->list_hide_flag == 0)
                     @if($is_first)
                         <td>
-                            <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
+                            <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}">
                                 @include('plugins.user.databases.default.databases_include_value')
                             </a>
                         </td>
