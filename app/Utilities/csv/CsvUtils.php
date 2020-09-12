@@ -1,14 +1,10 @@
 <?php
 
-namespace App\Utilities\csv;
+namespace App\Utilities\Csv;
 
 use Illuminate\Support\Facades\Log;
 
-/**
- * Shift-JIS から UTF-8 変換するストリームフィルタ
- * CSV読み込み時に使用して、5C問題対応
- */
-class Csv
+class CsvUtils
 {
     /**
      * UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
@@ -31,19 +27,6 @@ class Csv
             $header_columns[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header_columns[0]);
         }
         return $header_columns;
-    }
-
-    /**
-     * 空文字をnullに変換
-     * Laravel公式のリクエストを自動トリムする処理と同じ処理
-     * copy by Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::transform()
-     *
-     * @param  mixed  $value
-     * @return mixed
-     */
-    public static function convertEmptyStringsToNull($value)
-    {
-        return is_string($value) && $value === '' ? null : $value;
     }
 
     /**

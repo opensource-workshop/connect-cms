@@ -28,6 +28,8 @@ use App\Rules\CustomVali_BothRequired;
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
+use App\Utilities\String\StringUtils;
+
 /**
  * フォーム・プラグイン
  *
@@ -250,6 +252,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 // 項目データがない場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
+
+            $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
+            // 登録制限数オーバーか
+            if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+                $setting_error_messages[] = '制限数に達したため受付けを終了しました。';
+            }
         } else {
             // フレームに紐づくフォーム親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
@@ -270,21 +278,18 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     }
 
     /**
-     * （再帰関数）入力値の前後をトリムする
-     *
-     * @param $request
-     * @return void
+     * 登録制限数オーバーか
      */
-    public static function trimInput($value)
+    public function isOverEntryLimit($forms_inputs_count, $entry_limit)
     {
-        if (is_array($value)) {
-            // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
-            $value = array_map(['self', 'trimInput'], $value);
-        } elseif (is_string($value)) {
-            $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
+        // 登録制限数 が 空か 0 なら登録制限しない
+        if ($entry_limit != null && $entry_limit !== 0) {
+            if ($forms_inputs_count >= $entry_limit) {
+                return true;
+            }
         }
- 
-        return $value;
+
+        return false;
     }
 
     /**
@@ -293,11 +298,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      * @param [array] $validator_array 二次元配列
      * @param [App\Models\User\Forms\FormsColumns] $forms_column
      * @param Request $request
-     * @return void
+     * @return array
      */
     private function getValidatorRule($validator_array, $forms_column, $request)
     {
-
         $validator_rule = null;
         // 必須チェック
         if ($forms_column->required) {
@@ -312,48 +316,18 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
-            if ($request->forms_columns_value[$forms_column->id]) {
-                // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）
-                $replace_defs = [
-                    'ー' => '-',
-                    '－' => '-',
-                    '―' => '-'
-                ];
-                $search = array_keys($replace_defs);
-                $replace = array_values($replace_defs);
+            // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
+            $tmp_numeric_columns_value = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->forms_columns_value[$forms_column->id]);
 
-                if (
-                        is_numeric(
-                            mb_convert_kana(
-                                str_replace(
-                                    $search, 
-                                    $replace, 
-                                    $request->forms_columns_value[$forms_column->id]
-                                ), 
-                                'n'
-                            )
-                        )
-                    ) {
-                    // 全角→半角変換した結果が数値の場合
-                    $tmp_array = $request->forms_columns_value;
-                    // 全角→半角へ丸める
-                    $tmp_array[$forms_column->id] = 
-                        mb_convert_kana(
-                            str_replace(
-                                $search, 
-                                $replace, 
-                                $request->forms_columns_value[$forms_column->id]
-                            ), 
-                            'n'
-                        );
-                    $request->merge([
-                        "forms_columns_value" => $tmp_array,
-                    ]);
-                } else {
-                    // 全角→半角変換した結果が数値ではない場合
-                    $validator_rule[] = 'numeric';
-                }
-            }
+            $tmp_array = $request->forms_columns_value;
+            $tmp_array[$forms_column->id] = $tmp_numeric_columns_value;
+
+            $request->merge([
+                "forms_columns_value" => $tmp_array,
+            ]);
+
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'numeric';
         }
         // 英数値チェック
         if ($forms_column->rule_allowed_alpha_numeric) {
@@ -442,24 +416,31 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($forms_column->group) {
                 foreach ($forms_column->group as $group_item) {
                     // まとめ行で指定している項目について、バリデータールールをセット
-                    $validator_array = self::getValidatorRule($validator_array, $group_item, $request);
+                    $validator_array = $this->getValidatorRule($validator_array, $group_item, $request);
                 }
             }
             // まとめ行以外の項目について、バリデータールールをセット
-            $validator_array = self::getValidatorRule($validator_array, $forms_column, $request);
+            $validator_array = $this->getValidatorRule($validator_array, $forms_column, $request);
         }
 
         // 入力値をトリム
-        $request->merge(self::trimInput($request->all()));
+        $request->merge(StringUtils::trimInput($request->all()));
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
         $validator->setAttributeNames($validator_array['message']);
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
+        // $message = null;
         if ($validator->fails()) {
             return $this->index($request, $page_id, $frame_id, $validator->errors());
+        }
+
+        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
+        // 登録制限数オーバーか
+        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
+            return $this->index($request, $page_id, $frame_id);
         }
 
         // 表示テンプレートを呼び出す。
@@ -480,6 +461,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
+
+        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
+        // 登録制限数オーバーか
+        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
+            return $this->index($request, $page_id, $frame_id);
+        }
 
         // forms_inputs 登録
         $forms_inputs = new FormsInputs();
@@ -586,10 +574,28 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
+        // $plugins = DB::table($plugin_name)
+        //                ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
+        //                ->orderBy('created_at', 'desc')
+        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $plugins = DB::table($plugin_name)
-                       ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
+                        ->select(
+                            $plugin_name . '.id',
+                            $plugin_name . '.bucket_id',
+                            $plugin_name . '.created_at',
+                            $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                            DB::raw('count(forms_inputs.forms_id) as entry_count')
+                        )
+                        ->leftJoin('forms_inputs', $plugin_name . '.id', '=', 'forms_inputs.forms_id')
+                        ->groupBy(
+                            $plugin_name . '.id',
+                            $plugin_name . '.bucket_id',
+                            $plugin_name . '.created_at',
+                            $plugin_name . '.' . $plugin_name . '_name',
+                            'forms_inputs.forms_id'
+                        )
+                        ->orderBy($plugin_name . '.created_at', 'desc')
+                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -649,16 +655,27 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function saveBuckets($request, $page_id, $frame_id, $forms_id = null)
     {
+        // 入力値変換
+        // ・登録制限数
+        //   全角→半角変換
+        $entry_limit = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->entry_limit);
+        if (is_numeric($entry_limit)) {
+            $request->merge([
+                // 小終点の入力があったら、小数点切り捨てて整数に
+                "entry_limit" => floor($entry_limit),
+            ]);
+        }
 
         // デフォルトで必須
         $validator_values['forms_name'] = ['required'];
         $validator_attributes['forms_name'] = 'フォーム名';
 
+        $validator_values['entry_limit'] = ['nullable', 'numeric', 'min:0'];
+        $validator_attributes['entry_limit'] = '登録制限数';
+
         // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
         if ($request->mail_send_flag) {
-            $validator_values['mail_send_address'] = [
-                'required'
-            ];
+            $validator_values['mail_send_address'] = ['required'];
             $validator_attributes['mail_send_address'] = '送信するメールアドレス';
         }
 
@@ -682,7 +699,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $message = null;
 
         // 画面から渡ってくるforms_id が空ならバケツとブログを新規登録
-        if (empty($request->forms_id)) {
+        if (empty($forms_id)) {
             // バケツの登録
             $bucket = new Buckets();
             $bucket->bucket_name = '無題';
@@ -711,13 +728,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // forms_id があれば、フォームを更新
 
             // フォームデータ取得
-            $forms = Forms::where('id', $request->forms_id)->first();
+            $forms = Forms::where('id', $forms_id)->first();
 
             $message = 'フォーム設定を変更しました。';
         }
 
         // フォーム設定
         $forms->forms_name          = $request->forms_name;
+        $forms->entry_limit         = $request->entry_limit;
         $forms->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
         $forms->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;

@@ -31,6 +31,7 @@ final class DatabaseColumnType extends EnumsBase
     const created = 'created';
     const updated = 'updated';
     const posted = 'posted';
+    const display = 'display';
 
     // 複数年月型（テキスト入力）のデフォルトキャプション
     const dates_ym_caption = 'yyyy/mm形式で年月を入力してください。また複数入力したい場合は、カンマ「,」区切りで入力してください。';
@@ -58,5 +59,6 @@ final class DatabaseColumnType extends EnumsBase
         self::created => '登録日型（自動更新）',
         self::updated => '更新日型（自動更新）',
         self::posted => '公開日型（表示のみ）',
+        self::display => '表示順型（表示のみ）',
     ];
 }

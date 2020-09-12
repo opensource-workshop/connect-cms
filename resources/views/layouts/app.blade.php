@@ -220,18 +220,25 @@
 
                             {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
                             @if (isset($page_list) && !$is_manage_page)
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a>
-                                <div class="dropdown-divider"></div>
+                                {{-- プラグイン追加 --}}
+                                {{-- 追加時の FrameController::addPlugin()で frames.create の権限チェックあるため、ここでも同様にチェックする --}}
+                                @if (Auth::user()->can('frames.create'))
+                                    <a class="dropdown-item" href="#" data-toggle="modal" data-target="#pluginAddModal">プラグイン追加</a>
+                                    <div class="dropdown-divider"></div>
+                                @endif
 
                                 {{-- プレビューモード --}}
-                                @if (isset($page_list))
-                                    @if (app('request')->input('mode') == 'preview')
-                                        <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
-                                    @else
-                                        <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
-                                    @endif
-                                    @if (Auth::user()->can('role_manage_on') && isset($page_list))
-                                        <div class="dropdown-divider"></div>
+                                {{-- システム管理者、サイト管理者権限があれば、プレビューを有効にする（同権限でプラグイン設定できる。プレビューはプラグイン設定ボタンをOFFにする機能ため、同権限で制御する） --}}
+                                @if (Auth::user()->can('role_arrangement'))
+                                    @if (isset($page_list))
+                                        @if (app('request')->input('mode') == 'preview')
+                                            <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                                        @else
+                                            <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                                        @endif
+                                        @if (Auth::user()->can('role_manage_on') && isset($page_list))
+                                            <div class="dropdown-divider"></div>
+                                        @endif
                                     @endif
                                 @endif
                                 {{-- 管理プラグインのメニュー --}}

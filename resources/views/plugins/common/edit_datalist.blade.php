@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン共通
- --}}
+--}}
 <ul class="nav nav-tabs">
     {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab')
@@ -35,7 +35,7 @@
         </div>
     @endif
 
-    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/change/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/change/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
         {{ csrf_field() }}
         <div class="form-group">
             <table class="table table-hover" style="margin-bottom: 0;">
@@ -52,7 +52,7 @@
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
                     <td><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
                     <td>{{$plugin->plugin_bucket_name}}</td>
-                    <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/{{$frame->plugin_name}}/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}'"><i class="far fa-edit"></i> 設定変更</button></th>
+                    <th><button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/{{$frame->plugin_name}}/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'"><i class="far fa-edit"></i> 設定変更</button></th>
                     <td>{{$plugin->created_at}}</td>
                 </tr>
             @endforeach
@@ -64,9 +64,9 @@
             {{ $plugins->links() }}
         </div>
 
-        <div class="form-group text-center">
-            <button type="submit" class="btn btn-primary mr-3"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
-            <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+        <div class="form-group text-center mt-3">
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i> キャンセル</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
         </div>
     </form>
 @endauth

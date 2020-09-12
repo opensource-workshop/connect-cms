@@ -68,6 +68,7 @@
                 <tr>
                     <th></th>
                     <th>{{$frame->plugin_name_full}}名</th>
+                    <th>件数</th>
                     <th>詳細</th>
                     <th>作成日</th>
                 </tr>
@@ -77,6 +78,7 @@
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
                     <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
                     <td nowrap>{{$plugin->plugin_bucket_name}}</td>
+                    <td nowrap class="text-right">{{$plugin->entry_count}}</td>
                     <td nowrap>
                         <button class="btn btn-success btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
                             <i class="far fa-edit"></i> 設定変更

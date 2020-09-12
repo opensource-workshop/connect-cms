@@ -7,6 +7,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
+@php
+use App\Models\User\Databases\DatabasesColumns;
+@endphp
+
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -44,10 +48,8 @@
     {{ csrf_field() }}
     @foreach($databases_columns as $database_column)
 
-        {{-- 登録日型・更新日型・公開日型は入力表示しない --}}
-        @if($database_column->column_type == DatabaseColumnType::created ||
-            $database_column->column_type == DatabaseColumnType::updated ||
-            $database_column->column_type == DatabaseColumnType::posted)
+        {{-- 入力しないカラム型は表示しない --}}
+        @if (DatabasesColumns::isNotInputColumnType($database_column->column_type))
             @continue
         @endif
 
@@ -169,12 +171,18 @@
     {{-- 固定項目エリア --}}
     <hr>
     <div class="form-group container-fluid row">
-        {{-- ラベル --}}
         <label class="col-sm-2 control-label text-nowrap">公開日時</label>
-        {{-- 項目 --}}
         <div class="col-sm-10">
             {{$request->posted_at}}
             <input name="posted_at" class="form-control" type="hidden" value="{{$request->posted_at}}">
+        </div>
+    </div>
+
+    <div class="form-group container-fluid row">
+        <label class="col-sm-2 control-label text-nowrap">表示順</label>
+        <div class="col-sm-10">
+            {{$request->display_sequence}}
+            <input name="display_sequence" class="form-control" type="hidden" value="{{$request->display_sequence}}">
         </div>
     </div>
 
