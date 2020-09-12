@@ -27,6 +27,9 @@ use App\Models\User\Databases\DatabasesColumnsSelects;
 use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputCols;
 use App\Models\User\Databases\DatabasesInputs;
+use App\Models\User\Faqs\Faqs;
+use App\Models\User\Faqs\FaqsCategories;
+use App\Models\User\Faqs\FaqsPosts;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsColumnsSelects;
@@ -44,6 +47,10 @@ use App\Models\Migration\Nc2\Nc2BbsPost;
 use App\Models\Migration\Nc2\Nc2BbsPostBody;
 use App\Models\Migration\Nc2\Nc2Block;
 use App\Models\Migration\Nc2\Nc2Config;
+use App\Models\Migration\Nc2\Nc2Faq;
+use App\Models\Migration\Nc2\Nc2FaqBlock;
+use App\Models\Migration\Nc2\Nc2FaqCategory;
+use App\Models\Migration\Nc2\Nc2FaqQuestion;
 use App\Models\Migration\Nc2\Nc2Item;
 use App\Models\Migration\Nc2\Nc2Journal;
 use App\Models\Migration\Nc2\Nc2JournalBlock;
@@ -135,6 +142,7 @@ trait MigrationTrait
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
         'counter'       => 'Development',  // カウンター
+        'faq'           => 'faqs',         // FAQ
         'iframe'        => 'Development',  // iFrame
         'imagine'       => 'Abolition',    // imagine
         'journal'       => 'blogs',        // ブログ
@@ -235,6 +243,7 @@ trait MigrationTrait
         if ($target == 'all' && $initial == true) {
             // 全クリア
             Buckets::truncate();
+            Categories::truncate();
             Page::truncate();
         }
 
@@ -297,6 +306,15 @@ trait MigrationTrait
             FormsInputs::truncate();
             Buckets::where('plugin_name', 'forms')->delete();
             MigrationMapping::where('target_source_table', 'forms')->delete();
+        }
+
+        if ($target == 'faqs' || $target == 'all') {
+            Faqs::truncate();
+            FaqsCategories::truncate();
+            FaqsPosts::truncate();
+            Buckets::where('plugin_name', 'faqs')->delete();
+            MigrationMapping::where('target_source_table', 'faqs')->delete();
+            MigrationMapping::where('target_source_table', 'categories_faqs')->delete();
         }
 
         if ($target == 'whatsnews' || $target == 'all') {
@@ -606,6 +624,11 @@ trait MigrationTrait
             $this->importForms($redo);
         }
 
+        // FAQの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'faqs')) {
+            $this->importFaqs($redo);
+        }
+
         // 新着情報の取り込み
         if ($this->isTarget('cc_import', 'plugins', 'whatsnews')) {
             $this->importWhatsnews($redo);
@@ -906,10 +929,15 @@ trait MigrationTrait
      */
     private function importCategories($categories, $target = null, $plugin_id = null)
     {
+        $target_source_table = "categories";
+        if (!empty($target)) {
+            $target_source_table = $target_source_table . "_" . $target;
+        }
+
         $display_sequence = 0;
         foreach ($categories as $category_id => $category_name) {
             // マッピングテーブルの取得
-            $mapping = MigrationMapping::where('target_source_table', 'categories')->where('source_key', $category_id)->first();
+            $mapping = MigrationMapping::where('target_source_table', $target_source_table)->where('source_key', $category_id)->first();
 
             // マッピングテーブルの確認
             if (empty($mapping)) {
@@ -928,7 +956,7 @@ trait MigrationTrait
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
-                    'target_source_table'  => 'categories',
+                    'target_source_table'  => $target_source_table,
                     'source_key'           => $category_id,
                     'destination_key'      => $category->id,
                 ]);
@@ -1096,7 +1124,8 @@ trait MigrationTrait
     private function importBlogs($redo)
     {
         $this->putMonitor(3, "Blogs import Start.");
-
+//$cc_import_marges = $this->getMigrationConfig('blogs', 'cc_import_marges');
+//print_r($cc_import_marges);
         // データクリア
         if ($redo === true) {
             // blogs、blogs_posts のtruncate
@@ -1139,6 +1168,12 @@ trait MigrationTrait
                 $nc2_journal_id = $blog_ini['source_info']['journal_id'];
             }
 
+            // ブログの統合
+            $cc_import_marges = $this->getMigrationConfig('blogs', 'cc_import_marges');
+            if (is_array($cc_import_marges) && array_key_exists($nc2_journal_id, $cc_import_marges)) {
+                $nc2_journal_id = $cc_import_marges[$nc2_journal_id];
+            }
+
             // マッピングテーブルの取得
             $mapping = MigrationMapping::where('target_source_table', 'blogs')->where('source_key', $nc2_journal_id)->first();
 
@@ -1167,62 +1202,179 @@ trait MigrationTrait
                     'source_key'           => $nc2_journal_id,
                     'destination_key'      => $blog->id,
                 ]);
+            }
 
-                // ブログ固有カテゴリ追加
-                $blog_categories = collect();
-                if (array_key_exists('categories', $blog_ini) && array_key_exists('original_categories', $blog_ini['categories'])) {
-                    $blog_categories = $this->importCategories($blog_ini['categories']['original_categories'], 'blogs', $blog->id);
+            // これ以降は追加も更新も同じロジック
+
+            // ブログ固有カテゴリ追加
+            $blog_categories = collect();
+            if (array_key_exists('categories', $blog_ini) && array_key_exists('original_categories', $blog_ini['categories'])) {
+                $blog_categories = $this->importCategories($blog_ini['categories']['original_categories'], 'blogs', $blog->id);
+            }
+
+            // Blogs の記事を取得（TSV）
+            $blog_tsv_filename = str_replace('ini', 'tsv', basename($blogs_ini_path));
+            if (Storage::exists($this->getImportPath('blogs/') . $blog_tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのブログ丸ごと）
+                $blog_tsv = Storage::get($this->getImportPath('blogs/') . $blog_tsv_filename);
+                // POST が無いものは対象外
+                if (empty($blog_tsv)) {
+                    continue;
                 }
+                // 改行で記事毎に分割
+                $blog_tsv_lines = explode("\n", $blog_tsv);
+                foreach ($blog_tsv_lines as $blog_tsv_line) {
+                    // タブで項目に分割
+                    $blog_tsv_cols = explode("\t", $blog_tsv_line);
 
-                // Blogs の記事を取得（TSV）
-                $blog_tsv_filename = str_replace('ini', 'tsv', basename($blogs_ini_path));
-                if (Storage::exists($this->getImportPath('blogs/') . $blog_tsv_filename)) {
-                    // TSV ファイル取得（1つのTSV で1つのブログ丸ごと）
-                    $blog_tsv = Storage::get($this->getImportPath('blogs/') . $blog_tsv_filename);
-                    // POST が無いものは対象外
-                    if (empty($blog_tsv)) {
-                        continue;
+                    // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
+                    $posted_at_ts = mktime(substr($blog_tsv_cols[0], 8, 2), substr($blog_tsv_cols[0], 10, 2), substr($blog_tsv_cols[0], 12, 2), substr($blog_tsv_cols[0], 4, 2), substr($blog_tsv_cols[0], 6, 2), substr($blog_tsv_cols[0], 0, 4));
+                    $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
+
+                    // 記事のカテゴリID
+                    // 共通カテゴリに同じ文言があれば、共通カテゴリを使用。
+                    // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
+                    $categories_id = null;
+                    if ($common_categories->firstWhere('category', $blog_tsv_cols[1])) {
+                        $categories_id = $common_categories->firstWhere('category', $blog_tsv_cols[1])->id;
                     }
-                    // 改行で記事毎に分割
-                    $blog_tsv_lines = explode("\n", $blog_tsv);
-                    foreach ($blog_tsv_lines as $blog_tsv_line) {
-                        // タブで項目に分割
-                        $blog_tsv_cols = explode("\t", $blog_tsv_line);
-
-                        // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
-                        $posted_at_ts = mktime(substr($blog_tsv_cols[0], 8, 2), substr($blog_tsv_cols[0], 10, 2), substr($blog_tsv_cols[0], 12, 2), substr($blog_tsv_cols[0], 4, 2), substr($blog_tsv_cols[0], 6, 2), substr($blog_tsv_cols[0], 0, 4));
-                        $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
-
-                        // 記事のカテゴリID
-                        // 共通カテゴリに同じ文言があれば、共通カテゴリを使用。
-                        // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
-                        $categories_id = null;
-                        if ($common_categories->firstWhere('category', $blog_tsv_cols[1])) {
-                            $categories_id = $common_categories->firstWhere('category', $blog_tsv_cols[1])->id;
-                        }
-                        if (empty($categories_id) && $blog_categories->firstWhere('category', $blog_tsv_cols[1])) {
-                            $categories_id = $blog_categories->firstWhere('category', $blog_tsv_cols[1])->id;
-                        }
-
-                        // 本文
-                        $post_text = $this->changeWYSIWYG($blog_tsv_cols[5]);
-                        $post_text = $this->addParagraph('blogs', $post_text);
-
-                        // 本文2
-                        $post_text2 = $this->changeWYSIWYG($blog_tsv_cols[6]);
-                        $post_text2 = $this->addParagraph('blogs', $post_text2);
-
-                        // ブログ記事テーブル追加
-                        $blogs_posts = BlogsPosts::create(['blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[4], 'post_text' => $post_text, 'post_text2' => $post_text2, 'categories_id' => $categories_id, 'important' => null, 'status' => 0, 'posted_at' => $posted_at]);
-
-                        // contents_id を初回はid と同じものを入れて、更新
-                        $blogs_posts->contents_id = $blogs_posts->id;
-                        $blogs_posts->save();
+                    if (empty($categories_id) && $blog_categories->firstWhere('category', $blog_tsv_cols[1])) {
+                        $categories_id = $blog_categories->firstWhere('category', $blog_tsv_cols[1])->id;
                     }
+
+                    // 本文
+                    $post_text = $this->changeWYSIWYG($blog_tsv_cols[5]);
+                    $post_text = $this->addParagraph('blogs', $post_text);
+
+                    // 本文2
+                    $post_text2 = $this->changeWYSIWYG($blog_tsv_cols[6]);
+                    $post_text2 = $this->addParagraph('blogs', $post_text2);
+
+                    // ブログ記事テーブル追加
+                    $blogs_posts = BlogsPosts::create(['blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[4], 'post_text' => $post_text, 'post_text2' => $post_text2, 'categories_id' => $categories_id, 'important' => null, 'status' => 0, 'posted_at' => $posted_at]);
+
+                    // contents_id を初回はid と同じものを入れて、更新
+                    $blogs_posts->contents_id = $blogs_posts->id;
+                    $blogs_posts->save();
                 }
-            } else {
-                // マッピングテーブルがあれば、Blogs テーブル更新
-                // *** あとで。
+            }
+        }
+    }
+
+    /**
+     * Connect-CMS 移行形式のFAQをインポート
+     */
+    private function importFaqs($redo)
+    {
+        $this->putMonitor(3, "Faqs import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('faqs');
+        }
+
+        // FAQ定義の取り込み
+        $faqs_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('faqs/faq_*.ini'));
+
+        // FAQ定義のループ
+        foreach ($faqs_ini_paths as $faqs_ini_path) {
+            // ini_file の解析
+            $faq_ini = parse_ini_file($faqs_ini_path, true);
+
+            // ルーム指定を探しておく。
+            $room_id = null;
+            if (array_key_exists('source_info', $faq_ini) && array_key_exists('room_id', $faq_ini['source_info'])) {
+                $room_id = $faq_ini['source_info']['room_id'];
+            }
+
+            // nc2 の faq_id
+            $nc2_faq_id = 0;
+            if (array_key_exists('source_info', $faq_ini) && array_key_exists('faq_id', $faq_ini['source_info'])) {
+                $nc2_faq_id = $faq_ini['source_info']['faq_id'];
+            }
+
+            // FAQの統合
+            $cc_import_marges = $this->getMigrationConfig('faqs', 'cc_import_marges');
+            if (is_array($cc_import_marges) && array_key_exists($nc2_faq_id, $cc_import_marges)) {
+                $nc2_faq_id = $cc_import_marges[$nc2_faq_id];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'faqs')->where('source_key', $nc2_faq_id)->first();
+
+            // マッピングテーブルを確認して、追加か更新の処理を分岐
+            if (empty($mapping)) {
+                // マッピングテーブルがなければ、Buckets テーブルと Faqs テーブル、マッピングテーブルを追加
+                $faq_name = '無題';
+                if (array_key_exists('faq_base', $faq_ini) && array_key_exists('faq_name', $faq_ini['faq_base'])) {
+                    $faq_name = $faq_ini['faq_base']['faq_name'];
+                }
+                $bucket = Buckets::create(['bucket_name' => $faq_name, 'plugin_name' => 'faqs']);
+
+                $view_count = 10;
+                $faq = Faqs::create(['bucket_id' => $bucket->id, 'faq_name' => $faq_name, 'view_count' => $view_count]);
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'faqs',
+                    'source_key'           => $nc2_faq_id,
+                    'destination_key'      => $faq->id,
+                ]);
+            }
+
+            // これ以降は追加も更新も同じロジック
+
+            // FAQ固有カテゴリ追加
+            $faq_categories = collect();
+            if (array_key_exists('categories', $faq_ini) && array_key_exists('original_categories', $faq_ini['categories'])) {
+                $faq_categories = $this->importCategories($faq_ini['categories']['original_categories'], 'faqs', $faq->id);
+            }
+
+            // FAQのカテゴリーテーブル作成（カテゴリーの使用on設定）
+            $index = 1;
+            foreach ($faq_categories as $faq_category) {
+                FaqsCategories::create(['faqs_id' => $faq_category->plugin_id, 'categories_id' => $faq_category->id, 'view_flag' => 1, 'display_sequence' => $index]);
+                $index++;
+            }
+
+            // Faqs の記事を取得（TSV）
+            $faq_tsv_filename = str_replace('ini', 'tsv', basename($faqs_ini_path));
+            if (Storage::exists($this->getImportPath('faqs/') . $faq_tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのブログ丸ごと）
+                $faq_tsv = Storage::get($this->getImportPath('faqs/') . $faq_tsv_filename);
+                // POST が無いものは対象外
+                if (empty($faq_tsv)) {
+                    continue;
+                }
+                // 改行で記事毎に分割
+                $faq_tsv_lines = explode("\n", $faq_tsv);
+                foreach ($faq_tsv_lines as $faq_tsv_line) {
+                    // タブで項目に分割
+                    $faq_tsv_cols = explode("\t", $faq_tsv_line);
+
+                    // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
+                    $posted_at_ts = mktime(substr($faq_tsv_cols[2], 8, 2), substr($faq_tsv_cols[2], 10, 2), substr($faq_tsv_cols[2], 12, 2), substr($faq_tsv_cols[2], 4, 2), substr($faq_tsv_cols[2], 6, 2), substr($faq_tsv_cols[2], 0, 4));
+                    $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
+
+                    // 記事のカテゴリID
+                    // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
+                    $categories_id = null;
+                    if ($faq_categories->firstWhere('category', $faq_tsv_cols[0])) {
+                        $categories_id = $faq_categories->firstWhere('category', $faq_tsv_cols[0])->id;
+                    }
+
+                    // 本文
+                    $post_text = $this->changeWYSIWYG($faq_tsv_cols[4]);
+                    $post_text = $this->addParagraph('faqs', $post_text);
+
+                    // FAQ記事テーブル追加
+                    $faqs_posts = FaqsPosts::create(['faqs_id' => $faq->id, 'post_title' => $faq_tsv_cols[3], 'post_text' => $post_text, 'categories_id' => $categories_id, 'posted_at' => $posted_at]);
+                    $faqs_posts->contents_id = $faqs_posts->id;
+                    $faqs_posts->save();
+
+                    // 更新
+                    $faqs_posts->save();
+                }
             }
         }
     }
@@ -1947,6 +2099,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'blogs') {
             // ブログ
             $this->importPluginBlogs($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'faqs') {
+            // FAQ
+            $this->importPluginFaqs($page, $page_dir, $frame_ini, $display_sequence);
         } elseif ($plugin_name == 'databases') {
             // データベース
             $this->importPluginDatabases($page, $page_dir, $frame_ini, $display_sequence);
@@ -2082,6 +2237,51 @@ trait MigrationTrait
             $this->putError(1, 'Blog フレームのみで実体なし', "page_dir = " . $page_dir);
         }
 
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+    /**
+     * FAQプラグインの登録処理
+     */
+    private function importPluginFaqs($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $faq_id = null;
+        $faq_ini = null;
+        $nc2_faq_id = null;
+        $migration_mappings = null;
+        $faqs = null;
+        $bucket = null;
+
+        // エクスポートファイルの faq_id 取得（エクスポート時の連番）
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('faq_id', $frame_ini['frame_base'])) {
+            $faq_id = $frame_ini['frame_base']['faq_id'];
+        }
+        // ブログの情報取得
+        if (!empty($faq_id) && Storage::exists($this->getImportPath('faqs/faq_') . $faq_id . '.ini')) {
+            $faq_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('faqs/faq_') . $faq_id . '.ini', true);
+        }
+        // NC2 のfaq_id
+        if (!empty($faq_ini) && array_key_exists('source_info', $faq_ini) && array_key_exists('faq_id', $faq_ini['source_info'])) {
+            $nc2_faq_id = $faq_ini['source_info']['faq_id'];
+        }
+        // NC2 のfaq_id でマップ確認
+        if (!empty($faq_ini) && array_key_exists('source_info', $faq_ini) && array_key_exists('faq_id', $faq_ini['source_info'])) {
+            $migration_mappings = MigrationMapping::where('target_source_table', 'faqs')->where('source_key', $nc2_faq_id)->first();
+        }
+        // マップから新Blog を取得
+        if (!empty($migration_mappings)) {
+            $faqs = Faqs::find($migration_mappings->destination_key);
+        }
+        // 新Blog からBucket ID を取得
+        if (!empty($faqs)) {
+            $bucket = Buckets::find($faqs->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Faq フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
     }
@@ -3275,6 +3475,11 @@ trait MigrationTrait
             $this->nc2ExportRegistration($redo);
         }
 
+        // NC2 FAQ（faq）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'faqs')) {
+            $this->nc2ExportFaq($redo);
+        }
+
         // NC2 新着情報（whatsnew）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'whatsnews')) {
             $this->nc2ExportWhatsnew($redo);
@@ -3297,6 +3502,11 @@ trait MigrationTrait
             // ページ指定の有無
             if ($this->getMigrationConfig('pages', 'nc2_export_where_page_ids')) {
                 $nc2_pages_query->whereIn('page_id', $this->getMigrationConfig('pages', 'nc2_export_where_page_ids'));
+            }
+
+            // 対象外ページ指定の有無
+            if ($this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids')) {
+                $nc2_pages_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids'));
             }
 
             $nc2_pages = $nc2_pages_query->orderBy('space_type')
@@ -3895,6 +4105,105 @@ trait MigrationTrait
 
             // blog の記事
             Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
+        }
+    }
+
+    /**
+     * NC2：FAQ（Faq）の移行
+     */
+    private function nc2ExportFaq($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportFaq.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('faqs/'));
+        }
+
+        // NC2FAQ（Faq）を移行する。
+        $nc2_faqs = Nc2Faq::orderBy('faq_id')->get();
+
+        // 空なら戻る
+        if ($nc2_faqs->isEmpty()) {
+            return;
+        }
+
+        // NC2FAQ（Faq）のループ
+        foreach ($nc2_faqs as $nc2_faq) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_faq->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            $faqs_ini = "";
+            $faqs_ini .= "[faq_base]\n";
+            $faqs_ini .= "faq_name = \"" . $nc2_faq->faq_name . "\"\n";
+            $faqs_ini .= "view_count = 10\n";
+
+            // NC2 情報
+            $faqs_ini .= "\n";
+            $faqs_ini .= "[source_info]\n";
+            $faqs_ini .= "faq_id = " . $nc2_faq->faq_id . "\n";
+            $faqs_ini .= "room_id = " . $nc2_faq->room_id . "\n";
+
+            // NC2FAQのカテゴリ（faq_category）を移行する。
+            $faqs_ini .= "\n";
+            $faqs_ini .= "[categories]\n";
+            $nc2_faq_categories = Nc2FaqCategory::where('faq_id', $nc2_faq->faq_id)->orderBy('display_sequence')->get();
+            $faqs_ini_originals = "";
+
+            foreach ($nc2_faq_categories as $nc2_faq_category) {
+                $faqs_ini_originals .= "original_categories[" . $nc2_faq_category->category_id . "] = \"" . $nc2_faq_category->category_name . "\"\n";
+            }
+            if (!empty($faqs_ini_originals)) {
+                $faqs_ini .= $faqs_ini_originals;
+            }
+
+            // NC2FAQの記事（faq_post）を移行する。
+            $nc2_faq_posts = Nc2FaqQuestion::where('faq_id', $nc2_faq->faq_id)->orderBy('display_sequence')->get();
+
+            // FAQの記事はTSV でエクスポート
+            // カテゴリID{\t}表示順{\t}タイトル{\t}本文
+            $faqs_tsv = "";
+
+            // NC2FAQの記事をループ
+            $faqs_ini .= "\n";
+            $faqs_ini .= "[faq_post]\n";
+            foreach ($nc2_faq_posts as $nc2_faq_post) {
+                // TSV 形式でエクスポート
+                if (!empty($faqs_tsv)) {
+                    $faqs_tsv .= "\n";
+                }
+
+                $category_obj  = $nc2_faq_categories->firstWhere('category_id', $nc2_faq_post->category_id);
+                $category = "";
+                if (!empty($category_obj)) {
+                    $category  = $category_obj->category_name;
+                }
+
+                $question_answer = $this->nc2Wysiwyg(null, null, null, null, $nc2_faq_post->question_answer, 'faq');
+
+                $faqs_tsv .= $category                       . "\t";
+                $faqs_tsv .= $nc2_faq_post->display_sequence . "\t";
+                $faqs_tsv .= $nc2_faq_post->insert_time      . "\t";
+                $faqs_tsv .= $nc2_faq_post->question_name    . "\t";
+                $faqs_tsv .= $question_answer                . "\t";
+
+                $faqs_ini .= "post_title[" . $nc2_faq_post->question_id . "] = \"" . str_replace('"', '', $nc2_faq_post->question_name) . "\"\n";
+            }
+
+            // FAQ の設定
+            Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.ini', $faqs_ini);
+
+            // FAQ の記事
+            Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.tsv', $faqs_tsv);
         }
     }
 
@@ -4555,6 +4864,9 @@ trait MigrationTrait
         } elseif ($module_name == 'bbs') {
             $nc2_bbs_block = Nc2BbsBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "blog_id = \"bbs_" . $this->zeroSuppress($nc2_bbs_block->bbs_id) . "\"\n";
+        } elseif ($module_name == 'faq') {
+            $nc2_faq_block = Nc2FaqBlock::where('block_id', $nc2_block->block_id)->first();
+            $ret = "faq_id = \"" . $this->zeroSuppress($nc2_faq_block->faq_id) . "\"\n";
         } elseif ($module_name == 'multidatabase') {
             $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc2_block->block_id)->first();
             if (empty($nc2_multidatabase_block)) {

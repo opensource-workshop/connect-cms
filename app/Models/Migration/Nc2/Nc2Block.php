@@ -115,6 +115,7 @@ class Nc2Block extends Model
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
         'counter'       => 'Development',  // カウンター
+        'faq'           => 'faqs',         // FAQ
         'iframe'        => 'Development',  // iFrame
         'imagine'       => 'Abolition',    // imagine
         'journal'       => 'blogs',        // ブログ
