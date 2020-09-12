@@ -38,6 +38,10 @@ use App\User;
 
 use App\Models\Migration\MigrationMapping;
 use App\Models\Migration\Nc2\Nc2Announcement;
+use App\Models\Migration\Nc2\Nc2Bbs;
+use App\Models\Migration\Nc2\Nc2BbsBlock;
+use App\Models\Migration\Nc2\Nc2BbsPost;
+use App\Models\Migration\Nc2\Nc2BbsPostBody;
 use App\Models\Migration\Nc2\Nc2Block;
 use App\Models\Migration\Nc2\Nc2Config;
 use App\Models\Migration\Nc2\Nc2Item;
@@ -125,7 +129,7 @@ trait MigrationTrait
     protected $plugin_name = [
         'announcement'  => 'contents',     // お知らせ
         'assignment'    => 'Development',  // レポート
-        'bbs'           => 'Development',  // 掲示板
+        'bbs'           => 'blogs',        // 掲示板（2020-09 時点ではブログに移行）
         'cabinet'       => 'Development',  // キャビネット
         'calendar'      => 'Development',  // カレンダー
         'chat'          => 'Development',  // チャット
@@ -3256,6 +3260,11 @@ trait MigrationTrait
             $this->nc2ExportJournal($redo);
         }
 
+        // NC2 掲示板（bbs）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'bbses')) {
+            $this->nc2ExportBbs($redo);
+        }
+
         // NC2 汎用データベース（multidatabase）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'databases')) {
             $this->nc2ExportMultidatabase($redo);
@@ -3752,8 +3761,8 @@ trait MigrationTrait
                     $journals_tsv .= "\n";
                 }
 
-                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content);
-                $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content);
+                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content, 'journal');
+                $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content, 'journal');
 
                 $category_obj  = $nc2_journal_categories->firstWhere('category_id', $nc2_journal_post->category_id);
                 $category      = "";
@@ -3779,27 +3788,6 @@ trait MigrationTrait
                     $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc2_journal_post->title);
                 }
                 $journals_ini .= "post_title[" . $nc2_journal_post->post_id . "] = \"" . str_replace('"', '', $nc2_journal_post->title) . "\"\n";
-
-                // 1記事：1HTML の移行のロジック
-                //
-                // // タイトルに " あり
-                // if (strpos($nc2_journal_post->title, '"')) {
-                //     // ログ出力
-                //     $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc2_journal_post->title);
-                // }
-                // $journals_ini .= "post_title[" . $nc2_journal_post->post_id . "] = \"" . str_replace('"', '', $nc2_journal_post->title) . "\"\n";
-                //
-                // // 記事をエクスポート
-                // $nc2_block = null;
-                // $save_folder = '@blogs';
-                // $content_filename = $this->zeroSuppress($nc2_journal->journal_id) . '_' . $this->zeroSuppress($nc2_journal_post->post_id) . ".html";
-                // $ini_filename = null;
-                // $content = $nc2_journal_post->content . $nc2_journal_post->more_content;
-                // $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content);
-
-                // $blog_post_ini_detail .= "\n";
-                // $blog_post_ini_detail .= "[" . $nc2_journal_post->post_id . "]\n";
-                // $blog_post_ini_detail .= "post_html = \"" . $content_filename . "\"\n";
             }
 
             // blog の記事毎設定
@@ -3810,6 +3798,103 @@ trait MigrationTrait
 
             // blog の記事
             Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
+        }
+    }
+
+    /**
+     * NC2：掲示板（Bbs）の移行
+     */
+    private function nc2ExportBbs($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportBbs.");
+
+        // データクリア
+        //if ($redo === true) {
+        //    // 移行用ファイルの削除
+        //    Storage::deleteDirectory($this->getImportPath('blogs/'));
+        //}
+
+        // NC2掲示板（Bbs）を移行する。
+        $nc2_bbses = Nc2Bbs::orderBy('bbs_id')->get();
+
+        // 空なら戻る
+        if ($nc2_bbses->isEmpty()) {
+            return;
+        }
+
+        // NC2掲示板（Bbs）のループ
+        foreach ($nc2_bbses as $nc2_bbs) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_bbs->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // 掲示板を日誌に移行する。
+            // Connect-CMS に掲示板ができたら、掲示板 to 掲示板の移行機能も追加する。
+
+            $journals_ini = "";
+            $journals_ini .= "[blog_base]\n";
+            $journals_ini .= "blog_name = \"" . $nc2_bbs->bbs_name . "\"\n";
+            $journals_ini .= "view_count = 10\n";
+
+            // NC2 情報
+            $journals_ini .= "\n";
+            $journals_ini .= "[source_info]\n";
+            $journals_ini .= "journal_id = " . 'BBS_' . $nc2_bbs->bbs_id . "\n";
+            $journals_ini .= "room_id = " . $nc2_bbs->room_id . "\n";
+
+            // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
+            $nc2_bbs_posts = Nc2BbsPost::select('bbs_post.*', 'bbs_post_body.body')
+                                       ->join('bbs_post_body', 'bbs_post_body.post_id', '=', 'bbs_post.post_id')
+                                       ->where('bbs_id', $nc2_bbs->bbs_id)
+                                       ->orderBy('post_id')
+                                       ->get();
+
+            // 記事はTSV でエクスポート
+            // 日付{\t}status{\t}タイトル{\t}本文
+            $journals_tsv = "";
+
+            // NC2記事をループ
+            $journals_ini .= "\n";
+            $journals_ini .= "[blog_post]\n";
+            foreach ($nc2_bbs_posts as $nc2_bbs_post) {
+                // TSV 形式でエクスポート
+                if (!empty($journals_tsv)) {
+                    $journals_tsv .= "\n";
+                }
+
+                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_bbs_post->body, 'bbs');
+
+                $journals_tsv .= $nc2_bbs_post->insert_time . "\t";
+                $journals_tsv .=                              "\t"; // カテゴリ
+                $journals_tsv .= $nc2_bbs_post->status      . "\t";
+                $journals_tsv .=                              "\t"; // 承認フラグ
+                $journals_tsv .= $nc2_bbs_post->subject     . "\t";
+                $journals_tsv .= $content                   . "\t";
+                $journals_tsv .=                              "\t"; // more_content
+                $journals_tsv .=                              "\t"; // more_title
+                $journals_tsv .=                              "\t"; // hide_more_title
+
+                // 記事のタイトルの一覧
+                // タイトルに " あり
+                if (strpos($nc2_bbs_post->subject, '"')) {
+                    // ログ出力
+                    $this->putError(1, 'BBS subject in double-quotation', "タイトル = " . $nc2_bbs_post->subject);
+                }
+                $journals_ini .= "post_title[" . $nc2_bbs_post->post_id . "] = \"" . str_replace('"', '', $nc2_bbs_post->subject) . "\"\n";
+            }
+
+            // blog の設定
+            Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
+
+            // blog の記事
+            Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
         }
     }
 
@@ -4041,7 +4126,7 @@ trait MigrationTrait
                     }
                 } elseif ($multidatabase_metadata_content->type === 6) {
                     // WYSIWYG
-                    $content = $this->nc2Wysiwyg(null, null, null, null, $content);
+                    $content = $this->nc2Wysiwyg(null, null, null, null, $content, 'multidatabase');
                 } elseif ($multidatabase_metadata_content->type === 9) {
                     // 日付型
                     if (!empty($content) && strlen($content) == 14) {
@@ -4467,6 +4552,9 @@ trait MigrationTrait
         if ($module_name == 'journal') {
             $nc2_journal_block = Nc2JournalBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "blog_id = \"" . $this->zeroSuppress($nc2_journal_block->journal_id) . "\"\n";
+        } elseif ($module_name == 'bbs') {
+            $nc2_bbs_block = Nc2BbsBlock::where('block_id', $nc2_block->block_id)->first();
+            $ret = "blog_id = \"bbs_" . $this->zeroSuppress($nc2_bbs_block->bbs_id) . "\"\n";
         } elseif ($module_name == 'multidatabase') {
             $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc2_block->block_id)->first();
             if (empty($nc2_multidatabase_block)) {
@@ -4654,9 +4742,56 @@ trait MigrationTrait
         $content_filename = "frame_" . $frame_index_str . '.html';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
-        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content);
+        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement');
 
         //echo "nc2ExportContents";
+    }
+
+    /**
+     * コンテンツのクリーニング
+     */
+    private function cleaningContent($content, $nc2_module_name)
+    {
+        $plugin_name = $this->nc2GetPluginName($nc2_module_name);
+
+        // style から除去する属性の取得
+        $clear_styles = $this->getMigrationConfig($plugin_name, 'export_clear_style');
+        if (!$clear_styles) {
+            return $content;
+        }
+
+        $pattern = "/style *= *(\".*?\"|'.*?')/i";
+        $match_ret = preg_match_all($pattern, $content, $matches);
+        // style が見つかれば、件数が返ってくる。
+        if ($match_ret) {
+            // [1] にstyle の中身のみ入ってくる。（style="background-color:rgb(255, 0, 0);" の "background-color:rgb(255, 0, 0);" の部分）
+            foreach ($matches[1] as $match) {
+                // セミコロンの位置
+                $semicolon_pos = stripos($match, ';');
+                // セミコロンがない場合は処理しない。
+                if (!$semicolon_pos) {
+                    continue;
+                }
+
+                // 属性項目名のみ抜き出し（background-color）
+                $property = substr($match, 1, stripos($match, ':') - 1);
+                $property = mb_strtolower($property);
+                if (in_array($property, $clear_styles)) {
+                    // 値を含めた属性全体の抜き出し（background-color:rgb(255, 0, 0);）
+                    $style_value = substr($match, 1, stripos($match, ';'));
+                    // 値の除去
+                    $content = str_replace($style_value, '', $content);
+                }
+            }
+        }
+
+        // 不要な style="" があれば消す。
+        $content = str_replace(' style=""', '', $content);
+
+        // 不要な <span> のみで属性のないものがあれば消したいが、無効な<span> に対応する </span> のみ抜き出すのが難しく、
+        // 今回は課題として残しておく。
+
+        return $content;
     }
 
     /**
@@ -4666,8 +4801,11 @@ trait MigrationTrait
      * コンテンツファイル名
      * iniファイル名
      */
-    private function nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content)
+    private function nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, $nc2_module_name = null)
     {
+        // コンテンツのクリーニング
+        $content = $this->cleaningContent($content, $nc2_module_name);
+
         // 画像を探す
         $img_srcs = $this->getContentImage($content);
         // var_dump($img_srcs);
@@ -4704,12 +4842,14 @@ trait MigrationTrait
         if (!empty($iframe_srces)) {
             // iFrame のsrc を取得（複数の可能性もあり）
             $iframe_styles = $this->getIframeStyle($content);
-            foreach ($iframe_styles as $iframe_style) {
-                $width_pos = strpos($iframe_style, 'width');
-                $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
-                $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
-                if (!empty($iframe_style_width)) {
-                    $content = str_replace($iframe_style_width, "width:100%;", $content);
+            if (!empty($iframe_styles)) {
+                foreach ($iframe_styles as $iframe_style) {
+                    $width_pos = strpos($iframe_style, 'width');
+                    $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
+                    $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
+                    if (!empty($iframe_style_width)) {
+                        $content = str_replace($iframe_style_width, "width:100%;", $content);
+                    }
                 }
             }
         }
