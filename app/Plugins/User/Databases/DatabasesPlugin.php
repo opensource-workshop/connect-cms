@@ -389,17 +389,13 @@ class DatabasesPlugin extends UserPluginBase
             $hide_columns_ids = $this->getHideColumnsIds($columns, 'list_detail_display_flag');
 
             // キーワード指定の追加
+            // 絞り込み制御ON、絞り込み検索キーワードあり
+            if (!empty($databases_frames->use_filter_flag) && !empty($databases_frames->filter_search_keyword)) {
+                $inputs_query = $this->appendSearchKeyword($inputs_query, $hide_columns_ids, $databases_frames->filter_search_keyword);
+            }
+            // 画面のキーワード指定
             if (!empty(session('search_keyword.'.$frame_id))) {
-                $inputs_query->whereIn('databases_inputs.id', function ($query) use ($frame_id, $hide_columns_ids) {
-                               // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
-                               $query->select('databases_inputs_id')
-                                     ->from('databases_input_cols')
-                                     ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                     ->where('databases_columns.search_flag', 1)
-                                     ->whereNotIn('databases_columns.id', $hide_columns_ids)
-                                     ->where('value', 'like', '%' . session('search_keyword.'.$frame_id) . '%')
-                                     ->groupBy('databases_inputs_id');
-                });
+                $inputs_query = $this->appendSearchKeyword($inputs_query, $hide_columns_ids, session('search_keyword.'.$frame_id));
             }
 
             // オプション検索指定の追加
@@ -455,25 +451,13 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 絞り込み指定の追加
+            // 絞り込み制御ON、絞り込み指定あり
+            if (!empty($databases_frames->use_filter_flag) && !empty($databases_frames->filter_search_columns)) {
+                $inputs_query = $this->appendSearchColumns($inputs_query, json_decode($databases_frames->filter_search_columns, true));
+            }
+            // 画面の絞り込み指定
             if (!empty(session('search_column.'.$frame_id))) {
-                foreach (session('search_column.'.$frame_id) as $search_column) {
-                    if ($search_column && $search_column['columns_id'] && $search_column['value']) {
-                        $inputs_query->whereIn('databases_inputs.id', function ($query) use ($search_column) {
-                               // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。
-                               $query->select('databases_inputs_id')
-                                     ->from('databases_input_cols')
-                                     ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                     ->where('databases_columns_id', $search_column['columns_id']);
-
-                            if ($search_column['where'] == 'PART') {
-                                $query->where('value', 'LIKE', '%' . $search_column['value'] . '%');
-                            } else {
-                                $query->where('value', $search_column['value']);
-                            }
-                            $query->groupBy('databases_inputs_id');
-                        });
-                    }
-                }
+                $inputs_query = $this->appendSearchColumns($inputs_query, session('search_column.'.$frame_id));
             }
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
@@ -3432,20 +3416,31 @@ class DatabasesPlugin extends UserPluginBase
             // $database = null;
             $database = new Databases();
             $columns = null;
+            $select_columns = null;
+            $columns_selects = null;
         } else {
             $database = Databases::where('bucket_id', $database_frame->bucket_id)->first();
 
             // カラムの取得
             $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence', 'asc')->get();
+
+            // 絞り込み制御の対象カラム
+            $select_columns = $columns->whereIn('column_type', [\DatabaseColumnType::radio, \DatabaseColumnType::checkbox, \DatabaseColumnType::select]);
+
+            // カラム選択肢の取得
+            $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'databases_edit_view', [
-            'database_frame' => $database_frame,
-            'view_frame'     => $view_frame,
-            'database'       => $database,
-            'columns'        => $columns,
+            'databases_edit_view',
+            [
+                'database_frame' => $database_frame,
+                'view_frame' => $view_frame,
+                'database' => $database,
+                'columns' => $columns,
+                'select_columns' => $select_columns,
+                'columns_selects' => $columns_selects,
             ]
         )->withInput($request->all);
     }
@@ -3485,6 +3480,10 @@ class DatabasesPlugin extends UserPluginBase
         // データベース＆フレームデータ
         $database_frame = $this->getDatabaseFrame($frame_id);
 
+        // Log::debug(var_export($request->use_filter_flag, true));
+        // Log::debug(var_export($request->filter_search_keyword, true));
+        // Log::debug(var_export($request->filter_search_columns, true));
+
         // 表示設定の保存
         $databases_frames = DatabasesFrames::updateOrCreate(
             [
@@ -3500,6 +3499,9 @@ class DatabasesPlugin extends UserPluginBase
                 'default_sort_flag' => $request->default_sort_flag,
                 'view_count'        => $request->view_count,
                 'default_hide'      => $request->default_hide,
+                'use_filter_flag'   => $request->use_filter_flag,
+                'filter_search_keyword' => $request->filter_search_keyword,
+                'filter_search_columns' => json_encode($request->filter_search_columns),
                 'view_page_id'        => $request->view_page_id,
                 'view_frame_id'        => $request->view_frame_id
             ]
@@ -3652,6 +3654,51 @@ class DatabasesPlugin extends UserPluginBase
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * 検索キーワードの絞り込み
+     */
+    private function appendSearchKeyword($inputs_query, $hide_columns_ids, $search_keyword)
+    {
+        $inputs_query->whereIn('databases_inputs.id', function ($query) use ($search_keyword, $hide_columns_ids) {
+                        // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+                        $query->select('databases_inputs_id')
+                                ->from('databases_input_cols')
+                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                ->where('databases_columns.search_flag', 1)
+                                ->whereNotIn('databases_columns.id', $hide_columns_ids)
+                                ->where('value', 'like', '%' . $search_keyword . '%')
+                                ->groupBy('databases_inputs_id');
+        });
+        return $inputs_query;
+    }
+
+    /**
+     * カラムの絞り込み
+     */
+    private function appendSearchColumns($inputs_query, $search_columns)
+    {
+        foreach ($search_columns as $search_column) {
+            if ($search_column && $search_column['columns_id'] && $search_column['value']) {
+                $inputs_query->whereIn('databases_inputs.id', function ($query) use ($search_column) {
+                        // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。
+                        $query->select('databases_inputs_id')
+                                ->from('databases_input_cols')
+                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                ->where('databases_columns_id', $search_column['columns_id']);
+
+                    if ($search_column['where'] == 'PART') {
+                        $query->where('value', 'LIKE', '%' . $search_column['value'] . '%');
+                    } else {
+                        $query->where('value', $search_column['value']);
+                    }
+                    $query->groupBy('databases_inputs_id');
+                });
+            }
+        }
+
+        return $inputs_query;
     }
 
     /**
