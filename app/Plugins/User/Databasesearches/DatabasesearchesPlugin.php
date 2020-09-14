@@ -5,18 +5,19 @@ namespace App\Plugins\User\Databasesearches;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
+// use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
-use App\Models\User\Databases\Databases;
+//use App\Models\Common\Page;
+// use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesInputCols;
-use App\Models\User\Databases\DatabasesInputs;
+// use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databasesearches\Databasesearches;
 
 use App\Plugins\User\UserPluginBase;
+use App\Plugins\User\Databases\DatabasesTool;
 
 /**
  * データベース検索プラグイン
@@ -113,6 +114,21 @@ class DatabasesearchesPlugin extends UserPluginBase
             $conditions = array($condition_str);
         }
 
+        // カラムの取得
+        $columns = DatabasesColumns::select('databases_columns.*')
+                                    ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
+                                    ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id');
+        // フレーム（データベース指定）
+        if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
+            $columns->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
+        }
+
+        // 権限によって非表示columのdatabases_columns_id配列を取得する（各データベースの項目毎で権限によって非表示）
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns->get(), 'list_detail_display_flag');
+        // Log::debug(var_export($columns->get()->toArray(), true));
+        // var_dump($hide_columns_ids);
+        // dd($hide_columns_ids);
+
         // 登録データ行の取得 --->
 
         // JSON 形式
@@ -131,15 +147,32 @@ class DatabasesearchesPlugin extends UserPluginBase
         foreach ($conditions as $condition) {
             // 検索Query 組み立て
             $inputs_query
-                = DatabasesInputCols::select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id')
-                                    ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                    ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
-                                    ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id');
+                = DatabasesInputCols::select(
+                    'databases_inputs_id',
+                    // 'databases_columns_id',
+                    'frames.id as frames_id',
+                    'frames.page_id'
+                    // 'databases_frames.use_filter_flag',
+                    // 'databases_frames.filter_search_keyword',
+                    // 'databases_frames.filter_search_columns'
+                )
+                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
+                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id');
+                // ->leftjoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id');
 
             // フレーム（データベース指定）
             if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
                 $inputs_query->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
             }
+
+            // // 権限によって非表示カラムを取り除く
+            // $inputs_query->whereNotIn('databases_columns_id', $hide_columns_ids);
+
+            // // 絞り込み制御ON、絞り込み検索キーワードあり（各データベースの表示設定）
+            // if (!empty($databases_frames->use_filter_flag) && !empty($databases_frames->filter_search_keyword)) {
+            //     $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $columns, $inputs_query, $hide_columns_ids, $databases_frames->filter_search_keyword);
+            // }
 
             // カラム指定
             if (property_exists($condition, 'name') && $condition->name) {
@@ -194,9 +227,13 @@ class DatabasesearchesPlugin extends UserPluginBase
 
             // 行ID 取得のためのグルーピング
             $inputs_query->groupBy('databases_inputs_id')
+                        //  ->groupBy('databases_columns_id')
                          ->groupBy('frames.id')
                          ->groupBy('frames.page_id')
                          ->groupBy('databases_input_cols.updated_at')
+                        //  ->groupBy('databases_frames.use_filter_flag')
+                        //  ->groupBy('databases_frames.filter_search_keyword')
+                        //  ->groupBy('databases_frames.filter_search_columns')
                          ->orderBy('databases_input_cols.updated_at', 'desc');
 
             // データ取得
@@ -239,9 +276,12 @@ class DatabasesearchesPlugin extends UserPluginBase
                                         ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                         ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
+                                        ->whereNotIn('databases_columns_id', $hide_columns_ids)
                                         ->orderBy('databases_inputs_id', 'asc')
                                         ->orderBy('databases_columns_id', 'asc')
                                         ->get();
+        // Log::debug(var_export($input_cols->toArray(), true));
+        // var_dump($hide_columns_ids);
 
         // 画面へ
         return $this->view('databasesearches', [
