@@ -238,18 +238,10 @@ class DatabasesearchesPlugin extends UserPluginBase
         $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name')
                                         ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
-                                        ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'));
-                                        // ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
-                                        // ->get();
-
-        // bugfix: フレーム指定の場合、同じデータベースを複数フレームで指定した場合の対応漏れ
-        // フレーム（データベース指定）
-        if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
-            $input_cols->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
-        }
-        $input_cols = $input_cols->orderBy('databases_inputs_id', 'asc')
-                                ->orderBy('databases_columns_id', 'asc')
-                                ->get();
+                                        ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
+                                        ->orderBy('databases_inputs_id', 'asc')
+                                        ->orderBy('databases_columns_id', 'asc')
+                                        ->get();
 
         // 画面へ
         return $this->view('databasesearches', [
