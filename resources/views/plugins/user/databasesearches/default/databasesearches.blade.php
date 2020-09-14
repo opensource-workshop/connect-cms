@@ -36,7 +36,13 @@
             @endphp
             @if($view_col)
                 @if($loop->first)
-                    <a href="{{url('/')}}/plugin/databases/detail/{{$input_id->page_id}}/{{$input_id->frames_id}}/{{$input_id->databases_inputs_id}}#frame-{{$input_id->frames_id}}">{{$view_col->value}}</a>
+                    <a href="{{url('/')}}/plugin/databases/detail/{{$input_id->page_id}}/{{$input_id->frames_id}}/{{$input_id->databases_inputs_id}}#frame-{{$input_id->frames_id}}">
+                        @if($view_col->value)
+                            {{$view_col->value}}
+                        @else
+                            (無題)
+                        @endif
+                    </a>
                 @else
                     {{$view_col->value}}
                 @endif
