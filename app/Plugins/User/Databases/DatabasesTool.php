@@ -117,17 +117,8 @@ class DatabasesTool
      * データベースプラグイン例）   $where_in_colum_name = 'databases_inputs.id'
      * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
      */
-    public static function appendSearchKeyword($where_in_colum_name, $databases_columns, $inputs_query, $hide_columns_ids, $search_keyword)
+    public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword)
     {
-        if (empty($databases_columns)) {
-            return $inputs_query;
-        }
-
-        $databases_columns_ids = [];
-        foreach ($databases_columns as $databases_column) {
-            $databases_columns_ids[] = $databases_column->id;
-        }
-
         $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_keyword, $databases_columns_ids, $hide_columns_ids) {
                         // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
                         $query->select('databases_inputs_id')

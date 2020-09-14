@@ -387,16 +387,22 @@ class DatabasesPlugin extends UserPluginBase
             // 権限によって非表示columのdatabases_columns_id配列を取得する
             $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
 
+            $databases_columns_ids = [];
+            foreach ($databases_columns as $databases_column) {
+                $databases_columns_ids[] = $databases_column->id;
+            }
+
             // キーワード指定の追加
             // 絞り込み制御ON、絞り込み検索キーワードあり
             if (!empty($databases_frames->use_filter_flag) && !empty($databases_frames->filter_search_keyword)) {
-                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $columns, $inputs_query, $hide_columns_ids, $databases_frames->filter_search_keyword);
+                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, $databases_frames->filter_search_keyword);
             }
             // 画面のキーワード指定
             if (!empty(session('search_keyword.'.$frame_id))) {
-                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $columns, $inputs_query, $hide_columns_ids, session('search_keyword.'.$frame_id));
+                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id));
             }
 
+            // [TODO] データベースプラグイン単体では $request->search_options をセットしておらず「オプション検索指定」使っていない。今は残しておき、今後整理する予定
             // オプション検索指定の追加
             if ($request->has('search_options') && is_array($request->search_options)) {
                 // 指定をばらす
