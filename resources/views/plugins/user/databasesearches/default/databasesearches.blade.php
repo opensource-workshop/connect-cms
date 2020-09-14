@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース検索プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -30,7 +30,9 @@
         <td>
             @php
                 // 表示項目
-                $view_col = $input_cols->where('databases_inputs_id', $input_id->databases_inputs_id)->where('column_name', $view_column)->first();
+                $view_col = $input_cols->where('databases_inputs_id', $input_id->databases_inputs_id)
+                                        ->where('column_name', trim($view_column))
+                                        ->first();
             @endphp
             @if($view_col)
                 @if($loop->first)
