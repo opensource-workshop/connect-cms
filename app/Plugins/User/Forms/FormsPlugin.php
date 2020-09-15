@@ -11,8 +11,8 @@ use DB;
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
-use App\Models\Common\Uploads;
+// use App\Models\Common\Page;
+// use App\Models\Common\Uploads;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsColumnsSelects;
@@ -767,9 +767,15 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_id) {
             $forms_columns = FormsColumns::where('forms_id', $forms_id)->orderBy('display_sequence')->get();
             foreach ($forms_columns as $forms_column) {
+                // 入力データ値を削除する。
+                FormsInputCols::where('forms_columns_id', $forms_column->id)->delete();
+
                 // カラムに紐づく選択肢の削除
                 $this->deleteColumnsSelects($forms_column->id);
             }
+
+            // 入力データの行データを削除する。
+            FormsInputs::where('forms_id', $forms_id)->delete();
 
             // カラムデータを削除する。
             FormsColumns::where('forms_id', $forms_id)->delete();
