@@ -2759,7 +2759,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // データ項目のエラーチェック
-        $error_msgs = $this->checkCvslines($fp, $databases_columns, $file_extension, $unzip_dir_full_path);
+        $error_msgs = $this->checkCvslines($fp, $databases_columns, $id, $file_extension, $unzip_dir_full_path);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -3105,7 +3105,7 @@ class DatabasesPlugin extends UserPluginBase
     /**
      * CSVデータ行チェック
      */
-    private function checkCvslines($fp, $databases_columns, $file_extension, $unzip_dir_full_path)
+    private function checkCvslines($fp, $databases_columns, $databases_id, $file_extension, $unzip_dir_full_path)
     {
         $rules = [];
         // $rules = [
@@ -3115,7 +3115,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // 行頭（固定項目）
         // id
-        $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
+        // bugfix: id存在チェクは id & databases_id でチェックしないと、コピーしたデータベースに上書き出来てしまうため、ここではなく別途チェックする。
+        // $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
+        $rules[0] = ['nullable', 'numeric'];
 
         $attribute_names = [];
 
@@ -3207,6 +3209,11 @@ class DatabasesPlugin extends UserPluginBase
             // 配列の頭から要素(id)を取り除いて取得
             // CSVのデータ行の頭は、必ず固定項目のidの想定
             $databases_inputs_id = array_shift($csv_columns);
+
+            // id & databases_idの存在チェック
+            if (! DatabasesInputs::where('id', $databases_inputs_id)->where('databases_id', $databases_id)->exists()) {
+                $errors[] = $line_count . '行目のidは対象データベースに存在しません。';
+            }
 
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
