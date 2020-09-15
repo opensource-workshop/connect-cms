@@ -114,17 +114,8 @@ class DatabasesearchesPlugin extends UserPluginBase
             $conditions = array($condition_str);
         }
 
-        // カラムの取得
-        $columns = DatabasesColumns::
-            select(
-                'databases_columns.*',
-                'databases_frames.use_filter_flag',
-                'databases_frames.filter_search_keyword',
-                'databases_frames.filter_search_columns'
-            )
-            ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
-            ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-            ->leftjoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id');
+        // 全ての「カラム」と「表示設定の絞り込み条件」の取得
+        $columns = DatabasesTool::getDatabasesColumnsAndFilterSearchAll();
         // フレーム（データベース指定）
         if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
             $columns->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
@@ -138,19 +129,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         // dd($hide_columns_ids);
 
         // 各データベースのフレームの表示設定
-        // array[databases_id][databases_column_id][] = $databases_column->id...
-        // array[databases_id][use_filter_flag] = $databases_column->use_filter_flag
-        // array[databases_id][filter_search_keyword] = $databases_column->filter_search_keyword
-        // array[databases_id][filter_search_columns] = $databases_column->filter_search_columns
-        $databases_frames_settings = [];
-        if (!empty($columns)) {
-            foreach ($columns as $column) {
-                $databases_frames_settings[$column->databases_id]['databases_columns_ids'][] = $column->id;
-                $databases_frames_settings[$column->databases_id]['use_filter_flag'] = $column->use_filter_flag;
-                $databases_frames_settings[$column->databases_id]['filter_search_keyword'] = $column->filter_search_keyword;
-                $databases_frames_settings[$column->databases_id]['filter_search_columns'] = $column->filter_search_columns;
-            }
-        }
+        $databases_frames_settings = DatabasesTool::getDatabasesFramesSettings($columns);
 
         // 登録データ行の取得 --->
 
@@ -179,27 +158,13 @@ class DatabasesearchesPlugin extends UserPluginBase
                 $inputs_query->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
             }
 
-            // 各データベースのフレームの表示設定
-            foreach ($databases_frames_settings as $databases_id => $databases_frames_setting) {
-                // ・databases_id毎に配列を組んでいるため、databases_columns_ids = 1つのdatabases_idに対応
-                // ・databases_frames_settings のモトになった columns は、frameで絞っているので、同一DBを複数frame配置でだぶる不具合も発生しない想定。
-
-                // 絞り込み制御ON、絞り込み検索キーワードあり
-                if (!empty($databases_frames_setting['use_filter_flag']) && !empty($databases_frames_setting['filter_search_keyword'])) {
-                    $inputs_query = DatabasesTool::appendSearchKeyword(
-                        'databases_inputs_id',
-                        $inputs_query,
-                        $databases_frames_setting['databases_columns_ids'],
-                        $hide_columns_ids,
-                        $databases_frames_setting['filter_search_keyword']
-                    );
-                }
-
-                // 絞り込み制御ON、絞り込み指定あり
-                if (!empty($databases_frames_setting['use_filter_flag']) && !empty($databases_frames_setting['filter_search_columns'])) {
-                    $inputs_query = DatabasesTool::appendSearchColumns('databases_inputs_id', $inputs_query, json_decode($databases_frames_setting['filter_search_columns'], true));
-                }
-            }
+            // 全データベースの検索キーワードの絞り込み と カラムの絞り込み (各データベースのフレームの表示設定)
+            $inputs_query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
+                'databases_inputs_id',
+                $inputs_query,
+                $databases_frames_settings,
+                $hide_columns_ids
+            );
 
             // カラム指定
             if (property_exists($condition, 'name') && $condition->name) {
