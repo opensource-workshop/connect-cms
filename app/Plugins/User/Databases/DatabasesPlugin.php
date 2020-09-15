@@ -2093,8 +2093,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
-        $column = DatabasesColumns::where('id', $request->column_id)->first();
-
         $validator_values = null;
         $validator_attributes = null;
 
@@ -2170,6 +2168,9 @@ class DatabasesPlugin extends UserPluginBase
                     ->where('title_flag', 1)
                     ->update(['title_flag' => 0]);
         }
+
+        // bugfix: 更新データは上記update後に取得しないと、title_flagが更新されない不具合対応
+        $column = DatabasesColumns::where('id', $request->column_id)->first();
 
         // タイトル指定
         $column->title_flag = $title_flag;
