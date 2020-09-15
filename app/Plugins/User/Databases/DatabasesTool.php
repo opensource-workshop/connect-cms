@@ -5,6 +5,8 @@ namespace App\Plugins\User\Databases;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+use App\Models\User\Databases\DatabasesColumns;
+
 use App\Traits\ConnectCommonTrait;
 
 /**
@@ -13,6 +15,79 @@ use App\Traits\ConnectCommonTrait;
 class DatabasesTool
 {
     use ConnectCommonTrait;
+
+    /**
+     * 全ての「カラム」と「表示設定の絞り込み条件」の取得
+     */
+    public static function getDatabasesColumnsAndFilterSearchAll()
+    {
+        // カラムの取得
+        $columns = DatabasesColumns::
+            select(
+                'databases_columns.*',
+                'databases_frames.use_filter_flag',
+                'databases_frames.filter_search_keyword',
+                'databases_frames.filter_search_columns'
+            )
+            ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
+            ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+            ->leftjoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id');
+        return $columns;
+    }
+
+    /**
+     * 各データベースのフレームの表示設定 取得
+     */
+    public static function getDatabasesFramesSettings($columns)
+    {
+        // 各データベースのフレームの表示設定
+        // array[databases_id][databases_column_id][] = $databases_column->id...
+        // array[databases_id][use_filter_flag] = $databases_column->use_filter_flag
+        // array[databases_id][filter_search_keyword] = $databases_column->filter_search_keyword
+        // array[databases_id][filter_search_columns] = $databases_column->filter_search_columns
+        $databases_frames_settings = [];
+        if (!empty($columns)) {
+            foreach ($columns as $column) {
+                $databases_frames_settings[$column->databases_id]['databases_columns_ids'][] = $column->id;
+                $databases_frames_settings[$column->databases_id]['use_filter_flag'] = $column->use_filter_flag;
+                $databases_frames_settings[$column->databases_id]['filter_search_keyword'] = $column->filter_search_keyword;
+                $databases_frames_settings[$column->databases_id]['filter_search_columns'] = $column->filter_search_columns;
+            }
+        }
+        return $databases_frames_settings;
+    }
+
+    /**
+     * 全データベースの検索キーワードの絞り込み と カラムの絞り込み
+     *
+     * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
+     * 新着例）                    $where_in_colum_name = 'databases_inputs.id'
+     */
+    public static function appendSearchKeywordAndSearchColumnsAllDb($where_in_colum_name, $inputs_query, $databases_frames_settings, $hide_columns_ids)
+    {
+        // 各データベースのフレームの表示設定
+        foreach ($databases_frames_settings as $databases_id => $databases_frames_setting) {
+            // ・databases_id毎に配列を組んでいるため、databases_columns_ids = 1つのdatabases_idに対応
+            // ・databases_frames_settings のモトになった columns は、frameで絞っているので、同一DBを複数frame配置でだぶる不具合も発生しない想定。
+
+            // 絞り込み制御ON、絞り込み検索キーワードあり
+            if (!empty($databases_frames_setting['use_filter_flag']) && !empty($databases_frames_setting['filter_search_keyword'])) {
+                $inputs_query = self::appendSearchKeyword(
+                    $where_in_colum_name,
+                    $inputs_query,
+                    $databases_frames_setting['databases_columns_ids'],
+                    $hide_columns_ids,
+                    $databases_frames_setting['filter_search_keyword']
+                );
+            }
+
+            // 絞り込み制御ON、絞り込み指定あり
+            if (!empty($databases_frames_setting['use_filter_flag']) && !empty($databases_frames_setting['filter_search_columns'])) {
+                $inputs_query = self::appendSearchColumns($where_in_colum_name, $inputs_query, json_decode($databases_frames_setting['filter_search_columns'], true));
+            }
+        }
+        return $inputs_query;
+    }
 
     /**
      * 権限のよって非表示columのdatabases_columns_id配列を取得する
@@ -116,6 +191,7 @@ class DatabasesTool
      *
      * データベースプラグイン例）   $where_in_colum_name = 'databases_inputs.id'
      * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
+     * 新着例）                    $where_in_colum_name = 'databases_inputs.id'
      */
     public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword)
     {
@@ -138,6 +214,7 @@ class DatabasesTool
      *
      * データベースプラグイン例）   $where_in_colum_name = 'databases_inputs.id'
      * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
+     * 新着例）                    $where_in_colum_name = 'databases_inputs.id'
      */
     public static function appendSearchColumns($where_in_colum_name, $inputs_query, $search_columns)
     {
