@@ -15,6 +15,7 @@ use DB;
 use Carbon\Carbon;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\User\Databases\Databases;
@@ -1745,20 +1746,29 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  データベース削除処理
+     * データベース削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $databases_id)
     {
         // databases_id がある場合、データを削除
         if ($databases_id) {
+            // 表示設定を削除する。
+            DatabasesFrames::where('databases_id', $databases_id)->delete();
+
             // カラム権限データを削除する。
             DatabasesColumnsRole::where('databases_id', $databases_id)->delete();
 
             $databases_columns = DatabasesColumns::where('databases_id', $databases_id)->orderBy('display_sequence')->get();
             foreach ($databases_columns as $databases_column) {
+                // 入力データ値を削除する。
+                DatabasesInputCols::where('databases_columns_id', $databases_column->id)->delete();
+
                 // カラムに紐づく選択肢の削除
                 $this->deleteColumnsSelects($databases_column->id);
             }
+
+            // 入力データの行データを削除する。
+            DatabasesInputs::where('databases_id', $databases_id)->delete();
 
             // カラムデータを削除する。
             DatabasesColumns::where('databases_id', $databases_id)->delete();
@@ -1771,6 +1781,9 @@ class DatabasesPlugin extends UserPluginBase
 
             // FrameのバケツIDの更新
             Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+
+            // buckets_rolesの削除
+            BucketsRoles::where('buckets_id', $frame->bucket_id)->delete();
 
             // backetsの削除
             Buckets::where('id', $frame->bucket_id)->delete();
@@ -3210,9 +3223,11 @@ class DatabasesPlugin extends UserPluginBase
             // CSVのデータ行の頭は、必ず固定項目のidの想定
             $databases_inputs_id = array_shift($csv_columns);
 
-            // id & databases_idの存在チェック
-            if (! DatabasesInputs::where('id', $databases_inputs_id)->where('databases_id', $databases_id)->exists()) {
-                $errors[] = $line_count . '行目のidは対象データベースに存在しません。';
+            if (!empty($databases_inputs_id)) {
+                // id & databases_idの存在チェック
+                if (! DatabasesInputs::where('id', $databases_inputs_id)->where('databases_id', $databases_id)->exists()) {
+                    $errors[] = $line_count . '行目のidは対象データベースに存在しません。';
+                }
             }
 
             foreach ($csv_columns as $col => &$csv_column) {
