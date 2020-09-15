@@ -1206,7 +1206,7 @@ class DatabasesPlugin extends UserPluginBase
                             $directory = $this->getDirectory($delete_upload->id);
                             Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
 
-                            // データベースの削除
+                            // uploadの削除
                             $delete_upload->delete();
                         }
                     }
@@ -1759,34 +1759,69 @@ class DatabasesPlugin extends UserPluginBase
             DatabasesColumnsRole::where('databases_id', $databases_id)->delete();
 
             $databases_columns = DatabasesColumns::where('databases_id', $databases_id)->orderBy('display_sequence')->get();
+
+            ////
+            //// 添付ファイルの削除
+            ////
+            $file_column_type_ids = [];
             foreach ($databases_columns as $databases_column) {
-                // 入力データ値を削除する。
+                // ファイルタイプ
+                if ($databases_column->isFileColumnType($databases_column->column_type)) {
+                    $file_column_type_ids[] = $databases_column->id;
+                }
+            }
+
+            // 削除するファイル情報が入っている詳細データの特定
+            $del_file_ids = DatabasesInputCols::whereIn('databases_columns_id', $file_column_type_ids)
+                                                ->whereNotNull('value')
+                                                ->pluck('value')
+                                                ->all();
+
+            // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
+            $delete_uploads = Uploads::whereIn('id', $del_file_ids)->get();
+            foreach ($delete_uploads as $delete_upload) {
+                // ファイルの削除
+                $directory = $this->getDirectory($delete_upload->id);
+                Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                // uploadの削除
+                $delete_upload->delete();
+            }
+
+
+            foreach ($databases_columns as $databases_column) {
+                // 詳細データ値を削除する。
                 DatabasesInputCols::where('databases_columns_id', $databases_column->id)->delete();
 
                 // カラムに紐づく選択肢の削除
                 $this->deleteColumnsSelects($databases_column->id);
             }
 
-            // 入力データの行データを削除する。
+            // 入力行データを削除する。
             DatabasesInputs::where('databases_id', $databases_id)->delete();
 
             // カラムデータを削除する。
             DatabasesColumns::where('databases_id', $databases_id)->delete();
 
-            // データベース設定を削除する。
-            Databases::destroy($databases_id);
+            // bugfix: backets, buckets_rolesは $frame->bucket_id で消さない。選択したDBのbucket_idで消す
+            $databases = Databases::find($databases_id);
+
+            // buckets_rolesの削除
+            BucketsRoles::where('buckets_id', $databases->bucket_id)->delete();
+
+            // backetsの削除
+            Buckets::where('id', $databases->bucket_id)->delete();
 
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();
+            // bugfix: フレームのbucket_idと削除するDBのbucket_idが同じなら、FrameのバケツIDの更新する
+            if ($frame->bucket_id == $databases->bucket_id) {
+                // FrameのバケツIDの更新
+                Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            }
 
-            // FrameのバケツIDの更新
-            Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
-
-            // buckets_rolesの削除
-            BucketsRoles::where('buckets_id', $frame->bucket_id)->delete();
-
-            // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // データベース設定を削除する。
+            Databases::destroy($databases_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
