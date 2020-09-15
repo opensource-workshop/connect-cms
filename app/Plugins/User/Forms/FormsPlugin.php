@@ -1375,6 +1375,8 @@ ORDER BY forms_inputs_id, forms_columns_id
             foreach ($csv_line as $csv_col) {
                 $csv_data .= '"' . $csv_col . '",';
             }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
             $csv_data .= "\n";
         }
 
