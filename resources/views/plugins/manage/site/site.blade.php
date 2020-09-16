@@ -91,6 +91,14 @@
                 <small class="form-text text-muted">（用例）センターエリアCSSのランダム適用等</small>
             </div>
 
+            {{-- body任意クラス --}}
+            <div class="form-group">
+                <label class="col-form-label">bodyタグ任意クラス</label>
+                <input type="text" name="body_optional_class" id="body_optional_class" value="{{$configs["body_optional_class"]}}" class="form-control">
+                <small class="form-text text-muted">bodyタグに任意のclass属性を設定します。カンマ区切りで複数設定した場合、いづれかのクラスをランダムで設定します。</small>
+                <small class="form-text text-muted">（用例）bodyタグCSSのランダム適用等</small>
+            </div>
+
             {{-- フッターエリア任意クラス --}}
             <div class="form-group">
                 <label class="col-form-label">フッターエリア任意クラス</label>
