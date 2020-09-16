@@ -116,7 +116,15 @@
     </script>
 
 </head>
-<body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif">
+@php
+// body任意クラスを抽出（カンマ設定時はランダムで１つ設定）
+$body_optional_class = null;
+if(isset($configs_array['body_optional_class'])){
+    $classes = explode(',', $configs_array['body_optional_class']->value);
+    $body_optional_class = $classes[array_rand($classes)];
+}
+@endphp
+<body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
 @if (Auth::check() || (isset($configs) && ($configs['base_header_hidden'] != '1')))
 <nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif">
