@@ -195,17 +195,23 @@ class DatabasesTool
      */
     public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword)
     {
-        $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_keyword, $databases_columns_ids, $hide_columns_ids) {
-                        // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
-                        $query->select('databases_inputs_id')
-                                ->from('databases_input_cols')
-                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                ->where('databases_columns.search_flag', 1)
-                                ->whereIn('databases_columns.id', $databases_columns_ids)
-                                ->whereNotIn('databases_columns.id', $hide_columns_ids)
-                                ->where('value', 'like', '%' . $search_keyword . '%')
-                                ->groupBy('databases_inputs_id');
-        });
+        // add: キーワードでスペース連結してAND検索
+        $search_keywords = explode(' ', $search_keyword);
+
+        // キーワードAND検索
+        foreach ($search_keywords as $search_keyword) {
+            $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_keyword, $databases_columns_ids, $hide_columns_ids) {
+                // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+                $query->select('databases_inputs_id')
+                        ->from('databases_input_cols')
+                        ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                        ->where('databases_columns.search_flag', 1)
+                        ->whereIn('databases_columns.id', $databases_columns_ids)
+                        ->whereNotIn('databases_columns.id', $hide_columns_ids)
+                        ->where('value', 'like', '%' . $search_keyword . '%')
+                        ->groupBy('databases_inputs_id');
+            });
+        }
         return $inputs_query;
     }
 

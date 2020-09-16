@@ -367,6 +367,9 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
+            // debug:確認したいSQLの前にこれを仕込んで
+            // DB::enableQueryLog();
+
             // ソートなし or ソートするカラムIDが数値じゃない（=入力なしと同じ扱いにする）
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
                 $inputs_query = DatabasesInputs::where('databases_id', $database->id);
@@ -499,6 +502,9 @@ class DatabasesPlugin extends UserPluginBase
             }
             $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
             // <--- 登録データ行の取得
+
+            // debug: sql dumpする
+            // Log::debug(var_export(DB::getQueryLog(), true));
 
             // 登録データ詳細の取得
             $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
