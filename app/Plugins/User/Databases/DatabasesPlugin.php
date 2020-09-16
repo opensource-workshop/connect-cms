@@ -4,7 +4,7 @@ namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+// use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
@@ -32,7 +32,7 @@ use App\Rules\CustomVali_DatesYm;
 use App\Rules\CustomVali_CsvImage;
 use App\Rules\CustomVali_CsvExtensions;
 
-use App\Mail\ConnectMail;
+// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\Csv\SjisToUtf8EncodingFilter;
@@ -276,8 +276,6 @@ class DatabasesPlugin extends UserPluginBase
         $request->flash();
 
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-        // if ($request->has('page')) {
-        //     $request->session()->put('page_no.'.$frame_id, $request->page);
         $frame_page = "frame_{$frame_id}_page";
         if ($request->has($frame_page)) {
                 $request->session()->put('page_no.'.$frame_id, $request->$frame_page);
@@ -467,18 +465,6 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
-            // if ($sort_column_id == 'random' && $sort_column_order == 'session') {
-            //     $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
-            // } elseif ($sort_column_id == 'random' && $sort_column_order == 'every') {
-            //     $inputs_query->inRandomOrder();
-            // } elseif ($sort_column_id == 'created' && $sort_column_order == 'asc') {
-            //     $inputs_query->orderBy('databases_inputs.created_at', 'asc');
-            // } elseif ($sort_column_id == 'created' && $sort_column_order == 'desc') {
-            //     $inputs_query->orderBy('databases_inputs.created_at', 'desc');
-            // } elseif ($sort_column_id == 'updated' && $sort_column_order == 'asc') {
-            //     $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
-            // } elseif ($sort_column_id == 'updated' && $sort_column_order == 'desc') {
-            //     $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
             if ($sort_column_id == \DatabaseSortFlag::random && $sort_column_order == \DatabaseSortFlag::order_session) {
                 $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
             } elseif ($sort_column_id == \DatabaseSortFlag::random && $sort_column_order == \DatabaseSortFlag::order_every) {
@@ -705,7 +691,6 @@ class DatabasesPlugin extends UserPluginBase
         $database = $this->getDatabases($frame_id);
 
         // 登録データ行の取得
-        // $inputs = DatabasesInputs::where('id', $id)->first();
         $inputs = $this->getDatabasesInputs($id);
 
         // データがあることを確認
@@ -819,10 +804,8 @@ class DatabasesPlugin extends UserPluginBase
      *
      * @param [array] $validator_array 二次元配列
      * @param [App\Models\User\Databases\DatabasesColumns] $databases_column
-     * @param Request $request
-     * @return void
+     * @return array
      */
-    // private function getValidatorRule($validator_array, $databases_column, $request)
     private function getValidatorRule($validator_array, $databases_column)
     {
         // 入力しないカラム型は、バリデータチェックしない
@@ -844,47 +827,6 @@ class DatabasesPlugin extends UserPluginBase
         }
         // 数値チェック
         if ($databases_column->rule_allowed_numeric) {
-            // move: 入力値変換はバリデーションと同時に行わないため、移動
-            // if ($request->databases_columns_value[$databases_column->id]) {
-            //     // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）
-            //     $replace_defs = [
-            //         'ー' => '-',
-            //         '－' => '-',
-            //         '―' => '-'
-            //     ];
-            //     $search = array_keys($replace_defs);
-            //     $replace = array_values($replace_defs);
-
-            //     if (is_numeric(
-            //         mb_convert_kana(
-            //             str_replace(
-            //                 $search,
-            //                 $replace,
-            //                 $request->databases_columns_value[$databases_column->id]
-            //             ),
-            //             'n'
-            //         )
-            //     )) {
-            //         // 全角→半角変換した結果が数値の場合
-            //         $tmp_array = $request->databases_columns_value;
-            //         // 全角→半角へ丸める
-            //         $tmp_array[$databases_column->id] =
-            //             mb_convert_kana(
-            //                 str_replace(
-            //                     $search,
-            //                     $replace,
-            //                     $request->databases_columns_value[$databases_column->id]
-            //                 ),
-            //                 'n'
-            //             );
-            //         $request->merge([
-            //             "databases_columns_value" => $tmp_array,
-            //         ]);
-            //     } else {
-            //         // 全角→半角変換した結果が数値ではない場合
-            //         $validator_rule[] = 'numeric';
-            //     }
-            // }
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'numeric';
         }
@@ -1006,7 +948,6 @@ class DatabasesPlugin extends UserPluginBase
 
         foreach ($databases_columns as $databases_column) {
             // バリデータールールをセット
-            // $validator_array = $this->getValidatorRule($validator_array, $databases_column, $request);
             $validator_array = $this->getValidatorRule($validator_array, $databases_column);
         }
 
@@ -1366,135 +1307,6 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
-
-
-        // Databases、Frame データ
-        $database = $this->getDatabases($frame_id);
-
-        // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
-        if (empty($id)) {
-            $databases_inputs = new DatabasesInputs();
-            $databases_inputs->databases_id = $database->id;
-            $databases_inputs->save();
-        } else {
-            $databases_inputs = DatabasesInputs::where('id', $id)->first();
-        }
-
-        // ファイル（uploadsテーブル＆実ファイル）の削除。データ登録前に削除する。（後からだと内容が変わっていてまずい）
-        if (!empty($id) && $request->has('delete_upload_column_ids')) {
-            foreach ($request->delete_upload_column_ids as $delete_upload_column_id) {
-                if ($delete_upload_column_id) {
-                    // 削除するファイル情報が入っている詳細データの特定
-                    $del_databases_input_cols = DatabasesInputCols::where('databases_inputs_id', $id)
-                                                                  ->where('databases_columns_id', $delete_upload_column_id)
-                                                                  ->first();
-                    // ファイルが添付されていた場合
-                    if ($del_databases_input_cols && $del_databases_input_cols->value) {
-                        // 削除するファイルデータ
-                        $delete_upload = Uploads::find($del_databases_input_cols->value);
-
-                        // ファイルの削除
-                        if ($delete_upload) {
-                            $directory = $this->getDirectory($delete_upload->id);
-                            Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
-
-                            // データベースの削除
-                            $delete_upload->delete();
-                        }
-                    }
-                }
-            }
-        }
-
-        // id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
-        if (!empty($id)) {
-            DatabasesInputCols::where('databases_inputs_id', $id)->delete();
-        }
-
-        // データベースのカラムデータ
-        $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
-
-        // メールの送信文字列
-        $contents_text = '';
-
-        // 登録者のメールアドレス
-        $user_mailaddresses = array();
-
-        // databases_input_cols 登録
-        foreach ($databases_columns as $databases_column) {
-            $value = "";
-            if (is_array($request->databases_columns_value[$databases_column->id])) {
-                $value = implode(',', $request->databases_columns_value[$databases_column->id]);
-            } else {
-                $value = $request->databases_columns_value[$databases_column->id];
-            }
-
-            // ファイル系で削除指示があるものは、
-            // データ登録フラグを見て登録
-            if ($database->data_save_flag) {
-                $databases_input_cols = new DatabasesInputCols();
-                $databases_input_cols->databases_inputs_id = $databases_inputs->id;
-                $databases_input_cols->databases_columns_id = $databases_column['id'];
-                $databases_input_cols->value = $value;
-                $databases_input_cols->save();
-
-                // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if ($databases_column->column_type == \DatabaseColumnType::file) {
-                    $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
-                }
-            }
-
-            // メールの内容
-            $contents_text .= $databases_column->column_name . "：" . $value . "\n";
-
-            // メール型
-            if ($databases_column->column_type == \DatabaseColumnType::mail) {
-                $user_mailaddresses[] = $value;
-            }
-        }
-
-        // 最後の改行を除去
-        $contents_text = trim($contents_text);
-
-        // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-        $number = $database->numbering_use_flag ? $database->numbering_prefix . sprintf('%06d', $this->getNo('databases', $database->bucket_id, $database->numbering_prefix)) : null;
-
-        // 登録後メッセージ内の採番文字列を置換
-        $after_message = str_replace('[[number]]', $number, $database->after_message);
-
-        // メール送信
-        if ($database->mail_send_flag) {
-            // メール本文の組み立て
-            $mail_databaseat = $database->mail_databaseat;
-            $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
-
-            // メール本文内の採番文字列を置換
-            $mail_text = str_replace('[[number]]', $number, $mail_text);
-
-            // メール送信（管理者側）
-            $mail_addresses = explode(',', $database->mail_send_address);
-            foreach ($mail_addresses as $mail_address) {
-                Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-            }
-
-            // メール送信（ユーザー側）
-            foreach ($user_mailaddresses as $user_mailaddress) {
-                if (!empty($user_mailaddress)) {
-                    Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-                }
-            }
-        }
-
-        // 削除時のAction を/redirect/plugin にしたため、ここでreturn しなくてよい。
-
-        // 表示テンプレートを呼び出す。
-        //return $this->index($request, $page_id, $frame_id);
-        /*
-        return $this->view(
-            'databases_thanks', [
-            'after_message' => $after_message
-        ]);
-        */
     }
 
     /**
@@ -1511,10 +1323,6 @@ class DatabasesPlugin extends UserPluginBase
                             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        // $plugins = DB::table($plugin_name)
-        //                ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-        //                ->orderBy('created_at', 'desc')
-        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $plugins = DB::table($plugin_name)
                         ->select(
                             $plugin_name . '.id',
