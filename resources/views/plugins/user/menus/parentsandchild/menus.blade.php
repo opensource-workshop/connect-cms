@@ -23,7 +23,7 @@
     @endforeach
 
     {{-- 子供のページがある場合 --}}
-    @if (count($pages[$index]->children) > 0)
+    @if (isset($index) && count($pages[$index]->children) > 0)
         @php
             $tmp_page[] = $pages[$index];
             $pages=$tmp_page;
