@@ -574,14 +574,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        // $plugins = DB::table($plugin_name)
-        //                ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-        //                ->orderBy('created_at', 'desc')
-        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $plugins = DB::table($plugin_name)
                         ->select(
                             $plugin_name . '.id',
                             $plugin_name . '.bucket_id',
+                            $plugin_name . '.data_save_flag',
                             $plugin_name . '.created_at',
                             $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
                             DB::raw('count(forms_inputs.forms_id) as entry_count')
@@ -590,6 +587,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         ->groupBy(
                             $plugin_name . '.id',
                             $plugin_name . '.bucket_id',
+                            $plugin_name . '.data_save_flag',
                             $plugin_name . '.created_at',
                             $plugin_name . '.' . $plugin_name . '_name',
                             'forms_inputs.forms_id'
