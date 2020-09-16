@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 @if ($pages)
-<div class="list-group" style="margin-bottom: 0;">
+<div class="list-group mb-0">
     @foreach($pages as $key => $page)
         @php
             if (isset($index)) {
