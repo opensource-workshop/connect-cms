@@ -306,7 +306,7 @@
                                 @if ($target_plugins_frame->plugin_name == $target_plugin)
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $whatsnew->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
-                                        <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->bucket_name}}</label>
+                                        <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->frame_title}}</label>
                                     </div>
                                 @endif
                             @endforeach

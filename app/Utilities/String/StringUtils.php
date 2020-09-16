@@ -49,7 +49,8 @@ class StringUtils
         $tmp_array = explode(',', $kanma_value);
         // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
         $tmp_array = self::trimInput($tmp_array);
-        $kanma_value2 = implode(', ', $tmp_array);
+        // bugfix: カンマの前後にspace入れない
+        $kanma_value2 = implode(',', $tmp_array);
         return $kanma_value2;
     }
 
