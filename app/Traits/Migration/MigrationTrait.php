@@ -1525,11 +1525,15 @@ trait MigrationTrait
                 }
 
                 // 行ループで使用する各種変数
-                $header_skip = true;  // ヘッダースキップフラグ（1行目はカラム名の行）
-                $created_at_idx = 0;  // created_at のカラムインデックス（0 の場合は無効）
-                $created_at = '';     // created_at の内容（日時）
-                $updated_at_idx = 0;  // updated_at のカラムインデックス（0 の場合は無効）
-                $updated_at = '';     // updated_at の内容（日時）
+                $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
+                $status_idx = 0;           // status のカラムインデックス（0 の場合は無効）
+                $status = '';              // status の内容
+                $display_sequence_idx = 0; // display_sequence のカラムインデックス（0 の場合は無効）
+                $display_sequence = '';    // display_sequence の内容
+                $created_at_idx = 0;       // created_at のカラムインデックス（0 の場合は無効）
+                $created_at = '';          // created_at の内容（日時）
+                $updated_at_idx = 0;       // updated_at のカラムインデックス（0 の場合は無効）
+                $updated_at = '';          // updated_at の内容（日時）
 
                 // 改行で記事毎に分割（行の処理）
                 $database_tsv_lines = explode("\n", $database_tsv);
@@ -1547,6 +1551,10 @@ trait MigrationTrait
                                 $created_at_idx = $loop_idx;
                             } elseif ($database_tsv_col == 'updated_at') {
                                 $updated_at_idx = $loop_idx;
+                            } elseif ($database_tsv_col == 'status') {
+                                $status_idx = $loop_idx;
+                            } elseif ($database_tsv_col == 'display_sequence') {
+                                $display_sequence_idx = $loop_idx;
                             }
                             $loop_idx++;
                         }
@@ -1576,8 +1584,28 @@ trait MigrationTrait
                         $updated_at = date('Y-m-d H:i:s');
                     }
 
+                    // status
+                    if ($status_idx != 0 && array_key_exists($status_idx, $database_tsv_cols) && !empty($database_tsv_cols[$status_idx])) {
+                        $status = $database_tsv_cols[$status_idx];
+                    } else {
+                        $status = 0;
+                    }
+
+                    // display_sequence
+                    if ($display_sequence_idx != 0 && array_key_exists($display_sequence_idx, $database_tsv_cols) && !empty($database_tsv_cols[$display_sequence_idx])) {
+                        $display_sequence = $database_tsv_cols[$display_sequence_idx];
+                    } else {
+                        $display_sequence = 0;
+                    }
+
                     // 行データの追加
-                    $databases_input = DatabasesInputs::create(['databases_id' => $database->id, 'created_at' => $created_at, 'updated_at' => $updated_at]);
+                    $databases_input = DatabasesInputs::create([
+                        'databases_id'     => $database->id,
+                        'status'           => $status,
+                        'display_sequence' => $display_sequence,
+                        'created_at'       => $created_at,
+                        'updated_at'       => $updated_at,
+                    ]);
 
                     $databases_columns_id_idx = 0; // 処理カラムのloop index
 
@@ -2346,6 +2374,7 @@ trait MigrationTrait
                 'use_select_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_select_flag', 1),
                 'use_sort_flag'     => $this->getArrayValue($frame_ini, 'database', 'use_sort_flag', null),
                 'default_sort_flag' => $this->getArrayValue($frame_ini, 'database', 'default_sort_flag', null),
+                'use_filter_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_filter_flag', 0),
                 'view_count'        => $view_count,
                 'default_hide'      => 0,
             ]);
@@ -4372,7 +4401,9 @@ trait MigrationTrait
                 $tsv_cols[$metadata_id] = "";
             }
 
-            $tsv_header .= "created_at\tupdated_at";
+            $tsv_header .= "status" . "\t" . "display_sequence" . "\t" . "created_at" . "\t" . "updated_at";
+            $tsv_cols['status'] = "";
+            $tsv_cols['display_sequence'] = "";
             $tsv_cols['insert_time'] = "";
             $tsv_cols['update_time'] = "";
 
@@ -4380,6 +4411,9 @@ trait MigrationTrait
             $multidatabase_metadata_contents = Nc2MultidatabaseMetadataContent::select(
                 'multidatabase_metadata_content.*',
                 'multidatabase_metadata.type',
+                'multidatabase_content.agree_flag',
+                'multidatabase_content.temporary_flag',
+                'multidatabase_content.display_sequence as content_display_sequence',
                 'multidatabase_content.insert_time as multidatabase_content_insert_time',
                 'multidatabase_content.update_time as multidatabase_content_update_time'
             )->join('multidatabase_metadata', 'multidatabase_metadata.metadata_id', '=', 'multidatabase_metadata_content.metadata_id')
@@ -4406,6 +4440,16 @@ trait MigrationTrait
                         $old_metadata_content = $multidatabase_metadata_content;
                         $tsv .= $tsv_header . "\n";
                     } else {
+                        // 承認待ち、一時保存
+                        $tsv_record['status'] = 0;
+                        if ($old_metadata_content->agree_flag == 1) {
+                            $tsv_record['status'] = 1;
+                        }
+                        if ($old_metadata_content->temporary_flag == 1) {
+                            $tsv_record['status'] = 2;
+                        }
+                        // 表示順
+                        $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
                         // 登録日時、更新日時
                         $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                         $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
@@ -4449,6 +4493,17 @@ trait MigrationTrait
             // 最後の行の登録日時、更新日時
             // レコードがない場合もあり得る。
             if (!empty($old_metadata_content)) {
+                // 承認待ち、一時保存
+                $tsv_record['status'] = 0;
+                if ($old_metadata_content->agree_flag == 1) {
+                    $tsv_record['status'] = 1;
+                }
+                if ($old_metadata_content->temporary_flag == 1) {
+                    $tsv_record['status'] = 2;
+                }
+                // 表示順
+                $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
+                // 登録日時、更新日時
                 $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                 $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
                 $tsv .= implode("\t", $tsv_record);
