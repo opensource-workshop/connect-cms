@@ -39,7 +39,7 @@
 @if ($pages)
     <div class="form-group">
         <label class="col-form-label">ページの選択</label><br />
-    <div class="list-group" style="margin-bottom: 0;">
+    <div class="list-group mb-0">
     @foreach($pages as $page_record)
 
         {{-- 非表示のページは対象外 --}}

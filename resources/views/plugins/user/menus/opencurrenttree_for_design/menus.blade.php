@@ -11,7 +11,7 @@
 @section("plugin_contents_$frame->id")
 @if ($pages)
 
-    <div class="list-group" style="margin-bottom: 0;">
+    <div class="list-group mb-0">
         <ul>
             @foreach($pages as $page)
 

@@ -11,8 +11,8 @@ use DB;
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
-use App\Models\Common\Uploads;
+// use App\Models\Common\Page;
+// use App\Models\Common\Uploads;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsColumnsSelects;
@@ -574,14 +574,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        // $plugins = DB::table($plugin_name)
-        //                ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-        //                ->orderBy('created_at', 'desc')
-        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $plugins = DB::table($plugin_name)
                         ->select(
                             $plugin_name . '.id',
                             $plugin_name . '.bucket_id',
+                            $plugin_name . '.data_save_flag',
                             $plugin_name . '.created_at',
                             $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
                             DB::raw('count(forms_inputs.forms_id) as entry_count')
@@ -590,6 +587,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         ->groupBy(
                             $plugin_name . '.id',
                             $plugin_name . '.bucket_id',
+                            $plugin_name . '.data_save_flag',
                             $plugin_name . '.created_at',
                             $plugin_name . '.' . $plugin_name . '_name',
                             'forms_inputs.forms_id'
@@ -767,24 +765,35 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_id) {
             $forms_columns = FormsColumns::where('forms_id', $forms_id)->orderBy('display_sequence')->get();
             foreach ($forms_columns as $forms_column) {
+                // 詳細データ値を削除する。
+                FormsInputCols::where('forms_columns_id', $forms_column->id)->delete();
+
                 // カラムに紐づく選択肢の削除
                 $this->deleteColumnsSelects($forms_column->id);
             }
 
+            // 入力行データを削除する。
+            FormsInputs::where('forms_id', $forms_id)->delete();
+
             // カラムデータを削除する。
             FormsColumns::where('forms_id', $forms_id)->delete();
 
-            // フォーム設定を削除する。
-            Forms::destroy($forms_id);
+            // bugfix: backetsは $frame->bucket_id で消さない。選択したフォームのbucket_idで消す
+            $forms = Forms::find($forms_id);
+
+            // backetsの削除
+            Buckets::where('id', $forms->bucket_id)->delete();
 
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();
+            // bugfix: フレームのbucket_idと削除するフォームのbucket_idが同じなら、FrameのバケツIDの更新する
+            if ($frame->bucket_id == $forms->bucket_id) {
+                // FrameのバケツIDの更新
+                Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            }
 
-            // FrameのバケツIDの更新
-            Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
-
-            // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // フォーム設定を削除する。
+            Forms::destroy($forms_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
@@ -1375,6 +1384,8 @@ ORDER BY forms_inputs_id, forms_columns_id
             foreach ($csv_line as $csv_col) {
                 $csv_data .= '"' . $csv_col . '",';
             }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
             $csv_data .= "\n";
         }
 

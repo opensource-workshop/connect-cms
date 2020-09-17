@@ -49,7 +49,8 @@ class StringUtils
         $tmp_array = explode(',', $kanma_value);
         // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
         $tmp_array = self::trimInput($tmp_array);
-        $kanma_value2 = implode(', ', $tmp_array);
+        // bugfix: カンマの前後にspace入れない
+        $kanma_value2 = implode(',', $tmp_array);
         return $kanma_value2;
     }
 
@@ -89,4 +90,47 @@ class StringUtils
 
         return $columns_value;
     }
+
+    // /**
+    //  * 検索ワードのパース
+    //  */
+    // public static function parseSearchWords($search_words)
+    // {
+    //     // --- debug
+    //     // $search_words = " apple,apple bear \"Tom, Cruise\" or 'Mickey Mouse' another  word";
+    //     // $search_words = " あああ いいい ううう　ううう \"えええ えええ\" or 'おおお おおお' かか  きき　";
+    //     // $search_words = " code=1 type_name=学校 'type_code1=sch ool'";
+    //     // $search_words = "";
+    //     // $search_words = null;
+
+    //     // 正規表現の図) https://regexper.com/#%2F%5B%5Cs%5D*%5C%5C%5C%22%28%5B%5E%5C%5C%5C%22%5D%2B%29%5C%5C%5C%22%5B%5Cs%5D*%7C%22%20.%20%22%5B%5Cs%5D*'%28%5B%5E'%5D%2B%29'%5B%5Cs%5D*%7C%22%20.%20%22%5B%5Cs%5D%2B%2F
+    //     // preg_split) https://www.php.net/manual/ja/function.preg-split.php
+    //     //   PREG_SPLIT_NO_EMPTY: このフラグを設定すると、空文字列でないものだけが preg_split() により返されます。
+    //     //   PREG_SPLIT_DELIM_CAPTURE: このフラグを設定すると、文字列分割用のパターン中の カッコ'()'によるサブパターンでキャプチャされた値も同時に返されます。
+    //     //                             -> 正規表現にカッコ'()'でサブ抽出ができるようになる
+    //     //
+    //     //   ・半角空白(' ') でパースして配列を戻す
+    //     //   ・半角空白有りでも、''か""で囲めば単語として抽出する
+    //     //     ・前後の空白あり, 空白重複は取り除かれる
+    //     //     ・重複ワードはそのまま, 全角空白はそのまま, %はそのまま
+    //     //     ・null, "" でもarray空が戻ってきてくれる
+    //     //     ・日本語OK
+    //     $search_words_array = preg_split(
+    //         "/[\s]*\\\"([^\\\"]+)\\\"[\s]*|" . "[\s]*'([^']+)'[\s]*|" . "[\s]+/",
+    //         $search_words,
+    //         0,     // -1|0=無制限(-1=default)
+    //         PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+    //     );
+    //     // print_r($search_words_array);
+
+    //     if (preg_last_error() != PREG_NO_ERROR) {
+    //         // エラーならdebug log出力
+    //         // copy) https://www.php.net/manual/ja/function.preg-last-error.php#114105
+    //         //   In PHP 5.5 and above, getting the error message is as simple as:
+    //         $error_message = array_flip(get_defined_constants(true)['pcre'])[preg_last_error()];
+    //         Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . '):' . $error_message);
+    //     }
+
+    //     return $search_words_array;
+    // }
 }

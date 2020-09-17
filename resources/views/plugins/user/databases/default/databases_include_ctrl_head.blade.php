@@ -46,7 +46,7 @@
             <div class="col-sm">
                 <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
                 <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
-                @if($select_column->column_type == 'checkbox')
+                @if($select_column->column_type == DatabaseColumnType::checkbox)
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART">
                 @else
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">

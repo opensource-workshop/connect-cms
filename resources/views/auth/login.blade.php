@@ -57,7 +57,7 @@
                             <div class="col-md-6 offset-md-4">
                                 <div class="custom-control custom-checkbox mr-sm-2">
                                     <input type="checkbox" name="remember"{{old('remember') ? 'checked' : ''}} class="custom-control-input" id="remember">
-                                    <label class="custom-control-label" for="remember">ログイン状態を維持する。</label>
+                                    <label class="custom-control-label" for="remember" title="ログイン状態を維持するチェックボックス">ログイン状態を維持する。</label>
                                 </div>
                             </div>
                         </div>

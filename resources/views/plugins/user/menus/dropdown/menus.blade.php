@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 @if ($pages)
-    <ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
+    <ul class="nav nav-tabs nav-justified d-none d-md-flex">
     @foreach($pages as $page_obj)
 
         {{-- 非表示のページは対象外 --}}

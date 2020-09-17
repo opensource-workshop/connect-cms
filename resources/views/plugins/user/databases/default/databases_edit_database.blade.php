@@ -215,7 +215,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/databases/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$database_frame->databases_id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/databases/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$database->id}}#frame-{{$frame_id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

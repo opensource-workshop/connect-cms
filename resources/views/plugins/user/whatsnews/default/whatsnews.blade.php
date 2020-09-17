@@ -9,15 +9,16 @@
 
 @section("plugin_contents_$frame->id")
 @if ($whatsnews)
-    <p class="text-left">
-        @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
-        <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
-        @endif
-    </p>
+<p class="text-left">
+    @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
+    <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
+    @endif
+</p>
 
 <div>
     <dl>
     @foreach($whatsnews as $whatsnew)
+        {{-- view_posted_at: 登録日時の表示 --}}
         @if ($whatsnews_frame->view_posted_at)
         <dt>
             {{(new Carbon($whatsnew->posted_at))->format('Y/m/d')}}

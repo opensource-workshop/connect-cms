@@ -130,6 +130,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_header_color]
         );
 
+        // bodyタグのclass属性
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'body_optional_class'],
+            ['category' => 'general',
+             'value'    => $request->body_optional_class]
+        );
+
         // センターエリア要素のclass属性
         $configs = Configs::updateOrCreate(
             ['name'     => 'center_area_optional_class'],

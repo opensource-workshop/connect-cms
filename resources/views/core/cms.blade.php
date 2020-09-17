@@ -19,7 +19,7 @@
 {{-- <a href="#" data-href="{{URL::to('/')}}/test/1" data-toggle="modal" data-target="#modalDetails">リンク</a> --}}
 
 <!-- Modal -->
-<div class="modal fade" id="modalDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
+<div class="modal fade" id="modalDetails" tabindex="-1" role="dialog" data-backdrop="static">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
     </div>
