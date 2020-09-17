@@ -120,7 +120,7 @@ class Nc2Block extends Model
         'imagine'       => 'Abolition',    // imagine
         'journal'       => 'blogs',        // ブログ
         'language'      => 'Development',  // 言語選択
-        'linklist'      => 'Development',  // リンクリスト
+        'linklist'      => 'linklists',    // リンクリスト
         'login'         => 'Development',  // ログイン
         'menu'          => 'menus',        // メニュー
         'multidatabase' => 'databases',    // データベース
