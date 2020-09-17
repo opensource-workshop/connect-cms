@@ -16,5 +16,5 @@ class Linklist extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['bucket_id', 'linklist_name'];
+    protected $fillable = ['bucket_id', 'name'];
 }
