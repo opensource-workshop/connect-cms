@@ -36,7 +36,7 @@
 
 @if (!$blog || (!$blog->id && !$create_flag))
 @else
-<form action="{{url('/')}}/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     {{ csrf_field() }}
     {{-- create_flag がtrue の場合、新規作成するためにblogs_id を空にする --}}
     @if ($create_flag)
@@ -130,7 +130,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/blogs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$blog->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/blogs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$blog->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

@@ -29,10 +29,10 @@
     </div>
 
     @if (empty($linklist->id))
-    <form action="{{url('/')}}/redirect/plugin/linklists/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/redirect/plugin/linklists/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
     @else
-    <form action="{{url('/')}}/redirect/plugin/linklists/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$linklist->bucket_id}}" method="POST" class="">
+    <form action="{{url('/')}}/redirect/plugin/linklists/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$linklist->bucket_id}}#frame-{{$frame->id}}" method="POST" class="">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
     @endif
         {{ csrf_field() }}
@@ -81,7 +81,7 @@
 
                 <div class="text-center">
                     {{-- 削除ボタン --}}
-                    <form action="{{url('/')}}/redirect/plugin/linklists/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$linklist->id}}" method="POST">
+                    <form action="{{url('/')}}/redirect/plugin/linklists/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$linklist->id}}#frame-{{$frame->id}}" method="POST">
                         {{csrf_field()}}
                         <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                     </form>

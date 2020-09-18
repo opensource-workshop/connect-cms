@@ -24,9 +24,9 @@
 @else
 
     @if($databasesearches->id)
-    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}#frame-{{$frame->id}}" method="POST" class="">
     @else
-    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     @endif
         {{ csrf_field() }}
 
@@ -148,7 +148,7 @@
                 <span class="text-danger">データベース検索を削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
                 <div class="text-center">
                     {{-- 削除ボタン --}}
-                    <form action="{{url('/')}}/redirect/plugin/databasesearches/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}" method="POST">
+                    <form action="{{url('/')}}/redirect/plugin/databasesearches/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}#frame-{{$frame->id}}" method="POST">
                         {{csrf_field()}}
                         <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データベース検索を削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                     </form>

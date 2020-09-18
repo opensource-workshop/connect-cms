@@ -23,7 +23,7 @@
                         <span class="badge badge-warning align-bottom">承認待ち</span>
                     @endcan
                     @can('posts.approval',[[$contents, 'contents', $buckets]])
-                        <form action="{{url('/')}}/redirect/plugin/contents/approval/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="post" name="form_approval" class="d-inline">
+                        <form action="{{url('/')}}/redirect/plugin/contents/approval/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                             {{ csrf_field() }}
                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                                 <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>

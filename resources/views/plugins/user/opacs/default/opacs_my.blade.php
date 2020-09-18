@@ -25,7 +25,7 @@
 
 @can("role_article")
 <div class="card mb-3">
-    <div class="card-header"><a href="{{url('/')}}/plugin/opacs/rentlist/{{$page->id}}/{{$frame_id}}">貸出中一覧はこちら（モデレータ権限用）</a></div>
+    <div class="card-header"><a href="{{url('/')}}/plugin/opacs/rentlist/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}">貸出中一覧はこちら（モデレータ権限用）</a></div>
 </div>
 @endcan
 

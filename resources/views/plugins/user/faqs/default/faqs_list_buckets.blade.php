@@ -13,7 +13,7 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-<form action="{{url('/')}}/plugin/faqs/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/faqs/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     {{ csrf_field() }}
 
     <div class="form-group">

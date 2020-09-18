@@ -11,10 +11,10 @@
 
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))
-    <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_post{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="POST" class="" name="form_post{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
@@ -100,7 +100,7 @@
             <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/linklists/delete/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/linklists/delete/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <input type="hidden" name="redirect_path" value="{{$page->permanent_link}}#frame-{{$frame_id}}">
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>

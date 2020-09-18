@@ -19,7 +19,7 @@
         選択画面から、使用するリンクリストを選択するか、作成してください。
     </div>
 @else
-    <form action="{{url('/')}}/redirect/plugin/linklists/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/redirect/plugin/linklists/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
         {{ csrf_field() }}
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <div class="form-group">

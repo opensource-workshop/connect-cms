@@ -19,7 +19,7 @@
             </p>
             <p class="text-right col-6">
                 {{-- 新規登録ボタン --}}
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
+                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
         </div>
     @else
@@ -39,7 +39,7 @@
         <b>{{$post->posted_at->format('Y年n月j日')}}</b>
 
         {{-- タイトル --}}
-        <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{{$post->post_title}}</a></h2>
+        <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
 
         {{-- カテゴリ --}}
         @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
@@ -72,7 +72,7 @@
                         <span class="badge badge-warning align-bottom">承認待ち</span>
                     @endcan
                     @can('posts.approval',[[$post, 'blogs', $buckets]])
-                        <form action="{{url('/')}}/plugin/blogs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="post" name="form_approval" class="d-inline">
+                        <form action="{{url('/')}}/plugin/blogs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                             {{ csrf_field() }}
                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                                 <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
@@ -84,7 +84,7 @@
                     @if ($post->status == 1)
                         <span class="badge badge-warning align-bottom">一時保存</span>
                     @endif
-                    <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
+                    <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
                         <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                     </a>
                 @endcan
