@@ -1461,7 +1461,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 登録後はリダイレクト処理を呼ぶため、ここでは、view は呼ばない。
         // 新規登録後は、登録したデータの edit 画面を開きたいため、フォームで指定したリクエストの redirect_path を置き換える。
-        $request->merge(['redirect_path' => '/plugin/learningtasks/edit/' . $page_id . '/' . $frame_id . '/' . $post->id . '#frame-' . $frame_id]);
+        $request->merge(['redirect_path' => url('/') . '/plugin/learningtasks/edit/' . $page_id . '/' . $frame_id . '/' . $post->id . '#frame-' . $frame_id]);
 
         // 登録後は表示用の初期処理を呼ぶ。
         //return $this->index($request, $page_id, $frame_id);

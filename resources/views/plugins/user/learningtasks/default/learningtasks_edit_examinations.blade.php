@@ -22,7 +22,7 @@
 @else
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
 
     <div class="card mb-3 border-danger">
         <div class="card-body">

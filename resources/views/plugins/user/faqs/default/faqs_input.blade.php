@@ -15,9 +15,9 @@
 <script type="text/javascript">
     function save_action() {
         @if (empty($faqs_posts->id))
-            form_faqs_posts.action = "/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}";
+            form_faqs_posts.action = "{{url('/')}}/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}";
         @else
-            form_faqs_posts.action = "/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}";
+            form_faqs_posts.action = "{{url('/')}}/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}";
         @endif
         form_faqs_posts.submit();
     }

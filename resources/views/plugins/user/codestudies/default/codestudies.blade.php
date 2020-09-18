@@ -13,9 +13,9 @@
     function submit_codestudies_run() {
         form_codestudies.codestudies_run = "1";
         @if ($codestudy->id)
-            form_codestudies.action = "/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}";
+            form_codestudies.action = "{{url('/')}}/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}";
         @else
-            form_codestudies.action = "/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}";
+            form_codestudies.action = "{{url('/')}}/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}";
         @endif
         form_codestudies.submit();
     }

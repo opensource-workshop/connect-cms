@@ -38,7 +38,7 @@
 @else
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     {{-- create_flag がtrue の場合、新規作成するためにlearningtask_id を空にする --}}
     @if ($create_flag)

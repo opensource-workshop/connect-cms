@@ -30,10 +30,10 @@
 
     @if (empty($linklist->id))
     <form action="{{url('/')}}/redirect/plugin/linklists/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
-        <input type="hidden" name="redirect_path" value="/plugin/linklists/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
     @else
     <form action="{{url('/')}}/redirect/plugin/linklists/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$linklist->bucket_id}}" method="POST" class="">
-        <input type="hidden" name="redirect_path" value="/plugin/linklists/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
     @endif
         {{ csrf_field() }}
         <div class="form-group row">

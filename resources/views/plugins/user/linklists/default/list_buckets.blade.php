@@ -21,7 +21,7 @@
 @else
     <form action="{{url('/')}}/redirect/plugin/linklists/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
         {{ csrf_field() }}
-        <input type="hidden" name="redirect_path" value="/plugin/linklists/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <div class="form-group">
             <table class="table table-hover {{$frame->getSettingTableClass()}}">
             <thead>

@@ -12,10 +12,10 @@
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))
     <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_post{{$frame_id}}">
-        <input type="hidden" name="redirect_path" value="/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
     <form action="{{url('/')}}/redirect/plugin/linklists/save/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="POST" class="" name="form_post{{$frame_id}}">
-        <input type="hidden" name="redirect_path" value="/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <div class="form-group row">

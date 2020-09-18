@@ -30,10 +30,10 @@
 {{-- 投稿用フォーム --}}
 @if (empty($learningtasks_posts->id))
     <form action="{{url('/')}}/redirect/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
-        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
     <form action="{{url('/')}}/redirect/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
-        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">

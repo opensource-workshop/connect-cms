@@ -26,7 +26,7 @@
 
     <form action="{{url('/')}}/redirect/plugin/linklists/saveView/{{$page->id}}/{{$frame_id}}/{{$linklist->id}}" method="POST" class="">
         {{ csrf_field() }}
-        <input type="hidden" name="redirect_path" value="/plugin/linklists/editView/{{$page->id}}/{{$frame_id}}/{{$linklist->bucket_id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/editView/{{$page->id}}/{{$frame_id}}/{{$linklist->bucket_id}}#frame-{{$frame_id}}">
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
             <div class="{{$frame->getSettingInputClass()}}">

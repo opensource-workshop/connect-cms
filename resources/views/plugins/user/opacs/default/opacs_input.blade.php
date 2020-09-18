@@ -11,7 +11,7 @@
 <script type="text/javascript">
     {{-- 項目追加のsubmit JavaScript --}}
     function submit_book_search() {
-        form_opac_book.action = "/plugin/opacs/save/{{$page->id}}/{{$frame_id}}";
+        form_opac_book.action = "{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}";
         form_opac_book.book_search.value = 1;
         form_opac_book.submit();
     }

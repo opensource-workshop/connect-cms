@@ -292,7 +292,7 @@ class LinklistsPlugin extends UserPluginBase
         $post->save();
 
         // 登録後はリダイレクトして編集画面を開く。
-        return new Collection(['redirect_path' => "/plugin/linklists/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/linklists/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
     }
 
     /**
@@ -427,7 +427,7 @@ class LinklistsPlugin extends UserPluginBase
         );
 
         // 登録後はリダイレクトして編集ページを開く。
-        return new Collection(['redirect_path' => "/plugin/linklists/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/linklists/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
     }
 
     /**

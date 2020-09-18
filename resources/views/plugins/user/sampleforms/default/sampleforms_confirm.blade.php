@@ -10,7 +10,7 @@
 <script type="text/javascript">
     {{-- Form のキャンセル用フォームのsubmit JavaScript --}}
     function submit_cancel( frame_id ) {
-        sampleforms_form.action = "/plugin/sampleforms/create/{{$page->id}}/" + frame_id;
+        sampleforms_form.action = "{{url('/')}}/plugin/sampleforms/create/{{$page->id}}/" + frame_id;
         sampleforms_form.submit();
     }
 </script>
@@ -18,7 +18,7 @@
 <script type="text/javascript">
     {{-- Form のキャンセル用フォームのsubmit JavaScript --}}
     function submit_cancel( frame_id ) {
-        sampleforms_form.action = "/plugin/sampleforms/edit/{{$page->id}}/" + frame_id + "/{{$id}}";
+        sampleforms_form.action = "{{url('/')}}/plugin/sampleforms/edit/{{$page->id}}/" + frame_id + "/{{$id}}";
         sampleforms_form.submit();
     }
 </script>

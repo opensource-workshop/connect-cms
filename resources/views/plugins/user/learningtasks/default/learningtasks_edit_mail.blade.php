@@ -23,7 +23,7 @@
 @else
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveMail/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}" method="POST">
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="/plugin/learningtasks/editMail/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editMail/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">
 
     <div class="alert alert-warning mt-2">
         <i class="fas fa-exclamation-circle"></i>
