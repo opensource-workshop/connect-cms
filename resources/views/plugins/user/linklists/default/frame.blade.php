@@ -24,7 +24,7 @@
         フレームごとの表示設定を変更します。
     </div>
 
-    <form action="{{url('/')}}/redirect/plugin/linklists/saveView/{{$page->id}}/{{$frame_id}}/{{$linklist->id}}" method="POST" class="">
+    <form action="{{url('/')}}/redirect/plugin/linklists/saveView/{{$page->id}}/{{$frame_id}}/{{$linklist->id}}#frame-{{$frame->id}}" method="POST" class="">
         {{ csrf_field() }}
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/linklists/editView/{{$page->id}}/{{$frame_id}}/{{$linklist->bucket_id}}#frame-{{$frame_id}}">
         <div class="form-group row">

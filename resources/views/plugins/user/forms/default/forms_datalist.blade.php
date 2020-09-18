@@ -60,7 +60,7 @@
         }
     </script>
 
-    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
         {{ csrf_field() }}
         <div class="form-group">
             <table class="table table-hover table-responsive">

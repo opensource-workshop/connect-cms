@@ -15,9 +15,9 @@
 <script type="text/javascript">
     function save_action() {
         @if (empty($faqs_posts->id))
-            form_faqs_posts.action = "{{url('/')}}/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}";
+            form_faqs_posts.action = "{{url('/')}}/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
         @else
-            form_faqs_posts.action = "{{url('/')}}/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}";
+            form_faqs_posts.action = "{{url('/')}}/plugin/faqs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}#frame-{{$frame->id}}";
         @endif
         form_faqs_posts.submit();
     }
@@ -25,9 +25,9 @@
 
 {{-- 投稿用フォーム --}}
 @if (empty($faqs_posts->id))
-    <form action="{{url('/')}}/plugin/faqs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_faqs_posts">
+    <form action="{{url('/')}}/plugin/faqs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_faqs_posts">
 @else
-    <form action="{{url('/')}}/plugin/faqs/save/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}" method="POST" class="" name="form_faqs_posts">
+    <form action="{{url('/')}}/plugin/faqs/save/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_faqs_posts">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="faqs_id" value="{{$faq_frame->faqs_id}}">
@@ -143,7 +143,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/faqs/delete/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}" method="POST">
+                <form action="{{url('/')}}/plugin/faqs/delete/{{$page->id}}/{{$frame_id}}/{{$faqs_posts->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

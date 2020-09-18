@@ -24,7 +24,7 @@
         <div class="row">
             <p class="text-right col-12">
                 {{-- 新規登録ボタン --}}
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/faqs/create/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
+                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/faqs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
         </div>
     @else
@@ -83,7 +83,7 @@
                 公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
 
                 {{-- 詳細画面 --}}
-                <a href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}"><i class="fas fa-expand-alt"></i></a>
+                <a href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><i class="fas fa-expand-alt"></i></a>
 
                 {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
                 <div class="row">
@@ -93,7 +93,7 @@
                             <span class="badge badge-warning align-bottom">承認待ち</span>
                         @endcan
                         @can('posts.approval',[[$post, 'faqs', $buckets]])
-                            <form action="{{url('/')}}/plugin/faqs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="post" name="form_approval" class="d-inline">
+                            <form action="{{url('/')}}/plugin/faqs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                                 {{ csrf_field() }}
                                 <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                                     <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
@@ -105,7 +105,7 @@
                         @if ($post->status == 1)
                             <span class="badge badge-warning align-bottom">一時保存</span>
                         @endif
-                        <a href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
+                        <a href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
                             <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                         </a>
                     @endcan

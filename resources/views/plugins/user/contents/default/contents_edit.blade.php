@@ -14,14 +14,14 @@
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
     function save_action() {
-        form_update.action = "{{url('/')}}/redirect/plugin/contents/temporarysave/{{$page->id}}/{{$frame_id}}/{{$contents->id}}";
+        form_update.action = "{{url('/')}}/redirect/plugin/contents/temporarysave/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#frame-{{$frame->id}}";
         form_update.submit();
     }
 </script>
 
 {{-- 更新用フォーム --}}
 <div class="text-center">
-    <form action="{{url('/')}}/redirect/plugin/contents/update/{{$page->id}}/{{$frame_id}}/{{$contents->id}}" method="POST" class="" name="form_update">
+    <form action="{{url('/')}}/redirect/plugin/contents/update/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_update">
         {{ csrf_field() }}
         <input type="hidden" name="action" value="edit">
 

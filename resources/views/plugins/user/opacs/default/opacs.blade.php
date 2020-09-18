@@ -31,7 +31,7 @@
                 @if (isset($frame) && $frame->bucket_id)
                     <p class="text-right">
                         {{-- 新規登録ボタン --}}
-                        <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}'">
+                        <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'">
                             <i class="fas fa-plus"></i> 新規登録
                         </button>
                     </p>
@@ -81,7 +81,7 @@
         <tr>
 {{--
             <td>
-                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">
+                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}#frame-{{$frame->id}}">
                     <span class="label label-primary">詳細</span>
                 </a>
             </td>
@@ -94,11 +94,11 @@
 --}}
             <td>
                 @can("role_article")
-                <a href="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$book->id}}">
+                <a href="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$book->id}}#frame-{{$frame->id}}">
                     <i class="far fa-edit"></i>
                 </a>
                 @endcan
-                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}</a>
+                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}#frame-{{$frame->id}}</a>
             </td>
 {{--
             <td>{{$book->ndc}}</td>
@@ -133,7 +133,7 @@
 --}}
             {{-- 新規登録ボタン --}}
 {{--
-            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}'"><i class="fas fa-plus"></i> 新規登録</button>
+            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="fas fa-plus"></i> 新規登録</button>
         </p>
     @else
         <div class="panel panel-default">
