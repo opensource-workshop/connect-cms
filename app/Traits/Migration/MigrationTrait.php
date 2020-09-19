@@ -3903,6 +3903,43 @@ trait MigrationTrait
     }
 
     /**
+     *  ファイル出力
+     */
+    private function storageAppend($path, $value)
+    {
+        $value = $this->exportStrReplace($value);
+
+        // ファイル出力
+        Storage::append($path, $value);
+    }
+
+    /**
+     *  ファイル出力
+     */
+    private function storagePut($path, $value)
+    {
+        $value = $this->exportStrReplace($value);
+
+        // ファイル出力
+        Storage::put($path, $value);
+    }
+
+    /**
+     *  ファイル出力
+     */
+    private function exportStrReplace($value)
+    {
+        // 文字列変換指定を反映する。
+        $nc2_export_str_replaces = $this->getMigrationConfig('basic', 'nc2_export_str_replace');
+        if (!empty($nc2_export_str_replaces)) {
+            foreach ($nc2_export_str_replaces as $search => $replace) {
+                $value = str_replace($search, $replace, $value);
+            }
+        }
+        return $value;
+    }
+
+    /**
      *  プラグインの変換
      */
     public function nc2GetPluginName($module_name)
@@ -3965,7 +4002,8 @@ trait MigrationTrait
         $basic_ini .= "default_theme_public = \"" . $default_theme_public . "\"\n";
 
         // basic,ini ファイル保存
-        Storage::put($this->getImportPath('basic/basic.ini'), $basic_ini);
+        //Storage::put($this->getImportPath('basic/basic.ini'), $basic_ini);
+        $this->storagePut($this->getImportPath('basic/basic.ini'), $basic_ini);
     }
 
     /**
@@ -4004,7 +4042,8 @@ trait MigrationTrait
         $nc2_uploads = Nc2Upload::orderBy('upload_id')->get();
 
         // uploads,ini ファイル
-        Storage::put($this->getImportPath('uploads/uploads.ini'), "[uploads]");
+        //Storage::put($this->getImportPath('uploads/uploads.ini'), "[uploads]");
+        $this->storagePut($this->getImportPath('uploads/uploads.ini'), "[uploads]");
 
         // uploads,ini ファイルの詳細（変数に保持、後でappend。[uploads] セクションが切れないため。）
         $uploads_ini = "";
@@ -4082,7 +4121,8 @@ trait MigrationTrait
         foreach ($this->nc2_default_categories as $nc2_default_category_key => $nc2_default_category) {
             $uploads_ini .= "\n" . "categories[" . $nc2_default_category_key . "] = \"" . $nc2_default_category . "\"";
         }
-        Storage::put($this->getImportPath('categories/categories.ini'), $uploads_ini);
+        //Storage::put($this->getImportPath('categories/categories.ini'), $uploads_ini);
+        $this->storagePut($this->getImportPath('categories/categories.ini'), $uploads_ini);
     }
 
     /**
@@ -4187,7 +4227,8 @@ trait MigrationTrait
         }
 
         // Userデータの出力
-        Storage::put($this->getImportPath('users/users.ini'), $users_ini);
+        //Storage::put($this->getImportPath('users/users.ini'), $users_ini);
+        $this->storagePut($this->getImportPath('users/users.ini'), $users_ini);
     }
 
     /**
@@ -4311,10 +4352,12 @@ trait MigrationTrait
             // $journals_ini .= $blog_post_ini_detail;
 
             // blog の設定
-            Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.ini', $journals_ini);
+            //Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.ini', $journals_ini);
+            $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.ini', $journals_ini);
 
             // blog の記事
-            Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
+            //Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
+            $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
         }
     }
 
@@ -4409,10 +4452,12 @@ trait MigrationTrait
             }
 
             // blog の設定
-            Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
+            //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
+            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
 
             // blog の記事
-            Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
+            //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
+            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
         }
     }
 
@@ -4509,10 +4554,12 @@ trait MigrationTrait
             }
 
             // FAQ の設定
-            Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.ini', $faqs_ini);
+            //Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.ini', $faqs_ini);
+            $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.ini', $faqs_ini);
 
             // FAQ の記事
-            Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.tsv', $faqs_tsv);
+            //Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.tsv', $faqs_tsv);
+            $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.tsv', $faqs_tsv);
         }
     }
 
@@ -4593,10 +4640,12 @@ trait MigrationTrait
             }
 
             // リンクリストの設定
-            Storage::put($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc2_linklist->linklist_id) . '.ini', $linklists_ini);
+            //Storage::put($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc2_linklist->linklist_id) . '.ini', $linklists_ini);
+            $this->storagePut($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc2_linklist->linklist_id) . '.ini', $linklists_ini);
 
             // リンクリストの記事
-            Storage::put($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc2_linklist->linklist_id) . '.tsv', $linklists_tsv);
+            //Storage::put($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc2_linklist->linklist_id) . '.tsv', $linklists_tsv);
+            $this->storagePut($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc2_linklist->linklist_id) . '.tsv', $linklists_tsv);
         }
     }
 
@@ -4880,10 +4929,12 @@ trait MigrationTrait
 
             // データ行の書き出し
             //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
-            Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
+            //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
+            $this->storageAppend($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
 
             // detabase の設定
-            Storage::put($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.ini', $multidatabase_ini);
+            //Storage::put($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.ini', $multidatabase_ini);
+            $this->storagePut($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.ini', $multidatabase_ini);
         }
     }
 
@@ -5019,7 +5070,8 @@ trait MigrationTrait
             }
 
             // フォーム の設定
-            Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
+            //Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
+            $this->storagePut($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
 
             // 登録データもエクスポートする場合
             if ($this->hasMigrationConfig('forms', 'nc2_export_registration_data', true)) {
@@ -5046,7 +5098,8 @@ trait MigrationTrait
                     $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
                 }
                 // フォーム の登録データ
-                Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
+                //Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
+                $this->storagePut($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
             }
         }
     }
@@ -5130,7 +5183,8 @@ trait MigrationTrait
             $whatsnew_ini .= "module_name = \"whatsnew\"\n";
 
             // 新着情報の設定を出力
-            Storage::put($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
+            //Storage::put($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
+            $this->storagePut($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
         }
     }
 
@@ -5209,7 +5263,8 @@ trait MigrationTrait
         }
 
         // Userデータの出力
-        Storage::put($this->getImportPath('permalinks/permalinks.ini'), $permalinks_ini);
+        //Storage::put($this->getImportPath('permalinks/permalinks.ini'), $permalinks_ini);
+        $this->storagePut($this->getImportPath('permalinks/permalinks.ini'), $permalinks_ini);
     }
 
     /**
@@ -5333,9 +5388,11 @@ trait MigrationTrait
             // フレーム設定ファイルの出力
             // メニューの場合は、移行完了したページデータを参照してインポートしたいので、insert 側に出力する。
             if ($nc2_block->getModuleName() == 'menu') {
-                Storage::put($this->getImportPath('pages/', '@insert/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+                //Storage::put($this->getImportPath('pages/', '@insert/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+                $this->storagePut($this->getImportPath('pages/', '@insert/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
             } else {
-                Storage::put($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+                //Storage::put($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+                $this->storagePut($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
             }
 
             //echo $nc2_block->block_name . "\n";
@@ -5533,7 +5590,8 @@ trait MigrationTrait
         }
         $frame_ini .= "default_sort_flag = \"" . $default_sort_flag . "\"\n";
         $frame_ini .= "view_count = "          . $nc2_multidatabase_block->visible_item . "\n";
-        Storage::append($save_folder . "/"     . $ini_filename, $frame_ini);
+        //Storage::append($save_folder . "/"     . $ini_filename, $frame_ini);
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
     /**
@@ -5682,14 +5740,16 @@ trait MigrationTrait
 
         // HTML content の保存
         if ($save_folder) {
-            Storage::put($save_folder . "/" . $content_filename, $content);
+            //Storage::put($save_folder . "/" . $content_filename, $content);
+            $this->storagePut($save_folder . "/" . $content_filename, $content);
         }
 
         // フレーム設定ファイルの追記
         if ($ini_filename) {
             $contents_ini = "[contents]\n";
             $contents_ini .= "contents_file = \"" . $content_filename . "\"\n";
-            Storage::append($save_folder . "/" . $ini_filename, $contents_ini);
+            //Storage::append($save_folder . "/" . $ini_filename, $contents_ini);
+            $this->storageAppend($save_folder . "/" . $ini_filename, $contents_ini);
         }
 
         return $content;
@@ -5715,7 +5775,8 @@ trait MigrationTrait
 
         // 記事ごとにini ファイルが必要な場合のみ出力する。
         if ($ini_filename) {
-            Storage::append($save_folder . "/" . $ini_filename, $ini_text);
+            //Storage::append($save_folder . "/" . $ini_filename, $ini_text);
+            $this->storageAppend($save_folder . "/" . $ini_filename, $ini_text);
         }
 
 
