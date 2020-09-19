@@ -15,7 +15,7 @@
         <div class="row">
             <p class="text-right col-12">
                 {{-- 新規登録ボタン --}}
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/learningtasks/create/{{$page->id}}/{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
+                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/learningtasks/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
         </div>
     @else
@@ -129,7 +129,7 @@
         @foreach($categories_and_post as $post)  {{-- 課題のループ --}}
 
             <tr>
-                <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
+                <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
                  @if (Auth::check() && $learningtask->useReport())
                     <td>{{$tool->getReportStatus($post->id)}}</td>
                 @endif

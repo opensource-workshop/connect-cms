@@ -38,7 +38,7 @@
 @else
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     {{-- create_flag がtrue の場合、新規作成するためにlearningtask_id を空にする --}}
     @if ($create_flag)
@@ -386,7 +386,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/learningtasks/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/learningtasks/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

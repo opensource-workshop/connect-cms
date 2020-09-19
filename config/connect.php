@@ -27,6 +27,16 @@ return [
         ]]
     ),
 
+    // 特別なPath定義(マイページ画面)
+    'CC_SPECIAL_PATH_MYPAGE' => array_merge(
+        ['mypage' => [
+            'plugin' => 'App\Plugins\Mypage\IndexMypage\IndexMypage',
+            'method' => 'index',
+            'page_id' => null,
+            'flame_id' => null,
+        ]]
+    ),
+
     // 特別なPath定義(一般画面)
     'CC_SPECIAL_PATH' => array_merge(
         json_decode(env('CC_SPECIAL_PATH', '{}'), true)

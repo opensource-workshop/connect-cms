@@ -45,7 +45,7 @@
 <script type="text/javascript">
     function form_delete(id) {
         if (confirm('カテゴリを削除します。\nよろしいですか？')) {
-            form_delete_category.action = "{{url('/')}}/plugin/learningtasks/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id;
+            form_delete_category.action = "{{url('/')}}/plugin/learningtasks/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame->id}}";
             form_delete_category.submit();
         }
     }

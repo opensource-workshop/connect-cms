@@ -110,7 +110,7 @@ use App\Models\User\Databases\DatabasesColumns;
 
                 <div class="text-center">
                     {{-- 削除ボタン --}}
-                    <form action="{{url('/')}}/plugin/databases/delete/{{$page->id}}/{{$frame_id}}/{{$id}}" method="POST">
+                    <form action="{{url('/')}}/plugin/databases/delete/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame->id}}" method="POST">
                         {{csrf_field()}}
                         <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                     </form>

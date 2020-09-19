@@ -823,6 +823,7 @@ WHERE status = 0
         $blogs_post->status = 1;
         $blogs_post->blogs_id   = $request->blogs_id;
         $blogs_post->post_title = $request->post_title;
+        $blogs_post->categories_id = $request->categories_id;
         $blogs_post->important  = $request->important;
         $blogs_post->posted_at  = $request->posted_at . ':00';
         $blogs_post->post_text  = $request->post_text;

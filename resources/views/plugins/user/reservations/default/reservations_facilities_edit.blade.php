@@ -24,21 +24,21 @@
 <script type="text/javascript">
     {{-- 施設追加のsubmit JavaScript --}}
     function submit_add_facility(btn) {
-        form_facilities.action = "/plugin/reservations/addFacility/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_facilities.action = "{{url('/')}}/plugin/reservations/addFacility/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         btn.disabled = true;
         form_facilities.submit();
     }
 
     {{-- 施設更新のsubmit JavaScript --}}
     function submit_update_facility(facility_id) {
-        form_facilities.action = "/plugin/reservations/updateFacility/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_facilities.action = "{{url('/')}}/plugin/reservations/updateFacility/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_facilities.facility_id.value = facility_id;
         form_facilities.submit();
     }
 
     {{-- 表示順操作のsubmit JavaScript --}}
     function submit_display_sequence(facility_id, display_sequence, display_sequence_operation) {
-        form_facilities.action = "/plugin/reservations/updateFacilitySequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_facilities.action = "{{url('/')}}/plugin/reservations/updateFacilitySequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_facilities.facility_id.value = facility_id;
         form_facilities.display_sequence.value = display_sequence;
         form_facilities.display_sequence_operation.value = display_sequence_operation;

@@ -17,9 +17,8 @@ class DatabasesInputs extends Model
     // 更新する項目の定義
     protected $fillable = [
         'databases_id',
-        'databases_inputs_id',
-        'databases_columns_id',
-        'value',
+        'status',
+        'display_sequence',
         'posted_at',
         'created_at',
         'updated_at'
