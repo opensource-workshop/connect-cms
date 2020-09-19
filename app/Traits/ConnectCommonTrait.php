@@ -2,9 +2,9 @@
 
 namespace App\Traits;
 
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 
 use Session;
@@ -376,11 +376,15 @@ trait ConnectCommonTrait
         if (array_key_exists($path, config('connect.CC_SPECIAL_PATH_MANAGE'))) {
             return 2;
         }
+        // マイページ画面の特別なパス
+        if (array_key_exists($path, config('connect.CC_SPECIAL_PATH_MYPAGE'))) {
+            return 3;
+        }
         return false;
     }
 
     /**
-     *  管理プラグインのインスタンス生成
+     * 管理プラグインのインスタンス生成
      *
      * @param String $plugin_name
      * @return obj 生成したインスタンス
@@ -405,7 +409,32 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  管理プラグインの呼び出し
+     * マイページ用プラグインのインスタンス生成
+     *
+     * @param String $plugin_name
+     * @return obj 生成したインスタンス
+     */
+    private static function createMypageInstance($plugin_name)
+    {
+        // プラグイン毎に動的にnew するので、use せずにここでrequire する。
+        $file_path = base_path() . "/app/Plugins/Mypage/" . ucfirst($plugin_name) . "Mypage/" . ucfirst($plugin_name) . "Mypage.php";
+
+        // ファイルの存在確認
+        if (!file_exists($file_path)) {
+            abort(404);
+        }
+
+        // 指定されたプラグインファイルの読み込み
+        require $file_path;
+
+        /// インスタンスを生成して返す。
+        $class_name = "app\Plugins\Mypage\\" . ucfirst($plugin_name) . "Mypage\\" . ucfirst($plugin_name) . "Mypage";
+        $plugin_instance = new $class_name;
+        return $plugin_instance;
+    }
+
+    /**
+     * 管理プラグインの呼び出し
      *
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
@@ -453,6 +482,31 @@ trait ConnectCommonTrait
     }
 
     /**
+     * マイページ用プラグインの呼び出し
+     *
+     * @param String $plugin_name
+     * @return プラグインからの戻り値(HTMLなど)
+     */
+    private function invokeMypage($request, $plugin_name, $action = 'index', $id = null, $sub_id = null)
+    {
+        // ログインしているユーザー情報を取得
+        $user = Auth::user();
+
+        // 権限エラー
+        if (empty($user)) {
+            abort(403, 'ログインが必要です。');
+        }
+
+        // インスタンス生成
+        $plugin_instance = self::createMypageInstance($plugin_name);
+
+        // 指定されたアクションを呼ぶ。
+        // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
+        // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
+        return $plugin_instance->$action($request, $id, $sub_id);
+    }
+
+    /**
      *  指定したパスの呼び出し
      */
     public function callSpecialPath($path, $request)
@@ -460,8 +514,10 @@ trait ConnectCommonTrait
         // インスタンスを生成して呼び出す。
         if ($this->isSpecialPath($path) === 1) {
             $cc_special_path = config('connect.CC_SPECIAL_PATH');
-        } else {
+        } elseif ($this->isSpecialPath($path) === 2) {
             $cc_special_path = config('connect.CC_SPECIAL_PATH_MANAGE');
+        } elseif ($this->isSpecialPath($path) === 3) {
+            $cc_special_path = config('connect.CC_SPECIAL_PATH_MYPAGE');
         }
 
         $file_path = base_path() . '/' . $cc_special_path[$path]['plugin'] . '.php';
@@ -488,6 +544,8 @@ trait ConnectCommonTrait
             return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['frame_id']);
         } elseif ($this->isSpecialPath($path) === 2) {
             return $this->invokeManage($request, $cc_special_path[$path]['method']);
+        } elseif ($this->isSpecialPath($path) === 3) {
+            return $this->invokeMypage($request, $cc_special_path[$path]['method']);
         }
         return;
     }
