@@ -220,7 +220,7 @@ class ConnectController extends Controller
                         $frame = Frame::find($frame_mapping->destination_key);
                         if (!empty($frame)) {
                             // 見つけた詳細にリダイレクトする。
-                            Redirect::to('/plugin/' . $permalink->plugin_name . '/' . $permalink->action . '/' . $frame->page_id . '/' . $frame->id. '/' . $permalink->unique_id)->send();
+                            Redirect::to('/plugin/' . $permalink->plugin_name . '/' . $permalink->action . '/' . $frame->page_id . '/' . $frame->id. '/' . $permalink->unique_id . "#frame-" . $frame->id)->send();
                         }
                     }
                 }
