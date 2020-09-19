@@ -58,10 +58,10 @@ Route::get('/manage/{plugin_name}/{action?}/{id?}/{sub_id?}', 'Core\ClassControl
 Route::post('/manage/{plugin_name}/{action?}/{id?}', 'Core\ClassController@invokePostManage')->name('post_manage');
 
 // マイページ画面getアクション：マイページ画面用のクラスをURL をもとに、MypageController で呼び出す。
-Route::get('/mypage/{plugin_name}/{action?}/{id?}/{sub_id?}', 'Core\MypageController@invokeGetMypage')->name('get_mypage');
+Route::get('/mypage/{plugin_name?}/{action?}/{id?}/{sub_id?}', 'Core\MypageController@invokeGetMypage')->name('get_mypage');
 
 // マイページ画面postアクション
-Route::post('/mypage/{plugin_name}/{action?}/{id?}', 'Core\MypageController@invokePostMypage')->name('post_mypage');
+Route::post('/mypage/{plugin_name?}/{action?}/{id?}', 'Core\MypageController@invokePostMypage')->name('post_mypage');
 
 // 一般プラグインの表示系アクション
 Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost')->name('get_plugin');

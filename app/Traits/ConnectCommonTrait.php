@@ -489,6 +489,11 @@ trait ConnectCommonTrait
      */
     private function invokeMypage($request, $plugin_name, $action = 'index', $id = null, $sub_id = null)
     {
+        // $action = 'index' が効かないため、改めてチェック
+        if (empty($action)) {
+            $action = 'index';
+        }
+
         // ログインしているユーザー情報を取得
         $user = Auth::user();
 
