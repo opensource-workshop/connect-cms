@@ -16,5 +16,5 @@ class LinklistFrame extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['linklist_id', 'frame_id', 'view_count'];
+    protected $fillable = ['linklist_id', 'frame_id', 'view_count', 'type'];
 }

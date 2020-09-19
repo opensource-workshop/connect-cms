@@ -34,9 +34,31 @@
 
 {{-- リンク表示 --}}
 @if (isset($posts))
-    <ul>
+    @if (!$plugin_frame->type)
+    <dl>
+    @elseif ($plugin_frame->type == 1)
+    <ul type="disc">
+    @elseif ($plugin_frame->type == 2)
+    <ul type="circle">
+    @elseif ($plugin_frame->type == 3)
+    <ul type="square">
+    @elseif ($plugin_frame->type == 4)
+    <ol type="1">
+    @elseif ($plugin_frame->type == 5)
+    <ol type="a">
+    @elseif ($plugin_frame->type == 6)
+    <ol type="A">
+    @elseif ($plugin_frame->type == 7)
+    <ol type="i">
+    @elseif ($plugin_frame->type == 8)
+    <ol type="I">
+    @endif
     @foreach($posts as $post)
+        @if (!$plugin_frame->type)
+        <dd>
+        @else
         <li>
+        @endif
             @can('posts.update',[[null, 'linklists', $buckets]])
                 <a href="{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}"><i class="far fa-edit"></a></i>
             @endcan
@@ -54,9 +76,20 @@
                   {!!nl2br(e($post->description))!!}
                 </div>
             @endif
+        @if (!$plugin_frame->type)
+        </dd>
+        @else
         </li>
+        @endif
     @endforeach
     </ul>
+    @if (!$plugin_frame->type)
+    </dl>
+    @elseif ($plugin_frame->type == 1 || $plugin_frame->type == 2 || $plugin_frame->type == 3)
+    </ul>
+    @elseif ($plugin_frame->type == 4 || $plugin_frame->type == 5 || $plugin_frame->type == 6 || $plugin_frame->type == 7 || $plugin_frame->type == 8)
+    </ol>
+    @endif
 @endif
 
 @endsection

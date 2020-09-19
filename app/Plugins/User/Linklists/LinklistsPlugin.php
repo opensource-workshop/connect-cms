@@ -211,7 +211,8 @@ class LinklistsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-            'posts' => $posts,
+            'posts'        => $posts,
+            'plugin_frame' => $plugin_frame,
         ]);
     }
 
@@ -349,9 +350,11 @@ class LinklistsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'view_count' => ['nullable', 'numeric'],
+            'type'       => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'view_count' => '表示件数',
+            'type'       => '表示形式',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -362,7 +365,8 @@ class LinklistsPlugin extends UserPluginBase
         // フレームごとの表示設定の更新
         $linklist_frame = LinklistFrame::updateOrCreate(
             ['linklist_id' => $linklist_id, 'frame_id' => $frame_id],
-            ['view_count'  => $request->view_count],
+            ['view_count'  => $request->view_count,
+             'type'        => $request->type],
         );
 
         return;
