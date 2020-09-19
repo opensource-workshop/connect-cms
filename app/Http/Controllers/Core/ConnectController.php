@@ -162,6 +162,12 @@ class ConnectController extends Controller
             return;
         }
 
+        // 特別なパス（マイページ画面の最初など）は404 扱いにしない。
+        if (array_key_exists($request->path(), config('connect.CC_SPECIAL_PATH_MYPAGE'))) {
+            // 対象外の処理なので、戻る
+            return;
+        }
+
         // 特別なパス（特殊な一般画面など）は404 扱いにしない。
         if (array_key_exists($request->path(), config('connect.CC_SPECIAL_PATH'))) {
             // 対象外の処理なので、戻る
