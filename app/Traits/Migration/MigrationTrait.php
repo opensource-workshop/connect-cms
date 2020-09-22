@@ -3896,10 +3896,41 @@ trait MigrationTrait
                 // ブロック処理
                 $this->nc2Block($nc2_sort_page, $new_page_index);
             }
+
+            // ページ入れ替え
+            $this->changePageSequence();
         }
 
         // ページ、ブロックの関係をCSV 形式で出力。ファイルにしたい場合はコマンドラインでファイルに出力
         // echo $this->frame_tree;
+    }
+
+    /**
+     *  ページ入れ替え
+     */
+    private function changePageSequence()
+    {
+        // パラメータの取得とチェック
+        $nc2_export_change_pages = $this->getMigrationConfig('pages', 'nc2_export_change_page');
+        if (empty($nc2_export_change_pages)) {
+            return;
+        }
+
+        // パラメータのループと入れ替え処理
+        foreach ($nc2_export_change_pages as $source_page_id => $destination_page_id) {
+            // マッピングテーブルを見て、移行後のフォルダ名を取得
+            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $source_page_id)->first();
+            $destination_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $destination_page_id)->first();
+
+            if (empty($source_page) || empty($destination_page)) {
+                continue;
+            }
+
+            // 例：0005 を0007 に入れ替え。0005 -> 0005_, 0007 -> 0005, 0005_ -> 0007
+            Storage::move($this->getImportPath('pages/' . $source_page->destination_key), $this->getImportPath('pages/' . $source_page->destination_key . '_'));
+            Storage::move($this->getImportPath('pages/' . $destination_page->destination_key), $this->getImportPath('pages/' . $source_page->destination_key));
+            Storage::move($this->getImportPath('pages/' . $source_page->destination_key . '_'), $this->getImportPath('pages/' . $destination_page->destination_key));
+        }
     }
 
     /**
