@@ -3927,10 +3927,10 @@ trait MigrationTrait
     /**
      *  ファイル出力
      */
-    private function exportStrReplace($value)
+    private function exportStrReplace($value, $target = 'basic')
     {
         // 文字列変換指定を反映する。
-        $nc2_export_str_replaces = $this->getMigrationConfig('basic', 'nc2_export_str_replace');
+        $nc2_export_str_replaces = $this->getMigrationConfig($target, 'nc2_export_str_replace');
         if (!empty($nc2_export_str_replaces)) {
             foreach ($nc2_export_str_replaces as $search => $replace) {
                 $value = str_replace($search, $replace, $value);
@@ -4357,6 +4357,7 @@ trait MigrationTrait
 
             // blog の記事
             //Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
+            $journals_tsv = $this->exportStrReplace($journals_tsv, 'blogs');
             $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc2_journal->journal_id) . '.tsv', $journals_tsv);
         }
     }
@@ -4457,6 +4458,7 @@ trait MigrationTrait
 
             // blog の記事
             //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
+            $journals_tsv = $this->exportStrReplace($journals_tsv, 'bbses');
             $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
         }
     }
@@ -4559,6 +4561,7 @@ trait MigrationTrait
 
             // FAQ の記事
             //Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.tsv', $faqs_tsv);
+            $faqs_tsv = $this->exportStrReplace($faqs_tsv, 'faqs');
             $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc2_faq->faq_id) . '.tsv', $faqs_tsv);
         }
     }
@@ -4930,6 +4933,7 @@ trait MigrationTrait
             // データ行の書き出し
             //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
             //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
+            $tsv = $this->exportStrReplace($tsv, 'databases');
             $this->storageAppend($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
 
             // detabase の設定
