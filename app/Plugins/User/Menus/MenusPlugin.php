@@ -72,7 +72,7 @@ class MenusPlugin extends UserPluginBase
         //Log::debug(json_encode( $multi_language_root_page, JSON_UNESCAPED_UNICODE));
         //Log::debug(json_encode( $pages, JSON_UNESCAPED_UNICODE));
 
-        // パンくずリスト用に自分と上位階層のページを取得
+        // パンくずリスト用及び上位階層のカレント表現用に自分と上位階層のページを取得
         $ancestors = Page::ancestorsAndSelf($page_id);
 
         // パンくずリスト用ページに対する権限
