@@ -24,7 +24,7 @@
 
                     <li class="nav-item dropdown">
                     {{-- カレント --}}
-                    @if ($page_obj->id == $page_id)
+                    @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                     @else
                         <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
@@ -47,7 +47,7 @@
                     </li>
                 @else
                     <li class="nav-item">
-                    @if ($page_obj->id == $page_id)
+                    @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
                         <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
@@ -60,14 +60,14 @@
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
                     <li class="nav-item dropdown">
-                    @if ($page_obj->id == $page_id)
+                    @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link dropdown-toggle active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
                         <a class="nav-link dropdown-toggle" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                 @else
                     <li class="nav-item">
-                    @if ($page_obj->id == $page_id)
+                    @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
                         <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>

@@ -8,7 +8,11 @@
 --}}
 
 @if ($children->isView(Auth::user(), false, true, $page_roles))
+    @if ($children->id == $page_id)
+    <a class="dropdown-item active" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    @else
     <a class="dropdown-item" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
+    @endif
 
         {{-- 各ページの深さをもとにインデントの表現 --}}
         @for ($i = 0; $i < $children->depth; $i++)
