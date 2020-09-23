@@ -75,6 +75,13 @@
     @endif
     <div class="list-group-item text-secondary bg-light">データ管理系</div>
     @if (Auth::user()->can('admin_site'))
+        @if (isset($plugin_name) && $plugin_name == 'uploadfile')
+            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item active">アップロードファイル管理</a>
+        @else
+            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item">アップロードファイル管理</a>
+        @endif
+    @endif
+    @if (Auth::user()->can('admin_site'))
         @if (isset($plugin_name) && $plugin_name == 'theme')
             <a href="{{url('/')}}/manage/theme" class="list-group-item active">テーマ管理</a>
         @else
