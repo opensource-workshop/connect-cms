@@ -14,50 +14,48 @@
 @endif
     {{ csrf_field() }}
 
-    <div class="form-group row{{ $errors->has('name') ? ' has-error' : '' }}">
-        <label for="name" class="col-md-4 col-form-label text-md-right">ユーザ名</label>
+    <div class="form-group row">
+        <label for="name" class="col-md-4 col-form-label text-md-right">ユーザ名 <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
             <input id="name" type="text" class="form-control" name="name" value="{{ old('name', $user->name) }}" placeholder="表示されるユーザ名を入力します。" required autofocus>
 
             @if ($errors->has('name'))
-                <span class="help-block">
-                    <strong>{{ $errors->first('name') }}</strong>
-                </span>
+                <div class="text-danger">{{ $errors->first('name') }}</div>
             @endif
         </div>
     </div>
 
-    <div class="form-group row{{ $errors->has('userid') ? ' has-error' : '' }}">
-        <label for="userid" class="col-md-4 col-form-label text-md-right">ログインID</label>
+    <div class="form-group row">
+        <label for="userid" class="col-md-4 col-form-label text-md-right">ログインID <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
             <input id="userid" type="text" class="form-control" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="ログインするときのIDを入力します。" required autofocus>
 
             @if ($errors->has('userid'))
-                <span class="help-block">
-                    <strong>{{ $errors->first('userid') }}</strong>
-                </span>
+                <div class="text-danger">{{ $errors->first('userid') }}</div>
             @endif
         </div>
     </div>
 
-    <div class="form-group row{{ $errors->has('email') ? ' has-error' : '' }}">
+    <div class="form-group row">
         <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
 
         <div class="col-md-8">
             <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
 
             @if ($errors->has('email'))
-                <span class="help-block">
-                    <strong>{{ $errors->first('email') }}</strong>
-                </span>
+                <div class="text-danger">{{ $errors->first('email') }}</div>
             @endif
         </div>
     </div>
 
-    <div class="form-group row{{ $errors->has('password') ? ' has-error' : '' }}">
-        <label for="password" class="col-md-4 col-form-label text-md-right">パスワード</label>
+    <div class="form-group row">
+        @if (isset($function) && $function == 'edit')
+            <label for="password" class="col-md-4 col-form-label text-md-right">パスワード</label>
+        @else
+            <label for="password" class="col-md-4 col-form-label text-md-right">パスワード <label class="badge badge-danger">必須</label></label>
+        @endif
 
         <div class="col-md-8">
             @if (isset($function) && $function == 'edit')
@@ -67,19 +65,19 @@
             @endif
 
             @if ($errors->has('password'))
-                <span class="help-block" style="margin-bottom: 0;">
-                    @foreach ($errors->get('password') as $error)
-                        <strong>{{$error}}</strong><br />
-                    @endforeach
-
-{{--                    <strong>{{ $errors->get('password') }}</strong> --}}
-                </span>
+                @foreach ($errors->get('password') as $error)
+                    <div class="text-danger">{{$error}}</div>
+                @endforeach
             @endif
         </div>
     </div>
 
     <div class="form-group row">
-        <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用パスワード</label>
+        @if (isset($function) && $function == 'edit')
+            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用パスワード</label>
+        @else
+            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用パスワード <label class="badge badge-danger">必須</label></label>
+        @endif
 
         <div class="col-md-8">
             @if (isset($function) && $function == 'edit')

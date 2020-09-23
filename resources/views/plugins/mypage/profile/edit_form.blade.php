@@ -2,9 +2,7 @@
  * copy by resources\views\auth\registe_form.blade.php
 --}}
 
-{{--
 @include('common.errors_form_line')
---}}
 
 @if ($errors->has('undelete'))
     <div class="alert alert-danger">
