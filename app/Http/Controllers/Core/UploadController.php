@@ -55,6 +55,11 @@ class UploadController extends ConnectController
             return response()->download(storage_path(config('connect.no_image_path')));
         }
 
+        // ファイルの実体がない場合は空を返す。
+        if (!Storage::exists($this->getDirectory($id) . '/' . $id . '.' . $uploads->extension)) {
+            return;
+        }
+
         // 一時保存ファイルの場合は所有者を確認して、所有者ならOK
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
         if ($uploads->temporary_flag == 1) {
@@ -309,6 +314,18 @@ EOD;
         if ($request->hasFile('file')) {
             if ($request->file('file')->isValid()) {
                 // uploads テーブルに情報追加、ファイルのid を取得する
+                $upload = Uploads::create([
+                   'client_original_name' => $request->file('file')->getClientOriginalName(),
+                   'mimetype'             => $request->file('file')->getClientMimeType(),
+                   'extension'            => $request->file('file')->getClientOriginalExtension(),
+                   'size'                 => $request->file('file')->getClientSize(),
+                   'page_id'              => $request->page_id,
+                ]);
+
+                $directory = $this->getDirectory($upload->id);
+                $upload_path = $request->file('file')->storeAs($directory, $upload->id . '.' . $request->file('file')->getClientOriginalExtension());
+                echo json_encode(array('location' => url('/') . '/file/' . $upload->id));
+                /*
                 $id = DB::table('uploads')->insertGetId([
                    'client_original_name' => $request->file('file')->getClientOriginalName(),
                    'mimetype'             => $request->file('file')->getClientMimeType(),
@@ -320,6 +337,7 @@ EOD;
                 $directory = $this->getDirectory($id);
                 $upload_path = $request->file('file')->storeAs($directory, $id . '.' . $request->file('file')->getClientOriginalExtension());
                 echo json_encode(array('location' => url('/') . '/file/' . $id));
+                */
             }
             return;
         }
@@ -350,7 +368,7 @@ EOD;
             if ($request->hasFile($input_name)) {
                 if ($request->file($input_name)->isValid()) {
                     // uploads テーブルに情報追加、ファイルのid を取得する
-                    $id = DB::table('uploads')->insertGetId([
+                    $upload = Uploads::create([
                        'client_original_name' => $request->file($input_name)->getClientOriginalName(),
                        'mimetype'             => $request->file($input_name)->getClientMimeType(),
                        'extension'            => $request->file($input_name)->getClientOriginalExtension(),
@@ -358,9 +376,9 @@ EOD;
                        'page_id'              => $request->page_id,
                     ]);
 
-                    $directory = $this->getDirectory($id);
+                    $directory = $this->getDirectory($upload->id);
                     //$upload_paths[$id] = $request->file($input_name)->storeAs($directory, $id . '.' . $request->file($input_name)->getClientOriginalExtension());
-                    $upload_path = $request->file($input_name)->storeAs($directory, $id . '.' . $request->file($input_name)->getClientOriginalExtension());
+                    $upload_path = $request->file($input_name)->storeAs($directory, $upload->id . '.' . $request->file($input_name)->getClientOriginalExtension());
 
                     // PDFの場合は、別ウィンドウで表示
                     $target = '';
@@ -370,9 +388,9 @@ EOD;
 
                     // ファイルが1つなら<a>のみ、複数あれば<p><a>とする。
                     if ($file_count > 1) {
-                        $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
+                        $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $upload->id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
                     } else {
-                        $msg_array['link_texts'][] = '<a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a>';
+                        $msg_array['link_texts'][] = '<a href="' . url('/') . '/file/' . $upload->id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a>';
                     }
                 }
             }
