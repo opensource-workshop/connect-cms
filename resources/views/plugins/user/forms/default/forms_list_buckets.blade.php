@@ -58,6 +58,17 @@
             form_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
             form_download.submit();
         }
+
+        /**
+         * ツールチップ
+         */
+        $(function () {
+            // 有効化
+            $('[data-toggle="tooltip"]').tooltip()
+            // 常時表示 ※表示の判定は項目側で実施
+            $('[id^=detail-button-tip]').tooltip('show');
+            $('#frame-col-tip').tooltip('show');
+        })
     </script>
 
     <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
@@ -68,7 +79,8 @@
                 <tr>
                     <th></th>
                     <th>{{$frame->plugin_name_full}}名</th>
-                    <th>件数</th>
+                    <th>仮<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="仮登録数">...</a></th>
+                    <th>本<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="本登録数">...</a></th>
                     <th>データ保存</th>
                     <th>詳細</th>
                     <th>作成日</th>
@@ -79,7 +91,8 @@
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
                     <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
                     <td nowrap>{{$plugin->plugin_bucket_name}}</td>
-                    <td nowrap class="text-right">{{$plugin->entry_count}}</td>
+                    <td nowrap class="text-right">{{$plugin->tmp_entry_count}}</td>
+                    <td nowrap class="text-right">{{$plugin->active_entry_count}}</td>
                     <td nowrap>@if ($plugin->data_save_flag) 保存する @else 保存しない @endif</td>
                     <td nowrap>
                         <button class="btn btn-success btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">

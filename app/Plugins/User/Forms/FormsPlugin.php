@@ -256,10 +256,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
 
-            $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
             // 登録制限数オーバーか
-            if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
-                $setting_error_messages[] = '制限数に達したため受付けを終了しました。';
+            if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
+                $setting_error_messages[] = '制限数に達したため登録を終了しました。';
             }
         } else {
             // フレームに紐づくフォーム親データがない場合
@@ -287,8 +286,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     /**
      * 登録制限数オーバーか
      */
-    public function isOverEntryLimit($forms_inputs_count, $entry_limit)
+    public function isOverEntryLimit($form_id, $entry_limit)
     {
+        // カウントは本登録でする
+        $forms_inputs_count = FormsInputs::where('forms_id', $form_id)
+                                            ->where('status', \StatusType::active)
+                                            ->count();
+
         // 登録制限数 が 空か 0 なら登録制限しない
         if ($entry_limit != null && $entry_limit !== 0) {
             if ($forms_inputs_count >= $entry_limit) {
@@ -443,9 +447,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
-        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
         // 登録制限数オーバーか
-        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
             return $this->index($request, $page_id, $frame_id);
         }
@@ -469,9 +472,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
-        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
         // 登録制限数オーバーか
-        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
             return $this->index($request, $page_id, $frame_id);
         }
@@ -621,9 +623,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
-        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
         // 登録制限数オーバーか
-        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
             return $this->index($request, $page_id, $frame_id);
         }
@@ -664,9 +665,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
-        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
         // 登録制限数オーバーか
-        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
             return $this->index($request, $page_id, $frame_id);
         }
@@ -809,9 +809,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             $plugin_name . '.data_save_flag',
                             $plugin_name . '.created_at',
                             $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                            DB::raw('count(forms_inputs.forms_id) as entry_count')
+                            // 本登録数
+                            DB::raw('count(forms_inputs.forms_id) as active_entry_count')
                         )
-                        ->leftJoin('forms_inputs', $plugin_name . '.id', '=', 'forms_inputs.forms_id')
+                        ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
+                            $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
+                                        ->where('forms_inputs.status', \StatusType::active);
+                        })
                         ->groupBy(
                             $plugin_name . '.id',
                             $plugin_name . '.bucket_id',
@@ -823,13 +827,37 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         ->orderBy($plugin_name . '.created_at', 'desc')
                         ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
+        // 仮登録件数
+        $forms_tmp_entry = Forms::
+            select(
+                'forms.id',
+                DB::raw('count(forms_inputs.forms_id) as tmp_entry_count')
+            )
+            ->whereIn('forms.id', $plugins->pluck('id'))
+            ->leftJoin('forms_inputs', function ($leftJoin) {
+                $leftJoin->on('forms.id', '=', 'forms_inputs.forms_id')
+                            ->where('forms_inputs.status', \StatusType::temporary);
+            })
+            ->groupBy(
+                'forms.id',
+                'forms_inputs.forms_id'
+            )
+            ->get()
+            // keyをidにした結果をセット
+            ->mapWithKeys(function ($item) {
+                return [$item['id'] => $item];
+            });
+
+        foreach ($plugins as $plugin) {
+            // $plugin->idから $forms_tmp_entry を取得しているため、配列に必ずある想定
+            $plugin->tmp_entry_count = $forms_tmp_entry[$plugin->id]->tmp_entry_count;
+        }
+
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_datalist', [
+        return $this->view('forms_list_buckets', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
-            ]
-        );
+        ]);
     }
 
     /**
