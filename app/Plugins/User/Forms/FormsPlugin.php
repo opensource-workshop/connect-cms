@@ -1171,8 +1171,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // フォームのID。まだフォームがない場合は0
         $forms_id = 0;
+        $use_temporary_regist_mail_flag = null;
         if (!empty($form_db)) {
             $forms_id = $form_db->id;
+            $use_temporary_regist_mail_flag = $form_db->use_temporary_regist_mail_flag;
         }
 
         // 項目データ取得
@@ -1210,6 +1212,21 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             ->orderby('forms_columns.display_sequence')
             ->get();
 
+        // 仮登録設定時のワーニングメッセージ
+        $warning_message = null;
+        if ($use_temporary_regist_mail_flag) {
+            $is_exist = false;
+            foreach ($columns as $column) {
+                if ($column->required && $column->column_type == \FormColumnType::mail) {
+                    $is_exist = true;
+                    break;
+                }
+            }
+            if (! $is_exist) {
+                $warning_message = "仮登録メールが設定されています。必須のメールアドレス型の項目を設定してください。";
+            }
+        }
+
         // 編集画面テンプレートを呼び出す。
         return $this->view(
             'forms_edit',
@@ -1217,6 +1234,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_id'   => $forms_id,
                 'columns'    => $columns,
                 'message'    => $message,
+                'warning_message' => $warning_message,
                 'errors'     => $errors,
             ]
         );
