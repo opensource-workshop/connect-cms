@@ -50,6 +50,9 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["savePageError"]    = array('admin_site');
         $role_ckeck_table["analytics"]        = array('admin_site');
         $role_ckeck_table["saveAnalytics"]    = array('admin_site');
+        $role_ckeck_table["favicon"]          = array('admin_site');
+        $role_ckeck_table["saveFavicon"]      = array('admin_site');
+        $role_ckeck_table["deleteFavicon"]    = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -599,7 +602,7 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
-     *  ページエラー設定　更新
+     *  Analytics 設定　更新
      */
     public function saveAnalytics($request, $page_id = null, $errors = array())
     {
@@ -617,5 +620,107 @@ class SiteManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/site/analytics");
+    }
+
+    /**
+     *  Favicon 設定　表示画面
+     */
+    public function favicon($request)
+    {
+        // ファビコン設定を取得
+        $favicon = $this->getConfigs('favicon');
+
+        return view('plugins.manage.site.favicon', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "site",
+            "favicon"     => $favicon,
+        ]);
+    }
+
+    /**
+     *  Favicon 設定　更新
+     */
+    public function saveFavicon($request)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // ファイルがアップロードされた。
+        if ($request->hasFile('favicon')) {
+            // ファイルの基礎情報
+            $client_original_name = $request->file('favicon')->getClientOriginalName();
+            $mimetype             = $request->file('favicon')->getClientMimeType();
+            $extension            = $request->file('favicon')->getClientOriginalExtension();
+
+            // 拡張子チェック
+            if (mb_strtolower($extension) != 'ico') {
+                $validator = Validator::make($request->all(), []);
+                $validator->errors()->add('favicon_error', '.ico 以外はアップロードできません。');
+                return $this->favicon($request)->withErrors($validator);
+            }
+
+            // ファイルの保存
+            $filename = 'favicon.ico';
+            $request->file('favicon')->storeAs('tmp', $filename);
+
+            // ファイルパス
+            $src_file = storage_path() . '/app/tmp/' . $filename;
+            $dst_dir  = public_path() . '/uploads/favicon';
+            $dst_file = $dst_dir . '/' . $filename;
+
+            // ディレクトリの存在チェック
+            if (!File::isDirectory($dst_dir)) {
+                $result = File::makeDirectory($dst_dir);
+            }
+
+            // Favicon ディレクトリへファイルの移動
+            if (!rename($src_file, $dst_file)) {
+                die("Couldn't rename file");
+            }
+
+            // Favicon
+            $configs = Configs::updateOrCreate(
+                ['name'     => 'favicon'],
+                ['category' => 'favicon',
+                 'value'    => $filename]
+            );
+
+            session()->flash('save_favicon', 'Favicon を設定しました。');
+        }
+
+        // ファビコン管理画面に戻る
+        return redirect("/manage/site/favicon");
+    }
+
+    /**
+     *  Favicon 設定　削除
+     */
+    public function deleteFavicon($request)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // ファビコン設定を取得
+        $favicon = Configs::where('name', 'favicon')->first();
+        if (empty($favicon)) {
+            // ファビコン管理画面に戻る
+            return redirect("/manage/site/favicon");
+        }
+
+        // ファイル削除
+        $dst_file  = public_path() . '/uploads/favicon/favicon.ico';
+        File::delete($dst_file);
+
+        // データベース削除
+        $favicon->delete();
+
+        session()->flash('save_favicon', 'Favicon を削除しました。');
+
+        // ファビコン管理画面に戻る
+        return redirect("/manage/site/favicon");
     }
 }
