@@ -115,6 +115,10 @@
     @endif
     </script>
 
+    <!-- Favicon -->
+    @if (isset($configs_array) && isset($configs_array['favicon']))
+        <link href="{{url('/')}}/uploads/favicon/favicon.ico" rel="SHORTCUT ICON" />
+    @endif
 </head>
 @php
 // body任意クラスを抽出（カンマ設定時はランダムで１つ設定）
