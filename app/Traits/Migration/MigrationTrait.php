@@ -14,7 +14,10 @@ use Storage;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
+use App\Models\Common\Group;
+use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
@@ -71,6 +74,7 @@ use App\Models\Migration\Nc2\Nc2MultidatabaseBlock;
 use App\Models\Migration\Nc2\Nc2MultidatabaseMetadata;
 use App\Models\Migration\Nc2\Nc2MultidatabaseMetadataContent;
 use App\Models\Migration\Nc2\Nc2Page;
+use App\Models\Migration\Nc2\Nc2PageUserLink;
 use App\Models\Migration\Nc2\Nc2Registration;
 use App\Models\Migration\Nc2\Nc2RegistrationBlock;
 use App\Models\Migration\Nc2\Nc2RegistrationData;
@@ -285,6 +289,12 @@ trait MigrationTrait
             UsersRoles::where('users_id', '<>', $first_user->id)->delete();
             User::where('id', '<>', $first_user->id)->delete();
             MigrationMapping::where('target_source_table', 'users')->delete();
+        }
+
+        if ($target == 'groups' || $target == 'all') {
+            PageRole::truncate();
+            Group::truncate();
+            GroupUser::truncate();
         }
 
         if ($target == 'permalinks' || $target == 'all') {
@@ -744,7 +754,9 @@ trait MigrationTrait
                     // ページの作成
                     $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
                                           'permanent_link'    => $page_ini['page_base']['permanent_link'],
+                                          'layout'            => array_key_exists('layout', $page_ini['page_base']) ? $page_ini['page_base']['layout'] : null,
                                           'base_display_flag' => $page_ini['page_base']['base_display_flag'],
+                                          'membership_flag'   => empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'],
                                         ]);
 
                     // 親ページの指定があるか
@@ -761,7 +773,9 @@ trait MigrationTrait
                 } else {
                     // 対象のURL があった場合はページの更新
                     $page->page_name         = $page_ini['page_base']['page_name'];
+                    $page->layout            = array_key_exists('layout', $page_ini['page_base']) ? $page_ini['page_base']['layout'] : null;
                     $page->base_display_flag = $page_ini['page_base']['base_display_flag'];
+                    $page->membership_flag   = empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'];
                     $page->save();
 
                     $this->putMonitor(3, "Page found. Use existing page. url=" . $page_ini['page_base']['permanent_link']);
@@ -779,6 +793,11 @@ trait MigrationTrait
                 // ページの中身の作成
                 $this->importHtmlImpl($page, $path);
             }
+        }
+
+        // グループデータの取り込み
+        if ($this->isTarget('cc_import', 'groups')) {
+            $this->importGroups($redo);
         }
 
         // シーダーの呼び出し
@@ -1148,6 +1167,116 @@ trait MigrationTrait
             ]);
         }
         return;
+    }
+
+    /**
+     * Connect-CMS 移行形式のグループをインポート
+     */
+    private function importGroups($redo)
+    {
+        $this->putMonitor(3, "Groups import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            // 最初のユーザ以外の削除、migration_mappings のusers の削除
+            $this->clearData('groups');
+        }
+
+        // グループ定義の取り込み
+        $group_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('groups/group_*.ini'));
+
+        // グループ定義のループ
+        foreach ($group_ini_paths as $group_ini_path) {
+            // ini_file の解析
+            $group_ini = parse_ini_file($group_ini_path, true);
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'groups')->where('source_key', $group_ini['source_info']['room_id'])->first();
+
+            // マッピングテーブルを確認して、追加か更新の処理を分岐
+            if (empty($mapping)) {
+                // 追加
+                $group = Group::create(['name' => $group_ini['group_base']['name']]);
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'groups',
+                    'source_key'           => $group_ini['source_info']['room_id'],
+                    'destination_key'      => $group->id,
+                ]);
+            } else {
+                // 更新
+                $group = Group::updateOrCreate(['id' => $mapping->destination_key], ['name' => $group_ini['group_base']['name']]);
+            }
+
+            // group_users 作成
+            foreach ($group_ini['users']['user'] as $login_id => $role_authority_id) {
+                $user = User::where('userid', $login_id)->first();
+                if (empty($user)) {
+                    continue;
+                }
+                $group_user = GroupUser::updateOrCreate(
+                    ['group_id' => $group->id, 'user_id' => $user->id],
+                    ['group_id' => $group->id, 'user_id' => $user->id, 'group_role' => 'general']
+                );
+            }
+
+            // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
+            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
+            if (empty($source_page)) {
+                ciontinue;
+            }
+            $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
+            if (empty($destination_page)) {
+                ciontinue;
+            }
+            $page_role = PageRole::updateOrCreate(
+                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
+                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => 'role_guest', 'role_value' => 1]
+            );
+        }
+
+        // アップロード・ファイルのページIDを書き換えるために、アップロード・ファイル定義の読み込み
+        if (!Storage::exists($this->getImportPath('uploads/uploads.ini'))) {
+            return;
+        }
+
+        $uploads_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('uploads/uploads.ini'), true);
+
+        // アップロード・ファイルのループ
+        if (array_key_exists('uploads', $uploads_ini) && array_key_exists('upload', $uploads_ini['uploads'])) {
+            foreach ($uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
+                // ルーム指定を探しておく。
+                $room_id = null;
+                if (array_key_exists('nc2_room_id', $uploads_ini[$upload_key])) {
+                    $room_id = $uploads_ini[$upload_key]['nc2_room_id'];
+                }
+                if (empty($room_id)) {
+                    continue;
+                }
+                // アップロードファイルに対応するConnect-CMS のページを探す
+                $nc2_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $room_id)->first();
+                if (empty($nc2_page)) {
+                    continue;
+                }
+                $connect_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $nc2_page->destination_key)->first();
+                if (empty($connect_page)) {
+                    continue;
+                }
+                // アップロードファイルを探す
+                $upload_map = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $upload_key)->first();
+                if (empty($upload_map)) {
+                    continue;
+                }
+                // アップロードファイルのページid を更新
+                $upload = Uploads::find($upload_map->destination_key);
+                if (empty($upload)) {
+                    continue;
+                }
+                $upload->page_id = $connect_page->destination_key;
+                $upload->save();
+            }
+        }
     }
 
     /**
@@ -2200,10 +2329,10 @@ trait MigrationTrait
         // 画像、添付ファイルをマージ（変換が必要なパスしてマージ）
         $change_list = array();
         if (is_array($images)) {
-            $change_list = $change_list + $images;
+            $change_list = array_merge($change_list, $images);
         }
         if (is_array($anchors)) {
-            $change_list = $change_list + $anchors;
+            $change_list = array_merge($change_list, $anchors);
         }
 
         // 対象がなければ戻る
@@ -3753,6 +3882,11 @@ trait MigrationTrait
             $this->nc2ExportUsers($redo);
         }
 
+        // ルームデータのエクスポート
+        if ($this->isTarget('nc2_export', 'groups')) {
+            $this->nc2ExportRooms($redo);
+        }
+
         // NC2 日誌（journal）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'blogs')) {
             $this->nc2ExportJournal($redo);
@@ -3859,10 +3993,22 @@ trait MigrationTrait
                 }
 
                 // ページ設定の保存用変数
+                $membership_flag = null;
+                if ($nc2_sort_page->space_type == 2) {
+                    // 「すべての会員をデフォルトで参加させる」
+                    if ($nc2_sort_page->default_entry_flag == 1) {
+                        $membership_flag = 2;
+                    } else {
+                    // 選択した会員のみ
+                        $membership_flag = 1;
+                    }
+                }
+
                 $page_ini = "[page_base]\n";
                 $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
                 $page_ini .= "permanent_link = \"/" . $nc2_sort_page->permalink . "\"\n";
                 $page_ini .= "base_display_flag = 1\n";
+                $page_ini .= "membership_flag = " . $membership_flag . "\n";
                 $page_ini .= "nc2_page_id = \"" . $nc2_sort_page->page_id . "\"\n";
                 $page_ini .= "nc2_room_id = \"" . $nc2_sort_page->room_id . "\"\n";
 
@@ -4260,6 +4406,75 @@ trait MigrationTrait
         // Userデータの出力
         //Storage::put($this->getImportPath('users/users.ini'), $users_ini);
         $this->storagePut($this->getImportPath('users/users.ini'), $users_ini);
+    }
+
+
+    /**
+     * NC2：グループの移行
+     */
+    private function nc2ExportRooms($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportRooms.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('groups/'));
+        }
+
+        /*
+        [group_base]
+        name = "会員専用ルーム"
+
+        [users]
+        user["admin"] = 2
+        user["user"] = 4
+
+        ※ user["ユーザID"] = "role_authority_id"
+        */
+
+        // NC2 ルームの取得
+        // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
+        $nc2_rooms = Nc2Page::where('space_type', 2)
+                            ->whereColumn('page_id', 'room_id')
+                            ->where('thread_num', 1)
+                            ->where('default_entry_flag', 0)
+                            ->orderBy('thread_num')
+                            ->orderBy('display_sequence')
+                            ->get();
+
+        // 空なら戻る
+        if ($nc2_rooms->isEmpty()) {
+            return;
+        }
+
+        // グループをループ
+        foreach ($nc2_rooms as $nc2_room) {
+            // ini ファイル用変数
+            $groups_ini  = "[group_base]\n";
+            $groups_ini .= "name = \"" . $nc2_room->page_name . "\"\n";
+            $groups_ini .= "\n";
+            $groups_ini .= "[source_info]\n";
+            $groups_ini .= "room_id = " . $nc2_room->room_id . "\n";
+            $groups_ini .= "\n";
+            $groups_ini .= "[users]\n";
+
+            // NC2 参加ユーザの取得
+            $nc2_pages_users_links = Nc2PageUserLink::select('pages_users_link.*', 'users.login_id')
+                                                    ->join('users', 'users.user_id', 'pages_users_link.user_id')
+                                                    ->where('room_id', $nc2_room->room_id)
+                                                    ->orderBy('room_id')
+                                                    ->orderBy('users.role_authority_id')
+                                                    ->orderBy('users.insert_time')
+                                                    ->get();
+
+            foreach ($nc2_pages_users_links as $nc2_pages_users_link) {
+                $groups_ini .= "user[\"" . $nc2_pages_users_link->login_id . "\"] = " . $nc2_pages_users_link->role_authority_id . "\n";
+            }
+
+            // グループデータの出力
+            $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc2_room->room_id) . '.ini', $groups_ini);
+        }
     }
 
     /**
