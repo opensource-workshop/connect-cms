@@ -380,18 +380,18 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($forms_column->column_type == \FormColumnType::time_from_to) {
             $time_from = $request->forms_columns_value_for_time_from[$forms_column->id];
             $time_to = $request->forms_columns_value_for_time_to[$forms_column->id];
-            // request内の入力値（配列）を一旦取り出して、時間型（From~To）の入力値をセットする
-            $tmp_array = $request->forms_columns_value;
-            $tmp_array[$forms_column->id] = $time_from . '~' . $time_to;
-            $request->merge([
-                "forms_columns_value" => $tmp_array,
-            ]);
             if ($time_from && $time_to) {
                 // 両方入力時、時間の前後チェック
                 $validator_rule[] = new CustomVali_TimeFromTo(
                     \Carbon::createFromTimeString($time_from . ':00'),
                     \Carbon::createFromTimeString($time_to . ':00')
                 );
+                // request内の入力値（配列）を一旦取り出して、時間型（From~To）の入力値をセットする
+                $tmp_array = $request->forms_columns_value;
+                $tmp_array[$forms_column->id] = $time_from . '~' . $time_to;
+                $request->merge([
+                    "forms_columns_value" => $tmp_array,
+                ]);
             } elseif ($time_from || $time_to) {
                 // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
                 $validator_rule[] = new CustomVali_BothRequired(
