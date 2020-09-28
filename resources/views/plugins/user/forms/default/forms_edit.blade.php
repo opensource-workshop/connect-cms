@@ -95,6 +95,13 @@
                     <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : 'ユーザが登録時の項目を設定します。' }}
                 </div>
 
+                {{-- ワーニングメッセージエリア --}}
+                @if ($warning_message)
+                    <div class="alert alert-warning mt-2">
+                        <i class="fas fa-exclamation-circle"></i> {{$warning_message}}
+                    </div>
+                @endif
+
                 {{-- エラーメッセージエリア --}}
                 @if ($errors && $errors->any())
                     <div class="alert alert-danger mt-2">

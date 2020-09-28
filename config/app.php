@@ -246,6 +246,7 @@ return [
         'CsvCharacterCode' => \App\Enums\CsvCharacterCode::class,
         'ShowType' => \App\Enums\ShowType::class,
         'PermissionType' => \App\Enums\PermissionType::class,
+        'StatusType' => \App\Enums\StatusType::class,
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,

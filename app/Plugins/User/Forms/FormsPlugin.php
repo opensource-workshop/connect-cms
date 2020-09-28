@@ -2,7 +2,6 @@
 
 namespace App\Plugins\User\Forms;
 
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,11 +23,13 @@ use App\Rules\CustomVali_CheckWidthForString;
 use App\Rules\CustomVali_Confirmed;
 use App\Rules\CustomVali_TimeFromTo;
 use App\Rules\CustomVali_BothRequired;
+use App\Rules\CustomVali_TokenExists;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\String\StringUtils;
+use App\Utilities\Token\TokenUtils;
 
 /**
  * フォーム・プラグイン
@@ -55,6 +56,7 @@ class FormsPlugin extends UserPluginBase
         $functions = array();
         $functions['get']  = [
             'editColumnDetail',
+            'publicConfirmToken',
         ];
         $functions['post'] = [
             'index',
@@ -68,6 +70,7 @@ class FormsPlugin extends UserPluginBase
             'updateSelect',
             'updateSelectSequence',
             'deleteSelect',
+            'publicStoreToken',
         ];
         return $functions;
     }
@@ -114,7 +117,7 @@ class FormsPlugin extends UserPluginBase
     private function getFormsColumns($form)
     {
         // フォームのカラムデータ
-        $form_columns = [];
+        $forms_columns = [];
         if (!empty($form)) {
             $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
             if ($form->user_mail_send_flag == '1' && empty($forms_columns->where('column_type', \FormColumnType::mail)->first())) {
@@ -253,35 +256,43 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
 
-            $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
             // 登録制限数オーバーか
-            if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
-                $setting_error_messages[] = '制限数に達したため受付けを終了しました。';
+            if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
+                $setting_error_messages[] = '制限数に達したため登録を終了しました。';
             }
         } else {
             // フレームに紐づくフォーム親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
         }
 
-        // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms', [
-            'request' => $request,
-            'frame_id' => $frame_id,
-            'form' => $form,
-            'forms_columns' => $forms_columns,
-            'forms_columns_id_select' => $forms_columns_id_select,
-            'errors' => $errors,
-            'setting_error_messages' => $setting_error_messages,
-            ]
-        )->withInput($request->all);
+        if (empty($setting_error_messages)) {
+            // 表示テンプレートを呼び出す。
+            return $this->view('forms', [
+                'request' => $request,
+                'frame_id' => $frame_id,
+                'form' => $form,
+                'forms_columns' => $forms_columns,
+                'forms_columns_id_select' => $forms_columns_id_select,
+                'errors' => $errors,
+            ])->withInput($request->all);
+        } else {
+            // エラーあり
+            return $this->view('forms_error_messages', [
+                'error_messages' => $setting_error_messages,
+            ]);
+        }
     }
 
     /**
      * 登録制限数オーバーか
      */
-    public function isOverEntryLimit($forms_inputs_count, $entry_limit)
+    public function isOverEntryLimit($form_id, $entry_limit)
     {
+        // カウントは本登録でする
+        $forms_inputs_count = FormsInputs::where('forms_id', $form_id)
+                                            ->where('status', \StatusType::active)
+                                            ->count();
+
         // 登録制限数 が 空か 0 なら登録制限しない
         if ($entry_limit != null && $entry_limit !== 0) {
             if ($forms_inputs_count >= $entry_limit) {
@@ -436,9 +447,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
-        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
         // 登録制限数オーバーか
-        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
             return $this->index($request, $page_id, $frame_id);
         }
@@ -462,9 +472,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
-        $forms_inputs_count = FormsInputs::where('forms_id', $form->id)->get()->count();
         // 登録制限数オーバーか
-        if ($this->isOverEntryLimit($forms_inputs_count, $form->entry_limit)) {
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
             return $this->index($request, $page_id, $frame_id);
         }
@@ -472,6 +481,23 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // forms_inputs 登録
         $forms_inputs = new FormsInputs();
         $forms_inputs->forms_id = $form->id;
+
+        $user_token = null;
+        if ($form->use_temporary_regist_mail_flag) {
+            // 仮登録
+            // トークン生成 (メール送信用でユーザのみ知る. DB保存しない)
+            $user_token = TokenUtils::createNewToken();
+            // トークンをハッシュ化（DB保存用）
+            $record_token = TokenUtils::makeHashToken($user_token);
+
+            $forms_inputs->status = \StatusType::temporary;
+            $forms_inputs->add_token = $record_token;
+            $forms_inputs->add_token_created_at = new \Carbon();
+        } else {
+            // 本登録
+            $forms_inputs->status = \StatusType::active;
+        }
+
         $forms_inputs->save();
 
         // フォームのカラムデータ
@@ -509,12 +535,216 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $contents_text .= $forms_column->column_name . "：" . $value . "\n";
 
             // メール型
-            if ($forms_column->column_type == "mail") {
+            if ($forms_column->column_type == \FormColumnType::mail) {
                 $user_mailaddresses[] = $value;
             }
         }
         // 最後の改行を除去
         $contents_text = trim($contents_text);
+
+        if ($form->use_temporary_regist_mail_flag) {
+            // 仮登録
+            // ユーザ側のみメール送信する
+
+            $after_message = $form->temporary_regist_after_message;
+
+            // メール送信
+            // メール本文の組み立て
+            $mail_format = $form->temporary_regist_mail_format;
+            $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
+
+            // 本登録URL
+            $entry_url = url('/') . "/plugin/forms/publicConfirmToken/{$page_id}/{$frame_id}/{$forms_inputs->id}?token={$user_token}#frame-{$frame_id}";
+            $mail_text = str_replace('[[entry_url]]', $entry_url, $mail_text);
+
+            // メール本文内のサイト名文字列を置換
+            $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
+
+            // メール送信（ユーザー側）
+            foreach ($user_mailaddresses as $user_mailaddress) {
+                if (!empty($user_mailaddress)) {
+                    Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->temporary_regist_mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                }
+            }
+        } else {
+            // 本登録
+            // 採番は本登録の時のみする
+
+            // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
+            $number = $form->numbering_use_flag ? $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix)) : null;
+
+            // 登録後メッセージ内の採番文字列を置換
+            $after_message = str_replace('[[number]]', $number, $form->after_message);
+
+            // メール送信
+            if ($form->mail_send_flag || $form->user_mail_send_flag) {
+                // メール本文の組み立て
+                $mail_format = $form->mail_format;
+                $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
+
+                // メール本文内の採番文字列を置換
+                $mail_text = str_replace('[[number]]', $number, $mail_text);
+
+                // メール本文内のサイト名文字列を置換
+                $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
+
+                // メール送信（管理者側）
+                if ($form->mail_send_flag) {
+                    $mail_addresses = explode(',', $form->mail_send_address);
+                    foreach ($mail_addresses as $mail_address) {
+                        Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    }
+                }
+
+                // メール送信（ユーザー側）
+                if ($form->user_mail_send_flag) {
+                    foreach ($user_mailaddresses as $user_mailaddress) {
+                        if (!empty($user_mailaddress)) {
+                            Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                        }
+                    }
+                }
+            }
+        }
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'forms_thanks', [
+            'after_message' => $after_message
+            ]
+        );
+    }
+
+    /**
+     * トークンを使った本登録の確定画面表示
+     */
+    public function publicConfirmToken($request, $page_id, $frame_id, $id)
+    {
+        // Forms、Frame データ
+        $form = $this->getForms($frame_id);
+
+        // 登録制限数オーバーか
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
+            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
+            return $this->index($request, $page_id, $frame_id);
+        }
+
+        // $id がなかったら、エラー画面へ
+        // $forms_inputs がなかったら、エラー画面へ
+        $forms_inputs = FormsInputs::find($id);
+        if (empty($forms_inputs)) {
+            return $this->view('forms_error_messages', [
+                'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
+            ]);
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'token' => new CustomVali_TokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
+        ]);
+
+        // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
+        if ($validator->fails()) {
+            return $this->view('forms_error_messages', [
+                'error_messages' => $validator->errors()->all(),
+            ]);
+        }
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('forms_confirm_token', [
+            'id' => $id,
+            'token' => $request->token,
+        ]);
+    }
+
+    /**
+     * トークンを使ったデータ本登録
+     */
+    public function publicStoreToken($request, $page_id, $frame_id, $id)
+    {
+        // Forms、Frame データ
+        $form = $this->getForms($frame_id);
+
+        // 登録制限数オーバーか
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
+            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
+            return $this->index($request, $page_id, $frame_id);
+        }
+
+        // $id がなかったら、エラー画面へ
+        // $forms_inputs がなかったら、エラー画面へ
+        $forms_inputs = FormsInputs::find($id);
+        if (empty($forms_inputs)) {
+            return $this->view('forms_error_messages', [
+                'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
+            ]);
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'token' => new CustomVali_TokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
+        ]);
+
+        // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
+        if ($validator->fails()) {
+            return $this->view('forms_error_messages', [
+                'error_messages' => $validator->errors()->all(),
+            ]);
+        }
+
+        // forms_inputs 更新
+        // 本登録
+        $forms_inputs->status = \StatusType::active;
+        $forms_inputs->save();
+
+        // フォームのカラムデータ
+        $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
+
+        // フォームの登録データ
+        $forms_input_cols = FormsInputCols::where('forms_inputs_id', $id)
+                                            ->get()
+                                            // keyをforms_columns_idにした結果をセット
+                                            ->mapWithKeys(function ($item) {
+                                                return [$item['forms_columns_id'] => $item];
+                                            });
+
+        // メールの送信文字列
+        $contents_text = '';
+
+        // 登録者のメールアドレス
+        $user_mailaddresses = array();
+        // dd($id, $forms_input_cols->first()->forms_columns_id);
+        // foreach ($forms_input_cols as $forms_input_col) {
+        //     var_dump($forms_input_col->forms_columns_id);
+        // }
+        // dd($forms_input_cols->count());
+
+        foreach ($forms_columns as $forms_column) {
+            if ($forms_column->column_type == \FormColumnType::group) {
+                continue;
+            }
+
+            $value = "";
+            if (is_array($forms_input_cols[$forms_column->id])) {
+                $value = implode(',', $forms_input_cols[$forms_column->id]->value);
+            } else {
+                $value = $forms_input_cols[$forms_column->id]->value;
+            }
+
+            // メールの内容
+            $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+
+            // メール型
+            if ($forms_column->column_type == \FormColumnType::mail) {
+                $user_mailaddresses[] = $value;
+            }
+        }
+        // 最後の改行を除去
+        $contents_text = trim($contents_text);
+        // dd($user_mailaddresses);
+
+        // 本登録
+        // 採番は本登録の時のみする
 
         // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
         $number = $form->numbering_use_flag ? $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix)) : null;
@@ -553,11 +783,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_thanks', [
+        return $this->view('forms_thanks', [
             'after_message' => $after_message
-            ]
-        );
+        ]);
     }
 
     /**
@@ -581,9 +809,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             $plugin_name . '.data_save_flag',
                             $plugin_name . '.created_at',
                             $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                            DB::raw('count(forms_inputs.forms_id) as entry_count')
+                            // 本登録数
+                            DB::raw('count(forms_inputs.forms_id) as active_entry_count')
                         )
-                        ->leftJoin('forms_inputs', $plugin_name . '.id', '=', 'forms_inputs.forms_id')
+                        ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
+                            $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
+                                        ->where('forms_inputs.status', \StatusType::active);
+                        })
                         ->groupBy(
                             $plugin_name . '.id',
                             $plugin_name . '.bucket_id',
@@ -595,13 +827,37 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         ->orderBy($plugin_name . '.created_at', 'desc')
                         ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
+        // 仮登録件数
+        $forms_tmp_entry = Forms::
+            select(
+                'forms.id',
+                DB::raw('count(forms_inputs.forms_id) as tmp_entry_count')
+            )
+            ->whereIn('forms.id', $plugins->pluck('id'))
+            ->leftJoin('forms_inputs', function ($leftJoin) {
+                $leftJoin->on('forms.id', '=', 'forms_inputs.forms_id')
+                            ->where('forms_inputs.status', \StatusType::temporary);
+            })
+            ->groupBy(
+                'forms.id',
+                'forms_inputs.forms_id'
+            )
+            ->get()
+            // keyをidにした結果をセット
+            ->mapWithKeys(function ($item) {
+                return [$item['id'] => $item];
+            });
+
+        foreach ($plugins as $plugin) {
+            // $plugin->idから $forms_tmp_entry を取得しているため、配列に必ずある想定
+            $plugin->tmp_entry_count = $forms_tmp_entry[$plugin->id]->tmp_entry_count;
+        }
+
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_datalist', [
+        return $this->view('forms_list_buckets', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -677,9 +933,33 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $validator_attributes['mail_send_address'] = '送信するメールアドレス';
         }
 
+        $validator_attributes['data_save_flag'] = 'データを保存する';
+        $validator_attributes['user_mail_send_flag'] = '登録者にメール送信する';
+        $validator_attributes['temporary_regist_mail_format'] = '仮登録メールフォーマット';
+
+        $messages = [
+            'data_save_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
+            'user_mail_send_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
+            'temporary_regist_mail_format.regex' => '仮登録メールを送信する場合、:attributeに[[entry_url]]を含めてください。',
+        ];
+
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), $validator_values);
+        $validator = Validator::make($request->all(), $validator_values, $messages);
         $validator->setAttributeNames($validator_attributes);
+
+        // 仮登録メールがONならvalidate
+        $validator->sometimes("data_save_flag", 'accepted', function ($input) {
+            // 仮登録メールがONなら、上記の データ保存 ONであること
+            return $input->use_temporary_regist_mail_flag;
+        });
+        $validator->sometimes("user_mail_send_flag", 'accepted', function ($input) {
+            // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
+            return $input->use_temporary_regist_mail_flag;
+        });
+        $validator->sometimes("temporary_regist_mail_format", 'regex:/\[\[entry_url\]\]/', function ($input) {
+            // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
+            return $input->use_temporary_regist_mail_flag;
+        });
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
@@ -688,6 +968,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
             } else {
+                // var_dump($request->use_temporary_regist_mail_flag, $validator->errors()->first("use_temporary_regist_mail_flag"));
+                // var_dump($request->data_save_flag, old('data_save_flag'));
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $forms_id, $create_flag, $message, $validator->errors());
             }
@@ -696,7 +978,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 更新後のメッセージ
         $message = null;
 
-        // 画面から渡ってくるforms_id が空ならバケツとブログを新規登録
+        // 画面から渡ってくるforms_id が空ならバケツとフォームを新規登録
         if (empty($forms_id)) {
             // バケツの登録
             $bucket = new Buckets();
@@ -704,13 +986,13 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $bucket->plugin_name = 'forms';
             $bucket->save();
 
-            // ブログデータ新規オブジェクト
+            // フォームデータ新規オブジェクト
             $forms = new Forms();
             $forms->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
-            // Frame にBuckets が設定されていない ＞ 新規のフレーム＆ブログ作成
-            // Frame にBuckets が設定されている ＞ 既存のフレーム＆ブログ更新
+            // Frame にBuckets が設定されていない ＞ 新規のフレーム＆フォーム作成
+            // Frame にBuckets が設定されている ＞ 既存のフレーム＆フォーム更新
             // （表示フォーム選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
@@ -737,6 +1019,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
         $forms->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;
+        $forms->use_temporary_regist_mail_flag = (empty($request->use_temporary_regist_mail_flag)) ? 0 : $request->use_temporary_regist_mail_flag;
+        $forms->temporary_regist_mail_subject = $request->temporary_regist_mail_subject;
+        $forms->temporary_regist_mail_format = $request->temporary_regist_mail_format;
+        $forms->temporary_regist_after_message = $request->temporary_regist_after_message;
         $forms->from_mail_name      = $request->from_mail_name;
         $forms->mail_subject        = $request->mail_subject;
         $forms->mail_format         = $request->mail_format;
@@ -810,7 +1096,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 関連するセッションクリア
         $request->session()->forget('forms');
 
-        // 表示ブログ選択画面を呼ぶ
+        // 表示フォーム選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
     }
 
@@ -913,8 +1199,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // フォームのID。まだフォームがない場合は0
         $forms_id = 0;
+        $use_temporary_regist_mail_flag = null;
         if (!empty($form_db)) {
             $forms_id = $form_db->id;
+            $use_temporary_regist_mail_flag = $form_db->use_temporary_regist_mail_flag;
         }
 
         // 項目データ取得
@@ -952,6 +1240,21 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             ->orderby('forms_columns.display_sequence')
             ->get();
 
+        // 仮登録設定時のワーニングメッセージ
+        $warning_message = null;
+        if ($use_temporary_regist_mail_flag) {
+            $is_exist = false;
+            foreach ($columns as $column) {
+                if ($column->required && $column->column_type == \FormColumnType::mail) {
+                    $is_exist = true;
+                    break;
+                }
+            }
+            if (! $is_exist) {
+                $warning_message = "仮登録メールが設定されています。必須のメールアドレス型の項目を設定してください。";
+            }
+        }
+
         // 編集画面テンプレートを呼び出す。
         return $this->view(
             'forms_edit',
@@ -959,6 +1262,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_id'   => $forms_id,
                 'columns'    => $columns,
                 'message'    => $message,
+                'warning_message' => $warning_message,
                 'errors'     => $errors,
             ]
         );
