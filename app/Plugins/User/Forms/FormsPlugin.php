@@ -261,10 +261,21 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 return false;
             }
 
+            // 登録期間外か
+            if ($this->isOutOfTermRegist($form)) {
+                // エラー画面へ
+                return $this->view('forms_error_messages', [
+                    'error_messages' => ['登録期間外のため、登録出来ません。'],
+                ]);
+            }
+
             // 登録制限数オーバーか
             if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
                 // $setting_error_messages[] = '制限数に達したため登録を終了しました。';
-                $setting_error_messages[] = $form->entry_limit_over_message;
+                // エラー画面へ
+                return $this->view('forms_error_messages', [
+                    'error_messages' => [$form->entry_limit_over_message],
+                ]);
             }
         } else {
             // フレームに紐づくフォーム親データがない場合
@@ -327,6 +338,32 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 値あり & 今日から見てToが過去か
         if ($form->display_to && $form->display_to->isPast()) {
+            // 期間外
+            return true;
+        }
+
+        // 期間内
+        return false;
+    }
+
+    /**
+     * 登録期間外か
+     */
+    private function isOutOfTermRegist($form)
+    {
+        if (! $form->regist_control_flag) {
+            // 制御フラグOFFなら、登録期間内として扱う
+            return false;
+        }
+
+        // 値あり & 今から見てFromが未来か
+        if ($form->regist_from && $form->regist_from->isFuture()) {
+            // 期間外
+            return true;
+        }
+
+        // 値あり & 今日から見てToが過去か
+        if ($form->regist_to && $form->regist_to->isPast()) {
             // 期間外
             return true;
         }
@@ -454,10 +491,20 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return false;
         }
 
+        // 登録期間外か
+        if ($this->isOutOfTermRegist($form)) {
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => ['登録期間外のため、登録出来ません。'],
+            ]);
+        }
+
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
-            return $this->index($request, $page_id, $frame_id);
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => [$form->entry_limit_over_message],
+            ]);
         }
 
         // フォームのカラムデータ
@@ -516,10 +563,20 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return false;
         }
 
+        // 登録期間外か
+        if ($this->isOutOfTermRegist($form)) {
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => ['登録期間外のため、登録出来ません。'],
+            ]);
+        }
+
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
-            return $this->index($request, $page_id, $frame_id);
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => [$form->entry_limit_over_message],
+            ]);
         }
 
         // forms_inputs 登録
@@ -673,10 +730,20 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return false;
         }
 
+        // 登録期間外か
+        if ($this->isOutOfTermRegist($form)) {
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => ['登録期間外のため、登録出来ません。'],
+            ]);
+        }
+
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
-            return $this->index($request, $page_id, $frame_id);
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => [$form->entry_limit_over_message],
+            ]);
         }
 
         // $id がなかったら、エラー画面へ
@@ -721,10 +788,20 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return false;
         }
 
+        // 登録期間外か
+        if ($this->isOutOfTermRegist($form)) {
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => ['登録期間外のため、登録出来ません。'],
+            ]);
+        }
+
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
-            return $this->index($request, $page_id, $frame_id);
+            // エラー画面へ
+            return $this->view('forms_error_messages', [
+                'error_messages' => [$form->entry_limit_over_message],
+            ]);
         }
 
         // $id がなかったら、エラー画面へ
@@ -994,6 +1071,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_attributes['temporary_regist_mail_format'] = '仮登録メールフォーマット';
         $validator_attributes['display_from'] = '表示開始日時';
         $validator_attributes['display_to'] = '表示終了日時';
+        $validator_attributes['regist_from'] = '登録開始日時';
+        $validator_attributes['regist_to'] = '登録終了日時';
 
         $messages = [
             'data_save_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
@@ -1022,6 +1101,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator->sometimes("display_from", 'before:display_to', function ($input) {
             // 表示期間のFrom Toが両方入力ありなら、上記の 表示期間のFrom が To より前であること
             return $input->display_from && $input->display_to;
+        });
+
+        $validator->sometimes("regist_from", 'before:regist_to', function ($input) {
+            // 登録期間のFrom Toが両方入力ありなら、上記の 登録期間のFrom が To より前であること
+            return $input->regist_from && $input->regist_to;
         });
 
         // エラーがあった場合は入力画面に戻る。
@@ -1083,6 +1167,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->display_control_flag = empty($request->display_control_flag) ? 0 : $request->display_control_flag;
         $forms->display_from        = empty($request->display_from) ? null : new \Carbon($request->display_from);
         $forms->display_to          = empty($request->display_to) ? null : new \Carbon($request->display_to);
+        $forms->regist_control_flag = empty($request->regist_control_flag) ? 0 : $request->regist_control_flag;
+        $forms->regist_from         = empty($request->regist_from) ? null : new \Carbon($request->regist_from);
+        $forms->regist_to           = empty($request->regist_to) ? null : new \Carbon($request->regist_to);
         $forms->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
         $forms->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;

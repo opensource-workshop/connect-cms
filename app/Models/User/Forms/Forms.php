@@ -15,6 +15,8 @@ class Forms extends Model
     protected $dates = [
         'display_from',
         'display_to',
+        'regist_from',
+        'regist_to',
     ];
 
     // 更新する項目の定義
@@ -26,6 +28,9 @@ class Forms extends Model
         'display_control_flag',
         'display_from',
         'display_to',
+        'regist_control_flag',
+        'regist_from',
+        'regist_to',
         'mail_send_flag',
         'mail_send_address',
         'user_mail_send_flag',
