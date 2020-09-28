@@ -138,7 +138,7 @@
 
                 <small class="text-muted">
                     ※ 未入力の場合、開始日時で表示制限しません。<br>
-                    ※ 開始日時になった瞬間に表示開始します。例えば14:00の場合、14:00に公開します。
+                    ※ 開始日時になった瞬間に公開します。例えば14:00の場合、14:00に公開します。
                 </small>
                 @if ($errors && $errors->has('display_from'))
                     <div class="text-danger">{{$errors->first('display_from')}}</div>
