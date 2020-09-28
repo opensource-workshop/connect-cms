@@ -1325,13 +1325,16 @@ class OpacsPlugin extends UserPluginBase
         // 権限で異なる項目の編集
         $return_student_no = ($this->isCan('role_article')) ? $request->return_student_no : $user->userid;
 
-        // 学籍番号チェック
+        // 貸し出し中書籍
         $books_lents = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)->whereIn('lent_flag', [1, 2])->first();
-        if ($books_lents->student_no != $return_student_no) {
-            $messages = new MessageBag;
-            $messages->add('return_barcode', '貸し出し時の学籍番号と一致しません。');
-            return $this->index($request, $page_id, $frame_id, $messages);
-        }
+
+        // 学籍番号チェック
+        // 返却時の学籍番号チェックはなくす。（今後のオプションにする可能性があるので、コメントで残しておく）
+        // if ($books_lents->student_no != $return_student_no) {
+        //     $messages = new MessageBag;
+        //     $messages->add('return_barcode', '貸し出し時の学籍番号と一致しません。');
+        //     return $this->index($request, $page_id, $frame_id, $messages);
+        // }
 
         // 書籍貸し出しデータ
         $books_lents->lent_flag   = 9;
