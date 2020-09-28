@@ -31,6 +31,16 @@
             dayViewHeaderFormat: 'YYYY MMM',
             sideBySide: true,
         });
+        $('#regist_from{{$frame_id}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            dayViewHeaderFormat: 'YYYY MMM',
+            sideBySide: true,
+        });
+        $('#regist_to{{$frame_id}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            dayViewHeaderFormat: 'YYYY MMM',
+            sideBySide: true,
+        });
     });
 </script>
 
@@ -160,6 +170,65 @@
                 </small>
                 @if ($errors && $errors->has('display_to'))
                     <div class="text-danger">{{$errors->first('display_to')}}</div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">登録期間</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                <label>登録期間の制御</label><br>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="regist_control_flag_1" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="regist_control_flag_1">登録期間で制御する</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="0" id="regist_control_flag_0" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 0) checked="checked" @endif>
+                    <label class="custom-control-label" for="regist_control_flag_0">登録期間で制御しない</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                <label>登録開始日時</label>
+
+                <div class="input-group" id="regist_from{{$frame_id}}" data-target-input="nearest">
+                    <input class="form-control datetimepicker-input" type="text" name="regist_from" value="{{old('regist_from', $form->regist_from)}}" data-target="#regist_from{{$frame_id}}">
+                    <div class="input-group-append" data-target="#regist_from{{$frame_id}}" data-toggle="datetimepicker">
+                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    ※ 未入力の場合、開始日時で登録制限しません。<br>
+                    ※ 開始日時になった瞬間に登録開始します。例えば14:00の場合、14:00に登録開始します。
+                </small>
+                @if ($errors && $errors->has('regist_from'))
+                    <div class="text-danger">{{$errors->first('regist_from')}}</div>
+                @endif
+            </div>
+            <div class="col pl-0">
+                <label>登録終了日時</label>
+
+                <div class="input-group" id="regist_to{{$frame_id}}" data-target-input="nearest">
+                    <input class="form-control datetimepicker-input" type="text" name="regist_to" value="{{old('regist_to', $form->regist_to)}}" data-target="#regist_to{{$frame_id}}">
+                    <div class="input-group-append" data-target="#regist_to{{$frame_id}}" data-toggle="datetimepicker">
+                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    ※ 未入力の場合、終了日時で登録制限しません。<br>
+                    ※ 終了日時になった瞬間に登録終了します。例えば15:00の場合、14:59まで登録できます。
+                </small>
+                @if ($errors && $errors->has('regist_to'))
+                    <div class="text-danger">{{$errors->first('regist_to')}}</div>
                 @endif
             </div>
         </div>
