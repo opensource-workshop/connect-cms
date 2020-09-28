@@ -100,8 +100,7 @@ class FormsPlugin extends UserPluginBase
     private function getForms($frame_id)
     {
         // Forms、Frame データ
-        $form = DB::table('forms')
-            ->select('forms.*')
+        $form = Forms::select('forms.*')
             ->join('frames', 'frames.bucket_id', '=', 'forms.bucket_id')
             ->where('frames.id', '=', $frame_id)
             ->first();
@@ -256,6 +255,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
 
+            // 表示期間外か
+            if ($this->isOutOfTermDisplay($form)) {
+                // 表示しない
+                return false;
+            }
+
             // 登録制限数オーバーか
             if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
                 // $setting_error_messages[] = '制限数に達したため登録を終了しました。';
@@ -287,7 +292,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     /**
      * 登録制限数オーバーか
      */
-    public function isOverEntryLimit($form_id, $entry_limit)
+    private function isOverEntryLimit($form_id, $entry_limit)
     {
         // カウントは本登録でする
         $forms_inputs_count = FormsInputs::where('forms_id', $form_id)
@@ -301,6 +306,32 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             }
         }
 
+        return false;
+    }
+
+    /**
+     * 表示期間外か
+     */
+    private function isOutOfTermDisplay($form)
+    {
+        if (! $form->display_control_flag) {
+            // 制御フラグOFFなら、表示期間内として扱う
+            return false;
+        }
+
+        // 値あり & 今から見てFromが未来か
+        if ($form->display_from && $form->display_from->isFuture()) {
+            // 期間外
+            return true;
+        }
+
+        // 値あり & 今日から見てToが過去か
+        if ($form->display_to && $form->display_to->isPast()) {
+            // 期間外
+            return true;
+        }
+
+        // 期間内
         return false;
     }
 
@@ -417,6 +448,18 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
+        // 表示期間外か
+        if ($this->isOutOfTermDisplay($form)) {
+            // 表示しない
+            return false;
+        }
+
+        // 登録制限数オーバーか
+        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
+            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
+            return $this->index($request, $page_id, $frame_id);
+        }
+
         // フォームのカラムデータ
         $forms_columns = $this->getFormsColumns($form);
 
@@ -448,12 +491,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
-        // 登録制限数オーバーか
-        if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-            // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
-            return $this->index($request, $page_id, $frame_id);
-        }
-
         // 表示テンプレートを呼び出す。
         return $this->view(
             'forms_confirm', [
@@ -472,6 +509,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
+
+        // 表示期間外か
+        if ($this->isOutOfTermDisplay($form)) {
+            // 表示しない
+            return false;
+        }
 
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
@@ -624,6 +667,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
+        // 表示期間外か
+        if ($this->isOutOfTermDisplay($form)) {
+            // 表示しない
+            return false;
+        }
+
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // 初期画面へ遷移にして、それで同じ登録制限数オーバーチェックしてエラーメッセージ表示
@@ -665,6 +714,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
+
+        // 表示期間外か
+        if ($this->isOutOfTermDisplay($form)) {
+            // 表示しない
+            return false;
+        }
 
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
@@ -1018,6 +1073,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->forms_name          = $request->forms_name;
         $forms->entry_limit         = $request->entry_limit;
         $forms->entry_limit_over_message = $request->entry_limit_over_message;
+        $forms->display_control_flag = empty($request->display_control_flag) ? 0 : $request->display_control_flag;
+        $forms->display_from        = empty($request->display_from) ? null : new \Carbon($request->display_from);
+        $forms->display_to          = empty($request->display_to) ? null : new \Carbon($request->display_to);
         $forms->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
         $forms->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;
