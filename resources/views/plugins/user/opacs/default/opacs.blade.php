@@ -98,7 +98,7 @@
                     <i class="far fa-edit"></i>
                 </a>
                 @endcan
-                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}#frame-{{$frame->id}}</a>
+                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}</a>
             </td>
 {{--
             <td>{{$book->ndc}}</td>
