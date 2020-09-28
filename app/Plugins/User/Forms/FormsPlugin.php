@@ -992,6 +992,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_attributes['data_save_flag'] = 'データを保存する';
         $validator_attributes['user_mail_send_flag'] = '登録者にメール送信する';
         $validator_attributes['temporary_regist_mail_format'] = '仮登録メールフォーマット';
+        $validator_attributes['display_from'] = '表示開始日時';
+        $validator_attributes['display_to'] = '表示終了日時';
 
         $messages = [
             'data_save_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
@@ -1015,6 +1017,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator->sometimes("temporary_regist_mail_format", 'regex:/\[\[entry_url\]\]/', function ($input) {
             // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
             return $input->use_temporary_regist_mail_flag;
+        });
+
+        $validator->sometimes("display_from", 'before:display_to', function ($input) {
+            // 表示期間のFrom Toが両方入力ありなら、上記の 表示期間のFrom が To より前であること
+            return $input->display_from && $input->display_to;
         });
 
         // エラーがあった場合は入力画面に戻る。

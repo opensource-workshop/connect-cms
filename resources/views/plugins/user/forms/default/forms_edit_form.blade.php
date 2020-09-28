@@ -14,6 +14,8 @@
 
 @section("plugin_setting_$frame->id")
 
+@include('common.errors_form_line')
+
 <script>
     $(function () {
         /**
@@ -125,7 +127,7 @@
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
-                <label>開始日時</label>
+                <label>表示開始日時</label>
 
                 <div class="input-group" id="display_from{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="display_from" value="{{old('display_from', $form->display_from)}}" data-target="#display_from{{$frame_id}}">
@@ -143,7 +145,7 @@
                 @endif
             </div>
             <div class="col pl-0">
-                <label>終了日時</label>
+                <label>表示終了日時</label>
 
                 <div class="input-group" id="display_to{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="display_to" value="{{old('display_to', $form->display_to)}}" data-target="#display_to{{$frame_id}}">
