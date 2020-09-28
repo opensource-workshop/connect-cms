@@ -78,6 +78,14 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">登録制限越えのメッセージ</label>
+            <textarea name="entry_limit_over_message" class="form-control" rows=5 placeholder="（例）制限数に達したため登録を終了しました。">{{old('entry_limit_over_message', $form->entry_limit_over_message)}}</textarea>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">

@@ -258,7 +258,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
             // 登録制限数オーバーか
             if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-                $setting_error_messages[] = '制限数に達したため登録を終了しました。';
+                // $setting_error_messages[] = '制限数に達したため登録を終了しました。';
+                $setting_error_messages[] = $form->entry_limit_over_message;
             }
         } else {
             // フレームに紐づくフォーム親データがない場合
@@ -1016,6 +1017,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // フォーム設定
         $forms->forms_name          = $request->forms_name;
         $forms->entry_limit         = $request->entry_limit;
+        $forms->entry_limit_over_message = $request->entry_limit_over_message;
         $forms->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
         $forms->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;
