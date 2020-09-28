@@ -322,7 +322,7 @@ if(isset($configs_array['body_optional_class'])){
                         @if ($layouts_info[0]['exists'] == 1)
                             @include('layouts.add_plugin',['area_name' => 'ヘッダー', 'area_id' => 0])
                         @else
-                            <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                            <span class="form-control" style="background-color: #f0f0f0;">ヘッダーなし</span>
                         @endif
                     </div>
 
@@ -341,7 +341,7 @@ if(isset($configs_array['body_optional_class'])){
                             @if ($layouts_info[3]['exists'] == 1)
                                 @include('layouts.add_plugin',['area_name' => '右', 'area_id' => 3])
                             @else
-                                @include('layouts.add_plugin',['area_name' => '右', 'area_id' => 3, 'disabled' => true])
+                            <span class="form-control" style="background-color: #f0f0f0;">右カラムなし</span>
                             @endif
                         </div>
                     </div>
@@ -350,7 +350,7 @@ if(isset($configs_array['body_optional_class'])){
                         @if ($layouts_info[4]['exists'] == 1)
                             @include('layouts.add_plugin',['area_name' => 'フッター', 'area_id' => 4])
                         @else
-                            <span class="form-control" style="background-color: #f0f0f0;">左カラムなし</span>
+                            <span class="form-control" style="background-color: #f0f0f0;">フッターなし</span>
                         @endif
                     </div>
                 </div>
