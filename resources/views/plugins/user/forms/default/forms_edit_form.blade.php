@@ -13,6 +13,27 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+@include('common.errors_form_line')
+
+<script>
+    $(function () {
+        /**
+         * カレンダーボタン押下
+         */
+        $('#display_from{{$frame_id}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            dayViewHeaderFormat: 'YYYY MMM',
+            sideBySide: true,
+        });
+        $('#display_to{{$frame_id}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            dayViewHeaderFormat: 'YYYY MMM',
+            sideBySide: true,
+        });
+    });
+</script>
+
 @if (!$form->id && !$create_flag)
     <div class="alert alert-warning mt-2">
         <i class="fas fa-exclamation-circle"></i>
@@ -82,6 +103,65 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">登録制限越えのメッセージ</label>
             <textarea name="entry_limit_over_message" class="form-control" rows=5 placeholder="（例）制限数に達したため登録を終了しました。">{{old('entry_limit_over_message', $form->entry_limit_over_message)}}</textarea>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">表示期間</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                <label>表示期間の制御</label><br>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="display_control_flag_1" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="display_control_flag_1">表示期間で制御する</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="0" id="display_control_flag_0" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 0) checked="checked" @endif>
+                    <label class="custom-control-label" for="display_control_flag_0">表示期間で制御しない</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                <label>表示開始日時</label>
+
+                <div class="input-group" id="display_from{{$frame_id}}" data-target-input="nearest">
+                    <input class="form-control datetimepicker-input" type="text" name="display_from" value="{{old('display_from', $form->display_from)}}" data-target="#display_from{{$frame_id}}">
+                    <div class="input-group-append" data-target="#display_from{{$frame_id}}" data-toggle="datetimepicker">
+                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    ※ 未入力の場合、開始日時で表示制限しません。<br>
+                    ※ 開始日時になった瞬間に公開します。例えば14:00の場合、14:00に公開します。
+                </small>
+                @if ($errors && $errors->has('display_from'))
+                    <div class="text-danger">{{$errors->first('display_from')}}</div>
+                @endif
+            </div>
+            <div class="col pl-0">
+                <label>表示終了日時</label>
+
+                <div class="input-group" id="display_to{{$frame_id}}" data-target-input="nearest">
+                    <input class="form-control datetimepicker-input" type="text" name="display_to" value="{{old('display_to', $form->display_to)}}" data-target="#display_to{{$frame_id}}">
+                    <div class="input-group-append" data-target="#display_to{{$frame_id}}" data-toggle="datetimepicker">
+                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    ※ 未入力の場合、終了日時で表示制限しません。<br>
+                    ※ 終了日時になった瞬間に表示終了します。例えば15:00の場合、14:59まで表示します。
+                </small>
+                @if ($errors && $errors->has('display_to'))
+                    <div class="text-danger">{{$errors->first('display_to')}}</div>
+                @endif
+            </div>
         </div>
     </div>
 
