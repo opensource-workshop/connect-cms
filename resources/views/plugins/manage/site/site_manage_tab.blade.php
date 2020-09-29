@@ -45,28 +45,36 @@
                 @endif
                 </li>
 
-                <li role="presentation" class="nav-item">
-                @if ($function == "languages")
-                    <span class="nav-link"><span class="active">多言語設定</span></span>
-                @else
-                    <a href="{{url('/manage/site/languages')}}" class="nav-link">多言語設定</a></li>
-                @endif
-                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      その他設定
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
 
-                <li role="presentation" class="nav-item">
-                @if ($function == "pageError")
-                    <span class="nav-link"><span class="active">エラー設定</span></span>
-                @else
-                    <a href="{{url('/manage/site/pageError')}}" class="nav-link">エラー設定</a></li>
-                @endif
-                </li>
+                        @if ($function == "languages")
+                            <a href="{{url('/manage/site/languages')}}" class="dropdown-item active bg-light">多言語設定</a>
+                        @else
+                            <a href="{{url('/manage/site/languages')}}" class="dropdown-item">多言語設定</a>
+                        @endif
 
-                <li role="presentation" class="nav-item">
-                @if ($function == "analytics")
-                    <span class="nav-link"><span class="active">アクセス解析</span></span>
-                @else
-                    <a href="{{url('/manage/site/analytics')}}" class="nav-link">アクセス解析</a></li>
-                @endif
+                        @if ($function == "pageError")
+                            <a href="{{url('/manage/site/pageError')}}" class="dropdown-item active bg-light">エラー設定</a>
+                        @else
+                            <a href="{{url('/manage/site/pageError')}}" class="dropdown-item">エラー設定</a>
+                        @endif
+
+                        @if ($function == "analytics")
+                            <a href="{{url('/manage/site/analytics')}}" class="dropdown-item active bg-light">アクセス解析</a>
+                        @else
+                            <a href="{{url('/manage/site/analytics')}}" class="dropdown-item">アクセス解析</a>
+                        @endif
+
+                        @if ($function == "favicon")
+                            <a href="{{url('/manage/site/favicon')}}" class="dropdown-item active bg-light">ファビコン</a>
+                        @else
+                            <a href="{{url('/manage/site/favicon')}}" class="dropdown-item">ファビコン</a>
+                        @endif
+                    </div>
                 </li>
             </ul>
         </div>

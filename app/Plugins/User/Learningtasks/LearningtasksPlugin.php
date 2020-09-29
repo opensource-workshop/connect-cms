@@ -3,6 +3,7 @@
 namespace App\Plugins\User\Learningtasks;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -545,6 +546,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'extension'            => $request->file('add_task_file')->getClientOriginalExtension(),
                 'size'                 => $request->file('add_task_file')->getClientSize(),
                 'plugin_name'          => 'learningtasks',
+                'check_method'         => 'checkUploadPost',
                 'page_id'              => $page_id,
              ]);
 
@@ -1459,7 +1461,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 登録後はリダイレクト処理を呼ぶため、ここでは、view は呼ばない。
         // 新規登録後は、登録したデータの edit 画面を開きたいため、フォームで指定したリクエストの redirect_path を置き換える。
-        $request->merge(['redirect_path' => '/plugin/learningtasks/edit/' . $page_id . '/' . $frame_id . '/' . $post->id . '#frame-' . $frame_id]);
+        $request->merge(['redirect_path' => url('/') . '/plugin/learningtasks/edit/' . $page_id . '/' . $frame_id . '/' . $post->id . '#frame-' . $frame_id]);
 
         // 登録後は表示用の初期処理を呼ぶ。
         //return $this->index($request, $page_id, $frame_id);
@@ -2302,6 +2304,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
                 'size'                 => $request->file('upload_file')->getClientSize(),
                 'plugin_name'          => 'learningtasks',
+                'check_method'         => 'checkUploadUsersStatus',
                 'page_id'              => $page_id,
                 'private'              => 1,
              ]);
@@ -2728,6 +2731,96 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         return $this->editUsers($request, $page_id, $frame_id, $post_id);
+    }
+
+    /**
+     * 課題系ファイル閲覧チェック（ファイルダウンロード処理から呼ばれる）
+     */
+    public static function checkUploadPost($request, $upload)
+    {
+        // ファイルを閲覧する権限、条件があるかチェックする。
+
+        // 課題ファイル、試験問題ファイルなど、課題に紐づくファイルの閲覧権限のチェック
+        // upload_id でファイルを探せば、あれば 1つだけのはず。
+        $learningtasks_posts_file = LearningtasksPostsFiles::where('upload_id', $upload->id)->first();
+
+        // ない場合は、閲覧させない。
+        // もとは課題やレポートのアップロードだったけれど、課題やレポートが消されている。などを考慮。
+        if (empty($learningtasks_posts_file)) {
+            return [false, '対象ファイルなし'];
+        }
+
+        // 課題と課題セットを取得
+        $post = LearningtasksPosts::find($learningtasks_posts_file->post_id);
+        if (empty($post)) {
+            return [false, '課題（POST）なし'];
+        }
+        $learningtask = Learningtasks::find($post->learningtasks_id);
+        if (empty($learningtask)) {
+            return [false, '課題セットなし'];
+        }
+
+        // Bucket からFrame, Page とつないで、配置しているページを確認
+        // 複数ページに配置も可能なため、ページ単位のチェックが必要。
+        $frames = Frame::where('bucket_id', $learningtask->bucket_id)->get();
+
+        // LearningtasksTool クラスの各種メソッドを利用する。
+        foreach ($frames as $frame) {
+            // 課題管理ツールを利用してチェックする。
+            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post);
+
+            // 課題に対する権限はあるか。
+            // この結果がNG でも、複数ページの場合に次のページをチェックするため、return false はしない。
+            if ($tool->canPostView()) {
+                return [true, 'OK'];
+            }
+        }
+        return [false, '課題関係のファイルに対する権限なし'];
+    }
+
+    /**
+     * ファイル閲覧チェック（ファイルダウンロード処理から呼ばれる）
+     */
+    public static function checkUploadUsersStatus($request, $upload)
+    {
+        // ファイルを閲覧する権限、条件があるかチェックする。
+
+        // 提出ファイル、添削問題ファイルなど、提出に紐づくファイルの閲覧権限のチェック
+        // upload_id でファイルを探せば、あれば 1つだけのはず。
+        $learningtasks_users_status = LearningtasksUsersStatuses::where('upload_id', $upload->id)->first();
+
+        // ない場合は、閲覧させない。
+        // もとは課題やレポートのアップロードだったけれど、課題やレポートが消されている。などを考慮。
+        if (empty($learningtasks_users_status)) {
+            return [false, '対象ファイルなし'];
+        }
+
+        // 課題と課題セットを取得
+        $post = LearningtasksPosts::find($learningtasks_users_status->post_id);
+        if (empty($post)) {
+            return [false, '課題（POST）なし'];
+        }
+        $learningtask = Learningtasks::find($post->learningtasks_id);
+        if (empty($learningtask)) {
+            return [false, '課題セットなし'];
+        }
+
+        // Bucket からFrame, Page とつないで、配置しているページを確認
+        // 複数ページに配置も可能なため、ページ単位のチェックが必要。
+        $frames = Frame::where('bucket_id', $learningtask->bucket_id)->get();
+
+        // LearningtasksTool クラスの各種メソッドを利用する。
+        foreach ($frames as $frame) {
+            // 課題管理ツールを利用してチェックする。
+            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post);
+
+            // 提出に対する権限はあるか。
+            // この結果がNG でも、複数ページの場合に次のページをチェックするため、return false はしない。
+            if ($tool->canPostView()) {
+                return [true, 'OK'];
+            }
+        }
+        return [false, '提出関係のファイルに対する権限なし'];
     }
 
     /**

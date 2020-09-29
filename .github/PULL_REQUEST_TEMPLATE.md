@@ -1,11 +1,11 @@
 ## 概要（Overview）
-変更するに至った背景や目的、及び、変更内容
+<!-- 変更するに至った背景や目的、及び、変更内容 -->
 
 ## 関連Pull requests/Issues（Links to related pull requests or issues）
-関連するPR、Issuseがあればそのリンク
+<!-- 関連するPR、Issuseがあればそのリンク -->
 
 ## 参考（Reference）
-レビューするに当たって参考にできる情報があればそのリンク
+<!-- レビューするに当たって参考にできる情報があればそのリンク -->
 
 ## DB変更の有無（Whether DB is modified）
 Pull requestsにマイグレーションの追加があるか<br>

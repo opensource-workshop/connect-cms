@@ -50,6 +50,14 @@
                 @endif
                 <label class="custom-control-label" for="membership_flag_1">メンバーシップページ</label>
             </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if ($page->membership_flag == 2)
+                    <input type="radio" value="2" id="membership_flag_2" name="membership_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="2" id="membership_flag_2" name="membership_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="membership_flag_2">ログインユーザ全員参加</label>
+            </div>
         </div>
     </div>
 

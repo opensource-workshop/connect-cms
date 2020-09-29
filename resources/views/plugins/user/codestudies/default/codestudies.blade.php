@@ -13,9 +13,9 @@
     function submit_codestudies_run() {
         form_codestudies.codestudies_run = "1";
         @if ($codestudy->id)
-            form_codestudies.action = "/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}";
+            form_codestudies.action = "{{url('/')}}/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}";
         @else
-            form_codestudies.action = "/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}";
+            form_codestudies.action = "{{url('/')}}/plugin/codestudies/run/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
         @endif
         form_codestudies.submit();
     }
@@ -53,9 +53,9 @@
 @endif
 
 @if ($codestudy->id)
-    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}" method="POST" name="form_codestudies" class="">
+    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}" method="POST" name="form_codestudies" class="">
 @else
-    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}" method="POST" name="form_codestudies" class="">
+    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" name="form_codestudies" class="">
 @endif
 
     {{ csrf_field() }}
@@ -118,7 +118,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/codestudies/delete/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}" method="POST">
+                <form action="{{url('/')}}/plugin/codestudies/delete/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('プログラムを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
@@ -133,9 +133,9 @@
         <ol>
         @foreach($codestudies as $codestudy)
             @if($codestudy->title)
-                <li><a href="{{URL::to('/')}}/plugin/codestudies/edit/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}">{{$codestudy->title}}</a> [{{$codestudy->study_lang}}]</li>
+                <li><a href="{{URL::to('/')}}/plugin/codestudies/edit/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}">{{$codestudy->title}}</a> [{{$codestudy->study_lang}}]</li>
             @else
-                <li><a href="{{URL::to('/')}}/plugin/codestudies/edit/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}">無題</a> [{{$codestudy->study_lang}}]</li>
+                <li><a href="{{URL::to('/')}}/plugin/codestudies/edit/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}">無題</a> [{{$codestudy->study_lang}}]</li>
             @endif
         @endforeach
         </ol>

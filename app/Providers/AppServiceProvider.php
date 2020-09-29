@@ -178,6 +178,11 @@ class AppServiceProvider extends AuthServiceProvider
             return $this->check_authority($user, 'buckets.downloadCsv', $args);
         });
 
+        // CSVアップロード（CSVインポート）
+        Gate::define('buckets.uploadCsv', function ($user, $args = null) {
+            return $this->check_authority($user, 'buckets.uploadCsv', $args);
+        });
+
         // *** 記事の権限から確認
 
         // 記事追加
@@ -292,14 +297,15 @@ class AppServiceProvider extends AuthServiceProvider
             if ($this->check_role($user, 'role_arrangement')) {
                 return true;
             }
-            // 編集者
-            if ($this->check_role($user, 'role_reporter')) {
-                return true;
-            }
-            // モデレータ
-            if ($this->check_role($user, 'role_article')) {
-                return true;
-            }
+            // delete: 編集者, モデレータ権限は管理メニューで使える機能がないため、使わせない
+            // // 編集者
+            // if ($this->check_role($user, 'role_reporter')) {
+            //     return true;
+            // }
+            // // モデレータ
+            // if ($this->check_role($user, 'role_article')) {
+            //     return true;
+            // }
             // コンテンツ管理者
             if ($this->check_role($user, 'role_article_admin')) {
                 return true;

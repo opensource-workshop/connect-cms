@@ -267,8 +267,17 @@ class Page extends Model
             }
         }
 
+        // ログインユーザ全員参加の場合は、ログインしていればOKをチェックする。
+        if ($this->membership_flag == 2) {
+            if (!empty($user)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
         // メンバーシップページの場合は、参加条件をチェックする。
-        if ($this->membership_flag) {
+        if ($this->membership_flag == 1) {
             if ($check_page_roles && $check_page_roles->where('user_id', $user->id)->where('page_id', $this->id)->count() > 0) {
                 return true;
             } else {
@@ -492,6 +501,10 @@ class Page extends Model
 
         // パスワードチェック
         foreach ($page_tree as $page) {
+            // パスワードがあるページをチェックする。
+            if (empty($page->password)) {
+                continue;
+            }
             if ($page->password == $password) {
                 return true;
             }

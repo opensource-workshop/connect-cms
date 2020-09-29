@@ -26,7 +26,7 @@
 @can('posts.update', [[$inputs, $frame->plugin_name, $buckets]])
 <div class="row">
     <div class="col-12 text-right mb-1">
-        <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}'">
+        <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}'">
             <i class="far fa-edit"></i> 編集
         </button>
     </div>
@@ -37,9 +37,9 @@
 <div class="row">
     <div class="col-12 text-center mt-3">
         @if(Session::has('page_no.'.$frame_id))
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}?page={{Session::get('page_no.'.$frame_id)}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}?frame_{{$frame_id}}_page={{Session::get('page_no.'.$frame_id)}}#frame-{{$frame_id}}">
         @else
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame_id}}">
         @endif
             <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
         </a>

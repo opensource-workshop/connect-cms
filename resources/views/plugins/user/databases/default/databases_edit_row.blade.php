@@ -63,7 +63,7 @@
         {{-- 詳細ボタン --}}
         <button
             type="button"
-            class="btn btn-primary btn-xs cc-font-90 text-nowrap"
+            class="btn btn-success btn-xs cc-font-90 text-nowrap"
             {{-- 選択肢を保持する項目、且つ、選択肢の設定がない場合のみツールチップを表示 --}}
             @if (
                 ($column->column_type == DatabaseColumnType::radio ||
@@ -85,7 +85,7 @@
             class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
             >
-            <i class="fas fa-save"></i>
+            <i class="fas fa-check"></i>
         </button>
     </td>
 
@@ -113,10 +113,9 @@
                     <i class="far fa-list-alt"></i>
                     {{ $column->select_names }}
                 </div>
-            @elseif(!$column->caption && $column->select_count == 0)
-                {{-- 選択肢データがなく、キャプションの設定もない場合はツールチップ分、余白として改行する --}}
-                {{-- change: <td>タグ内に表示するもがなければ<td>タグ自体が無視されるので、改行不要 --}}
-                {{--<br>--}}
+            @elseif(!$column->caption && !$column->title_flag && $column->select_count == 0)
+                {{-- 選択肢データがなく、キャプションの設定・タイトル指定もない場合はツールチップ分、余白として改行する --}}
+                <br>
             @endif
 
             @if ($column->caption)

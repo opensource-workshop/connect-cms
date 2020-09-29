@@ -41,15 +41,16 @@
 
 @if (!$database->id && !$create_flag)
 @else
-<form action="{{url('/')}}/plugin/databases/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
-    {{ csrf_field() }}
 
-    {{-- create_flag がtrue の場合、新規作成するためにdatabases_id を空にする --}}
-    @if ($create_flag)
-        <input type="hidden" name="databases_id" value="">
-    @else
-        <input type="hidden" name="databases_id" value="{{$database->id}}">
-    @endif
+{{-- create_flag がtrue の場合、新規作成するためにdatabases_id を空にする --}}
+@if ($create_flag)
+<form action="{{url('/')}}/plugin/databases/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+    <input type="hidden" name="copy_databases_id" value="{{old('copy_databases_id', $database->id)}}">
+@else
+<form action="{{url('/')}}/plugin/databases/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$database->id}}#frame-{{$frame_id}}" method="POST" class="">
+    <input type="hidden" name="copy_databases_id" value="">
+@endif
+    {{ csrf_field() }}
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">データベース名 <label class="badge badge-danger">必須</label></label>
@@ -180,7 +181,7 @@
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
@@ -214,7 +215,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/databases/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$database_frame->databases_id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/databases/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$database->id}}#frame-{{$frame_id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

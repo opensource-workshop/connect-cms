@@ -19,7 +19,9 @@ return [
     'delete' => '削除',
     'to_confirm' => '確認画面へ',
     'cancel' => 'キャンセル',
-    'submit' => '送信',
+    // 'submit' => '送信',
+    'temporary_regist' => '仮登録',
+    'main_regist' => '本登録',
     'required' => '必須',
     'to_list' => '一覧へ',
     'next' => '次へ',
@@ -27,5 +29,6 @@ return [
     'enter_same_email' => '同じメールアドレスを入力',
     'not_match_confirmation_value' => 'が確認用の値と一致しません。',
     'entered_time_is_invalid' => '入力した時間の前後関係が不正です。',
-    'both_required' => '両方入力してください。'
+    'search_results' => '検索結果',
+    'cases' => '件',
 ];

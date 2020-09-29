@@ -51,6 +51,11 @@
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">DB選択</a>
     </li>
 @endif
+@if ($action == 'import')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">CSVインポート</span></span>
+    </li>
+@endif
 @if ($action == 'editBucketsRoles' || $action == 'saveBucketsRoles')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">権限設定</span></span>

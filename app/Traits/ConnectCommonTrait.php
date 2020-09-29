@@ -2,9 +2,9 @@
 
 namespace App\Traits;
 
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 
 use Session;
@@ -376,11 +376,15 @@ trait ConnectCommonTrait
         if (array_key_exists($path, config('connect.CC_SPECIAL_PATH_MANAGE'))) {
             return 2;
         }
+        // マイページ画面の特別なパス
+        if (array_key_exists($path, config('connect.CC_SPECIAL_PATH_MYPAGE'))) {
+            return 3;
+        }
         return false;
     }
 
     /**
-     *  管理プラグインのインスタンス生成
+     * 管理プラグインのインスタンス生成
      *
      * @param String $plugin_name
      * @return obj 生成したインスタンス
@@ -405,7 +409,32 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  管理プラグインの呼び出し
+     * マイページ用プラグインのインスタンス生成
+     *
+     * @param String $plugin_name
+     * @return obj 生成したインスタンス
+     */
+    private static function createMypageInstance($plugin_name)
+    {
+        // プラグイン毎に動的にnew するので、use せずにここでrequire する。
+        $file_path = base_path() . "/app/Plugins/Mypage/" . ucfirst($plugin_name) . "Mypage/" . ucfirst($plugin_name) . "Mypage.php";
+
+        // ファイルの存在確認
+        if (!file_exists($file_path)) {
+            abort(404);
+        }
+
+        // 指定されたプラグインファイルの読み込み
+        require $file_path;
+
+        /// インスタンスを生成して返す。
+        $class_name = "app\Plugins\Mypage\\" . ucfirst($plugin_name) . "Mypage\\" . ucfirst($plugin_name) . "Mypage";
+        $plugin_instance = new $class_name;
+        return $plugin_instance;
+    }
+
+    /**
+     * 管理プラグインの呼び出し
      *
      * @param String $plugin_name
      * @return プラグインからの戻り値(HTMLなど)
@@ -453,6 +482,36 @@ trait ConnectCommonTrait
     }
 
     /**
+     * マイページ用プラグインの呼び出し
+     *
+     * @param String $plugin_name
+     * @return プラグインからの戻り値(HTMLなど)
+     */
+    private function invokeMypage($request, $plugin_name, $action = 'index', $id = null, $sub_id = null)
+    {
+        // $action = 'index' が効かないため、改めてチェック
+        if (empty($action)) {
+            $action = 'index';
+        }
+
+        // ログインしているユーザー情報を取得
+        $user = Auth::user();
+
+        // 権限エラー
+        if (empty($user)) {
+            abort(403, 'ログインが必要です。');
+        }
+
+        // インスタンス生成
+        $plugin_instance = self::createMypageInstance($plugin_name);
+
+        // 指定されたアクションを呼ぶ。
+        // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
+        // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
+        return $plugin_instance->$action($request, $id, $sub_id);
+    }
+
+    /**
      *  指定したパスの呼び出し
      */
     public function callSpecialPath($path, $request)
@@ -460,8 +519,10 @@ trait ConnectCommonTrait
         // インスタンスを生成して呼び出す。
         if ($this->isSpecialPath($path) === 1) {
             $cc_special_path = config('connect.CC_SPECIAL_PATH');
-        } else {
+        } elseif ($this->isSpecialPath($path) === 2) {
             $cc_special_path = config('connect.CC_SPECIAL_PATH_MANAGE');
+        } elseif ($this->isSpecialPath($path) === 3) {
+            $cc_special_path = config('connect.CC_SPECIAL_PATH_MYPAGE');
         }
 
         $file_path = base_path() . '/' . $cc_special_path[$path]['plugin'] . '.php';
@@ -488,6 +549,8 @@ trait ConnectCommonTrait
             return $plugin_instance->invoke($plugin_instance, $request, $cc_special_path[$path]['method'], $cc_special_path[$path]['page_id'], $cc_special_path[$path]['frame_id']);
         } elseif ($this->isSpecialPath($path) === 2) {
             return $this->invokeManage($request, $cc_special_path[$path]['method']);
+        } elseif ($this->isSpecialPath($path) === 3) {
+            return $this->invokeMypage($request, $cc_special_path[$path]['method']);
         }
         return;
     }
@@ -778,6 +841,60 @@ trait ConnectCommonTrait
             }
         }
         return;
+    }
+
+    /**
+     *  外部ユーザ情報取得
+     *
+     */
+    public function getOtherAuthUser($request, $userid)
+    {
+        // Config チェック
+        $auth_method = Configs::where('name', 'auth_method')->first();
+
+        // 外部認証ではない場合は戻る
+        if (empty($auth_method) || $auth_method->value == '') {
+            // 外部認証の対象外
+            return array('code' => 100, 'message' => '', 'userid' => $userid, 'name' => '');
+        }
+
+        // NetCommons2 認証
+        if ($auth_method->value == 'netcommons2') {
+            // リクエストURLの組み立て
+            $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_getuser&userid=' . $userid . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5($auth_method['additional5'] . $auth_method['additional3']);
+            // Log::debug($request['password']);
+            // Log::debug($auth_method['additional3']);
+            // Log::debug(md5($request['password']));
+            // Log::debug(md5(md5($request['password']) . $auth_method['additional3']));
+            // Log::debug($request_url);
+
+            // NC2 をCall
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $request_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $return_json = curl_exec($ch);
+
+            // JSON データを複合化
+            $check_result = json_decode($return_json, true);
+
+            // 戻り値のチェック
+            if (is_array($check_result) &&
+                array_key_exists('check', $check_result) &&
+                array_key_exists('handle', $check_result)) {
+                if ($check_result['check'] == true) {
+                    // ユーザ情報が取得できた
+                    return array('code' => 200, 'message' => '', 'userid' => $userid, 'name' => $check_result['handle']);
+                } else {
+                    // ユーザ情報が取得できなかった
+                    return array('code' => 404, 'message' => $check_result['message'], 'userid' => $userid, 'name' => '');
+                }
+            } else {
+                // システム的なエラー
+                return array('code' => 500, 'message' => '戻り値の異常', 'userid' => $userid, 'name' => '');
+            }
+        }
+        // 外部認証の対象外
+        return array('code' => 100, 'message' => '', 'userid' => $userid, 'name' => '');
     }
 
     /**

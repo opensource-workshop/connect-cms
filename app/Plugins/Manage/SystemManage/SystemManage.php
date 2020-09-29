@@ -132,7 +132,8 @@ class SystemManage extends ManagePluginBase
              'additional1' => $request->auth_netcomons2_site_url,
              'additional2' => $request->auth_netcomons2_site_key,
              'additional3' => $request->auth_netcomons2_salt,
-            'additional4' => $request->auth_netcomons2_add_role]
+             'additional4' => $request->auth_netcomons2_add_role,
+             'additional5' => $request->auth_netcomons2_admin_password]
         );
 
         // システム管理画面に戻る

@@ -177,7 +177,7 @@
                                                 class="btn btn-primary cc-font-90 text-nowrap"
                                                 onclick="javascript:submit_update_select({{ $select->id }});"
                                                 >
-                                                <i class="fas fa-save"></i>
+                                                <i class="fas fa-check"></i>
                                             </button>
                                         </td>
 
@@ -646,7 +646,7 @@
         <div class="form-group text-center">
             {{-- キャンセルボタン --}}
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/databases/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'">
-                <i class="fas fa-times"></i> キャンセル
+                <i class="fas fa-chevron-left"></i> 前へ
             </button>
         </div>
     </form>

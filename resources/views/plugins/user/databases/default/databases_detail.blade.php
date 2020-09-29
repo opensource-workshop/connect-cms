@@ -41,7 +41,7 @@
                 <span class="badge badge-warning align-bottom">承認待ち</span>
             @endcan
             @can('posts.approval',[[$inputs, $frame->plugin_name, $buckets]])
-                <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}" method="post" name="form_approval" class="d-inline">
+                <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
                     {{ csrf_field() }}
                     <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                         <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
@@ -55,7 +55,7 @@
             @endif
         @endcan
 
-        <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}'">
+        <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}'">
             <i class="far fa-edit"></i> 編集
         </button>
     </div>
@@ -66,9 +66,9 @@
 <div class="row">
     <div class="col-12 text-center mt-3">
         @if(Session::has('page_no.'.$frame_id))
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}?page={{Session::get('page_no.'.$frame_id)}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}?frame_{{$frame_id}}_page={{Session::get('page_no.'.$frame_id)}}#frame-{{$frame_id}}">
         @else
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame_id}}">
         @endif
             <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
         </a>

@@ -18,6 +18,9 @@ class FaqsPosts extends Model
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = ['posted_at'];
 
+    // 更新する項目の定義
+    protected $fillable = ['contents_id', 'faqs_id', 'post_title', 'post_text', 'categories_id', 'posted_at'];
+
     /**
      *  リスト表示用タイトル
      *  改行を取り除いたもの。

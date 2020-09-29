@@ -11,7 +11,7 @@
 <script type="text/javascript">
     {{-- 項目追加のsubmit JavaScript --}}
     function submit_book_search() {
-        form_opac_book.action = "/plugin/opacs/save/{{$page->id}}/{{$frame_id}}";
+        form_opac_book.action = "{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
         form_opac_book.book_search.value = 1;
         form_opac_book.submit();
     }
@@ -27,10 +27,10 @@
 {{-- 登録用フォーム --}}
 @if (empty($opacs_books->id))
 {{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="" onsubmit="return false;"> --}}
-    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="">
+    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" id="form_opac_book" name="form_opac_book" class="">
 @else
 {{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="" onsubmit="return false;"> --}}
-    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="">
+    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="opacs_id" value="{{$opac_frame->opacs_id}}">
@@ -393,7 +393,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/opacs/destroy/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" method="POST">
+                <form action="{{url('/')}}/plugin/opacs/destroy/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
                 </form>

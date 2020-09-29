@@ -13,14 +13,14 @@
     <div class="row">
         <p class="text-right col-12">
             {{-- 新規登録ボタン --}}
-            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}'">
+            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}'">
                 <i class="far fa-edit"></i> 新規登録
             </button>
         </p>
     </div>
 @endcan
 
-<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
     {{-- 検索 --}}
@@ -46,7 +46,7 @@
             <div class="col-sm">
                 <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
                 <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
-                @if($select_column->column_type == 'checkbox')
+                @if($select_column->column_type == DatabaseColumnType::checkbox)
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART">
                 @else
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">

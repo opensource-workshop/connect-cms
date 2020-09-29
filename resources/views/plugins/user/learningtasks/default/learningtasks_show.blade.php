@@ -49,7 +49,7 @@
         <div class="col-sm-9">
             <form action="{{url('/')}}/redirect/plugin/learningtasks/switchUser/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST">
                 {{ csrf_field() }}
-                <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                 <select class="form-control mb-1" name="student_id" onchange="javascript:submit(this.form);">
                     <option value="">評価する受講者を選んでください。</option>
                     @foreach ($tool->getStudents() as $student)
@@ -152,7 +152,7 @@
                 @if ($tool->canReportUpload($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                         <div class="form-group row mb-1">
 
                             <label class="col-sm-3 text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
@@ -197,7 +197,7 @@
                 @if ($tool->canReportEvaluate($post))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus2/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status2" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 
                         @if ($tool->checkFunction('use_report_evaluate_file'))
                         <div class="form-group row mb-1">
@@ -258,7 +258,7 @@
                 @if ($tool->canReportComment($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus3/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status3" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 
                         @if ($tool->checkFunction('use_report_reference_file'))
                         <div class="form-group row mb-1">
@@ -329,7 +329,7 @@
                     @if ($tool->canExamination($post))
                         <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus4/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status4">
                             {{ csrf_field() }}
-                            <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                            <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                             <div class="form-group row mb-3">
                                 <label class="col-sm-3 text-sm-right">試験日</label>
                                 <div class="col-sm-9">
@@ -470,7 +470,7 @@
                 @if ($tool->canExaminationUpload($post))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus5/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status5" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 
                         @if ($tool->checkFunction('use_examination_file'))
                         <div class="form-group row mb-1">
@@ -518,7 +518,7 @@
                 @if ($tool->canExaminationEvaluate($post))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus6/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status6" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 
                         @if ($tool->checkFunction('use_examination_evaluate_file'))
                         <div class="form-group row mb-1">
@@ -578,7 +578,7 @@
                 @if ($tool->canExaminationComment($post))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus7/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status7" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 
                         @if ($tool->checkFunction('use_examination_reference_file'))
                         <div class="form-group row mb-1">
@@ -627,11 +627,45 @@
     <h5 class="mb-1"><span class="badge badge-secondary mt-3">総合評価</span></h5>
     <div class="card">
         <div class="card-body">
-            <div class="card mb-3">
-                <div class="card-body">
-                    {{$tool->getEvaluateStatus($post->id)}}
-                </div>
-            </div>
+
+            @foreach($tool->getEvaluateStatuses($post->id) as $evaluate_status)
+            <table class="table table-bordered table-sm report_table">
+            <tbody>
+                <tr>
+                    <th>{{$evaluate_status->getStstusPostTimeName()}}</th>
+                    <td>{{$evaluate_status->created_at}}</td>
+                </tr>
+                @if ($tool->isUseFunction($evaluate_status->task_status, 'file'))
+                <tr>
+                    <th>{{$evaluate_status->getUploadFileName()}}</th>
+                    @if (empty($evaluate_status->upload_id))
+                    <td>なし</td>
+                    @else
+                    <td><a href="{{url('/')}}/file/{{$evaluate_status->upload_id}}" target="_blank">{{$evaluate_status->upload->client_original_name}}</a></td>
+                    @endif
+                </tr>
+                @endif
+                @if ($evaluate_status->hasExamination())
+                <tr>
+                    <th>試験日時</th>
+                    <td>{{$tool->getViewDate($evaluate_status)}}</td>
+                </tr>
+                @endif
+                @if ($evaluate_status->hasGrade())
+                <tr>
+                    <th>評価</th>
+                    <td><span class="text-danger font-weight-bold">{{$evaluate_status->grade}}</span></td>
+                </tr>
+                @endif
+                @if ($tool->isUseFunction($evaluate_status->task_status, 'comment'))
+                <tr>
+                    <th>コメント</th>
+                    <td>{!!nl2br(e($evaluate_status->comment))!!}</td>
+                </tr>
+                @endif
+            </tbody>
+            </table>
+            @endforeach
 
             @if ($tool->checkFunction('use_evaluate') && $tool->isTeacher() && $tool->canEvaluateView($post))
                 <h5 class="mb-1"><span class="badge badge-secondary" for="status8">評価</span></h5>
@@ -639,7 +673,7 @@
                 @if ($tool->canEvaluate($post->id))
                     <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus8/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status6" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 
                         @if ($tool->checkFunction('use_evaluate_file'))
                         <div class="form-group row mb-1">
@@ -730,9 +764,9 @@
                 <span class="badge badge-warning align-bottom">承認待ち</span>
             @endcan
             @can('posts.approval',[[$post, 'learningtasks', 'preview_off']])
-                <form action="{{url('/')}}/redirect/plugin/learningtasks/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}" method="post" name="form_approval" class="d-inline">
+                <form action="{{url('/')}}/redirect/plugin/learningtasks/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                     {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                     <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                         <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
                     </button>
@@ -745,7 +779,7 @@
                     <span class="badge badge-warning align-bottom">一時保存</span>
                 @endcan
             @endif
-            <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
+            <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
                 <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
             </a>
         @endcan
@@ -760,17 +794,17 @@
     <div class="col-12 text-center mt-3">
         {{--
         @if (isset($before_post))
-        <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}" class="mr-1">
+        <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
             <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="hidden-xs">前へ</span></span>
         </a>
         @endif
         --}}
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}">
             <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">一覧へ</span></span>
         </a>
         {{--
         @if (isset($after_post))
-        <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$after_post->id}}" class="mr-1">
+        <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$after_post->id}}#frame-{{$frame->id}}" class="mr-1">
             <span class="btn btn-info"><i class="fas fa-chevron-right"></i> <span class="hidden-xs">次へ</span></span>
         </a>
         @endif

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Redirect;
 
 use App\Http\Controllers\Controller;
 
@@ -16,6 +17,8 @@ use App\Models\Core\Configs;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
+use App\Models\Common\Permalink;
+use App\Models\Migration\MigrationMapping;
 
 use File;
 use Storage;
@@ -88,7 +91,7 @@ class ConnectController extends Controller
     /**
      *  コンストラクタ
      */
-    function __construct(Request $request, Router $router)
+    public function __construct(Request $request, Router $router)
     {
         // 別メソッドで使用するために保持しておく。
         $this->router = $router;
@@ -106,12 +109,12 @@ class ConnectController extends Controller
             $this->frame_id = $allRouteParams['frame_id'];
         }
 
-        // ページID が渡ってきた場合
+        // ページの特定
         if (!empty($this->page_id)) {
-             $this->page = Page::where('id', $this->page_id)->first();
-        }
-        // ページID が渡されなかった場合、URL から取得
-        else {
+            // ページID が渡ってきた場合
+            $this->page = Page::where('id', $this->page_id)->first();
+        } else {
+            // ページID が渡されなかった場合、URL から取得
             $this->page = $this->getCurrentPage();
         }
 
@@ -159,6 +162,12 @@ class ConnectController extends Controller
             return;
         }
 
+        // 特別なパス（マイページ画面の最初など）は404 扱いにしない。
+        if (array_key_exists($request->path(), config('connect.CC_SPECIAL_PATH_MYPAGE'))) {
+            // 対象外の処理なので、戻る
+            return;
+        }
+
         // 特別なパス（特殊な一般画面など）は404 扱いにしない。
         if (array_key_exists($request->path(), config('connect.CC_SPECIAL_PATH'))) {
             // 対象外の処理なので、戻る
@@ -185,6 +194,37 @@ class ConnectController extends Controller
         } else {
             // ページありとして、戻る
             return;
+        }
+
+        // 固定URL があれば、詳細処理にリダイレクトする。
+        $allRouteParams = $router->getCurrentRoute()->parameters();
+        if (array_key_exists('all', $allRouteParams) && !empty($allRouteParams['all'])) {
+            // 固定URL 分解
+            $route_param_all = $allRouteParams['all'];
+            $route_param_all_no_block = substr($route_param_all, 0, stripos($route_param_all, '-'));
+
+            // 固定URL がデータとして存在するか。
+            if (empty($route_param_all_no_block)) {
+                $permalink = Permalink::where('short_url', $route_param_all)->first();
+            } else {
+                $permalink = Permalink::where('short_url', $route_param_all)->orWhere('short_url', $route_param_all_no_block)->first();
+            }
+
+            // NetCommons2 の固定URL の処理
+            if (!empty($permalink) && $permalink->migrate_source == 'NetCommons2') {
+                // ページとフレームを探す。
+                $block_id = substr($route_param_all, stripos($route_param_all, '-') + 1);
+                if (!empty($block_id)) {
+                    $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $block_id)->first();
+                    if (!empty($frame_mapping)) {
+                        $frame = Frame::find($frame_mapping->destination_key);
+                        if (!empty($frame)) {
+                            // 見つけた詳細にリダイレクトする。
+                            Redirect::to('/plugin/' . $permalink->plugin_name . '/' . $permalink->action . '/' . $frame->page_id . '/' . $frame->id. '/' . $permalink->unique_id . "#frame-" . $frame->id)->send();
+                        }
+                    }
+                }
+            }
         }
 
         // 表示中の他言語を取得（設定がない場合は空が返る）
@@ -422,9 +462,8 @@ class ConnectController extends Controller
                 if ($layouts_info[$frame['area_id']]['frames'][0]['page_id'] == $frame['page_id']) {
                     $layouts_info[$frame['area_id']]['frames'][] = $frame;
                 }
-            }
-            // 子から遡って最初に出てきた共通エリアのフレーム
-            else {
+            } else {
+                // 子から遡って最初に出てきた共通エリアのフレーム
                 $layouts_info[$frame['area_id']]['frames'][] = $frame;
             }
         }

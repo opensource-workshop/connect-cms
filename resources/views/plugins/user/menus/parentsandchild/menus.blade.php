@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 @if ($pages)
-<div class="list-group" style="margin-bottom: 0;">
+<div class="list-group mb-0">
     @foreach($pages as $key => $page)
         @php
             if (isset($index)) {
@@ -23,7 +23,7 @@
     @endforeach
 
     {{-- 子供のページがある場合 --}}
-    @if (count($pages[$index]->children) > 0)
+    @if (isset($index) && count($pages[$index]->children) > 0)
         @php
             $tmp_page[] = $pages[$index];
             $pages=$tmp_page;
@@ -32,7 +32,11 @@
             @if($page_obj->parent_id == null)
                 {{-- 非表示のページは対象外 --}}
                 @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
+                    @if ($page_obj->id == $page_id)
+                    <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item active">{{$page_obj->page_name}}</a>
+                    @else
                     <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item">{{$page_obj->page_name}}</a>
+                    @endif
                     @if (isset($page_obj->children))
                         {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
                         @include('plugins.user.menus.parentsandchild.menu_children',['children' => $page_obj->children])

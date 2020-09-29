@@ -126,8 +126,8 @@
                                     <th class="text-center">行<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="行グループ">...</a></th>
                                     <th class="text-center">列<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="列グループ">...</a></th>
                                     <th class="text-center text-nowrap">詳細
-                                        <a href="https://connect-cms.jp/manual/user/database#frame-125" target="_brank">
-                                            <i class="fas fa-info-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i>
+                                        <a href="https://connect-cms.jp/manual/user/database#frame-179" target="_brank">
+                                            <i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i>
                                         </a>
                                     </th>
                                     <th class="text-center text-nowrap">更新</th>

@@ -432,12 +432,20 @@ class PageManage extends ManagePluginBase
         // ヘッダー項目のエラーチェック
         $error_msgs = $this->checkHeader($header_columns);
         if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
+
             return ( $this->import($request, $page_id, $error_msgs) );
         }
 
         // データ項目のエラーチェック
         $error_msgs = $this->checkPageline($fp, $error_msgs);
         if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
+
             return ( $this->import($request, $page_id, $error_msgs) );
         }
 

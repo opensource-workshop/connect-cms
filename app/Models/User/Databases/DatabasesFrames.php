@@ -5,8 +5,13 @@ namespace App\Models\User\Databases;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
+use App\UserableNohistory;
+
 class DatabasesFrames extends Model
 {
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
+
     // 更新する項目の定義
     protected $fillable = [
         'databases_id',
@@ -17,6 +22,9 @@ class DatabasesFrames extends Model
         'default_sort_flag',
         'view_count',
         'default_hide',
+        'use_filter_flag',
+        'filter_search_keyword',
+        'filter_search_columns',
         'view_page_id',
         'view_frame_id',
         'created_at',

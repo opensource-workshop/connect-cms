@@ -298,6 +298,13 @@ a.cc-cursor-text:hover {
     z-index: 9999;
 }
 
+/* フッター
+------------------------------------- */
+.footer_494949 {
+    background-color: #494949;
+    color: #ffffff;
+}
+
 /* Card の中のUL
 ------------------------------------- */
 .card ul {

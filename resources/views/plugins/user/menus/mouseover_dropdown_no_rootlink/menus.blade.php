@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 @if ($pages)
-    <ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
+    <ul class="nav nav-tabs nav-justified d-none d-md-flex">
     @foreach($pages as $page_obj)
 
         {{-- 非表示のページは対象外 --}}
@@ -21,7 +21,7 @@
 
                 <li class="nav-item dropdown {{$page_obj->getClass()}}" onmouseleave="$(this).find('a.nav-link').click();$(this).find('a.nav-link').blur();">
                 {{-- カレント --}}
-                @if ($page_obj->id == $page_id)
+                @if ($ancestors->contains('id', $page_obj->id))
                     <a class="nav-link active dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
                 @else
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
@@ -44,8 +44,13 @@
                     </div>
                 </li>
             @else
-                <li class="nav-item active">
+                <li class="nav-item">
+                        {{-- カレント --}}
+                    @if ($ancestors->contains('id', $page_obj->id))
+                    <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
+                    @else
                     <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
+                    @endif
                         {{$page_obj->page_name}}
                     </a>
                 </li>

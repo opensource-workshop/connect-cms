@@ -16,9 +16,9 @@
 <script type="text/javascript">
     function save_action() {
         @if (empty($blogs_posts->id))
-            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
         @else
-            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}";
         @endif
         form_blogs_posts{{$frame_id}}.submit();
     }
@@ -26,9 +26,9 @@
 
 {{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
+    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
+    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
@@ -144,7 +144,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/blogs/delete/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}" method="POST">
+                <form action="{{url('/')}}/plugin/blogs/delete/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

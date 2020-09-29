@@ -10,10 +10,10 @@
 
 @section("plugin_contents_$frame->id")
 
-<form action="{{url('/')}}/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}" method="POST">
+<form action="{{url('/')}}/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{csrf_field()}}
     <div class="form-group mb-0">
-        <select class="form-control" name="session_theme" class="form-control" onchange="javascript:submit(this.form);">
+        <select class="form-control" name="session_theme" title="テーマの選択">
             <option value="session:clear">元に戻す</option>
             @foreach($themes as $theme)
                 @isset($theme['themes'])
@@ -29,8 +29,14 @@
         </select>
 
         <div class="custom-control custom-checkbox mt-2">
-            <input type="checkbox" name="session_header_black" value="1" class="custom-control-input" id="session_header_black" @if(old('session_header_black', $session_header_black)) checked=checked @endif onchange="javascript:submit(this.form);">
+            <input type="checkbox" name="session_header_black" value="1" class="custom-control-input" id="session_header_black" @if(old('session_header_black', $session_header_black)) checked=checked @endif title="ヘッダーは黒にする">
             <label class="custom-control-label" for="session_header_black">ヘッダーは黒にする</label>
+        </div>
+
+        <div class="text-center mt-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> 変更
+            </button>
         </div>
 
     </div>

@@ -4,8 +4,13 @@ namespace App\Models\User\Databases;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\UserableNohistory;
+
 class DatabasesColumns extends Model
 {
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
+
     // 更新する項目の定義
     protected $fillable = [
         'databases_id',
@@ -32,5 +37,34 @@ class DatabasesColumns extends Model
     {
         // 1対多
         return $this->hasMany('App\Models\User\Databases\DatabasesColumnsRole', 'databases_columns_id', 'id');
+    }
+
+    /**
+     * 入力しないカラム型か
+     */
+    public static function isNotInputColumnType($column_type)
+    {
+        // 登録日型・更新日型・公開日型・表示順型は入力しない
+        if ($column_type == \DatabaseColumnType::created ||
+                $column_type == \DatabaseColumnType::updated ||
+                $column_type == \DatabaseColumnType::posted ||
+                $column_type == \DatabaseColumnType::display) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ファイルタイプのカラム型か
+     */
+    public static function isFileColumnType($column_type)
+    {
+        // ファイルタイプ
+        if ($column_type == \DatabaseColumnType::file ||
+                $column_type == \DatabaseColumnType::image ||
+                $column_type == \DatabaseColumnType::video) {
+            return true;
+        }
+        return false;
     }
 }

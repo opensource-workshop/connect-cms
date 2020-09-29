@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 @if ($pages)
-    <ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
+    <ul class="nav nav-tabs nav-justified d-none d-md-flex">
     @foreach($pages as $page_obj)
 
         {{-- 非表示のページは対象外 --}}
@@ -19,7 +19,7 @@
 
                     <li class="nav-item dropdown">
                     {{-- カレント --}}
-                    @if ($page_obj->id == $page_id)
+                    @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
                     @else
                         <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
@@ -42,8 +42,13 @@
                         </div>
                     </li>
                 @else
-                    <li class="nav-item active">
+                    <li class="nav-item">
+                        {{-- カレント --}}
+                        @if ($ancestors->contains('id', $page_obj->id))
+                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}">
+                        @else
                         <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
+                        @endif
                             {{$page_obj->page_name}}
                         </a>
                     </li>

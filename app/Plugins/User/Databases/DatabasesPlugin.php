@@ -4,17 +4,19 @@ namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+// use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Validation\Rule;
 
 use DB;
 use Carbon\Carbon;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
-//use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
@@ -27,9 +29,16 @@ use App\Models\User\Databases\DatabasesInputCols;
 use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
 use App\Rules\CustomVali_DatesYm;
+use App\Rules\CustomVali_CsvImage;
+use App\Rules\CustomVali_CsvExtensions;
 
-use App\Mail\ConnectMail;
+// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
+
+use App\Utilities\Csv\SjisToUtf8EncodingFilter;
+use App\Utilities\Csv\CsvUtils;
+use App\Utilities\Zip\UnzipUtils;
+use App\Utilities\String\StringUtils;
 
 /**
  * データベース・プラグイン
@@ -267,8 +276,9 @@ class DatabasesPlugin extends UserPluginBase
         $request->flash();
 
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-        if ($request->has('page')) {
-            $request->session()->put('page_no.'.$frame_id, $request->page);
+        $frame_page = "frame_{$frame_id}_page";
+        if ($request->has($frame_page)) {
+                $request->session()->put('page_no.'.$frame_id, $request->$frame_page);
         } else {
             // 指定がなければセッションから削除
             $request->session()->forget('page_no.'.$frame_id);
@@ -276,6 +286,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
+        // Log::debug(var_export($database, true));
+        // -> DB->first();でデータなしの場合、NULLが返る
+        // -> [2020-09-02 18:05:43] local.DEBUG: NULL
 
 
         $setting_error_messages = null;
@@ -289,11 +302,22 @@ class DatabasesPlugin extends UserPluginBase
              * ※データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合はリテラル「mail_setting_error」が返る
              */
             $databases_columns = $this->getDatabasesColumns($database);
+            // Log::debug(var_export($databases_columns, true));
+            // -> DB->get();でデータなしの場合、Collectionクラスが返る
+            // ->
+            // [2020-09-02 18:02:46] local.DEBUG: Illuminate\Database\Eloquent\Collection::__set_state(array(
+            //    'items' =>
+            //    array (
+            //    ),
+            //  ))
 
             if ($databases_columns == 'mail_setting_error') {
+                // memo: フォームの名残。データベース設定画面に「登録者にメール送信する」項目はないため、ここに入る事をはない想定。
                 // データベース設定で「登録者にメール送信あり」設定にも関わらず、項目内にメールアドレス型が存在しない場合
                 $setting_error_messages[] = 'メールアドレス型の項目を設定してください。（データベースの設定「登録者にメール送信する」と関連）';
-            } elseif (!$databases_columns) {
+            // bugfix: DB->get();でデータなしの場合、Collectionクラスが返るため、CollectionクラスのisEmpty()を使う
+            // } elseif (!$databases_columns) {
+            } elseif ($databases_columns->isEmpty()) {
                 // 項目データがない場合
                 $setting_error_messages[] = 'フレームの設定画面から、項目データを作成してください。';
             }
@@ -343,6 +367,9 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
+            // debug:確認したいSQLの前にこれを仕込んで
+            // DB::enableQueryLog();
+
             // ソートなし or ソートするカラムIDが数値じゃない（=入力なしと同じ扱いにする）
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
                 $inputs_query = DatabasesInputs::where('databases_id', $database->id);
@@ -359,23 +386,25 @@ class DatabasesPlugin extends UserPluginBase
             // 権限によって表示する記事を絞る
             $inputs_query = $this->appendAuthWhere($inputs_query, 'databases_inputs');
 
-            // 権限のよって非表示columのdatabases_columns_id配列を取得する
-            $hide_columns_ids = $this->getHideColumnsIds($columns, 'list_detail_display_flag');
+            // 権限によって非表示columのdatabases_columns_id配列を取得する
+            $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
 
-            // キーワード指定の追加
-            if (!empty(session('search_keyword.'.$frame_id))) {
-                $inputs_query->whereIn('databases_inputs.id', function ($query) use ($frame_id, $hide_columns_ids) {
-                               // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
-                               $query->select('databases_inputs_id')
-                                     ->from('databases_input_cols')
-                                     ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                     ->where('databases_columns.search_flag', 1)
-                                     ->whereNotIn('databases_columns.id', $hide_columns_ids)
-                                     ->where('value', 'like', '%' . session('search_keyword.'.$frame_id) . '%')
-                                     ->groupBy('databases_inputs_id');
-                });
+            $databases_columns_ids = [];
+            foreach ($databases_columns as $databases_column) {
+                $databases_columns_ids[] = $databases_column->id;
             }
 
+            // キーワード指定の追加
+            // 絞り込み制御ON、絞り込み検索キーワードあり
+            if (!empty($databases_frames->use_filter_flag) && !empty($databases_frames->filter_search_keyword)) {
+                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, $databases_frames->filter_search_keyword);
+            }
+            // 画面のキーワード指定
+            if (!empty(session('search_keyword.'.$frame_id))) {
+                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id));
+            }
+
+            // [TODO] データベースプラグイン単体では $request->search_options をセットしておらず「オプション検索指定」使っていない。今は残しておき、今後整理する予定
             // オプション検索指定の追加
             if ($request->has('search_options') && is_array($request->search_options)) {
                 // 指定をばらす
@@ -429,40 +458,16 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 絞り込み指定の追加
+            // 絞り込み制御ON、絞り込み指定あり
+            if (!empty($databases_frames->use_filter_flag) && !empty($databases_frames->filter_search_columns)) {
+                $inputs_query = DatabasesTool::appendSearchColumns('databases_inputs.id', $inputs_query, json_decode($databases_frames->filter_search_columns, true));
+            }
+            // 画面の絞り込み指定
             if (!empty(session('search_column.'.$frame_id))) {
-                foreach (session('search_column.'.$frame_id) as $search_column) {
-                    if ($search_column && $search_column['columns_id'] && $search_column['value']) {
-                        $inputs_query->whereIn('databases_inputs.id', function ($query) use ($search_column) {
-                               // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。
-                               $query->select('databases_inputs_id')
-                                     ->from('databases_input_cols')
-                                     ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                     ->where('databases_columns_id', $search_column['columns_id']);
-
-                            if ($search_column['where'] == 'PART') {
-                                $query->where('value', 'LIKE', '%' . $search_column['value'] . '%');
-                            } else {
-                                $query->where('value', $search_column['value']);
-                            }
-                            $query->groupBy('databases_inputs_id');
-                        });
-                    }
-                }
+                $inputs_query = DatabasesTool::appendSearchColumns('databases_inputs.id', $inputs_query, session('search_column.'.$frame_id));
             }
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
-            // if ($sort_column_id == 'random' && $sort_column_order == 'session') {
-            //     $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
-            // } elseif ($sort_column_id == 'random' && $sort_column_order == 'every') {
-            //     $inputs_query->inRandomOrder();
-            // } elseif ($sort_column_id == 'created' && $sort_column_order == 'asc') {
-            //     $inputs_query->orderBy('databases_inputs.created_at', 'asc');
-            // } elseif ($sort_column_id == 'created' && $sort_column_order == 'desc') {
-            //     $inputs_query->orderBy('databases_inputs.created_at', 'desc');
-            // } elseif ($sort_column_id == 'updated' && $sort_column_order == 'asc') {
-            //     $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
-            // } elseif ($sort_column_id == 'updated' && $sort_column_order == 'desc') {
-            //     $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
             if ($sort_column_id == \DatabaseSortFlag::random && $sort_column_order == \DatabaseSortFlag::order_session) {
                 $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
             } elseif ($sort_column_id == \DatabaseSortFlag::random && $sort_column_order == \DatabaseSortFlag::order_every) {
@@ -475,6 +480,10 @@ class DatabasesPlugin extends UserPluginBase
                 $inputs_query->orderBy('databases_inputs.updated_at', 'asc');
             } elseif ($sort_column_id == \DatabaseSortFlag::updated && $sort_column_order == \DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.updated_at', 'desc');
+            } elseif ($sort_column_id == \DatabaseSortFlag::display && $sort_column_order == \DatabaseSortFlag::order_asc) {
+                $inputs_query->orderBy('databases_inputs.display_sequence', 'asc');
+            } elseif ($sort_column_id == \DatabaseSortFlag::display && $sort_column_order == \DatabaseSortFlag::order_desc) {
+                $inputs_query->orderBy('databases_inputs.display_sequence', 'desc');
             } elseif ($sort_column_id == \DatabaseSortFlag::posted && $sort_column_order == \DatabaseSortFlag::order_asc) {
                 $inputs_query->orderBy('databases_inputs.posted_at', 'asc');
             } elseif ($sort_column_id == \DatabaseSortFlag::posted && $sort_column_order == \DatabaseSortFlag::order_desc) {
@@ -493,6 +502,9 @@ class DatabasesPlugin extends UserPluginBase
             }
             $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
             // <--- 登録データ行の取得
+
+            // debug: sql dumpする
+            // Log::debug(var_export(DB::getQueryLog(), true));
 
             // 登録データ詳細の取得
             $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
@@ -573,7 +585,7 @@ class DatabasesPlugin extends UserPluginBase
         $group_rows_cols_null_columns = [];
 
         // 権限のよって非表示columのdatabases_columns_id配列を取得する
-        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'list_detail_display_flag');
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($databases_columns, 'list_detail_display_flag');
 
         // 表示しないcolumnは、group_rows_cols_columnsに含まない。
         //
@@ -603,6 +615,13 @@ class DatabasesPlugin extends UserPluginBase
         }
         // Log::debug(var_export($group_rows_cols_columns, true));
 
+        // 行を数値でソート
+        ksort($group_rows_cols_columns, SORT_NUMERIC);
+        foreach ($group_rows_cols_columns as &$group_row_column) {
+            // 列を数値でソート
+            ksort($group_row_column, SORT_NUMERIC);
+        }
+
         // 行グループ・列グループどっちも設定なし配列を、設定あり配列のお尻に追加し直す
         foreach ($group_rows_cols_null_columns as $group_rows_cols_null_column) {
             $group_rows_cols_columns[] = $group_rows_cols_null_column;
@@ -622,108 +641,12 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 権限のよって非表示columのdatabases_columns_id配列を取得する
-        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
 
         // 表示しないcolumnは、group_rows_cols_columnsに含まない。
         $disp_databases_columns = $databases_columns->whereNotIn('id', $hide_columns_ids);
 
         return $disp_databases_columns;
-    }
-
-    /**
-     * 権限のよって非表示columのdatabases_columns_id配列を取得する
-     * $display_flag_column_name = regist_edit_display_flag|list_detail_display_flag
-     */
-    private function getHideColumnsIds($databases_columns, $display_flag_column_name = 'list_detail_display_flag')
-    {
-        if (empty($databases_columns)) {
-            return [];
-        }
-
-        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-        // Log::debug('role_article_admin: '.var_export($this->isCan('role_article_admin'), true));
-        // Log::debug('role_arrangement: '.var_export($this->isCan('role_arrangement'), true));
-        // Log::debug('role_article: '.var_export($this->isCan('role_article'), true));
-        // Log::debug('role_approval: '.var_export($this->isCan('role_approval'), true));
-        // Log::debug('role_reporter: '.var_export($this->isCan('role_reporter'), true));
-
-        $databases_hide_columns_ids = [];
-
-        foreach ($databases_columns as $databases_column) {
-            if ($this->isCan('role_article_admin')) {
-                // コンテンツ管理者のユーザは、必ず当カラムを表示します。
-                continue;
-            }
-
-            // 権限で表示カラムを制御
-            if (!$databases_column->role_display_control_flag) {
-                // 制御しない表示カラムはスルー
-                continue;
-            }
-
-            // 権限で表示カラムを制御する場合、一度に非表示扱いにする
-            // 該当権限で表示フラグをゲットできたら、array keyを指定して非表示扱いから取り除く
-            $databases_hide_columns_ids[$databases_column->id] = $databases_column->id;
-
-            // カラムの表示権限データ取得
-            $databases_columns_roles = $databases_column->databasesColumnsRoles;
-
-            if (Auth::user()) {
-                // ログイン済み
-                foreach ($databases_columns_roles as $databases_columns_role) {
-                    if ($this->isCan('role_article') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_article &&
-                            $databases_columns_role->$display_flag_column_name == 1) {
-                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-                        // Log::debug(var_export('モデレータ', true));
-
-                        // モデレータ権限あり & モデレータ表示のcolumn
-                        // 非表示扱いから取り除く(=表示する)
-                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
-                        continue 2;
-                    } elseif ($this->isCan('role_reporter') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_reporter &&
-                            $databases_columns_role->$display_flag_column_name == 1) {
-                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-                        // Log::debug(var_export('編集者権限', true));
-
-                        // 編集者権限あり & 編集者表示のcolumn
-                        // 非表示扱いから取り除く(=表示する)
-                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
-                        continue 2;
-                    } elseif (!$this->isCan('role_arrangement') &&
-                            !$this->isCan('role_article') &&
-                            !$this->isCan('role_approval') &&
-                            !$this->isCan('role_reporter') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::no_role &&
-                            $databases_columns_role->$display_flag_column_name == 1) {
-                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-                        // Log::debug(var_export('権限なし', true));
-
-                        // 権限なし(プラグイン管理者・モデレータ・承認者・編集者のいずれの権限も付いていない)
-                        // & 権限なし表示のcolumn
-                        // 非表示扱いから取り除く(=表示する)
-                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
-                        continue 2;
-                    }
-                }
-            } else {
-                // 未ログイン
-                foreach ($databases_columns_roles as $databases_columns_role) {
-                    // 未ログインで非表示のcolumnは、取り除く
-                    if ($databases_columns_role->role_name == \DatabaseColumnRoleName::not_login &&
-                            $databases_columns_role->$display_flag_column_name == 1) {
-                        // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-                        // Log::debug(var_export('未ログイン', true));
-
-                        // 非表示扱いから取り除く(=表示する)
-                        unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
-                        continue 2;
-                    }
-                }
-            }
-        }
-        return $databases_hide_columns_ids;
     }
 
     /**
@@ -760,6 +683,7 @@ class DatabasesPlugin extends UserPluginBase
                 session(['sort_column_id.'.$frame_id    => '']);
                 session(['sort_column_order.'.$frame_id => '']);
             }
+            // var_dump($sort_column_parts);
         }
         return $this->index($request, $page_id, $frame_id);
     }
@@ -773,7 +697,6 @@ class DatabasesPlugin extends UserPluginBase
         $database = $this->getDatabases($frame_id);
 
         // 登録データ行の取得
-        // $inputs = DatabasesInputs::where('id', $id)->first();
         $inputs = $this->getDatabasesInputs($id);
 
         // データがあることを確認
@@ -883,37 +806,16 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     * （再帰関数）入力値の前後をトリムする
-     *
-     * @param $request
-     * @return void
-     */
-    private static function trimInput($value)
-    {
-        if (is_array($value)) {
-            // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
-            $value = array_map(['self', 'trimInput'], $value);
-        } elseif (is_string($value)) {
-            $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
-        }
-
-        return $value;
-    }
-
-    /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
      * @param [array] $validator_array 二次元配列
      * @param [App\Models\User\Databases\DatabasesColumns] $databases_column
-     * @param Request $request
-     * @return void
+     * @return array
      */
-    private function getValidatorRule($validator_array, $databases_column, $request)
+    private function getValidatorRule($validator_array, $databases_column)
     {
-        // 登録日型・更新日型・公開日型は入力表示しないため、バリデータチェックしない
-        if ($databases_column->column_type == \DatabaseColumnType::created ||
-                $databases_column->column_type == \DatabaseColumnType::updated ||
-                $databases_column->column_type == \DatabaseColumnType::posted) {
+        // 入力しないカラム型は、バリデータチェックしない
+        if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
             return $validator_array;
         }
 
@@ -931,46 +833,8 @@ class DatabasesPlugin extends UserPluginBase
         }
         // 数値チェック
         if ($databases_column->rule_allowed_numeric) {
-            if ($request->databases_columns_value[$databases_column->id]) {
-                // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）
-                $replace_defs = [
-                    'ー' => '-',
-                    '－' => '-',
-                    '―' => '-'
-                ];
-                $search = array_keys($replace_defs);
-                $replace = array_values($replace_defs);
-
-                if (is_numeric(
-                    mb_convert_kana(
-                        str_replace(
-                            $search,
-                            $replace,
-                            $request->databases_columns_value[$databases_column->id]
-                        ),
-                        'n'
-                    )
-                )) {
-                    // 全角→半角変換した結果が数値の場合
-                    $tmp_array = $request->databases_columns_value;
-                    // 全角→半角へ丸める
-                    $tmp_array[$databases_column->id] =
-                        mb_convert_kana(
-                            str_replace(
-                                $search,
-                                $replace,
-                                $request->databases_columns_value[$databases_column->id]
-                            ),
-                            'n'
-                        );
-                    $request->merge([
-                        "databases_columns_value" => $tmp_array,
-                    ]);
-                } else {
-                    // 全角→半角変換した結果が数値ではない場合
-                    $validator_rule[] = 'numeric';
-                }
-            }
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'numeric';
         }
         // 英数値チェック
         if ($databases_column->rule_allowed_alpha_numeric) {
@@ -1012,6 +876,50 @@ class DatabasesPlugin extends UserPluginBase
             $validator_rule[] = 'nullable';
             $validator_rule[] = new CustomVali_DatesYm();
         }
+        // 画像チェック
+        if ($databases_column->column_type == \DatabaseColumnType::image) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'image';
+        }
+        // 動画チェック
+        if ($databases_column->column_type == \DatabaseColumnType::video) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'mimes:mp4';
+        }
+        // 単一選択チェック
+        // 複数選択チェック
+        // リストボックスチェック
+        if ($databases_column->column_type == \DatabaseColumnType::radio ||
+                $databases_column->column_type == \DatabaseColumnType::checkbox ||
+                $databases_column->column_type == \DatabaseColumnType::select) {
+            // カラムの選択肢用データ
+            $selects = DatabasesColumnsSelects::where('databases_columns_id', $databases_column->id)
+                                            ->orderBy('databases_columns_id', 'asc')
+                                            ->orderBy('display_sequence', 'asc')
+                                            ->pluck('value')
+                                            ->toArray();
+
+            // 単一選択チェック
+            if ($databases_column->column_type == \DatabaseColumnType::radio) {
+                $validator_rule[] = 'nullable';
+                // Rule::inのみで、selectsの中の１つが入ってるかチェック
+                $validator_rule[] = Rule::in($selects);
+            }
+            // 複数選択チェック
+            if ($databases_column->column_type == \DatabaseColumnType::checkbox) {
+                $validator_rule[] = 'nullable';
+                // array & Rule::in で、selectsの中の値に存在しているかチェック
+                $validator_rule[] = 'array';
+                $validator_rule[] = Rule::in($selects);
+            }
+            // リストボックスチェック
+            if ($databases_column->column_type == \DatabaseColumnType::select) {
+                $validator_rule[] = 'nullable';
+                // Rule::inのみで、selectsの中の１つが入ってるかチェック
+                $validator_rule[] = Rule::in($selects);
+            }
+        }
+
         // バリデータールールをセット
         if ($validator_rule) {
             $validator_array['column']['databases_columns_value.' . $databases_column->id] = $validator_rule;
@@ -1046,22 +954,57 @@ class DatabasesPlugin extends UserPluginBase
 
         foreach ($databases_columns as $databases_column) {
             // バリデータールールをセット
-            $validator_array = $this->getValidatorRule($validator_array, $databases_column, $request);
+            $validator_array = $this->getValidatorRule($validator_array, $databases_column);
         }
 
         // 固定項目エリア
         $validator_array['column']['posted_at'] = ['required', 'date_format:Y-m-d H:i'];
+        $validator_array['column']['display_sequence'] = ['nullable', 'numeric'];
         $validator_array['message']['posted_at'] = '公開日時';
+        $validator_array['message']['display_sequence'] = '表示順';
 
+        // --- 入力値変換
         // 入力値をトリム
-        $request->merge(self::trimInput($request->all()));
+        $request->merge(StringUtils::trimInput($request->all()));
+
+        foreach ($databases_columns as $databases_column) {
+            // 数値チェック
+            if ($databases_column->rule_allowed_numeric) {
+                // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
+                $tmp_numeric_columns_value = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->databases_columns_value[$databases_column->id]);
+
+                $tmp_array = $request->databases_columns_value;
+                $tmp_array[$databases_column->id] = $tmp_numeric_columns_value;
+                $request->merge([
+                    "databases_columns_value" => $tmp_array,
+                ]);
+            }
+            // 複数年月型
+            if ($databases_column->column_type == \DatabaseColumnType::dates_ym) {
+                // 一度配列にして、trim後、また文字列に戻す。
+                $tmp_columns_value = StringUtils::trimInputKanma($request->databases_columns_value[$databases_column->id]);
+
+                $tmp_array = $request->databases_columns_value;
+                $tmp_array[$databases_column->id] = $tmp_columns_value;
+                $request->merge([
+                    "databases_columns_value" => $tmp_array,
+                ]);
+            }
+        }
+
+        $request->merge([
+            // 表示順:  全角→半角変換
+            "display_sequence" => StringUtils::convertNumericAndMinusZenkakuToHankaku($request->display_sequence),
+        ]);
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
         $validator->setAttributeNames($validator_array['message']);
+        // Log::debug(var_export($request->all(), true));
+        // Log::debug(var_export($validator_array, true));
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
+        // $message = null;
         if ($validator->fails()) {
             // var_dump($validator->errors()->first("posted_at"));
             // Log::debug(var_export($request->posted_at, true));
@@ -1078,9 +1021,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // ファイル項目を探して保存
         foreach ($databases_columns as $databases_column) {
-            if (($databases_column->column_type == \DatabaseColumnType::file)  ||
-                ($databases_column->column_type == \DatabaseColumnType::image) ||
-                ($databases_column->column_type == \DatabaseColumnType::video)) {
+            if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                 // ファイル系の処理パターン
                 // 新規登録   ＞ アップロードされたことを hasFile で検知
                 // 変更の削除 ＞ databases_columns_delete_ids に削除するdatabases_input_cols の id を溜める。項目値も一旦クリア。
@@ -1166,11 +1107,20 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        if ($request->filled('display_sequence')) {
+            $display_sequence = intval($request->display_sequence);
+        } else {
+            $max_display_sequence = DatabasesInputs::where('databases_id', $database->id)->where('id', '<>', $id)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+        }
+
         // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
         if (empty($id)) {
             $databases_inputs = new DatabasesInputs();
             $databases_inputs->databases_id = $database->id;
             $databases_inputs->status = $status;
+            $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->save();
         } else {
@@ -1178,6 +1128,7 @@ class DatabasesPlugin extends UserPluginBase
             // 更新されたら、行レコードの updated_at を更新したいので、update()
             $databases_inputs->updated_at = now();
             $databases_inputs->status = $status;
+            $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->update();
         }
@@ -1200,7 +1151,7 @@ class DatabasesPlugin extends UserPluginBase
                             $directory = $this->getDirectory($delete_upload->id);
                             Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
 
-                            // データベースの削除
+                            // uploadの削除
                             $delete_upload->delete();
                         }
                     }
@@ -1212,7 +1163,7 @@ class DatabasesPlugin extends UserPluginBase
         $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
 
         // 権限のよって登録・編集の非表示columのdatabases_columns_id配列を取得する
-        $hide_columns_ids = $this->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
         // Log::debug(var_export($databases_columns_ids, true));
 
@@ -1239,10 +1190,8 @@ class DatabasesPlugin extends UserPluginBase
 
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
-            // 登録日型・更新日型・公開日型は、databases_inputsテーブルの登録日・更新日・公開日を利用するため、登録しない
-            if ($databases_column->column_type == \DatabaseColumnType::created ||
-                    $databases_column->column_type == \DatabaseColumnType::updated ||
-                    $databases_column->column_type == \DatabaseColumnType::posted) {
+            // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
+            if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
                 continue;
             }
 
@@ -1264,9 +1213,7 @@ class DatabasesPlugin extends UserPluginBase
                 $databases_input_cols->save();
 
                 // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if (($databases_column->column_type == \DatabaseColumnType::file)  ||
-                    ($databases_column->column_type == \DatabaseColumnType::image) ||
-                    ($databases_column->column_type == \DatabaseColumnType::video)) {
+                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
@@ -1342,9 +1289,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // ファイル型のファイル、uploads テーブルを削除
         foreach ($input_cols as $input_col) {
-            if (($input_col->column_type == \DatabaseColumnType::file) ||
-                ($input_col->column_type == \DatabaseColumnType::image) ||
-                ($input_col->column_type == \DatabaseColumnType::video)) {
+            if (DatabasesColumns::isFileColumnType($input_col->column_type)) {
                 // 削除するファイルデータ
                 $delete_upload = Uploads::find($input_col->value);
 
@@ -1368,135 +1313,6 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
-
-
-        // Databases、Frame データ
-        $database = $this->getDatabases($frame_id);
-
-        // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
-        if (empty($id)) {
-            $databases_inputs = new DatabasesInputs();
-            $databases_inputs->databases_id = $database->id;
-            $databases_inputs->save();
-        } else {
-            $databases_inputs = DatabasesInputs::where('id', $id)->first();
-        }
-
-        // ファイル（uploadsテーブル＆実ファイル）の削除。データ登録前に削除する。（後からだと内容が変わっていてまずい）
-        if (!empty($id) && $request->has('delete_upload_column_ids')) {
-            foreach ($request->delete_upload_column_ids as $delete_upload_column_id) {
-                if ($delete_upload_column_id) {
-                    // 削除するファイル情報が入っている詳細データの特定
-                    $del_databases_input_cols = DatabasesInputCols::where('databases_inputs_id', $id)
-                                                                  ->where('databases_columns_id', $delete_upload_column_id)
-                                                                  ->first();
-                    // ファイルが添付されていた場合
-                    if ($del_databases_input_cols && $del_databases_input_cols->value) {
-                        // 削除するファイルデータ
-                        $delete_upload = Uploads::find($del_databases_input_cols->value);
-
-                        // ファイルの削除
-                        if ($delete_upload) {
-                            $directory = $this->getDirectory($delete_upload->id);
-                            Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
-
-                            // データベースの削除
-                            $delete_upload->delete();
-                        }
-                    }
-                }
-            }
-        }
-
-        // id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
-        if (!empty($id)) {
-            DatabasesInputCols::where('databases_inputs_id', $id)->delete();
-        }
-
-        // データベースのカラムデータ
-        $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
-
-        // メールの送信文字列
-        $contents_text = '';
-
-        // 登録者のメールアドレス
-        $user_mailaddresses = array();
-
-        // databases_input_cols 登録
-        foreach ($databases_columns as $databases_column) {
-            $value = "";
-            if (is_array($request->databases_columns_value[$databases_column->id])) {
-                $value = implode(',', $request->databases_columns_value[$databases_column->id]);
-            } else {
-                $value = $request->databases_columns_value[$databases_column->id];
-            }
-
-            // ファイル系で削除指示があるものは、
-            // データ登録フラグを見て登録
-            if ($database->data_save_flag) {
-                $databases_input_cols = new DatabasesInputCols();
-                $databases_input_cols->databases_inputs_id = $databases_inputs->id;
-                $databases_input_cols->databases_columns_id = $databases_column['id'];
-                $databases_input_cols->value = $value;
-                $databases_input_cols->save();
-
-                // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if ($databases_column->column_type == \DatabaseColumnType::file) {
-                    $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
-                }
-            }
-
-            // メールの内容
-            $contents_text .= $databases_column->column_name . "：" . $value . "\n";
-
-            // メール型
-            if ($databases_column->column_type == \DatabaseColumnType::mail) {
-                $user_mailaddresses[] = $value;
-            }
-        }
-
-        // 最後の改行を除去
-        $contents_text = trim($contents_text);
-
-        // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-        $number = $database->numbering_use_flag ? $database->numbering_prefix . sprintf('%06d', $this->getNo('databases', $database->bucket_id, $database->numbering_prefix)) : null;
-
-        // 登録後メッセージ内の採番文字列を置換
-        $after_message = str_replace('[[number]]', $number, $database->after_message);
-
-        // メール送信
-        if ($database->mail_send_flag) {
-            // メール本文の組み立て
-            $mail_databaseat = $database->mail_databaseat;
-            $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
-
-            // メール本文内の採番文字列を置換
-            $mail_text = str_replace('[[number]]', $number, $mail_text);
-
-            // メール送信（管理者側）
-            $mail_addresses = explode(',', $database->mail_send_address);
-            foreach ($mail_addresses as $mail_address) {
-                Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-            }
-
-            // メール送信（ユーザー側）
-            foreach ($user_mailaddresses as $user_mailaddress) {
-                if (!empty($user_mailaddress)) {
-                    Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-                }
-            }
-        }
-
-        // 削除時のAction を/redirect/plugin にしたため、ここでreturn しなくてよい。
-
-        // 表示テンプレートを呼び出す。
-        //return $this->index($request, $page_id, $frame_id);
-        /*
-        return $this->view(
-            'databases_thanks', [
-            'after_message' => $after_message
-        ]);
-        */
     }
 
     /**
@@ -1514,9 +1330,23 @@ class DatabasesPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $plugins = DB::table($plugin_name)
-                       ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
+                        ->select(
+                            $plugin_name . '.id',
+                            $plugin_name . '.bucket_id',
+                            $plugin_name . '.created_at',
+                            $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                            DB::raw('count(databases_inputs.databases_id) as entry_count')
+                        )
+                        ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
+                        ->groupBy(
+                            $plugin_name . '.id',
+                            $plugin_name . '.bucket_id',
+                            $plugin_name . '.created_at',
+                            $plugin_name . '.' . $plugin_name . '_name',
+                            'databases_inputs.databases_id'
+                        )
+                        ->orderBy($plugin_name . '.created_at', 'desc')
+                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -1577,7 +1407,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $databases_id = null)
     {
-
         // デフォルトで必須
         $validator_values['databases_name'] = ['required'];
         $validator_attributes['databases_name'] = 'データベース名';
@@ -1610,7 +1439,7 @@ class DatabasesPlugin extends UserPluginBase
         $message = null;
 
         // 画面から渡ってくるdatabases_id が空ならバケツとブログを新規登録
-        if (empty($request->databases_id)) {
+        if (empty($databases_id)) {
             // バケツの登録
             $bucket = new Buckets();
             // $bucket->bucket_name = '無題';
@@ -1618,8 +1447,19 @@ class DatabasesPlugin extends UserPluginBase
             $bucket->plugin_name = 'databases';
             $bucket->save();
 
-            // ブログデータ新規オブジェクト
-            $databases = new Databases();
+            if (empty($request->copy_databases_id)) {
+                // 登録
+
+                // データベース新規オブジェクト
+                $databases = new Databases();
+            } else {
+                // コピー
+
+                // コピー元IDで、データベースデータ取得
+                $copy_databases = Databases::where('id', $request->copy_databases_id)->first();
+                // ID消して複製
+                $databases = $copy_databases->replicate();
+            }
             $databases->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
@@ -1640,7 +1480,7 @@ class DatabasesPlugin extends UserPluginBase
         } else {
             // databases_id があれば、データベースを更新
             // データベースデータ取得
-            $databases = Databases::where('id', $request->databases_id)->first();
+            $databases = Databases::where('id', $databases_id)->first();
 
             // データベース名で、Buckets名も更新する
             Buckets::where('id', $databases->bucket_id)->update(['bucket_name' => $request->databases_name]);
@@ -1664,6 +1504,47 @@ class DatabasesPlugin extends UserPluginBase
         // データ保存
         $databases->save();
 
+        // 登録
+        if (empty($databases_id)) {
+            // コピーIDあり
+            if ($request->copy_databases_id) {
+                // 【DBカラムコピー】
+                $copy_databases_columns = DatabasesColumns::where('databases_id', $request->copy_databases_id)->get();
+                foreach ($copy_databases_columns as $copy_databases_column) {
+                    // ID消して複製
+                    $databases_column = $copy_databases_column->replicate();
+                    $databases_column->databases_id = $databases->id;
+                    $databases_column->save();
+
+                    // 【DBカラムの権限表示指定コピー】
+                    $copy_databases_columns_roles = DatabasesColumnsRole::where('databases_id', $request->copy_databases_id)
+                                                                        ->where('databases_columns_id', $copy_databases_column->id)
+                                                                        ->get();
+                    foreach ($copy_databases_columns_roles as $copy_databases_columns_role) {
+                        // ID消して複製
+                        $databases_columns_role = $copy_databases_columns_role->replicate();
+                        $databases_columns_role->databases_id = $databases->id;
+                        $databases_columns_role->databases_columns_id = $databases_column->id;
+                        $databases_columns_role->save();
+                    }
+
+                    // 選択肢カラム
+                    if ($copy_databases_column->column_type == \DatabaseColumnType::radio ||
+                            $copy_databases_column->column_type == \DatabaseColumnType::checkbox ||
+                            $copy_databases_column->column_type == \DatabaseColumnType::select) {
+                        // 【DBカラム選択肢コピー】
+                        $copy_databases_columns_selects = DatabasesColumnsSelects::where('databases_columns_id', $copy_databases_column->id)->get();
+                        foreach ($copy_databases_columns_selects as $copy_databases_columns_select) {
+                            // ID消して複製
+                            $databases_columns_select = $copy_databases_columns_select->replicate();
+                            $databases_columns_select->databases_columns_id = $databases_column->id;
+                            $databases_columns_select->save();
+                        }
+                    }
+                }
+            }
+        }
+
         // 新規作成フラグを付けてデータベース設定変更画面を呼ぶ
         $create_flag = false;
 
@@ -1673,35 +1554,82 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  データベース削除処理
+     * データベース削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $databases_id)
     {
         // databases_id がある場合、データを削除
         if ($databases_id) {
+            // 表示設定を削除する。
+            DatabasesFrames::where('databases_id', $databases_id)->delete();
+
             // カラム権限データを削除する。
             DatabasesColumnsRole::where('databases_id', $databases_id)->delete();
 
             $databases_columns = DatabasesColumns::where('databases_id', $databases_id)->orderBy('display_sequence')->get();
+
+            ////
+            //// 添付ファイルの削除
+            ////
+            $file_column_type_ids = [];
             foreach ($databases_columns as $databases_column) {
+                // ファイルタイプ
+                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                    $file_column_type_ids[] = $databases_column->id;
+                }
+            }
+
+            // 削除するファイル情報が入っている詳細データの特定
+            $del_file_ids = DatabasesInputCols::whereIn('databases_columns_id', $file_column_type_ids)
+                                                ->whereNotNull('value')
+                                                ->pluck('value')
+                                                ->all();
+
+            // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
+            $delete_uploads = Uploads::whereIn('id', $del_file_ids)->get();
+            foreach ($delete_uploads as $delete_upload) {
+                // ファイルの削除
+                $directory = $this->getDirectory($delete_upload->id);
+                Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                // uploadの削除
+                $delete_upload->delete();
+            }
+
+
+            foreach ($databases_columns as $databases_column) {
+                // 詳細データ値を削除する。
+                DatabasesInputCols::where('databases_columns_id', $databases_column->id)->delete();
+
                 // カラムに紐づく選択肢の削除
                 $this->deleteColumnsSelects($databases_column->id);
             }
 
+            // 入力行データを削除する。
+            DatabasesInputs::where('databases_id', $databases_id)->delete();
+
             // カラムデータを削除する。
             DatabasesColumns::where('databases_id', $databases_id)->delete();
 
-            // データベース設定を削除する。
-            Databases::destroy($databases_id);
+            // bugfix: backets, buckets_rolesは $frame->bucket_id で消さない。選択したDBのbucket_idで消す
+            $databases = Databases::find($databases_id);
+
+            // buckets_rolesの削除
+            BucketsRoles::where('buckets_id', $databases->bucket_id)->delete();
+
+            // backetsの削除
+            Buckets::where('id', $databases->bucket_id)->delete();
 
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();
+            // bugfix: フレームのbucket_idと削除するDBのbucket_idが同じなら、FrameのバケツIDの更新する
+            if ($frame->bucket_id == $databases->bucket_id) {
+                // FrameのバケツIDの更新
+                Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            }
 
-            // FrameのバケツIDの更新
-            Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
-
-            // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // データベース設定を削除する。
+            Databases::destroy($databases_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
@@ -2021,8 +1949,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
-        $column = DatabasesColumns::where('id', $request->column_id)->first();
-
         $validator_values = null;
         $validator_attributes = null;
 
@@ -2098,6 +2024,9 @@ class DatabasesPlugin extends UserPluginBase
                     ->where('title_flag', 1)
                     ->update(['title_flag' => 0]);
         }
+
+        // bugfix: 更新データは上記update後に取得しないと、title_flagが更新されない不具合対応
+        $column = DatabasesColumns::where('id', $request->column_id)->first();
 
         // タイトル指定
         $column->title_flag = $title_flag;
@@ -2342,7 +2271,7 @@ class DatabasesPlugin extends UserPluginBase
     /**
      * データベースデータダウンロード
      */
-    public function downloadCsv($request, $page_id, $frame_id, $id)
+    public function downloadCsv($request, $page_id, $frame_id, $id, $data_output_flag = true)
     {
 
         // id で対象のデータの取得
@@ -2353,10 +2282,11 @@ class DatabasesPlugin extends UserPluginBase
         // カラムの取得
         $columns = DatabasesColumns::where('databases_id', $id)->orderBy('display_sequence', 'asc')->get();
 
-        // 登録データの取得
-        $input_cols = DatabasesInputCols::whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $id))
-                                      ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
-                                      ->get();
+        // move: インポートフォーマットのダウンロード対応するため、下に移動
+        // // 登録データの取得
+        // $input_cols = DatabasesInputCols::whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $id))
+        //                               ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
+        //                               ->get();
 
         /*
         ダウンロード前の配列イメージ。
@@ -2394,18 +2324,78 @@ class DatabasesPlugin extends UserPluginBase
         // データ行用の空配列
         $copy_base = array();
 
+        // 見出し行-頭（固定項目）
+        $csv_array[0]['id'] = 'id';
+        $copy_base['id'] = '';
         // 見出し行
         foreach ($columns as $column) {
             $csv_array[0][$column->id] = $column->column_name;
             $copy_base[$column->id] = '';
         }
+        // 見出し行-末尾（固定項目）
+        $csv_array[0]['posted_at'] = '公開日時';
+        $csv_array[0]['display_sequence'] = '表示順';
+        $copy_base['posted_at'] = '';
+        $copy_base['display_sequence'] = '';
 
-        // データ
-        foreach ($input_cols as $input_col) {
-            if (!array_key_exists($input_col->databases_inputs_id, $csv_array)) {
-                $csv_array[$input_col->databases_inputs_id] = $copy_base;
+        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
+        if ($data_output_flag) {
+            // 登録データの取得
+            $input_cols = DatabasesInputCols::
+                                        select(
+                                            'databases_input_cols.*',
+                                            'databases_inputs.created_at as inputs_created_at',
+                                            'databases_inputs.updated_at as inputs_updated_at',
+                                            'databases_inputs.posted_at as inputs_posted_at',
+                                            'databases_inputs.display_sequence as inputs_display_sequence'
+                                        )
+                                        ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                        ->whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $id))
+                                        ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
+                                        ->get();
+
+            // データ
+            foreach ($input_cols as $input_col) {
+                if (!array_key_exists($input_col->databases_inputs_id, $csv_array)) {
+                    // 初回のみベースをセット
+                    $csv_array[$input_col->databases_inputs_id] = $copy_base;
+
+                    $csv_array[$input_col->databases_inputs_id][$input_col->databases_columns_id] = $input_col->inputs_created_at;
+                    $csv_array[$input_col->databases_inputs_id][$input_col->databases_columns_id] = $input_col->inputs_updated_at;
+                    $csv_array[$input_col->databases_inputs_id][$input_col->databases_columns_id] = $input_col->inputs_posted_at;
+                    $csv_array[$input_col->databases_inputs_id][$input_col->databases_columns_id] = $input_col->inputs_display_sequence;
+
+                    // 初回で固定項目をセット
+                    $csv_array[$input_col->databases_inputs_id]['id'] = $input_col->databases_inputs_id;
+
+                    $databases_inputs = DatabasesInputs::where('id', $input_col->databases_inputs_id)->first();
+                    // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
+                    // $csv_array[$input_col->databases_inputs_id]['posted_at'] = $databases_inputs->posted_at->format('Y/m/d H:i');
+                    $csv_array[$input_col->databases_inputs_id]['posted_at'] = $databases_inputs->posted_at->format('Y/n/j H:i');
+
+                    $csv_array[$input_col->databases_inputs_id]['display_sequence'] = $databases_inputs->display_sequence;
+
+                    // 登録日型、更新日型、公開日型は $input_cols に含まれないので、初回でセット
+                    foreach ($columns as $column) {
+                        switch ($column->column_type) {
+                            case \DatabaseColumnType::created:
+                                $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_created_at;
+                                break;
+                            case \DatabaseColumnType::updated:
+                                $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_updated_at;
+                                break;
+                            case \DatabaseColumnType::posted:
+                                $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_posted_at;
+                                break;
+                            case \DatabaseColumnType::display:
+                                $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_display_sequence;
+                                break;
+                        }
+                    }
+                }
+
+                $csv_array[$input_col->databases_inputs_id][$input_col->databases_columns_id] = $input_col->value;
             }
-            $csv_array[$input_col->databases_inputs_id][$input_col->databases_columns_id] = $input_col->value;
         }
 
         // レスポンス版
@@ -2421,13 +2411,753 @@ class DatabasesPlugin extends UserPluginBase
             foreach ($csv_line as $csv_col) {
                 $csv_data .= '"' . $csv_col . '",';
             }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
             $csv_data .= "\n";
         }
 
+        // Log::debug(var_export($request->character_code, true));
+
         // 文字コード変換
-        $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
+        // $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
 
         return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
+     * インポート画面表示
+     */
+    public function import($request, $page_id, $frame_id, $id)
+    {
+        // id で対象のデータの取得
+
+        // データベースの取得
+        $database = Databases::where('id', $id)->first();
+
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'databases_import',
+            [
+                'database' => $database,
+            ]
+        );
+    }
+
+    /**
+     * インポート
+     */
+    public function uploadCsv($request, $page_id, $frame_id, $id)
+    {
+        // クラスを使用する前に、それが存在するかどうかを調べます
+        if (UnzipUtils::useZipArchive()) {
+            // zip or csv
+            $rules = [
+                'databases_csv'  => [
+                    'required',
+                    'file',
+                    'mimes:csv,txt,zip', // mimesの都合上text/csvなのでtxtも許可が必要
+                    'mimetypes:text/plain,application/zip',
+                ],
+            ];
+        } else {
+            // csv
+            $rules = [
+                'databases_csv'  => [
+                    'required',
+                    'file',
+                    'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
+                    'mimetypes:text/plain',
+                ],
+            ];
+        }
+
+        // 画面エラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames([
+            'databases_csv'  => 'CSVファイル',
+        ]);
+
+        if ($validator->fails()) {
+            // Log::debug(var_export($validator->errors(), true));
+            // エラーと共に編集画面を呼び出す
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+
+        // CSVファイル一時保存
+        $path = $request->file('databases_csv')->store('tmp');
+        // Log::debug(var_export(storage_path('app/') . $path, true));
+        $csv_full_path = storage_path('app/') . $path;
+        $unzip_dir_full_path = null;
+
+        // ファイル拡張子取得
+        $file_extension = $request->file('databases_csv')->getClientOriginalExtension();
+        // 小文字に変換
+        $file_extension = strtolower($file_extension);
+        // Log::debug(var_export($file_extension, true));
+
+        // クラスを使用する前に、それが存在するかどうかを調べます
+        // if (class_exists('ZipArchive')) {
+        if (UnzipUtils::useZipArchive()) {
+            if ($file_extension == 'zip') {
+                $zip_full_path = storage_path('app/') . $path;
+
+                // 一時的な解凍フォルダ名
+                // $tmp_dir = uniqid('', true);
+                $tmp_dir = UnzipUtils::getTmpDir();
+                $unzip_dir_full_path = storage_path('app/') . "tmp/database/{$tmp_dir}/";
+
+                $error_msg = UnzipUtils::unzip($zip_full_path, $unzip_dir_full_path);
+                if ($error_msg !== true) {
+                    // 一時ファイルの削除
+                    $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+                    return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
+                }
+
+                // パターンにマッチするパス名を探す。 csvは１つの想定
+                // winの標準機能でzip圧縮すると、zip内にフォルダが１つでき、その中にファイルが格納されているため、
+                // zip内１つ下のフォルダを検索
+                // $csv_full_path = $unzip_dir_full_path . "database/database.csv";
+                // $csv_full_paths = glob($unzip_dir_full_path . "database/*.csv");
+                $csv_full_paths = glob($unzip_dir_full_path . "*/*.csv");
+                // Log::debug(var_export($csv_full_paths, true));
+
+                if (empty($csv_full_paths)) {
+                    // 「エラー」zipファイルにcsvを含めてください。csv0個
+                    // 一時ファイルの削除
+                    $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+                    $error_msg = "ZIPファイルにCSVを含めてください。";
+                    return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
+                }
+                if (count($csv_full_paths) >= 2) {
+                    // 「エラー」zipファイルに含めるcsvは１つにしてください。csv2個以上
+                    // 一時ファイルの削除
+                    $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+                    $error_msg = "ZIPファイルに含めるCSVは１つにしてください。";
+                    return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
+                }
+                $csv_full_path = $csv_full_paths[0];
+
+                // 一時ファイルの削除
+                // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+                // dd('ここまで');
+            }
+        }
+
+        // 文字コード
+        $character_code = $request->character_code;
+
+        // 文字コード自動検出
+        if ($character_code == \CsvCharacterCode::auto) {
+            // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
+            $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
+            if (!$character_code) {
+                // 一時ファイルの削除
+                $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
+                            ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+
+                return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
+            }
+        }
+
+        // 読み込み
+        $fp = fopen($csv_full_path, 'r');
+        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
+        if ($character_code == \CsvCharacterCode::sjis_win) {
+            // ストリームフィルタとして登録.
+            // 5C問題対応：https://qiita.com/suin/items/3edfb9cb15e26bffba11
+            // 5C問題 詳細：https://qiita.com/Kohei-Sato-1221/items/c050bb23436f35666165
+            stream_filter_register(
+                'sjis_to_utf8_encoding_filter',
+                SjisToUtf8EncodingFilter::class
+            );
+
+            // ファイル読み込み時に使うストリームフィルタを指定.
+            // ストリームフィルタ内で、Shift-JIS -> UTF-8変換してる。UTF-8変換で5C問題対応になる
+            stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
+        }
+
+        // 一行目（ヘッダ）
+        $header_columns = fgetcsv($fp, 0, ',');
+        // CSVファイル：UTF-8のみ
+        if ($character_code == \CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
+        }
+        // dd($csv_full_path);
+        // Log::debug('$header_columns:'. var_export($header_columns, true));
+
+        // カラムの取得
+        $databases_columns = DatabasesColumns::where('databases_id', $id)->orderBy('display_sequence', 'asc')->get();
+        // Log::debug('$databases_columns:'. var_export($databases_columns, true));
+
+        // ヘッダー項目のエラーチェック
+        $error_msgs = $this->checkCsvHeader($header_columns, $databases_columns);
+        if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+            // return ( $this->import($request, $page_id, $error_msgs) );
+            return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
+        }
+
+        // データ項目のエラーチェック
+        $error_msgs = $this->checkCvslines($fp, $databases_columns, $id, $file_extension, $unzip_dir_full_path);
+        if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+            // return ( $this->import($request, $page_id, $error_msgs) );
+            return redirect()->back()->withErrors(['databases_csv' => $error_msgs])->withInput();
+        }
+
+        if ($file_extension == 'zip') {
+            // １．全ファイルアップロード
+            //     uploadsフォルダを全アップロード、変数にアップロードIDもつ
+            //     使われないファイルがアップロードされる事もあるが、temporary_flag = 1で残るので後から判別可能（今後ファイルクリーアップ作って綺麗にする方向かなぁ）
+
+            // パターンにマッチするパス名を探す。
+            // $unzip_uploads_full_paths = glob($unzip_dir_full_path . "database/uploads/*");
+            $unzip_uploads_full_paths = glob($unzip_dir_full_path . "*/uploads/*");
+            // Log::debug(var_export($unzip_uploads_full_paths, true));
+            $filesystem = new Filesystem();
+
+            // アップロードしたzipのアップロードファイル
+            // $unzip_uploadeds = [
+            //     991 => 'uploads/filename1.jpg',
+            //     992 => 'uploads/filename2.jpg',
+            //     993 => 'uploads/filename3.jpg',
+            // ];
+            $unzip_uploadeds = [];
+
+            foreach ($unzip_uploads_full_paths as $unzip_uploads_full_path) {
+                // uploads テーブルに情報追加、ファイルのid を取得する
+                $upload = Uploads::create([
+                    // 'client_original_name' => $request->file($req_filename)->getClientOriginalName(),
+                    // 'mimetype'             => $request->file($req_filename)->getClientMimeType(),
+                    // 'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
+                    // 'size'                 => $request->file($req_filename)->getClientSize(),
+                    'client_original_name' => $filesystem->basename($unzip_uploads_full_path),
+                    'mimetype'             => $filesystem->mimeType($unzip_uploads_full_path),
+                    'extension'            => $filesystem->extension($unzip_uploads_full_path),
+                    'size'                 => $filesystem->size($unzip_uploads_full_path),
+                    'plugin_name'          => 'databasess',
+                    'page_id'              => $page_id,
+                    'temporary_flag'       => 1,
+                    'created_id'           => Auth::user()->id,
+                ]);
+                // Log::debug(var_export($filesystem->mimeType($unzip_uploads_full_path), true));
+                // Log::debug(var_export($filesystem->basename($unzip_uploads_full_path), true));
+                // Log::debug(var_export($filesystem->extension($unzip_uploads_full_path), true));
+                // Log::debug(var_export($filesystem->size($unzip_uploads_full_path), true));
+
+                // ファイル保存
+                $directory = $this->getDirectory($upload->id);
+
+                // // 一時ファイルの削除
+                // fclose($fp);
+                // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+                // dd('ここまで');
+
+                // $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
+                // 一時ディレクトリから、uploadsディレクトリに移動
+                // 拡張子なしに対応
+                // $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . '.' . $filesystem->extension($unzip_uploads_full_path));
+                $unzip_extension = $filesystem->extension($unzip_uploads_full_path) ? '.'.$filesystem->extension($unzip_uploads_full_path) : '';
+                $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . $unzip_extension);
+
+                $unzip_uploadeds[$upload->id] = 'uploads/' . $filesystem->basename($unzip_uploads_full_path);
+            }
+        }
+
+        // // 一時ファイルの削除
+        // fclose($fp);
+        // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+        // dd('ここまで');
+
+        // ファイルポインタの位置を先頭に戻す
+        rewind($fp);
+
+        // ヘッダー
+        $header_columns = fgetcsv($fp, 0, ',');
+        // CSVファイル：UTF-8のみ
+        if ($character_code == \CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
+        }
+
+        // データベースの取得
+        $database = Databases::where('id', $id)->first();
+
+        // データ
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // --- 入力値変換
+            // Log::debug(var_export($csv_columns, true));
+
+            // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
+            // $request->merge(self::trimInput($request->all()));
+            $csv_columns = StringUtils::trimInput($csv_columns);
+
+            // 配列の頭から要素(id)を取り除いて取得
+            // CSVのデータ行の頭は、必ず固定項目のidの想定
+            $databases_inputs_id = array_shift($csv_columns);
+            // 空文字をnullに変換
+            $databases_inputs_id = StringUtils::convertEmptyStringsToNull($databases_inputs_id);
+
+            foreach ($csv_columns as $col => &$csv_column) {
+                // 空文字をnullに変換
+                $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
+
+                // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
+                // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
+                if (isset($databases_columns[$col])) {
+                    // 数値チェック
+                    // if ($databases_column->rule_allowed_numeric) {
+                    if ($databases_columns[$col]->rule_allowed_numeric) {
+                        // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
+                        $csv_column = StringUtils::convertNumericAndMinusZenkakuToHankaku($csv_column);
+                    }
+
+                    // csv値あり
+                    if ($csv_column) {
+                        if ($file_extension == 'zip') {
+                            // ファイルタイプ
+                            if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
+                                // パスをアップロードIDに書き換える。
+                                $csv_column = array_search($csv_column, $unzip_uploadeds);
+                                $csv_column = $csv_column === false ? null : $csv_column;
+
+                                if (!empty($databases_inputs_id)) {
+                                    // 更新
+
+                                    // アップロードIDあり
+                                    if ($csv_column) {
+                                        // Uploadファイル削除
+                                        // Uploadデータ削除
+                                        // ファイル系データ削除
+
+                                        // 削除するファイル情報が入っている詳細データの特定
+                                        $del_databases_input_cols = DatabasesInputCols::where('databases_inputs_id', $databases_inputs_id)
+                                                                                    ->where('databases_columns_id', $databases_columns[$col]->id)
+                                                                                    ->first();
+                                        // ファイルが添付されていた場合
+                                        if ($del_databases_input_cols && $del_databases_input_cols->value) {
+                                            // 削除するファイルデータ
+                                            $delete_upload = Uploads::find($del_databases_input_cols->value);
+
+                                            // ファイルの削除
+                                            if ($delete_upload) {
+                                                $directory = $this->getDirectory($delete_upload->id);
+                                                Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                                                // データベースの削除
+                                                $delete_upload->delete();
+                                            }
+                                        }
+
+                                        // DatabasesInputColsのデータありのファイルタイプは、ここで消す
+                                        DatabasesInputCols::where('databases_inputs_id', $databases_inputs_id)
+                                                            ->where('databases_columns_id', $databases_columns[$col]->id)
+                                                            ->delete();
+                                    }
+                                }
+                            }
+                        }
+                        // 複数選択型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
+                            // 一度配列にして、trim後、また文字列に戻す。
+                            $csv_column = StringUtils::trimInputKanma($csv_column);
+                        }
+                        // 複数年月型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::dates_ym) {
+                            // 一度配列にして、trim後、また文字列に戻す。
+                            $csv_column = StringUtils::trimInputKanma($csv_column);
+                        }
+                        // 日付型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::date) {
+                            // Excelのcsvで日付を入力すると、2020/1/1形式になるため、2020/01/01形式に変換する
+                            // バリデーションで無効な日付は排除済み。
+                            // csv値ありのみ。
+                            $dt = new Carbon($csv_column);
+                            $csv_column = $dt->format('Y/m/d');
+                        }
+                    }
+                }
+            }
+            // Log::debug('$csv_columns:'. var_export($csv_columns, true));
+
+            // 配列の末尾から要素を取り除いて取得。CSVのデータ行の末尾は必ず下記固定項目の想定
+            // 配列末尾：表示順
+            // 次の末尾：公開日時
+            $display_sequence = array_pop($csv_columns);
+            $posted_at = array_pop($csv_columns);
+            $posted_at = new Carbon($posted_at);
+
+            $status = 0;  // 公開
+
+            // // 一時ファイルの削除
+            // fclose($fp);
+            // Storage::delete($path);
+            // dd('ここまで' . $posted_at);
+
+            if (empty($databases_inputs_id)) {
+                // 登録
+
+                $databases_inputs = new DatabasesInputs();
+                $databases_inputs->databases_id = $database->id;
+                $databases_inputs->status = $status;
+                $databases_inputs->display_sequence = $display_sequence;
+                // 公開日時
+                // $databases_inputs->posted_at = $posted_at . ':00';
+                $databases_inputs->posted_at = $posted_at;
+                $databases_inputs->save();
+            } else {
+                // 更新
+
+                // databases_inputs_idはバリデートでDatabasesInputs存在チェック済みなので、必ずデータある想定
+                $databases_inputs = DatabasesInputs::where('id', $databases_inputs_id)->first();
+                // 更新されたら、行レコードの updated_at を更新したいので、update()
+                $databases_inputs->updated_at = now();
+                // インポートで更新時に status は更新しない
+                // $databases_inputs->status = $status;
+                $databases_inputs->display_sequence = $display_sequence;
+                // 公開日時
+                $databases_inputs->posted_at = $posted_at;
+                $databases_inputs->update();
+
+                // databases_inputs_id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
+                $file_columns_ids = [];
+                foreach ($databases_columns as $databases_column) {
+                    // ファイルタイプ
+                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                        $file_columns_ids[] = $databases_column->id;
+                    }
+                }
+
+                // delete -> insertでファイルタイプは、ここでは消さずに残す。
+                DatabasesInputCols::where('databases_inputs_id', $databases_inputs_id)
+                                    ->whereNotIn('databases_columns_id', $file_columns_ids)
+                                    ->delete();
+            }
+
+            // --- データ行の各項目登録
+            foreach ($csv_columns as $col => $csv_column) {
+                // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
+                // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
+                if (isset($databases_columns[$col])) {
+                    // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
+                    if (DatabasesColumns::isNotInputColumnType($databases_columns[$col]->column_type)) {
+                        continue;
+                    }
+
+                    // ファイルタイプ
+                    if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
+                        if ($file_extension == 'csv') {
+                            if (empty($databases_inputs_id)) {
+                                // 登録: ファイルなしは既に$csv_columnにnullをセット済みのため、何もしない.（nullだとno_image画像が表示される）
+                                // $csv_column = null;
+                            } else {
+                                // 更新
+                                // 空(null)は、データを消さずに残してあるため、continue で何も処理させない
+                                continue;
+                            }
+                        } elseif ($file_extension == 'zip') {
+                            if (empty($databases_inputs_id)) {
+                                // 登録: ファイルなしは既に$csv_columnにnullをセット済みのため、何もしない.（nullだとno_image画像が表示される）
+                                // $csv_column = null;
+                            } else {
+                                // 更新
+                                if (empty($csv_column)) {
+                                    // 空(null)は、データを消さずに残してあるため、continue で何も処理させない
+                                    continue;
+                                } else {
+                                    // データありは、新しいアップロードIDが格納されているため、そのまま登録させる。
+                                    // uploads テーブルの一時フラグを更新
+                                    // $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
+                                    $uploads_count = Uploads::where('id', $csv_column)->update(['temporary_flag' => 0]);
+                                }
+                            }
+                        }
+                    }
+
+                    // change: データ登録フラグ（data_save_flag）は、フォームの名残で残っているだけのため、フラグ見ないようする
+                    // データ登録フラグを見て登録
+                    // if ($database->data_save_flag) {
+                    $databases_input_cols = new DatabasesInputCols();
+                    $databases_input_cols->databases_inputs_id = $databases_inputs->id;
+                    $databases_input_cols->databases_columns_id = $databases_columns[$col]['id'];
+                    // $databases_input_cols->value = $value;
+                    $databases_input_cols->value = $csv_column;
+                    $databases_input_cols->save();
+                    // }
+                }
+            }
+        }
+
+        // 一時ファイルの削除
+        fclose($fp);
+        $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
+
+        $request->flash_message = 'インポートしました。';
+
+        // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
+    }
+
+    /**
+     * CSVヘッダーチェック
+     */
+    private function checkCsvHeader($header_columns, $databases_columns)
+    {
+        if (empty($header_columns)) {
+            return array("CSVファイルが空です。");
+        }
+
+        $header_column_format = [];
+        // ヘッダ行-頭（固定項目）
+        $header_column_format[] = 'id';
+        foreach ($databases_columns as $databases_column) {
+            $header_column_format[] = $databases_column->column_name;
+        }
+        // ヘッダ行-末尾（固定項目）
+        $header_column_format[] = '公開日時';
+        $header_column_format[] = '表示順';
+
+        // 項目の不足チェック
+        $shortness = array_diff($header_column_format, $header_columns);
+        if (!empty($shortness)) {
+            // Log::debug(var_export($header_column_format, true));
+            // Log::debug(var_export($header_columns, true));
+            return array("1行目に " . implode(",", $shortness) . " が不足しています。");
+        }
+        // 項目の不要チェック
+        $excess = array_diff($header_columns, $header_column_format);
+        if (!empty($excess)) {
+            return array("1行目に " . implode(",", $excess) . " は不要です。");
+        }
+
+        return array();
+    }
+
+    /**
+     * CSVデータ行チェック
+     */
+    private function checkCvslines($fp, $databases_columns, $databases_id, $file_extension, $unzip_dir_full_path)
+    {
+        $rules = [];
+        // $rules = [
+        //     0 => [],
+        //     1 => ['required'],
+        // ];
+
+        // 行頭（固定項目）
+        // id
+        // bugfix: id存在チェクは id & databases_id でチェックしないと、コピーしたデータベースに上書き出来てしまうため、ここではなく別途チェックする。
+        // $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
+        $rules[0] = ['nullable', 'numeric'];
+
+        $attribute_names = [];
+
+        // エラーチェック配列
+        $validator_array = array('column' => array(), 'message' => array());
+
+        foreach ($databases_columns as $col => $databases_column) {
+            // $validator_array['column']['databases_columns_value.' . $databases_column->id] = $validator_rule;
+            // $validator_array['message']['databases_columns_value.' . $databases_column->id] = $databases_column->column_name;
+
+            // バリデータールールを取得
+            $validator_array = $this->getValidatorRule($validator_array, $databases_column);
+
+            // バリデータールールあるか
+            // if (array_key_exists('databases_columns_value.' . $databases_column->id, $validator_array['column'])) {
+            if (isset($validator_array['column']['databases_columns_value.' . $databases_column->id])) {
+                // 行頭（固定項目）の id 分　col をずらすため、+1
+                $rules[$col + 1] = $validator_array['column']['databases_columns_value.' . $databases_column->id];
+
+                if ($file_extension == 'csv') {
+                    // ファイルタイプ
+                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                        // csv単体のインポートでは、ファイルタイプはインポートできないため、バリデーションルールをチェックなしで上書き。
+                        // 登録時の値は別途 null に変換してる。
+                        $rules[$col + 1] = [];
+                    }
+                } elseif ($file_extension == 'zip') {
+                    // zipのファイルタイプのバリデーションは、Laravelのそのまま使えなかった。
+                    // 【対応】
+                    // csv用の画像、動画バリデーションを作成して上書きする
+                    // 【原因】
+                    // 画像 = image = mimes:jpeg,png,gif,bmp,svg
+                    // 動画 = mimes:mp4
+                    // のmimesチェックは、Symfony\Component\HttpFoundation\File\UploadedFileクラスの値をチェックするが、
+                    // UploadedFile::isValid() 内で php標準の is_uploaded_file() でHTTP POST でアップロードされたファイルかどうかを調べていて、
+                    // 無理くり添付ファイルをUploadedFileクラスで newして作った変数では、is_uploaded_file() で false になり「アップロード失敗しました」とバリデーションエラーに必ずなるため。
+
+                    if ($databases_column->column_type == \DatabaseColumnType::file) {
+                        // バリデーション元々なし（バリデーションがないため、ここには到達しない想定）
+                        $rules[$col + 1] = [];
+                    } elseif ($databases_column->column_type == \DatabaseColumnType::image) {
+                        // csv用のバリデーションで上書き
+                        $rules[$col + 1] = ['nullable', new CustomVali_CsvImage()];
+                    } elseif ($databases_column->column_type == \DatabaseColumnType::video) {
+                        // csv用のバリデーションで上書き
+                        $rules[$col + 1] = ['nullable', new CustomVali_CsvExtensions(['mp4'])];
+                    }
+                }
+            } else {
+                // ルールなしは空配列入れないと、バリデーション項目がずれるのでセット
+                $rules[$col + 1] = [];
+            }
+        }
+        // 行末（固定項目）
+        // 公開日時
+        // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
+        // $rules[$col + 1] = ['required', 'date_format:Y-m-d H:i'];
+        // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
+        $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
+        // 表示順
+        $rules[$col + 3] = ['nullable', 'numeric'];
+
+        // ヘッダー行が1行目なので、2行目からデータ始まる
+        $line_count = 2;
+        $errors = [];
+
+        $filesystem = new Filesystem();
+        $unzip_uploads_full_paths2 = [];
+        // $unzip_uploads_full_paths2 = [
+        //     'uploads/MP4_test_movie.mp4' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/MP4_test_movie.mp4',
+        //     'uploads/file2.jpg' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/file2.jpg'
+        // ];
+
+        if ($file_extension == 'zip') {
+            // パターンにマッチするパス名を探す。
+            $unzip_uploads_full_paths = glob($unzip_dir_full_path . "*/uploads/*");
+
+            foreach ($unzip_uploads_full_paths as $unzip_uploads_full_path) {
+                $unzip_uploads_full_paths2['uploads/' . $filesystem->basename($unzip_uploads_full_path)] = $unzip_uploads_full_path;
+            }
+        }
+
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+            $csv_columns = StringUtils::trimInput($csv_columns);
+
+            // 配列の頭から要素(id)を取り除いて取得
+            // CSVのデータ行の頭は、必ず固定項目のidの想定
+            $databases_inputs_id = array_shift($csv_columns);
+
+            if (!empty($databases_inputs_id)) {
+                // id & databases_idの存在チェック
+                if (! DatabasesInputs::where('id', $databases_inputs_id)->where('databases_id', $databases_id)->exists()) {
+                    $errors[] = $line_count . '行目のidは対象データベースに存在しません。';
+                }
+            }
+
+            foreach ($csv_columns as $col => &$csv_column) {
+                // 空文字をnullに変換
+                $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
+
+                // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
+                // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
+                if (isset($databases_columns[$col])) {
+                    // csv値あり
+                    if ($csv_column) {
+                        if ($file_extension == 'zip') {
+                            // ファイルタイプ
+                            if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
+                                // バリデーションのためだけに、一時的にパスをフルパスに書き換える。
+                                if (isset($unzip_uploads_full_paths2[$csv_column])) {
+                                    $csv_column = $unzip_uploads_full_paths2[$csv_column];
+                                } else {
+                                    // 対応するパスが無いため、エラー
+                                    $csv_column = null;
+                                    $errors[] = $line_count . '行目の' . $databases_columns[$col]->column_name . 'のファイルが見つかりません。';
+                                }
+                            }
+                        }
+                        // 複数選択型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
+                            // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
+                            $csv_column = explode(',', $csv_column);
+                            // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+                            $csv_column = StringUtils::trimInput($csv_column);
+                            // Log::debug(var_export($csv_column, true));
+                        }
+                    }
+                }
+            }
+
+            // 頭のIDをarrayに戻す
+            array_unshift($csv_columns, $databases_inputs_id);
+
+            // バリデーション
+            $validator = Validator::make($csv_columns, $rules);
+            // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
+            // Log::debug(var_export($rules, true));
+
+            $attribute_names = [];
+            // 行頭（固定項目）
+            // id
+            $attribute_names[0] = $line_count . '行目のid';
+            foreach ($databases_columns as $col => $databases_column) {
+                // 行数＋項目名
+                // 頭-固定項目 の id 分　col をずらすため、+1
+                $attribute_names[$col + 1] = $line_count . '行目の' . $databases_column->column_name;
+            }
+            // 行末（固定項目）
+            // 行頭（固定項目）の id 分で+1, 行末に追加で+1 = col+2ずらす
+            $attribute_names[$col + 2] = $line_count . '行目の公開日時';
+            $attribute_names[$col + 3] = $line_count . '行目の表示順';
+
+            $validator->setAttributeNames($attribute_names);
+            // Log::debug(var_export($attribute_names, true));
+
+            if ($validator->fails()) {
+                $errors = array_merge($errors, $validator->errors()->all());
+                // continue;
+            }
+
+            $line_count++;
+        }
+
+        return $errors;
+    }
+
+    /**
+     * インポート時の一時ファイル削除
+     */
+    private function rmImportTmpFile($path, $file_extension, $unzip_dir_full_path = null)
+    {
+        if ($file_extension == 'zip') {
+            // 空でないディレクトリを削除
+            UnzipUtils::rmdirNotEmpty($unzip_dir_full_path);
+            // Storage::deleteDirectory($unzip_dir_full_path);
+        }
+
+        // 一時ファイルの削除
+        Storage::delete($path);
+    }
+
+    /**
+     * CSVインポートのフォーマットダウンロード
+     */
+    public function downloadCsvFormat($request, $page_id, $frame_id, $id)
+    {
+        // データ出力しない（フォーマットのみ出力）
+        $data_output_flag = false;
+        return $this->downloadCsv($request, $page_id, $frame_id, $id, $data_output_flag);
     }
 
     /**
@@ -2449,22 +3179,35 @@ class DatabasesPlugin extends UserPluginBase
 
         // Frames > Buckets > Database で特定
         if (empty($database_frame->bucket_id)) {
-            $database = null;
+            // bugfix: DBが選択されていない状態で「表示設定」タブを選択するとエラーとなる不具合対応
+            // $database = null;
+            $database = new Databases();
             $columns = null;
+            $select_columns = null;
+            $columns_selects = null;
         } else {
             $database = Databases::where('bucket_id', $database_frame->bucket_id)->first();
 
             // カラムの取得
             $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence', 'asc')->get();
+
+            // 絞り込み制御の対象カラム
+            $select_columns = $columns->whereIn('column_type', [\DatabaseColumnType::radio, \DatabaseColumnType::checkbox, \DatabaseColumnType::select]);
+
+            // カラム選択肢の取得
+            $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view(
-            'databases_edit_view', [
-            'database_frame' => $database_frame,
-            'view_frame'     => $view_frame,
-            'database'       => $database,
-            'columns'        => $columns,
+            'databases_edit_view',
+            [
+                'database_frame' => $database_frame,
+                'view_frame' => $view_frame,
+                'database' => $database,
+                'columns' => $columns,
+                'select_columns' => $select_columns,
+                'columns_selects' => $columns_selects,
             ]
         )->withInput($request->all);
     }
@@ -2504,6 +3247,10 @@ class DatabasesPlugin extends UserPluginBase
         // データベース＆フレームデータ
         $database_frame = $this->getDatabaseFrame($frame_id);
 
+        // Log::debug(var_export($request->use_filter_flag, true));
+        // Log::debug(var_export($request->filter_search_keyword, true));
+        // Log::debug(var_export($request->filter_search_columns, true));
+
         // 表示設定の保存
         $databases_frames = DatabasesFrames::updateOrCreate(
             [
@@ -2519,6 +3266,9 @@ class DatabasesPlugin extends UserPluginBase
                 'default_sort_flag' => $request->default_sort_flag,
                 'view_count'        => $request->view_count,
                 'default_hide'      => $request->default_hide,
+                'use_filter_flag'   => $request->use_filter_flag,
+                'filter_search_keyword' => $request->filter_search_keyword,
+                'filter_search_columns' => json_encode($request->filter_search_columns),
                 'view_page_id'        => $request->view_page_id,
                 'view_frame_id'        => $request->view_frame_id
             ]
@@ -2693,6 +3443,17 @@ class DatabasesPlugin extends UserPluginBase
         // 戻り値('sql_method'、link_pattern'、'link_base')
         // 新着側でユニオンしてるため、selectで指定する項目は全必須。プラグイン側にない項目はNULLで返す。
 
+        // 全ての「カラム」と「表示設定の絞り込み条件」の取得
+        $columns = DatabasesTool::getDatabasesColumnsAndFilterSearchAll();
+        $columns = $columns->get();
+
+        // 権限によって非表示columのdatabases_columns_id配列を取得する（各データベースの項目毎で権限によって非表示）
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
+
+        // 各データベースのフレームの表示設定
+        $databases_frames_settings = DatabasesTool::getDatabasesFramesSettings($columns);
+
+
 /*
 SELECT
     frames.page_id                as page_id,
@@ -2722,7 +3483,7 @@ AND databases_inputs.posted_at <= NOW()
 ;
 */
         // データ詳細の取得
-        $return[] = DatabasesInputs::select(
+        $inputs_query = DatabasesInputs::select(
             'frames.page_id                as page_id',
             'frames.id                     as frame_id',
             'databases_inputs.id           as post_id,',
@@ -2736,9 +3497,11 @@ AND databases_inputs.posted_at <= NOW()
         )
                 ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
                 ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                ->leftJoin('databases_columns', function ($leftJoin) {
+                ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
                     $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
-                                ->where('databases_columns.title_flag', 1);
+                                ->where('databases_columns.title_flag', 1)
+                                // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                                ->whereNotIn('databases_columns.id', $hide_columns_ids);
                 })
                 ->leftJoin('databases_input_cols', function ($leftJoin) {
                     $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
@@ -2747,6 +3510,15 @@ AND databases_inputs.posted_at <= NOW()
                 ->where('databases_inputs.status', 0)
                 ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
+        // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
+        $inputs_query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
+            'databases_inputs.id',
+            $inputs_query,
+            $databases_frames_settings,
+            $hide_columns_ids
+        );
+
+        $return[] = $inputs_query;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/databases/detail';
 

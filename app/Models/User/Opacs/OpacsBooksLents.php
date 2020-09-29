@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class OpacsBooksLents extends Model
 {
+    // 更新する項目の定義
+    protected $fillable = ['opacs_books_id', 'lent_flag', 'student_no', 'return_scheduled', 'return_date', 'phone_no', 'email', 'lent_at'];
+
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = ['lent_at', 'scheduled_return'];
 

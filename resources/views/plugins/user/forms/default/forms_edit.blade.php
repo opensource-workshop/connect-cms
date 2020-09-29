@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -26,7 +26,7 @@
     /**
      * 項目の追加ボタン押下
      */
-     function submit_add_column() {
+    function submit_add_column() {
         form_columns.action = "{{url('/')}}/plugin/forms/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.submit();
     }
@@ -34,7 +34,7 @@
     /**
      * 項目の削除ボタン押下
      */
-     function submit_delete_column(column_id) {
+    function submit_delete_column(column_id) {
         if(confirm('項目を削除します。\nよろしいですか？')){
             form_columns.action = "{{url('/')}}/plugin/forms/deleteColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
             form_columns.column_id.value = column_id;
@@ -46,7 +46,7 @@
     /**
      * 項目の更新ボタン押下
      */
-     function submit_update_column(column_id) {
+    function submit_update_column(column_id) {
         form_columns.action = "{{url('/')}}/plugin/forms/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.column_id.value = column_id;
         form_columns.submit();
@@ -55,7 +55,7 @@
     /**
      * 項目の表示順操作ボタン押下
      */
-     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
+    function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
         form_columns.action = "{{url('/')}}/plugin/forms/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.column_id.value = column_id;
         form_columns.display_sequence.value = display_sequence;
@@ -66,7 +66,7 @@
     /**
      * ツールチップ
      */
-     $(function () {
+    $(function () {
         // 有効化
         $('[data-toggle="tooltip"]').tooltip()
         // 常時表示 ※表示の判定は項目側で実施
@@ -89,11 +89,18 @@
                 <input type="hidden" name="column_id" value="">
                 <input type="hidden" name="display_sequence" value="">
                 <input type="hidden" name="display_sequence_operation" value="">
-        
+
                 {{-- メッセージエリア --}}
                 <div class="alert alert-info mt-2">
                     <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : 'ユーザが登録時の項目を設定します。' }}
                 </div>
+
+                {{-- ワーニングメッセージエリア --}}
+                @if ($warning_message)
+                    <div class="alert alert-warning mt-2">
+                        <i class="fas fa-exclamation-circle"></i> {{$warning_message}}
+                    </div>
+                @endif
 
                 {{-- エラーメッセージエリア --}}
                 @if ($errors && $errors->any())
@@ -115,7 +122,7 @@
                             <th class="text-center" style="min-width: 165px;" nowrap>項目名</th>
                             <th class="text-center" style="min-width: 165px;" nowrap>型</th>
                             <th class="text-center" nowrap>必須</th>
-                            <th class="text-center" nowrap>詳細 <a href="https://connect-cms.jp/manual/user/form#frame-125" target="_brank"><span class="fas fa-info-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
+                            <th class="text-center" nowrap>詳細 <a href="https://connect-cms.jp/manual/user/form#frame-125" target="_brank"><span class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
                             <th class="text-center" nowrap>更新</th>
                             <th class="text-center" nowrap>削除</th>
                         </tr>

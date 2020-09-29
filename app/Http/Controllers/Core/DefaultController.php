@@ -487,15 +487,29 @@ class DefaultController extends ConnectController
             return $plugin_ret;
         }
 
+        // 戻り値にredirect_path が含まれていたら、そこにredirectする。
+        if (is_a($plugin_ret, 'Illuminate\Support\Collection')) {
+            if ($plugin_ret->has('redirect_path')) {
+                $request->redirect_path = $plugin_ret->get('redirect_path');
+            }
+        }
+
         // 2ページ目以降を表示している場合は、表示ページに遷移
         $page_no_link = "";
+        // bugfix: 表示ページのパラメータ ?page= は、?frame_{$frame_id}_page= に修正
+        //         同じページに複数のページ送りがある時に対応して、既にパラメータ名が変更されていてたため
+        $frame_page = "frame_{$frame_id}_page";
         // セッションにあれば使用する。
         if ($request->session()->has('page_no.'.$frame_id)) {
-            $page_no_link = "page=" . $request->session()->get('page_no.'.$frame_id);
+            // $page_no_link = "page=" . $request->session()->get('page_no.'.$frame_id);
+            $page_no_link = "{$frame_page}=" . $request->session()->get('page_no.'.$frame_id);
         }
         // リクエストにあれば優先で使用する。
-        if ($request->page) {
-            $page_no_link = "page=" . $request->page;
+        // if ($request->page) {
+        //     $page_no_link = "page=" . $request->page;
+        // }
+        if ($request->$frame_page) {
+            $page_no_link = "{$frame_page}=" . $request->$frame_page;
         }
 
         // return_frame_action があれば、編集中ページに遷移
@@ -508,7 +522,6 @@ class DefaultController extends ConnectController
 
         // redirect_path があれば遷移
         if ($request->redirect_path) {
-
             $redirect_response = redirect($request->redirect_path);
             if ($request->flash_message) {
                 // フラッシュメッセージの設定があれば、Laravelのフラッシュデータ保存に連携

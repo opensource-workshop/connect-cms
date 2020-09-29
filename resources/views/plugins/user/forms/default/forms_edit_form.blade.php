@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォームプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -36,15 +36,14 @@
 
 @if (!$form->id && !$create_flag)
 @else
-<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
-    {{ csrf_field() }}
 
-    {{-- create_flag がtrue の場合、新規作成するためにforms_id を空にする --}}
-    @if ($create_flag)
-        <input type="hidden" name="forms_id" value="">
-    @else
-        <input type="hidden" name="forms_id" value="{{$form->id}}">
-    @endif
+{{-- create_flag がtrue の場合、新規作成するためにforms_id を空にする --}}
+@if ($create_flag)
+<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+@else
+<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$form->id}}#frame-{{$frame_id}}" method="POST" class="">
+@endif
+    {{ csrf_field() }}
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">フォーム名 <label class="badge badge-danger">必須</label></label>
@@ -55,9 +54,42 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">データ保存</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <div class="custom-control custom-checkbox">
+                <input type="hidden" name="data_save_flag" value="0">
+                <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', $form->data_save_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="data_save_flag">データを保存する（チェックを外すと、サイト上にデータを保持しません）</label>
+            </div>
+            @if ($errors && $errors->has('data_save_flag')) <div class="text-danger">{{$errors->first('data_save_flag')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">登録制限数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="entry_limit" value="{{old('entry_limit', $form->entry_limit)}}" class="form-control">
+            <small class="text-muted">
+                ※ 未入力か 0 の場合、登録数を制限しません。<br>
+                ※ 制限する場合、本登録の数で制限します。
+            </small><br>
+            @if ($errors && $errors->has('entry_limit')) <div class="text-danger">{{$errors->first('entry_limit')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">登録制限越えのメッセージ</label>
+            <textarea name="entry_limit_over_message" class="form-control" rows=5 placeholder="（例）制限数に達したため登録を終了しました。">{{old('entry_limit_over_message', $form->entry_limit_over_message)}}</textarea>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
+                <input type="hidden" name="mail_send_flag" value="0">
                 <input type="checkbox" name="mail_send_flag" value="1" class="custom-control-input" id="mail_send_flag" @if(old('mail_send_flag', $form->mail_send_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="mail_send_flag">以下のアドレスにメール送信する</label>
             </div>
@@ -77,46 +109,90 @@
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-checkbox">
+                <input type="hidden" name="user_mail_send_flag" value="0">
                 <input type="checkbox" name="user_mail_send_flag" value="1" class="custom-control-input" id="user_mail_send_flag" @if(old('user_mail_send_flag', $form->user_mail_send_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="user_mail_send_flag">登録者にメール送信する</label>
             </div>
+            @if ($errors && $errors->has('user_mail_send_flag')) <div class="text-danger">{{$errors->first('user_mail_send_flag')}}</div> @endif
         </div>
     </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">仮登録メール</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <div class="custom-control custom-checkbox">
+                <input type="hidden" name="use_temporary_regist_mail_flag" value="0">
+                <input type="checkbox" name="use_temporary_regist_mail_flag" value="1" class="custom-control-input" id="use_temporary_regist_mail_flag" @if(old('use_temporary_regist_mail_flag', $form->use_temporary_regist_mail_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="use_temporary_regist_mail_flag">登録者に仮登録メールを送信する</label>
+            </div>
+            <div>
+                <small class="text-muted">
+                    ※ 仮登録メールを使う事で、本登録前にメールアドレスの確認がとれます。<br>
+                    ※ 仮登録メールを使うには、「データ保存」と「登録者にメール送信する」のチェックを付けてください。また「仮登録メールフォーマット」に [[entry_url]] を含めてください。
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">仮登録メール件名</label>
+            <input type="text" name="temporary_regist_mail_subject" value="{{old('temporary_regist_mail_subject', $form->temporary_regist_mail_subject)}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">仮登録メールフォーマット</label>
+            <textarea name="temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、本登録を行ってください。&#13;&#10;&#13;&#10;↓本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('temporary_regist_mail_format', $form->temporary_regist_mail_format)}}</textarea>
+            <small class="text-muted">
+                ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
+                ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                ※ [[body]] を記述すると該当部分に登録内容が入ります。
+            </small>
+            @if ($errors && $errors->has('temporary_regist_mail_format')) <div class="text-danger">{{$errors->first('temporary_regist_mail_format')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">仮登録後のメッセージ</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <textarea name="temporary_regist_after_message" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;メールを送信しましたので内容をご確認の上、本登録を行ってください。">{{old('temporary_regist_after_message', $form->temporary_regist_after_message)}}</textarea>
+        </div>
+    </div>
+
 {{--
     <div class="form-group">
         <label class="control-label">From メール送信者名</label>
         <input type="text" name="from_mail_name" value="{{old('from_mail_name', $form->from_mail_name)}}" class="form-control">
     </div>
 --}}
+
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">メール件名</label>
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">本登録メール</label>
         <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">本登録メール件名</label>
             <input type="text" name="mail_subject" value="{{old('mail_subject', $form->mail_subject)}}" class="form-control">
         </div>
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">メールフォーマット</label>
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
+            <label class="control-label">本登録メールフォーマット</label>
             <textarea name="mail_format" class="form-control" rows=5 placeholder="（例）受付内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('mail_format', $form->mail_format)}}</textarea>
-            <small class="text-muted">※ [[site_name]] を記述すると該当部分にサイト名が入ります。</small><br>
-            <small class="text-muted">※ [[body]] を記述すると該当部分に登録内容が入ります。</small><br>
-            <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
+            <small class="text-muted">
+                ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                ※ [[body]] を記述すると該当部分に登録内容が入ります。<br>
+                ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
+            </small>
         </div>
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">データ保存</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', $form->data_save_flag)) checked=checked @endif>
-                <label class="custom-control-label" for="data_save_flag">データを保存する（チェックを外すと、サイト上にデータを保持しません）</label>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">登録後のメッセージ</label>
+        <label class="{{$frame->getSettingLabelClass()}}">本登録後のメッセージ</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <textarea name="after_message" class="form-control" rows=5 placeholder="（例）お申込みありがとうございます。&#13;&#10;受付番号は[[number]]になります。">{{old('after_message', $form->after_message)}}</textarea>
             <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
@@ -129,6 +205,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">採番</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
+                <input type="hidden" name="numbering_use_flag" value="0">
                 <input type="checkbox" name="numbering_use_flag" value="1" class="custom-control-input" id="numbering_use_flag" @if(old('numbering_use_flag', $form->numbering_use_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="numbering_use_flag">採番機能を使用する</label>
             </div>
@@ -140,8 +217,10 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">採番プレフィックス</label>
             <input type="text" id="numbering_prefix" name="numbering_prefix" value="{{old('numbering_prefix', $form->numbering_prefix)}}" class="form-control" v-model="v_numbering_prefix">
-            <small class="text-muted">※ 採番イメージ：@{{ v_numbering_prefix + '000001' }}</small><br>
-            <small class="text-muted">※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。</small>
+            <small class="text-muted">
+                ※ 採番イメージ：@{{ v_numbering_prefix + '000001' }}<br>
+                ※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。
+            </small>
         </div>
     </div>
 
@@ -184,7 +263,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/forms/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$form_frame->forms_id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/forms/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$form->id}}#frame-{{$frame_id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

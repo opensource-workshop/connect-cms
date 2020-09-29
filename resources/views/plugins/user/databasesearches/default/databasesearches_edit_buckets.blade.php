@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース検索プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -24,9 +24,9 @@
 @else
 
     @if($databasesearches->id)
-    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}#frame-{{$frame->id}}" method="POST" class="">
     @else
-    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/databasesearches/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     @endif
         {{ csrf_field() }}
 
@@ -54,7 +54,10 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="view_columns" value="{{old('view_columns', $databasesearches->view_columns)}}" class="form-control">
                 @if ($errors && $errors->has('view_columns')) <div class="text-danger">{{$errors->first('view_columns')}}</div> @endif
-                <small class="form-text text-muted">カンマ区切り（ex. タイトル,エリア）</small>
+                <small class="form-text text-muted">
+                    ※ カンマ区切り（ex. タイトル,エリア）<br>
+                    ※ 表示カラムを設定しても、データベースのDBカラム設定「権限の表示指定」が設定されている場合、設定した権限以外はデータ表示されません。
+                </small>
             </div>
         </div>
 
@@ -145,7 +148,7 @@
                 <span class="text-danger">データベース検索を削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
                 <div class="text-center">
                     {{-- 削除ボタン --}}
-                    <form action="{{url('/')}}/redirect/plugin/databasesearches/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}" method="POST">
+                    <form action="{{url('/')}}/redirect/plugin/databasesearches/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$databasesearches->id}}#frame-{{$frame->id}}" method="POST">
                         {{csrf_field()}}
                         <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データベース検索を削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                     </form>

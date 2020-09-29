@@ -49,7 +49,7 @@
                                 <span class="badge badge-warning align-bottom">承認待ち</span>
                             @endcan
                             @can('posts.approval',[[$input, $frame->plugin_name, $buckets]])
-                                <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$input->id}}" method="post" name="form_approval" class="d-inline">
+                                <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
                                     {{ csrf_field() }}
                                     <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                                         <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
@@ -61,9 +61,13 @@
                             @if ($input->status == 1)
                                 <span class="badge badge-warning align-bottom">一時保存</span>
                             @endif
+
+                            <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}'">
+                                <i class="far fa-edit"></i> 編集
+                            </button>
                         @endcan
 
-                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}">
+                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" class="ml-2">
                             <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
                         </a>
                     </div>
@@ -73,7 +77,7 @@
 
         {{-- ページング処理 --}}
         <div class="text-center mt-2">
-            {{ $inputs->links() }}
+            {{ $inputs->fragment('frame-' . $frame_id)->links() }}
         </div>
     @endif
 

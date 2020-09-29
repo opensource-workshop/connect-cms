@@ -11,12 +11,12 @@
 @section("plugin_contents_$frame->id")
 @if ($pages)
 
-<ul class="nav nav-tabs nav-justified d-none d-md-flex" style="">
+<ul class="nav nav-tabs nav-justified d-none d-md-flex">
 @foreach($pages as $page)
 
     {{-- 非表示のページは対象外 --}}
     @if ($page->isView(Auth::user(), false, true, $page_roles))
-        @if ($page->id == $page_id)
+        @if ($ancestors->contains('id', $page->id))
             <li role="presentation" class="nav-item"><a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="nav-link active">{{$page->page_name}}</a></li>
         @else
             <li role="presentation" class="nav-item"><a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="nav-link">{{$page->page_name}}</a></li>

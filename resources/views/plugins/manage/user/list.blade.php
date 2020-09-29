@@ -24,7 +24,7 @@
         <table class="table table-hover cc-font-90">
         <thead>
             <tr>
-                <th nowrap>ユーザID</th>
+                <th nowrap>ログインID</th>
                 <th nowrap>ユーザー名</th>
                 <th nowrap><i class="fas fa-users" title="グループ参加"></i></th>
                 <th nowrap>eメール</th>

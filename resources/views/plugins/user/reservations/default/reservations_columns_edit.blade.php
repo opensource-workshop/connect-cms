@@ -24,21 +24,21 @@
 <script type="text/javascript">
     {{-- 予約項目の追加のsubmit JavaScript --}}
     function submit_add_column(btn) {
-        form_columns.action = "/plugin/reservations/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.action = "{{url('/')}}/plugin/reservations/addColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         btn.disabled = true;
         form_columns.submit();
     }
 
     {{-- 予約項目の更新のsubmit JavaScript --}}
     function submit_update_column(column_id) {
-        form_columns.action = "/plugin/reservations/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.action = "{{url('/')}}/plugin/reservations/updateColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.column_id.value = column_id;
         form_columns.submit();
     }
 
     {{-- 予約項目の表示順操作のsubmit JavaScript --}}
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
-        form_columns.action = "/plugin/reservations/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.action = "{{url('/')}}/plugin/reservations/updateColumnSequence/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_columns.column_id.value = column_id;
         form_columns.display_sequence.value = display_sequence;
         form_columns.display_sequence_operation.value = display_sequence_operation;

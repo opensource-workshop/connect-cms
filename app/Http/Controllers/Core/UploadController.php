@@ -55,6 +55,11 @@ class UploadController extends ConnectController
             return response()->download(storage_path(config('connect.no_image_path')));
         }
 
+        // ファイルの実体がない場合は空を返す。
+        if (!Storage::exists($this->getDirectory($id) . '/' . $id . '.' . $uploads->extension)) {
+            return;
+        }
+
         // 一時保存ファイルの場合は所有者を確認して、所有者ならOK
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
         if ($uploads->temporary_flag == 1) {
@@ -64,7 +69,7 @@ class UploadController extends ConnectController
             }
         }
 
-        // 画像にページ情報がある場合
+        // ファイルにページ情報がある場合
         if ($uploads->page_id) {
             $page = Page::find($uploads->page_id);
             $page_roles = $this->getPageRoles(array($page->id));
@@ -74,8 +79,18 @@ class UploadController extends ConnectController
                  return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
 
-            // 画像に閲覧権限がない場合
+            // ファイルに閲覧権限がない場合
             if (!$page->isView(Auth::user(), true, true, $page_roles)) {
+                 return response()->download(storage_path(config('connect.forbidden_image_path')));
+            }
+        }
+
+        // ファイルに固有のチェック関数が設定されている場合は、チェック関数を呼ぶ
+        if (!empty($uploads->check_method)) {
+            list($return_boolean, $return_message) = $this->callCheckMethod($request, $uploads);
+            if (!$return_boolean) {
+                  //Log::debug($uploads);
+                  //Log::debug($return_message);
                  return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
         }
@@ -109,6 +124,46 @@ class UploadController extends ConnectController
                                  ]
                      );
         }
+    }
+
+    /**
+     *  ファイルチェックメソッドの呼び出し
+     */
+    private function callCheckMethod($request, $upload)
+    {
+        if (empty($upload)) {
+            return false;
+        }
+
+        // プラグイン・クラスファイルの存在を確認
+
+        // 標準プラグインとして存在するか確認
+        $class_name = "App\Plugins\User\\" . ucfirst($upload->plugin_name) . "\\" . ucfirst($upload->plugin_name) . "Plugin";
+        if (!class_exists($class_name)) {
+            // 標準プラグインになければ、オプションプラグインとして存在するか確認
+            $class_name = "App\PluginsOption\User\\" . ucfirst($upload->plugin_name) . "\\" . ucfirst($upload->plugin_name) . "Plugin";
+            if (!class_exists($class_name)) {
+                return false;
+            }
+        }
+
+        // プラグイン・クラスファイルのメソッドの存在を確認
+        if (empty($upload->check_method)) {
+            // チェックの必要なし
+            return true;
+        } else {
+            if (method_exists($class_name, $upload->check_method)) {
+                // チェックする。
+            } else {
+                // チェック用のメソッドが設定されているのにメソッドがない。
+                // 権限なしとして処理する。
+                return false;
+            }
+        }
+
+        // チェック・メソッドの呼び出し（可変関数として変数に関数名を設定してから呼び出し）
+        $check_method = $upload->check_method;
+        return $class_name::$check_method($request, $upload);
     }
 
     /**
@@ -259,6 +314,18 @@ EOD;
         if ($request->hasFile('file')) {
             if ($request->file('file')->isValid()) {
                 // uploads テーブルに情報追加、ファイルのid を取得する
+                $upload = Uploads::create([
+                   'client_original_name' => $request->file('file')->getClientOriginalName(),
+                   'mimetype'             => $request->file('file')->getClientMimeType(),
+                   'extension'            => $request->file('file')->getClientOriginalExtension(),
+                   'size'                 => $request->file('file')->getClientSize(),
+                   'page_id'              => $request->page_id,
+                ]);
+
+                $directory = $this->getDirectory($upload->id);
+                $upload_path = $request->file('file')->storeAs($directory, $upload->id . '.' . $request->file('file')->getClientOriginalExtension());
+                echo json_encode(array('location' => url('/') . '/file/' . $upload->id));
+                /*
                 $id = DB::table('uploads')->insertGetId([
                    'client_original_name' => $request->file('file')->getClientOriginalName(),
                    'mimetype'             => $request->file('file')->getClientMimeType(),
@@ -270,6 +337,7 @@ EOD;
                 $directory = $this->getDirectory($id);
                 $upload_path = $request->file('file')->storeAs($directory, $id . '.' . $request->file('file')->getClientOriginalExtension());
                 echo json_encode(array('location' => url('/') . '/file/' . $id));
+                */
             }
             return;
         }
@@ -300,7 +368,7 @@ EOD;
             if ($request->hasFile($input_name)) {
                 if ($request->file($input_name)->isValid()) {
                     // uploads テーブルに情報追加、ファイルのid を取得する
-                    $id = DB::table('uploads')->insertGetId([
+                    $upload = Uploads::create([
                        'client_original_name' => $request->file($input_name)->getClientOriginalName(),
                        'mimetype'             => $request->file($input_name)->getClientMimeType(),
                        'extension'            => $request->file($input_name)->getClientOriginalExtension(),
@@ -308,9 +376,9 @@ EOD;
                        'page_id'              => $request->page_id,
                     ]);
 
-                    $directory = $this->getDirectory($id);
+                    $directory = $this->getDirectory($upload->id);
                     //$upload_paths[$id] = $request->file($input_name)->storeAs($directory, $id . '.' . $request->file($input_name)->getClientOriginalExtension());
-                    $upload_path = $request->file($input_name)->storeAs($directory, $id . '.' . $request->file($input_name)->getClientOriginalExtension());
+                    $upload_path = $request->file($input_name)->storeAs($directory, $upload->id . '.' . $request->file($input_name)->getClientOriginalExtension());
 
                     // PDFの場合は、別ウィンドウで表示
                     $target = '';
@@ -320,9 +388,9 @@ EOD;
 
                     // ファイルが1つなら<a>のみ、複数あれば<p><a>とする。
                     if ($file_count > 1) {
-                        $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
+                        $msg_array['link_texts'][] = '<p><a href="' . url('/') . '/file/' . $upload->id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a></p>';
                     } else {
-                        $msg_array['link_texts'][] = '<a href="' . url('/') . '/file/' . $id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a>';
+                        $msg_array['link_texts'][] = '<a href="' . url('/') . '/file/' . $upload->id . '" ' . $target . '>' . $request->file($input_name)->getClientOriginalName() . '</a>';
                     }
                 }
             }

@@ -1,3 +1,3 @@
-
-<span class="text-danger"><i class="fas fa-bug"></i> Error!! template not found.</span>
-
+<div class="alert alert-danger m-3">
+    <span><i class="fas fa-bug"></i> Error!! template not found.</span>
+</div>

@@ -243,6 +243,10 @@ return [
         'ConnectLocale' => \App\Enums\ConnectLocale::class,
         'GroupType' => \App\Enums\GroupType::class,
         'WhatsnewsTargetPlugin' => \App\Enums\WhatsnewsTargetPlugin::class,
+        'CsvCharacterCode' => \App\Enums\CsvCharacterCode::class,
+        'ShowType' => \App\Enums\ShowType::class,
+        'PermissionType' => \App\Enums\PermissionType::class,
+        'StatusType' => \App\Enums\StatusType::class,
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
