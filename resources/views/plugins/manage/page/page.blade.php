@@ -75,8 +75,7 @@
                 <th nowrap class="pl-1"><i class="far fa-eye" title="メニュー表示"></i></th>
                 <th nowrap>固定リンク</th>
                 <th nowrap class="pl-1"><i class="fas fa-key" title="閲覧パスワードあり"></i></th>
-                <th nowrap class="pl-1"><i class="fas fa-lock" title="メンバーシップページ"></i></th>
-                <th nowrap class="pl-1"><i class="fas fa-lock" title="ログインユーザ全員参加"></i></th>
+                <th nowrap class="pl-1"><i class="fas fa-lock" title="メンバーシップページ・ログインユーザ全員参加"></i></th>
                 <th nowrap class="pl-1"><i class="fas fa-users" title="ページ権限設定"></i></th>
                 <th nowrap><i class="fas fa-paint-roller" title="背景色"></i></th>
                 <th nowrap><img src="{{asset('/images/core/layout/header_icon.png')}}" title="ヘッダー色" class="cc-page-layout-icon" alt="ヘッダー色"></th>
