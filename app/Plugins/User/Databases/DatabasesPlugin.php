@@ -3378,18 +3378,18 @@ class DatabasesPlugin extends UserPluginBase
             // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
             //
             // [TODO] status Enum作成したほうがよさそう。コードの意味の全体が把握できないため
-            $query->Where($table_name . '.status', '=', 0)
-                    ->orWhere($table_name . '.status', '=', 2);
+            $query->Where($table_name . '.status', '=', \StatusType::active)
+                    ->orWhere($table_name . '.status', '=', \StatusType::approval_pending);
         } elseif ($this->isCan('role_reporter')) {
             //
             // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
             //
-            $query->Where($table_name . '.status', '=', 0)
+            $query->Where($table_name . '.status', '=', \StatusType::active)
                     ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
         } else {
             // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
             // 未ログイン
-            $query->where($table_name . '.status', 0);
+            $query->where($table_name . '.status', \StatusType::active);
 
             // DBカラム posted_at(投稿日時) 存在するか
             if (Schema::hasColumn($table_name, 'posted_at')) {
