@@ -2271,10 +2271,12 @@ class LearningtasksPlugin extends UserPluginBase
         $validator_values = array();
         $validator_attributes = array();
 
-        // アップロードファイルの指定があれば、必須チェック
-        if ($tool->isRequreUploadFile($task_status)) {
-            $validator_values['upload_file'] = ['required'];
-            $validator_attributes['upload_file'] = 'ファイル';
+        // アップロードファイルの指定があれば、必須チェック（必須は受講生側のレポート提出、試験提出のみ）
+        if ($task_status == 1 || $task_status == 5) {
+            if ($tool->isRequreUploadFile($task_status)) {
+                $validator_values['upload_file'] = ['required'];
+                $validator_attributes['upload_file'] = 'ファイル';
+            }
         }
         // 評価の場合、評価を必須チェック
         if ($task_status == 2 || $task_status == 6 || $task_status == 8) {
