@@ -5152,8 +5152,8 @@ trait MigrationTrait
                         $content = $this->getCCDatetime($content);
                     }
                 }
-
-                $tsv_record[$multidatabase_metadata_content->metadata_id] = $content;
+                // データ中にタブ文字が存在するケースがあったため、タブ文字は半角スペースに置き換えるようにした。
+                $tsv_record[$multidatabase_metadata_content->metadata_id] = str_replace("\t", " ", $content);
                 $old_metadata_content = $multidatabase_metadata_content;
             }
             // 最後の行の登録日時、更新日時
