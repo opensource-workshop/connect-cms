@@ -4,12 +4,12 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
+--}}
 <script>
     /**
      * カレンダーボタン押下
      */
-     $(function () {
+    $(function () {
         $('#{{ $form_obj->id }}').datetimepicker({
             @if (App::getLocale() == ConnectLocale::ja)
                 dayViewHeaderFormat: 'YYYY年 M月',
@@ -25,7 +25,7 @@
         <input 
             type="text" 
             name="forms_columns_value[{{ $form_obj->id }}]" 
-            value="{{old('forms_columns_value.'.$form_obj->id)}}"
+            value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_obj->id, $request->forms_columns_value[$form_obj->id])}}@endif"
             class="form-control datetimepicker-input" 
             data-target="#{{ $form_obj->id }}"
         >
