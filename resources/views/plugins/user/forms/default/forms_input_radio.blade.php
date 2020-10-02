@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
+--}}
 @if (array_key_exists($form_obj->id, $forms_columns_id_select))
     @php
         // グループカラムの幅の計算
@@ -17,15 +17,23 @@
         @foreach($forms_columns_id_select[$form_obj->id] as $select)
 
             <div class="custom-control custom-radio custom-control-inline">
-                @if (old('forms_columns_value.'.$form_obj->id) == $select['value'] ||
-                     (isset($request->forms_columns_value) &&
-                      array_key_exists($form_obj->id, $request->forms_columns_value) &&
-                      $request->forms_columns_value[$form_obj->id] == $select['value'])
-                )
-                <input type="radio" id="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}" name="forms_columns_value[{{$form_obj->id}}]" value="{{$select['value']}}" class="custom-control-input" checked>
-            @else
-                <input type="radio" id="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}" name="forms_columns_value[{{$form_obj->id}}]" value="{{$select['value']}}" class="custom-control-input">
-            @endif
+                @php
+                // ラジオ用変数
+                $column_radio_checked = "";
+
+                // リクエストした自フレームのみ処理
+                if ($frame_id == $request->frame_id) {
+                    if (old('forms_columns_value.'.$form_obj->id) == $select['value'] ||
+                        (isset($request->forms_columns_value) &&
+                        array_key_exists($form_obj->id, $request->forms_columns_value) &&
+                        $request->forms_columns_value[$form_obj->id] == $select['value'])
+                    ) {
+                        $column_radio_checked = " checked";
+                    }
+                }
+                @endphp
+
+                <input type="radio" id="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}" name="forms_columns_value[{{$form_obj->id}}]" value="{{$select['value']}}" class="custom-control-input" {{$column_radio_checked}}>
                 <label class="custom-control-label" for="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}">{{$select['value']}}</label>
             </div>
 

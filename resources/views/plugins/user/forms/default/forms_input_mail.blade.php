@@ -4,8 +4,8 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
- <input 
+--}}
+<input 
     name="forms_columns_value[{{$form_obj->id}}]" 
     class="form-control" 
     type="{{$form_obj->column_type}}" 

@@ -4,12 +4,12 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
- <script>
+--}}
+<script>
     /**
      * 時間Fromカレンダーボタン押下
      */
-     $(function () {
+    $(function () {
         $('#{{ $form_obj->id }}_from').datetimepicker({
             tooltips: {
                 close: '閉じる',
@@ -33,7 +33,7 @@
     /**
      * 時間Toカレンダーボタン押下
      */
-     $(function () {
+    $(function () {
         $('#{{ $form_obj->id }}_to').datetimepicker({
             tooltips: {
                 close: '閉じる',
@@ -61,7 +61,7 @@
             <input 
                 type="text" 
                 name="forms_columns_value_for_time_from[{{ $form_obj->id }}]" 
-                value="{{old('forms_columns_value_for_time_from.'.$form_obj->id)}}"
+                value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_from.'.$form_obj->id, $request->forms_columns_value_for_time_from[$form_obj->id])}}@endif"
                 class="form-control datetimepicker-input" 
                 data-target="#{{ $form_obj->id }}_from"
             >
@@ -77,7 +77,7 @@
             <input 
                 type="text" 
                 name="forms_columns_value_for_time_to[{{ $form_obj->id }}]" 
-                value="{{old('forms_columns_value_for_time_to.'.$form_obj->id)}}"
+                value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_to.'.$form_obj->id, $request->forms_columns_value_for_time_to[$form_obj->id])}}@endif"
                 class="form-control datetimepicker-input" 
                 data-target="#{{ $form_obj->id }}_to"
             >

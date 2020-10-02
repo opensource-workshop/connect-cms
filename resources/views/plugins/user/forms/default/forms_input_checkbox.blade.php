@@ -20,22 +20,25 @@
             // チェック用変数
             $column_checkbox_checked = "";
 
-            // old でチェックされていたもの
-            if (!empty(old('forms_columns_value.'.$form_obj->id))) {
-                foreach(old('forms_columns_value.'.$form_obj->id) as $old_value) {
-                    if ( $old_value == $select['value'] ) {
-                        $column_checkbox_checked = " checked";
+            // リクエストした自フレームのみ処理
+            if ($frame_id == $request->frame_id) {
+                // old でチェックされていたもの
+                if (!empty(old('forms_columns_value.'.$form_obj->id))) {
+                    foreach(old('forms_columns_value.'.$form_obj->id) as $old_value) {
+                        if ( $old_value == $select['value'] ) {
+                            $column_checkbox_checked = " checked";
+                        }
                     }
                 }
-            }
 
-            // 画面が戻ってきたもの
-            if (isset($request->forms_columns_value) &&
-                array_key_exists($form_obj->id, $request->forms_columns_value)) {
+                // 画面が戻ってきたもの
+                if (isset($request->forms_columns_value) &&
+                    array_key_exists($form_obj->id, $request->forms_columns_value)) {
 
-                foreach($request->forms_columns_value[$form_obj->id] as $request_value) {
-                    if ( $request_value == $select['value'] ) {
-                        $column_checkbox_checked = " checked";
+                    foreach($request->forms_columns_value[$form_obj->id] as $request_value) {
+                        if ( $request_value == $select['value'] ) {
+                            $column_checkbox_checked = " checked";
+                        }
                     }
                 }
             }
