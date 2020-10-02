@@ -55,6 +55,7 @@ class FormsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = [
+            'index',
             'editColumnDetail',
             'publicConfirmToken',
         ];
@@ -277,10 +278,82 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                     'error_messages' => [$form->entry_limit_over_message],
                 ]);
             }
+
+            ////
+            //// 項目名でGETパラメータ取得して、対応する項目にリクエストセット
+            ////
+            // URLのなかに'/plugin/forms/index'が含まれている場合（getのパラメータを含める時のみindexをURLに含められてる想定）
+            // 同一ページに複数フォームある場合、１つのフォームを登録して確認画面を表示するが、他は初期表示のため、リクエストが上書きされてしまうことを防ぐ。
+            if (strpos($request->url(), '/plugin/forms/index') !== false) {
+                // まとめ行に対応してない素の状態のFormsColumnsが欲しいため、再取得
+                $tmp_forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
+
+                $forms_columns_value = $request->forms_columns_value;
+                // 同じメールアドレス用
+                $forms_columns_value_confirmation = $request->forms_columns_value_confirmation;
+                // 時間型（FromTo）用
+                $forms_columns_value_for_time_from = $request->forms_columns_value_for_time_from;
+                $forms_columns_value_for_time_to = $request->forms_columns_value_for_time_to;
+
+                foreach ($tmp_forms_columns as $tmp_forms_column) {
+                    // $tmp_array[$tmp_forms_column->id] = isset($forms_columns_value[$tmp_forms_column->id]) ? $forms_columns_value[$tmp_forms_column->id] : null;
+                    // var_dump($tmp_forms_column->id);
+
+                    if (! isset($forms_columns_value[$tmp_forms_column->id])) {
+                        // 入力なし
+                        // 初期は入力なしのため、getでカラム名あればその値、なければnullで配列埋める
+
+                        if ($tmp_forms_column->column_type == \FormColumnType::mail) {
+                            // メール
+                            // 同じメールアドレスを埋める
+                            $forms_columns_value_confirmation[$tmp_forms_column->id] = $request->input($tmp_forms_column->column_name, null);
+                            $forms_columns_value[$tmp_forms_column->id] = $request->input($tmp_forms_column->column_name, null);
+                        } elseif ($tmp_forms_column->column_type == \FormColumnType::checkbox) {
+                            // チェックボックス
+                            $checkbox = $request->input($tmp_forms_column->column_name, null);
+                            $checkbox = explode(',', $checkbox);
+
+                            $forms_columns_value[$tmp_forms_column->id] = $checkbox;
+                        } elseif ($tmp_forms_column->column_type == \FormColumnType::time_from_to) {
+                            // 時間型(FromTo)
+                            $from_to = $request->input($tmp_forms_column->column_name, null);
+                            $from_to = str_replace('~', '～', $from_to);
+                            $from_to = explode('～', $from_to);
+
+                            $forms_columns_value_for_time_from[$tmp_forms_column->id] = isset($from_to[0]) ? $from_to[0] : null;
+                            $forms_columns_value_for_time_to[$tmp_forms_column->id] = isset($from_to[1]) ? $from_to[1] : null;
+                        } elseif ($tmp_forms_column->column_type == \FormColumnType::group) {
+                            // まとめ行(なにもしない)
+                        } else {
+                            // その他
+                            $forms_columns_value[$tmp_forms_column->id] = $request->input($tmp_forms_column->column_name, null);
+                        }
+
+                        // var_dump($tmp_forms_column->id);
+                        $request->merge([
+                            "forms_columns_value" => $forms_columns_value,
+                            "forms_columns_value_confirmation" => $forms_columns_value_confirmation,
+                            "forms_columns_value_for_time_from" => $forms_columns_value_for_time_from,
+                            "forms_columns_value_for_time_to" => $forms_columns_value_for_time_to,
+                        ]);
+                    }
+                }
+            }
+
+            // foreach ($forms_columns as $forms_column) {
+            //     var_dump($forms_column->id);
+            //     if (isset($forms_column->group)) {
+            //         foreach ($forms_column->group as $group_row) {
+            //             var_dump($group_row->id);
+            //         }
+            //     }
+            // }
         } else {
             // フレームに紐づくフォーム親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
         }
+
+        // var_dump('index', $request->forms_columns_value, $frame_id, $request->frame_id);
 
         if (empty($setting_error_messages)) {
             // 表示テンプレートを呼び出す。
@@ -291,7 +364,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns' => $forms_columns,
                 'forms_columns_id_select' => $forms_columns_id_select,
                 'errors' => $errors,
-            ])->withInput($request->all);
+            ]);
         } else {
             // エラーあり
             return $this->view('forms_error_messages', [
@@ -539,6 +612,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($validator->fails()) {
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
+
+        // var_dump('publicConfirm', $request->forms_columns_value);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
