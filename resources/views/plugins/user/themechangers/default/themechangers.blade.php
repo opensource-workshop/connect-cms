@@ -13,6 +13,7 @@
 <form action="{{url('/')}}/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{csrf_field()}}
     <div class="form-group mb-0">
+        <p>テーマを一時的に変更して、サイトの見た目や配色を確認する事ができます。</p>
         <select class="form-control" name="session_theme" title="テーマの選択">
             <option value="session:clear">元に戻す</option>
             @foreach($themes as $theme)
