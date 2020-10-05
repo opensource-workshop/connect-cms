@@ -35,7 +35,7 @@
             <i class="fa fa-times"></i>
         </button>
         <div class="input-group-append">
-            <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+            <button class="btn btn-primary" type="submit"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
         </div>
         <div class="ml-2">
             <a data-toggle="collapse" href="#collapse-search-help">
@@ -57,7 +57,7 @@
     --}}
     @foreach($codes_searches as $codes_search)
     <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.href='{{url('/')}}/manage/code/index?page=1&search_words={{$codes_search->search_words}}'">
-        <i class="fas fa-search"></i> {{$codes_search->name}}
+        <i class="fas fa-search" aria-label="検索" role="presentation"></i> {{$codes_search->name}}
     </button>
     @endforeach
 </div>
