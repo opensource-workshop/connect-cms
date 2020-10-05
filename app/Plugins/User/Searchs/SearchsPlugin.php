@@ -204,9 +204,15 @@ class SearchsPlugin extends UserPluginBase
         // フレームから、検索の設定取得
         $searchs_frame = $this->getSearchsFrame($frame_id);
 
-        // 検索キーワードが入ってきたら、検索メソッドへ
-        if (!empty($searchs_frame) && $searchs_frame->recieve_keyword == 1 && $request->search_keyword) {
-            return $this->search($request, $page_id, $frame_id);
+        // change: アクセシビリティ対応, getで検索空で受け取った場合、検索必須であるメッセージを表示する事（G83：入力が完了していない必須項目を特定するために、テキストの説明文を提供していることを確認して下さい）
+        // 入力エラーが無く、検索キーワードが入ってきたら、検索メソッドへ
+        // if (!empty($searchs_frame) && is_null($errors) && $searchs_frame->recieve_keyword == 1 && $request->search_keyword) {
+        if (!empty($searchs_frame) && is_null($errors) && $searchs_frame->recieve_keyword == 1) {
+            $get_query = strstr($request->fullUrl(), '?');
+            // 'search_keyword'がクエリ文字列に含まれている場合
+            if (strpos($get_query, 'search_keyword') !== false) {
+                return $this->search($request, $page_id, $frame_id);
+            }
         }
 
         // 表示テンプレートを呼び出す。

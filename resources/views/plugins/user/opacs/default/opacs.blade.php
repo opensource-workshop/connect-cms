@@ -20,7 +20,7 @@
                 <div class="input-group date">
                     <input type="text" name="keyword" value="{{Session::get('search_keyword')}}" class="form-control" placeholder="キーワード検索">
                     <span class="input-group-btn">
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
                     </span>
                 </div>
             </div>

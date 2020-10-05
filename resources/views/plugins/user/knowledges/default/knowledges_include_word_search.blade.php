@@ -10,7 +10,7 @@
     <input type="text" class="form-control" placeholder="フリーワード検索">
     <span class="input-group-btn">
         <button type="button" class="btn btn-primary">
-            <i class="fas fa-search"></i>
+            <i class="fas fa-search" aria-label="検索" role="presentation"></i>
         </button>
     </span>
 </div>
