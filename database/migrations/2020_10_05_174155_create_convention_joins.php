@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateConventionFrames extends Migration
+class CreateConventionJoins extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,11 @@ class CreateConventionFrames extends Migration
      */
     public function up()
     {
-        Schema::create('convention_frames', function (Blueprint $table) {
+        Schema::create('convention_joins', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('convention_id')->comment('イベントID');
-            $table->integer('frame_id')->comment('フレームID');
-            $table->integer('view_count')->nullable()->comment('1ページの表示件数');
+            $table->integer('post_id')->comment('コマID');
+            $table->integer('user_id')->comment('ユーザID');
+            $table->integer('join_flag')->nullable()->comment('参加フラグ');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
             $table->timestamp('created_at')->nullable();
@@ -37,6 +37,6 @@ class CreateConventionFrames extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('convention_frames');
+        Schema::dropIfExists('convention_joins');
     }
 }

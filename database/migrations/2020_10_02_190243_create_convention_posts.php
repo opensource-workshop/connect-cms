@@ -15,11 +15,13 @@ class CreateConventionPosts extends Migration
     {
         Schema::create('convention_posts', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('convention_id')->comment('ƒCƒxƒ“ƒgID');
-            $table->string('title')->comment('ƒ^ƒCƒgƒ‹');
+            $table->integer('convention_id')->comment('ã‚¤ãƒ™ãƒ³ãƒˆID');
+            $table->string('track')->comment('ãƒˆãƒ©ãƒƒã‚¯No');
+            $table->string('period')->comment('ã‚³ãƒžNo');
+            $table->string('title')->comment('ã‚¿ã‚¤ãƒˆãƒ«');
             $table->string('url')->nullable()->comment('URL');
-            $table->text('description')->nullable()->comment('à–¾');
-            $table->integer('display_sequence')->comment('•\Ž¦‡');
+            $table->text('description')->nullable()->comment('èª¬æ˜Ž');
+            $table->integer('display_sequence')->comment('è¡¨ç¤ºé †');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
             $table->timestamp('created_at')->nullable();

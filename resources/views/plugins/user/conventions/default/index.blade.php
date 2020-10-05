@@ -20,72 +20,68 @@
     </div>
 @endif
 
-{{-- 新規登録 --}}
-@can('posts.create',[[null, 'conventions', $buckets]])
-    @if (isset($frame) && $frame->bucket_id)
-        <div class="row">
-            <p class="text-right col-12">
-                {{-- 新規登録ボタン --}}
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/conventions/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
-            </p>
-        </div>
-    @endif
-@endcan
-
-{{-- リンク表示 --}}
 @if (isset($posts))
-    @if (!$plugin_frame->type)
-    <dl>
-    @elseif ($plugin_frame->type == 1)
-    <ul type="disc">
-    @elseif ($plugin_frame->type == 2)
-    <ul type="circle">
-    @elseif ($plugin_frame->type == 3)
-    <ul type="square">
-    @elseif ($plugin_frame->type == 4)
-    <ol type="1">
-    @elseif ($plugin_frame->type == 5)
-    <ol type="a">
-    @elseif ($plugin_frame->type == 6)
-    <ol type="A">
-    @elseif ($plugin_frame->type == 7)
-    <ol type="i">
-    @elseif ($plugin_frame->type == 8)
-    <ol type="I">
-    @endif
-    @foreach($posts as $post)
-        @if (!$plugin_frame->type)
-        <dd>
-        @else
-        <li>
-        @endif
-            @can('posts.update',[[null, 'conventions', $buckets]])
-                <a href="{{url('/')}}/plugin/conventions/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}"><i class="far fa-edit"></a></i>
-            @endcan
-            @if (empty($post->url))
-                {{$post->title}}
-            @else
-                <a href="{{$post->url}}">{{$post->title}}</a>
+{{-- トラックの表 --}}
+<table class="table table-bordered">
+<thead>
+    <tr>
+    <td></td>
+    @for ($j = 1; $j <= $convention->track_count; $j++)
+        <td>トラック-{{$j}}</td>
+    @endfor
+    </tr>
+</thead>
+<tbody>
+@for ($i = 1; $i <= $convention->period_count; $i++)
+    <tr>
+        <td rowspan="2">{{$tool->getPeriodLabel($i)}}</td>
+        @for ($j = 1; $j <= $convention->track_count; $j++)
+        <td class="border-bottom-0">
+            <p>
+                @can('posts.create',[[null, 'conventions', $buckets]])
+                    @if ($posts->where('track', $j)->where('period', $i)->first())
+                    <a href="{{url('/')}}/plugin/conventions/edit/{{$page->id}}/{{$frame_id}}/{{$posts->where('track', $j)->where('period', $i)->first()->id}}?track={{$j}}&period={{$i}}#frame-{{$frame_id}}"><i class="far fa-edit"></i></a>
+                    @else
+                    <a href="{{url('/')}}/plugin/conventions/edit/{{$page->id}}/{{$frame_id}}?track={{$j}}&period={{$i}}#frame-{{$frame_id}}"><i class="far fa-edit"></i></a>
+                    @endif
+                @endcan
+                {{$tool->getTitle($j, $i)}}
+            </p>
+            {!!nl2br($tool->getDescription($j, $i))!!}
+            {!!nl2br($tool->getLinkTag($j, $i))!!}
+        </td>
+        @endfor
+    </tr>
+    <tr>
+        @for ($j = 1; $j <= $convention->track_count; $j++)
+        <td class="border-top-0">
+            @if ($tool->hasPeriod($j, $i))
+            @auth
+                @if ($tool->isJoin($j, $i))
+                    <form action="{{url('/')}}/redirect/plugin/conventions/joinOff/{{$page->id}}/{{$frame_id}}/{{$tool->getPostId($j, $i)}}#frame-{{$frame->id}}" method="POST">
+                        {{csrf_field()}}
+                        <input type="hidden" name="join_flag" value="1">
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt"></i> 参加を取り消す</button>
+                        </div>
+                    </form>
+                @else
+                    <form action="{{url('/')}}/redirect/plugin/conventions/join/{{$page->id}}/{{$frame_id}}/{{$tool->getPostId($j, $i)}}#frame-{{$frame->id}}" method="POST">
+                        {{csrf_field()}}
+                        <input type="hidden" name="join_flag" value="1">
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 参加する</button>
+                        </div>
+                    </form>
+                @endif
+            @endauth
             @endif
-            @if (!empty($post->description))
-                <div class="alert alert-secondary bg-light mt-2" role="alert">
-                  {!!nl2br(e($post->description))!!}
-                </div>
-            @endif
-        @if (!$plugin_frame->type)
-        </dd>
-        @else
-        </li>
-        @endif
-    @endforeach
-    </ul>
-    @if (!$plugin_frame->type)
-    </dl>
-    @elseif ($plugin_frame->type == 1 || $plugin_frame->type == 2 || $plugin_frame->type == 3)
-    </ul>
-    @elseif ($plugin_frame->type == 4 || $plugin_frame->type == 5 || $plugin_frame->type == 6 || $plugin_frame->type == 7 || $plugin_frame->type == 8)
-    </ol>
-    @endif
+        </td>
+        @endfor
+    </tr>
+@endfor
+</tbody>
+</table>
 @endif
 
 @endsection

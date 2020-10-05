@@ -18,19 +18,24 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/conventions/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
+
+    <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">トラックNo</label>
+        <div class="col-md-10">{{$track}}</div>
+        <input type="hidden" name="track" value="{{$track}}">
+    </div>
+
+    <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">コマNo</label>
+        <div class="col-md-10">{{$period}}</div>
+        <input type="hidden" name="period" value="{{$period}}">
+    </div>
+
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
             <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control">
             @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right">URL</label>
-        <div class="col-md-10">
-            <input type="text" name="url" value="{{old('url', $post->url)}}" class="form-control">
-            @if ($errors && $errors->has('url')) <div class="text-danger">{{$errors->first('url')}}</div> @endif
         </div>
     </div>
 
@@ -43,6 +48,15 @@
     </div>
 
     <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">URL</label>
+        <div class="col-md-10">
+            <input type="text" name="url" value="{{old('url', $post->url)}}" class="form-control">
+            @if ($errors && $errors->has('url')) <div class="text-danger">{{$errors->first('url')}}</div> @endif
+        </div>
+    </div>
+
+{{--
+    <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">表示順</label>
         <div class="col-md-10">
             <input type="text" name="display_sequence" value="{{old('display_sequence', $post->display_sequence)}}" class="form-control">
@@ -50,6 +64,7 @@
             @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
         </div>
     </div>
+--}}
 
     <div class="form-group">
         <div class="row">
@@ -95,4 +110,21 @@
         </div>
     </div>
 </div>
+
+<div class="form-group row">
+    <label class="col-md-2 control-label text-md-right">参加者一覧</label>
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <ul>
+                @foreach ($joins as $join)
+                    <li>{{$join->name}}
+                @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @endsection

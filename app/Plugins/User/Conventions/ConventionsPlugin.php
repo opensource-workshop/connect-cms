@@ -13,7 +13,10 @@ use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\User\Conventions\Convention;
 use App\Models\User\Conventions\ConventionFrame;
+use App\Models\User\Conventions\ConventionJoin;
 use App\Models\User\Conventions\ConventionPost;
+
+use App\Plugins\User\Conventions\ConventionsTool;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -44,7 +47,7 @@ class ConventionsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['editView'];
-        $functions['post'] = ['saveView'];
+        $functions['post'] = ['saveView', 'join', 'joinOff'];
         return $functions;
     }
 
@@ -122,6 +125,35 @@ class ConventionsPlugin extends UserPluginBase
 
         // 取得
         return $posts_query->paginate($convention_frame->view_count);
+    }
+
+    /**
+     *  参加者取得
+     */
+    private function getJoins($convention_frame, $post_id, $user_id)
+    {
+        // データ取得
+        $joins_query = ConventionJoin::select('convention_joins.*', 'users.name')
+                                      ->join('convention_posts', function ($join) use ($convention_frame) {
+                                          $join->on('convention_posts.id', '=', 'convention_joins.post_id')
+                                               ->where('convention_posts.convention_id', '=', $convention_frame->convention_id);
+                                      })
+                                      ->leftJoin('users', 'users.id', '=', 'convention_joins.user_id');
+
+        if (!empty($user_id)) {
+            $joins_query->where('convention_joins.user_id', $user_id);
+        }
+
+        if (!empty($post_id)) {
+            $joins_query->where('convention_joins.post_id', $post_id);
+        }
+
+        $joins_query->whereNull('convention_joins.deleted_at')
+            ->whereNull('convention_posts.deleted_at')
+            ->orderBy('created_at', 'asc');
+
+        // 取得
+        return $joins_query->get();
     }
 
     /* スタティック関数 */
@@ -203,16 +235,28 @@ class ConventionsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
+        // プラグインの主データ
+        $convention = $this->getPluginBucket($this->frame->bucket_id);
+
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);
 
-        // リンクリストデータ一覧の取得
+        // イベントデータ一覧の取得
         $posts = $this->getPosts($plugin_frame);
+
+        // ログインしているユーザ
+        $user = Auth::user();
+        $user_id = empty($user) ? null : $user->id;
+
+        // 参加者一覧の取得
+        $joins = $this->getJoins($plugin_frame, null, $user_id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
+            'convention'   => $convention,
             'posts'        => $posts,
             'plugin_frame' => $plugin_frame,
+            'tool'         => new ConventionsTool($request, $page_id, $frame_id, $convention, $posts, $joins),
         ]);
     }
 
@@ -241,9 +285,18 @@ class ConventionsPlugin extends UserPluginBase
         // 記事取得
         $post = $this->getPost($post_id);
 
+        // プラグインのフレームデータ
+        $plugin_frame = $this->getPluginFrame($frame_id);
+
+        // 参加者一覧の取得
+        $joins = $this->getJoins($plugin_frame, $post_id, null);
+
         // 変更画面を呼び出す。
         return $this->view('edit', [
-            'post' => $post,
+            'post'   => $post,
+            'track'  => !empty($request->track) ? $request->track : $post->track,
+            'period' => !empty($request->period) ? $request->period : $post->period,
+            'joins'  => $joins,
         ]);
     }
 
@@ -254,10 +307,14 @@ class ConventionsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
+            'track'            => ['required', 'numeric'],
+            'period'           => ['required', 'numeric'],
             'title'            => ['required'],
             'display_sequence' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
+            'track'            => 'トラックNo',
+            'period'           => 'コマNo',
             'title'            => 'タイトル',
             'display_sequence' => '表示順',
         ]);
@@ -282,7 +339,9 @@ class ConventionsPlugin extends UserPluginBase
         }
 
         // 値のセット
-        $post->convention_id          = $convention_frame->convention_id;
+        $post->convention_id     = $convention_frame->convention_id;
+        $post->track             = $request->track;
+        $post->period            = $request->period;
         $post->title             = $request->title;
         $post->url               = $request->url;
         $post->description       = $request->description;
@@ -306,6 +365,33 @@ class ConventionsPlugin extends UserPluginBase
             ConventionPost::where('id', $post_id)->delete();
         }
         return;
+    }
+
+    /**
+     *  参加処理
+     */
+    public function join($request, $page_id, $frame_id, $post_id)
+    {
+        // ログインしているユーザ
+        $user = Auth::user();
+
+        $convention_join = ConventionJoin::updateOrCreate(
+            ['post_id'   => $post_id,
+             'user_id'   => $user->id],
+            ['post_id'   => $post_id,
+             'user_id'   => $user->id,
+             'join_flag' => $request->join_flag],
+        );
+    }
+
+    /**
+     *  参加取り消し処理
+     */
+    public function joinOff($request, $page_id, $frame_id, $post_id)
+    {
+        // ログインしているユーザ
+        $user = Auth::user();
+        ConventionJoin::where('post_id', $post_id)->where('user_id', $user->id)->delete();
     }
 
     /**
@@ -397,10 +483,14 @@ class ConventionsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'name' => ['required'],
+            'name'         => ['required'],
+            'track_count'  => ['required', 'numeric'],
+            'period_count' => ['required', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'name' => 'リンクリスト名',
+            'name'         => 'イベント名',
+            'track_count'  => 'トラック数',
+            'period_count' => 'コマ数',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -420,7 +510,10 @@ class ConventionsPlugin extends UserPluginBase
         // プラグインバケツを取得(なければ新規オブジェクト)
         // プラグインバケツにデータを設定して保存
         $convention = $this->getPluginBucket($bucket->id);
-        $convention->name = $request->name;
+        $convention->name         = $request->name;
+        $convention->track_count  = $request->track_count;
+        $convention->period_count = $request->period_count;
+        $convention->period_label = $request->period_label;
         $convention->save();
 
         // プラグインフレームを作成 or 更新

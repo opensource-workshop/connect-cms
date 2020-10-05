@@ -15,8 +15,11 @@ class CreateConventions extends Migration
     {
         Schema::create('conventions', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('bucket_id')->comment('�o�P�cID');
-            $table->string('name')->comment('�C�x���g��');
+            $table->integer('bucket_id')->comment('バケツID');
+            $table->string('name')->comment('イベント名');
+            $table->string('track_count')->comment('トラック数');
+            $table->string('period_count')->comment('トラック内コマ数');
+            $table->text('period_label')->nullable()->comment('コマ説明');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
             $table->timestamp('created_at')->nullable();

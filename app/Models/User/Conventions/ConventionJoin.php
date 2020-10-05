@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Userable;
 
-class Convention extends Model
+class ConventionJoin extends Model
 {
     // 論理削除
     use SoftDeletes;
@@ -16,5 +16,5 @@ class Convention extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['bucket_id', 'name', 'track_count', 'period_count', 'period_label'];
+    protected $fillable = ['post_id', 'user_id', 'join_flag'];
 }

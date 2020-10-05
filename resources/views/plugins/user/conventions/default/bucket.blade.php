@@ -43,6 +43,32 @@
                 @if ($errors && $errors->has('name')) <div class="text-danger">{{$errors->first('name')}}</div> @endif
             </div>
         </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">トラック数 <label class="badge badge-danger">必須</label></label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="track_count" value="{{old('track_count', $convention->track_count)}}" class="form-control">
+                @if ($errors && $errors->has('track_count')) <div class="text-danger">{{$errors->first('track_count')}}</div> @endif
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">コマ数 <label class="badge badge-danger">必須</label></label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="period_count" value="{{old('period_count', $convention->period_count)}}" class="form-control">
+                @if ($errors && $errors->has('period_count')) <div class="text-danger">{{$errors->first('period_count')}}</div> @endif
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">コマ説明</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <textarea name="period_label" class="form-control" rows=2>{!!old('period_label', $convention->period_label)!!}</textarea>
+                @if ($errors && $errors->has('period_label')) <div class="text-danger">{{$errors->first('period_label')}}</div> @endif
+                <small class="text-muted">※ コマの説明をカンマ区切りで記載します。</small>
+            </div>
+        </div>
+
         {{-- Submitボタン --}}
         <div class="form-group text-center">
             <div class="row">
