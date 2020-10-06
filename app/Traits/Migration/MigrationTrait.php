@@ -3087,6 +3087,14 @@ trait MigrationTrait
             $frame_design = $frame_ini['frame_base']['frame_design'];
         }
 
+        // 強制的にフレームデザインを適用する指定があれば上書きする。
+        if ($frame_design != 'none') {
+            $cc_import_force_frame_design = $this->getMigrationConfig('frames', 'cc_import_force_frame_design', null);
+            if (!empty($cc_import_force_frame_design)) {
+                $frame_design = $cc_import_force_frame_design;
+            }
+        }
+
         // Frame エリアID
         $frame_area_id = 2; // メイン
         if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
