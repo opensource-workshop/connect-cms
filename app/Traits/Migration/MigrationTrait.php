@@ -4248,15 +4248,18 @@ trait MigrationTrait
                 continue;
             }
 
-            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
-            // ルーム指定があれば、指定されたルームのみ処理する。
-            if (empty($room_ids)) {
-                // ルーム指定なし。全データの移行
-            } elseif (!empty($room_ids) && in_array($nc2_upload->room_id, $room_ids)) {
-                // ルーム指定あり。指定ルームに合致する。
-            } else {
-                // ルーム指定あり。条件に合致せず。移行しない。
-                continue;
+            // アップロードファイルのルームを無視する指定があれば全部を移行、なければルーム設定を参照
+            if (!$this->hasMigrationConfig('uploads', 'nc2_export_uploads_force_room', true)) {
+                $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+                // ルーム指定があれば、指定されたルームのみ処理する。
+                if (empty($room_ids)) {
+                    // ルーム指定なし。全データの移行
+                } elseif (!empty($room_ids) && in_array($nc2_upload->room_id, $room_ids)) {
+                    // ルーム指定あり。指定ルームに合致する。
+                } else {
+                    // ルーム指定あり。条件に合致せず。移行しない。
+                    continue;
+                }
             }
 
             // ファイルのコピー
