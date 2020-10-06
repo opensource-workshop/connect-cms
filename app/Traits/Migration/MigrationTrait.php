@@ -1857,6 +1857,8 @@ trait MigrationTrait
                 $status = '';              // status の内容
                 $display_sequence_idx = 0; // display_sequence のカラムインデックス（0 の場合は無効）
                 $display_sequence = '';    // display_sequence の内容
+                $posted_at_idx = 0;        // posted_at のカラムインデックス（0 の場合は無効）
+                $posted_at = '';           // posted_at の内容（日時）
                 $created_at_idx = 0;       // created_at のカラムインデックス（0 の場合は無効）
                 $created_at = '';          // created_at の内容（日時）
                 $updated_at_idx = 0;       // updated_at のカラムインデックス（0 の場合は無効）
@@ -1876,7 +1878,9 @@ trait MigrationTrait
                         $database_tsv_cols = explode("\t", trim($database_tsv_line, "\n\r"));
 
                         foreach ($database_tsv_cols as $database_tsv_col) {
-                            if ($database_tsv_col == 'created_at') {
+                            if ($database_tsv_col == 'posted_at') {
+                                $posted_at_idx = $loop_idx;
+                            } elseif ($database_tsv_col == 'created_at') {
                                 $created_at_idx = $loop_idx;
                             } elseif ($database_tsv_col == 'updated_at') {
                                 $updated_at_idx = $loop_idx;
@@ -1894,8 +1898,17 @@ trait MigrationTrait
                     // 行データをタブで項目に分割
                     $database_tsv_cols = explode("\t", trim($database_tsv_line, "\n\r"));
 
-                    // created_at、updated_at の設定
-                    // created_at、updated_at のカラムがない or データが空の場合は、処理時間を入れる。
+                    // posted_at、created_at、updated_at の設定
+                    // posted_at、created_at、updated_at のカラムがない or データが空の場合は、処理時間を入れる。
+                    if ($posted_at_idx != 0 && array_key_exists($posted_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$posted_at_idx])) {
+                        $posted_at = $database_tsv_cols[$posted_at_idx];
+                        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $posted_at)) {
+                            $this->putError(3, '日付エラー', "posted_at = " . $posted_at);
+                            $posted_at = date('Y-m-d H:i:s');
+                        }
+                    } else {
+                        $posted_at = date('Y-m-d H:i:s');
+                    }
                     if ($created_at_idx != 0 && array_key_exists($created_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$created_at_idx])) {
                         $created_at = $database_tsv_cols[$created_at_idx];
                         if (!\DateTime::createFromFormat('Y-m-d H:i:s', $created_at)) {
@@ -1934,6 +1947,7 @@ trait MigrationTrait
                         'databases_id'     => $database->id,
                         'status'           => $status,
                         'display_sequence' => $display_sequence,
+                        'posted_at'        => $posted_at,
                         'created_at'       => $created_at,
                         'updated_at'       => $updated_at,
                     ]);
@@ -1960,8 +1974,9 @@ trait MigrationTrait
                     $bulks = array();
 
                     foreach ($database_tsv_cols as $database_tsv_col) {
-                        // created_at、updated_at はカラムとしては読み飛ばす
-                        if ($databases_columns_id_idx == $created_at_idx ||
+                        // posted_at、created_at、updated_at はカラムとしては読み飛ばす
+                        if ($databases_columns_id_idx == $posted_at_idx ||
+                            $databases_columns_id_idx == $created_at_idx ||
                             $databases_columns_id_idx == $updated_at_idx ||
                             $databases_columns_id_idx == $status_idx ||
                             $databases_columns_id_idx == $display_sequence_idx) {
@@ -5064,9 +5079,10 @@ trait MigrationTrait
                 $tsv_cols[$metadata_id] = "";
             }
 
-            $tsv_header .= "status" . "\t" . "display_sequence" . "\t" . "created_at" . "\t" . "updated_at" . "\t" . "content_id";
+            $tsv_header .= "status" . "\t" . "display_sequence" . "\t" . "posted_at" . "\t" . "created_at" . "\t" . "updated_at" . "\t" . "content_id";
             $tsv_cols['status'] = "";
             $tsv_cols['display_sequence'] = "";
+            $tsv_cols['posted_at'] = "";
             $tsv_cols['insert_time'] = "";
             $tsv_cols['update_time'] = "";
             $tsv_cols['content_id'] = "";
@@ -5114,6 +5130,8 @@ trait MigrationTrait
                         }
                         // 表示順
                         $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
+                        // 投稿日
+                        $tsv_record['posted_at'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                         // 登録日時、更新日時
                         $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                         $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
@@ -5169,6 +5187,8 @@ trait MigrationTrait
                 }
                 // 表示順
                 $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
+                // 投稿日
+                $tsv_record['posted_at'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                 // 登録日時、更新日時
                 $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                 $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
