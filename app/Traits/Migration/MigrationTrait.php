@@ -5627,6 +5627,9 @@ trait MigrationTrait
                 continue;
             }
 
+            // NC2 ブロック強制上書き設定があれば反映
+            $nc2_block = $this->overrideNc2Block($nc2_block);
+
             $frame_index++;
             $frame_index_str = sprintf("%'.04d", $frame_index);
 
@@ -5683,6 +5686,23 @@ trait MigrationTrait
                 $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
             }
         }
+    }
+
+    /**
+     * NC2：NC2 のブロックの上書き
+     */
+    private function overrideNc2Block($nc2_block)
+    {
+        // @nc2_override/blocks/{block_id}.ini があれば処理
+        $nc2_override_block_path = $this->migration_base . '@nc2_override/blocks/' . $nc2_block->block_id . '.ini';
+        if (Storage::exists($nc2_override_block_path)) {
+            $nc2_override_block = parse_ini_file(storage_path() . '/app/' . $nc2_override_block_path, true);
+            // ブロックタイトル
+            if (array_key_exists('block', $nc2_override_block) && array_key_exists('block_name', $nc2_override_block['block'])) {
+                $nc2_block->block_name = $nc2_override_block['block']['block_name'];
+            }
+        }
+        return $nc2_block;
     }
 
     /**
