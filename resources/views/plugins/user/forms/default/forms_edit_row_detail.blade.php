@@ -381,6 +381,34 @@
 
     <br>
 
+    @if (
+        $column->column_type == FormColumnType::text || 
+        $column->column_type == FormColumnType::textarea || 
+        $column->column_type == FormColumnType::mail || 
+        $column->column_type == FormColumnType::date
+    )
+        {{-- プレースホルダ設定 --}}
+        <div class="card">
+            <h5 class="card-header">プレースホルダの設定</h5>
+            <div class="card-body">
+
+                {{-- プレースホルダ内容 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">内容 </label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <input type="text" name="place_holder" class="form-control" value="{{old('place_holder', $column->place_holder)}}">
+                    </div>
+                </div>
+
+                {{-- ボタンエリア --}}
+                <div class="form-group text-center">
+                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                </div>
+            </div>
+        </div>
+        <br>
+    @endif
+
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
         {{-- キャンセルボタン --}}

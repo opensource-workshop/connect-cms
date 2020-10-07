@@ -10,6 +10,7 @@
     class="form-control" 
     type="{{$form_obj->column_type}}" 
     value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_obj->id, $request->forms_columns_value[$form_obj->id])}}@endif"
+    placeholder="{{ $form_obj->place_holder }}"
 >
 {{-- 確認用の項目 --}}
 <input 

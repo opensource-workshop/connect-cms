@@ -88,7 +88,8 @@
     $column->column_type == FormColumnType::checkbox ||
     $column->column_type == FormColumnType::select ||
     $column->column_type == FormColumnType::group ||
-    $column->caption
+    $column->caption || 
+    $column->place_holder
     )
     <tr>
         <td class="pt-0 border border-0"></td>
@@ -97,13 +98,17 @@
         @if ($column->column_type != FormColumnType::group && $column->select_count > 0)
             {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
             <div class="small"><i class="far fa-list-alt"></i> {{ $column->select_names }}</div>
-        @elseif($column->column_type != FormColumnType::group && !$column->caption && $column->select_count == 0)
-            {{-- 選択肢データがなく、キャプションの設定もない場合はツールチップ分、余白として改行する --}}
+        @elseif($column->column_type != FormColumnType::group && !$column->caption && !$column->place_holder && $column->select_count == 0)
+            {{-- 選択肢データがなく、キャプション／プレースホルダーの設定もない場合はツールチップ分、余白として改行する --}}
             <br>
         @endif
         @if ($column->caption)
             {{-- キャプションが設定されている場合、キャプションを表示する --}}
             <div class="small {{ $column->caption_color }}"><i class="fas fa-pen"></i> {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}</div>
+        @endif
+        @if ($column->place_holder)
+            {{-- プレースホルダーが設定されている場合、プレースホルダーを表示する --}}
+            <div class="small"><i class="fas fa-pen-fancy"></i> {{ mb_strimwidth($column->place_holder, 0, 60, '...', 'UTF-8') }}</div>
         @endif
         @if ($column->column_type == FormColumnType::group && !isset($column->frame_col))
             {{-- まとめ行でまとめ数の設定がない場合はツールチップ分、余白として改行する --}}

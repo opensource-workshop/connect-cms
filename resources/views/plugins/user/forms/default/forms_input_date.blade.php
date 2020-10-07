@@ -28,6 +28,7 @@
             value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_obj->id, $request->forms_columns_value[$form_obj->id])}}@endif"
             class="form-control datetimepicker-input" 
             data-target="#{{ $form_obj->id }}"
+            placeholder="{{ $form_obj->place_holder }}"
         >
         <div class="input-group-append" data-target="#{{ $form_obj->id }}" data-toggle="datetimepicker">
             <div class="input-group-text"><i class="fa fa-calendar"></i></div>

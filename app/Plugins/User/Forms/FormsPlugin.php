@@ -1479,6 +1479,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.frame_col',
                 'forms_columns.caption',
                 'forms_columns.caption_color',
+                'forms_columns.place_holder',
                 'forms_columns.display_sequence',
                 DB::raw('count(forms_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(forms_columns_selects.value order by forms_columns_selects.display_sequence SEPARATOR \',\') as select_names')
@@ -1497,6 +1498,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 'forms_columns.frame_col',
                 'forms_columns.caption',
                 'forms_columns.caption_color',
+                'forms_columns.place_holder',
                 'forms_columns.display_sequence'
             )
             ->orderby('forms_columns.display_sequence')
@@ -1701,6 +1703,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 項目の更新処理
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
+        $column->place_holder = $request->place_holder;
         $column->frame_col = $request->frame_col;
         // 分刻み指定
         if ($column->column_type == \FormColumnType::time) {
