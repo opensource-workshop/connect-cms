@@ -288,6 +288,10 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">仮登録メール件名</label>
             <input type="text" name="temporary_regist_mail_subject" value="{{old('temporary_regist_mail_subject', $form->temporary_regist_mail_subject)}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
+            <small class="text-muted">
+                ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。
+            </small>
         </div>
     </div>
 
@@ -299,6 +303,7 @@
             <small class="text-muted">
                 ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
                 ※ [[body]] を記述すると該当部分に登録内容が入ります。
             </small>
             @if ($errors && $errors->has('temporary_regist_mail_format')) <div class="text-danger">{{$errors->first('temporary_regist_mail_format')}}</div> @endif
@@ -324,6 +329,11 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">本登録メール件名</label>
             <input type="text" name="mail_subject" value="{{old('mail_subject', $form->mail_subject)}}" class="form-control">
+            <small class="text-muted">
+                ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
+            </small>
         </div>
     </div>
 
@@ -334,6 +344,7 @@
             <textarea name="mail_format" class="form-control" rows=5 placeholder="（例）受付内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('mail_format', $form->mail_format)}}</textarea>
             <small class="text-muted">
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
                 ※ [[body]] を記述すると該当部分に登録内容が入ります。<br>
                 ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
             </small>
