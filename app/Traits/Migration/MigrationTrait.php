@@ -3659,7 +3659,6 @@ trait MigrationTrait
      */
     private function getContentAnchor($content)
     {
-
         $pattern = "|<a.*?href=\"(.*?)\".*?>(.*?)</a>|mis";
         if (preg_match_all($pattern, $content, $anchors)) {
             if (is_array($anchors) && isset($anchors[1])) {
@@ -3673,11 +3672,56 @@ trait MigrationTrait
     }
 
     /**
+     * HTML からa タグの 相対パスリンクを絶対パスに修正
+     */
+    private function changeFullPath($content, $nc2_page)
+    {
+        // A タグの相対パス（./ and ../）を探して絶対パスに変換する。
+        if (!empty($nc2_page)) {
+            // 1つのWYSIWYG に複数存在する可能性があるため、preg_match_all
+            $match_count = preg_match_all("|<a href=\"(.*?)\".*?>(.*?)</a>|mis", $content, $matches);
+            if ($match_count !== false) {
+                for ($i = 0; $i < $match_count; $i++) {
+                    // ./ の場合、./ を現在の固定リンクに変換
+                    if (stripos($matches[1][$i], './') === 0) {
+                        $replace_str = str_ireplace('./', '/' . $nc2_page->permalink . '/', $matches[0][$i]);
+                        $content = str_ireplace($matches[0][$i], $replace_str, $content);
+                    }
+                    // 何階層上がるか計算
+                    $count = mb_substr_count($matches[1][$i], '../');
+                    if ($count > 0) {
+                        $new_permalink = $nc2_page->permalink;
+                        // 上がる階層分、右から / の左まで切り取り
+                        for ($j = 0; $j < $count; $j++) {
+                            if (mb_strpos($new_permalink, '/', 0, "UTF-8") !== false) {
+                                // 1階層上がる
+                                $new_permalink = mb_substr($new_permalink, 0, mb_strrpos($new_permalink, '/', 0, "UTF-8"));
+                            } else {
+                                $new_permalink = '';
+                            }
+                        }
+                        // ../ の回数分をフルパスに変換
+                        $search = str_repeat('../', $count);
+                        // 計算したフルパスは最初と最後の / がないので追加（ルートの場合は / 1つのみ）
+                        if (empty($new_permalink)) {
+                            $new_permalink = '/';
+                        } else {
+                            $new_permalink = '/' . $new_permalink . '/';
+                        }
+                        $replace_str = str_ireplace($search, $new_permalink, $matches[0][$i]);
+                        $content = str_ireplace($matches[0][$i], $replace_str, $content);
+                    }
+                }
+            }
+        }
+        return $content;
+    }
+
+    /**
      * ページのHTML取得
      */
     private function getHTMLPage($url)
     {
-
         // curl Open
         $ch = curl_init();
 
@@ -3697,7 +3741,6 @@ trait MigrationTrait
      */
     private function getInnerHtml($node)
     {
-
         // node が空の場合
         if (empty($node)) {
             return "";
@@ -4537,6 +4580,18 @@ trait MigrationTrait
                 continue;
             }
 
+            // この日誌が配置されている最初のページオブジェクトを取得しておく
+            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
+            $nc2_page = null;
+            $nc2_journal_block = Nc2JournalBlock::where('journal_id', $nc2_journal->journal_id)->orderBy('block_id', 'asc')->first();
+            if (!empty($nc2_journal_block)) {
+                $nc2_block = Nc2Block::where('block_id', $nc2_journal_block->block_id)->first();
+            }
+            if (!empty($nc2_block)) {
+                $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
+            }
+
+            // ブログ設定
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
@@ -4591,8 +4646,8 @@ trait MigrationTrait
                     $journals_tsv .= "\n";
                 }
 
-                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content, 'journal');
-                $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content, 'journal');
+                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->content, 'journal', $nc2_page);
+                $more_content  = $this->nc2Wysiwyg(null, null, null, null, $nc2_journal_post->more_content, 'journal', $nc2_page);
 
                 $category_obj  = $nc2_journal_categories->firstWhere('category_id', $nc2_journal_post->category_id);
                 $category      = "";
@@ -4668,6 +4723,17 @@ trait MigrationTrait
                 continue;
             }
 
+            // この掲示板が配置されている最初のページオブジェクトを取得しておく
+            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
+            $nc2_page = null;
+            $nc2_bbs_block = Nc2BbsBlock::where('bbs_id', $nc2_bbs->bbs_id)->orderBy('block_id', 'asc')->first();
+            if (!empty($nc2_bbs_block)) {
+                $nc2_block = Nc2Block::where('block_id', $nc2_bbs_block->block_id)->first();
+            }
+            if (!empty($nc2_block)) {
+                $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
+            }
+
             // 掲示板を日誌に移行する。
             // Connect-CMS に掲示板ができたら、掲示板 to 掲示板の移行機能も追加する。
 
@@ -4703,7 +4769,7 @@ trait MigrationTrait
                     $journals_tsv .= "\n";
                 }
 
-                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_bbs_post->body, 'bbs');
+                $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_bbs_post->body, 'bbs', $nc2_page);
 
                 $journals_tsv .= $nc2_bbs_post->insert_time . "\t";
                 $journals_tsv .=                              "\t"; // カテゴリ
@@ -4769,6 +4835,17 @@ trait MigrationTrait
                 continue;
             }
 
+            // このFAQが配置されている最初のページオブジェクトを取得しておく
+            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
+            $nc2_page = null;
+            $nc2_faq_block = Nc2FaqBlock::where('faq_id', $nc2_faq->faq_id)->orderBy('block_id', 'asc')->first();
+            if (!empty($nc2_faq_block)) {
+                $nc2_block = Nc2Block::where('block_id', $nc2_faq_block->block_id)->first();
+            }
+            if (!empty($nc2_block)) {
+                $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
+            }
+
             $faqs_ini = "";
             $faqs_ini .= "[faq_base]\n";
             $faqs_ini .= "faq_name = \"" . $nc2_faq->faq_name . "\"\n";
@@ -4816,7 +4893,7 @@ trait MigrationTrait
                     $category  = $category_obj->category_name;
                 }
 
-                $question_answer = $this->nc2Wysiwyg(null, null, null, null, $nc2_faq_post->question_answer, 'faq');
+                $question_answer = $this->nc2Wysiwyg(null, null, null, null, $nc2_faq_post->question_answer, 'faq', $nc2_page);
 
                 $faqs_tsv .= $category                       . "\t";
                 $faqs_tsv .= $nc2_faq_post->display_sequence . "\t";
@@ -4978,6 +5055,16 @@ trait MigrationTrait
                 $multidatabase_ini .= "view_count = 10\n";  // 初期値
             } else {
                 $multidatabase_ini .= "view_count = " . $nc2_multidatabase_block->visible_item . "\n";
+            }
+
+            // この汎用データベースが配置されている最初のページオブジェクトを取得しておく
+            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
+            $nc2_page = null;
+            if (!empty($nc2_multidatabase_block)) {
+                $nc2_block = Nc2Block::where('block_id', $nc2_multidatabase_block->block_id)->first();
+            }
+            if (!empty($nc2_block)) {
+                $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
             }
 
             // NC2 情報
@@ -5174,7 +5261,7 @@ trait MigrationTrait
                     }
                 } elseif ($multidatabase_metadata_content->type === 6) {
                     // WYSIWYG
-                    $content = $this->nc2Wysiwyg(null, null, null, null, $content, 'multidatabase');
+                    $content = $this->nc2Wysiwyg(null, null, null, null, $content, 'multidatabase', $nc2_page);
                 } elseif ($multidatabase_metadata_content->type === 9) {
                     // 日付型
                     if (!empty($content) && strlen($content) == 14) {
@@ -5920,7 +6007,7 @@ trait MigrationTrait
         $content_filename = "frame_" . $frame_index_str . '.html';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
-        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement');
+        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
 
         //echo "nc2ExportContents";
     }
@@ -5979,7 +6066,7 @@ trait MigrationTrait
      * コンテンツファイル名
      * iniファイル名
      */
-    private function nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, $nc2_module_name = null)
+    private function nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, $nc2_module_name = null, $nc2_page = null)
     {
         // コンテンツのクリーニング
         $content = $this->cleaningContent($content, $nc2_module_name);
@@ -6038,6 +6125,10 @@ trait MigrationTrait
 
         // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
+
+        // HTML からa タグの 相対パスリンクを絶対パスに修正
+        $content = $this->changeFullPath($content, $nc2_page);
+
 
         // HTML content の保存
         if ($save_folder) {
