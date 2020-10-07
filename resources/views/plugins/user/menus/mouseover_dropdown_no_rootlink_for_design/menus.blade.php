@@ -46,7 +46,7 @@
                     </div>
                 </li>
             @else
-                <li class="nav-item active">
+                <li class="nav-item active {{$page_obj->getClass()}}">
                     <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                         {{$page_obj->page_name}}
                     </a>

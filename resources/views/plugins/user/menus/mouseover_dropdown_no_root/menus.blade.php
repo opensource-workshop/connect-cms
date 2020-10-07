@@ -17,7 +17,7 @@
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
 
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     {{-- カレント --}}
                     @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
@@ -42,7 +42,7 @@
                         </div>
                     </li>
                 @else
-                    <li class="nav-item">
+                    <li class="nav-item {{$page_obj->getClass()}}">
                         {{-- カレント --}}
                         @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}">

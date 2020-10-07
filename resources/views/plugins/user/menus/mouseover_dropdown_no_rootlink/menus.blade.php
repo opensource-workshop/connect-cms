@@ -44,7 +44,7 @@
                     </div>
                 </li>
             @else
-                <li class="nav-item">
+                <li class="nav-item {{$page_obj->getClass()}}">
                         {{-- カレント --}}
                     @if ($ancestors->contains('id', $page_obj->id))
                     <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>

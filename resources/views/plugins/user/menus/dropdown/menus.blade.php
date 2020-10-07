@@ -22,7 +22,7 @@
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
 
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     {{-- カレント --}}
                     @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
@@ -46,7 +46,7 @@
                         </div>
                     </li>
                 @else
-                    <li class="nav-item">
+                    <li class="nav-item {{$page_obj->getClass()}}">
                     @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
@@ -59,14 +59,14 @@
             @else
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link dropdown-toggle active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
                         <a class="nav-link dropdown-toggle" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                 @else
-                    <li class="nav-item">
+                    <li class="nav-item {{$page_obj->getClass()}}">
                     @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @else
