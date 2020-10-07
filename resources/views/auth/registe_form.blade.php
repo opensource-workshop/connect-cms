@@ -203,9 +203,15 @@
     <div class="form-group row text-center">
         <div class="col-sm-3"></div>
         <div class="col-sm-6">
+            @if (Auth::user() && Auth::user()->can('admin_page'))
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user')}}'">
                 <i class="fas fa-times"></i> キャンセル
             </button>
+            @else
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}'">
+                <i class="fas fa-times"></i> キャンセル
+            </button>
+            @endif
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
                 @if (isset($function) && $function == 'edit')
                     ユーザ変更
