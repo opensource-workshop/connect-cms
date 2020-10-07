@@ -727,6 +727,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $after_message = $form->temporary_regist_after_message;
 
             // メール送信
+            // メール件名の組み立て
+            $subject = $form->temporary_regist_mail_subject;
+
+            // メール件名内のサイト名文字列を置換
+            $subject = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $subject);
+            // メール件名内のフォーム名文字列を置換
+            $subject = str_replace('[[form_name]]', $form->forms_name, $subject);
+
             // メール本文の組み立て
             $mail_format = $form->temporary_regist_mail_format;
             $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
@@ -734,14 +742,15 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // 本登録URL
             $entry_url = url('/') . "/plugin/forms/publicConfirmToken/{$page_id}/{$frame_id}/{$forms_inputs->id}?token={$user_token}#frame-{$frame_id}";
             $mail_text = str_replace('[[entry_url]]', $entry_url, $mail_text);
-
             // メール本文内のサイト名文字列を置換
             $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
+            // メール本文内のフォーム名文字列を置換
+            $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
             // メール送信（ユーザー側）
             foreach ($user_mailaddresses as $user_mailaddress) {
                 if (!empty($user_mailaddress)) {
-                    Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->temporary_regist_mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                 }
             }
         } else {
@@ -756,21 +765,32 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
             // メール送信
             if ($form->mail_send_flag || $form->user_mail_send_flag) {
+                // メール件名の組み立て
+                $subject = $form->mail_subject;
+
+                // メール本文内の採番文字列を置換
+                $subject = str_replace('[[number]]', $number, $subject);
+                // メール件名内のサイト名文字列を置換
+                $subject = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $subject);
+                // メール件名内のフォーム名文字列を置換
+                $subject = str_replace('[[form_name]]', $form->forms_name, $subject);
+
                 // メール本文の組み立て
                 $mail_format = $form->mail_format;
                 $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
 
                 // メール本文内の採番文字列を置換
                 $mail_text = str_replace('[[number]]', $number, $mail_text);
-
                 // メール本文内のサイト名文字列を置換
                 $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
+                // メール本文内のフォーム名文字列を置換
+                $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
                 // メール送信（管理者側）
                 if ($form->mail_send_flag) {
                     $mail_addresses = explode(',', $form->mail_send_address);
                     foreach ($mail_addresses as $mail_address) {
-                        Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                        Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                     }
                 }
 
@@ -778,7 +798,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 if ($form->user_mail_send_flag) {
                     foreach ($user_mailaddresses as $user_mailaddress) {
                         if (!empty($user_mailaddress)) {
-                            Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                            Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                         }
                     }
                 }
@@ -964,21 +984,32 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // メール送信
         if ($form->mail_send_flag || $form->user_mail_send_flag) {
+            // メール件名の組み立て
+            $subject = $form->mail_subject;
+
+            // メール本文内の採番文字列を置換
+            $subject = str_replace('[[number]]', $number, $subject);
+            // メール件名内のサイト名文字列を置換
+            $subject = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $subject);
+            // メール件名内のフォーム名文字列を置換
+            $subject = str_replace('[[form_name]]', $form->forms_name, $subject);
+
             // メール本文の組み立て
             $mail_format = $form->mail_format;
             $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
 
             // メール本文内の採番文字列を置換
             $mail_text = str_replace('[[number]]', $number, $mail_text);
-
             // メール本文内のサイト名文字列を置換
             $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
+            // メール本文内のフォーム名文字列を置換
+            $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
             // メール送信（管理者側）
             if ($form->mail_send_flag) {
                 $mail_addresses = explode(',', $form->mail_send_address);
                 foreach ($mail_addresses as $mail_address) {
-                    Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                 }
             }
 
@@ -986,7 +1017,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($form->user_mail_send_flag) {
                 foreach ($user_mailaddresses as $user_mailaddress) {
                     if (!empty($user_mailaddress)) {
-                        Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $form->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                        Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
                     }
                 }
             }
