@@ -2914,9 +2914,6 @@ trait MigrationTrait
         $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
         $content_html = File::get($html_file_path);
 
-        // Google Analytics タグ部分を削除
-        $content_html = $this->deleteGATag($content_html);
-
         // 対象外の条件を確認
         $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
         foreach ($import_ommit_keywords as $import_ommit_keyword) {
@@ -2924,6 +2921,9 @@ trait MigrationTrait
                 return;
             }
         }
+
+        // Google Analytics タグ部分を削除
+        $content_html = $this->deleteGATag($content_html);
 
         // Buckets 登録
         // echo "Buckets 登録\n";
