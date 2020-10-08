@@ -69,7 +69,7 @@
                                 {{-- ＋ボタンクリックでformサブミット --}}
                                 <a href="javascript:form_edit_booking.submit()">
                                     <button type="button" class="btn btn-primary">
-                                        <i class="far fa-edit bg-default small cc-font-color"></i> {{ __('messages.edit') }}
+                                        <small<i class="far fa-edit bg-default cc-font-color"></i></small> {{ __('messages.edit') }}
                                     </button>
                                 </a>
                             </form>
