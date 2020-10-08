@@ -293,9 +293,9 @@ class DatabasesPlugin extends UserPluginBase
 
         $setting_error_messages = null;
         $databases_columns = null;
-        $databases_columns_id_select = null;
+        // $databases_columns_id_select = null;
         if ($database) {
-            $databases_columns_id_select = $this->getDatabasesColumnsSelects($database->id);
+            // $databases_columns_id_select = $this->getDatabasesColumnsSelects($database->id);
 
             /**
              * データベースのカラムデータを取得
@@ -330,7 +330,7 @@ class DatabasesPlugin extends UserPluginBase
         //--- 初期表示データ
 
         if (empty($database)) {
-            $databases = null;
+            // $databases = null;
             $columns = null;
             $select_columns = null;
             $sort_columns = null;
@@ -340,7 +340,7 @@ class DatabasesPlugin extends UserPluginBase
             $input_cols = null;
         } else {
             // データベースの取得
-            $databases = Databases::where('id', $database->id)->first();
+            // $databases = Databases::where('id', $database->id)->first();
 
             // フレーム毎のデータベース設定の取得
             $databases_frames = DatabasesFrames::where('frames_id', $frame_id)->where('databases_id', $database->id)->first();
@@ -547,15 +547,15 @@ class DatabasesPlugin extends UserPluginBase
         return $this->view(
             'databases',
             [
-                'request'  => $request,
-                'frame_id' => $frame_id,
-                'database' => $database,
-                'databases_columns' => $databases_columns,
-                'databases_columns_id_select' => $databases_columns_id_select,
+                // 'request'  => $request,
+                // 'frame_id' => $frame_id,
+                // 'database' => $database,
+                // 'databases_columns' => $databases_columns,
+                // 'databases_columns_id_select' => $databases_columns_id_select,
                 'errors' => $errors,
                 'setting_error_messages' => $setting_error_messages,
 
-                'databases'        => $databases,
+                // 'databases'        => $databases,
                 'database_frame'   => $database_frame,
                 'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
                 'columns'          => $columns,
