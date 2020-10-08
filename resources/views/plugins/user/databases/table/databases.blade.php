@@ -39,7 +39,7 @@
             @foreach($columns as $column)
                 @if($column->list_hide_flag == 0)
                     @if($is_first)
-                        <td>
+                        <td class="{{$column->classname}}">
                             <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}">
                                 @include('plugins.user.databases.default.databases_include_value')
                             </a>
@@ -48,7 +48,7 @@
                         $is_first = false;
                         @endphp
                     @else
-                        <td>
+                        <td class="{{$column->classname}}">
                             @include('plugins.user.databases.default.databases_include_value')
                         </td>
                     @endif

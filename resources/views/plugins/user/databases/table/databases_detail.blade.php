@@ -15,7 +15,7 @@
     @if($column->detail_hide_flag == 0)
     <tr>
         <th style="background-color: #e9ecef;" nowrap>{{$column->column_name}}</th>
-        <td>
+        <td class="{{$column->classname}}">
             @include('plugins.user.databases.default.databases_include_detail_value')
         </td>
     </tr>
