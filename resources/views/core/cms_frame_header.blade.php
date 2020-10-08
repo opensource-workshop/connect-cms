@@ -88,7 +88,7 @@
         <div class="float-right">
             <i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom text-secondary cc-font-color"></i>
             <i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom text-secondary cc-font-color"></i>
-            <i class="fas fa-cog bg-{{$frame->frame_design}} small text-secondary cc-font-color"></i>
+            <small><i class="fas fa-cog bg-{{$frame->frame_design}} text-secondary cc-font-color"></i></small>
         </div>
         @endif
 --}}
