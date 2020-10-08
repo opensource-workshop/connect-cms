@@ -1224,11 +1224,11 @@ trait MigrationTrait
             // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
             $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
             if (empty($source_page)) {
-                ciontinue;
+                continue;
             }
             $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
             if (empty($destination_page)) {
-                ciontinue;
+                continue;
             }
             $page_role = PageRole::updateOrCreate(
                 ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
