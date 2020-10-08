@@ -35,7 +35,10 @@
                         @foreach($group_col_columns as $column)
                             <div class="row pt-2 pb-2">
                                 <div class="col">
-                                    <small><b>{{$column->column_name}}</b></small><br>
+                                    @if ($column->label_hide_flag == '0')
+                                        <small><b>{{$column->column_name}}</b></small><br>
+                                    @endif
+
                                     <div class="{{$column->classname}}">
                                         @include('plugins.user.databases.default.databases_include_value')
                                     </div>

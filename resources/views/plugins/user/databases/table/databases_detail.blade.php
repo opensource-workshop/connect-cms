@@ -14,10 +14,16 @@
     @foreach($columns as $column)
     @if($column->detail_hide_flag == 0)
     <tr>
-        <th style="background-color: #e9ecef;" nowrap>{{$column->column_name}}</th>
-        <td class="{{$column->classname}}">
-            @include('plugins.user.databases.default.databases_include_detail_value')
-        </td>
+        @if ($column->label_hide_flag == '0')
+            <th style="background-color: #e9ecef;" nowrap>{{$column->column_name}}</th>
+            <td class="{{$column->classname}}">
+                @include('plugins.user.databases.default.databases_include_detail_value')
+            </td>
+        @else
+            <td class="{{$column->classname}}" colspan="2">
+                @include('plugins.user.databases.default.databases_include_detail_value')
+            </td>
+        @endif
     </tr>
     @endif
     @endforeach

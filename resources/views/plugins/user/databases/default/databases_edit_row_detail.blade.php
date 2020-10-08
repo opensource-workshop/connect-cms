@@ -446,6 +446,21 @@
                     </div>
                 </div>
 
+                {{-- 項目名を非表示にする指定 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">項目名の表示指定</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="label_hide_flag_0" name="label_hide_flag" class="custom-control-input" @if(old('label_hide_flag', $column->label_hide_flag) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="label_hide_flag_0">項目名を表示する</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="label_hide_flag_1" name="label_hide_flag" class="custom-control-input" @if(old('label_hide_flag', $column->label_hide_flag) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="label_hide_flag_1">項目名を表示しない</label>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- 権限毎に一覧・詳細で非表示にする指定 --}}
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}} pt-0">権限の表示指定</label>

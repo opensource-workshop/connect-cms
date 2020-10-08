@@ -2061,6 +2061,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->list_hide_flag = (empty($request->list_hide_flag)) ? 0 : $request->list_hide_flag;
         // 詳細から非表示にする指定
         $column->detail_hide_flag = (empty($request->detail_hide_flag)) ? 0 : $request->detail_hide_flag;
+        // 項目名を非表示にする指定
+        $column->label_hide_flag = (empty($request->label_hide_flag)) ? 0 : $request->label_hide_flag;
         // 権限で表示カラムを制御
         $column->role_display_control_flag = (empty($request->role_display_control_flag)) ? 0 : $request->role_display_control_flag;
         // 並べ替え指定

@@ -20,6 +20,7 @@ class DatabasesColumns extends Model
         'frame_col',
         'list_hide_flag',
         'detail_hide_flag',
+        'label_hide_flag',
         'sort_flag',
         'search_flag',
         'select_flag',
