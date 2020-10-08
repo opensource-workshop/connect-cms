@@ -223,7 +223,7 @@ class DatabasesearchesPlugin extends UserPluginBase
                         ->groupBy('frames.page_id')
                         // bugfix: 入力データ1件の項目内で更新日がずれると重複を起こすため、updated_atのgroupBy不要。
                         //->groupBy('databases_input_cols.updated_at')
-                        ->orderBy('databases_input_cols.updated_at', 'desc');
+                        ;
 
             // データ取得
             //$inputs_ids_array[] = $inputs_query->get();
@@ -260,8 +260,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
             $inputs_ids->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
         }
-        $inputs_ids = $inputs_ids->orderBy('databases_input_cols.updated_at', 'desc')
-                                ->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
+        $inputs_ids = $inputs_ids->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
         // Log::debug(var_export($inputs_ids->toArray(), true));
         // Log::debug(var_export($inputs_ids_marge, true));
 
