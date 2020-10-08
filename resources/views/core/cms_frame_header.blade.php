@@ -73,7 +73,7 @@
             </form>
 
             {{-- 変更画面へのリンク --}}
-            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}"><i class="fas fa-cog bg-{{$frame->frame_design}} small cc-font-color"></i></a>
+            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}"><small><i class="fas fa-cog bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
 
 {{-- モーダル実装 --}}
             {{-- 変更画面へのリンク --}}
@@ -88,7 +88,7 @@
         <div class="float-right">
             <i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom text-secondary cc-font-color"></i>
             <i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom text-secondary cc-font-color"></i>
-            <i class="fas fa-cog bg-{{$frame->frame_design}} small text-secondary cc-font-color"></i>
+            <small><i class="fas fa-cog bg-{{$frame->frame_design}} text-secondary cc-font-color"></i></small>
         </div>
         @endif
 --}}

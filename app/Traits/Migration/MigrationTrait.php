@@ -1224,11 +1224,11 @@ trait MigrationTrait
             // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
             $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
             if (empty($source_page)) {
-                ciontinue;
+                continue;
             }
             $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
             if (empty($destination_page)) {
-                ciontinue;
+                continue;
             }
             $page_role = PageRole::updateOrCreate(
                 ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
@@ -2914,9 +2914,6 @@ trait MigrationTrait
         $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
         $content_html = File::get($html_file_path);
 
-        // Google Analytics タグ部分を削除
-        $content_html = $this->deleteGATag($content_html);
-
         // 対象外の条件を確認
         $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
         foreach ($import_ommit_keywords as $import_ommit_keyword) {
@@ -2924,6 +2921,9 @@ trait MigrationTrait
                 return;
             }
         }
+
+        // Google Analytics タグ部分を削除
+        $content_html = $this->deleteGATag($content_html);
 
         // Buckets 登録
         // echo "Buckets 登録\n";
