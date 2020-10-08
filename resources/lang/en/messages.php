@@ -32,4 +32,5 @@ return [
     'both_required' => 'Please enter both.',
     'search_results' => 'Search Results',
     'cases' => 'cases',
+    'people' => 'people',
 ];

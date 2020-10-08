@@ -32,4 +32,5 @@ return [
     'both_required' => '両方の項目を入力してください。',
     'search_results' => '検索結果',
     'cases' => '件',
+    'people' => '名',
 ];
