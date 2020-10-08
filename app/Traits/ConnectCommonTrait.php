@@ -773,6 +773,33 @@ trait ConnectCommonTrait
     }
 
     /**
+     *  利用可能かチェック
+     *  戻り値：true なら
+     */
+    public function checkUserStstus($request, &$error_msg = "")
+    {
+        // userid は必要
+        if (!$request->filled('userid')) {
+            $error_msg = "ログインできません。";
+            return false;
+        }
+
+        // ユーザが存在しなければfalse
+        $user = User::where('userid', $request->userid)->first();
+        if (empty($user)) {
+            $error_msg = "ログインできません。";
+            return false;
+        }
+
+        // 利用不可ならfalse
+        if ($user->status == 0) {
+            return true;
+        }
+        $error_msg = "利用不可のため、ログインできません。";
+        return false;
+    }
+
+    /**
      *  外部認証
      *
      */

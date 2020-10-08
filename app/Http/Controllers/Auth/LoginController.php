@@ -67,6 +67,13 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
+        // 利用可能かチェック
+        if (!$this->checkUserStstus($request, $error_msg)) {
+            throw ValidationException::withMessages([
+                $this->username() => [$error_msg],
+            ]);
+        }
+
         // 外部認証の確認と外部認証の場合は関数側で認証してトップページを呼ぶ
         // 外部認証でない場合は戻ってくる。
         $this->authMethod($request);

@@ -24,8 +24,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        //'name', 'email', 'password',
-        'name', 'email', 'userid', 'password', 'role',
+        'name', 'email', 'userid', 'password', 'status',
     ];
 
     /**
@@ -46,6 +45,18 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new PasswordResetNotification($token));
+    }
+
+    /**
+     * 状態から一覧表示の背景クラスを返却
+     */
+    public function getStstusBackgroundClass()
+    {
+        if ($this->status == 1) {
+            // 利用停止中
+            return "bg-warning";
+        }
+        return "";
     }
 
     /**
