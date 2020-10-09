@@ -75,14 +75,18 @@ use App\Models\User\Databases\DatabasesColumns;
             </div>
         </div>
 
-        <div class="form-group row">
-            <label class="col-sm-3 control-label">表示順</label>
-            <div class="col-sm-9">
-                <input type="text" name="display_sequence" value="{{old('display_sequence', $inputs->display_sequence)}}" class="form-control">
-                <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
-                @if ($errors && $errors->has('display_sequence')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('display_sequence')}}</div> @endif
+        @if ($is_hide_posted)
+            <input type="hidden" name="display_sequence" value="{{old('display_sequence', $inputs->display_sequence)}}">
+        @else
+            <div class="form-group row">
+                <label class="col-sm-3 control-label">表示順</label>
+                <div class="col-sm-9">
+                    <input type="text" name="display_sequence" value="{{old('display_sequence', $inputs->display_sequence)}}" class="form-control">
+                    <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
+                    @if ($errors && $errors->has('display_sequence')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('display_sequence')}}</div> @endif
+                </div>
             </div>
-        </div>
+        @endif
 
         {{-- ボタンエリア --}}
         <div class="form-group text-center">

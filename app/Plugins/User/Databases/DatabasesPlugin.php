@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 // use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -25,6 +24,7 @@ use App\Models\User\Databases\DatabasesColumnsRole;
 use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databases\DatabasesInputCols;
+use App\Models\User\Databases\DatabasesRole;
 
 use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
@@ -145,8 +145,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabases($frame_id)
     {
         // Databases、Frame データ
-        $database = DB::table('databases')
-            ->select('databases.*')
+        $database = Databases::select('databases.*')
             ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
             ->where('frames.id', '=', $frame_id)
             ->first();
@@ -404,7 +403,7 @@ class DatabasesPlugin extends UserPluginBase
                 $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id));
             }
 
-            // [TODO] データベースプラグイン単体では $request->search_options をセットしておらず「オプション検索指定」使っていない。今は残しておき、今後整理する予定
+            // データベースプラグイン単体では $request->search_options をセットしておらず「オプション検索指定」使っていないが、個別の追加テンプレートで利用するため、消さない。
             // オプション検索指定の追加
             if ($request->has('search_options') && is_array($request->search_options)) {
                 // 指定をばらす
@@ -751,6 +750,9 @@ class DatabasesPlugin extends UserPluginBase
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
+        // 権限のよって固定項目"表示順"を非表示にするか
+        $is_hide_posted = (new DatabasesTool())->isHidePosted($database);
+
         // データベースのカラムデータ
         $databases_columns = $this->getDatabasesColumns($database);
 
@@ -789,20 +791,18 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databases_input',
-            [
-                'request'  => $request,
-                'frame_id' => $frame_id,
-                'id'       => $id,
-                'database' => $database,
-                'databases_columns' => $databases_columns,
-                'databases_columns_id_select' => $databases_columns_id_select,
-                'input_cols'  => $input_cols,
-                'inputs'      => $inputs,
-                'errors'      => $errors,
-            ]
-        )->withInput($request->all);
+        return $this->view('databases_input', [
+            'request'  => $request,
+            'frame_id' => $frame_id,
+            'id'       => $id,
+            'database' => $database,
+            'databases_columns' => $databases_columns,
+            'databases_columns_id_select' => $databases_columns_id_select,
+            'input_cols'  => $input_cols,
+            'inputs'      => $inputs,
+            'is_hide_posted' => $is_hide_posted,
+            'errors'      => $errors,
+        ]);
     }
 
     /**
@@ -936,6 +936,9 @@ class DatabasesPlugin extends UserPluginBase
     {
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
+
+        // 権限のよって固定項目"表示順"を非表示にするか
+        $is_hide_posted = (new DatabasesTool())->isHidePosted($database);
 
         // データベースのカラムデータ
         $databases_columns = $this->getDatabasesColumns($database);
@@ -1075,8 +1078,7 @@ class DatabasesPlugin extends UserPluginBase
         //print_r($delete_upload_column_ids);
         //print_r($uploads);
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databases_confirm', [
+        return $this->view('databases_confirm', [
             'request'                  => $request,
             'frame_id'                 => $frame_id,
             'id'                       => $id,
@@ -1084,8 +1086,8 @@ class DatabasesPlugin extends UserPluginBase
             'databases_columns'        => $databases_columns,
             'uploads'                  => $uploads,
             'delete_upload_column_ids' => $delete_upload_column_ids,
-            ]
-        );
+            'is_hide_posted'           => $is_hide_posted,
+        ]);
     }
 
     /**
@@ -1389,17 +1391,26 @@ class DatabasesPlugin extends UserPluginBase
             $database = Databases::where('bucket_id', $database_frame->bucket_id)->first();
         }
 
+        if (empty($database->id)) {
+            $databases_roles = new DatabasesRole();
+        } else {
+            $databases_roles = DatabasesRole::where('databases_id', $database->id)
+                                                ->get()
+                                                // keyをrole_nameにした結果をセット
+                                                ->mapWithKeys(function ($item) {
+                                                    return [$item['role_name'] => $item];
+                                                });
+        }
+
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databases_edit_database',
-            [
-                'database_frame'  => $database_frame,
-                'database'        => $database,
-                'create_flag' => $create_flag,
-                'message'     => $message,
-                'errors'      => $errors,
-            ]
-        )->withInput($request->all);
+        return $this->view('databases_edit_database', [
+            'database_frame'  => $database_frame,
+            'database'        => $database,
+            'databases_roles' => $databases_roles,
+            'create_flag' => $create_flag,
+            'message'     => $message,
+            'errors'      => $errors,
+        ])->withInput($request->all);
     }
 
     /**
@@ -1490,6 +1501,8 @@ class DatabasesPlugin extends UserPluginBase
 
         // データベース設定
         $databases->databases_name      = $request->databases_name;
+        $databases->posted_role_display_control_flag = (empty($request->posted_role_display_control_flag)) ? 0 : $request->posted_role_display_control_flag;
+
         $databases->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $databases->mail_send_address   = $request->mail_send_address;
         $databases->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;
@@ -1503,6 +1516,28 @@ class DatabasesPlugin extends UserPluginBase
 
         // データ保存
         $databases->save();
+
+        // delete -> insert
+        // データベース権限データ(表示順の権限毎の制御)を削除する。
+        DatabasesRole::where('databases_id', $databases->id)->delete();
+
+        $database_role_name_keys = \DatabaseRoleName::getMemberKeys();
+
+        foreach ($database_role_name_keys as $database_role_name_key) {
+            if (! isset($request->$database_role_name_key)) {
+                // チェックなしの権限はスルー
+                continue;
+            }
+            $posted_regist_edit_display_flag = isset($request->$database_role_name_key['posted_regist_edit_display_flag']) ? $request->$database_role_name_key['posted_regist_edit_display_flag'] : 0;
+
+            $database_role = new DatabasesRole();
+            $database_role->databases_id = $databases->id;
+            $database_role->role_name = $database_role_name_key;
+            $database_role->posted_regist_edit_display_flag = $posted_regist_edit_display_flag;
+
+            // 保存
+            $database_role->save();
+        }
 
         // 登録
         if (empty($databases_id)) {
@@ -1610,6 +1645,9 @@ class DatabasesPlugin extends UserPluginBase
 
             // カラムデータを削除する。
             DatabasesColumns::where('databases_id', $databases_id)->delete();
+
+            // データベース権限データ(表示順の権限毎の制御)を削除する。
+            DatabasesRole::where('databases_id', $databases_id)->delete();
 
             // bugfix: backets, buckets_rolesは $frame->bucket_id で消さない。選択したDBのbucket_idで消す
             $databases = Databases::find($databases_id);

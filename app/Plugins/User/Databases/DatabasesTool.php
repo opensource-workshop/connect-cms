@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 use App\Models\User\Databases\DatabasesColumns;
 
@@ -184,6 +183,69 @@ class DatabasesTool
             }
         }
         return $databases_hide_columns_ids;
+    }
+
+    /**
+     * 権限のよって固定項目"表示順"を非表示にするか
+     */
+    public function isHidePosted($database)
+    {
+        if (empty($database)) {
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            return false;
+        }
+
+        if ($this->isCan('role_article_admin')) {
+            // コンテンツ管理者のユーザは、必ず当カラムを表示します。
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            return false;
+        }
+
+        // 権限で表示順の表示カラムを制御
+        if (!$database->posted_role_display_control_flag) {
+            // 制御しない表示カラムはスルー
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            return false;
+        }
+
+        // データベースの表示権限データ取得
+        $databases_roles = $database->databasesRoles;
+
+        if (Auth::user()) {
+            // ログイン済み
+
+            foreach ($databases_roles as $databases_role) {
+                if ($this->isCan('role_article') &&
+                        $databases_role->role_name == \DatabaseRoleName::role_article &&
+                        $databases_role->posted_regist_edit_display_flag == 1) {
+                    // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                    // \Log::debug(var_export('モデレータ', true));
+
+                    // モデレータ権限あり & モデレータ表示の項目
+                    // 非表示扱いから取り除く(=表示する)
+                    return false;
+                } elseif ($this->isCan('role_reporter') &&
+                        $databases_role->role_name == \DatabaseRoleName::role_reporter &&
+                        $databases_role->posted_regist_edit_display_flag == 1) {
+                    // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                    // \Log::debug(var_export('編集者権限', true));
+
+                    // 編集者権限あり & 編集者表示の項目
+                    // 非表示扱いから取り除く(=表示する)
+                    return false;
+                }
+            }
+
+            // 非表示
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            return true;
+        } else {
+            // 未ログイン
+
+            // 表示
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            return false;
+        }
     }
 
     /**

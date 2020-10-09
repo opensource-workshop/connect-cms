@@ -60,6 +60,53 @@
         </div>
     </div>
 
+    {{-- 表示順のDBカラム設定 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">表示順カラムの権限の表示指定</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+
+                <div class="row">
+                    <div class="col-md">
+                        <label>表示順カラムの制御</label><br>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="posted_role_display_control_flag_1" name="posted_role_display_control_flag" class="custom-control-input" @if(old('posted_role_display_control_flag', $database->posted_role_display_control_flag) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="posted_role_display_control_flag_1">権限で制御する</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="posted_role_display_control_flag_0" name="posted_role_display_control_flag" class="custom-control-input" @if(old('posted_role_display_control_flag', $database->posted_role_display_control_flag) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="posted_role_display_control_flag_0">権限で制御しない</label>
+                        </div>
+                        <div>
+                            <small class="text-muted">
+                                ※ コンテンツ管理者のユーザは、「権限で制御する」場合でも、必ず表示順カラムを表示します。
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md">
+                        <label>表示順カラムを登録・編集で表示する権限</label>
+                        @foreach (DatabaseRoleName::getRegistEditDisplayMembers() as $role_name => $display_value)
+                            @php
+                            $display_flag = 0;
+                            if (isset($databases_roles[$role_name])) {
+                                $display_flag = $databases_roles[$role_name]->posted_regist_edit_display_flag;
+                            }
+                            @endphp
+                            <div class="custom-control custom-checkbox">
+                                <input name="{{$role_name}}[posted_regist_edit_display_flag]" value="1" type="checkbox" class="custom-control-input" id="{{$role_name}}_posted_regist_edit_display_flag" @if(old($role_name . '.posted_regist_edit_display_flag', $display_flag) == 1) checked="checked" @endif>
+                                <label class="custom-control-label" for="{{$role_name}}_posted_regist_edit_display_flag">{{  $display_value  }}</label>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 {{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
@@ -224,6 +271,7 @@
         </div>
     </div>
 </div>
+{{--
 <script>
     new Vue({
       el: "#app_{{ $frame->id }}",
@@ -232,5 +280,6 @@
       }
     })
 </script>
+--}}
 @endif
 @endsection

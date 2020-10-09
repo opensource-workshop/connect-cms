@@ -237,6 +237,7 @@ return [
         'DatabaseColumnType' => \App\Enums\DatabaseColumnType::class,
         'DatabaseColumnRoleName' => \App\Enums\DatabaseColumnRoleName::class,
         'DatabaseSortFlag' => \App\Enums\DatabaseSortFlag::class,
+        'DatabaseRoleName' => \App\Enums\DatabaseRoleName::class,
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
         'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
