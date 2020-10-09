@@ -30,6 +30,19 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
+        if(env('OPTION_BATCH_SCHEDULE')){
+            // カンマ連結されたバッチスケジュールセットを分割
+            $defs = explode(',', env('OPTION_BATCH_SCHEDULE'));
+            foreach($defs as $def){
+                // パイプ連結されたコマンドと実施時刻を分割
+                $option_schedule_sets = explode('|', $def);
+                $cmd = 'command:' . $option_schedule_sets[0];
+                $time = $option_schedule_sets[1];
+
+                // バッチスケジュールを定義
+                $schedule->command($cmd)->at($time);
+            }
+        }
     }
 
     /**
