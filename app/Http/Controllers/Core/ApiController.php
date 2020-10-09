@@ -13,6 +13,8 @@ use App\Http\Requests;
 
 use File;
 
+use App\Plugins\Api\ApiPluginBase;
+
 use App\User;
 
 /**
@@ -25,6 +27,17 @@ use App\User;
  */
 class ApiController extends ConnectController
 {
+    /**
+     *  json encode
+     */
+    public function encodeJson($value, $request = null)
+    {
+        // UNOCIDE エスケープ指定
+        if (!empty($request) && $request->filled('escape') && $request->escape == 'json_unescaped_unicode') {
+            return json_encode($value, JSON_UNESCAPED_UNICODE);
+        }
+        return json_encode($value);
+    }
 
     /**
      *  APIプラグインのインスタンス生成
@@ -68,6 +81,18 @@ class ApiController extends ConnectController
     {
         // インスタンス生成
         $plugin_instance = self::createApiInstance($plugin_name);
+
+        // インスタンスが API プラグインか判定（スーパークラスで判定）
+        if (!$plugin_instance instanceof ApiPluginBase) {
+            $ret = array('code' => 404, 'message' => '指定されたインターフェースは存在しません。');
+            return $this->encodeJson($ret, $request);
+        }
+
+        // メソッドの有無確認
+        if (!method_exists($plugin_instance, $action)) {
+            $ret = array('code' => 404, 'message' => '指定されたメソッドは存在しません。');
+            return $this->encodeJson($ret, $request);
+        }
 
         // 指定されたアクションを呼ぶ。
         return $plugin_instance->$action($request, $arg1, $arg2, $arg3, $arg4, $arg5);
