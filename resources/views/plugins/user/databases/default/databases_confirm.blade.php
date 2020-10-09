@@ -27,7 +27,7 @@ use App\Models\User\Databases\DatabasesColumns;
     {{-- 保存のキャンセル JavaScript --}}
     function submit_databases_cancel() {
         @if($id)
-            databases_store{{$frame_id}}.action = "{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
+            databases_store{{$frame_id}}.action = "{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}";
         @else
             databases_store{{$frame_id}}.action = "{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         @endif
@@ -178,17 +178,21 @@ use App\Models\User\Databases\DatabasesColumns;
         </div>
     </div>
 
-    <div class="form-group container-fluid row">
-        <label class="col-sm-2 control-label text-nowrap">表示順</label>
-        <div class="col-sm-10">
-            {{$request->display_sequence}}
-            <input name="display_sequence" class="form-control" type="hidden" value="{{$request->display_sequence}}">
+    @if ($is_hide_posted)
+        <input name="display_sequence" type="hidden" value="{{$request->display_sequence}}">
+    @else
+        <div class="form-group container-fluid row">
+            <label class="col-sm-2 control-label text-nowrap">表示順</label>
+            <div class="col-sm-10">
+                {{$request->display_sequence}}
+                <input name="display_sequence" type="hidden" value="{{$request->display_sequence}}">
+            </div>
         </div>
-    </div>
+    @endif
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-2" onclick="submit_databases_cancel();"><i class="fas fa-times"></i> キャンセル</button>
+        <button type="button" class="btn btn-secondary mr-2" onclick="submit_databases_cancel();"><i class="fas fa-chevron-left"></i> 前へ</button>
         <button type="button" class="btn btn-info mr-2" onclick="submit_databases_temporary();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
         @if($id)
             @if ($buckets->needApprovalUser(Auth::user()))
