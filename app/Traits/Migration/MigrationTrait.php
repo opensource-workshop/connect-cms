@@ -1992,6 +1992,18 @@ trait MigrationTrait
                             } elseif ($create_columns[$databases_columns_id_idx]->column_type == 'wysiwyg') {
                                 // WYSIWYG
                                 $database_tsv_col = $this->changeWYSIWYG($database_tsv_col);
+                            } elseif ($create_columns[$databases_columns_id_idx]->column_type == 'image' || $create_columns[$databases_columns_id_idx]->column_type == 'file') {
+                                // 画像、ファイル
+                                $database_tsv_col = str_replace('../../uploads/upload_', "", $database_tsv_col);
+                                if (empty($database_tsv_col)) {
+                                    $database_tsv_col = '';
+                                } else {
+                                    $database_tsv_col = intval(substr($database_tsv_col, 0, strpos($database_tsv_col, '.')));
+                                    $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $database_tsv_col)->first();
+                                    if (!empty($upload_mapping)) {
+                                        $database_tsv_col = $upload_mapping->destination_key;
+                                    }
+                                }
                             }
 
                             // セルデータの追加
@@ -5245,18 +5257,16 @@ trait MigrationTrait
                 $content = str_replace("\n", "<br />", $multidatabase_metadata_content->content);
 
                 // メタデータの型による変換
-                if ($multidatabase_metadata_content->type === 0) {
-                    // 画像型
+                if ($multidatabase_metadata_content->type === 0 || $multidatabase_metadata_content->type === 5) {
+                    // 画像型、ファイル型
                     if (strpos($content, '?action=multidatabase_action_main_filedownload&upload_id=') !== false) {
                         // NC2 のアップロードID 抜き出し
                         $nc2_uploads_id = str_replace('?action=multidatabase_action_main_filedownload&upload_id=', '', $content);
-                        // マッピングテーブルから新ID を探す
-                        $migration_mappings = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $nc2_uploads_id)->first();
-                        // マップから新ファイルID を取得
-                        if (!empty($migration_mappings)) {
-                            // アップロードファイル情報
-                            $migration_mappings = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $nc2_uploads_id)->first();
-                            $content = $migration_mappings->destination_key;
+                        // uploads.ini からファイルを探す
+                        if (array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($nc2_uploads_id, $this->uploads_ini['uploads']['upload'])) {
+                            if (array_key_exists($nc2_uploads_id, $this->uploads_ini) && array_key_exists('temp_file_name', $this->uploads_ini[$nc2_uploads_id])) {
+                                $content = '../../uploads/' . $this->uploads_ini[$nc2_uploads_id]['temp_file_name'];
+                            }
                         }
                     }
                 } elseif ($multidatabase_metadata_content->type === 6) {
