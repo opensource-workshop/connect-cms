@@ -36,6 +36,8 @@ class UserManage extends ManagePluginBase
         // 権限チェックテーブル
         $role_ckeck_table = array();
         $role_ckeck_table["index"]              = array('admin_user');
+        $role_ckeck_table["search"]             = array('admin_user');
+        $role_ckeck_table["clearSearch"]        = array('admin_user');
         $role_ckeck_table["regist"]             = array('admin_user');
         $role_ckeck_table["edit"]               = array('admin_user');
         $role_ckeck_table["update"]             = array('admin_user');
@@ -45,24 +47,87 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["deleteOriginalRole"] = array('admin_user');
         $role_ckeck_table["groups"]             = array('admin_user');
         $role_ckeck_table["saveGroups"]         = array('admin_user');
-/*
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"]   = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
-        $role_ckeck_table["regist"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
-        $role_ckeck_table["edit"]    = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
-        $role_ckeck_table["update"]  = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
-        $role_ckeck_table["destroy"] = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_USER_MANAGER'));
-*/
+
         return $role_ckeck_table;
     }
 
     /**
      *  データ取得
      */
-    private function getUsers()
+    private function getUsers($request, $page)
     {
+        /* 権限が指定されている場合は、権限を保持しているユーザID を抜き出しておき、後で whereIn する。
+        ----------------------------------------------------------------------------------------------*/
+
+        $in_users = null;
+
+        // 権限が指定されている場合
+        if (
+            $request->session()->has('user_search_condition.role_article_admin') ||
+            $request->session()->has('user_search_condition.role_arrangement') ||
+            $request->session()->has('user_search_condition.role_article') ||
+            $request->session()->has('user_search_condition.role_approval') ||
+            $request->session()->has('user_search_condition.role_reporter')
+        ) {
+            //$in_users_query = UsersRoles::select('users_roles.user_id')->where('role_value', 1);
+            $in_users_query = UsersRoles::select('users_roles.user_id');
+
+
+        }
+
+
+
+        // コンテンツ権限
+        if ($request->session()->has('user_search_condition.role_article_admin')) {
+            $in_users_query->orWhere('role_name', 'role_article_admin');
+        }
+
+        $in_users = UsersRoles::select('users_roles.user_id');
+
+
+
+        /* ユーザデータ取得
+        ----------------------------------------------------------------------------------------------*/
+
         // ユーザデータ取得
-        $users = User::orderBy('id', 'asc')->paginate(10);
+        $users_query = User::select('users.*');
+
+        // ログインID
+        if ($request->session()->has('user_search_condition.userid')) {
+            $users_query->where('userid', 'like', '%' . $request->session()->get('user_search_condition.userid') . '%');
+        }
+
+        // ユーザー名
+        if ($request->session()->has('user_search_condition.name')) {
+            $users_query->where('name', 'like', '%' . $request->session()->get('user_search_condition.name') . '%');
+        }
+
+        // eメール
+        if ($request->session()->has('user_search_condition.email')) {
+            $users_query->where('email', 'like', '%' . $request->session()->get('user_search_condition.email') . '%');
+        }
+
+        // 表示順
+        $sort = 'created_at_asc';
+        if ($request->session()->has('user_search_condition.sort')) {
+            $sort = session('user_search_condition.sort');
+        }
+        if ($sort == 'created_at_asc') {
+            $users_query->orderBy('created_at', 'asc');
+        } elseif ($sort == 'created_at_desc') {
+            $users_query->orderBy('created_at', 'desc');
+        }elseif ($sort == 'updated_at_asc') {
+            $users_query->orderBy('updated', 'asc');
+        } elseif ($sort == 'updated_at_desc') {
+            $users_query->orderBy('updated', 'desc');
+        } elseif ($sort == 'userid_asc') {
+            $users_query->orderBy('userid', 'asc');
+        } elseif ($sort == 'userid_desc') {
+            $users_query->orderBy('userid', 'desc');
+        }
+
+        // データ取得
+        $users = $users_query->paginate(10, null, 'page', $page);
 
         // ユーザデータからID の配列生成
         $user_ids = array();
@@ -123,14 +188,73 @@ class UserManage extends ManagePluginBase
      */
     public function index($request, $id)
     {
+        /* ページの処理（セッション）
+        ----------------------------------------------*/
+
+        // 表示ページ数。詳細で更新して戻ってきたら、元と同じページを表示したい。
+        // セッションにあればページの指定があれば使用。
+        // ただし、リクエストでページ指定があればそれが優先。(ページング操作)
+        $page = 1;
+        if ($request->session()->has('user_page_condition.page')) {
+            $page = $request->session()->get('user_page_condition.page');
+        }
+        if ($request->filled('page')) {
+            $page = $request->page;
+        }
+
+        // ページがリクエストで指定されている場合は、セッションの検索条件配列のページ番号を更新しておく。
+        // 詳細画面や更新処理から戻ってきた時用
+        if ($request->filled('page')) {
+            session(["user_page_condition.page" => $request->page]);
+        }
+
+        /* データの取得（検索）
+        ----------------------------------------------*/
+
         // User データの取得
-        $users = $this->getUsers();
+        $users = $this->getUsers($request, $page);
 
         return view('plugins.manage.user.list', [
             "function"    => __FUNCTION__,
             "plugin_name" => "user",
             "users"       => $users,
         ]);
+    }
+
+    /**
+     *  検索条件設定処理
+     */
+    public function search($request, $id)
+    {
+        // 検索ボタンが押されたときはここが実行される。検索条件を設定してindex を呼ぶ。
+        $user_search_condition = [
+            "userid"             => $request->input('user_search_condition.userid'),
+            "name"               => $request->input('user_search_condition.name'),
+            "email"              => $request->input('user_search_condition.email'),
+
+            "role_article_admin" => $request->input('user_search_condition.role_article_admin'),
+            "role_arrangement"   => $request->input('user_search_condition.role_arrangement'),
+            "role_article"       => $request->input('user_search_condition.role_article'),
+            "role_approval"      => $request->input('user_search_condition.role_approval'),
+            "role_reporter"      => $request->input('user_search_condition.role_reporter'),
+
+            "sort"               => $request->input('user_search_condition.sort'),
+        ];
+
+        session(["user_search_condition" => $user_search_condition]);
+
+        return redirect("/manage/user");
+    }
+
+    /**
+     *  検索条件クリア処理
+     */
+    public function clearSearch($request, $id)
+    {
+        // 検索条件をクリアし、index 処理を呼ぶ。
+        $request->session()->forget('user_page_condition');
+        $request->session()->forget('user_search_condition');
+        return $this->index($request, $id);
     }
 
     /**
@@ -141,10 +265,22 @@ class UserManage extends ManagePluginBase
         // ユーザデータの空枠
         $user = new User();
 
+        // 役割設定取得
+        $original_role_configs = Configs::select('configs.*', 'users_roles.role_value')
+                                        ->leftJoin('users_roles', function ($join) use ($id) {
+                                            $join->on('users_roles.role_name', '=', 'configs.name')
+                                                 ->where('users_roles.users_id', '=', $id)
+                                                 ->where('users_roles.target', '=', 'original_role');
+                                        })
+                                        ->where('category', 'original_role')
+                                        ->orderBy('additional1', 'asc')
+                                        ->get();
+
         return view('plugins.manage.user.regist', [
-            "function" => __FUNCTION__,
-            "plugin_name" => "user",
-            "user"     => $user,
+            "function"              => __FUNCTION__,
+            "plugin_name"           => "user",
+            "user"                  => $user,
+            "original_role_configs" => $original_role_configs,
         ]);
     }
 
@@ -194,26 +330,26 @@ class UserManage extends ManagePluginBase
             'name'     => 'required|string|max:255',
             'email'    => ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'password' => 'nullable|string|min:6|confirmed',
+            'status'   => 'required',
         ]);
         $validator->setAttributeNames([
             'name'     => 'ユーザ名',
             'email'    => 'eメール',
             'password' => 'パスワード',
+            'status'   => '状態',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/user/edit/' . $id)
-                       ->withErrors($validator)
-                       ->withInput();
+            return redirect('manage/user/edit/' . $id)->withErrors($validator)->withInput();
         }
 
         // 更新内容の配列
-        $update_array = array();
         $update_array = [
             'name'     => $request->name,
             'email'    => $request->email,
             'userid'   => $request->userid,
+            'status'   => $request->status,
         ];
 
         // パスワードの入力があれば、更新
@@ -222,8 +358,7 @@ class UserManage extends ManagePluginBase
         }
 
         // ユーザデータの更新
-        User::where('id', $id)
-            ->update($update_array);
+        User::where('id', $id)->update($update_array);
 
         // ユーザ権限の更新（権限データの delete & insert）
         DB::table('users_roles')->where('users_id', '=', $id)->delete();

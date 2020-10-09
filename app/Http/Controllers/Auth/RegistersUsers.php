@@ -63,7 +63,6 @@ trait RegistersUsers
      */
     public function register(Request $request)
     {
-//Log::debug("register start.");
         $this->validator($request->all())->validate();
 
         // ユーザー登録関連設定の取得
@@ -108,6 +107,18 @@ trait RegistersUsers
                         'users_id'   => $user->id,
                         'target'     => 'manage',
                         'role_name'  => $role_name,
+                        'role_value' => 1
+                    ]);
+                }
+            }
+
+            // 役割設定の登録
+            if (!empty($request->original_role)) {
+                foreach ($request->original_role as $original_role => $value) {
+                    UsersRoles::create([
+                        'users_id'   => $user->id,
+                        'target'     => 'original_role',
+                        'role_name'  => $original_role,
                         'role_value' => 1
                     ]);
                 }

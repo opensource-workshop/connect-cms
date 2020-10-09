@@ -21,7 +21,7 @@
         <div class="accordion" id="search_accordion">
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
-                    <div class="card-header faq-list-title" id="search_condition">
+                    <div class="card-header" id="search_condition">
                         絞り込み条件 <i class="fas fa-angle-down"></i>
                    </div>
                 </button>
@@ -79,7 +79,6 @@
                 </div>
             </div>
         </div>
-
 
         <table class="table table-responsive text-nowrap">
         <thead>
