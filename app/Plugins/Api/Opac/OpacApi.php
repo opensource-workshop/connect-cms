@@ -282,4 +282,32 @@ class OpacApi extends ApiPluginBase
         $ret = array('code' => 200, 'message' => '返却処理が完了しました。');
         return $this->encodeJson($ret, $request);
     }
+
+    /**
+     *  貸し出し状況取得
+     */
+    public function rentinfo($request, $opac_id, $userid)
+    {
+        // 貸し出し中書籍
+        $lents = OpacsBooksLents::select('opacs_books_lents.*',
+                                         'opacs_books.title',
+                                         'opacs_books.subtitle',
+                                         'opacs_books.creator',
+                                         'opacs_books.publisher',
+                                         'opacs_books.publication_year'
+                                )
+                                ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
+                                ->where('opacs_id', $opac_id)
+                                ->where('opacs_books_lents.lent_flag', 1)
+                                ->where('opacs_books_lents.student_no', $userid)
+                                ->orderBy('opacs_books_lents.return_scheduled', 'desc')
+                                ->get();
+        if ($lents->isEmpty()) {
+            $ret = array('code' => 404, 'message' => '貸し出し中の書籍はありません。');
+            return $this->encodeJson($ret, $request);
+        }
+
+        $ret = array('code' => 200, 'message' => '', 'lents' => $lents);
+        return $this->encodeJson($ret, $request);
+    }
 }
