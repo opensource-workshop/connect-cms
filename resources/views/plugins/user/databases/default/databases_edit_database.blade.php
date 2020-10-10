@@ -13,6 +13,9 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+@include('common.errors_form_line')
+
 @if (!$database->id && !$create_flag)
     {{-- idなし & 変更 = DB未選択&変更:初期表示 --}}
     <div class="alert alert-warning mt-2">

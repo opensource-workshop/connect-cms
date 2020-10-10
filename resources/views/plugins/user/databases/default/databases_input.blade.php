@@ -14,6 +14,9 @@ use App\Models\User\Databases\DatabasesColumns;
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+@include('common.errors_form_line')
+
 @if (empty($setting_error_messages))
 
     <script type="text/javascript">
