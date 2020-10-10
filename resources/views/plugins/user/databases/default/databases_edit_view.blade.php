@@ -15,13 +15,17 @@
 
 @section("plugin_setting_$frame->id")
 
+@include('common.errors_form_line')
+
 @if ($errors->any())
+    {{--
     <div class="alert alert-danger mt-2">
         @foreach ($errors->all() as $error)
             <i class="fas fa-exclamation-circle"></i>
             {{$error}}
         @endforeach
     </div>
+    --}}
 @else
     @if (!$database->id)
         <div class="alert alert-warning mt-2">
