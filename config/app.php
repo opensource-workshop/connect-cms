@@ -248,6 +248,7 @@ return [
         'ShowType' => \App\Enums\ShowType::class,
         'PermissionType' => \App\Enums\PermissionType::class,
         'StatusType' => \App\Enums\StatusType::class,
+        'DisplayNumberType' => \App\Enums\DisplayNumberType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
