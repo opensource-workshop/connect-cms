@@ -249,6 +249,9 @@ return [
         'PermissionType' => \App\Enums\PermissionType::class,
         'StatusType' => \App\Enums\StatusType::class,
 
+        // utils
+        'DateUtils' => \App\Utilities\Date\DateUtils::class,
+
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
     ],
