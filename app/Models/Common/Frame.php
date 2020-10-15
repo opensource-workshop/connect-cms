@@ -21,7 +21,12 @@ class Frame extends Model
         'plugin_name',
         'frame_col',
         'template',
+        'browser_width',
+        'disable_whatsnews',
+        'page_only',
+        'default_hidden',
         'classname',
+        'none_hidden',
         'bucket_id',
         'display_sequence',
     ];

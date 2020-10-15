@@ -1112,6 +1112,7 @@ trait MigrationTrait
                         'email'    => $email,
                         'userid'   => $user_item['userid'],
                         'password' => Hash::make($user_item['password']),
+                        'status'   => $user_item['status'],
                     ]);
 
                     // マッピングテーブルの追加
@@ -1126,6 +1127,7 @@ trait MigrationTrait
                     $user->email     = $email;
                     $user->userid    = $user_item['userid'];
                     $user->password  = Hash::make($user_item['password']);
+                    $user->status    = $user_item['status'];
                     $user->save();
                 }
                 // ユーザー権限をインポートする。
@@ -2174,6 +2176,10 @@ trait MigrationTrait
             // データ行と登録データの移行
 
             // 登録データの取り込み
+            if (!File::exists(str_replace('.ini', '.txt', $form_ini_path))) {
+                continue;
+            }
+
             $data_txt_ini = parse_ini_file(str_replace('.ini', '.txt', $form_ini_path), true);
 
             // データがなければ戻る
@@ -3125,6 +3131,30 @@ trait MigrationTrait
             $template = $frame_ini['frame_base']['template'];
         }
 
+        // browser_width
+        $browser_width = null;
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('browser_width', $frame_ini['frame_base'])) {
+            $browser_width = $frame_ini['frame_base']['browser_width'];
+        }
+
+        // disable_whatsnews
+        $disable_whatsnews = 0;
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('disable_whatsnews', $frame_ini['frame_base'])) {
+            $disable_whatsnews = $frame_ini['frame_base']['disable_whatsnews'];
+        }
+
+        // page_only
+        $page_only = 0;
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('page_only', $frame_ini['frame_base'])) {
+            $page_only = $frame_ini['frame_base']['page_only'];
+        }
+
+        // default_hidden
+        $default_hidden = 0;
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('default_hidden', $frame_ini['frame_base'])) {
+            $default_hidden = $frame_ini['frame_base']['default_hidden'];
+        }
+
         // plugin_name
         $plugin_name = '';
         if (array_key_exists('frame_base', $frame_ini) && array_key_exists('plugin_name', $frame_ini['frame_base'])) {
@@ -3135,6 +3165,12 @@ trait MigrationTrait
         $classname = '';
         if (array_key_exists('frame_base', $frame_ini) && array_key_exists('classname', $frame_ini['frame_base'])) {
             $classname = $frame_ini['frame_base']['classname'];
+        }
+
+        // none_hidden
+        $none_hidden = 0;
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('none_hidden', $frame_ini['frame_base'])) {
+            $none_hidden = $frame_ini['frame_base']['none_hidden'];
         }
 
         // bucket_id
@@ -3162,16 +3198,21 @@ trait MigrationTrait
         $migration_mappings = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $source_key)->first();
         if (empty($migration_mappings)) {
             $frame = Frame::create([
-                'page_id'          => $page->id,
-                'area_id'          => $frame_area_id,
-                'frame_title'      => $frame_title,
-                'frame_design'     => $frame_design,
-                'plugin_name'      => $plugin_name,
-                'frame_col'        => $frame_col,
-                'template'         => $template,
-                'classname'        => $classname,
-                'bucket_id'        => $bucket_id,
-                'display_sequence' => $display_sequence,
+                'page_id'           => $page->id,
+                'area_id'           => $frame_area_id,
+                'frame_title'       => $frame_title,
+                'frame_design'      => $frame_design,
+                'plugin_name'       => $plugin_name,
+                'frame_col'         => $frame_col,
+                'template'          => $template,
+                'browser_width'     => $browser_width,
+                'disable_whatsnews' => $disable_whatsnews,
+                'page_only'         => $page_only,
+                'default_hidden'    => $default_hidden,
+                'classname'         => $classname,
+                'none_hidden'       => $none_hidden,
+                'bucket_id'         => $bucket_id,
+                'display_sequence'  => $display_sequence,
             ]);
             $migration_mappings = MigrationMapping::create([
                 'target_source_table' => 'frames',
@@ -3180,16 +3221,21 @@ trait MigrationTrait
             ]);
         } else {
             $frame = Frame::find($migration_mappings->destination_key);
-            $frame->page_id          = $page->id;
-            $frame->area_id          = $frame_area_id;
-            $frame->frame_title      = $frame_title;
-            $frame->frame_design     = $frame_design;
-            $frame->plugin_name      = $plugin_name;
-            $frame->frame_col        = $frame_col;
-            $frame->template         = $template;
-            $frame->classname        = $classname;
-            $frame->bucket_id        = $bucket_id;
-            $frame->display_sequence = $display_sequence;
+            $frame->page_id           = $page->id;
+            $frame->area_id           = $frame_area_id;
+            $frame->frame_title       = $frame_title;
+            $frame->frame_design      = $frame_design;
+            $frame->plugin_name       = $plugin_name;
+            $frame->frame_col         = $frame_col;
+            $frame->template          = $template;
+            $frame->browser_width     = $browser_width;
+            $frame->disable_whatsnews = $disable_whatsnews;
+            $frame->page_only         = $page_only;
+            $frame->default_hidden    = $default_hidden;
+            $frame->classname         = $classname;
+            $frame->none_hidden       = $none_hidden;
+            $frame->bucket_id         = $bucket_id;
+            $frame->display_sequence  = $display_sequence;
             $frame->save();
         }
 
@@ -4435,8 +4481,7 @@ trait MigrationTrait
                                 ->first();
 
         // NC2 ユーザデータ取得
-        $nc2_users_query = Nc2User::select('users.*', 'users_items_link.content AS email')
-                                  ->where('active_flag', 1);
+        $nc2_users_query = Nc2User::select('users.*', 'users_items_link.content AS email');
         if (!empty($nc2_mail_item)) {
             $nc2_users_query->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
                 $join->on('users_items_link.user_id', '=', 'users.user_id')
@@ -4472,6 +4517,12 @@ trait MigrationTrait
             $users_ini .= "email              = \"" . $nc2_user->email . "\"\n";
             $users_ini .= "userid             = \"" . $nc2_user->login_id . "\"\n";
             $users_ini .= "password           = \"" . $nc2_user->password . "\"\n";
+            if ($nc2_user->active_flag == 0) {
+                $users_ini .= "status             = 1\n";
+            } else {
+                $users_ini .= "status             = 0\n";
+            }
+
             if ($nc2_user->role_authority_id == 1) {
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
@@ -5453,6 +5504,11 @@ trait MigrationTrait
 
             // 登録データもエクスポートする場合
             if ($this->hasMigrationConfig('forms', 'nc2_export_registration_data', true)) {
+                // 対象外指定があれば、読み飛ばす
+                if ($this->isOmmit('forms', 'export_ommit_registration_data_ids', $nc2_registration->registration_id)) {
+                    continue;
+                }
+
                 // データ部
                 $registration_data_header = "[form_inputs]\n";
                 $registration_data = "";
@@ -5742,7 +5798,11 @@ trait MigrationTrait
             $frame_ini = "[frame_base]\n";
             $frame_ini .= "area_id = " . $this->nc2BlockArea($nc2_block) . "\n";
             $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
-            $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
+            if (!empty($nc2_block->frame_design)) {
+                $frame_ini .= "frame_design = \"" . $nc2_block->frame_design . "\"\n";
+            } else {
+                $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
+            }
             $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
 
             // グルーピングされているブロックの考慮
@@ -5751,10 +5811,39 @@ trait MigrationTrait
             $row_block_count = $nc2_blocks->where('parent_id', $nc2_block->parent_id)->where('row_num', $nc2_block->row_num)->count();
             $row_block_parent = $nc2_blocks->where('block_id', $nc2_block->parent_id)->first();
 
-            if ($row_block_count > 1 && $row_block_count <= 12 && $row_block_parent && $row_block_parent->action_name == 'pages_view_grouping') {
+            if (!empty($nc2_block->frame_col)) {
+                $frame_ini .= "frame_col = " . $nc2_block['frame_col'] . "\n";
+            } elseif ($row_block_count > 1 && $row_block_count <= 12 && $row_block_parent && $row_block_parent->action_name == 'pages_view_grouping') {
                 $frame_ini .= "frame_col = " . floor(12 / $row_block_count) . "\n";
             }
-            $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
+
+            // 各項目
+            if (!empty($nc2_block->template)) {
+                $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
+            } else {
+                $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
+            }
+            if (!empty($nc2_block->browser_width)) {
+                $frame_ini .= "browser_width = \"" . $nc2_block->browser_width . "\"\n";
+            }
+            if (!empty($nc2_block->disable_whatsnews)) {
+                $frame_ini .= "disable_whatsnews = " . $nc2_block->disable_whatsnews . "\n";
+            }
+            if (!empty($nc2_block->page_only)) {
+                $frame_ini .= "page_only = " . $nc2_block->page_only . "\n";
+            }
+            if (!empty($nc2_block->default_hidden)) {
+                $frame_ini .= "default_hidden = " . $nc2_block->default_hidden . "\n";
+            }
+            if (!empty($nc2_block->classname)) {
+                $frame_ini .= "classname = \"" . $nc2_block->classname . "\"\n";
+            }
+            if (!empty($nc2_block->none_hidden)) {
+                $frame_ini .= "none_hidden = " . $nc2_block->none_hidden . "\n";
+            }
+            if (!empty($nc2_block->display_sequence)) {
+                $frame_ini .= "display_sequence = " . $nc2_block->display_sequence . "\n";
+            }
 
             // モジュールに紐づくメインのデータのID
             $frame_ini .= $this->nc2BlockMainDataId($nc2_block);
@@ -5802,9 +5891,17 @@ trait MigrationTrait
         $nc2_override_block_path = $this->migration_base . '@nc2_override/blocks/' . $nc2_block->block_id . '.ini';
         if (Storage::exists($nc2_override_block_path)) {
             $nc2_override_block = parse_ini_file(storage_path() . '/app/' . $nc2_override_block_path, true);
+
             // ブロックタイトル
-            if (array_key_exists('block', $nc2_override_block) && array_key_exists('block_name', $nc2_override_block['block'])) {
-                $nc2_block->block_name = $nc2_override_block['block']['block_name'];
+            //if (array_key_exists('block', $nc2_override_block) && array_key_exists('block_name', $nc2_override_block['block'])) {
+            //    $nc2_block->block_name = $nc2_override_block['block']['block_name'];
+            //}
+
+            // ブロック属性（@nc2_override/blocks の中の属性で上書き）
+            if (array_key_exists('block', $nc2_override_block)) {
+                foreach ($nc2_override_block['block'] as $column_name => $column_value) {
+                    $nc2_block->$column_name = $column_value;
+                }
             }
         }
         return $nc2_block;
