@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -42,15 +42,22 @@
     @foreach($faqs_posts as $post)
         <div class="card">
             <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}">
-                <div class="card-header faq-list-title" id="headingFaq{{$post->id}}">
-                    {{-- タイトル --}}
-                    {!!$post->getNobrPostTitle()!!}
+                <div class="faq-list-title" id="headingFaq{{$post->id}}">
 
-                    {{-- カテゴリ --}}
-                    @if($post->category)
-                        <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
-                    @endif
-               </div>
+                    <div class="d-flex flex-row">
+                        <div class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></div>
+                        <div>
+                            {{-- タイトル --}}
+                            {!!$post->getNobrPostTitle()!!}
+
+                            {{-- カテゴリ --}}
+                            @if($post->category)
+                                <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                </div>
             </button>
 
             <div id="collapseFaq{{$post->id}}" class="collapse" aria-labelledby="headingFaq{{$post->id}}" data-parent="#accordionFaq{{$frame_id}}">
@@ -58,25 +65,32 @@
 
                 {{-- 記事本文 --}}
                 <article class="cc_article">
-                    {{-- 記事本文 --}}
-                    {!!$post->post_text!!}
 
-                    {{-- 重要記事 --}}
-                    @if($post->important == 1)
-                        <span class="badge badge-danger">重要</span>
-                    @endif
+                    <div class="d-flex flex-row">
+                        <div class="pr-2"><span class="h5"><span class="badge badge-secondary">A</span></span></div>
+                        <div>
+                            {{-- 記事本文 --}}
+                            {!! $post->post_text !!}
 
-                    {{-- カテゴリ --}}
-                    @if($post->category)
-                        <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
-                    @endif
+                            {{-- 重要記事 --}}
+                            @if($post->important == 1)
+                                <span class="badge badge-danger">重要</span>
+                            @endif
 
-                    {{-- タグ --}}
-                    @isset($post->tags)
-                        @foreach($post->tags as $tag)
-                            <span class="badge badge-secondary">{{$tag}}</span>
-                        @endforeach
-                    @endisset
+                            {{-- カテゴリ --}}
+                            @if($post->category)
+                                <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
+                            @endif
+
+                            {{-- タグ --}}
+                            @isset($post->tags)
+                                @foreach($post->tags as $tag)
+                                    <span class="badge badge-secondary">{{$tag}}</span>
+                                @endforeach
+                            @endisset
+                        </div>
+                    </div>
+
                 </article>
 
                 {{-- 投稿日時 --}}

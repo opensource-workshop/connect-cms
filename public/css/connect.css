@@ -325,6 +325,39 @@ a.cc-cursor-text:hover {
     display: inline;
 }
 
+/* .card-header よりコピー */
+.faq-list-title {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    /* background-color: rgba(0, 0, 0, 0.03); */
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.faq-list-title:first-child {
+    border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+}
+
+.faq-list-title + .list-group .list-group-item:first-child {
+    border-top: 0;
+}
+
+.card-group > .card:not(:last-child) .faq-list-title {
+    border-top-right-radius: 0;
+}
+
+.card-group > .card:not(:first-child) .faq-list-title {
+    border-top-left-radius: 0;
+}
+
+.accordion > .card:not(:first-of-type) .faq-list-title:first-child {
+    border-radius: 0;
+}
+
+.accordion > .card .faq-list-title {
+    margin-bottom: -1px;
+}
+
 /* LearningTasks
 ------------------------------------- */
 .learningtasks-list-title p {

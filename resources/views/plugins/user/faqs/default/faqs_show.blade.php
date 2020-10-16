@@ -4,21 +4,28 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
 {{-- タイトル --}}
-<h2>{!!$post->post_title!!}</h2>
+<div class="d-flex flex-row">
+    <div class="pr-2"><span class="h2"><span class="badge badge-primary">Q</span></span></div>
+    <div><h2>{!!$post->post_title!!}</h2></div>
+</div>
 
 <article>
 
     {{-- 記事本文 --}}
-    {!! $post->post_text !!}
+    <div class="d-flex flex-row">
+        <div class="pr-2"><span class="h2"><span class="badge badge-secondary">A</span></span></div>
+        <div>{!! $post->post_text !!}</div>
+    </div>
 
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-    <div class="row">
-        <div class="col-12 text-right mb-1">
+    <div class="row pt-1">
+        <div class="col text-right mb-1">
         @if ($post->status == 2)
             @can('preview',[[null, 'faqs', 'preview_off']])
                 <span class="badge badge-warning align-bottom">承認待ち</span>
