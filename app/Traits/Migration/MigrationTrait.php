@@ -800,10 +800,62 @@ trait MigrationTrait
             $this->importGroups($redo);
         }
 
+        // ページ内リンクの編集
+        if ($added == false) {
+            $this->changePageInLink();
+        }
+
         // シーダーの呼び出し
         //if ($this->isTarget('cc_import', 'addition')) {
         //    $this->importSeeder($redo);
         //}
+    }
+
+    /**
+     * ページ内リンクの編集
+     */
+    private function changePageInLink()
+    {
+        // 固定記事
+        $contents = Contents::where('content_text', 'like', '%#_%')->get();
+        foreach ($contents as $content) {
+            // a タグの href 抜き出し
+            $hrefs = $this->getContentAnchor($content->content_text);
+            foreach ($hrefs as $href) {
+                // 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
+                if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
+                    // NC2 ブロックID取得
+                    $nc2_block_id = mb_substr($href, mb_strripos($href, '#_') + 2);
+                    // Connect-CMS フレームID
+                    $map_frame = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $nc2_block_id)->first();
+                    if (!empty($map_frame)) {
+                        $content->content_text = str_replace('#_' . $nc2_block_id, '#frame-' . $map_frame->destination_key, $content->content_text);
+                        $content->save();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * ページ内リンクの編集
+     */
+    private function changePageInLinkImpl($text)
+    {
+        $hrefs = $this->getContentAnchor($text);
+        foreach ($hrefs as $href) {
+            // 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
+            if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
+                // NC2 ブロックID取得
+                $nc2_block_id = mb_substr($href, mb_strripos($href, '#_') + 2);
+                // Connect-CMS フレームID
+                $map_frame = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $nc2_block_id)->first();
+                if (!empty($map_frame)) {
+                    $text = str_replace('#_' . $nc2_block_id, '#frame-' . $map_frame->destination_key, $text);
+                }
+            }
+        }
+        return $text;
     }
 
     /**
@@ -1303,6 +1355,9 @@ trait MigrationTrait
 
         // 定義のループ
         if (array_key_exists('permalinks', $permalinks_ini) && array_key_exists('permalink', $permalinks_ini['permalinks'])) {
+            // バルクINSERT対応
+            $bulks = array();
+
             foreach ($permalinks_ini['permalinks']['permalink'] as $permalink_index => $short_url) {
                 // 固定URL情報
                 $permalink_item = null;
@@ -1314,6 +1369,12 @@ trait MigrationTrait
                 }
 
                 // Permalinks 登録 or 更新
+                $bulks[] = ['short_url' => $short_url,
+                    'plugin_name'    => $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name'),
+                    'action'         => $this->getArrayValue($permalinks_ini, $short_url, 'action'),
+                    'unique_id'      => $this->getArrayValue($permalinks_ini, $short_url, 'unique_id'),
+                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source')];
+                /*
                 $permalink = Permalink::updateOrCreate(
                     ['short_url'     => $short_url],
                     ['short_url'     => $short_url,
@@ -1322,6 +1383,7 @@ trait MigrationTrait
                     'unique_id'      => $this->getArrayValue($permalinks_ini, $short_url, 'unique_id'),
                     'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source')]
                 );
+                */
 
                 // マップ 登録 or 更新
                 /*
@@ -1333,6 +1395,8 @@ trait MigrationTrait
                 );
                 */
             }
+            // バルクINSERT
+            DB::table('permalinks')->insert($bulks);
         }
     }
 
@@ -3649,7 +3713,7 @@ trait MigrationTrait
 
         if (preg_match_all($pattern, $content, $images)) {
             if (is_array($images) && isset($images[0])) {
-                return $images[0];
+                return $images;
             } else {
                 return false;
             }
@@ -5149,6 +5213,12 @@ trait MigrationTrait
             // カラム情報
             $multidatabase_cols_rows = array();
 
+            // 行情報
+            //$row_group_header = 0;
+            //$row_group_left = 0;
+            //$row_group_right = 0;
+            //$row_group_footer = 0;
+
             foreach ($multidatabase_metadatas as $multidatabase_metadata) {
                 // type
                 if ($multidatabase_metadata->type == 1) {
@@ -5191,13 +5261,25 @@ trait MigrationTrait
                 $multidatabase_cols_rows[$metadata_id]["display_sequence"] = $multidatabase_metadata->display_sequence;
                 $multidatabase_cols_rows[$metadata_id]["row_group"]        = null;
                 $multidatabase_cols_rows[$metadata_id]["column_group"]     = null;
-                if ($multidatabase_metadata->display_pos == 2) {
+                if ($multidatabase_metadata->display_pos == 1) {
+                    //$row_group_header++;
                     $multidatabase_cols_rows[$metadata_id]["row_group"]    = 1;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 1;
                 }
+                if ($multidatabase_metadata->display_pos == 2) {
+                    //$row_group_left++;
+                    $multidatabase_cols_rows[$metadata_id]["row_group"]    = 2;
+                    $multidatabase_cols_rows[$metadata_id]["column_group"] = 1;
+                }
                 if ($multidatabase_metadata->display_pos == 3) {
-                    $multidatabase_cols_rows[$metadata_id]["row_group"]    = 1;
+                    //$row_group_right++;
+                    $multidatabase_cols_rows[$metadata_id]["row_group"]    = 2;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 2;
+                }
+                if ($multidatabase_metadata->display_pos == 4) {
+                    //$row_group_footer++;
+                    $multidatabase_cols_rows[$metadata_id]["row_group"]    = 3;
+                    $multidatabase_cols_rows[$metadata_id]["column_group"] = 1;
                 }
                 $multidatabase_cols_rows[$metadata_id]["columns_selects"]  = $multidatabase_metadata->select_content;
             }
@@ -5662,12 +5744,34 @@ trait MigrationTrait
         // NC2固定リンクのループ（インデックス用）
         $index = 0;
         foreach ($nc2_abbreviate_urls as $nc2_abbreviate_url) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_abbreviate_url->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
             $permalinks_ini .= "permalink[" . $index . "] = \"" . $nc2_abbreviate_url->short_url . "\"\n";
             $index++;
         }
 
         // NC2固定リンクのループ（データ用）
         foreach ($nc2_abbreviate_urls as $nc2_abbreviate_url) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_abbreviate_url->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
             $permalink  = "\n";
             $permalink .= "[\"" . $nc2_abbreviate_url->short_url . "\"]\n";
 
@@ -6185,14 +6289,28 @@ trait MigrationTrait
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
 
+        // CSS の img-fluid を自動で付ける最小の画像幅
+        $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
+
         // 画像全体にレスポンシブCSS を適用する。
         $img_srcs = $this->getContentImageTag($content);
+
         if (!empty($img_srcs)) {
-            $img_srcs = array_unique($img_srcs);
-            foreach ($img_srcs as $img_src) {
+            $img_srcs_0 = array_unique($img_srcs[0]);
+            foreach ($img_srcs_0 as $key => $img_src) {
                 if (stripos($img_src, '../../uploads') !== false && stripos($img_src, 'class=') === false) {
-                    $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
-                    $content = str_replace($img_src, $new_img_src, $content);
+                    // 画像のファイル名。$file_name には、最初に "/" がつく。
+                    $last_slash_pos = mb_strripos($img_srcs[1][$key], '/');
+                    $file_name = mb_substr($img_srcs[1][$key], $last_slash_pos);
+                    $file_path = storage_path() . '/app/' . $this->getImportPath('uploads' . $file_name);
+                    // 画像が存在し、img_fluid_min_width で指定された大きさ以上なら、img-fluid クラスをつける。
+                    if (File::exists($file_path)) {
+                        $imagesize = getimagesize($file_path);
+                        if (is_array($imagesize) && $imagesize[0] >= $img_fluid_min_width) {
+                            $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
+                            $content = str_replace($img_src, $new_img_src, $content);
+                        }
+                    }
                 }
             }
         }
