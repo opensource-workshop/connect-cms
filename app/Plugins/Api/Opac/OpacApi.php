@@ -87,7 +87,7 @@ class OpacApi extends ApiPluginBase
     /**
      *  貸し出し中書籍情報取得
      */
-    private function getLent($request, $opac_id, $key_column, $key_value, $userid)
+    private function getLent($request, $opac_id, $key_column, $key_value, $userid = null)
     {
         // パラメータチェック（キー項目）
         if ($key_column == 'barcode' || $key_column == 'isbn') {
@@ -98,13 +98,17 @@ class OpacApi extends ApiPluginBase
         }
 
         // 返すデータ取得
-        $opacs_book = OpacsBooks::select('opacs_books.*', 'opacs_books_lents.id as lent_id', 'opacs_books_lents.lent_flag')
-                                ->join('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
-                                ->where('opacs_id', $opac_id)
-                                ->where($key_column, $key_value)
-                                ->where('opacs_books_lents.lent_flag', '<>', 9)
-                                ->where('opacs_books_lents.student_no', $userid)
-                                ->first();
+        $opacs_book_query = OpacsBooks::select('opacs_books.*', 'opacs_books_lents.id as lent_id', 'opacs_books_lents.lent_flag')
+                                      ->join('opacs_books_lents', 'opacs_books_lents.opacs_books_id', '=', 'opacs_books.id')
+                                      ->where('opacs_id', $opac_id)
+                                      ->where($key_column, $key_value)
+                                      ->where('opacs_books_lents.lent_flag', '<>', 9);
+        if (!empty($userid)) {
+            $opacs_book_query->where('opacs_books_lents.student_no', $userid);
+        }
+
+        $opacs_book = $opacs_book_query->first();
+
         if (empty($opacs_book)) {
             $ret = array('code' => 404, 'message' => '指定された書籍が存在しません。');
             return [$ret, null];
@@ -248,13 +252,13 @@ class OpacApi extends ApiPluginBase
     /**
      *  書籍返却処理
      */
-    public function returnbook($request, $opac_id, $key_column, $key_value, $userid)
+    public function returnbook($request, $opac_id, $key_column, $key_value, $userid = null)
     {
         // ユーザの確認
-        list($ret, $user) = $this->getUser($request, $userid);
-        if ($ret['code'] != 200) {
-            return $this->encodeJson($ret, $request);
-        }
+        //list($ret, $user) = $this->getUser($request, $userid);
+        //if ($ret['code'] != 200) {
+        //    return $this->encodeJson($ret, $request);
+        //}
 
         // 書籍＆貸出情報
         list($ret, $opacs_books_lent) = $this->getLent($request, $opac_id, $key_column, $key_value, $userid);
