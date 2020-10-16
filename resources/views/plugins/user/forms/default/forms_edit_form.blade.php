@@ -97,12 +97,26 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">仮登録数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            {{$form->tmp_entry_count}}
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">本登録数</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            {{$form->active_entry_count}}
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">登録制限数</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="entry_limit" value="{{old('entry_limit', $form->entry_limit)}}" class="form-control">
             <small class="text-muted">
                 ※ 未入力か 0 の場合、登録数を制限しません。<br>
-                ※ 制限する場合、本登録の数で制限します。
+                ※ 制限する場合、本登録数で制限します。
             </small><br>
             @if ($errors && $errors->has('entry_limit')) <div class="text-danger">{{$errors->first('entry_limit')}}</div> @endif
         </div>

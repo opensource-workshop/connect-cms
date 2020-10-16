@@ -1133,6 +1133,20 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
         }
 
+        // 仮登録件数
+        $tmp_entry_count = FormsInputs::where('forms_id', $form->id)
+                                    ->where('forms_inputs.status', \StatusType::temporary)
+                                    ->count();
+
+        // 本登録数
+        $active_entry_count = FormsInputs::where('forms_id', $form->id)
+                                    ->where('forms_inputs.status', \StatusType::active)
+                                    ->count();
+
+        $form->tmp_entry_count = $tmp_entry_count;
+        $form->active_entry_count = $active_entry_count;
+        // var_dump($tmp_entry_count, $active_entry_count);
+
         // 表示テンプレートを呼び出す。
         return $this->view(
             'forms_edit_form', [
