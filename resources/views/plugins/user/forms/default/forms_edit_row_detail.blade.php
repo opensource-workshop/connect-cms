@@ -337,7 +337,12 @@
                     <div class="form-group row">
                         <label class="{{$frame->getSettingLabelClass()}}">正規表現</label>
                         <div class="{{$frame->getSettingInputClass()}}">
-                            <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control" placeholder="（例）/^[0-9a-zA-Z]{20}$/">
+                            <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control">
+                            <small class="text-muted">
+                                ※ エラーメッセージは「正しい形式の＜項目名＞を指定してください。」と表示されるため、併せてキャプションの設定をする事をオススメします。<br>
+                                ※ （設定例：電話番号ハイフンあり）/0\d{1,4}-\d{1,4}-\d{4}/<br>
+                                ※ （設定例：指定ドメインのメールアドレスのみ）/@example\.com$/<br>
+                            </small>
                             @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
                         </div>
                     </div>
