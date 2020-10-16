@@ -14,7 +14,11 @@
         }
     @endphp
     <select id="forms_columns_value[{{$form_obj->id}}]_{{$loop->iteration}}" name="forms_columns_value[{{$form_obj->id}}]" class="custom-select">
-        <option value=""></option>
+        {{-- 選択肢が１つ以外は、空白行表示する。（セレクトボックスで選択肢が1つの場合、選べる選択肢は１つのため、空白行をなくして既に選択状態にする => 単に固定文字を送信させたいだけ） --}}
+        @if (count($forms_columns_id_select[$form_obj->id]) !== 1)
+            <option value=""></option>
+        @endif
+
         @foreach($forms_columns_id_select[$form_obj->id] as $select)
             @php
             // セレクトボックス用変数
