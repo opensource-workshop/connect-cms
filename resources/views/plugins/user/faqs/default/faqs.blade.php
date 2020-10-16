@@ -136,7 +136,7 @@
     </div>
 
     {{-- ページング処理 --}}
-    <div class="text-center">
+    <div class="text-center mt-3">
         {{ $faqs_posts->links() }}
     </div>
 @endif
