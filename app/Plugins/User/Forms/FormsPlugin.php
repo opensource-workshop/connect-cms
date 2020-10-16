@@ -507,6 +507,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $validator_rule[] = 'numeric';
             $validator_rule[] = 'min:' . $forms_column->rule_min;
         }
+        // 正規表現チェック
+        if ($forms_column->rule_regex) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'regex:' . $forms_column->rule_regex;
+        }
         // ～日以降を許容
         if ($forms_column->rule_date_after_equal) {
             $comparison_date = \Carbon::now()->addDay($forms_column->rule_date_after_equal)->format('Y/m/d');
@@ -1740,6 +1745,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->rule_max = $request->rule_max;
         // 最小値
         $column->rule_min = $request->rule_min;
+        // 正規表現
+        $column->rule_regex = $request->rule_regex;
         // ～日以降を許容
         $column->rule_date_after_equal = $request->rule_date_after_equal;
 

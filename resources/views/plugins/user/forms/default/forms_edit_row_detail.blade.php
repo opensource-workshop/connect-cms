@@ -14,6 +14,9 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+@include('common.errors_form_line')
+
 <script type="text/javascript">
 
     /**
@@ -290,7 +293,10 @@
                         <label class="{{$frame->getSettingLabelClass()}}">入力桁数</label>
                         <div class="{{$frame->getSettingInputClass()}}">
                             <input type="text" name="rule_digits_or_less" value="{{old('rule_digits_or_less', $column->rule_digits_or_less)}}" class="form-control">
-                            <small class="text-muted">※ 入力桁数の指定時は「半角数値のみ許容」も適用されます。</small><br>
+                            <small class="text-muted">
+                                ※ 数値で入力します。<br>
+                                ※ 入力桁数の指定時は「半角数値のみ許容」も適用されます。<br>
+                            </small>
                             @if ($errors && $errors->has('rule_digits_or_less')) <div class="text-danger">{{$errors->first('rule_digits_or_less')}}</div> @endif
                         </div>
                     </div>
@@ -299,7 +305,10 @@
                         <label class="{{$frame->getSettingLabelClass()}}">入力最大文字数</label>
                         <div class="{{$frame->getSettingInputClass()}}">
                             <input type="text" name="rule_word_count" value="{{old('rule_word_count', $column->rule_word_count)}}" class="form-control">
-                            <small class="text-muted">※ 全角は2文字、半角は1文字として換算します。</small><br>
+                            <small class="text-muted">
+                                ※ 数値で入力します。<br>
+                                ※ 全角は2文字、半角は1文字として換算します。<br>
+                            </small>
                             @if ($errors && $errors->has('rule_word_count')) <div class="text-danger">{{$errors->first('rule_word_count')}}</div> @endif
                         </div>
                     </div>
@@ -308,6 +317,7 @@
                         <label class="{{$frame->getSettingLabelClass()}}">最大値</label>
                         <div class="{{$frame->getSettingInputClass()}}">
                             <input type="text" name="rule_max" value="{{old('rule_max', $column->rule_max)}}" class="form-control">
+                            <small class="text-muted">※ 数値で入力します。</small>
                             @if ($errors && $errors->has('rule_max')) <div class="text-danger">{{$errors->first('rule_max')}}</div> @endif
                         </div>
                     </div>
@@ -316,7 +326,16 @@
                         <label class="{{$frame->getSettingLabelClass()}}">最小値</label>
                         <div class="{{$frame->getSettingInputClass()}}">
                             <input type="text" name="rule_min" value="{{old('rule_min', $column->rule_min)}}" class="form-control">
+                            <small class="text-muted">※ 数値で入力します。</small>
                             @if ($errors && $errors->has('rule_min')) <div class="text-danger">{{$errors->first('rule_min')}}</div> @endif
+                        </div>
+                    </div>
+                    {{-- 正規表現設定 --}}
+                    <div class="form-group row">
+                        <label class="{{$frame->getSettingLabelClass()}}">正規表現</label>
+                        <div class="{{$frame->getSettingInputClass()}}">
+                            <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control" placeholder="（例）/^[0-9a-zA-Z]{20}$/">
+                            @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
                         </div>
                     </div>
                 @endif
