@@ -4,7 +4,6 @@ namespace App\Plugins\User\Blogs;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -14,7 +13,7 @@ use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
+// use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsCategories;
 use App\Models\User\Blogs\BlogsFrames;
@@ -100,6 +99,15 @@ class BlogsPlugin extends UserPluginBase
                                 })
                                 ->orderBy('id', 'desc')
                                 ->first();
+
+        // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+        if (empty($this->post->read_more_button)) {
+            $this->post->read_more_button = BlogsPosts::read_more_button_default;
+        }
+        if (empty($this->post->close_more_button)) {
+            $this->post->close_more_button = BlogsPosts::close_more_button_default;
+        }
+
         return $this->post;
     }
 
@@ -241,11 +249,11 @@ class BlogsPlugin extends UserPluginBase
                                            })
                                            ->groupBy('contents_id');
                                  })
+                                // 設定を見てWhere を付与する。
+                                ->where(function ($query_setting) use ($blog_frame) {
+                                    $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                                });
 
-                                           // 設定を見てWhere を付与する。
-                                           ->where(function ($query_setting) use ($blog_frame) {
-                                               $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
-                                           });
         // フレームの重要記事の条件参照
         if ($blog_frame->important_view == 'important_only') {
             $blogs_query->where('blogs_posts.important', 1);
@@ -262,6 +270,17 @@ class BlogsPlugin extends UserPluginBase
         $blogs_posts = $blogs_query->orderBy('posted_at', 'desc')
                                    ->orderBy('contents_id', 'desc')
                                    ->paginate($count, ["*"], "frame_{$blog_frame->id}_page");
+
+        foreach ($blogs_posts as &$blogs_post) {
+            // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+            if (empty($blogs_post->read_more_button)) {
+                $blogs_post->read_more_button = BlogsPosts::read_more_button_default;
+            }
+            if (empty($blogs_post->close_more_button)) {
+                $blogs_post->close_more_button = BlogsPosts::close_more_button_default;
+            }
+        }
+
         return $blogs_posts;
     }
 
@@ -503,10 +522,10 @@ WHERE status = 0
         }
 
         // Page データ
-        $page = Page::where('id', $page_id)->first();
+        // $page = Page::where('id', $page_id)->first();
 
         // 認証されているユーザの取得
-        $user = Auth::user();
+        // $user = Auth::user();
 
         // ブログデータ一覧の取得
         $blogs_posts = $this->getPosts($blog_frame);
@@ -748,6 +767,9 @@ WHERE status = 0
         $blogs_post->posted_at     = $request->posted_at . ':00';
         $blogs_post->post_text     = $request->post_text;
         $blogs_post->post_text2    = $request->post_text2;
+        $blogs_post->read_more_flag = $request->read_more_flag ?? 0;
+        $blogs_post->read_more_button = $request->read_more_button;
+        $blogs_post->close_more_button = $request->close_more_button;
 
         // 承認の要否確認とステータス処理
         if ($this->isApproval($frame_id)) {

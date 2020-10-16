@@ -28,14 +28,18 @@
     {!! $post->post_text !!}
 
     {{-- 続きを読む --}}
-    @if ($post->post_text2)
+    @if ($post->read_more_flag)
         {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
         <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post_tags) class="mb-2" @endisset>
-            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-down"></i> 続きを読む</button>
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();">
+                <i class="fas fa-angle-down"></i> {{$post->read_more_button}}
+            </button>
         </div>
         <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post_tags) class="mb-2" @endisset>
             {!! $post->post_text2 !!}
-            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-up"></i> 閉じる</button>
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();">
+                <i class="fas fa-angle-up"></i> {{$post->close_more_button}}
+            </button>
         </div>
     @endif
 
