@@ -259,7 +259,7 @@
     <br>
     @endif
 
-    @if ($column->column_type == FormColumnType::text || $column->column_type == FormColumnType::textarea || $column->column_type == FormColumnType::date)
+    @if ($column->column_type == FormColumnType::text || $column->column_type == FormColumnType::textarea || $column->column_type == FormColumnType::date || $column->column_type == FormColumnType::mail)
         {{-- チェック処理の設定 --}}
         <div class="card">
             <h5 class="card-header">チェック処理の設定</h5>
@@ -330,6 +330,9 @@
                             @if ($errors && $errors->has('rule_min')) <div class="text-danger">{{$errors->first('rule_min')}}</div> @endif
                         </div>
                     </div>
+                @endif
+
+                @if ($column->column_type == FormColumnType::text || $column->column_type == FormColumnType::textarea || $column->column_type == FormColumnType::mail)
                     {{-- 正規表現設定 --}}
                     <div class="form-group row">
                         <label class="{{$frame->getSettingLabelClass()}}">正規表現</label>
