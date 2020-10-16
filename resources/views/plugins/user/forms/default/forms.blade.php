@@ -8,6 +8,9 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+@include('common.errors_form_line')
+
 <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal">
     {{ csrf_field() }}
 
