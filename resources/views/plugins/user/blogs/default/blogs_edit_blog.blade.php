@@ -13,6 +13,10 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('common.errors_form_line')
+
 @if (!$blog || !$blog->id)
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
