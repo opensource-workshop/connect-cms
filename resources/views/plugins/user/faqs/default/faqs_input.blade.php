@@ -4,10 +4,14 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('common.errors_form_line')
+
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
