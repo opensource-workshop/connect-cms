@@ -18,7 +18,15 @@
 
     <div class="row">
         <div class="col-12 clearfix">
+
+            @if (isset($is_template_designbase))
+            {{-- designbaseテンプレート --}}
+            <div class="float-left week_nav">
+            @else
+            {{-- defaultテンプレート --}}
             <div class="float-left">
+            @endif
+
                 <div class="list-group list-group-horizontal">
                     {{-- 前週ボタン --}}
                     <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subDay(7)->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
@@ -34,7 +42,15 @@
                     </a>
                 </div>
             </div>
+
+            @if (isset($is_template_designbase))
+            {{-- designbaseテンプレート --}}
+            <div class="float-right col-sm-5 to_current">
+            @else
+            {{-- defaultテンプレート --}}
             <div class="float-right col-sm-5">
+            @endif
+
                 {{-- 当日へボタン --}}
                 <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
                     {{__('messages.to_today')}}<br>({{ App::getLocale() == ConnectLocale::ja ? Carbon::today()->format('Y年n月j日') : Carbon::today()->format('j M Y') }})
@@ -71,8 +87,15 @@
                                 {{ $cell['date']->dayOfWeek == DayOfWeek::sun ? 'text-danger' : '' }}
                                 {{-- 土曜なら青文字 --}}
                                 {{ $cell['date']->dayOfWeek == DayOfWeek::sat ? 'text-primary' : '' }}
-                                {{-- 当日ならセル背景を黄色 --}}
-                                {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
+
+                                @if (isset($is_template_designbase))
+                                    {{-- designbaseテンプレート --}}
+                                    {{ $cell['date'] == Carbon::today() ? ' current' : '' }}
+                                @else
+                                    {{-- defaultテンプレート --}}
+                                    {{-- 当日ならセル背景を黄色 --}}
+                                    {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
+                                @endif
                                 "
                             >
                                 <div class="clearfix">
@@ -95,7 +118,7 @@
                                                 <input type="hidden" name="target_date" value="{{ $cell['date']->format('Ymd') }}">
                                                 {{-- ＋ボタンクリックでformサブミット --}}
                                                 <a href="javascript:form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
-                                                    <i class="fas fa-plus-square fa-2x"></i>
+                                                    <span class="btn btn-success btn-sm"><i class="fas fa-plus"></i></span>
                                                 </a>
                                             </form>
                                         @endauth

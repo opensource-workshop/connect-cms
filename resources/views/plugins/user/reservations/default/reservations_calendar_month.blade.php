@@ -18,7 +18,15 @@
 
     <div class="row">
         <div class="col-12 clearfix">
+
+            @if (isset($is_template_designbase))
+            {{-- designbaseテンプレート --}}
+            <div class="float-left month_nav">
+            @else
+            {{-- defaultテンプレート --}}
             <div class="float-left">
+            @endif
+
                 <div class="list-group list-group-horizontal">
                     {{-- 前月ボタン --}}
                     <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subMonthsNoOverflow('1')->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
@@ -34,7 +42,15 @@
                     </a>
                 </div>
             </div>
+
+            @if (isset($is_template_designbase))
+            {{-- designbaseテンプレート --}}
+            <div class="float-right col-sm-5 to_current">
+            @else
+            {{-- defaultテンプレート --}}
             <div class="float-right col-sm-5">
+            @endif
+
                 {{-- 今月へボタン --}}
                 <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
                     {{__('messages.to_this_month')}}<br>({{ App::getLocale() == ConnectLocale::ja ? Carbon::today()->format('Y年n月') : Carbon::today()->format('M Y') }})
@@ -74,8 +90,15 @@
                                     {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sun ? ' text-danger' : '' }}
                                     {{-- 当月、且つ、日曜なら赤文字 --}}
                                     {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}
-                                    {{-- 当日ならセル背景を黄色 --}}
-                                    {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
+
+                                    @if (isset($is_template_designbase))
+                                        {{-- designbaseテンプレート --}}
+                                        {{ $cell['date'] == Carbon::today() ? ' current' : '' }}
+                                    @else
+                                        {{-- defaultテンプレート --}}
+                                        {{-- 当日ならセル背景を黄色 --}}
+                                        {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
+                                    @endif
                                     "
                                 >
                                     <div class="clearfix">
@@ -101,7 +124,7 @@
                                                     <input type="hidden" name="target_date" value="{{ $cell['date']->format('Ymd') }}">
                                                     {{-- ＋ボタンクリックでformサブミット --}}
                                                     <a href="javascript:form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
-                                                        <i class="fas fa-plus-square fa-2x"></i>
+                                                        <span class="btn btn-success btn-sm"><i class="fas fa-plus"></i></span>
                                                     </a>
                                                 </form>
                                             @endauth
@@ -142,7 +165,7 @@
                                                                 data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
                                                                 @break
                                                         @default
-                                                            
+
                                                     @endswitch
                                                 @endforeach
                                             >
