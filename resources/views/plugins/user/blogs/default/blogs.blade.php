@@ -126,7 +126,7 @@
 
     {{-- ページング処理 --}}
     <div class="text-center">
-        {{ $blogs_posts->links() }}
+        {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
     </div>
 @endif
 @endsection
