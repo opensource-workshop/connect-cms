@@ -25,10 +25,23 @@
     {{ csrf_field() }}
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">
+
         {{-- ラベル --}}
-        <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+        @if (isset($is_template_label_sm_4))
+            {{-- label-sm-4テンプレート --}}
+            <label class="col-sm-4 control-label text-nowrap">{{$form_column->column_name}}</label>
+
+        @elseif (isset($is_template_label_sm_6))
+            {{-- label-sm-6テンプレート --}}
+            <label class="col-sm-6 control-label text-nowrap">{{$form_column->column_name}}</label>
+
+        @else
+            {{-- defaultテンプレート --}}
+            <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+        @endif
+
         {{-- 項目 --}}
-        <div class="col-sm-10">
+        <div class="col-sm">
 
         @switch($form_column->column_type)
 
