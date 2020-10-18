@@ -90,7 +90,7 @@
                 <tr>
                     <!-- Task Name -->
                     <td class="table-text col-md-2 p-1" nowrap>
-                        <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-primary btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
+                        <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
 
                         {{-- 上移動 --}}
                         <button type="button" class="btn p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$page_item->id}})">
