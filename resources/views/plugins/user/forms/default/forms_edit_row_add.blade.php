@@ -11,7 +11,7 @@
     </td>
     {{-- 項目名 --}}
     <td>
-        <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}">
+        <input class="form-control @if ($errors && $errors->has('column_name')) border-danger @endif" type="text" name="column_name" value="{{ old('column_name') }}">
     </td>
     {{-- 型 --}}
     <td>
