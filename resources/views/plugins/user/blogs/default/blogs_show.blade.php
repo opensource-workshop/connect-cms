@@ -18,6 +18,25 @@
 
     {{-- タイトル --}}
     <h2>{{$post->post_title}}</h2>
+
+@elseif (isset($is_template_titleindex))
+    {{-- titleindexテンプレート --}}
+
+    {{-- 投稿日時 --}}
+    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+    {{-- タイトル --}}
+    <h2>{{$post->post_title}}</h2>
+
+@elseif (isset($is_template_sidetitleindex))
+    {{-- sidetitleindexテンプレート --}}
+
+    {{-- 投稿日時 --}}
+    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+    {{-- タイトル --}}
+    <h2>{{$post->post_title}}</h2>
+
 @else
     {{-- defaultテンプレート --}}
 

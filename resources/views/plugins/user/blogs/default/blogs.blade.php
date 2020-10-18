@@ -34,19 +34,47 @@
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
+
+    @if (isset($is_template_titleindex))
+    {{-- titleindexテンプレート --}}
+    <div class="titleindex">
+    @elseif (isset($is_template_sidetitleindex))
+    {{-- sidetitleindexテンプレート --}}
+    <div class="sidetitleindex">
+    @endif
+
     @foreach($blogs_posts as $post)
 
         @if (isset($is_template_datafirst))
             {{-- datafirstテンプレート --}}
-
             {{-- 投稿日時 --}}
             <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
             {{-- タイトル --}}
             <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+
+        @elseif (isset($is_template_titleindex))
+            {{-- titleindexテンプレート --}}
+            {{-- 投稿日時 --}}
+            <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+
+            {{-- タイトル --}}
+            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+
+        @elseif (isset($is_template_sidetitleindex))
+            {{-- sidetitleindexテンプレート --}}
+            @if ($loop->index == 3)
+                @break
+            @endif
+
+            {{-- 投稿日時 --}}
+            <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+
+            {{-- タイトル --}}
+            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+
         @else
             {{-- defaultテンプレート --}}
-
             {{-- タイトル --}}
             <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
 
@@ -66,35 +94,41 @@
         @else
         <article class="cc_article">
         @endif
-            <div class="clearfix">
 
-                {{-- 記事本文 --}}
-                {!! $post->post_text !!}
+            {{-- titleindexテンプレート・sidetitleindexテンプレートは本文表示しない --}}
+            @if (isset($is_template_titleindex) || isset($is_template_sidetitleindex))
+            @else
+                <div class="clearfix">
 
-                {{-- 続きを読む --}}
-                @if ($post->read_more_flag)
-                    {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
-                    <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post->tags) class="mb-2" @endisset>
-                        <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();">
-                            <i class="fas fa-angle-down"></i> {{$post->read_more_button}}
-                        </button>
-                    </div>
-                    <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post->tags) class="mb-2" @endisset>
-                        {!! $post->post_text2 !!}
-                        <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();">
-                            <i class="fas fa-angle-up"></i> {{$post->close_more_button}}
-                        </button>
-                    </div>
-                @endif
+                    {{-- 記事本文 --}}
+                    {!! $post->post_text !!}
 
-                {{-- タグ --}}
-                @isset($post->tags)
-                    @foreach($post->tags as $tag)
-                        <span class="badge badge-secondary">{{$tag}}</span>
-                    @endforeach
-                @endisset
+                    {{-- 続きを読む --}}
+                    @if ($post->read_more_flag)
+                        {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
+                        <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post->tags) class="mb-2" @endisset>
+                            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();">
+                                <i class="fas fa-angle-down"></i> {{$post->read_more_button}}
+                            </button>
+                        </div>
+                        <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post->tags) class="mb-2" @endisset>
+                            {!! $post->post_text2 !!}
+                            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();">
+                                <i class="fas fa-angle-up"></i> {{$post->close_more_button}}
+                            </button>
+                        </div>
+                    @endif
 
-            </div>
+                    {{-- タグ --}}
+                    @isset($post->tags)
+                        @foreach($post->tags as $tag)
+                            <span class="badge badge-secondary">{{$tag}}</span>
+                        @endforeach
+                    @endisset
+
+                </div>
+            @endif
+
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
             <div class="row">
                 <div class="col-12 text-right mb-1">
@@ -124,9 +158,19 @@
         </article>
     @endforeach
 
-    {{-- ページング処理 --}}
-    <div class="text-center">
-        {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
+    {{-- sidetitleindexテンプレートはページング表示しない --}}
+    @if (isset($is_template_sidetitleindex))
+    @else
+        {{-- ページング処理 --}}
+        <div class="text-center">
+            {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
+        </div>
+    @endif
+
+    {{-- titleindexテンプレート・sidetitleindexテンプレート --}}
+    @if (isset($is_template_titleindex) || isset($is_template_sidetitleindex))
     </div>
+    @endif
+
 @endif
 @endsection
