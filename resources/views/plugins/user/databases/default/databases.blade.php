@@ -24,11 +24,18 @@
                     <div class="row border-left border-right border-bottom @if($loop->first) border-top @endif">
                     {{-- 列グループ ループ --}}
                     @foreach($group_row_cols_columns as $group_col_columns)
-                        {{-- 最初の繰り返し & left-col-3を使う（default-left-col-3テンプレートより指定） --}}
-                        @if ($loop->first && isset($use_left_col_3))
-                        <div class="col-sm-3">
+
+                        @if (isset($is_template_default_left_col_3))
+                            {{-- default-left-col-3テンプレート --}}
+                            @if ($loop->first)
+                                <div class="col-sm-3">
+                            @else
+                                <div class="col-sm">
+                            @endif
+
                         @else
-                        <div class="col-sm">
+                            {{-- defaultテンプレート --}}
+                            <div class="col-sm">
                         @endif
 
                         {{-- カラム ループ --}}

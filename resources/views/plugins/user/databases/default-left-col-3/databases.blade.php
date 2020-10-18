@@ -3,4 +3,4 @@
 --}}
 
 {{-- defaultの初期表示blade --}}
-@include('plugins.user.databases.default.databases', ['use_left_col_3' => true])
+@include('plugins.user.databases.default.databases', ['is_template_default_left_col_3' => true])
