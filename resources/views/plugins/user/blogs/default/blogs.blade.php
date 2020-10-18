@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 {{-- 新規登録 --}}
-@can('posts.create',[[null, 'blogs', $buckets]])
+@can('posts.create',[[null, $frame->plugin_name, $buckets]])
     @if (isset($buckets) && isset($frame) && $frame->bucket_id)
         <div class="row">
             <p class="text-left col-6">
@@ -36,11 +36,23 @@
 @if (isset($blogs_posts))
     @foreach($blogs_posts as $post)
 
-        {{-- タイトル --}}
-        <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+        @if (isset($is_template_datafirst))
+            {{-- datafirstテンプレート --}}
 
-        {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+            {{-- 投稿日時 --}}
+            <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+            {{-- タイトル --}}
+            <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+        @else
+            {{-- defaultテンプレート --}}
+
+            {{-- タイトル --}}
+            <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+
+            {{-- 投稿日時 --}}
+            <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        @endif
 
         {{-- カテゴリ --}}
         @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif

@@ -9,11 +9,24 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-{{-- タイトル --}}
-<h2>{{$post->post_title}}</h2>
 
-{{-- 投稿日時 --}}
-<b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+@if (isset($is_template_datafirst))
+    {{-- datafirstテンプレート --}}
+
+    {{-- 投稿日時 --}}
+    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+    {{-- タイトル --}}
+    <h2>{{$post->post_title}}</h2>
+@else
+    {{-- defaultテンプレート --}}
+
+    {{-- タイトル --}}
+    <h2>{{$post->post_title}}</h2>
+
+    {{-- 投稿日時 --}}
+    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+@endif
 
 {{-- カテゴリ --}}
 @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
