@@ -139,6 +139,34 @@
             </tr>
         @endforeach
         @endif
+
+        @if ($create_flag)
+            <tr>
+                <td nowrap>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
+                        <label class="custom-control-label" for="add_view_flag"></label>
+                    </div>
+                </td>
+                <td nowrap>
+                    <input type="text" value="" name="add_display_sequence" class="form-control">
+                </td>
+                <td nowrap>
+                    <input type="text" value="" name="add_classname" class="form-control">
+                </td>
+                <td nowrap>
+                    <input type="text" value="" name="add_category" class="form-control">
+                </td>
+                <td nowrap>
+                    <input type="text" value="" name="add_color" class="form-control">
+                </td>
+                <td nowrap>
+                    <input type="text" value="" name="add_background_color" class="form-control">
+                </td>
+                <td nowrap>
+                </td>
+            </tr>
+        @else
             <tr>
                 <td nowrap>
                     <div class="custom-control custom-checkbox">
@@ -167,6 +195,7 @@
                 <td nowrap>
                 </td>
             </tr>
+        @endif
         </tbody>
         </table>
 

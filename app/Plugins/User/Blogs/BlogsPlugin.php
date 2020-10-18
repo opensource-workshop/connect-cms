@@ -1113,7 +1113,7 @@ WHERE status = 0
     /**
      * カテゴリ表示関数
      */
-    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null)
+    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -1181,6 +1181,7 @@ WHERE status = 0
             'plugin_categories'  => $plugin_categories,
             'blog_frame'         => $blog_frame,
             'errors'             => $errors,
+            'create_flag'        => $create_flag,
         ])->withInput($request->all);
     }
 
