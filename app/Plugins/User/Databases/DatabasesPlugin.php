@@ -1897,25 +1897,18 @@ class DatabasesPlugin extends UserPluginBase
     public function updateColumn($request, $page_id, $frame_id)
     {
         // 明細行から更新対象を抽出する為のnameを取得
-        $str_column_name = "column_name_"."$request->column_id";
-        $str_column_type = "column_type_"."$request->column_id";
-        $str_required = "required_"."$request->column_id";
-
-        // エラーチェック用に値を詰める
-        $request->merge([
-            "column_name" => $request->$str_column_name,
-            "column_type" => $request->$str_column_type,
-            "required" => $request->$str_required,
-        ]);
+        $str_column_name = "column_name_".$request->column_id;
+        $str_column_type = "column_type_".$request->column_id;
+        $str_required = "required_".$request->column_id;
 
         $validate_value = [
-            'column_name'  => ['required'],
-            'column_type'  => ['required'],
+            'column_name_'.$request->column_id => ['required'],
+            'column_type_'.$request->column_id => ['required'],
         ];
 
         $validate_attribute = [
-            'column_name'  => '項目名',
-            'column_type'  => '型',
+            'column_name_'.$request->column_id => '項目名',
+            'column_type_'.$request->column_id => '型',
         ];
 
         // エラーチェック
@@ -1931,9 +1924,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // 項目の更新処理
         $column = DatabasesColumns::query()->where('id', $request->column_id)->first();
-        $column->column_name = $request->column_name;
-        $column->column_type = $request->column_type;
-        $column->required = $request->required ? \Required::on : \Required::off;
+        $column->column_name = $request->$str_column_name;
+        $column->column_type = $request->$str_column_type;
+        $column->required = $request->$str_required ? \Required::on : \Required::off;
 
         // 複数年月型（テキスト入力）は、キャプションが空なら定型文をセットする
         if (\DatabaseColumnType::dates_ym == $request->column_type &&
@@ -1942,7 +1935,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         $column->save();
-        $message = '項目【 '. $request->column_name .' 】を更新しました。';
+        $message = '項目【 '. $request->$str_column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, $errors);
