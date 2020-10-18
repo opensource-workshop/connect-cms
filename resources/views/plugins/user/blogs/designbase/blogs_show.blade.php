@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -29,6 +29,22 @@
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
 
+    {{-- 続きを読む --}}
+    @if ($post->read_more_flag)
+        {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
+        <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post_tags) class="mb-2" @endisset>
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();">
+                <i class="fas fa-angle-down"></i> {{$post->read_more_button}}
+            </button>
+        </div>
+        <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post_tags) class="mb-2" @endisset>
+            {!! $post->post_text2 !!}
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();">
+                <i class="fas fa-angle-up"></i> {{$post->close_more_button}}
+            </button>
+        </div>
+    @endif
+
     {{-- タグ --}}
     @isset($post_tags)
         @foreach($post_tags as $tags)
@@ -40,10 +56,10 @@
     <div class="row">
         <div class="col-12 text-right mb-1">
         @if ($post->status == 2)
-            @can('preview',[[null, 'blogs', 'preview_off']])
+            @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
                 <span class="badge badge-warning align-bottom">承認待ち</span>
             @endcan
-            @can('posts.approval',[[$post, 'blogs', 'preview_off']])
+            @can('posts.approval',[[$post, $frame->plugin_name, $buckets]])
                 <form action="{{url('/')}}/plugin/blogs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                     {{ csrf_field() }}
                     <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
@@ -52,11 +68,9 @@
                 </form>
             @endcan
         @endif
-        @can('posts.update',[[$post, 'blogs', 'preview_off']])
+        @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
             @if ($post->status == 1)
-                @can('preview',[[$post, 'blogs', 'preview_off']])
-                    <span class="badge badge-warning align-bottom">一時保存</span>
-                @endcan
+                <span class="badge badge-warning align-bottom">一時保存</span>
             @endif
             <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
                 <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>

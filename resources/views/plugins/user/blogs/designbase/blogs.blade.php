@@ -4,13 +4,13 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
 {{-- 新規登録 --}}
-@can('posts.create',[[null, 'blogs', $buckets]])
-    @if (isset($frame) && $frame->bucket_id)
+@can('posts.create',[[null, $frame->plugin_name, $buckets]])
+    @if (isset($buckets) && isset($frame) && $frame->bucket_id)
         <div class="row">
             <p class="text-left col-6">
                 @if (isset($blog_frame->rss) && $blog_frame->rss == 1)
@@ -54,8 +54,8 @@
 
     {{-- ページング処理 --}}
     <div class="text-center">
-        {{ $blogs_posts->links() }}
+        {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
     </div>
-    </div>
+</div>
 @endif
 @endsection
