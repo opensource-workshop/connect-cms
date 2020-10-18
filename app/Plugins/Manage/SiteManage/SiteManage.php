@@ -213,7 +213,7 @@ class SiteManage extends ManagePluginBase
     /**
      *  カテゴリ表示画面
      */
-    public function categories($request, $id, $errors = null)
+    public function categories($request, $id, $errors = null, $create_flag = false)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -229,7 +229,7 @@ class SiteManage extends ManagePluginBase
             "plugin_name" => "site",
             "id"          => $id,
             "categories"  => $categories,
-            "create_flag" => true,
+            "create_flag" => $create_flag,
             "errors"      => $errors,
         ]);
     }
@@ -240,18 +240,18 @@ class SiteManage extends ManagePluginBase
     public function saveCategories($request, $id)
     {
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color) || !empty($request->add_background_color)) {
+        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color) || !empty($request->add_background_color)) {
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_display_sequence' => ['required'],
-                'add_classname'        => ['required'],
+                //'add_classname'        => ['required'],
                 'add_category'         => ['required'],
                 'add_color'            => ['required'],
                 'add_background_color' => ['required'],
             ]);
             $validator->setAttributeNames([
                 'add_display_sequence' => '追加行の表示順',
-                'add_classname'        => '追加行のクラス名',
+                //'add_classname'        => '追加行のクラス名',
                 'add_category'         => '追加行のカテゴリ',
                 'add_color'            => '追加行の文字色',
                 'add_background_color' => '追加行の背景色',
@@ -268,14 +268,14 @@ class SiteManage extends ManagePluginBase
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'display_sequence.'.$category_id => ['required'],
-                    'classname.'.$category_id        => ['required'],
+                    // 'classname.'.$category_id        => ['required'],
                     'category.'.$category_id         => ['required'],
                     'color.'.$category_id            => ['required'],
                     'background_color.'.$category_id => ['required'],
                 ]);
                 $validator->setAttributeNames([
                     'display_sequence.'.$category_id => '表示順',
-                    'classname.'.$category_id        => 'クラス名',
+                    // 'classname.'.$category_id        => 'クラス名',
                     'category.'.$category_id         => 'カテゴリ',
                     'color.'.$category_id            => '文字色',
                     'background_color.'.$category_id => '背景色',
@@ -316,7 +316,7 @@ class SiteManage extends ManagePluginBase
             }
         }
 
-        return $this->categories($request, $id, null);
+        return $this->categories($request, $id, null, true);
     }
 
     /**
@@ -327,7 +327,7 @@ class SiteManage extends ManagePluginBase
         // カテゴリ削除
         Categories::where('id', $id)->delete();
 
-        return $this->categories($request, $id, null);
+        return $this->categories($request, $id, null, true);
     }
 
     /**
