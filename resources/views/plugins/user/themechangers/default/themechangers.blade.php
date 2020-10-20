@@ -30,7 +30,7 @@
         </select>
 
         <div class="custom-control custom-checkbox mt-2">
-            <input type="checkbox" name="session_header_black" value="1" class="custom-control-input" id="session_header_black" @if(old('session_header_black', $session_header_black)) checked=checked @endif title="ヘッダーは黒にする">
+            <input type="checkbox" name="session_header_black" value="1" class="custom-control-input" id="session_header_black" @if(old('session_header_black', $session_header_black)) checked=checked @endif>
             <label class="custom-control-label" for="session_header_black">ヘッダーは黒にする</label>
         </div>
 
