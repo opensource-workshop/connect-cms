@@ -183,7 +183,7 @@ class OpacApi extends ApiPluginBase
             // OK
         } else {
             // 貸し出し可能冊数をオーバー。NG
-            $ret = array('code' => 403, 'message' => '貸し出し可能冊数の上限まで貸し出し中です。');
+            $ret = array('code' => 403, 'message' => '貸出可能冊数の上限まで貸出中です。');
             return $this->encodeJson($ret, $request);
         }
 
@@ -214,7 +214,7 @@ class OpacApi extends ApiPluginBase
         // 同じ条件の本が複数ある場合も含めて確認する。複数ある場合は、1冊でも貸出可能ならOK
         $rent_ok_book = null;
         foreach ($opacs_books as $opacs_book) {
-            // lent_flag = 9:貸出終了(貸し出し可能)、1:貸し出し中、2:貸し出しリクエスト受付中
+            // lent_flag = 9:貸出終了(貸し出し可能)、1:貸出中、2:貸出リクエスト受付中
             // 最新の1件を判断する。
             $opacs_books_lent = OpacsBooksLents::where('opacs_books_id', $opacs_book->id)->orderBy('id', 'desc')->first();
             if (empty($opacs_books_lent) || $opacs_books_lent->lent_flag == 9) {
@@ -223,10 +223,10 @@ class OpacApi extends ApiPluginBase
                 continue;
             }
             if ($opacs_books_lent->lent_flag == 1) {
-                $ret = array('code' => 403, 'message' => '貸し出し中');
+                $ret = array('code' => 403, 'message' => '貸出中');
                 return $this->encodeJson($ret, $request);
             } elseif ($opacs_books_lent->lent_flag == 2) {
-                $ret = array('code' => 403, 'message' => '貸し出しリクエスト受付中');
+                $ret = array('code' => 403, 'message' => '貸出リクエスト受付中');
                 return $this->encodeJson($ret, $request);
             } else {
                 $ret = array('code' => 403, 'message' => 'その他エラー。lent_flag = ' . $opacs_books_lent->lent_flag);
@@ -245,7 +245,7 @@ class OpacApi extends ApiPluginBase
             'return_scheduled' => date('Y-m-d 00:00:00', $lent_max_ts),
         ]);
 
-        $ret = array('code' => 200, 'message' => '貸し出し処理が完了しました。');
+        $ret = array('code' => 200, 'message' => '貸出処理が完了しました。');
         return $this->encodeJson($ret, $request);
     }
 
@@ -301,7 +301,7 @@ class OpacApi extends ApiPluginBase
                                 ->orderBy('opacs_books_lents.return_scheduled', 'desc')
                                 ->get();
         if ($lents->isEmpty()) {
-            $ret = array('code' => 404, 'message' => '貸し出し中の書籍はありません。');
+            $ret = array('code' => 404, 'message' => '貸出中の書籍はありません。');
             return $this->encodeJson($ret, $request);
         }
 
