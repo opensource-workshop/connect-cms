@@ -56,8 +56,8 @@
 
     @foreach($posts as $post)
         @if (!$plugin_frame->type)
-        {{-- bugfix: dlタグ配下は、dt,ddがそれぞれ1つ以上ないとHTMLバリデーションエラーになるため、dtの空タグを追加し、role="presentation"でスクリーンリーダーは空タグを読み飛ばすように対応 --}}
-        <dt role="presentation"></dt>
+        {{-- bugfix: dlタグ配下は、dt,ddがそれぞれ1つ以上ないとHTMLバリデーションエラーになるため、dtの空タグを追加 --}}
+        <dt></dt>
         <dd>
         @else
         <li>
