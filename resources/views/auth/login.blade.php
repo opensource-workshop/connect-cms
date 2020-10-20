@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<main class="container" role="main">
     <div class="row">
         <div class="col-md-8 offset-md-2 mt-3">
             <div class="card">
@@ -67,7 +67,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-check"></i> ログイン
                                 </button>
-	
+
                                 <a class="btn btn-link" href="{{ route('password.request') }}">
                                     パスワードを忘れた場合。
                                 </a>
@@ -78,5 +78,5 @@
             </div>
         </div>
     </div>
-</div>
+</main>
 @endsection
