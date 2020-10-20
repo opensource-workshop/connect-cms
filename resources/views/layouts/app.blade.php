@@ -147,10 +147,10 @@ if(isset($configs_array['body_optional_class'])){
     </button>
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
+        <ul class="navbar-nav mr-auto d-md-none">
 
             @if(isset($page_list))
-            <div class="d-block d-md-none">
+
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
@@ -216,10 +216,10 @@ if(isset($configs_array['body_optional_class'])){
                         @endif
                     @endif
                 @endforeach
-                <div class="dropdown-divider"></div>
-            </div>
             @endif
         </ul>
+
+        <div class="dropdown-divider d-md-none"></div>
 
         <ul class="navbar-nav text-nowrap">
             {{-- 管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
