@@ -142,7 +142,7 @@ if(isset($configs_array['body_optional_class'])){
     </a>
 
     <!-- SmartPhone Button -->
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="メニュー">
         <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -300,9 +300,7 @@ if(isset($configs_array['body_optional_class'])){
 </nav>
 @endif
 
-<main role="main">
-    @yield('content')
-</main>
+@yield('content')
 
 {{-- -------------------------------------------- --}}
 
