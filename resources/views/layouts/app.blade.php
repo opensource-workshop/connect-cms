@@ -272,10 +272,10 @@ if(isset($configs_array['body_optional_class'])){
 
             @guest
                 @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
-                    <a class="nav-link" href="{{ route('login') }}">ログイン</a>
+                    <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
                 @endif
                 @if (isset($configs) && ($configs['user_register_enable'] == '1'))
-                    <a class="nav-link" href="{{ route('register') }}">ユーザ登録</a>
+                    <li><a class="nav-link" href="{{ route('register') }}">ユーザ登録</a></li>
                 @endif
             @else
                 <li class="nav-item dropdown">
