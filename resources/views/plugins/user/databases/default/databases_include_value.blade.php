@@ -7,6 +7,8 @@
  * @category データベース・プラグイン
 --}}
 @php
+    use App\Models\Common\Uploads;
+
     $obj = $input_cols->where('databases_inputs_id', $input->id)->where('databases_columns_id', $column->id)->first();
 
     // ファイル型
@@ -24,7 +26,8 @@
             $value = '';
         }
         else {
-            $value = '<img src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" />';
+            $filename = Uploads::getFilenameNoExtensionById($obj->value);
+            $value = '<img src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" alt="'.$filename.'" />';
         }
     }
     // 動画型
