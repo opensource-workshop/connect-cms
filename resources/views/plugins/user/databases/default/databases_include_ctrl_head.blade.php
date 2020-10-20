@@ -36,8 +36,7 @@
     @endif
 
     @if($select_columns || $databases_frames->isBasicUseSortFlag())
-        <div class="form-group row mb-3">
-
+        <div class="form-group form-row mb-3">
         {{-- 絞り込み --}}
         @foreach($select_columns as $select_column)
             @php
@@ -51,12 +50,13 @@
                 @else
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
                 @endif
-                <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);">
+                <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}">
                     <option value="">{{$select_column->column_name}}</option>
                     @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
                         <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>
                     @endforeach
                 </select>
+                <small class="form-text text-muted" id="search_column{{$loop->index}}_{{$frame_id}}">選択すると自動的に絞り込みします。</small>
             </div>
         @endforeach
 
@@ -82,7 +82,7 @@
             @endphp
 
             <div class="col-sm">
-                <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);">
+                <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);" aria-describedby="sort_column{{$frame_id}}">
 
                     {{-- 基本部分 --}}
                     <option value="">並べ替え</option>
@@ -110,6 +110,7 @@
                     </optgroup>
                     @endif
                 </select>
+                <small class="form-text text-muted" id="sort_column{{$frame_id}}">選択すると自動的に並び順を変更します。</small>
             </div>
         @endif
         </div>
