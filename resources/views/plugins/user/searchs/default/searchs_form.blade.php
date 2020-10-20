@@ -11,8 +11,8 @@
     <div class="input-group">
         <input type="text" name="search_keyword" class="form-control" value="{{old('search_keyword')}}" placeholder="キーワードを入力してください。" />
         <div class="input-group-append">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-search" aria-label="検索" role="presentation"></i>
+            <button type="submit" class="btn btn-primary" title="検索">
+                <i class="fas fa-search" role="presentation"></i>
             </button>
         </div>
     </div>

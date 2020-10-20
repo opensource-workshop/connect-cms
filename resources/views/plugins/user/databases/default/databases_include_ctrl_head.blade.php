@@ -28,8 +28,8 @@
     <div class="input-group mb-3">
         <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="検索はキーワードを入力してください。">
         <div class="input-group-append">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-search" aria-label="検索" role="presentation"></i>
+            <button type="submit" class="btn btn-primary" title="検索">
+                <i class="fas fa-search" role="presentation"></i>
             </button>
         </div>
     </div>
