@@ -9,7 +9,7 @@
     {{ csrf_field() }}
 
     <div class="input-group">
-        <input type="text" name="search_keyword" class="form-control" value="{{old('search_keyword')}}" placeholder="キーワードを入力してください。" />
+        <input type="text" name="search_keyword" class="form-control" value="{{old('search_keyword')}}" placeholder="検索はキーワードを入力してください。" title="検索キーワード" />
         <div class="input-group-append">
             <button type="submit" class="btn btn-primary" title="検索">
                 <i class="fas fa-search" role="presentation"></i>
