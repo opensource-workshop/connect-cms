@@ -53,9 +53,9 @@
     @endforeach
 
     {{-- ページング処理 --}}
-    <div class="text-center">
+    <nav class="text-center">
         {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
-    </div>
+    </nav>
 </div>
 @endif
 @endsection
