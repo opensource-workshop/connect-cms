@@ -33,7 +33,7 @@
                 {{-- 非表示のページは対象外 --}}
                 @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
                     @if ($page_obj->id == $page_id)
-                    <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page_obj->depth }} active">{{$page_obj->page_name}}</a>
+                    <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page_obj->depth }} active" aria-current="page">{{$page_obj->page_name}}</a>
                     @else
                     <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page_obj->depth }}">{{$page_obj->page_name}}</a>
                     @endif

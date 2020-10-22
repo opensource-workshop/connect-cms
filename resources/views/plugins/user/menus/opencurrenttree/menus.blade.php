@@ -22,7 +22,7 @@
 
                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                 @if ($page->id == $page_id)
-                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page->depth }} active">
+                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page->depth }} active" aria-current="page">
                 @else
                 <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page->depth }}">
                 @endif
@@ -57,7 +57,7 @@
 
                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                 @if ($page->id == $page_id)
-                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item active">
+                <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item active" aria-current="page">
                 @else
                 <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item">
                 @endif

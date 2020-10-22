@@ -23,7 +23,7 @@
                 <li class="nav-item dropdown {{$page_obj->getClass()}}" onmouseleave="$(this).find('a.nav-link').click();$(this).find('a.nav-link').blur();">
                 {{-- カレント --}}
                 @if ($page_obj->id == $page_id)
-                    <a class="nav-link active dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                    <a class="nav-link active dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();" aria-current="page">
                 @else
                     <a class="nav-link dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
                 @endif

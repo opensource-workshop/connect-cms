@@ -10,7 +10,7 @@
         @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
             @if ($page_obj->id == $page_id)
-            <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page_obj->depth }} active">
+            <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page_obj->depth }} active" aria-current="page">
             @else
             <a href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page_obj->depth }}">
             @endif

@@ -10,7 +10,7 @@
 @if ($children->isView(Auth::user(), false, true, $page_roles))
 
     @if ($children->id == $page_id)
-    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $children->depth }} active">
+    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $children->depth }} active" aria-current="page">
     @else
     <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $children->depth }}">
     @endif

@@ -23,7 +23,7 @@
                 <li class="nav-item dropdown {{$page_obj->getClass()}}" onmouseleave="$(this).find('a.nav-link').click();$(this).find('a.nav-link').blur();">
                 {{-- カレント --}}
                 @if ($ancestors->contains('id', $page_obj->id))
-                    <a class="nav-link active dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                    <a class="nav-link active dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();" aria-current="page">
                 @else
                     <a class="nav-link dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
                 @endif
@@ -48,7 +48,7 @@
                 <li class="nav-item {{$page_obj->getClass()}}">
                         {{-- カレント --}}
                     @if ($ancestors->contains('id', $page_obj->id))
-                    <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
+                    <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
                     @else
                     <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif

@@ -21,7 +21,7 @@
                     <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     {{-- カレント --}}
                     @if ($ancestors->contains('id', $page_obj->id))
-                        <a class="nav-link active dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                        <a class="nav-link active dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();" aria-current="page">
                     @else
                         <a class="nav-link dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
                     @endif
@@ -46,7 +46,7 @@
                     <li class="nav-item {{$page_obj->getClass()}}">
                         {{-- カレント --}}
                         @if ($ancestors->contains('id', $page_obj->id))
-                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}" aria-current="page">
                         @else
                         <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
                         @endif
