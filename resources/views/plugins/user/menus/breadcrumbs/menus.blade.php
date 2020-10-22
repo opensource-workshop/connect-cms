@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 @if ($ancestors)
-    <nav>
+    <nav aria-label="パンくずリスト">
         <ol class="breadcrumb">
         @foreach($ancestors as $ancestor)
             {{-- パンくずはdisplay_flag を継承した値を持っていないので、ページの表示フラグを参照 --}}

@@ -10,6 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 @if ($pages)
+<nav aria-label="サイトマップ">
 
     @foreach($pages as $page)
 
@@ -62,5 +63,7 @@
 </ul>
         @endif
     @endforeach
+
+</nav>
 @endif
 @endsection

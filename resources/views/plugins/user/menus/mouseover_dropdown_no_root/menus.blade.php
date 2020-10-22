@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 @if ($pages)
-    <ul class="nav nav-tabs nav-justified d-none d-md-flex">
+    <ul class="nav nav-tabs nav-justified d-none d-md-flex" role="navigation" aria-label="タブメニュー">
     @foreach($pages as $page_obj)
 
         {{-- 非表示のページは対象外 --}}

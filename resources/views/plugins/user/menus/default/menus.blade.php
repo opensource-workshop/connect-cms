@@ -11,7 +11,7 @@
 @section("plugin_contents_$frame->id")
 @if ($pages)
 
-    <div class="list-group mb-0">
+    <div class="list-group mb-0" role="navigation" aria-label="メニュー">
     @foreach($pages as $page)
 
         {{-- 子供のページがある場合 --}}

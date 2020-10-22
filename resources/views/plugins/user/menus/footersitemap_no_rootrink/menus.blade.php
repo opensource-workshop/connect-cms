@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 @if ($pages)
-<div class="footersitemap">
+<div class="footersitemap" role="navigation" aria-label="サイトマップ">
     <ul class="nav nav-justified">
     @foreach($pages as $page_obj)
         @if($page_obj->parent_id == null)
