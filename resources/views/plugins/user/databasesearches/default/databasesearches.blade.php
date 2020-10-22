@@ -55,9 +55,13 @@
 </table>
 
 {{-- ページング処理 --}}
-<div class="text-center">
-    {{ $inputs_ids->links() }}
-</div>
+{{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+@if ($inputs_ids->lastPage() > 1)
+    <nav class="text-center" aria-label="{{$databasesearches->databasesearches_name}}のページ付け">
+        {{ $inputs_ids->fragment('frame-' . $frame_id)->links() }}
+    </nav>
+@endif
+
 @else
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
