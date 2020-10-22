@@ -641,9 +641,9 @@ class FaqsPlugin extends UserPluginBase
         return $this->index($request, $page_id, $frame_id);
     }
 
-   /**
-    * データ一時保存関数
-    */
+    /**
+     * データ一時保存関数
+     */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 項目のエラーチェック
@@ -662,7 +662,7 @@ class FaqsPlugin extends UserPluginBase
             $faqs_post->created_id  = Auth::user()->id;
         } else {
             $faqs_post = FaqsPosts::find($id)->replicate();
- 
+
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
             $check_faqs_post = $this->getPost($id);
 
@@ -676,6 +676,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs_post->status = 1;
         $faqs_post->faqs_id          = $request->faqs_id;
         $faqs_post->post_title       = $request->post_title;
+        $faqs_post->categories_id    = $request->categories_id;
         $faqs_post->important        = $request->important;
         $faqs_post->posted_at        = $request->posted_at . ':00';
         $faqs_post->post_text        = $request->post_text;
