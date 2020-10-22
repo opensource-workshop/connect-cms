@@ -24,9 +24,9 @@
                         <li>
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                             @if ($page->id == $page_id)
-                            <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item active">
+                            <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page->depth }} active">
                             @else
-                            <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item">
+                            <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page->depth }}">
                             @endif
                                 {{-- 各ページの深さをもとにインデントの表現 --}}
                                 @for ($i = 0; $i < $page->depth; $i++)
