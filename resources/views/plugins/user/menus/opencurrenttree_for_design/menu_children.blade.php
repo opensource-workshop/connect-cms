@@ -28,9 +28,9 @@
 @if ($children->isView(Auth::user(), false, true, $page_roles))
     <li>
         @if ($children->id == $page_id)
-        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item active">
+        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $children->depth }} active">
         @else
-        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item">
+        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $children->depth }}">
         @endif
 
             {{-- 各ページの深さをもとにインデントの表現 --}}
