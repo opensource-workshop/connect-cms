@@ -49,9 +49,12 @@
     </dl>
 
     {{-- ページング処理 --}}
-    <div class="text-center">
-        {{ $searchs_results->appends(['search_keyword' => old('search_keyword')])->links() }}
-    </div>
+    {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+    @if ($searchs_results->lastPage() > 1)
+        <nav class="text-center" aria-label="{{$searchs_frame->search_name}}のページ付け">
+            {{ $searchs_results->appends(['search_keyword' => old('search_keyword')])->fragment('frame-' . $frame_id)->links() }}
+        </nav>
+    @endif
 </div>
 @endif
 @endsection
