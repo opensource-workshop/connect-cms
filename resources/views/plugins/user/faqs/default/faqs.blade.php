@@ -145,8 +145,12 @@
     </div>
 
     {{-- ページング処理 --}}
-    <nav class="text-center mt-3">
-        {{ $faqs_posts->fragment('frame-' . $frame_id)->links() }}
-    </nav>
+    {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+    @if ($faqs_posts->lastPage() > 1)
+        <nav class="text-center mt-3" aria-label="{{$faq_frame->faq_name}}のページ付け">
+            {{ $faqs_posts->fragment('frame-' . $frame_id)->links() }}
+        </nav>
+    @endif
+
 @endif
 @endsection
