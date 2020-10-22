@@ -25,9 +25,9 @@
                     <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     {{-- カレント --}}
                     @if ($ancestors->contains('id', $page_obj->id))
-                        <a class="nav-link active dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link active dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                     @else
-                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                     @endif
 
                             {{$page_obj->page_name}}
