@@ -11,7 +11,8 @@
 @section("plugin_contents_$frame->id")
 @if ($pages)
 
-<ul class="nav nav-tabs nav-justified d-none d-md-flex" role="navigation" aria-label="タブメニュー">
+<nav aria-label="タブメニュー">
+<ul class="nav nav-tabs nav-justified d-none d-md-flex">
 @foreach($pages as $page)
 
     {{-- 非表示のページは対象外 --}}
@@ -24,6 +25,7 @@
     @endif
 @endforeach
 </ul>
+</nav>
 
 @endif
 @endsection
