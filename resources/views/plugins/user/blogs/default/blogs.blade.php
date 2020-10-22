@@ -170,9 +170,12 @@
     @if (isset($is_template_sidetitleindex))
     @else
         {{-- ページング処理 --}}
-        <nav class="text-center">
-            {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
-        </nav>
+        {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+        @if ($blogs_posts->lastPage() > 1)
+            <nav class="text-center" aria-label="{{$blog_frame->blog_name}}のページ付け">
+                {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
+            </nav>
+        @endif
     @endif
 
     {{-- titleindexテンプレート・sidetitleindexテンプレート --}}

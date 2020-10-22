@@ -84,7 +84,7 @@
 </article>
 
 {{-- 一覧へ戻る --}}
-<nav class="row">
+<nav class="row" aria-label="{{$blog_frame->blog_name}}のページ移動">
     <div class="col-12 text-center mt-3">
         @if (isset($before_post))
         <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
