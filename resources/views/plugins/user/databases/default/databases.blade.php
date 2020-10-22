@@ -94,9 +94,13 @@
         @endforeach
 
         {{-- ページング処理 --}}
-        <div class="text-center mt-2">
-            {{ $inputs->fragment('frame-' . $frame_id)->links() }}
-        </div>
+        {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+        @if ($inputs->lastPage() > 1)
+            <nav class="text-center mt-2" aria-label="{{$database_frame->databases_name}}のページ付け">
+                {{ $inputs->fragment('frame-' . $frame_id)->links() }}
+            </nav>
+        @endif
+
     @endif
 
 @else

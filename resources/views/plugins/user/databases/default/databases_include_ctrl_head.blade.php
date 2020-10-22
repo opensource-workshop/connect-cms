@@ -20,7 +20,7 @@
     </div>
 @endcan
 
-<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}">
     {{ csrf_field() }}
 
     {{-- 検索 --}}
