@@ -308,6 +308,22 @@
         </div>
     </div>
     <div class="form-group row">
+        <label for="permanent_link" class="col-md-3 col-form-label text-md-right pt-0">自動転送</label>
+        <div class="col-md-9 d-sm-flex align-items-center">
+
+            <div class="custom-control custom-checkbox">
+                <input name="transfer_lower_page_flag" value="0" type="hidden">
+                @if ($page->transfer_lower_page_flag == 1)
+                    <input name="transfer_lower_page_flag" value="1" type="checkbox" class="custom-control-input" id="transfer_lower_page_flag" checked="checked">
+                @else
+                    <input name="transfer_lower_page_flag" value="1" type="checkbox" class="custom-control-input" id="transfer_lower_page_flag">
+                @endif
+                <label class="custom-control-label" for="transfer_lower_page_flag">下層ページへ自動転送する</label>
+                <small class="form-text text-muted">下層ページの中から、メニュー表示「表示する」がチェックされた一番上のページに自動転送します。</small>
+            </div>
+        </div>
+    </div>
+    <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">IPアドレス制限</label>
         <div class="col-md-9">
             <input type="text" name="ip_address" id="ip_address" value="{{$page->ip_address}}" class="form-control">
