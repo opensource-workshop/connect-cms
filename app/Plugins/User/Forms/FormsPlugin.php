@@ -1900,9 +1900,15 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $columns = FormsColumns::where('forms_id', $id)->orderBy('display_sequence', 'asc')->get();
 
         // 登録データの取得
-        $input_cols = FormsInputCols::whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id))
-                                      ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
-                                      ->get();
+        $input_cols = FormsInputCols::
+                                    select(
+                                        'forms_input_cols.*',
+                                        'forms_inputs.status as inputs_status'
+                                    )
+                                    ->join('forms_inputs', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
+                                    ->whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id))
+                                    ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+                                    ->get();
 
 /*
 ダウンロード前の配列イメージ。
@@ -1940,6 +1946,9 @@ ORDER BY forms_inputs_id, forms_columns_id
         // データ行用の空配列
         $copy_base = array();
 
+        // 見出し行-頭（固定項目）
+        $csv_array[0]['status'] = '仮登録:1/本登録:0';
+        $copy_base['status'] = '';
         // 見出し行
         foreach ($columns as $column) {
             $csv_array[0][$column->id] = $column->column_name;
@@ -1949,7 +1958,11 @@ ORDER BY forms_inputs_id, forms_columns_id
         // データ
         foreach ($input_cols as $input_col) {
             if (!array_key_exists($input_col->forms_inputs_id, $csv_array)) {
+                // 初回のみベースをセット
                 $csv_array[$input_col->forms_inputs_id] = $copy_base;
+
+                // 初回で固定項目をセット
+                $csv_array[$input_col->forms_inputs_id]['status'] = $input_col->inputs_status;
             }
             $csv_array[$input_col->forms_inputs_id][$input_col->forms_columns_id] = $input_col->value;
         }
