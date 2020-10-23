@@ -20,7 +20,10 @@
     </div>
 @endcan
 
-<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+{{-- アクセシビリティ対応。検索OFF & 絞り込み項目なし & ソートOFFの時、検索の空フォームを作らないようにする。 --}}
+@if(($database_frame && $database_frame->use_search_flag == 1) || (($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag()))
+
+<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}">
     {{ csrf_field() }}
 
     {{-- 検索 --}}
@@ -35,7 +38,7 @@
     </div>
     @endif
 
-    @if($select_columns || $databases_frames->isBasicUseSortFlag())
+    @if(($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
         <div class="form-group form-row mb-3">
         {{-- 絞り込み --}}
         @foreach($select_columns as $select_column)
@@ -116,3 +119,5 @@
         </div>
     @endif
 </form>
+
+@endif

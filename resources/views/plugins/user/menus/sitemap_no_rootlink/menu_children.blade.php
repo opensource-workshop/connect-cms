@@ -11,9 +11,9 @@
 <ul>
 <li>
     @if ($children->id == $page_id)
-    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="active">
+    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="{{ 'depth-' . $children->depth }} active">
     @else
-    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="">
+    <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="{{ 'depth-' . $children->depth }}">
     @endif
         {{-- 各ページの深さをもとにインデントの表現 --}}
 {{--

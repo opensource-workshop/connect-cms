@@ -10,41 +10,51 @@
 
 @section("plugin_contents_$frame->id")
 
+<article>
+
 @if (isset($is_template_datafirst))
     {{-- datafirstテンプレート --}}
 
-    {{-- 投稿日時 --}}
-    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+    <header>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
-    {{-- タイトル --}}
-    <h2>{{$post->post_title}}</h2>
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+    </header>
 
 @elseif (isset($is_template_titleindex))
     {{-- titleindexテンプレート --}}
 
-    {{-- 投稿日時 --}}
-    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+    <header>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
-    {{-- タイトル --}}
-    <h2>{{$post->post_title}}</h2>
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+    </header>
 
 @elseif (isset($is_template_sidetitleindex))
     {{-- sidetitleindexテンプレート --}}
 
-    {{-- 投稿日時 --}}
-    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+    <header>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
-    {{-- タイトル --}}
-    <h2>{{$post->post_title}}</h2>
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+    </header>
 
 @else
     {{-- defaultテンプレート --}}
 
-    {{-- タイトル --}}
-    <h2>{{$post->post_title}}</h2>
+    <header>
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
 
-    {{-- 投稿日時 --}}
-    <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+    </header>
 @endif
 
 {{-- カテゴリ --}}
@@ -53,8 +63,6 @@
 @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
     <span class="badge badge-pill badge-danger">重要記事に設定</span>
 @endif
-
-<article>
 
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
@@ -83,7 +91,7 @@
     @endisset
 
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-    <div class="row">
+    <footer class="row">
         <div class="col-12 text-right mb-1">
         @if ($post->status == 2)
             @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
@@ -107,11 +115,11 @@
             </a>
         @endcan
         </div>
-    </div>
+    </footer>
 </article>
 
 {{-- 一覧へ戻る --}}
-<div class="row">
+<nav class="row" aria-label="{{$blog_frame->blog_name}}のページ移動">
     <div class="col-12 text-center mt-3">
         @if (isset($before_post))
         <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
@@ -127,5 +135,5 @@
         </a>
         @endif
     </div>
-</div>
+</nav>
 @endsection

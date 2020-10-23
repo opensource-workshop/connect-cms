@@ -8,23 +8,26 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-{{-- 投稿日時 --}}
-<p>
-{{$post->posted_at->format('Y/m/d')}}
-</p>
-
-{{-- カテゴリ --}}
-@if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
-{{-- タイトル --}}
-<h2>
-    {{$post->post_title}}
-    {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
-    @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
-        <small><span class="badge badge-pill badge-danger">重要記事に設定</span></small>
-    @endif
-</h2>
 
 <article>
+
+    <header>
+        {{-- 投稿日時 --}}
+        <p>
+        {{$post->posted_at->format('Y/m/d')}}
+        </p>
+
+        {{-- カテゴリ --}}
+        @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+        {{-- タイトル --}}
+        <h2>
+            {{$post->post_title}}
+            {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
+            @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+                <small><span class="badge badge-pill badge-danger">重要記事に設定</span></small>
+            @endif
+        </h2>
+    </header>
 
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
@@ -53,7 +56,7 @@
     @endisset
 
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-    <div class="row">
+    <footer class="row">
         <div class="col-12 text-right mb-1">
         @if ($post->status == 2)
             @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
@@ -77,11 +80,11 @@
             </a>
         @endcan
         </div>
-    </div>
+    </footer>
 </article>
 
 {{-- 一覧へ戻る --}}
-<div class="row">
+<nav class="row" aria-label="{{$blog_frame->blog_name}}のページ移動">
     <div class="col-12 text-center mt-3">
         @if (isset($before_post))
         <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
@@ -97,5 +100,5 @@
         </a>
         @endif
     </div>
-</div>
+</nav>
 @endsection

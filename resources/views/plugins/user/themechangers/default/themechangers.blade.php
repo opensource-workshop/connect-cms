@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 
-<form action="{{url('/')}}/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
+<form action="{{url('/')}}/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" aria-label="テーマチェンジャー">
     {{csrf_field()}}
     <div class="form-group mb-0">
         <fieldset>

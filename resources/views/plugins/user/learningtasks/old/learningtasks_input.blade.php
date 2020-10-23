@@ -90,6 +90,7 @@
         <div class="custom-control custom-checkbox">
             <input type="checkbox" name="important" value="1" class="custom-control-input" id="important" @if(old('important', $learningtasks_posts->important)) checked=checked @endif>
             <label class="custom-control-label" for="important">チェックすると、新着に表示し続けることができます。</label>
+            <small class="form-text text-muted">※ プラグイン「新着情報」側の設定（重要記事の扱い）も必要です。</small>
         </div>
     </div>
 

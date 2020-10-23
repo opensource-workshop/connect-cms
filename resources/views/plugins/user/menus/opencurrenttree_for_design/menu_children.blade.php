@@ -28,9 +28,9 @@
 @if ($children->isView(Auth::user(), false, true, $page_roles))
     <li>
         @if ($children->id == $page_id)
-        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item active">
+        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $children->depth }} active" aria-current="page">
         @else
-        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item">
+        <a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $children->depth }}">
         @endif
 
             {{-- 各ページの深さをもとにインデントの表現 --}}
@@ -43,9 +43,9 @@
 
             {{-- カレントもしくは自分のルート筋なら表示する --}}
             @if ($children->isAncestorOf($current_page) || $current_page->id == $children->id)
-                {{$children->page_name}} {!!$menu->getFolderCloseFont()!!}
+                {{$children->page_name}} @if ($menu) {!!$menu->getFolderCloseFont()!!} @endif
             @else
-                {{$children->page_name}} {!!$menu->getFolderOpenFont()!!}
+                {{$children->page_name}} @if ($menu) {!!$menu->getFolderOpenFont()!!} @endif
             @endif
 
         @else

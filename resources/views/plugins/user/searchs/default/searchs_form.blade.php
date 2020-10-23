@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
 --}}
-<form action="{{url('/')}}/plugin/searchs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
+<form action="{{url('/')}}/plugin/searchs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline" role="search" aria-label="{{$searchs_frame->search_name}}">
     {{ csrf_field() }}
 
     <div class="input-group">

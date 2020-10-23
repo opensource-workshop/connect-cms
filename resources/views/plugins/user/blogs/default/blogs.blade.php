@@ -45,21 +45,31 @@
 
     @foreach($blogs_posts as $post)
 
+        @if ($loop->last)
+        <article>
+        @else
+        <article class="cc_article">
+        @endif
+
         @if (isset($is_template_datafirst))
             {{-- datafirstテンプレート --}}
-            {{-- 投稿日時 --}}
-            <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+            <header>
+                {{-- 投稿日時 --}}
+                <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
-            {{-- タイトル --}}
-            <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+                {{-- タイトル --}}
+                <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+            </header>
 
         @elseif (isset($is_template_titleindex))
             {{-- titleindexテンプレート --}}
-            {{-- 投稿日時 --}}
-            <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+            <header>
+                {{-- 投稿日時 --}}
+                <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
 
-            {{-- タイトル --}}
-            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+                {{-- タイトル --}}
+                <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+            </header>
 
         @elseif (isset($is_template_sidetitleindex))
             {{-- sidetitleindexテンプレート --}}
@@ -67,19 +77,23 @@
                 @break
             @endif
 
-            {{-- 投稿日時 --}}
-            <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+            <header>
+                {{-- 投稿日時 --}}
+                <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
 
-            {{-- タイトル --}}
-            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+                {{-- タイトル --}}
+                <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+            </header>
 
         @else
             {{-- defaultテンプレート --}}
-            {{-- タイトル --}}
-            <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+            <header>
+                {{-- タイトル --}}
+                <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
 
-            {{-- 投稿日時 --}}
-            <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+                {{-- 投稿日時 --}}
+                <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+            </header>
         @endif
 
         {{-- カテゴリ --}}
@@ -87,12 +101,6 @@
         {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
         @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
             <span class="badge badge-pill badge-danger">重要記事に設定</span>
-        @endif
-
-        @if ($loop->last)
-        <article>
-        @else
-        <article class="cc_article">
         @endif
 
             {{-- titleindexテンプレート・sidetitleindexテンプレートは本文表示しない --}}
@@ -130,7 +138,7 @@
             @endif
 
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-            <div class="row">
+            <footer class="row">
                 <div class="col-12 text-right mb-1">
                 @if ($post->status == 2)
                     @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
@@ -154,7 +162,7 @@
                     </a>
                 @endcan
                 </div>
-            </div>
+            </footer>
         </article>
     @endforeach
 
@@ -162,9 +170,12 @@
     @if (isset($is_template_sidetitleindex))
     @else
         {{-- ページング処理 --}}
-        <div class="text-center">
-            {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
-        </div>
+        {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+        @if ($blogs_posts->lastPage() > 1)
+            <nav class="text-center" aria-label="{{$blog_frame->blog_name}}のページ付け">
+                {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
+            </nav>
+        @endif
     @endif
 
     {{-- titleindexテンプレート・sidetitleindexテンプレート --}}
