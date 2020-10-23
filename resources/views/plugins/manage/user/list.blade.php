@@ -60,27 +60,61 @@
 
                             {{-- コンテンツ権限 --}}
                             <div class="form-group row">
-                                <label for="user_search_condition_email" class="col-md-3 col-form-label text-md-right">コンテンツ権限</label>
+                                <label for="user_search_condition_email" class="col-md-3 text-md-right">コンテンツ権限</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin"@if(Session::get('user_search_condition.role_article_admin') == "1") checked @endif>
-                                        <label class="custom-control-label" for="role_article_admin">コンテンツ管理者</label>
+                                        <label class="custom-control-label" for="role_article_admin">コンテンツ管理者</label><h6><span class="badge badge-danger ml-1">コ</span></h6>
                                     </div>
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[role_arrangement]" value="1" type="checkbox" class="custom-control-input" id="role_arrangement"@if(Session::get('user_search_condition.role_arrangement') == "1") checked @endif>
-                                        <label class="custom-control-label" for="role_arrangement">プラグイン管理者</label>
+                                        <label class="custom-control-label" for="role_arrangement">プラグイン管理者</label><h6><span class="badge badge-primary ml-1">プ</span></h6>
                                     </div>
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[role_article]" value="1" type="checkbox" class="custom-control-input" id="role_article"@if(Session::get('user_search_condition.role_article') == "1") checked @endif>
-                                        <label class="custom-control-label" for="role_article">モデレータ</label>
+                                        <label class="custom-control-label" for="role_article">モデレータ</label><h6><span class="badge badge-success ml-1">モ</span></h6>
                                     </div>
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[role_approval]" value="1" type="checkbox" class="custom-control-input" id="role_approval"@if(Session::get('user_search_condition.role_approval') == "1") checked @endif>
-                                        <label class="custom-control-label" for="role_approval">承認者</label>
+                                        <label class="custom-control-label" for="role_approval">承認者</label><h6><span class="badge badge-warning ml-1">承</span></h6>
                                     </div>
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter"@if(Session::get('user_search_condition.role_reporter') == "1") checked @endif>
-                                        <label class="custom-control-label" for="role_reporter">編集者</label>
+                                        <label class="custom-control-label" for="role_reporter">編集者</label><h6><span class="badge badge-info ml-1">編</span></h6>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- 管理権限 --}}
+                            <div class="form-group row">
+                                <label for="user_search_condition_email" class="col-md-3 text-md-right">管理権限</label>
+                                <div class="col-md-9">
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="user_search_condition[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system"@if(Session::get('user_search_condition.admin_system') == "1") checked @endif>
+                                        <label class="custom-control-label" for="admin_system">システム管理者</label><h6><span class="badge badge-danger ml-1">シ</span></h6>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="user_search_condition[admin_site]" value="1" type="checkbox" class="custom-control-input" id="admin_site"@if(Session::get('user_search_condition.admin_site') == "1") checked @endif>
+                                        <label class="custom-control-label" for="admin_site">サイト管理者</label><h6><span class="badge badge-primary ml-1">サ</span></h6>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="user_search_condition[admin_page]" value="1" type="checkbox" class="custom-control-input" id="admin_page"@if(Session::get('user_search_condition.admin_page') == "1") checked @endif>
+                                        <label class="custom-control-label" for="admin_page">ページ管理者</label><h6><span class="badge badge-success ml-1">ペ</span></h6>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="user_search_condition[admin_user]" value="1" type="checkbox" class="custom-control-input" id="admin_user"@if(Session::get('user_search_condition.admin_user') == "1") checked @endif>
+                                        <label class="custom-control-label" for="admin_user">ユーザ管理者</label><h6><span class="badge badge-warning ml-1">ユ</span></h6>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ゲスト --}}
+                            <div class="form-group row">
+                                <label for="user_search_condition_email" class="col-md-3 text-md-right">ゲスト</label>
+                                <div class="col-md-9">
+                                    <div class="custom-control custom-checkbox">
+                                        <input name="user_search_condition[guest]" value="1" type="checkbox" class="custom-control-input" id="guest"@if(Session::get('user_search_condition.guest') == "1") checked @endif>
+                                        <label class="custom-control-label" for="guest">ゲスト</label>
                                     </div>
                                 </div>
                             </div>
@@ -127,6 +161,7 @@
                     <th nowrap>ユーザー名</th>
                     <th nowrap><i class="fas fa-users" title="グループ参加"></i></th>
                     <th nowrap>eメール</th>
+                    <th nowrap>権限</th>
                     <th nowrap>役割設定</th>
                     <th nowrap>作成日</th>
                     <th nowrap>更新日</th>
@@ -144,6 +179,22 @@
                     <td>{{$user->name}}</td>
                     <td nowrap><a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="fas fa-users"></i></a></th>
                     <td>{{$user->email}}</td>
+                    <td nowrap>
+                        @isset($user->view_user_roles)
+                        <h6>
+{!!$user->getRoleStringTag()!!}
+{{--
+                        @foreach($user->view_user_roles as $view_user_role)
+                            @if ($view_user_role->role_name == 'role_article_admin')<span class="badge badge-danger">コ</span> @endif
+                            @if ($view_user_role->role_name == 'role_arrangement')<span class="badge badge-primary">プ</span> @endif
+                            @if ($view_user_role->role_name == 'role_article')<span class="badge badge-success">モ</span> @endif
+                            @if ($view_user_role->role_name == 'role_approval')<span class="badge badge-warning">承</span> @endif
+                            @if ($view_user_role->role_name == 'role_reporter')<span class="badge badge-info">編</span> @endif
+                        @endforeach
+--}}
+                        </h6>
+                        @endif
+                    </td>
                     <td>
                         @isset($user->user_original_roles)
                         @foreach($user->user_original_roles as $user_original_role)
