@@ -74,6 +74,12 @@ class MenusPlugin extends UserPluginBase
 
         // パンくずリスト用及び上位階層のカレント表現用に自分と上位階層のページを取得
         $ancestors = Page::ancestorsAndSelf($page_id);
+        $top_page = Page::where('permanent_link', '/')->first();
+        // トップページ以外は、トップページをパンくず先頭に追加
+        if ($top_page && $top_page->id != $page_id) {
+            // コレクションクラスの先頭に追加
+            $ancestors->prepend($top_page);
+        }
 
         // パンくずリスト用ページに対する権限
         $ancestors_page_roles = $this->getPageRoles($ancestors->pluck('id'));
