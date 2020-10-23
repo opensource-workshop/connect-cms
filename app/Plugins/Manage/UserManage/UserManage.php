@@ -62,35 +62,88 @@ class UserManage extends ManagePluginBase
         $in_users = null;
 
         // 権限が指定されている場合
-        if (
-            $request->session()->has('user_search_condition.role_article_admin') ||
+        if ($request->session()->has('user_search_condition.role_article_admin') ||
             $request->session()->has('user_search_condition.role_arrangement') ||
             $request->session()->has('user_search_condition.role_article') ||
             $request->session()->has('user_search_condition.role_approval') ||
-            $request->session()->has('user_search_condition.role_reporter')
-        ) {
-            //$in_users_query = UsersRoles::select('users_roles.user_id')->where('role_value', 1);
-            $in_users_query = UsersRoles::select('users_roles.user_id');
+            $request->session()->has('user_search_condition.role_reporter') ||
+            $request->session()->has('user_search_condition.admin_system') ||
+            $request->session()->has('user_search_condition.admin_site') ||
+            $request->session()->has('user_search_condition.admin_page') ||
+            $request->session()->has('user_search_condition.admin_user')) {
+            $in_users_query = UsersRoles::select('users_roles.users_id');
 
+            // コンテンツ管理者
+            if ($request->session()->get('user_search_condition.role_article_admin') == 1) {
+                $in_users_query->orWhere('role_name', 'role_article_admin');
+            }
+            // プラグイン管理者
+            if ($request->session()->get('user_search_condition.role_arrangement') == 1) {
+                $in_users_query->orWhere('role_name', 'role_arrangement');
+            }
+            // モデレータ
+            if ($request->session()->get('user_search_condition.role_article') == 1) {
+                $in_users_query->orWhere('role_name', 'role_article');
+            }
+            // 承認者
+            if ($request->session()->get('user_search_condition.role_approval') == 1) {
+                $in_users_query->orWhere('role_name', 'role_approval');
+            }
+            // 編集者
+            if ($request->session()->get('user_search_condition.role_reporter') == 1) {
+                $in_users_query->orWhere('role_name', 'role_reporter');
+            }
+            // システム管理者
+            if ($request->session()->get('user_search_condition.admin_system') == 1) {
+                $in_users_query->orWhere('role_name', 'admin_system');
+            }
+            // サイト管理者
+            if ($request->session()->get('user_search_condition.admin_site') == 1) {
+                $in_users_query->orWhere('role_name', 'admin_site');
+                $in_users_query->orWhere('role_name', 'admin_system');
+            }
+            // ページ管理者
+            if ($request->session()->get('user_search_condition.admin_page') == 1) {
+                $in_users_query->orWhere('role_name', 'admin_page');
+                $in_users_query->orWhere('role_name', 'admin_system');
+            }
+            // ユーザ管理者
+            if ($request->session()->get('user_search_condition.admin_user') == 1) {
+                $in_users_query->orWhere('role_name', 'admin_user');
+                $in_users_query->orWhere('role_name', 'admin_system');
+            }
 
+            $in_users = $in_users_query->get();
         }
 
-
-
-        // コンテンツ権限
-        if ($request->session()->has('user_search_condition.role_article_admin')) {
-            $in_users_query->orWhere('role_name', 'role_article_admin');
+        // ゲスト権限が指定されている場合
+        if ($request->session()->has('user_search_condition.guest')) {
+            $guest_users = User::select('users.id as users_id', DB::raw('count(users_roles.role_value) AS count'))
+                               ->leftJoin('users_roles', function ($join) {
+                                   $join->on('users_roles.users_id', '=', 'users.id')
+                                        ->whereIn('target', ['base', 'manage']);
+                               })
+                               ->having('count', 0)
+                               ->groupBy('users.id')
+                               ->get();
+            // 他のユーザ絞り込みがある場合は、結果のマージ
+            if (empty($in_users)) {
+                $in_users = $guest_users;
+            } else {
+                $in_users = $in_users->concat($guest_users);
+            }
         }
-
-        $in_users = UsersRoles::select('users_roles.user_id');
-
-
 
         /* ユーザデータ取得
         ----------------------------------------------------------------------------------------------*/
 
         // ユーザデータ取得
         $users_query = User::select('users.*');
+
+        // 権限
+        if ($in_users) {
+            $users_query->whereIn('id', $in_users->pluck('users_id'));
+        }
 
         // ログインID
         if ($request->session()->has('user_search_condition.userid')) {
@@ -116,7 +169,7 @@ class UserManage extends ManagePluginBase
             $users_query->orderBy('created_at', 'asc');
         } elseif ($sort == 'created_at_desc') {
             $users_query->orderBy('created_at', 'desc');
-        }elseif ($sort == 'updated_at_asc') {
+        } elseif ($sort == 'updated_at_asc') {
             $users_query->orderBy('updated', 'asc');
         } elseif ($sort == 'updated_at_desc') {
             $users_query->orderBy('updated', 'desc');
@@ -135,7 +188,30 @@ class UserManage extends ManagePluginBase
             $user_ids[] = $user->id;
         }
 
-        // ユーザ権限データ取得（役割設定）
+        // ユーザ権限取得
+        $roles = null;
+        if ($user_ids) {
+            $roles = UsersRoles::whereIn('users_id', $user_ids)
+                               ->where('target', 'manage')
+                               ->orWhere('target', 'base')
+                               ->get();
+        }
+
+        // ユーザ権限データをユーザデータへマージ
+        if ($roles) {
+            $user_roles = array();
+            foreach ($roles as $role) {
+                $user_roles[$role->users_id][] = $role;
+            }
+            foreach ($users as &$user) {
+                if (array_key_exists($user->id, $user_roles)) {
+                    // $user->user_roles に保持すると、値が消えるので、表示用の変数を用意した。
+                    $user->view_user_roles = $user_roles[$user->id];
+                }
+            }
+        }
+
+        // 役割取得
         $original_roles = null;
         if ($user_ids) {
             $original_roles = UsersRoles::select('users_roles.*', 'configs.name', 'configs.value')
@@ -148,7 +224,7 @@ class UserManage extends ManagePluginBase
                                         ->get();
         }
 
-        // ユーザデータへマージ
+        // 役割をユーザデータへマージ
         if ($original_roles) {
             $user_original_roles = array();
             foreach ($original_roles as $original_role) {
@@ -164,6 +240,7 @@ class UserManage extends ManagePluginBase
         //$users = DB::table('users')
         //         ->orderBy('id', 'asc')
         //         ->paginate(10);
+        //Log::debug($users);
 
         return $users;
     }
@@ -237,6 +314,13 @@ class UserManage extends ManagePluginBase
             "role_article"       => $request->input('user_search_condition.role_article'),
             "role_approval"      => $request->input('user_search_condition.role_approval'),
             "role_reporter"      => $request->input('user_search_condition.role_reporter'),
+
+            "admin_system"       => $request->input('user_search_condition.admin_system'),
+            "admin_site"         => $request->input('user_search_condition.admin_site'),
+            "admin_page"         => $request->input('user_search_condition.admin_page'),
+            "admin_user"         => $request->input('user_search_condition.admin_user'),
+
+            "guest"              => $request->input('user_search_condition.guest'),
 
             "sort"               => $request->input('user_search_condition.sort'),
         ];
