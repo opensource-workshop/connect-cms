@@ -72,27 +72,32 @@ class MenusPlugin extends UserPluginBase
         //Log::debug(json_encode( $multi_language_root_page, JSON_UNESCAPED_UNICODE));
         //Log::debug(json_encode( $pages, JSON_UNESCAPED_UNICODE));
 
-        // パンくずリスト用及び上位階層のカレント表現用に自分と上位階層のページを取得
+        // 上位階層のカレント表現用に自分と上位階層のページを取得
         $ancestors = Page::ancestorsAndSelf($page_id);
+
+        // パンくずリスト用に複製
+        $ancestors_breadcrumbs = clone $ancestors;
         $top_page = Page::where('permanent_link', '/')->first();
         // トップページ以外は、トップページをパンくず先頭に追加
         if ($top_page && $top_page->id != $page_id) {
             // コレクションクラスの先頭に追加
-            $ancestors->prepend($top_page);
+            $ancestors_breadcrumbs->prepend($top_page);
         }
 
+        // delete: どこにも使われていないためコメントアウト
         // パンくずリスト用ページに対する権限
-        $ancestors_page_roles = $this->getPageRoles($ancestors->pluck('id'));
+        // $ancestors_page_roles = $this->getPageRoles($ancestors->pluck('id'));
 
         // 画面へ
         return $this->view('menus', [
             'page_id'      => $page_id,
             'pages'        => $pages,
             'ancestors'    => $ancestors,
+            'ancestors_breadcrumbs' => $ancestors_breadcrumbs,
             'current_page' => $this->page,
             'menu'         => $menu,
             'page_roles'   => $page_roles,
-            'ancestors_page_roles' => $ancestors_page_roles,
+            // 'ancestors_page_roles' => $ancestors_page_roles,
 //            'page'      => $this->page,
         ]);
     }
