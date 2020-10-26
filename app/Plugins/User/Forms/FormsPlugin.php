@@ -2,7 +2,9 @@
 
 namespace App\Plugins\User\Forms;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -10,8 +12,7 @@ use DB;
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-// use App\Models\Common\Page;
-// use App\Models\Common\Uploads;
+use App\Models\Common\Uploads;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsColumnsSelects;
@@ -63,6 +64,7 @@ class FormsPlugin extends UserPluginBase
             'index',
             'publicConfirm',
             'publicStore',
+            'publicStoreToken',
             'cancel',
             'updateColumn',
             'updateColumnSequence',
@@ -71,9 +73,30 @@ class FormsPlugin extends UserPluginBase
             'updateSelect',
             'updateSelectSequence',
             'deleteSelect',
-            'publicStoreToken',
         ];
         return $functions;
+    }
+
+    /**
+     * 追加の権限定義（コアから呼び出す）
+     */
+    public function declareRole()
+    {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
+        // 権限チェックテーブル
+        $role_ckeck_table = array();
+
+        $role_ckeck_table["editColumnDetail"]     = array('buckets.editColumn');
+        $role_ckeck_table["updateColumn"]         = array('buckets.editColumn');
+        $role_ckeck_table["updateColumnSequence"] = array('buckets.editColumn');
+        $role_ckeck_table["updateColumnDetail"]   = array('buckets.editColumn');
+        $role_ckeck_table["addSelect"]            = array('buckets.addColumn');
+        $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
+        $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
+        $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
+        return $role_ckeck_table;
     }
 
     /**
@@ -199,6 +222,30 @@ class FormsPlugin extends UserPluginBase
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
+    }
+
+    /**
+     * ファイル系の詳細データの取得
+     */
+    private function getUploadsInputCols($inputs_id)
+    {
+        $records = FormsInputCols::select('uploads.*', 'forms_columns.column_type', 'forms_input_cols.forms_columns_id as columns_id', 'forms_input_cols.value')
+                                    ->join('forms_columns', 'forms_columns.id', '=', 'forms_input_cols.forms_columns_id')
+                                    ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                                    ->where('forms_inputs_id', $inputs_id)
+                                    ->whereIn('forms_columns.column_type', [\FormColumnType::file])
+                                    ->orderBy('forms_inputs_id', 'asc')
+                                    ->orderBy('forms_columns_id', 'asc')
+                                    ->get();
+
+        // 後でこのCollection から要素を削除する可能性がある。
+        // そのため、カラムを特定できるように、カラムをキーにして詰め替える。
+        $uploads = collect();
+        foreach ($records as $record) {
+            $uploads->put($record->columns_id, $record);
+        }
+
+        return $uploads;
     }
 
     /* 画面アクション関数 */
@@ -590,6 +637,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // フォームのカラムデータ
         $forms_columns = $this->getFormsColumns($form);
 
+        // ファイル系の詳細データ
+        $uploads = collect();
+        if ($id) {
+            $uploads = $this->getUploadsInputCols($id);
+        }
+
         // エラーチェック配列
         $validator_array = array( 'column' => array(), 'message' => array());
 
@@ -604,6 +657,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // まとめ行以外の項目について、バリデータールールをセット
             $validator_array = $this->getValidatorRule($validator_array, $forms_column, $request);
         }
+        // [TODO]
+        // $this->getValidatorRule　で Serialization of 'Illuminate\Http\UploadedFile' is not allowed
+        // 添付ファイルのアップロードで $request->all() でエラー – じゃが
+        // https://www.jaga.biz/laravel/request_all_error/
+        // return;
 
         // 入力値をトリム
         $request->merge(StringUtils::trimInput($request->all()));
@@ -618,17 +676,60 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
+        // ファイル項目を探して保存
+        foreach ($forms_columns as $forms_column) {
+            if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                // ファイル系の処理パターン
+                // 新規登録   ＞ アップロードされたことを hasFile で検知
+                // 変更の削除 ＞ forms_columns_delete_ids に削除するforms_input_cols の id を溜める。項目値も一旦クリア。
+                // 変更       ＞ アップロードされたことを hasFile で検知。hasFile で無いなら、元の値を使用。
+                //               この時、変更の削除も同時に行われている可能性もある。でも、変更の削除が先に処理するのでOK
+
+                // ファイルのリクエスト名
+                $req_filename = 'forms_columns_value.' . $forms_column->id;
+
+                // ファイルがアップロードされた。
+                if ($request->hasFile($req_filename)) {
+                    // ファイルチェック
+                    var_dump(1);
+
+                    // uploads テーブルに情報追加、ファイルのid を取得する
+                    $upload = Uploads::create([
+                        'client_original_name' => $request->file($req_filename)->getClientOriginalName(),
+                        'mimetype'             => $request->file($req_filename)->getClientMimeType(),
+                        'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
+                        'size'                 => $request->file($req_filename)->getClientSize(),
+                        'plugin_name'          => 'forms',
+                        'page_id'              => $page_id,
+                        'temporary_flag'       => 1,
+                        'created_id'           => Auth::user()->id,
+                    ]);
+
+                    // ファイル保存
+                    $directory = $this->getDirectory($upload->id);
+                    $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
+
+                    // 項目とファイルID の関連保持
+                    $upload->column_type = $forms_column->column_type;
+                    $upload->columns_id = $forms_column->id;
+
+                    // ここで、put でキー指定でセットすることで、紐づくファイル情報が変更される。
+                    $uploads->put($forms_column->id, $upload);
+                }
+            }
+        }
+        print_r($uploads);
+
         // var_dump('publicConfirm', $request->forms_columns_value);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_confirm', [
+        return $this->view('forms_confirm', [
             'request' => $request,
             'frame_id' => $frame_id,
             'form' => $form,
             'forms_columns' => $forms_columns,
-            ]
-        );
+            'uploads' => $uploads,
+        ]);
     }
 
     /**
@@ -712,6 +813,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $forms_input_cols->forms_columns_id = $forms_column['id'];
                 $forms_input_cols->value = $value;
                 $forms_input_cols->save();
+
+                // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
+                if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                    $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
+                }
             }
 
             // メールの内容
@@ -1331,6 +1437,36 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // forms_id がある場合、データを削除
         if ($forms_id) {
             $forms_columns = FormsColumns::where('forms_id', $forms_id)->orderBy('display_sequence')->get();
+
+            ////
+            //// 添付ファイルの削除
+            ////
+            $file_column_type_ids = [];
+            foreach ($forms_columns as $forms_column) {
+                // ファイルタイプ
+                if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                    $file_column_type_ids[] = $forms_column->id;
+                }
+            }
+
+            // 削除するファイル情報が入っている詳細データの特定
+            $del_file_ids = FormsInputCols::whereIn('forms_columns_id', $file_column_type_ids)
+                                                ->whereNotNull('value')
+                                                ->pluck('value')
+                                                ->all();
+
+            // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
+            $delete_uploads = Uploads::whereIn('id', $del_file_ids)->get();
+            foreach ($delete_uploads as $delete_upload) {
+                // ファイルの削除
+                $directory = $this->getDirectory($delete_upload->id);
+                Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                // uploadの削除
+                $delete_upload->delete();
+            }
+
+
             foreach ($forms_columns as $forms_column) {
                 // 詳細データ値を削除する。
                 FormsInputCols::where('forms_columns_id', $forms_column->id)->delete();
@@ -1417,7 +1553,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->caption_color = \Bs4TextColor::dark;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を追加しました。';
-        
+
         // 編集画面へ戻る。
         return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, $errors);
     }

@@ -19,7 +19,7 @@ final class FormColumnType
     const date = 'date';
     const time = 'time';
     const time_from_to = 'time_from_to';
-    // const file = 'file';
+    const file = 'file';
     const group = 'group';
 
     // key/valueの連想配列
@@ -35,7 +35,7 @@ final class FormColumnType
         self::date=>'日付型',
         self::time=>'時間型',
         self::time_from_to=>'時間型(FromTo)',
-        // self::file=>'ファイル型',
+        self::file=>'ファイル型',
         self::group=>'まとめ行',
     ];
 
