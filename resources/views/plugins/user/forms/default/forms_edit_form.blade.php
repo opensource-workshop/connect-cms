@@ -45,10 +45,7 @@
 </script>
 
 @if (!$form->id && !$create_flag)
-    <div class="alert alert-warning mt-2">
-        <i class="fas fa-exclamation-circle"></i>
-        フォーム選択画面から選択するか、フォーム新規作成で作成してください。
-    </div>
+    @include('plugins.user.forms.default.forms_warning_messages_line', ['warning_messages' => ['フォーム選択から選択するか、フォーム作成で作成してください。']])
 @else
 
     <div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i>

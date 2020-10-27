@@ -59,6 +59,8 @@ class FormsPlugin extends UserPluginBase
             'index',
             'editColumnDetail',
             'publicConfirmToken',
+            'listInputs',
+            'editInput',
         ];
         $functions['post'] = [
             'index',
@@ -73,6 +75,7 @@ class FormsPlugin extends UserPluginBase
             'updateSelect',
             'updateSelectSequence',
             'deleteSelect',
+            'storeInput',
         ];
         return $functions;
     }
@@ -86,16 +89,19 @@ class FormsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        $role_ckeck_table = array();
+        $role_ckeck_table = [];
 
-        $role_ckeck_table["editColumnDetail"]     = array('buckets.editColumn');
-        $role_ckeck_table["updateColumn"]         = array('buckets.editColumn');
-        $role_ckeck_table["updateColumnSequence"] = array('buckets.editColumn');
-        $role_ckeck_table["updateColumnDetail"]   = array('buckets.editColumn');
-        $role_ckeck_table["addSelect"]            = array('buckets.addColumn');
-        $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
-        $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
-        $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
+        $role_ckeck_table["editColumnDetail"]     = ['buckets.editColumn'];
+        $role_ckeck_table["updateColumn"]         = ['buckets.editColumn'];
+        $role_ckeck_table["updateColumnSequence"] = ['buckets.editColumn'];
+        $role_ckeck_table["updateColumnDetail"]   = ['buckets.editColumn'];
+        $role_ckeck_table["addSelect"]            = ['buckets.addColumn'];
+        $role_ckeck_table["updateSelect"]         = ['buckets.editColumn'];
+        $role_ckeck_table["updateSelectSequence"] = ['buckets.editColumn'];
+        $role_ckeck_table["deleteSelect"]         = ['buckets.editColumn'];
+        $role_ckeck_table["listInputs"]           = ['frames.edit'];
+        $role_ckeck_table["editInput"]            = ['frames.edit'];
+        $role_ckeck_table["storeInput"]           = ['frames.edit'];
         return $role_ckeck_table;
     }
 
@@ -427,7 +433,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // カウントは本登録でする
         $forms_inputs_count = FormsInputs::where('forms_id', $form_id)
-                                            ->where('status', \StatusType::active)
+                                            ->where('status', \FormStatusType::active)
                                             ->count();
 
         // 登録制限数 が 空か 0 なら登録制限しない
@@ -657,11 +663,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // まとめ行以外の項目について、バリデータールールをセット
             $validator_array = $this->getValidatorRule($validator_array, $forms_column, $request);
         }
-        // [TODO]
-        // $this->getValidatorRule　で Serialization of 'Illuminate\Http\UploadedFile' is not allowed
-        // 添付ファイルのアップロードで $request->all() でエラー – じゃが
-        // https://www.jaga.biz/laravel/request_all_error/
-        // return;
 
         // 入力値をトリム
         $request->merge(StringUtils::trimInput($request->all()));
@@ -718,7 +719,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 }
             }
         }
-        print_r($uploads);
 
         // var_dump('publicConfirm', $request->forms_columns_value);
 
@@ -774,12 +774,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // トークンをハッシュ化（DB保存用）
             $record_token = TokenUtils::makeHashToken($user_token);
 
-            $forms_inputs->status = \StatusType::temporary;
+            $forms_inputs->status = \FormStatusType::temporary;
             $forms_inputs->add_token = $record_token;
             $forms_inputs->add_token_created_at = new \Carbon();
         } else {
             // 本登録
-            $forms_inputs->status = \StatusType::active;
+            $forms_inputs->status = \FormStatusType::active;
         }
 
         $forms_inputs->save();
@@ -1035,7 +1035,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // forms_inputs 更新
         // 本登録
-        $forms_inputs->status = \StatusType::active;
+        $forms_inputs->status = \FormStatusType::active;
         $forms_inputs->save();
 
         // フォームのカラムデータ
@@ -1153,6 +1153,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             ->select('frames.*')
                             ->where('frames.id', $frame_id)->first();
 
+        // $frame_page = "frame_{$frame_id}_buckets_page";
+
         // データ取得（1ページの表示件数指定）
         $plugins = DB::table($plugin_name)
                         ->select(
@@ -1166,7 +1168,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         )
                         ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
                             $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
-                                        ->where('forms_inputs.status', \StatusType::active);
+                                        ->where('forms_inputs.status', \FormStatusType::active);
                         })
                         ->groupBy(
                             $plugin_name . '.id',
@@ -1188,7 +1190,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             ->whereIn('forms.id', $plugins->pluck('id'))
             ->leftJoin('forms_inputs', function ($leftJoin) {
                 $leftJoin->on('forms.id', '=', 'forms_inputs.forms_id')
-                            ->where('forms_inputs.status', \StatusType::temporary);
+                            ->where('forms_inputs.status', \FormStatusType::temporary);
             })
             ->groupBy(
                 'forms.id',
@@ -1208,7 +1210,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 表示テンプレートを呼び出す。
         return $this->view('forms_list_buckets', [
             'plugin_frame' => $plugin_frame,
-            'plugins'      => $plugins,
+            'plugins' => $plugins,
+            // 'frame_page' => $request->input($frame_page, 1),
         ]);
     }
 
@@ -1246,12 +1249,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 仮登録件数
         $tmp_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', \StatusType::temporary)
+                                    ->where('forms_inputs.status', \FormStatusType::temporary)
                                     ->count();
 
         // 本登録数
         $active_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', \StatusType::active)
+                                    ->where('forms_inputs.status', \FormStatusType::active)
                                     ->count();
 
         $form->tmp_entry_count = $tmp_entry_count;
@@ -2026,7 +2029,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function downloadCsv($request, $page_id, $frame_id, $id)
     {
-
         // id で対象のデータの取得
 
         // フォームの取得
@@ -2035,16 +2037,35 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // カラムの取得
         $columns = FormsColumns::where('forms_id', $id)->orderBy('display_sequence', 'asc')->get();
 
+        // debug:確認したいSQLの前にこれを仕込んで
+        // \DB::enableQueryLog();
+
         // 登録データの取得
-        $input_cols = FormsInputCols::
-                                    select(
-                                        'forms_input_cols.*',
-                                        'forms_inputs.status as inputs_status'
-                                    )
-                                    ->join('forms_inputs', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
-                                    ->whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id))
-                                    ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
-                                    ->get();
+        // change: 基本ないが、forms_input_colsにデータが無い場合にも対応(登録一覧の表示は、forms_input_colsがない場合にも対応していた)
+        // $input_cols = FormsInputCols::
+        //                             select(
+        //                                 'forms_input_cols.*',
+        //                                 'forms_inputs.status as inputs_status'
+        //                             )
+        //                             ->leftjoin('forms_inputs', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
+        //                             ->whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id)->where('status', '!=', \FormStatusType::delete))
+        //                             ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+        //                             ->get();
+        $input_cols = FormsInputs::
+                select(
+                    'forms_inputs.status as inputs_status',
+                    'forms_input_cols.*'
+                )
+                ->leftjoin('forms_input_cols', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
+                ->where('forms_inputs.forms_id', $id)
+                // 削除データは出力しない
+                ->where('forms_inputs.status', '!=', \FormStatusType::delete)
+                ->orderBy('forms_inputs.id', 'asc')
+                ->orderBy('forms_input_cols.forms_columns_id', 'asc')
+                ->get();
+
+        // debug: sql dumpする
+        // \Log::debug(var_export(\DB::getQueryLog(), true));
 
 /*
 ダウンロード前の配列イメージ。
@@ -2083,7 +2104,7 @@ ORDER BY forms_inputs_id, forms_columns_id
         $copy_base = array();
 
         // 見出し行-頭（固定項目）
-        $csv_array[0]['status'] = '仮登録:1/本登録:0';
+        $csv_array[0]['status'] = '状態(0:本登録,1:仮登録)';
         $copy_base['status'] = '';
         // 見出し行
         foreach ($columns as $column) {
@@ -2132,5 +2153,116 @@ ORDER BY forms_inputs_id, forms_columns_id
         }
 
         return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
+     * 登録一覧
+     */
+    public function listInputs($request, $page_id, $frame_id, $forms_id = null)
+    {
+        // フォーム＆フレームデータ
+        $form_frame = $this->getFormFrame($frame_id);
+
+        $form = null;
+        if (!empty($forms_id)) {
+            // forms_id が渡ってくればforms_id が対象
+            $form = Forms::where('id', $forms_id)->first();
+        } elseif (!empty($form_frame->bucket_id)) {
+            // Frame のbucket_id があれば、bucket_id からフォームデータ取得
+            $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
+        }
+
+        if (empty($form)) {
+            // ワーニング画面へ
+            return $this->view('forms_edit_warning_messages', [
+                'warning_messages' => ["フォーム選択から選択するか、フォーム作成で作成してください。"],
+            ]);
+        }
+
+        // カラムの取得
+        $columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence', 'asc')->get();
+
+        $inputs_query = FormsInputs::where('forms_id', $form->id);
+        $inputs_query->orderBy('forms_inputs.id', 'asc');
+
+        // データ取得
+        $get_count = 10;
+        $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
+
+        // 登録データ詳細の取得
+        $input_cols = FormsInputCols::select('forms_input_cols.*', 'uploads.client_original_name')
+                                        ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                                        ->whereIn('forms_inputs_id', $inputs->pluck('id'))
+                                        ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+                                        ->get();
+
+        // bucktsで開いていたページの保持
+        // $frame_page = "frame_{$frame_id}_buckets_page";
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('forms_list_inputs', [
+            'form' => $form,
+            'columns' => $columns,
+            'inputs' => $inputs,
+            'input_cols' => $input_cols,
+        ]);
+    }
+
+    /**
+     * 登録一覧からの編集画面表示
+     */
+    public function editInput($request, $page_id, $frame_id, $inputs_id)
+    {
+        $input = FormsInputs::find($inputs_id);
+        if (empty($input)) {
+            // ワーニング画面へ
+            return $this->view('forms_edit_warning_messages', [
+                'warning_messages' => ["登録データがありません。"],
+            ]);
+        }
+
+        // 登録データ詳細の取得
+        $input_cols = FormsInputCols::select('forms_input_cols.*', 'uploads.client_original_name')
+                                        ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                                        ->where('forms_inputs_id', $inputs_id)
+                                        ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+                                        ->get();
+
+        // Formsデータ
+        $form = Forms::find($input->forms_id);
+
+        // フォームのカラムデータ
+        $forms_columns = $this->getFormsColumns($form);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('forms_edit_input', [
+            'input' => $input,
+            'input_cols' => $input_cols,
+            'frame_id' => $frame_id,
+            'form' => $form,
+            'forms_columns' => $forms_columns,
+        ]);
+    }
+
+    /**
+     * 登録一覧＞編集からのデータ登録
+     */
+    public function storeInput($request, $page_id, $frame_id, $inputs_id)
+    {
+        $input = FormsInputs::find($inputs_id);
+        if (empty($input)) {
+            // ワーニング画面へ
+            return $this->view('forms_edit_warning_messages', [
+                'warning_messages' => ["登録データがありません。"],
+            ]);
+        }
+
+        // forms_inputs 更新
+        $input->status = $request->status;
+        $input->save();
+
+        $request->flash_message = '変更しました。';
+
+        // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
     }
 }
