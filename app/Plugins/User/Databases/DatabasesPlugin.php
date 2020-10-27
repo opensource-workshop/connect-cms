@@ -114,7 +114,7 @@ class DatabasesPlugin extends UserPluginBase
         $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
         $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
         $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
-        $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
+        // $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
         $role_ckeck_table["editView"]             = array('frames.edit');
         $role_ckeck_table["saveView"]             = array('frames.edit');
         return $role_ckeck_table;
