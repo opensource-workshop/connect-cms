@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * フォーム項目区分
  */
-final class FormColumnType
+final class FormColumnType extends EnumsBase
 {
     // 定数メンバ
     const text = 'text';
@@ -38,20 +38,4 @@ final class FormColumnType
         self::file=>'ファイル型',
         self::group=>'まとめ行',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }
