@@ -249,6 +249,7 @@ return [
         'PermissionType' => \App\Enums\PermissionType::class,
         'StatusType' => \App\Enums\StatusType::class,
         'DisplayNumberType' => \App\Enums\DisplayNumberType::class,
+        'FormStatusType' => \App\Enums\FormStatusType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

@@ -45,10 +45,7 @@
 </script>
 
 @if (!$form->id && !$create_flag)
-    <div class="alert alert-warning mt-2">
-        <i class="fas fa-exclamation-circle"></i>
-        フォーム選択画面から選択するか、フォーム新規作成で作成してください。
-    </div>
+    @include('plugins.user.forms.default.forms_warning_messages_line', ['warning_messages' => ['フォーム選択から選択するか、フォーム作成で作成してください。']])
 @else
 
     <div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i>
@@ -277,6 +274,28 @@
                 <label class="custom-control-label" for="user_mail_send_flag">登録者にメール送信する</label>
             </div>
             @if ($errors && $errors->has('user_mail_send_flag')) <div class="text-danger">{{$errors->first('user_mail_send_flag')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                <label>メールの添付ファイル制御</label><br>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="mail_attach_flag_1" name="mail_attach_flag" class="custom-control-input" @if(old('mail_attach_flag', $form->mail_attach_flag) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="mail_attach_flag_1">メールにファイルを添付する</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="0" id="mail_attach_flag_0" name="mail_attach_flag" class="custom-control-input" @if(old('mail_attach_flag', $form->mail_attach_flag) == 0) checked="checked" @endif>
+                    <label class="custom-control-label" for="mail_attach_flag_0">メールにファイルを添付しない</label>
+                </div>
+                <div>
+                    <small class="text-muted">
+                        ※ フォームにファイル型の項目があれば、メールにファイルを添付できます。<br>
+                    </small>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -5,8 +5,8 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Log;
+
+// use Illuminate\Contracts\Queue\ShouldQueue;
 
 class ConnectMail extends Mailable
 {
@@ -31,7 +31,19 @@ class ConnectMail extends Mailable
      */
     public function build()
     {
-         return $this->subject($this->options['subject'])
-             ->text($this->options['template'], $this->data);
+        $mail = $this->subject($this->options['subject'])
+                        ->text($this->options['template'], $this->data);
+
+        // 添付ファイル
+        if (isset($this->options['attachs'])) {
+            foreach ($this->options['attachs'] as $attach) {
+                $mail->attach($attach['file_path'], [
+                    'as' => $attach['file_name'],
+                    'mime' => $attach['mime'],
+                ]);
+            }
+        }
+
+        return $mail;
     }
 }
