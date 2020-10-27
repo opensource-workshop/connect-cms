@@ -650,7 +650,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
 
         // エラーチェック配列
-        $validator_array = array( 'column' => array(), 'message' => array());
+        $validator_array = array('column' => array(), 'message' => array());
 
         foreach ($forms_columns as $forms_column) {
             // まとめ行であれば、ネストされた配列をさらに展開
@@ -680,19 +680,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // ファイル項目を探して保存
         foreach ($forms_columns as $forms_column) {
             if (FormsColumns::isFileColumnType($forms_column->column_type)) {
-                // ファイル系の処理パターン
-                // 新規登録   ＞ アップロードされたことを hasFile で検知
-                // 変更の削除 ＞ forms_columns_delete_ids に削除するforms_input_cols の id を溜める。項目値も一旦クリア。
-                // 変更       ＞ アップロードされたことを hasFile で検知。hasFile で無いなら、元の値を使用。
-                //               この時、変更の削除も同時に行われている可能性もある。でも、変更の削除が先に処理するのでOK
-
                 // ファイルのリクエスト名
                 $req_filename = 'forms_columns_value.' . $forms_column->id;
 
                 // ファイルがアップロードされた。
                 if ($request->hasFile($req_filename)) {
                     // ファイルチェック
-                    var_dump(1);
 
                     // uploads テーブルに情報追加、ファイルのid を取得する
                     $upload = Uploads::create([
@@ -793,6 +786,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 登録者のメールアドレス
         $user_mailaddresses = array();
 
+        // 添付ファイルID
+        $attach_uploads_ids = [];
+
         // forms_input_cols 登録
         foreach ($forms_columns as $forms_column) {
             if ($forms_column->column_type == \FormColumnType::group) {
@@ -820,8 +816,19 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 }
             }
 
-            // メールの内容
-            $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            // ファイルタイプがファイル系 で 値がある事
+            if (FormsColumns::isFileColumnType($forms_column->column_type) && $value) {
+                $attach_uploads_ids[] = $value;
+
+                // データ登録フラグOFFでも、一時的にファイルは持っているため、検索可能
+                $upload = Uploads::where('id', $value)->first();
+
+                // メールの内容(ファイル系は、ファイル名を載せる)
+                $contents_text .= $forms_column->column_name . "：" . $upload->client_original_name . "\n";
+            } else {
+                // メールの内容
+                $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            }
 
             // メール型
             if ($forms_column->column_type == \FormColumnType::mail) {
@@ -858,10 +865,15 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // メール本文内のフォーム名文字列を置換
             $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
+            // メールオプション
+            $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+            // メールオプションに添付ファイルをセットする
+            $mail_options = $this->setMailOptionsAttach($attach_uploads_ids, $form->mail_attach_flag, $mail_options);
+
             // メール送信（ユーザー側）
             foreach ($user_mailaddresses as $user_mailaddress) {
                 if (!empty($user_mailaddress)) {
-                    Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                 }
             }
         } else {
@@ -897,11 +909,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 // メール本文内のフォーム名文字列を置換
                 $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
+                // メールオプション
+                $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+                // メールオプションに添付ファイルをセットする
+                $mail_options = $this->setMailOptionsAttach($attach_uploads_ids, $form->mail_attach_flag, $mail_options);
+
                 // メール送信（管理者側）
                 if ($form->mail_send_flag) {
                     $mail_addresses = explode(',', $form->mail_send_address);
                     foreach ($mail_addresses as $mail_address) {
-                        Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                        Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                     }
                 }
 
@@ -909,19 +926,67 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 if ($form->user_mail_send_flag) {
                     foreach ($user_mailaddresses as $user_mailaddress) {
                         if (!empty($user_mailaddress)) {
-                            Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                            Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                         }
                     }
                 }
             }
         }
 
+        // データ登録フラグOFFなら、添付ファイルを削除
+        if (! $form->data_save_flag) {
+            // アップロードファイルあり
+            if (! empty($attach_uploads_ids)) {
+                // 削除するファイルデータ
+                $delete_uploads = Uploads::whereIn('id', $attach_uploads_ids)->get();
+
+                foreach ($delete_uploads as $delete_upload) {
+                    // ファイルの削除
+                    $directory = $this->getDirectory($delete_upload->id);
+                    Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                    // uploadの削除
+                    $delete_upload->delete();
+                }
+            }
+        }
+
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_thanks', [
+        return $this->view('forms_thanks', [
             'after_message' => $after_message
-            ]
-        );
+        ]);
+    }
+
+    /**
+     * メールオプションに添付ファイルをセットする
+     */
+    private function setMailOptionsAttach($attach_uploads_ids, $mail_attach_flag, $mail_options)
+    {
+        // メール添付OFF
+        if (empty($mail_attach_flag)) {
+            // なにもしない
+            return $mail_options;
+        }
+
+        // アップロードファイルIDなし
+        if (empty($attach_uploads_ids)) {
+            // なにもしない
+            return $mail_options;
+        }
+
+        $attach_uploads = Uploads::whereIn('id', $attach_uploads_ids)->get();
+
+        foreach ($attach_uploads as $attach_upload) {
+            // 添付ファイルパスの取得
+            $directory = $this->getDirectory($attach_upload->id);
+            $mail_options['attachs'][] = [
+                'file_path' => storage_path('app/' . $directory . '/' . $attach_upload->id . '.' .$attach_upload->extension),
+                'file_name' => $attach_upload->client_original_name,
+                'mime' => $attach_upload->mimetype,
+            ];
+        }
+
+        return $mail_options;
     }
 
     /**
@@ -1060,6 +1125,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // }
         // dd($forms_input_cols->count());
 
+        // 添付ファイルID
+        $attach_uploads_ids = [];
+
         foreach ($forms_columns as $forms_column) {
             if ($forms_column->column_type == \FormColumnType::group) {
                 continue;
@@ -1072,8 +1140,19 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $value = $forms_input_cols[$forms_column->id]->value;
             }
 
-            // メールの内容
-            $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            // ファイルタイプがファイル系 で 値がある事
+            if (FormsColumns::isFileColumnType($forms_column->column_type) && $value) {
+                $attach_uploads_ids[] = $value;
+
+                // データ登録フラグOFFでも、一時的にファイルは持っているため、検索可能
+                $upload = Uploads::where('id', $value)->first();
+
+                // メールの内容(ファイル系は、ファイル名を載せる)
+                $contents_text .= $forms_column->column_name . "：" . $upload->client_original_name . "\n";
+            } else {
+                // メールの内容
+                $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            }
 
             // メール型
             if ($forms_column->column_type == \FormColumnType::mail) {
@@ -1116,11 +1195,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // メール本文内のフォーム名文字列を置換
             $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
+            // メールオプション
+            $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+            // メールオプションに添付ファイルをセットする
+            $mail_options = $this->setMailOptionsAttach($attach_uploads_ids, $form->mail_attach_flag, $mail_options);
+
             // メール送信（管理者側）
             if ($form->mail_send_flag) {
                 $mail_addresses = explode(',', $form->mail_send_address);
                 foreach ($mail_addresses as $mail_address) {
-                    Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                 }
             }
 
@@ -1128,7 +1212,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($form->user_mail_send_flag) {
                 foreach ($user_mailaddresses as $user_mailaddress) {
                     if (!empty($user_mailaddress)) {
-                        Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                        Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                     }
                 }
             }
@@ -1406,9 +1490,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->regist_control_flag = empty($request->regist_control_flag) ? 0 : $request->regist_control_flag;
         $forms->regist_from         = empty($request->regist_from) ? null : new \Carbon($request->regist_from);
         $forms->regist_to           = empty($request->regist_to) ? null : new \Carbon($request->regist_to);
-        $forms->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
+        $forms->mail_send_flag      = empty($request->mail_send_flag) ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
-        $forms->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;
+        $forms->user_mail_send_flag = empty($request->user_mail_send_flag) ? 0 : $request->user_mail_send_flag;
+        $forms->mail_attach_flag    = empty($request->mail_attach_flag) ? 0 : $request->mail_attach_flag;
         $forms->use_temporary_regist_mail_flag = (empty($request->use_temporary_regist_mail_flag)) ? 0 : $request->use_temporary_regist_mail_flag;
         $forms->temporary_regist_mail_subject = $request->temporary_regist_mail_subject;
         $forms->temporary_regist_mail_format = $request->temporary_regist_mail_format;
@@ -1416,10 +1501,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->from_mail_name      = $request->from_mail_name;
         $forms->mail_subject        = $request->mail_subject;
         $forms->mail_format         = $request->mail_format;
-        $forms->data_save_flag      = (empty($request->data_save_flag))      ? 0 : $request->data_save_flag;
+        $forms->data_save_flag      = empty($request->data_save_flag) ? 0 : $request->data_save_flag;
         $forms->after_message       = $request->after_message;
-        $forms->numbering_use_flag  = (empty($request->numbering_use_flag))      ? 0 : $request->numbering_use_flag;
-        $forms->numbering_prefix   = $request->numbering_prefix;
+        $forms->numbering_use_flag  = empty($request->numbering_use_flag) ? 0 : $request->numbering_use_flag;
+        $forms->numbering_prefix    = $request->numbering_prefix;
 
         // データ保存
         $forms->save();

@@ -278,6 +278,28 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                <label>メールの添付ファイル制御</label><br>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="mail_attach_flag_1" name="mail_attach_flag" class="custom-control-input" @if(old('mail_attach_flag', $form->mail_attach_flag) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="mail_attach_flag_1">メールにファイルを添付する</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="0" id="mail_attach_flag_0" name="mail_attach_flag" class="custom-control-input" @if(old('mail_attach_flag', $form->mail_attach_flag) == 0) checked="checked" @endif>
+                    <label class="custom-control-label" for="mail_attach_flag_0">メールにファイルを添付しない</label>
+                </div>
+                <div>
+                    <small class="text-muted">
+                        ※ フォームにファイル型の項目があれば、メールにファイルを添付できます。<br>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} pt-0">仮登録メール</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-checkbox">
