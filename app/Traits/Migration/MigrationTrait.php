@@ -2052,8 +2052,8 @@ trait MigrationTrait
                         // エラーの内容は再度、チェックすること。
                         if (array_key_exists($databases_columns_id_idx, $column_ids)) {
                             // 項目の型により変換するもの
-                            if ($create_columns[$databases_columns_id_idx]->column_type == 'textarea') {
-                                // 複数行テキスト
+                            if ($create_columns[$databases_columns_id_idx]->column_type == 'text' || $create_columns[$databases_columns_id_idx]->column_type == 'textarea') {
+                                // テキスト or 複数行テキスト
                                 $database_tsv_col = str_replace('<br />', "\n", $database_tsv_col);
                             } elseif ($create_columns[$databases_columns_id_idx]->column_type == 'wysiwyg') {
                                 // WYSIWYG
