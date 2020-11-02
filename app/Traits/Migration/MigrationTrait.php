@@ -821,6 +821,9 @@ trait MigrationTrait
         foreach ($contents as $content) {
             // a タグの href 抜き出し
             $hrefs = $this->getContentAnchor($content->content_text);
+            if ($hrefs === false) {
+                continue;
+            }
             foreach ($hrefs as $href) {
                 // 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
                 if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
