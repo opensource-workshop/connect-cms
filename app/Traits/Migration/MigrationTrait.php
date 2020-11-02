@@ -1764,8 +1764,8 @@ trait MigrationTrait
                 foreach ($linklist_tsv_lines as $linklist_tsv_line) {
                     // タブで項目に分割
                     $linklist_tsv_cols = explode("\t", $linklist_tsv_line);
-                    $linklist_tsv_cols[3] = isset($linklist_tsv_cols[3]) ? $linklist_tsv_cols[3] : 0;
-                    $linklist_tsv_cols[4] = isset($linklist_tsv_cols[4]) ? $linklist_tsv_cols[4] : 0;
+                    $linklist_tsv_cols[3] = isset($linklist_tsv_cols[3]) ? $linklist_tsv_cols[3] : '0';
+                    $linklist_tsv_cols[4] = isset($linklist_tsv_cols[4]) ? $linklist_tsv_cols[4] : '0';
                     // リンクリストテーブル追加
                     $linklists_posts = LinklistPost::create(['linklist_id' => $linklist->id, 'title' => $linklist_tsv_cols[0], 'url' => $linklist_tsv_cols[1], 'description' => $linklist_tsv_cols[2], 'target_blank_flag' => $linklist_tsv_cols[3], 'display_sequence' => $linklist_tsv_cols[4]]);
 
@@ -5113,9 +5113,9 @@ trait MigrationTrait
                 if (!empty($linklists_tsv)) {
                     $linklists_tsv .= "\n";
                 }
-                $linklists_tsv .= $nc2_linklist_post->title              . "\t";
-                $linklists_tsv .= $nc2_linklist_post->url                . "\t";
-                $linklists_tsv .= $nc2_linklist_post->description        . "\t";
+                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->title)              . "\t";
+                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->url)                . "\t";
+                $linklists_tsv .= str_replace("\t", " ", $nc2_linklist_post->description)        . "\t";
                 $linklists_tsv .= $nc2_linklist_block->target_blank_flag . "\t";
                 $linklists_tsv .= $nc2_linklist_post->link_sequence;
 
