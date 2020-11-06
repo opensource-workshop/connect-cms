@@ -4,7 +4,7 @@ namespace App\Traits;
 
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 
 use Session;
@@ -328,7 +328,8 @@ trait ConnectCommonTrait
         // ユーザーオブジェクトにロールデータを付与
         $users_roles = new UsersRoles();
         $user->user_roles = $users_roles->getUsersRoles($user->id);
-        //Log::debug("ユーザー：\n" . $user);
+        // Log::debug($user);
+        // Log::debug($user->user_roles);
 
         // ログイン可否の個別設定を取得
         $configs_login_permits = ConfigsLoginPermits::orderBy('apply_sequence', 'asc')->get();
