@@ -104,7 +104,7 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 国会図書館API
-        $request_url = 'http://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
+        $request_url = 'https://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
 
         // $context = stream_context_create(array(
         //     'http' => array('ignore_errors' => true, 'timeout' => 10)
