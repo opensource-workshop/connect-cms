@@ -2,8 +2,7 @@
 
 namespace App\Plugins\Manage\PageManage;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -170,6 +169,7 @@ class PageManage extends ManagePluginBase
         $page->ip_address           = $request->ip_address;
         $page->othersite_url        = $request->othersite_url;
         $page->othersite_url_target = (isset($request->othersite_url_target) ? $request->othersite_url_target : 0);
+        $page->transfer_lower_page_flag = $request->transfer_lower_page_flag ?? 0;
         $page->class                = $request->class;
         $page->save();
 
@@ -203,6 +203,7 @@ class PageManage extends ManagePluginBase
                 'ip_address'           => $request->ip_address,
                 'othersite_url'        => $request->othersite_url,
                 'othersite_url_target' => (isset($request->othersite_url_target) ? $request->othersite_url_target : 0),
+                'transfer_lower_page_flag' => $request->transfer_lower_page_flag ?? 0,
                 'class'                => $request->class,
         ]);
 

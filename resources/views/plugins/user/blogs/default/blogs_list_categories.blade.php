@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Blogプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -71,16 +71,19 @@
         @foreach($general_categories as $category)
             <tr>
                 <td nowrap>
-                    <input type="hidden" value="{{$category->id}}" name="general_categories_id[{{$category->id}}]">
-                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="general_blogs_categories_id[{{$category->id}}]">
+                    <input type="hidden" value="{{$category->categories_id}}" name="general_categories_id[{{$category->categories_id}}]">
+                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="general_blogs_categories_id[{{$category->categories_id}}]">
 
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="general_view_flag[{{$category->id}}]" class="custom-control-input" id="general_view_flag[{{$category->id}}]"@if ($category->view_flag == 1) checked="checked"@endif>
-                        <label class="custom-control-label" for="general_view_flag[{{$category->id}}]"></label>
+                        {{-- チェック外した場合にも値を飛ばす対応 --}}
+                        <input type="hidden" value="0" name="general_view_flag[{{$category->categories_id}}]">
+
+                        <input type="checkbox" value="1" name="general_view_flag[{{$category->categories_id}}]" class="custom-control-input" id="general_view_flag[{{$category->categories_id}}]"@if (old('general_view_flag.'.$category->categories_id, $category->view_flag) == 1) checked="checked"@endif>
+                        <label class="custom-control-label" for="general_view_flag[{{$category->categories_id}}]"></label>
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('general_display_sequence.'.$category->categories_id, $category->blogs_categories_display_sequence)}}" name="general_display_sequence[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('general_display_sequence.'.$category->categories_id)) border-danger @endif">
                 </td>
                 <td nowrap>{{$category->classname}}</td>
                 <td nowrap>{{$category->category}}</td>
@@ -104,35 +107,39 @@
         @foreach($plugin_categories as $category)
             <tr>
                 <td nowrap>
-                    <input type="hidden" value="{{$category->id}}" name="plugin_categories_id[{{$category->id}}]">
-                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="plugin_blogs_categories_id[{{$category->id}}]">
+                    <input type="hidden" value="{{$category->categories_id}}" name="plugin_categories_id[{{$category->categories_id}}]">
+                    <input type="hidden" value="{{$category->blogs_categories_id}}" name="plugin_blogs_categories_id[{{$category->categories_id}}]">
 
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="plugin_view_flag[{{$category->id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->id}}]"@if ($category->view_flag) checked="checked"@endif>
-                        <label class="custom-control-label" for="plugin_view_flag[{{$category->id}}]"></label>
+                        {{-- チェック外した場合にも値を飛ばす対応 --}}
+                        <input type="hidden" value="0" name="plugin_view_flag[{{$category->categories_id}}]">
+
+                        <input type="checkbox" value="1" name="plugin_view_flag[{{$category->categories_id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->categories_id}}]"@if (old('plugin_view_flag.'.$category->categories_id, $category->view_flag)) checked="checked"@endif>
+                        <label class="custom-control-label" for="plugin_view_flag[{{$category->categories_id}}]"></label>
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_display_sequence.'.$category->categories_id, $category->blogs_categories_display_sequence)}}" name="plugin_display_sequence[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('plugin_display_sequence.'.$category->categories_id)) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_display_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_classname.'.$category->categories_id, $category->classname)}}" name="plugin_classname[{{$category->categories_id}}]" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_category.'.$category->id, $category->category)}}" name="plugin_category[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_category.'.$category->categories_id, $category->category)}}" name="plugin_category[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('plugin_category.'.$category->categories_id)) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_color.'.$category->id, $category->color)}}" name="plugin_color[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_color.'.$category->categories_id, $category->color)}}" name="plugin_color[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('plugin_color.'.$category->categories_id)) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_background_color.'.$category->id, $category->background_color)}}" name="plugin_background_color[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_background_color.'.$category->categories_id, $category->background_color)}}" name="plugin_background_color[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('plugin_background_color.'.$category->categories_id)) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <a href="javascript:form_delete('{{$category->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
+                    <a href="javascript:form_delete('{{$category->categories_id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
                 </td>
             </tr>
         @endforeach
         @endif
+
         @if ($create_flag)
             <tr>
                 <td nowrap>
@@ -163,24 +170,27 @@
             <tr>
                 <td nowrap>
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
+                        {{-- チェック外した場合にも値を飛ばす対応 --}}
+                        <input type="hidden" value="0" name="add_view_flag">
+
+                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag"@if (old('add_view_flag')) checked="checked"@endif>
                         <label class="custom-control-label" for="add_view_flag"></label>
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_display_sequence', '')}}" name="add_display_sequence" class="form-control">
+                    <input type="text" value="{{old('add_display_sequence')}}" name="add_display_sequence" class="form-control @if ($errors && $errors->has('add_display_sequence')) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_classname', '')}}" name="add_classname" class="form-control">
+                    <input type="text" value="{{old('add_classname')}}" name="add_classname" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_category', '')}}" name="add_category" class="form-control">
+                    <input type="text" value="{{old('add_category')}}" name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control">
+                    <input type="text" value="{{old('add_color')}}" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_background_color', '')}}" name="add_background_color" class="form-control">
+                    <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif">
                 </td>
                 <td nowrap>
                 </td>

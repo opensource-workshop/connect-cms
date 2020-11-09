@@ -9,14 +9,14 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-@if ($ancestors)
-    <nav>
+@if ($ancestors_breadcrumbs)
+    <nav aria-label="パンくずリスト">
         <ol class="breadcrumb">
-        @foreach($ancestors as $ancestor)
+        @foreach($ancestors_breadcrumbs as $ancestor)
             {{-- パンくずはdisplay_flag を継承した値を持っていないので、ページの表示フラグを参照 --}}
             @if ($ancestor->base_display_flag == 1)
                 @if ($loop->last)
-                    <li class="breadcrumb-item {{$ancestor->getClass()}}">{{$ancestor->page_name}}</li>
+                    <li class="breadcrumb-item {{$ancestor->getClass()}} active" aria-current="page">{{$ancestor->page_name}}</li>
                 @else
                     <li class="breadcrumb-item {{$ancestor->getClass()}}"><a href="{{$ancestor->getUrl()}}" {!!$ancestor->getUrlTargetTag()!!}>{{$ancestor->page_name}}</a></li>
                 @endif

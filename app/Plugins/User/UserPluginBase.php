@@ -677,7 +677,7 @@ class UserPluginBase extends PluginBase
         $configs = Configs::where('category', 'log')->get();
 
         // ログファイル名
-        $log_filename = 'Laravel';
+        $log_filename = 'laravel';
 
         $config_log_filename_choice_obj = $configs->where('name', 'log_filename_choice')->first();
 

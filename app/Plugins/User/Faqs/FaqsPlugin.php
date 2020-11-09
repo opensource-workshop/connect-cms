@@ -54,6 +54,20 @@ class FaqsPlugin extends UserPluginBase
     }
 
     /**
+     * 追加の権限定義（コアから呼び出す）
+     */
+    public function declareRole()
+    {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
+        // 権限チェックテーブル
+        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
+        $role_ckeck_table = array();
+        return $role_ckeck_table;
+    }
+
+    /**
      *  編集画面の最初のタブ（コアから呼び出す）
      *
      *  スーパークラスをオーバーライド
@@ -641,9 +655,9 @@ class FaqsPlugin extends UserPluginBase
         return $this->index($request, $page_id, $frame_id);
     }
 
-   /**
-    * データ一時保存関数
-    */
+    /**
+     * データ一時保存関数
+     */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 項目のエラーチェック
@@ -662,7 +676,7 @@ class FaqsPlugin extends UserPluginBase
             $faqs_post->created_id  = Auth::user()->id;
         } else {
             $faqs_post = FaqsPosts::find($id)->replicate();
- 
+
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
             $check_faqs_post = $this->getPost($id);
 
@@ -676,6 +690,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs_post->status = 1;
         $faqs_post->faqs_id          = $request->faqs_id;
         $faqs_post->post_title       = $request->post_title;
+        $faqs_post->categories_id    = $request->categories_id;
         $faqs_post->important        = $request->important;
         $faqs_post->posted_at        = $request->posted_at . ':00';
         $faqs_post->post_text        = $request->post_text;

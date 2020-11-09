@@ -28,6 +28,6 @@
     </td>
     {{-- 更新ボタン --}}
     <td class="text-center">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_update_facility({{ $facility->id }});"><i class="fas fa-save"></i> <span class="d-sm-none">更新</span></button>
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="submit_update_facility({{ $facility->id }});"><i class="fas fa-check"></i> <span class="d-sm-none">更新</span></button>
     </td>
 </tr>

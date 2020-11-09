@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category リンクリスト・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -13,6 +13,10 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('common.errors_form_line')
+
 @if (empty($linklist->id) && $action != 'createBuckets')
     <div class="alert alert-warning">
         <i class="fas fa-exclamation-circle"></i>

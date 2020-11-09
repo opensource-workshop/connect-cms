@@ -11,7 +11,7 @@
 @if ($whatsnews)
 <p class="text-left">
     @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
-    <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
+    <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
     @endif
 </p>
 

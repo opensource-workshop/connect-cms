@@ -10,7 +10,7 @@
 
 @section("plugin_contents_$frame->id")
 {{-- 新規登録 --}}
-@can('posts.create',[[null, 'blogs', $buckets]])
+@can('posts.create',[[null, $frame->plugin_name, $buckets]])
     @if (isset($buckets) && isset($frame) && $frame->bucket_id)
         <div class="row">
             <p class="text-left col-6">
@@ -34,13 +34,67 @@
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
+
+    @if (isset($is_template_titleindex))
+    {{-- titleindexテンプレート --}}
+    <div class="titleindex">
+    @elseif (isset($is_template_sidetitleindex))
+    {{-- sidetitleindexテンプレート --}}
+    <div class="sidetitleindex">
+    @endif
+
     @foreach($blogs_posts as $post)
 
-        {{-- タイトル --}}
-        <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+        @if ($loop->last)
+        <article>
+        @else
+        <article class="cc_article">
+        @endif
 
-        {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        @if (isset($is_template_datafirst))
+            {{-- datafirstテンプレート --}}
+            <header>
+                {{-- 投稿日時 --}}
+                <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+                {{-- タイトル --}}
+                <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+            </header>
+
+        @elseif (isset($is_template_titleindex))
+            {{-- titleindexテンプレート --}}
+            <header>
+                {{-- 投稿日時 --}}
+                <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+
+                {{-- タイトル --}}
+                <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+            </header>
+
+        @elseif (isset($is_template_sidetitleindex))
+            {{-- sidetitleindexテンプレート --}}
+            @if ($loop->index == 3)
+                @break
+            @endif
+
+            <header>
+                {{-- 投稿日時 --}}
+                <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+
+                {{-- タイトル --}}
+                <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+            </header>
+
+        @else
+            {{-- defaultテンプレート --}}
+            <header>
+                {{-- タイトル --}}
+                <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
+
+                {{-- 投稿日時 --}}
+                <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+            </header>
+        @endif
 
         {{-- カテゴリ --}}
         @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
@@ -49,38 +103,42 @@
             <span class="badge badge-pill badge-danger">重要記事に設定</span>
         @endif
 
-        @if ($loop->last)
-        <article>
-        @else
-        <article class="cc_article">
-        @endif
-            <div class="clearfix">
+            {{-- titleindexテンプレート・sidetitleindexテンプレートは本文表示しない --}}
+            @if (isset($is_template_titleindex) || isset($is_template_sidetitleindex))
+            @else
+                <div class="clearfix">
 
-                {{-- 記事本文 --}}
-                {!! $post->post_text !!}
+                    {{-- 記事本文 --}}
+                    {!! $post->post_text !!}
 
-                {{-- 続きを読む --}}
-                @if ($post->post_text2)
-                    {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
-                    <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post->tags) class="mb-2" @endisset>
-                        <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-down"></i> 続きを読む</button>
-                    </div>
-                    <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post->tags) class="mb-2" @endisset>
-                        {!! $post->post_text2 !!}
-                        <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-up"></i> 閉じる</button>
-                    </div>
-                @endif
+                    {{-- 続きを読む --}}
+                    @if ($post->read_more_flag)
+                        {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
+                        <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post->tags) class="mb-2" @endisset>
+                            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();">
+                                <i class="fas fa-angle-down"></i> {{$post->read_more_button}}
+                            </button>
+                        </div>
+                        <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post->tags) class="mb-2" @endisset>
+                            {!! $post->post_text2 !!}
+                            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();">
+                                <i class="fas fa-angle-up"></i> {{$post->close_more_button}}
+                            </button>
+                        </div>
+                    @endif
 
-                {{-- タグ --}}
-                @isset($post->tags)
-                    @foreach($post->tags as $tag)
-                        <span class="badge badge-secondary">{{$tag}}</span>
-                    @endforeach
-                @endisset
+                    {{-- タグ --}}
+                    @isset($post->tags)
+                        @foreach($post->tags as $tag)
+                            <span class="badge badge-secondary">{{$tag}}</span>
+                        @endforeach
+                    @endisset
 
-            </div>
+                </div>
+            @endif
+
             {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-            <div class="row">
+            <footer class="row">
                 <div class="col-12 text-right mb-1">
                 @if ($post->status == 2)
                     @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
@@ -104,13 +162,26 @@
                     </a>
                 @endcan
                 </div>
-            </div>
+            </footer>
         </article>
     @endforeach
 
-    {{-- ページング処理 --}}
-    <div class="text-center">
-        {{ $blogs_posts->links() }}
+    {{-- sidetitleindexテンプレートはページング表示しない --}}
+    @if (isset($is_template_sidetitleindex))
+    @else
+        {{-- ページング処理 --}}
+        {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+        @if ($blogs_posts->lastPage() > 1)
+            <nav class="text-center" aria-label="{{$blog_frame->blog_name}}のページ付け">
+                {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
+            </nav>
+        @endif
+    @endif
+
+    {{-- titleindexテンプレート・sidetitleindexテンプレート --}}
+    @if (isset($is_template_titleindex) || isset($is_template_sidetitleindex))
     </div>
+    @endif
+
 @endif
 @endsection

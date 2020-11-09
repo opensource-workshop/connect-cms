@@ -4,13 +4,13 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
 {{-- 新規登録 --}}
-@can('posts.create',[[null, 'blogs', $buckets]])
-    @if (isset($frame) && $frame->bucket_id)
+@can('posts.create',[[null, $frame->plugin_name, $buckets]])
+    @if (isset($buckets) && isset($frame) && $frame->bucket_id)
         <div class="row">
             <p class="text-left col-6">
                 @if (isset($blog_frame->rss) && $blog_frame->rss == 1)
@@ -53,9 +53,13 @@
     @endforeach
 
     {{-- ページング処理 --}}
-    <div class="text-center">
-        {{ $blogs_posts->links() }}
-    </div>
-    </div>
+    {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+    @if ($blogs_posts->lastPage() > 1)
+        <nav class="text-center" aria-label="{{$blog_frame->blog_name}}のページ付け">
+            {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
+        </nav>
+    @endif
+
+</div>
 @endif
 @endsection

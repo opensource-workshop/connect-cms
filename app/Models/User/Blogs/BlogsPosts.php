@@ -15,6 +15,10 @@ class BlogsPosts extends Model
     // 保存時のユーザー関連データの保持
     use Userable;
 
+    // 定数メンバ
+    const read_more_button_default = '続きを読む';
+    const close_more_button_default = '閉じる';
+
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = ['posted_at'];
 

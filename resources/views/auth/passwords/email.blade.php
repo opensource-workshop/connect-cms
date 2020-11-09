@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<main class="container" role="main">
     <div class="row mt-3">
         <div class="col-8 mx-auto">
             <div class="card">
@@ -17,7 +17,7 @@
                     <form class="form-horizontal" method="POST" action="{{ route('password.email') }}">
                         {{ csrf_field() }}
 
-                         <div class="form-group row">
+                        <div class="form-group row">
                             <label for="userid" class="col-md-3 col-form-label text-md-right">eメール</label>
                             <div class="col-md-7">
                                 <input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}" required>
@@ -41,5 +41,5 @@
             </div>
         </div>
     </div>
-</div>
+</main>
 @endsection

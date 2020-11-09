@@ -6,9 +6,17 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
 --}}
+@php
+use App\Models\User\Blogs\BlogsPosts;
+@endphp
+
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('common.errors_form_line')
+
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
@@ -64,8 +72,9 @@
     <div class="form-group">
         <label class="control-label">重要記事</label>
         <div class="custom-control custom-checkbox">
-            <input type="checkbox" name="important" value="1" class="custom-control-input" id="important" @if(old('important', $blogs_posts->important)) checked=checked @endif>
-            <label class="custom-control-label" for="important">チェックすると、新着に表示し続けることができます。</label>
+            <input type="checkbox" name="important" value="1" class="custom-control-input" id="important{{$frame_id}}" @if(old('important', $blogs_posts->important)) checked=checked @endif>
+            <label class="custom-control-label" for="important{{$frame_id}}">チェックすると、新着に表示し続けることができます。</label>
+            <small class="form-text text-muted">※ プラグイン「新着情報」側の設定（重要記事の扱い）も必要です。</small>
         </div>
     </div>
 
@@ -75,8 +84,31 @@
         @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
     </div>
 
+
+    <div class="form-row">
+        <div class="form-group col-md">
+            <label class="control-label">続き</label>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="read_more_flag" value="1" class="custom-control-input" id="read_more_flag{{$frame_id}}" @if(old('read_more_flag', $blogs_posts->read_more_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="read_more_flag{{$frame_id}}">続きを表示する</label>
+            </div>
+        </div>
+
+        <div class="form-group col-md">
+            <label class="control-label">続きを読むボタン名</label>
+            <input type="text" name="read_more_button" value="{{old('read_more_button', $blogs_posts->read_more_button)}}" class="form-control">
+            <small class="form-text text-muted">空の場合「{{BlogsPosts::read_more_button_default}}」を表示します。</small>
+        </div>
+
+        <div class="form-group col-md">
+            <label class="control-label">続きを閉じるボタン名</label>
+            <input type="text" name="close_more_button" value="{{old('close_more_button', $blogs_posts->close_more_button)}}" class="form-control">
+            <small class="form-text text-muted">空の場合「{{BlogsPosts::close_more_button_default}}」を表示します。</small>
+        </div>
+    </div>
+
     <div class="form-group">
-        <label class="control-label">続き</label>
+        <label class="control-label">続き本文</label>
         <textarea name="post_text2">{!!old('post_text2', $blogs_posts->post_text2)!!}</textarea>
         @if ($errors && $errors->has('post_text2')) <div class="text-danger">{{$errors->first('post_text2')}}</div> @endif
     </div>
@@ -95,8 +127,8 @@
     <div class="form-group">
         <label class="control-label">タグ</label>
         <input type="text" name="tags" value="{{old('tags', $blogs_posts_tags)}}" class="form-control">
-        @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif
         <small class="form-text text-muted">カンマ区切りで複数指定可能</small>
+        @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif
     </div>
 
     <div class="form-group">

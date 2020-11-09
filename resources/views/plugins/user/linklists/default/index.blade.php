@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category リンクリストプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -53,12 +53,16 @@
     @elseif ($plugin_frame->type == 8)
     <ol type="I">
     @endif
+
     @foreach($posts as $post)
         @if (!$plugin_frame->type)
+        {{-- bugfix: dlタグ配下は、dt,ddがそれぞれ1つ以上ないとHTMLバリデーションエラーになるため、dtの空タグを追加 --}}
+        <dt></dt>
         <dd>
         @else
         <li>
         @endif
+
             @can('posts.update',[[null, 'linklists', $buckets]])
                 <a href="{{url('/')}}/plugin/linklists/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}"><i class="far fa-edit"></a></i>
             @endcan
@@ -71,18 +75,14 @@
                     <a href="{{$post->url}}">{{$post->title}}</a>
                 @endif
             @endif
-            @if (!empty($post->description))
-                <div class="alert alert-secondary bg-light mt-2" role="alert">
-                  {!!nl2br(e($post->description))!!}
-                </div>
-            @endif
+
         @if (!$plugin_frame->type)
         </dd>
         @else
         </li>
         @endif
     @endforeach
-    </ul>
+
     @if (!$plugin_frame->type)
     </dl>
     @elseif ($plugin_frame->type == 1 || $plugin_frame->type == 2 || $plugin_frame->type == 3)

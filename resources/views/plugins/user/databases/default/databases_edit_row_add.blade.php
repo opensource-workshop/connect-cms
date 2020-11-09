@@ -14,7 +14,7 @@
 
     {{-- 項目名 --}}
     <td class="p-1">
-        <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}">
+        <input class="form-control @if ($errors && $errors->has('column_name')) border-danger @endif" type="text" name="column_name" value="{{ old('column_name') }}">
     </td>
 
     {{-- 型 --}}
@@ -22,10 +22,8 @@
         <select class="form-control" name="column_type">
             <option value="" disabled>型を指定</option>
             @foreach (DatabaseColumnType::getMembers() as $key=>$value)
-                <option value="{{$key}}"
-                    {{-- validation用 --}}
-                    @if($key == old('column_type')) selected="selected" @endif
-                    >{{ $value }}
+                <option value="{{$key}}" @if($key == old('column_type')) selected="selected" @endif>
+                    {{ $value }}
                 </option>
             @endforeach
         </select>
@@ -33,7 +31,7 @@
 
     {{-- 必須 --}}
     <td class="align-middle text-center p-1">
-        <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
+        <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。" @if (old("required") == Required::on) checked="checked" @endif>
     </td>
 
     {{-- 余白 --}}

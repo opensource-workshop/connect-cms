@@ -30,6 +30,25 @@ class Uploads extends Model
     }
 
     /**
+     * IDからファイル名(拡張子なし)取得
+     */
+    public static function getFilenameNoExtensionById($id)
+    {
+        if (empty($id)) {
+            return '';
+        }
+
+        $uploads = Uploads::find(intval($id));
+        if (empty($uploads)) {
+            return '';
+        }
+
+        // 末尾の拡張子を除いたファイル名を取得
+        $newFileName = rtrim($uploads->client_original_name, '.'.$uploads->extension);
+        return $newFileName;
+    }
+
+    /**
      *  プラグイン名
      */
     public function getPluginNameFull()

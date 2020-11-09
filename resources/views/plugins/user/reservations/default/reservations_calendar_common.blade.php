@@ -68,7 +68,7 @@
                                 <input type="hidden" name="booking_id" value="">
                                 {{-- ＋ボタンクリックでformサブミット --}}
                                 <a href="javascript:form_edit_booking.submit()">
-                                    <button type="button" class="btn btn-primary">
+                                    <button type="button" class="btn btn-success">
                                         <i class="far fa-edit"></i> {{ __('messages.edit') }}
                                     </button>
                                 </a>
@@ -129,21 +129,39 @@
             </li>
         </ul>
 
-        <div>
+        @if (isset($is_template_designbase))
+            {{-- designbaseテンプレート --}}
+            <div class="orderCalendar">
+                @if ($view_format == ReservationCalendarDisplayType::month)
 
-            @if ($view_format == ReservationCalendarDisplayType::month)
+                    {{-- 月で表示 --}}
+                    @include('plugins.user.reservations.designbase.reservations_calendar_month')
 
-                {{-- 月で表示 --}}
-                @include('plugins.user.reservations.default.reservations_calendar_month')
+                @elseif ($view_format == ReservationCalendarDisplayType::week)
 
-            @elseif ($view_format == ReservationCalendarDisplayType::week)
+                    {{-- 週で表示 --}}
+                    @include('plugins.user.reservations.designbase.reservations_calendar_week')
 
-                {{-- 週で表示 --}}
-                @include('plugins.user.reservations.default.reservations_calendar_week')
+                @endif
+            </div>
 
-            @endif
-        </div>
-    
+        @else
+            {{-- defaultテンプレート --}}
+            <div>
+                @if ($view_format == ReservationCalendarDisplayType::month)
+
+                    {{-- 月で表示 --}}
+                    @include('plugins.user.reservations.default.reservations_calendar_month')
+
+                @elseif ($view_format == ReservationCalendarDisplayType::week)
+
+                    {{-- 週で表示 --}}
+                    @include('plugins.user.reservations.default.reservations_calendar_week')
+
+                @endif
+            </div>
+        @endif
+
     @else
         {{-- 未ログイン時は何も表示しない --}}
         @if (Auth::check())

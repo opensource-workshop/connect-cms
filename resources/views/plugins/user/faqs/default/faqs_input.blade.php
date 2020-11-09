@@ -4,10 +4,14 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('common.errors_form_line')
+
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
@@ -71,6 +75,7 @@
         <div class="custom-control custom-checkbox">
             <input type="checkbox" name="important" value="1" class="custom-control-input" id="important" @if(old('important', $faqs_posts->important)) checked=checked @endif>
             <label class="custom-control-label" for="important">チェックすると、新着に表示し続けることができます。</label>
+            <small class="form-text text-muted">※ プラグイン「新着情報」側の設定（重要記事の扱い）も必要です。</small>
         </div>
     </div>
 

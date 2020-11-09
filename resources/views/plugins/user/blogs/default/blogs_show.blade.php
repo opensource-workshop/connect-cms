@@ -9,11 +9,53 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-{{-- タイトル --}}
-<h2>{{$post->post_title}}</h2>
 
-{{-- 投稿日時 --}}
-<b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+<article>
+
+@if (isset($is_template_datafirst))
+    {{-- datafirstテンプレート --}}
+
+    <header>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+    </header>
+
+@elseif (isset($is_template_titleindex))
+    {{-- titleindexテンプレート --}}
+
+    <header>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+    </header>
+
+@elseif (isset($is_template_sidetitleindex))
+    {{-- sidetitleindexテンプレート --}}
+
+    <header>
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+    </header>
+
+@else
+    {{-- defaultテンプレート --}}
+
+    <header>
+        {{-- タイトル --}}
+        <h2>{{$post->post_title}}</h2>
+
+        {{-- 投稿日時 --}}
+        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+    </header>
+@endif
 
 {{-- カテゴリ --}}
 @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
@@ -22,20 +64,22 @@
     <span class="badge badge-pill badge-danger">重要記事に設定</span>
 @endif
 
-<article>
-
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
 
     {{-- 続きを読む --}}
-    @if ($post->post_text2)
+    @if ($post->read_more_flag)
         {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
         <div id="post_text2_button_{{$frame->id}}_{{$post->id}}" @isset($post_tags) class="mb-2" @endisset>
-            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-down"></i> 続きを読む</button>
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_button_{{$frame->id}}_{{$post->id}}').hide();">
+                <i class="fas fa-angle-down"></i> {{$post->read_more_button}}
+            </button>
         </div>
         <div id="post_text2_{{$frame->id}}_{{$post->id}}" style="display: none;" @isset($post_tags) class="mb-2" @endisset>
             {!! $post->post_text2 !!}
-            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();"><i class="fas fa-angle-up"></i> 閉じる</button>
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#post_text2_button_{{$frame->id}}_{{$post->id}}').show(); $('#post_text2_{{$frame->id}}_{{$post->id}}').hide();">
+                <i class="fas fa-angle-up"></i> {{$post->close_more_button}}
+            </button>
         </div>
     @endif
 
@@ -47,7 +91,7 @@
     @endisset
 
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
-    <div class="row">
+    <footer class="row">
         <div class="col-12 text-right mb-1">
         @if ($post->status == 2)
             @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
@@ -71,11 +115,11 @@
             </a>
         @endcan
         </div>
-    </div>
+    </footer>
 </article>
 
 {{-- 一覧へ戻る --}}
-<div class="row">
+<nav class="row" aria-label="{{$blog_frame->blog_name}}のページ移動">
     <div class="col-12 text-center mt-3">
         @if (isset($before_post))
         <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
@@ -91,5 +135,5 @@
         </a>
         @endif
     </div>
-</div>
+</nav>
 @endsection

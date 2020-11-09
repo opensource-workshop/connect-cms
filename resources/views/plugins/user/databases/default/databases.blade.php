@@ -24,11 +24,18 @@
                     <div class="row border-left border-right border-bottom @if($loop->first) border-top @endif">
                     {{-- 列グループ ループ --}}
                     @foreach($group_row_cols_columns as $group_col_columns)
-                        {{-- 最初の繰り返し & left-col-3を使う（default-left-col-3テンプレートより指定） --}}
-                        @if ($loop->first && isset($use_left_col_3))
-                        <div class="col-sm-3">
+
+                        @if (isset($is_template_default_left_col_3))
+                            {{-- default-left-col-3テンプレート --}}
+                            @if ($loop->first)
+                                <div class="col-sm-3">
+                            @else
+                                <div class="col-sm">
+                            @endif
+
                         @else
-                        <div class="col-sm">
+                            {{-- defaultテンプレート --}}
+                            <div class="col-sm">
                         @endif
 
                         {{-- カラム ループ --}}
@@ -78,7 +85,7 @@
                             </button>
                         @endcan
 
-                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" class="ml-2">
+                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" class="ml-2" @if ($input->title) title="{{$input->title}}の詳細" @endif>
                             <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
                         </a>
                     </div>
@@ -87,9 +94,13 @@
         @endforeach
 
         {{-- ページング処理 --}}
-        <div class="text-center mt-2">
-            {{ $inputs->fragment('frame-' . $frame_id)->links() }}
-        </div>
+        {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
+        @if ($inputs->lastPage() > 1)
+            <nav class="text-center mt-2" aria-label="{{$database_frame->databases_name}}のページ付け">
+                {{ $inputs->fragment('frame-' . $frame_id)->links() }}
+            </nav>
+        @endif
+
     @endif
 
 @else

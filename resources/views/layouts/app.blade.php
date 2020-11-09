@@ -131,7 +131,7 @@ if(isset($configs_array['body_optional_class'])){
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
 @if (Auth::check() || (isset($configs) && ($configs['base_header_hidden'] != '1')))
-<nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif">
+<nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
         @if(isset($configs))
@@ -142,15 +142,15 @@ if(isset($configs_array['body_optional_class'])){
     </a>
 
     <!-- SmartPhone Button -->
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="メニュー">
         <span class="navbar-toggler-icon"></span>
     </button>
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
+        <ul class="navbar-nav mr-auto d-md-none">
 
             @if(isset($page_list))
-            <div class="d-block d-md-none">
+
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
@@ -216,10 +216,10 @@ if(isset($configs_array['body_optional_class'])){
                         @endif
                     @endif
                 @endforeach
-                <div class="dropdown-divider"></div>
-            </div>
             @endif
         </ul>
+
+        <div class="dropdown-divider d-md-none"></div>
 
         <ul class="navbar-nav text-nowrap">
             {{-- 管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
@@ -272,10 +272,10 @@ if(isset($configs_array['body_optional_class'])){
 
             @guest
                 @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
-                    <a class="nav-link" href="{{ route('login') }}">ログイン</a>
+                    <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
                 @endif
                 @if (isset($configs) && ($configs['user_register_enable'] == '1'))
-                    <a class="nav-link" href="{{ route('register') }}">ユーザ登録</a>
+                    <li><a class="nav-link" href="{{ route('register') }}">ユーザ登録</a></li>
                 @endif
             @else
                 <li class="nav-item dropdown">
@@ -300,9 +300,7 @@ if(isset($configs_array['body_optional_class'])){
 </nav>
 @endif
 
-<main role="main">
-    @yield('content')
-</main>
+@yield('content')
 
 {{-- -------------------------------------------- --}}
 

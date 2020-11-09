@@ -4,14 +4,14 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
+--}}
     <tr id="column_add_tr">
     {{-- 余白 --}}
     <td>
     </td>
     {{-- 項目名 --}}
     <td>
-        <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}">
+        <input class="form-control @if ($errors && $errors->has('column_name')) border-danger @endif" type="text" name="column_name" value="{{ old('column_name') }}">
     </td>
     {{-- 型 --}}
     <td>
@@ -29,7 +29,7 @@
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
+        <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。" @if (old("required") == Required::on) checked="checked" @endif>
     </td>
     {{-- 余白 --}}
     <td>

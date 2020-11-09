@@ -114,7 +114,7 @@ class DatabasesPlugin extends UserPluginBase
         $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
         $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
         $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
-        $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
+        // $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
         $role_ckeck_table["editView"]             = array('frames.edit');
         $role_ckeck_table["saveView"]             = array('frames.edit');
         return $role_ckeck_table;
@@ -215,7 +215,7 @@ class DatabasesPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'databases.id as databases_id', 'databases_frames.id as databases_frames_id', 'use_search_flag', 'use_select_flag', 'use_sort_flag', 'view_count', 'default_hide', 'view_page_id', 'view_frame_id')
+                 ->select('frames.*', 'databases.id as databases_id', 'databases_frames.id as databases_frames_id', 'databases_name', 'use_search_flag', 'use_select_flag', 'use_sort_flag', 'view_count', 'default_hide', 'view_page_id', 'view_frame_id')
                  ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
                  ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
                  ->where('frames.id', $frame_id)
@@ -500,6 +500,31 @@ class DatabasesPlugin extends UserPluginBase
                 $get_count = $databases_frames->view_count;
             }
             $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
+
+            // 登録データ行のタイトル取得
+            $inputs_titles = DatabasesInputs::
+                    select(
+                        'databases_inputs.id',
+                        'databases_input_cols.value as title'
+                    )
+                    ->whereIn('databases_inputs.id', $inputs->pluck('id'))
+                    ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
+                        $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                                    ->where('databases_columns.title_flag', 1)
+                                    // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                                    ->whereNotIn('databases_columns.id', $hide_columns_ids);
+                    })
+                    ->leftJoin('databases_input_cols', function ($leftJoin) {
+                        $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                    ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+                    })
+                    ->get();
+
+            foreach ($inputs as &$input) {
+                $inputs_title = $inputs_titles->where('id', $input->id)->first();
+                $input->title = isset($inputs_title) ? $inputs_title->title : null;
+            }
+
             // <--- 登録データ行の取得
 
             // debug: sql dumpする
@@ -1045,7 +1070,7 @@ class DatabasesPlugin extends UserPluginBase
                         'mimetype'             => $request->file($req_filename)->getClientMimeType(),
                         'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
                         'size'                 => $request->file($req_filename)->getClientSize(),
-                        'plugin_name'          => 'databasess',
+                        'plugin_name'          => 'databases',
                         'page_id'              => $page_id,
                         'temporary_flag'       => 1,
                         'created_id'           => Auth::user()->id,
@@ -1897,25 +1922,18 @@ class DatabasesPlugin extends UserPluginBase
     public function updateColumn($request, $page_id, $frame_id)
     {
         // 明細行から更新対象を抽出する為のnameを取得
-        $str_column_name = "column_name_"."$request->column_id";
-        $str_column_type = "column_type_"."$request->column_id";
-        $str_required = "required_"."$request->column_id";
-
-        // エラーチェック用に値を詰める
-        $request->merge([
-            "column_name" => $request->$str_column_name,
-            "column_type" => $request->$str_column_type,
-            "required" => $request->$str_required,
-        ]);
+        $str_column_name = "column_name_".$request->column_id;
+        $str_column_type = "column_type_".$request->column_id;
+        $str_required = "required_".$request->column_id;
 
         $validate_value = [
-            'column_name'  => ['required'],
-            'column_type'  => ['required'],
+            'column_name_'.$request->column_id => ['required'],
+            'column_type_'.$request->column_id => ['required'],
         ];
 
         $validate_attribute = [
-            'column_name'  => '項目名',
-            'column_type'  => '型',
+            'column_name_'.$request->column_id => '項目名',
+            'column_type_'.$request->column_id => '型',
         ];
 
         // エラーチェック
@@ -1931,9 +1949,9 @@ class DatabasesPlugin extends UserPluginBase
 
         // 項目の更新処理
         $column = DatabasesColumns::query()->where('id', $request->column_id)->first();
-        $column->column_name = $request->column_name;
-        $column->column_type = $request->column_type;
-        $column->required = $request->required ? \Required::on : \Required::off;
+        $column->column_name = $request->$str_column_name;
+        $column->column_type = $request->$str_column_type;
+        $column->required = $request->$str_required ? \Required::on : \Required::off;
 
         // 複数年月型（テキスト入力）は、キャプションが空なら定型文をセットする
         if (\DatabaseColumnType::dates_ym == $request->column_type &&
@@ -1942,7 +1960,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         $column->save();
-        $message = '項目【 '. $request->column_name .' 】を更新しました。';
+        $message = '項目【 '. $request->$str_column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, $errors);
@@ -2695,7 +2713,7 @@ class DatabasesPlugin extends UserPluginBase
                     'mimetype'             => $filesystem->mimeType($unzip_uploads_full_path),
                     'extension'            => $filesystem->extension($unzip_uploads_full_path),
                     'size'                 => $filesystem->size($unzip_uploads_full_path),
-                    'plugin_name'          => 'databasess',
+                    'plugin_name'          => 'databases',
                     'page_id'              => $page_id,
                     'temporary_flag'       => 1,
                     'created_id'           => Auth::user()->id,

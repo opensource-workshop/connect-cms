@@ -20,24 +20,26 @@
     </div>
 @endcan
 
-<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+{{-- アクセシビリティ対応。検索OFF & 絞り込み項目なし & ソートOFFの時、検索の空フォームを作らないようにする。 --}}
+@if(($database_frame && $database_frame->use_search_flag == 1) || (($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag()))
+
+<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}">
     {{ csrf_field() }}
 
     {{-- 検索 --}}
     @if($database_frame && $database_frame->use_search_flag == 1)
     <div class="input-group mb-3">
-        <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="検索はキーワードを入力してください。">
+        <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="検索はキーワードを入力してください。" title="検索キーワード">
         <div class="input-group-append">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-search" aria-label="検索" role="presentation"></i>
+            <button type="submit" class="btn btn-primary" title="検索">
+                <i class="fas fa-search" role="presentation"></i>
             </button>
         </div>
     </div>
     @endif
 
-    @if($select_columns || $databases_frames->isBasicUseSortFlag())
-        <div class="form-group row mb-3">
-
+    @if(($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
+        <div class="form-group form-row mb-3">
         {{-- 絞り込み --}}
         @foreach($select_columns as $select_column)
             @php
@@ -51,12 +53,13 @@
                 @else
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
                 @endif
-                <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);">
+                <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}">
                     <option value="">{{$select_column->column_name}}</option>
                     @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
                         <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>
                     @endforeach
                 </select>
+                <small class="form-text text-muted" id="search_column{{$loop->index}}_{{$frame_id}}">選択すると自動的に絞り込みします。</small>
             </div>
         @endforeach
 
@@ -82,7 +85,7 @@
             @endphp
 
             <div class="col-sm">
-                <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);">
+                <select class="form-control" name="sort_column" onChange="javascript:submit(this.form);" aria-describedby="sort_column{{$frame_id}}">
 
                     {{-- 基本部分 --}}
                     <option value="">並べ替え</option>
@@ -110,8 +113,11 @@
                     </optgroup>
                     @endif
                 </select>
+                <small class="form-text text-muted" id="sort_column{{$frame_id}}">選択すると自動的に並び順を変更します。</small>
             </div>
         @endif
         </div>
     @endif
 </form>
+
+@endif

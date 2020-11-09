@@ -25,10 +25,23 @@
     {{ csrf_field() }}
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">
+
         {{-- ラベル --}}
-        <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+        @if (isset($is_template_label_sm_4))
+            {{-- label-sm-4テンプレート --}}
+            <label class="col-sm-4 control-label text-nowrap">{{$form_column->column_name}}</label>
+
+        @elseif (isset($is_template_label_sm_6))
+            {{-- label-sm-6テンプレート --}}
+            <label class="col-sm-6 control-label text-nowrap">{{$form_column->column_name}}</label>
+
+        @else
+            {{-- defaultテンプレート --}}
+            <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+        @endif
+
         {{-- 項目 --}}
-        <div class="col-sm-10">
+        <div class="col-sm">
 
         @switch($form_column->column_type)
 
@@ -87,6 +100,20 @@
         @case(FormColumnType::time_from_to)
             {{$request->forms_columns_value[$form_column->id]}}
             <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
+            @break
+        @case(FormColumnType::file)
+            @php
+                // value 値の取得
+                if ($uploads && $uploads->where('columns_id', $form_column->id)) {
+                    $value_obj = $uploads->where('columns_id', $form_column->id)->first();
+                }
+            @endphp
+            @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
+                <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
+                <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
+            @else
+                <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="">
+            @endif
             @break
         @endswitch
         </div>

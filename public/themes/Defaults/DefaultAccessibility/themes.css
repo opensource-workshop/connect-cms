@@ -3868,11 +3868,14 @@ input[type="button"].btn-block {
     color: #fff;
     background-color: #006DFF;
     border-color: #006DFF; }
+/* delete by opensource-workshop.jp, 左メニューの枠線が消えるため、コメントアウト */
+/*
   .list-group-item + .list-group-item {
     border-top-width: 0; }
     .list-group-item + .list-group-item.active {
       margin-top: -1px;
       border-top-width: 1px; }
+*/
 
 .list-group-horizontal {
   flex-direction: row; }

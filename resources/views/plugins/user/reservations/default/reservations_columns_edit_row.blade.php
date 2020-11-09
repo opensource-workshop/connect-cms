@@ -70,7 +70,7 @@
             class="btn btn-primary cc-font-90 text-nowrap" 
             onclick="javascript:submit_update_column({{ $column->id }});"
         >
-            <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
+            <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
         </button>
     </td>
 </tr>
@@ -79,7 +79,7 @@
 <tr>
     <td class="pt-0 border border-0"></td>
     <td class="pt-0 border border-0" colspan="7">
-    
+
     @if ($column->select_count > 0)
         {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
         <i class="far fa-list-alt"></i> 
@@ -89,5 +89,5 @@
         <br>
     @endif
     </td>
-</tr>    
+</tr>
 @endif

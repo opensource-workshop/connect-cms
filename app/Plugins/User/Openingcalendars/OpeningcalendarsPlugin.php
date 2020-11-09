@@ -53,6 +53,20 @@ class OpeningcalendarsPlugin extends UserPluginBase
     }
 
     /**
+     * 追加の権限定義（コアから呼び出す）
+     */
+    public function declareRole()
+    {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
+        // 権限チェックテーブル
+        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
+        $role_ckeck_table = array();
+        return $role_ckeck_table;
+    }
+
+    /**
      *  編集画面の最初のタブ（コアから呼び出す）
      *
      *  スーパークラスをオーバーライド

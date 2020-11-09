@@ -6,7 +6,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- --}}
+--}}
 {{-- 大元のレイアウトの継承とページコンテンツは大元のレイアウトに埋め込むために @section で定義する --}}
 @extends('layouts.app')
 @section('content')
@@ -20,10 +20,10 @@
 
 <!-- Modal -->
 <div class="modal fade" id="modalDetails" tabindex="-1" role="dialog" data-backdrop="static">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
@@ -52,9 +52,9 @@ $(function(){
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
         @if (isset($configs_array['browser_width_header']) && $configs_array['browser_width_header']->value == '100%')
-    <div id="ccHeaderArea" class="ccHeaderArea row p-0 mx-auto">
+    <header id="ccHeaderArea" class="ccHeaderArea row p-0 mx-auto">
         @else
-    <div id="ccHeaderArea" class="ccHeaderArea row container p-0 mx-auto">
+    <header id="ccHeaderArea" class="ccHeaderArea row container p-0 mx-auto">
         @endif
         {{-- ヘッダーフレームのループ --}}
         @isset($layouts_info[0]['frames'])
@@ -66,7 +66,7 @@ $(function(){
                 @endif
             @endforeach
         @endif
-    </div>
+    </header>
     @endif
 
     {{-- 中央エリア --}}
@@ -85,7 +85,7 @@ $(function(){
         @endif
         {{-- 左エリア --}}
         @if ($layouts_info[1]['exists'])
-        <div id="ccLeftArea" class="ccLeftArea p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
+        <aside id="ccLeftArea" class="ccLeftArea p-0 {{$layouts_info[1]['col']}} order-2 order-lg-1">
             {{-- サービス取得 --}}
             {{-- Todo：実際には、ページ内で使用されているプラグインを動的に定義する必要がある --}}
             @isset($layouts_info[1]['frames'])
@@ -97,22 +97,22 @@ $(function(){
                     @endif
                 @endforeach
             @endif
-        </div>
+        </aside>
         @endif
 
         {{-- メインエリア --}}
-        <div id="ccMainArea" class="ccMainArea row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2">
+        <main id="ccMainArea" class="ccMainArea row mx-0 p-0 {{$layouts_info[2]['col']}} order-1 order-lg-2" role="main">
             {{-- ページ内のフレームのループ --}}
             @foreach($frames as $frame)
                 @if ($frame->area_id == 2)
                     @include('core.cms_frame')
                 @endif
             @endforeach
-        </div>
+        </main>
 
         {{-- 右エリア --}}
         @if ($layouts_info[3]['exists'])
-        <div id="ccRightArea" class="ccRightArea p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
+        <aside id="ccRightArea" class="ccRightArea p-0 {{$layouts_info[3]['col']}} order-3 order-lg-3">
             {{-- ページ内のフレームのループ --}}
             @isset($layouts_info[3]['frames'])
                 @foreach($layouts_info[3]['frames'] as $frame)
@@ -123,7 +123,7 @@ $(function(){
                     @endif
                 @endforeach
             @endif
-        </div>
+        </aside>
         @endif
 
     </div>{{-- /row --}}
@@ -139,9 +139,9 @@ $(function(){
     @endphp
     @if ($layouts_info[4]['exists'])
         @if (isset($configs_array['browser_width_footer']) && $configs_array['browser_width_footer']->value == '100%')
-    <div id="ccFooterArea" class="ccFooterArea row p-0 mx-auto {{ $footer_area_optional_class }}">
+    <footer id="ccFooterArea" class="ccFooterArea row p-0 mx-auto {{ $footer_area_optional_class }}">
         @else
-    <div id="ccFooterArea" class="ccFooterArea row container p-0 mx-auto {{ $footer_area_optional_class }}">
+    <footer id="ccFooterArea" class="ccFooterArea row container p-0 mx-auto {{ $footer_area_optional_class }}">
         @endif
         {{-- フッターフレームのループ --}}
         @isset($layouts_info[4]['frames'])
@@ -164,7 +164,7 @@ $(function(){
             </div>
         </div>
 --}}
-    </div>
+    </footer>
     @endif
 
 </div>{{-- /container --}}

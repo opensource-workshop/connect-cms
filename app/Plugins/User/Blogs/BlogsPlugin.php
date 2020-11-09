@@ -4,7 +4,6 @@ namespace App\Plugins\User\Blogs;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -14,7 +13,7 @@ use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
+// use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsCategories;
 use App\Models\User\Blogs\BlogsFrames;
@@ -54,6 +53,20 @@ class BlogsPlugin extends UserPluginBase
         $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'settingBlogFrame'];
         $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveBlogFrame'];
         return $functions;
+    }
+
+    /**
+     * 追加の権限定義（コアから呼び出す）
+     */
+    public function declareRole()
+    {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
+        // 権限チェックテーブル
+        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
+        $role_ckeck_table = array();
+        return $role_ckeck_table;
     }
 
     /**
@@ -100,6 +113,15 @@ class BlogsPlugin extends UserPluginBase
                                 })
                                 ->orderBy('id', 'desc')
                                 ->first();
+
+        // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+        if (empty($this->post->read_more_button)) {
+            $this->post->read_more_button = BlogsPosts::read_more_button_default;
+        }
+        if (empty($this->post->close_more_button)) {
+            $this->post->close_more_button = BlogsPosts::close_more_button_default;
+        }
+
         return $this->post;
     }
 
@@ -241,11 +263,11 @@ class BlogsPlugin extends UserPluginBase
                                            })
                                            ->groupBy('contents_id');
                                  })
+                                // 設定を見てWhere を付与する。
+                                ->where(function ($query_setting) use ($blog_frame) {
+                                    $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                                });
 
-                                           // 設定を見てWhere を付与する。
-                                           ->where(function ($query_setting) use ($blog_frame) {
-                                               $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
-                                           });
         // フレームの重要記事の条件参照
         if ($blog_frame->important_view == 'important_only') {
             $blogs_query->where('blogs_posts.important', 1);
@@ -262,6 +284,17 @@ class BlogsPlugin extends UserPluginBase
         $blogs_posts = $blogs_query->orderBy('posted_at', 'desc')
                                    ->orderBy('contents_id', 'desc')
                                    ->paginate($count, ["*"], "frame_{$blog_frame->id}_page");
+
+        foreach ($blogs_posts as &$blogs_post) {
+            // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+            if (empty($blogs_post->read_more_button)) {
+                $blogs_post->read_more_button = BlogsPosts::read_more_button_default;
+            }
+            if (empty($blogs_post->close_more_button)) {
+                $blogs_post->close_more_button = BlogsPosts::close_more_button_default;
+            }
+        }
+
         return $blogs_posts;
     }
 
@@ -503,10 +536,10 @@ WHERE status = 0
         }
 
         // Page データ
-        $page = Page::where('id', $page_id)->first();
+        // $page = Page::where('id', $page_id)->first();
 
         // 認証されているユーザの取得
-        $user = Auth::user();
+        // $user = Auth::user();
 
         // ブログデータ一覧の取得
         $blogs_posts = $this->getPosts($blog_frame);
@@ -748,6 +781,9 @@ WHERE status = 0
         $blogs_post->posted_at     = $request->posted_at . ':00';
         $blogs_post->post_text     = $request->post_text;
         $blogs_post->post_text2    = $request->post_text2;
+        $blogs_post->read_more_flag = $request->read_more_flag ?? 0;
+        $blogs_post->read_more_button = $request->read_more_button;
+        $blogs_post->close_more_button = $request->close_more_button;
 
         // 承認の要否確認とステータス処理
         if ($this->isApproval($frame_id)) {
@@ -1105,35 +1141,62 @@ WHERE status = 0
         $blog_frame = $this->getBlogFrame($frame_id);
 
         // カテゴリ（全体）
-        $general_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
+        $general_categories = Categories::
+                                        select(
+                                            'categories.*',
+                                            'blogs_categories.id as blogs_categories_id',
+                                            'blogs_categories.categories_id',
+                                            'blogs_categories.view_flag',
+                                            'blogs_categories.display_sequence as blogs_categories_display_sequence'
+                                        )
                                         ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
                                             $join->on('blogs_categories.categories_id', '=', 'categories.id')
                                                  ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
                                         })
                                         ->where('target', null)
-                                        ->orderBy('display_sequence', 'asc')
+                                        ->orderBy('blogs_categories.display_sequence', 'asc')
+                                        ->orderBy('categories.display_sequence', 'asc')
                                         ->get();
+
+        foreach ($general_categories as $general_categorie) {
+            // （初期登録時を想定）ブログカテゴリのカテゴリIDが空なので、カテゴリのIDを初期値にセット
+            if (is_null($general_categorie->categories_id)) {
+                $general_categorie->categories_id = $general_categorie->id;
+            }
+
+            // （初期登録時を想定）ブログカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
+            if (is_null($general_categorie->blogs_categories_display_sequence)) {
+                $general_categorie->blogs_categories_display_sequence = $general_categorie->display_sequence;
+            }
+        }
+
         // カテゴリ（このブログ）
         $plugin_categories = null;
         if ($blog_frame->blogs_id) {
-            $plugin_categories = Categories::select('categories.*', 'blogs_categories.id as blogs_categories_id', 'blogs_categories.categories_id', 'blogs_categories.view_flag')
-                                           ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
-                                           ->where('target', 'blogs')
-                                           ->where('plugin_id', $blog_frame->blogs_id)
-                                           ->orderBy('display_sequence', 'asc')
-                                           ->get();
+            $plugin_categories = Categories::
+                                            select(
+                                                'categories.*',
+                                                'blogs_categories.id as blogs_categories_id',
+                                                'blogs_categories.categories_id',
+                                                'blogs_categories.view_flag',
+                                                'blogs_categories.display_sequence as blogs_categories_display_sequence'
+                                            )
+                                            ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                                            ->where('target', 'blogs')
+                                            ->where('plugin_id', $blog_frame->blogs_id)
+                                            ->orderBy('blogs_categories.display_sequence', 'asc')
+                                            ->orderBy('categories.display_sequence', 'asc')
+                                            ->get();
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs_list_categories', [
+        return $this->view('blogs_list_categories', [
             'general_categories' => $general_categories,
             'plugin_categories'  => $plugin_categories,
             'blog_frame'         => $blog_frame,
             'errors'             => $errors,
             'create_flag'        => $create_flag,
-            ]
-        )->withInput($request->all);
+        ])->withInput($request->all);
     }
 
     /**
@@ -1149,48 +1212,61 @@ WHERE status = 0
         /* エラーチェック
         ------------------------------------ */
 
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_display_sequence' => ['required'],
-                'add_category'         => ['required'],
-                'add_color'            => ['required'],
-                'add_background_color' => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_display_sequence' => '追加行の表示順',
-                'add_category'         => '追加行のカテゴリ',
-                'add_color'            => '追加行の文字色',
-                'add_background_color' => '追加行の背景色',
-            ]);
+        $rules = [];
 
-            if ($validator->fails()) {
-                return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
+            // 項目のエラーチェック
+            $rules['add_display_sequence'] = ['required'];
+            $rules['add_category'] = ['required'];
+            $rules['add_color'] = ['required'];
+            $rules['add_background_color'] = ['required'];
+
+            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
+            $setAttributeNames['add_category'] = '追加行のカテゴリ';
+            $setAttributeNames['add_color'] = '追加行の文字色';
+            $setAttributeNames['add_background_color'] = '追加行の背景色';
+        }
+
+        // \Log::debug(var_export($request->general_categories_id, true));
+        // \Log::debug(var_export($request->general_display_sequence, true));
+        // \Log::debug(var_export(old('general_view_flag'), true));
+
+        // 共通項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->general_categories_id)) {
+            foreach ($request->general_categories_id as $category_id) {
+                // 項目のエラーチェック
+                $rules['general_display_sequence.'.$category_id] = ['required'];
+
+                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
             }
         }
 
-        // 既存項目のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->blogs_categories_id)) {
-            foreach ($request->blogs_categories_id as $category_id) {
+        // 既存項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->plugin_categories_id)) {
+            foreach ($request->plugin_categories_id as $category_id) {
                 // 項目のエラーチェック
-                $validator = Validator::make($request->all(), [
-                    'plugin_display_sequence.'.$category_id => ['required'],
-                    'plugin_category.'.$category_id         => ['required'],
-                    'plugin_color.'.$category_id            => ['required'],
-                    'plugin_background_color.'.$category_id => ['required'],
-                ]);
-                $validator->setAttributeNames([
-                    'plugin_display_sequence.'.$category_id => '表示順',
-                    'plugin_category.'.$category_id         => 'カテゴリ',
-                    'plugin_color.'.$category_id            => '文字色',
-                    'plugin_background_color.'.$category_id => '背景色',
-                ]);
+                $rules['plugin_display_sequence.'.$category_id] = ['required'];
+                $rules['plugin_category.'.$category_id] = ['required'];
+                $rules['plugin_color.'.$category_id] = ['required'];
+                $rules['plugin_background_color.'.$category_id] = ['required'];
 
-                if ($validator->fails()) {
-                    return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
-                }
+                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
+                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
+                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
+                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
         }
 
         /* カテゴリ追加
@@ -1209,13 +1285,13 @@ WHERE status = 0
                                 'target'           => 'blogs',
                                 'plugin_id'        => $blog_frame->blogs_id,
                                 'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                            ]);
             BlogsCategories::create([
                                 'blogs_id'         => $blog_frame->blogs_id,
                                 'categories_id'    => $add_category->id,
                                 'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
                                 'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                            ]);
         }
 
         // 既存項目アリ
@@ -1231,7 +1307,7 @@ WHERE status = 0
                 $category->background_color = $request->plugin_background_color[$plugin_categories_id];
                 $category->target           = 'blogs';
                 $category->plugin_id        = $blog_frame->blogs_id;
-                $category->display_sequence = $request->plugin_display_sequence[$plugin_categories_id];
+                $category->display_sequence = intval($request->plugin_display_sequence[$plugin_categories_id]);
 
                 // 保存
                 $category->save();
@@ -1246,10 +1322,10 @@ WHERE status = 0
                 BlogsCategories::updateOrCreate(
                     ['categories_id' => $general_categories_id, 'blogs_id' => $blog_frame->blogs_id],
                     [
-                     'blogs_id' => $blog_frame->blogs_id,
-                     'categories_id' => $general_categories_id,
-                     'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->general_display_sequence[$general_categories_id],
+                        'blogs_id' => $blog_frame->blogs_id,
+                        'categories_id' => $general_categories_id,
+                        'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => intval($request->general_display_sequence[$general_categories_id]),
                     ]
                 );
             }
@@ -1263,10 +1339,10 @@ WHERE status = 0
                 BlogsCategories::updateOrCreate(
                     ['categories_id' => $plugin_categories_id, 'blogs_id' => $blog_frame->blogs_id],
                     [
-                     'blogs_id' => $blog_frame->blogs_id,
-                     'categories_id' => $plugin_categories_id,
-                     'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
+                        'blogs_id' => $blog_frame->blogs_id,
+                        'categories_id' => $plugin_categories_id,
+                        'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => intval($request->plugin_display_sequence[$plugin_categories_id]),
                     ]
                 );
             }

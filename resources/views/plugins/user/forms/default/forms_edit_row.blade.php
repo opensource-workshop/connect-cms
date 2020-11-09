@@ -20,29 +20,22 @@
     </td>
     {{-- 項目名 --}}
     <td>
-        <input class="form-control" type="text" name="column_name_{{ $column->id }}" value="{{ old('column_name_'.$column->id, $column->column_name)}}">
+        <input class="form-control @if ($errors && $errors->has('column_name_'.$column->id)) border-danger @endif" type="text" name="column_name_{{ $column->id }}" value="{{ old('column_name_'.$column->id, $column->column_name)}}">
     </td>
     {{-- 型 --}}
     <td>
         <select class="form-control" name="column_type_{{ $column->id }}">
             <option value="" disabled>型を指定</option>
             @foreach (FormColumnType::getMembers() as $key=>$value)
-                <option value="{{$key}}"
-                    {{-- 初期表示用 --}}
-                    @if($key == $column->column_type)
-                        selected="selected"
-                    @endif
-                    {{-- validation用 --}}
-                    @if($key == old("column_type_$column->id"))
-                        selected="selected"
-                    @endif
-                >{{ $value }}</option>
+                <option value="{{$key}}" @if(old("column_type_{$column->id}", $column->column_type) == $key) selected="selected" @endif>
+                    {{ $value }}
+                </option>
             @endforeach
         </select>
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        <input type="checkbox" name="required_{{ $column->id }}" value="1" @if ($column->required == Required::on) checked="checked" @endif>
+        <input type="checkbox" name="required_{{ $column->id }}" value="1" data-toggle="tooltip" title="必須項目として指定します。" @if (old("required_{$column->id}", $column->required) == Required::on) checked="checked" @endif>
     </td>
     {{-- 詳細設定 --}}
     <td class="text-center">
