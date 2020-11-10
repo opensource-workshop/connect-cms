@@ -114,7 +114,7 @@ class DatabasesPlugin extends UserPluginBase
         $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
         $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
         $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
-        $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
+        // $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
         $role_ckeck_table["editView"]             = array('frames.edit');
         $role_ckeck_table["saveView"]             = array('frames.edit');
         return $role_ckeck_table;
@@ -500,6 +500,31 @@ class DatabasesPlugin extends UserPluginBase
                 $get_count = $databases_frames->view_count;
             }
             $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
+
+            // 登録データ行のタイトル取得
+            $inputs_titles = DatabasesInputs::
+                    select(
+                        'databases_inputs.id',
+                        'databases_input_cols.value as title'
+                    )
+                    ->whereIn('databases_inputs.id', $inputs->pluck('id'))
+                    ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
+                        $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                                    ->where('databases_columns.title_flag', 1)
+                                    // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                                    ->whereNotIn('databases_columns.id', $hide_columns_ids);
+                    })
+                    ->leftJoin('databases_input_cols', function ($leftJoin) {
+                        $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                    ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+                    })
+                    ->get();
+
+            foreach ($inputs as &$input) {
+                $inputs_title = $inputs_titles->where('id', $input->id)->first();
+                $input->title = isset($inputs_title) ? $inputs_title->title : null;
+            }
+
             // <--- 登録データ行の取得
 
             // debug: sql dumpする
@@ -1045,7 +1070,7 @@ class DatabasesPlugin extends UserPluginBase
                         'mimetype'             => $request->file($req_filename)->getClientMimeType(),
                         'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
                         'size'                 => $request->file($req_filename)->getClientSize(),
-                        'plugin_name'          => 'databasess',
+                        'plugin_name'          => 'databases',
                         'page_id'              => $page_id,
                         'temporary_flag'       => 1,
                         'created_id'           => Auth::user()->id,
@@ -2688,7 +2713,7 @@ class DatabasesPlugin extends UserPluginBase
                     'mimetype'             => $filesystem->mimeType($unzip_uploads_full_path),
                     'extension'            => $filesystem->extension($unzip_uploads_full_path),
                     'size'                 => $filesystem->size($unzip_uploads_full_path),
-                    'plugin_name'          => 'databasess',
+                    'plugin_name'          => 'databases',
                     'page_id'              => $page_id,
                     'temporary_flag'       => 1,
                     'created_id'           => Auth::user()->id,

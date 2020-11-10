@@ -15,4 +15,7 @@ class Nc2LinklistBlock extends Model
      * テーブル名の指定
      */
     protected $table = 'linklist_block';
+    
+    /* New用に追加 */
+    protected $fillable = ['linklist_id','target_blank_flag'];
 }

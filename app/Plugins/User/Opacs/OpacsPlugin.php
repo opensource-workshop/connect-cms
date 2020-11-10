@@ -55,6 +55,20 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
+     * 追加の権限定義（コアから呼び出す）
+     */
+    public function declareRole()
+    {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
+        // 権限チェックテーブル
+        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
+        $role_ckeck_table = array();
+        return $role_ckeck_table;
+    }
+
+    /**
      *  編集画面の最初のタブ
      *
      *  スーパークラスをオーバーライド
@@ -90,7 +104,7 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 国会図書館API
-        $request_url = 'http://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
+        $request_url = 'https://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
 
         // $context = stream_context_create(array(
         //     'http' => array('ignore_errors' => true, 'timeout' => 10)

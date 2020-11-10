@@ -150,6 +150,12 @@ body {
     border-bottom: 2px solid #b64c4c;
 }
 
+.frame-design-none {
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+}
+
 /*  Active
 ------------------------------------- */
 .cc-active {

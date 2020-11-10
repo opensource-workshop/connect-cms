@@ -1,9 +1,8 @@
 {{--
- * 詳細表示画面テンプレート。
+ * 詳細表示画面テンプレート（defaultテンプレートをベース）
+ * ・項目の部分をdl,dt,ddタグに置き換え
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
- * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
@@ -23,19 +22,17 @@
         @foreach($group_row_cols_columns as $group_col_columns)
             <div class="col-sm {{ "column-group-" . $column_group_count++ }}">
             {{-- カラム ループ --}}
-            @foreach($group_col_columns as $column)
-                <div class="row pt-2 pb-2">
-                    <div class="col">
-                        @if ($column->label_hide_flag == '0')
-                            <small><b>{{$column->column_name}}</b></small><br>
-                        @endif
+                <dl>
+                @foreach($group_col_columns as $column)
+                    @if ($column->label_hide_flag == '0')
+                        <dt>{{$column->column_name}}</dt>
+                    @endif
 
-                        <div class="{{$column->classname}}">
-                            @include('plugins.user.databases.default.databases_include_detail_value')
-                        </div>
-                    </div>
-                </div>
-            @endforeach
+                    <dd>
+                        @include('plugins.user.databases.default.databases_include_detail_value')
+                    </dd>
+                @endforeach
+                </dl>
             </div>
         @endforeach
         </div>

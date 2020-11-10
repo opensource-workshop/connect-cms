@@ -115,9 +115,10 @@ use App\Utilities\Zip\UnzipUtils;
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'">
-                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
-                </button>
+                <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="mr-2">
+                    <span class="btn btn-info"><i class="fas fa-list"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> DB選択へ</span></span>
+                </a>
+
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}" onclick="return confirm('インポートします。\nよろしいですか？')">

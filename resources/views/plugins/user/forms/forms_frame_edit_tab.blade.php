@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォームプラグイン
- --}}
+--}}
 @if ($action == 'editColumn' || $action == 'editColumnDetail'  || $action == '')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">項目設定</span></span>
@@ -30,6 +30,15 @@
 @else
     <li role="presentation" class="nav-item">
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">フォーム作成</a>
+    </li>
+@endif
+@if ($action == 'listInputs')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">登録一覧</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listInputs/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">登録一覧</a>
     </li>
 @endif
 @if ($action == 'listBuckets')

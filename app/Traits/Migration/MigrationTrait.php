@@ -821,6 +821,9 @@ trait MigrationTrait
         foreach ($contents as $content) {
             // a タグの href 抜き出し
             $hrefs = $this->getContentAnchor($content->content_text);
+            if ($hrefs === false) {
+                continue;
+            }
             foreach ($hrefs as $href) {
                 // 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
                 if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
@@ -1761,7 +1764,8 @@ trait MigrationTrait
                 foreach ($linklist_tsv_lines as $linklist_tsv_line) {
                     // タブで項目に分割
                     $linklist_tsv_cols = explode("\t", $linklist_tsv_line);
-
+                    $linklist_tsv_cols[3] = isset($linklist_tsv_cols[3]) ? $linklist_tsv_cols[3] : '0';
+                    $linklist_tsv_cols[4] = isset($linklist_tsv_cols[4]) ? $linklist_tsv_cols[4] : '0';
                     // リンクリストテーブル追加
                     $linklists_posts = LinklistPost::create(['linklist_id' => $linklist->id, 'title' => $linklist_tsv_cols[0], 'url' => $linklist_tsv_cols[1], 'description' => $linklist_tsv_cols[2], 'target_blank_flag' => $linklist_tsv_cols[3], 'display_sequence' => $linklist_tsv_cols[4]]);
 
@@ -2052,8 +2056,8 @@ trait MigrationTrait
                         // エラーの内容は再度、チェックすること。
                         if (array_key_exists($databases_columns_id_idx, $column_ids)) {
                             // 項目の型により変換するもの
-                            if ($create_columns[$databases_columns_id_idx]->column_type == 'textarea') {
-                                // 複数行テキスト
+                            if ($create_columns[$databases_columns_id_idx]->column_type == 'text' || $create_columns[$databases_columns_id_idx]->column_type == 'textarea') {
+                                // テキスト or 複数行テキスト
                                 $database_tsv_col = str_replace('<br />', "\n", $database_tsv_col);
                             } elseif ($create_columns[$databases_columns_id_idx]->column_type == 'wysiwyg') {
                                 // WYSIWYG
@@ -4919,12 +4923,12 @@ trait MigrationTrait
 
             // blog の設定
             //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
-            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
+            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs->bbs_id) . '.ini', $journals_ini);
 
             // blog の記事
             //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
             $journals_tsv = $this->exportStrReplace($journals_tsv, 'bbses');
-            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
+            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs->bbs_id) . '.tsv', $journals_tsv);
         }
     }
 
@@ -5109,9 +5113,9 @@ trait MigrationTrait
                 if (!empty($linklists_tsv)) {
                     $linklists_tsv .= "\n";
                 }
-                $linklists_tsv .= $nc2_linklist_post->title              . "\t";
-                $linklists_tsv .= $nc2_linklist_post->url                . "\t";
-                $linklists_tsv .= $nc2_linklist_post->description        . "\t";
+                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->title)              . "\t";
+                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->url)                . "\t";
+                $linklists_tsv .= str_replace("\t", " ", $nc2_linklist_post->description)        . "\t";
                 $linklists_tsv .= $nc2_linklist_block->target_blank_flag . "\t";
                 $linklists_tsv .= $nc2_linklist_post->link_sequence;
 

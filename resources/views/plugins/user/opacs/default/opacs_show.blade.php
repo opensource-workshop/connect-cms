@@ -70,20 +70,22 @@
     <td>{{$opacs_books->ndc}}</td>
 </tr>
 <tr>
+    <th nowrap>配架場所</th>
+    <td>{{$opacs_books->shelf}}</td>
+</tr>
+<tr>
     <th>状況</th>
+    <td>
     @if ($opacs_books->lent_flag == 1)
-        <td>
-            <span style="color: red;"><i class="fas fa-user"></i></span> 
-            貸し出し中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
-            </span>
-        </td>
+        <span style="color: red;"><i class="fas fa-user"></i></span> 
+        貸し出し中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
+        </span>
     @elseif ($opacs_books->lent_flag == 2)
-        <td>
-            <span style="color: red;"><i class="fas fa-user"></i></span> 
-            貸し出しリクエスト中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
-            </span>
-        </td>
+        <span style="color: red;"><i class="fas fa-user"></i></span> 
+        貸し出しリクエスト中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
+        </span>
     @endif
+    </td>
 </tr>
 </table>
 

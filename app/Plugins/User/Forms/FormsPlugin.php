@@ -2,7 +2,9 @@
 
 namespace App\Plugins\User\Forms;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
@@ -10,8 +12,7 @@ use DB;
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-// use App\Models\Common\Page;
-// use App\Models\Common\Uploads;
+use App\Models\Common\Uploads;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsColumnsSelects;
@@ -58,11 +59,14 @@ class FormsPlugin extends UserPluginBase
             'index',
             'editColumnDetail',
             'publicConfirmToken',
+            'listInputs',
+            'editInput',
         ];
         $functions['post'] = [
             'index',
             'publicConfirm',
             'publicStore',
+            'publicStoreToken',
             'cancel',
             'updateColumn',
             'updateColumnSequence',
@@ -71,9 +75,34 @@ class FormsPlugin extends UserPluginBase
             'updateSelect',
             'updateSelectSequence',
             'deleteSelect',
-            'publicStoreToken',
+            'storeInput',
         ];
         return $functions;
+    }
+
+    /**
+     * 追加の権限定義（コアから呼び出す）
+     */
+    public function declareRole()
+    {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
+        // 権限チェックテーブル
+        $role_ckeck_table = [];
+
+        $role_ckeck_table["editColumnDetail"]     = ['buckets.editColumn'];
+        $role_ckeck_table["updateColumn"]         = ['buckets.editColumn'];
+        $role_ckeck_table["updateColumnSequence"] = ['buckets.editColumn'];
+        $role_ckeck_table["updateColumnDetail"]   = ['buckets.editColumn'];
+        $role_ckeck_table["addSelect"]            = ['buckets.addColumn'];
+        $role_ckeck_table["updateSelect"]         = ['buckets.editColumn'];
+        $role_ckeck_table["updateSelectSequence"] = ['buckets.editColumn'];
+        $role_ckeck_table["deleteSelect"]         = ['buckets.editColumn'];
+        $role_ckeck_table["listInputs"]           = ['frames.edit'];
+        $role_ckeck_table["editInput"]            = ['frames.edit'];
+        $role_ckeck_table["storeInput"]           = ['frames.edit'];
+        return $role_ckeck_table;
     }
 
     /**
@@ -199,6 +228,30 @@ class FormsPlugin extends UserPluginBase
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
+    }
+
+    /**
+     * ファイル系の詳細データの取得
+     */
+    private function getUploadsInputCols($inputs_id)
+    {
+        $records = FormsInputCols::select('uploads.*', 'forms_columns.column_type', 'forms_input_cols.forms_columns_id as columns_id', 'forms_input_cols.value')
+                                    ->join('forms_columns', 'forms_columns.id', '=', 'forms_input_cols.forms_columns_id')
+                                    ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                                    ->where('forms_inputs_id', $inputs_id)
+                                    ->whereIn('forms_columns.column_type', [\FormColumnType::file])
+                                    ->orderBy('forms_inputs_id', 'asc')
+                                    ->orderBy('forms_columns_id', 'asc')
+                                    ->get();
+
+        // 後でこのCollection から要素を削除する可能性がある。
+        // そのため、カラムを特定できるように、カラムをキーにして詰め替える。
+        $uploads = collect();
+        foreach ($records as $record) {
+            $uploads->put($record->columns_id, $record);
+        }
+
+        return $uploads;
     }
 
     /* 画面アクション関数 */
@@ -380,7 +433,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // カウントは本登録でする
         $forms_inputs_count = FormsInputs::where('forms_id', $form_id)
-                                            ->where('status', \StatusType::active)
+                                            ->where('status', \FormStatusType::active)
                                             ->count();
 
         // 登録制限数 が 空か 0 なら登録制限しない
@@ -590,8 +643,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // フォームのカラムデータ
         $forms_columns = $this->getFormsColumns($form);
 
+        // ファイル系の詳細データ
+        $uploads = collect();
+        if ($id) {
+            $uploads = $this->getUploadsInputCols($id);
+        }
+
         // エラーチェック配列
-        $validator_array = array( 'column' => array(), 'message' => array());
+        $validator_array = array('column' => array(), 'message' => array());
 
         foreach ($forms_columns as $forms_column) {
             // まとめ行であれば、ネストされた配列をさらに展開
@@ -618,17 +677,52 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
+        // ファイル項目を探して保存
+        foreach ($forms_columns as $forms_column) {
+            if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                // ファイルのリクエスト名
+                $req_filename = 'forms_columns_value.' . $forms_column->id;
+
+                // ファイルがアップロードされた。
+                if ($request->hasFile($req_filename)) {
+                    // ファイルチェック
+
+                    // uploads テーブルに情報追加、ファイルのid を取得する
+                    $upload = Uploads::create([
+                        'client_original_name' => $request->file($req_filename)->getClientOriginalName(),
+                        'mimetype'             => $request->file($req_filename)->getClientMimeType(),
+                        'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
+                        'size'                 => $request->file($req_filename)->getClientSize(),
+                        'plugin_name'          => 'forms',
+                        'page_id'              => $page_id,
+                        'temporary_flag'       => 1,
+                        'created_id'           => Auth::user()->id,
+                    ]);
+
+                    // ファイル保存
+                    $directory = $this->getDirectory($upload->id);
+                    $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
+
+                    // 項目とファイルID の関連保持
+                    $upload->column_type = $forms_column->column_type;
+                    $upload->columns_id = $forms_column->id;
+
+                    // ここで、put でキー指定でセットすることで、紐づくファイル情報が変更される。
+                    $uploads->put($forms_column->id, $upload);
+                }
+            }
+        }
+
         // var_dump('publicConfirm', $request->forms_columns_value);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_confirm', [
+        return $this->view('forms_confirm', [
             'request' => $request,
             'frame_id' => $frame_id,
             'form' => $form,
             'forms_columns' => $forms_columns,
-            ]
-        );
+            'uploads' => $uploads,
+        ]);
     }
 
     /**
@@ -673,12 +767,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // トークンをハッシュ化（DB保存用）
             $record_token = TokenUtils::makeHashToken($user_token);
 
-            $forms_inputs->status = \StatusType::temporary;
+            $forms_inputs->status = \FormStatusType::temporary;
             $forms_inputs->add_token = $record_token;
             $forms_inputs->add_token_created_at = new \Carbon();
         } else {
             // 本登録
-            $forms_inputs->status = \StatusType::active;
+            $forms_inputs->status = \FormStatusType::active;
         }
 
         $forms_inputs->save();
@@ -691,6 +785,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 登録者のメールアドレス
         $user_mailaddresses = array();
+
+        // 添付ファイルID
+        $attach_uploads_ids = [];
 
         // forms_input_cols 登録
         foreach ($forms_columns as $forms_column) {
@@ -712,10 +809,26 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $forms_input_cols->forms_columns_id = $forms_column['id'];
                 $forms_input_cols->value = $value;
                 $forms_input_cols->save();
+
+                // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
+                if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                    $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
+                }
             }
 
-            // メールの内容
-            $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            // ファイルタイプがファイル系 で 値がある事
+            if (FormsColumns::isFileColumnType($forms_column->column_type) && $value) {
+                $attach_uploads_ids[] = $value;
+
+                // データ登録フラグOFFでも、一時的にファイルは持っているため、検索可能
+                $upload = Uploads::where('id', $value)->first();
+
+                // メールの内容(ファイル系は、ファイル名を載せる)
+                $contents_text .= $forms_column->column_name . "：" . $upload->client_original_name . "\n";
+            } else {
+                // メールの内容
+                $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            }
 
             // メール型
             if ($forms_column->column_type == \FormColumnType::mail) {
@@ -752,10 +865,15 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // メール本文内のフォーム名文字列を置換
             $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
+            // メールオプション
+            $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+            // メールオプションに添付ファイルをセットする
+            $mail_options = $this->setMailOptionsAttach($attach_uploads_ids, $form->mail_attach_flag, $mail_options);
+
             // メール送信（ユーザー側）
             foreach ($user_mailaddresses as $user_mailaddress) {
                 if (!empty($user_mailaddress)) {
-                    Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                 }
             }
         } else {
@@ -791,11 +909,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 // メール本文内のフォーム名文字列を置換
                 $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
+                // メールオプション
+                $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+                // メールオプションに添付ファイルをセットする
+                $mail_options = $this->setMailOptionsAttach($attach_uploads_ids, $form->mail_attach_flag, $mail_options);
+
                 // メール送信（管理者側）
                 if ($form->mail_send_flag) {
                     $mail_addresses = explode(',', $form->mail_send_address);
                     foreach ($mail_addresses as $mail_address) {
-                        Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                        Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                     }
                 }
 
@@ -803,19 +926,67 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 if ($form->user_mail_send_flag) {
                     foreach ($user_mailaddresses as $user_mailaddress) {
                         if (!empty($user_mailaddress)) {
-                            Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                            Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                         }
                     }
                 }
             }
         }
 
+        // データ登録フラグOFFなら、添付ファイルを削除
+        if (! $form->data_save_flag) {
+            // アップロードファイルあり
+            if (! empty($attach_uploads_ids)) {
+                // 削除するファイルデータ
+                $delete_uploads = Uploads::whereIn('id', $attach_uploads_ids)->get();
+
+                foreach ($delete_uploads as $delete_upload) {
+                    // ファイルの削除
+                    $directory = $this->getDirectory($delete_upload->id);
+                    Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                    // uploadの削除
+                    $delete_upload->delete();
+                }
+            }
+        }
+
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_thanks', [
+        return $this->view('forms_thanks', [
             'after_message' => $after_message
-            ]
-        );
+        ]);
+    }
+
+    /**
+     * メールオプションに添付ファイルをセットする
+     */
+    private function setMailOptionsAttach($attach_uploads_ids, $mail_attach_flag, $mail_options)
+    {
+        // メール添付OFF
+        if (empty($mail_attach_flag)) {
+            // なにもしない
+            return $mail_options;
+        }
+
+        // アップロードファイルIDなし
+        if (empty($attach_uploads_ids)) {
+            // なにもしない
+            return $mail_options;
+        }
+
+        $attach_uploads = Uploads::whereIn('id', $attach_uploads_ids)->get();
+
+        foreach ($attach_uploads as $attach_upload) {
+            // 添付ファイルパスの取得
+            $directory = $this->getDirectory($attach_upload->id);
+            $mail_options['attachs'][] = [
+                'file_path' => storage_path('app/' . $directory . '/' . $attach_upload->id . '.' .$attach_upload->extension),
+                'file_name' => $attach_upload->client_original_name,
+                'mime' => $attach_upload->mimetype,
+            ];
+        }
+
+        return $mail_options;
     }
 
     /**
@@ -929,7 +1100,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // forms_inputs 更新
         // 本登録
-        $forms_inputs->status = \StatusType::active;
+        $forms_inputs->status = \FormStatusType::active;
         $forms_inputs->save();
 
         // フォームのカラムデータ
@@ -954,6 +1125,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // }
         // dd($forms_input_cols->count());
 
+        // 添付ファイルID
+        $attach_uploads_ids = [];
+
         foreach ($forms_columns as $forms_column) {
             if ($forms_column->column_type == \FormColumnType::group) {
                 continue;
@@ -966,8 +1140,19 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $value = $forms_input_cols[$forms_column->id]->value;
             }
 
-            // メールの内容
-            $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            // ファイルタイプがファイル系 で 値がある事
+            if (FormsColumns::isFileColumnType($forms_column->column_type) && $value) {
+                $attach_uploads_ids[] = $value;
+
+                // データ登録フラグOFFでも、一時的にファイルは持っているため、検索可能
+                $upload = Uploads::where('id', $value)->first();
+
+                // メールの内容(ファイル系は、ファイル名を載せる)
+                $contents_text .= $forms_column->column_name . "：" . $upload->client_original_name . "\n";
+            } else {
+                // メールの内容
+                $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+            }
 
             // メール型
             if ($forms_column->column_type == \FormColumnType::mail) {
@@ -1010,11 +1195,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // メール本文内のフォーム名文字列を置換
             $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
 
+            // メールオプション
+            $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+            // メールオプションに添付ファイルをセットする
+            $mail_options = $this->setMailOptionsAttach($attach_uploads_ids, $form->mail_attach_flag, $mail_options);
+
             // メール送信（管理者側）
             if ($form->mail_send_flag) {
                 $mail_addresses = explode(',', $form->mail_send_address);
                 foreach ($mail_addresses as $mail_address) {
-                    Mail::to(trim($mail_address))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                    Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                 }
             }
 
@@ -1022,7 +1212,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($form->user_mail_send_flag) {
                 foreach ($user_mailaddresses as $user_mailaddress) {
                     if (!empty($user_mailaddress)) {
-                        Mail::to(trim($user_mailaddress))->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $mail_text]));
+                        Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                     }
                 }
             }
@@ -1047,6 +1237,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             ->select('frames.*')
                             ->where('frames.id', $frame_id)->first();
 
+        // $frame_page = "frame_{$frame_id}_buckets_page";
+
         // データ取得（1ページの表示件数指定）
         $plugins = DB::table($plugin_name)
                         ->select(
@@ -1060,7 +1252,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         )
                         ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
                             $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
-                                        ->where('forms_inputs.status', \StatusType::active);
+                                        ->where('forms_inputs.status', \FormStatusType::active);
                         })
                         ->groupBy(
                             $plugin_name . '.id',
@@ -1082,7 +1274,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             ->whereIn('forms.id', $plugins->pluck('id'))
             ->leftJoin('forms_inputs', function ($leftJoin) {
                 $leftJoin->on('forms.id', '=', 'forms_inputs.forms_id')
-                            ->where('forms_inputs.status', \StatusType::temporary);
+                            ->where('forms_inputs.status', \FormStatusType::temporary);
             })
             ->groupBy(
                 'forms.id',
@@ -1102,7 +1294,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 表示テンプレートを呼び出す。
         return $this->view('forms_list_buckets', [
             'plugin_frame' => $plugin_frame,
-            'plugins'      => $plugins,
+            'plugins' => $plugins,
+            // 'frame_page' => $request->input($frame_page, 1),
         ]);
     }
 
@@ -1140,12 +1333,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 仮登録件数
         $tmp_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', \StatusType::temporary)
+                                    ->where('forms_inputs.status', \FormStatusType::temporary)
                                     ->count();
 
         // 本登録数
         $active_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', \StatusType::active)
+                                    ->where('forms_inputs.status', \FormStatusType::active)
                                     ->count();
 
         $form->tmp_entry_count = $tmp_entry_count;
@@ -1297,9 +1490,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->regist_control_flag = empty($request->regist_control_flag) ? 0 : $request->regist_control_flag;
         $forms->regist_from         = empty($request->regist_from) ? null : new \Carbon($request->regist_from);
         $forms->regist_to           = empty($request->regist_to) ? null : new \Carbon($request->regist_to);
-        $forms->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
+        $forms->mail_send_flag      = empty($request->mail_send_flag) ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
-        $forms->user_mail_send_flag = (empty($request->user_mail_send_flag)) ? 0 : $request->user_mail_send_flag;
+        $forms->user_mail_send_flag = empty($request->user_mail_send_flag) ? 0 : $request->user_mail_send_flag;
+        $forms->mail_attach_flag    = empty($request->mail_attach_flag) ? 0 : $request->mail_attach_flag;
         $forms->use_temporary_regist_mail_flag = (empty($request->use_temporary_regist_mail_flag)) ? 0 : $request->use_temporary_regist_mail_flag;
         $forms->temporary_regist_mail_subject = $request->temporary_regist_mail_subject;
         $forms->temporary_regist_mail_format = $request->temporary_regist_mail_format;
@@ -1307,10 +1501,10 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->from_mail_name      = $request->from_mail_name;
         $forms->mail_subject        = $request->mail_subject;
         $forms->mail_format         = $request->mail_format;
-        $forms->data_save_flag      = (empty($request->data_save_flag))      ? 0 : $request->data_save_flag;
+        $forms->data_save_flag      = empty($request->data_save_flag) ? 0 : $request->data_save_flag;
         $forms->after_message       = $request->after_message;
-        $forms->numbering_use_flag  = (empty($request->numbering_use_flag))      ? 0 : $request->numbering_use_flag;
-        $forms->numbering_prefix   = $request->numbering_prefix;
+        $forms->numbering_use_flag  = empty($request->numbering_use_flag) ? 0 : $request->numbering_use_flag;
+        $forms->numbering_prefix    = $request->numbering_prefix;
 
         // データ保存
         $forms->save();
@@ -1331,6 +1525,36 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // forms_id がある場合、データを削除
         if ($forms_id) {
             $forms_columns = FormsColumns::where('forms_id', $forms_id)->orderBy('display_sequence')->get();
+
+            ////
+            //// 添付ファイルの削除
+            ////
+            $file_column_type_ids = [];
+            foreach ($forms_columns as $forms_column) {
+                // ファイルタイプ
+                if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                    $file_column_type_ids[] = $forms_column->id;
+                }
+            }
+
+            // 削除するファイル情報が入っている詳細データの特定
+            $del_file_ids = FormsInputCols::whereIn('forms_columns_id', $file_column_type_ids)
+                                                ->whereNotNull('value')
+                                                ->pluck('value')
+                                                ->all();
+
+            // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
+            $delete_uploads = Uploads::whereIn('id', $del_file_ids)->get();
+            foreach ($delete_uploads as $delete_upload) {
+                // ファイルの削除
+                $directory = $this->getDirectory($delete_upload->id);
+                Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+                // uploadの削除
+                $delete_upload->delete();
+            }
+
+
             foreach ($forms_columns as $forms_column) {
                 // 詳細データ値を削除する。
                 FormsInputCols::where('forms_columns_id', $forms_column->id)->delete();
@@ -1417,7 +1641,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->caption_color = \Bs4TextColor::dark;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を追加しました。';
-        
+
         // 編集画面へ戻る。
         return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, $errors);
     }
@@ -1890,7 +2114,6 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function downloadCsv($request, $page_id, $frame_id, $id)
     {
-
         // id で対象のデータの取得
 
         // フォームの取得
@@ -1899,10 +2122,35 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // カラムの取得
         $columns = FormsColumns::where('forms_id', $id)->orderBy('display_sequence', 'asc')->get();
 
+        // debug:確認したいSQLの前にこれを仕込んで
+        // \DB::enableQueryLog();
+
         // 登録データの取得
-        $input_cols = FormsInputCols::whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id))
-                                      ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
-                                      ->get();
+        // change: 基本ないが、forms_input_colsにデータが無い場合にも対応(登録一覧の表示は、forms_input_colsがない場合にも対応していた)
+        // $input_cols = FormsInputCols::
+        //                             select(
+        //                                 'forms_input_cols.*',
+        //                                 'forms_inputs.status as inputs_status'
+        //                             )
+        //                             ->leftjoin('forms_inputs', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
+        //                             ->whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id)->where('status', '!=', \FormStatusType::delete))
+        //                             ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+        //                             ->get();
+        $input_cols = FormsInputs::
+                select(
+                    'forms_inputs.status as inputs_status',
+                    'forms_input_cols.*'
+                )
+                ->leftjoin('forms_input_cols', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
+                ->where('forms_inputs.forms_id', $id)
+                // 削除データは出力しない
+                ->where('forms_inputs.status', '!=', \FormStatusType::delete)
+                ->orderBy('forms_inputs.id', 'asc')
+                ->orderBy('forms_input_cols.forms_columns_id', 'asc')
+                ->get();
+
+        // debug: sql dumpする
+        // \Log::debug(var_export(\DB::getQueryLog(), true));
 
 /*
 ダウンロード前の配列イメージ。
@@ -1940,6 +2188,9 @@ ORDER BY forms_inputs_id, forms_columns_id
         // データ行用の空配列
         $copy_base = array();
 
+        // 見出し行-頭（固定項目）
+        $csv_array[0]['status'] = '状態(0:本登録,1:仮登録)';
+        $copy_base['status'] = '';
         // 見出し行
         foreach ($columns as $column) {
             $csv_array[0][$column->id] = $column->column_name;
@@ -1949,7 +2200,11 @@ ORDER BY forms_inputs_id, forms_columns_id
         // データ
         foreach ($input_cols as $input_col) {
             if (!array_key_exists($input_col->forms_inputs_id, $csv_array)) {
+                // 初回のみベースをセット
                 $csv_array[$input_col->forms_inputs_id] = $copy_base;
+
+                // 初回で固定項目をセット
+                $csv_array[$input_col->forms_inputs_id]['status'] = $input_col->inputs_status;
             }
             $csv_array[$input_col->forms_inputs_id][$input_col->forms_columns_id] = $input_col->value;
         }
@@ -1983,5 +2238,116 @@ ORDER BY forms_inputs_id, forms_columns_id
         }
 
         return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
+     * 登録一覧
+     */
+    public function listInputs($request, $page_id, $frame_id, $forms_id = null)
+    {
+        // フォーム＆フレームデータ
+        $form_frame = $this->getFormFrame($frame_id);
+
+        $form = null;
+        if (!empty($forms_id)) {
+            // forms_id が渡ってくればforms_id が対象
+            $form = Forms::where('id', $forms_id)->first();
+        } elseif (!empty($form_frame->bucket_id)) {
+            // Frame のbucket_id があれば、bucket_id からフォームデータ取得
+            $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
+        }
+
+        if (empty($form)) {
+            // ワーニング画面へ
+            return $this->view('forms_edit_warning_messages', [
+                'warning_messages' => ["フォーム選択から選択するか、フォーム作成で作成してください。"],
+            ]);
+        }
+
+        // カラムの取得
+        $columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence', 'asc')->get();
+
+        $inputs_query = FormsInputs::where('forms_id', $form->id);
+        $inputs_query->orderBy('forms_inputs.id', 'asc');
+
+        // データ取得
+        $get_count = 10;
+        $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
+
+        // 登録データ詳細の取得
+        $input_cols = FormsInputCols::select('forms_input_cols.*', 'uploads.client_original_name')
+                                        ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                                        ->whereIn('forms_inputs_id', $inputs->pluck('id'))
+                                        ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+                                        ->get();
+
+        // bucktsで開いていたページの保持
+        // $frame_page = "frame_{$frame_id}_buckets_page";
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('forms_list_inputs', [
+            'form' => $form,
+            'columns' => $columns,
+            'inputs' => $inputs,
+            'input_cols' => $input_cols,
+        ]);
+    }
+
+    /**
+     * 登録一覧からの編集画面表示
+     */
+    public function editInput($request, $page_id, $frame_id, $inputs_id)
+    {
+        $input = FormsInputs::find($inputs_id);
+        if (empty($input)) {
+            // ワーニング画面へ
+            return $this->view('forms_edit_warning_messages', [
+                'warning_messages' => ["登録データがありません。"],
+            ]);
+        }
+
+        // 登録データ詳細の取得
+        $input_cols = FormsInputCols::select('forms_input_cols.*', 'uploads.client_original_name')
+                                        ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                                        ->where('forms_inputs_id', $inputs_id)
+                                        ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+                                        ->get();
+
+        // Formsデータ
+        $form = Forms::find($input->forms_id);
+
+        // フォームのカラムデータ
+        $forms_columns = $this->getFormsColumns($form);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('forms_edit_input', [
+            'input' => $input,
+            'input_cols' => $input_cols,
+            'frame_id' => $frame_id,
+            'form' => $form,
+            'forms_columns' => $forms_columns,
+        ]);
+    }
+
+    /**
+     * 登録一覧＞編集からのデータ登録
+     */
+    public function storeInput($request, $page_id, $frame_id, $inputs_id)
+    {
+        $input = FormsInputs::find($inputs_id);
+        if (empty($input)) {
+            // ワーニング画面へ
+            return $this->view('forms_edit_warning_messages', [
+                'warning_messages' => ["登録データがありません。"],
+            ]);
+        }
+
+        // forms_inputs 更新
+        $input->status = $request->status;
+        $input->save();
+
+        $request->flash_message = '変更しました。';
+
+        // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
     }
 }

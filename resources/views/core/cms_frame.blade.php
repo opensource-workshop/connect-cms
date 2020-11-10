@@ -44,11 +44,7 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
 <div class="container">
 @endif
 
-    @if ($frame->frame_design == 'none')
-    <div class="card mb-3 border-0" style="-webkit-box-shadow: none; box-shadow: none; background-color: transparent;" id="frame-card-{{ $frame->frame_id }}">
-    @else
-    <div class="card mb-3" id="frame-card-{{ $frame->frame_id }}">
-    @endif
+    <div class="card mb-3 @if ($frame->frame_design == 'none') border-0 frame-design-none @endif" id="frame-card-{{ $frame->frame_id }}">
 
         {{-- フレームヘッダー(表示) --}}
         @include('core.cms_frame_header')

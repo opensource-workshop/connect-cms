@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * フォーム項目区分
  */
-final class FormColumnType
+final class FormColumnType extends EnumsBase
 {
     // 定数メンバ
     const text = 'text';
@@ -19,7 +19,7 @@ final class FormColumnType
     const date = 'date';
     const time = 'time';
     const time_from_to = 'time_from_to';
-    // const file = 'file';
+    const file = 'file';
     const group = 'group';
 
     // key/valueの連想配列
@@ -35,23 +35,7 @@ final class FormColumnType
         self::date=>'日付型',
         self::time=>'時間型',
         self::time_from_to=>'時間型(FromTo)',
-        // self::file=>'ファイル型',
+        self::file=>'ファイル型',
         self::group=>'まとめ行',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }

@@ -95,9 +95,13 @@
                     <td nowrap class="text-right">{{$plugin->active_entry_count}}</td>
                     <td nowrap>@if ($plugin->data_save_flag) 保存する @else 保存しない @endif</td>
                     <td nowrap>
-                        <button class="btn btn-success btn-sm mr-1" type="button" onclick="location.href='{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
+                        <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">
                             <i class="far fa-edit"></i> 設定変更
-                        </button>
+                        </a>
+
+                        <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/forms/listInputs/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">
+                            <i class="fas fa-list"></i> 登録一覧
+                        </a>
 
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">

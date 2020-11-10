@@ -75,11 +75,6 @@
                     <a href="{{$post->url}}">{{$post->title}}</a>
                 @endif
             @endif
-            @if (!empty($post->description))
-                <div class="alert alert-secondary bg-light mt-2" role="alert">
-                    {!!nl2br(e($post->description))!!}
-                </div>
-            @endif
 
         @if (!$plugin_frame->type)
         </dd>

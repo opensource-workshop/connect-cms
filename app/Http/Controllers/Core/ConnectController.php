@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Core;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\View;
+// use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redirect;
@@ -16,12 +15,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\Configs;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
-use App\Models\Common\PageRole;
+// use App\Models\Common\PageRole;
 use App\Models\Common\Permalink;
 use App\Models\Migration\MigrationMapping;
 
 use File;
-use Storage;
+// use Storage;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -116,6 +115,21 @@ class ConnectController extends Controller
         } else {
             // ページID が渡されなかった場合、URL から取得
             $this->page = $this->getCurrentPage();
+        }
+
+        // 下層ページへ自動転送
+        if ($this->page && $this->page->transfer_lower_page_flag) {
+            // メニュー表示ONで、下層ページ一番上
+            $lower_top_page = Page::where('parent_id', $this->page->id)
+                                    ->where('base_display_flag', '1')
+                                    ->orderBy('_lft', 'asc')
+                                    ->first();
+
+            if ($lower_top_page) {
+                // 下層ページにリダイレクトする。
+                // もしpermanent_linkが''の場合、トップページに遷移した。
+                Redirect::to($lower_top_page->permanent_link)->send();
+            }
         }
 
         // ページがあるか判定し、なければ、404 ページを表示する。

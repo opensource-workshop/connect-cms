@@ -85,7 +85,7 @@
                             </button>
                         @endcan
 
-                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" class="ml-2">
+                        <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" class="ml-2" @if ($input->title) title="{{$input->title}}の詳細" @endif>
                             <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
                         </a>
                     </div>
