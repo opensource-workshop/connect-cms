@@ -1399,7 +1399,11 @@ trait MigrationTrait
                 */
             }
             // バルクINSERT
-            DB::table('permalinks')->insert($bulks);
+            $size = 1000; //Prepared statement contains too many placeholders 対策
+            $chunk_bulks = array_chunk($bulks, $size);
+            foreach ($chunk_bulks as $bulk) {
+                DB::table('permalinks')->insert($bulk);
+            }
         }
     }
 
