@@ -215,7 +215,20 @@ class DatabasesPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'databases.id as databases_id', 'databases_frames.id as databases_frames_id', 'databases_name', 'use_search_flag', 'use_select_flag', 'use_sort_flag', 'view_count', 'default_hide', 'view_page_id', 'view_frame_id')
+                 ->select(
+                    'frames.*', 
+                    'databases.id as databases_id', 
+                    'databases_frames.id as databases_frames_id', 
+                    'databases_name', 
+                    'use_search_flag', 
+                    'placeholder_search', 
+                    'use_select_flag', 
+                    'use_sort_flag', 
+                    'view_count', 
+                    'default_hide', 
+                    'view_page_id', 
+                    'view_frame_id'
+                )
                  ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
                  ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
                  ->where('frames.id', $frame_id)
@@ -3319,6 +3332,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_id'      => $database_frame->databases_id,
                 'frames_id'         => $frame_id,
                 'use_search_flag'   => $request->use_search_flag,
+                'placeholder_search' => $request->placeholder_search,
                 'use_select_flag'   => $request->use_select_flag,
                 'use_sort_flag'     => $request->use_sort_flag ? implode(',', $request->use_sort_flag) : null,
                 'default_sort_flag' => $request->default_sort_flag,

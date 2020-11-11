@@ -17,6 +17,7 @@ class DatabasesFrames extends Model
         'databases_id',
         'frames_id',
         'use_search_flag',
+        'placeholder_search',
         'use_select_flag',
         'use_sort_flag',
         'default_sort_flag',

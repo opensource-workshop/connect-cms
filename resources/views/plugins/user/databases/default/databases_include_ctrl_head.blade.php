@@ -29,7 +29,14 @@
     {{-- 検索 --}}
     @if($database_frame && $database_frame->use_search_flag == 1)
     <div class="input-group mb-3">
-        <input type="text" name="search_keyword" class="form-control" value="{{Session::get('search_keyword.'.$frame_id)}}" placeholder="検索はキーワードを入力してください。" title="検索キーワード">
+        <input 
+            type="text" 
+            name="search_keyword" 
+            class="form-control" 
+            value="{{Session::get('search_keyword.'.$frame_id)}}" 
+            placeholder="{{ $database_frame->placeholder_search ? $database_frame->placeholder_search : '検索はキーワードを入力してください。' }}" 
+            title="検索キーワード"
+        >
         <div class="input-group-append">
             <button type="submit" class="btn btn-primary" title="検索">
                 <i class="fas fa-search" role="presentation"></i>
