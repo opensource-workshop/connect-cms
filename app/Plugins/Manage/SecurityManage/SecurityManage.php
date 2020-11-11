@@ -71,7 +71,6 @@ class SecurityManage extends ManagePluginBase
      */
     public function saveLoginPermit($request, $id, $errors = null)
     {
-
         // Config データのログイン拒否設定
         $configs = Configs::updateOrCreate(
             ['name'     => 'login_reject'],
