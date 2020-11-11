@@ -201,4 +201,24 @@ return [
         'uploadCsv'           => ['post'],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | HTMLPurifier Role List
+    |--------------------------------------------------------------------------
+    |
+    | Connect-CMS HTMLPurifier Role List const
+    | この値を初期値。Config テーブルの値を初期値からの設定値として使用する。
+    | Config テーブルの値は文字列型になるため、ここでも値は文字列型にする。
+    | 制限チェック時には、=== '0' でチェックしている。
+    */
+
+    'CC_HTMLPurifier_ROLE_LIST' => [
+
+        'role_article_admin' => '0',
+        'role_arrangement'   => '0',
+        'role_article'       => '0',
+        'role_approval'      => '1',
+        'role_reporter'      => '1',
+        'role_guest'         => '1',
+    ],
 ];

@@ -303,9 +303,11 @@ EOD;
      */
     public function postFile(Request $request)
     {
-
         // ファイルアップロードには、記事の追加、変更の権限が必要
-        if (!$this->isCan('posts.create') || !$this->isCan('posts.update')) {
+        //if (!$this->isCan('posts.create') || !$this->isCan('posts.update')) {
+
+        // ファイルアップロードには、編集者権限が必要
+        if (!$this->isCan('role_reporter')) {
             echo json_encode(array('location' => 'error'));
             return;
         }
