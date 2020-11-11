@@ -93,7 +93,7 @@ class UserPluginBase extends PluginBase
     /**
      *  コンストラクタ
      */
-    function __construct($page = null, $frame = null, $pages = null)
+    public function __construct($page = null, $frame = null, $pages = null)
     {
         // ページの保持
         $this->page = $page;
@@ -741,6 +741,7 @@ class UserPluginBase extends PluginBase
                 $config->set('Attr.EnableID', true);          // id属性を許可する
                 $config->set('Filter.YouTube', true);         // Youtube埋め込みを許可する
                 $config->set('HTML.TargetBlank', true);       // target="_blank" が使えるようにする
+                $config->set('Attr.AllowedFrameTargets', ['_blank']);
                 $config->set('HTML.SafeIframe', true);
                 $config->set('URI.SafeIframeRegexp', '%^(https?:)?//(www\.youtube(?:-nocookie)?\.com/embed/|player\.vimeo\.com/video/)%'); //allow YouTube and Vimeo
 
