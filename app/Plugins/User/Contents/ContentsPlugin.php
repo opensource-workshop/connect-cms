@@ -386,7 +386,7 @@ class ContentsPlugin extends UserPluginBase
         $contents = new Contents;
         $contents->created_id   = Auth::user()->id;
         $contents->bucket_id    = $bucket_id;
-        $contents->content_text = $request->contents;
+        $contents->content_text = $this->clean($request->contents);
 
         // 一時保存(status が 1 になる。)
         if ($status == 1) {
@@ -417,7 +417,7 @@ class ContentsPlugin extends UserPluginBase
 
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $newrow = $oldrow->replicate();
-        $newrow->content_text = $request->contents;
+        $newrow->content_text = $this->clean($request->contents);
 
         // 承認フラグ(要承認の場合はstatus が2 になる。)
         if ($this->isApproval($frame_id)) {

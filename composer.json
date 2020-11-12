@@ -8,6 +8,7 @@
         "php": ">=7.2.0",
         "bensampo/laravel-enum": "1.19",
         "doctrine/dbal": "^2.10",
+        "ezyang/htmlpurifier": "^4.13",
         "fideloper/proxy": "~3.3",
         "kalnoy/nestedset": "4.3.4",
         "laravel/framework": "5.5.*",

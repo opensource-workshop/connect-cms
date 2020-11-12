@@ -34,6 +34,8 @@ class SecurityManage extends ManagePluginBase
         //$role_ckeck_table["loginPermit"]       = array('admin_site');
         $role_ckeck_table["saveLoginPermit"]   = array('admin_site');
         $role_ckeck_table["deleteLoginPermit"] = array('admin_site');
+        $role_ckeck_table["purifier"]          = array('admin_site');
+        $role_ckeck_table["savePurifier"]      = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -69,7 +71,6 @@ class SecurityManage extends ManagePluginBase
      */
     public function saveLoginPermit($request, $id, $errors = null)
     {
-
         // Config データのログイン拒否設定
         $configs = Configs::updateOrCreate(
             ['name'     => 'login_reject'],
@@ -156,5 +157,83 @@ class SecurityManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/security");
+    }
+
+    /**
+     *  HTML記述制限
+     */
+    public function purifier($request, $id)
+    {
+        // 設定されている権限
+        $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');
+
+        // Config テーブルからHTML記述制限の取得
+        // Config テーブルにデータがあれば、配列を上書きする。
+        // 初期状態ではConfig テーブルはなく、cc_role.CC_HTMLPurifier_ROLE_LIST を初期値とするため。
+        $config_purifiers = Configs::where('category', 'html_purifier')->get();
+        foreach ($config_purifiers as $config_purifier) {
+            if (array_key_exists($config_purifier->name, $purifiers)) {
+                $purifiers[$config_purifier->name] = $config_purifier->value;
+            }
+        }
+
+        // ページ管理画面に戻る
+        return view('plugins.manage.security.purifier', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "security",
+            "purifiers"   => $purifiers,
+        ]);
+    }
+
+    /**
+     *  HTML記述制限の保存
+     */
+    public function savePurifier($request, $id)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'confirm_purifier'   => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'confirm_purifier'   => 'XSSに対する注意点',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect('manage/security/purifier/')
+                       ->withErrors($validator)
+                       ->withInput();
+        }
+
+        // デフォルト権限
+        $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');
+
+        // 設定保存
+        $this->savePurifierCategory($request, 'role_article_admin');
+        $this->savePurifierCategory($request, 'role_arrangement');
+        $this->savePurifierCategory($request, 'role_article');
+        $this->savePurifierCategory($request, 'role_approval');
+        $this->savePurifierCategory($request, 'role_reporter');
+        $this->savePurifierCategory($request, 'role_guest');
+
+        return redirect("/manage/security/purifier");
+    }
+
+    /**
+     *  HTML記述制限の保存
+     */
+    private function savePurifierCategory($request, $role_name)
+    {
+        // デフォルト権限
+        $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');
+
+        // デフォルトと異なる設定が送られてきたら保存
+        if ($request->has($role_name)) {
+            $configs = Configs::updateOrCreate(
+                ['name'     => $role_name],
+                ['category' => 'html_purifier',
+                 'value'    => $request->$role_name]
+            );
+        }
+        return;
     }
 }

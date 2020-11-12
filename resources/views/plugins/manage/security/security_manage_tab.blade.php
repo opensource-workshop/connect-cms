@@ -20,6 +20,13 @@
                     <a href="{{url('/manage/security')}}" class="nav-link">ログイン制限</a></li>
                 @endif
                 </li>
+                <li role="presentation" class="nav-item">
+                @if ($function == "purifier")
+                    <span class="nav-link"><span class="active">HTML記述制限</span></span>
+                @else
+                    <a href="{{url('/manage/security/purifier')}}" class="nav-link">HTML記述制限</a></li>
+                @endif
+                </li>
             </ul>
         </div>
     </nav>
