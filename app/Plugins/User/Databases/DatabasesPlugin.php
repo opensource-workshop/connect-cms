@@ -469,6 +469,94 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
+            // カスタムテンプレート用
+            // 項目名|検索区分|値　→　項目名（id）でマージしてor検索
+            if ($request->has('search_options_or') && is_array($request->search_options_or)) {
+                $merge_search_options = [];
+                foreach ($request->search_options_or as $search_option) {
+                    list($colname, $reg_txt, $val) = explode('|', $search_option);
+                    if (count(explode('|', $search_option)) != 3) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    $option_search_column_obj = $columns->where('column_name', $colname);
+                    if (empty($option_search_column_obj)) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    $option_search_column = $option_search_column_obj->first();
+                    if (empty($option_search_column)) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    if (empty($reg_txt) || !in_array($reg_txt, ['ALL', 'PART', 'FRONT', 'REAR', 'GT', 'LT', 'GE', 'LE'])) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    if (empty($val)) {
+                        continue;  // 指定が正しくなければ飛ばす
+                    }
+                    // カラムIDでマージする
+                    $merge_search_options[$option_search_column->id][] = [
+                        'reg_txt' => $reg_txt,
+                        'val' => $val,
+                    ];
+                }
+
+                foreach ($merge_search_options as $col_id => $search_vals) {
+                        // 検索方法
+                        $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
+                            $query->select('databases_inputs_id')
+                            ->from('databases_input_cols')
+                            ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                            ->where('databases_input_cols.databases_columns_id', $col_id);
+
+                            $query->where(function($query) use($search_vals){
+                                foreach ($search_vals as $vals){
+                                    $reg_txt = $vals['reg_txt'];
+                                    $val = $vals['val'];
+                                    if ($reg_txt == 'ALL') {
+                                        $query->orwhere('value', $val);
+                                    } elseif ($reg_txt == 'PART') {
+                                        $query->orwhere('value', 'like', '%' . $val . '%');
+                                    }
+                                }
+                            });
+                        $query->groupBy('databases_inputs_id');
+                    });
+                }
+            }
+
+            // カスタムテンプレート用
+            // 期間検索　［yyyymm(dd)|yyyymm(dd)...］で入力されているデータを検索
+            // 検索対象の項目型は複数年月型（テキスト入力）が推奨だが、期間外データを入力する場合は1行文字列型でも可能
+            if ($request->has('search_term') && is_array($request->search_term)) {
+                if (isset($request->search_term['term_value']) && isset($request->search_term['column_name'])) {
+                    $colname = $request->search_term['column_name'];
+                    $tmp_request_search_term = $request->search_term;
+                    $search_term_column_obj = $columns->where('column_name', $colname);
+                    if (!empty($option_search_column_obj)) {
+                        $search_term_column = $search_term_column_obj->first();
+                        if (!empty($search_term_column)) {
+                            $col_id = $search_term_column->id;
+                            unset($tmp_request_search_term['column_name']);
+                            // datepickerで入力された場合にはyyyy/MMでくるので置換する
+                            $tmp_request_search_term['term_value'] = str_replace( "/", "", $tmp_request_search_term['term_value']);
+                            // テンプレートでsearch_term[XXXX]をセットすることで、ORの値を任意に増やすことができる（*や通年）等期間外のデータ
+                            $search_vals = $tmp_request_search_term;
+                            $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
+                                $query->select('databases_inputs_id')
+                                ->from('databases_input_cols')
+                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                ->where('databases_input_cols.databases_columns_id', $col_id);
+                                $query->where(function($query) use($search_vals){
+                                    foreach ($search_vals as $val){
+                                        $query->orwhere('value', 'like', '%' . $val . '%');
+                                    }
+                                });
+                                $query->groupBy('databases_inputs_id');
+                            });
+                        }
+                    }
+                }
+            }
+
             // 絞り込み指定の追加
             // 絞り込み制御ON、絞り込み指定あり
             if (!empty($databases_frames->use_filter_flag) && !empty($databases_frames->filter_search_columns)) {
@@ -702,6 +790,9 @@ class DatabasesPlugin extends UserPluginBase
 
             // オプション検索
             session(['search_options.'.$frame_id => $request->search_options]);
+
+            // オプション検索OR
+            session(['search_options_or.'.$frame_id => $request->search_options_or]);
 
             // ランダム読み込みのための Seed をセッション中に作っておく
             if (empty(session('sort_seed.'.$frame_id))) {
