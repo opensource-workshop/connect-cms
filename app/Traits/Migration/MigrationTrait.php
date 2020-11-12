@@ -1678,6 +1678,8 @@ trait MigrationTrait
                     }
 
                     // 本文
+                    $faq_tsv_cols[3] = isset($faq_tsv_cols[3]) ? $faq_tsv_cols[3] : '';
+                    $faq_tsv_cols[4] = isset($faq_tsv_cols[4]) ? $faq_tsv_cols[4] : '';
                     $post_text = $this->changeWYSIWYG($faq_tsv_cols[4]);
                     $post_text = $this->addParagraph('faqs', $post_text);
 
