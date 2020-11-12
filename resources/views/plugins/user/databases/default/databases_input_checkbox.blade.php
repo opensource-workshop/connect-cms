@@ -16,10 +16,8 @@
 	    // value 値の取得
 	    $value_obj = (empty($input_cols)) ? null : $input_cols->where('databases_inputs_id', $id)->where('databases_columns_id', $database_obj->id)->first();
 	    $value = '';
-	    $values = array();
 	    if (!empty($value_obj)) {
 	        $value = $value_obj->value;
- 		    $values = explode(',', $value);
 	    }
 
     @endphp
@@ -51,12 +49,11 @@
             }
 
             // 変更時のデータベースの値から
-            if (!empty($values)) {
-
-                foreach($values as $selected_value) {
-                    if ( $selected_value == $select['value'] ) {
-                        $column_checkbox_checked = " checked";
-                    }
+            if (!empty($value)) {
+                // 入力されたデータの中に選択肢が含まれているか否か
+                // 選択肢にカンマが含まれている可能性を考慮
+                if(strpos($value,$select['value']) !== false){
+                    $column_checkbox_checked = " checked";
                 }
             }
             @endphp
