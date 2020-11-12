@@ -24,13 +24,20 @@
             {{-- カラム ループ --}}
                 <dl>
                 @foreach($group_col_columns as $column)
-                    @if ($column->label_hide_flag == '0')
-                        <dt>{{$column->column_name}}</dt>
+                    @if ($column_group_count == 2 && $loop->first)
+                        {{-- 1列目、且つ、一番最初の項目はタイトル項目とする為、強調表示＆表頭の表示なし --}}
+                        <h2>
+                            @include('plugins.user.databases.default.databases_include_detail_value')
+                        </h2>
+                    @else
+                        {{-- 上記以外は通常表示 --}}
+                        @if ($column->label_hide_flag == '0')
+                            <dt>{{$column->column_name}}</dt>
+                        @endif
+                        <dd>
+                            @include('plugins.user.databases.default.databases_include_detail_value')
+                        </dd>
                     @endif
-
-                    <dd>
-                        @include('plugins.user.databases.default.databases_include_detail_value')
-                    </dd>
                 @endforeach
                 </dl>
             </div>
