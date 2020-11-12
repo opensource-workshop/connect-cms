@@ -2080,6 +2080,10 @@ trait MigrationTrait
                                         $database_tsv_col = $upload_mapping->destination_key;
                                     }
                                 }
+                            } elseif ($create_columns[$databases_columns_id_idx]->column_type == 'created' || $create_columns[$databases_columns_id_idx]->column_type == 'updated') {
+                                // 登録日、更新日の場合にはセルデータを作らず返却
+                                $databases_columns_id_idx++;
+                                continue;
                             }
 
                             // セルデータの追加
