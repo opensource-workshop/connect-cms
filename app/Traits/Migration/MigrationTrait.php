@@ -1667,7 +1667,7 @@ trait MigrationTrait
                         continue;
                     }
                     // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
-                    $posted_at_ts = mktime(substr($faq_tsv_cols[2], 8, 2), substr($faq_tsv_cols[2], 10, 2), substr($faq_tsv_cols[2], 12, 2), substr($faq_tsv_cols[2], 4, 2), substr($faq_tsv_cols[2], 6, 2), substr($faq_tsv_cols[2], 0, 4));
+                    $posted_at_ts = mktime((int)substr($faq_tsv_cols[2], 8, 2), (int)substr($faq_tsv_cols[2], 10, 2), (int)substr($faq_tsv_cols[2], 12, 2), (int)substr($faq_tsv_cols[2], 4, 2), (int)substr($faq_tsv_cols[2], 6, 2), (int)substr($faq_tsv_cols[2], 0, 4));
                     $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
 
                     // 記事のカテゴリID
