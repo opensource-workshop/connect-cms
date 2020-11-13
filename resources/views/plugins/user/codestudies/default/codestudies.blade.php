@@ -49,9 +49,9 @@
 @endif
 
 @if ($codestudy->id)
-    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}" method="POST" name="form_codestudies" class="">
+    <form action="{{url('/')}}/plugin/codestudies/savecode/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}" method="POST" name="form_codestudies" class="">
 @else
-    <form action="{{url('/')}}/plugin/codestudies/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" name="form_codestudies" class="">
+    <form action="{{url('/')}}/plugin/codestudies/savecode/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" name="form_codestudies" class="">
 @endif
 
     {{ csrf_field() }}
@@ -144,7 +144,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/codestudies/delete/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}" method="POST">
+                <form action="{{url('/')}}/plugin/codestudies/deletecode/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('プログラムを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
@@ -159,9 +159,9 @@
         <ol>
         @foreach($codestudies as $codestudy)
             @if($codestudy->title)
-                <li><a href="{{URL::to('/')}}/plugin/codestudies/edit/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}">{{$codestudy->title}}</a> [{{$codestudy->study_lang}}]</li>
+                <li><a href="{{URL::to('/')}}/plugin/codestudies/editcode/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}">{{$codestudy->title}}</a> [{{$codestudy->study_lang}}]</li>
             @else
-                <li><a href="{{URL::to('/')}}/plugin/codestudies/edit/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}">無題</a> [{{$codestudy->study_lang}}]</li>
+                <li><a href="{{URL::to('/')}}/plugin/codestudies/editcode/{{$page->id}}/{{$frame_id}}/{{$codestudy->id}}#frame-{{$frame->id}}">無題</a> [{{$codestudy->study_lang}}]</li>
             @endif
         @endforeach
         </ol>
