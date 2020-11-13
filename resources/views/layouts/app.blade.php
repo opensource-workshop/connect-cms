@@ -130,7 +130,7 @@ if(isset($configs_array['body_optional_class'])){
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
-@if (Auth::check() || (isset($configs) && ($configs['base_header_hidden'] != '1')))
+@if (Auth::check() || (isset($configs) && isset($configs['base_header_hidden']) && ($configs['base_header_hidden'] != '1')))
 <nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">

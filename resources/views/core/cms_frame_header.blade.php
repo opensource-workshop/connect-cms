@@ -57,7 +57,11 @@
 
             {{-- プラグイン名 --}}
             <span class="badge badge-secondary">
+                @if (Plugins::query()->where('plugin_name', $frame->plugin_name)->first())
                 {{ Plugins::query()->where('plugin_name', $frame->plugin_name)->first()->plugin_name_full }}
+                @else
+                {{$frame->plugin_name}}
+                @endif
             </span>
 
             {{-- 上移動。POSTのためのフォーム --}}
