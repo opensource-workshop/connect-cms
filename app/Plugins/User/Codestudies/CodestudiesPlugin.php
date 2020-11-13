@@ -37,7 +37,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  実行関数チェック
      */
-    var $run_check_msgs = null;
+    private $run_check_msgs = null;
 
     /* コアから呼び出す関数 */
 
@@ -65,6 +65,27 @@ class CodestudiesPlugin extends UserPluginBase
         // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
         $role_ckeck_table = array();
         return $role_ckeck_table;
+    }
+
+    /**
+     *  使用言語のバージョン取得
+     */
+    private function getLangVersion()
+    {
+        $versions = array();
+        // PHP
+        $versions['PHP'] = phpversion();
+        // Java
+        $cmd = 'javac -encoding UTF-8 -version';
+        exec("$cmd 2>&1", $result);
+        // バージョン取得ががうまくいった場合($result が空)
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $versions['Java'] = mb_convert_encoding(implode('<br />', $result), "UTF-8", "sjis-win");
+        } else {
+            $versions['Java'] = implode('<br />', $result);
+        }
+
+        return $versions;
     }
 
     /**
@@ -120,6 +141,7 @@ class CodestudiesPlugin extends UserPluginBase
             'codestudies' => $codestudies,
             'codestudy'   => $codestudy,
             'errors'      => $errors,
+            'versions'    => $this->getLangVersion(),
             ]
         )->withInput($request->all);
     }
@@ -164,6 +186,7 @@ class CodestudiesPlugin extends UserPluginBase
             'error_flag'     => $error_flag,
             'errors'         => $errors,
             'run_check_msgs' => $this->run_check_msgs,
+            'versions'       => $this->getLangVersion(),
             ]
         )->withInput($request->all);
     }
@@ -171,7 +194,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  保存処理
      */
-    private function save_impl($request, $page_id, $frame_id, $codestudy_id)
+    private function saveImpl($request, $page_id, $frame_id, $codestudy_id)
     {
         // id があれば更新、なければ登録
         if (empty($codestudy_id)) {
@@ -219,7 +242,7 @@ class CodestudiesPlugin extends UserPluginBase
         }
 
         // データ保存
-        $codestudy_id = $this->save_impl($request, $page_id, $frame_id, $codestudy_id);
+        $codestudy_id = $this->saveImpl($request, $page_id, $frame_id, $codestudy_id);
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->edit($request, $page_id, $frame_id, $codestudy_id);
@@ -228,7 +251,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  実行可否の判定
      */
-    private function run_check($codestudy)
+    private function runCheck($codestudy)
     {
         // 禁止関数
         $deny_method = array();
@@ -312,7 +335,7 @@ class CodestudiesPlugin extends UserPluginBase
         }
 
         // データ保存
-        $codestudy_id = $this->save_impl($request, $page_id, $frame_id, $codestudy_id);
+        $codestudy_id = $this->saveImpl($request, $page_id, $frame_id, $codestudy_id);
 
         // コード取得
         $codestudy = Codestudies::where('id', $codestudy_id)->first();
@@ -333,10 +356,10 @@ class CodestudiesPlugin extends UserPluginBase
 
         // 実行可否の判定
         $error_flag = null;
-        //$error_msg = $this->run_check($codestudy);
+        //$error_msg = $this->runCheck($codestudy);
         $error_msg = array();
 
-        $this->run_check($codestudy);
+        $this->runCheck($codestudy);
 
         //if ($error_msg) {
         if ($this->run_check_msgs) {

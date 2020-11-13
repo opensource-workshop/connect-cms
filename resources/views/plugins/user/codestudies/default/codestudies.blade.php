@@ -37,7 +37,7 @@
 @if ($error_flag == 1)
 <div class="card border-danger">
 @else
-<div class="card border-primary">
+<div class="card border-primary mb-3">
 @endif
     <div class="card-header">実行結果</div>
     <div class="card-body">
@@ -67,11 +67,25 @@
 
     <div class="form-group">
         <label class="control-label">コード <label class="badge badge-danger">必須</label></label><br />
-        <textarea class="form-control" rows="10" name="code_text" style="font-family:'ＭＳ ゴシック', 'MS Gothic', 'Osaka－等幅', Osaka-mono, monospace;">{!!old('code_text', $codestudy->code_text)!!}</textarea>
+        <textarea id="txt-editor" class="form-control" rows="10" name="code_text" style="font-family:'ＭＳ ゴシック', 'MS Gothic', 'Osaka－等幅', Osaka-mono, monospace;">{!!old('code_text', $codestudy->code_text)!!}</textarea>
         @if ($errors && $errors->has('code_text')) <div class="text-danger">{{$errors->first('code_text')}}</div> @endif
     </div>
 
-    <div class="form-group">
+<link rel="stylesheet" href="{{url('/')}}/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="{{url('/')}}/codemirror/lib/codemirror_cc.css">
+<script src="{{url('/')}}/codemirror/lib/codemirror.js"></script>
+<script src="{{url('/')}}/codemirror/mode/javascript/javascript.js"></script>
+
+<script type="text/javascript">
+    var editor = CodeMirror.fromTextArea(document.getElementById("txt-editor"),
+    {
+        //mode:"text/x-php",   // 言語を設定する
+        lineNumbers: true,   // 行番号を表示する
+        lineWrapping: true,  // 行を折り返す
+    });
+</script>
+
+    <div class="container form-group row mb-2">
         <label class="control-label">言語 <label class="badge badge-danger">必須</span></label><br />
         <div class="card">
             <div class="card-body p-2">
@@ -88,6 +102,22 @@
             </div>
         </div>
         @if ($errors && $errors->has('study_lang')) <div class="text-danger">{{$errors->first('study_lang')}}</div> @endif
+
+        <a data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+            各言語のバージョン表示
+        </a>
+    </div>
+
+
+    <div class="collapse mb-3" id="collapseExample">
+        <div class="p-2 CodestudyLanguageVersionFrame">
+        @foreach($versions as $language => $version)
+            <span class="badge badge-info">{{$language}}</span><br />
+            <div class="CodestudyLanguageVersion p-2 pl-3">
+            {!!$version!!}<br />
+            </div>
+        @endforeach
+       </div>
     </div>
 
     <div class="form-group">
