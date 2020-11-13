@@ -1548,8 +1548,30 @@ trait MigrationTrait
                     $post_text2 = $this->changeWYSIWYG($blog_tsv_cols[6]);
                     $post_text2 = $this->addParagraph('blogs', $post_text2);
 
+                    // 続きを読む
+                    $read_more_flag = 0;
+                    $read_more_button = null;
+                    $close_more_button = null;
+                    if (!empty($post_text2)) {
+                        $read_more_flag = 1;
+                        $read_more_button = '続きを読む';
+                        $close_more_button = '閉じる';
+                    }
+
                     // ブログ記事テーブル追加
-                    $blogs_posts = BlogsPosts::create(['blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[4], 'post_text' => $post_text, 'post_text2' => $post_text2, 'categories_id' => $categories_id, 'important' => null, 'status' => 0, 'posted_at' => $posted_at]);
+                    $blogs_posts = BlogsPosts::create([
+                        'blogs_id' => $blog->id, 
+                        'post_title' => $blog_tsv_cols[4], 
+                        'post_text' => $post_text, 
+                        'post_text2' => $post_text2, 
+                        'read_more_flag' => $read_more_flag,
+                        'read_more_button' => $read_more_button,
+                        'close_more_button' => $close_more_button,
+                        'categories_id' => $categories_id, 
+                        'important' => null, 
+                        'status' => 0, 
+                        'posted_at' => $posted_at
+                    ]);
 
                     // contents_id を初回はid と同じものを入れて、更新
                     $blogs_posts->contents_id = $blogs_posts->id;
@@ -6368,7 +6390,7 @@ trait MigrationTrait
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
 
         // HTML からa タグの 相対パスリンクを絶対パスに修正
-        $content = $this->changeFullPath($content, $nc2_page);
+        //$content = $this->changeFullPath($content, $nc2_page);
 
 
         // HTML content の保存
