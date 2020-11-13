@@ -42,11 +42,7 @@
     <div class="card-header">実行結果</div>
     <div class="card-body">
         @foreach ($result as $result_row)
-            @if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
-                {!!mb_convert_encoding($result_row, 'UTF-8', 'SJIS-win')!!}<br />
-            @else
-                {!!$result_row!!}<br />
-            @endif
+            {!!$result_row!!}<br />
         @endforeach
     </div>
 </div>

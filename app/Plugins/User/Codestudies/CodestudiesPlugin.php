@@ -389,7 +389,7 @@ class CodestudiesPlugin extends UserPluginBase
                 // コンパイルがうまくいった場合($result が空)
                 if (empty($result)) {
                     // 実行
-                    $cmd  = 'java -classpath ' . storage_path('app/codestudy/' . $codestudy->created_id . '/' . $codestudy_id);
+                    $cmd  = 'java -Dfile.encoding=UTF-8 -classpath ' . storage_path('app/codestudy/' . $codestudy->created_id . '/' . $codestudy_id);
                     $cmd .= ' ' . $class_name;
                     exec("$cmd 2>&1", $result);
                     //Log::debug($cmd);
