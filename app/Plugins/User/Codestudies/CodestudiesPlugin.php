@@ -48,8 +48,8 @@ class CodestudiesPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
-        $functions['post'] = ['run'];
+        $functions['get']  = ['editcode'];
+        $functions['post'] = ['savecode', 'run', 'deletecode'];
         return $functions;
     }
 
@@ -64,6 +64,10 @@ class CodestudiesPlugin extends UserPluginBase
         // 権限チェックテーブル
         // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
         $role_ckeck_table = array();
+        $role_ckeck_table["editcode"]   = array('role_reporter');
+        $role_ckeck_table["savecode"]   = array('role_reporter');
+        $role_ckeck_table["run"]        = array('role_reporter');
+        $role_ckeck_table["deletecode"] = array('role_reporter');
         return $role_ckeck_table;
     }
 
@@ -149,7 +153,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      * 編集画面
      */
-    public function edit($request, $page_id, $frame_id, $codestudy_id = null, $result = null, $error_flag = null, $errors = null)
+    public function editcode($request, $page_id, $frame_id, $codestudy_id = null, $result = null, $error_flag = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
         $request->flash();
@@ -219,7 +223,7 @@ class CodestudiesPlugin extends UserPluginBase
     /**
      *  保存画面処理
      */
-    public function save($request, $page_id, $frame_id, $codestudy_id)
+    public function savecode($request, $page_id, $frame_id, $codestudy_id)
     {
 
         // 項目のエラーチェック
@@ -235,7 +239,7 @@ class CodestudiesPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             if ($codestudy_id) {
-                return $this->edit($request, $page_id, $frame_id, $codestudy_id, null, null, $validator->errors());
+                return $this->editcode($request, $page_id, $frame_id, $codestudy_id, null, null, $validator->errors());
             } else {
                 return $this->index($request, $page_id, $frame_id, $validator->errors());
             }
@@ -245,7 +249,7 @@ class CodestudiesPlugin extends UserPluginBase
         $codestudy_id = $this->saveImpl($request, $page_id, $frame_id, $codestudy_id);
 
         // 登録後は表示用の初期処理を呼ぶ。
-        return $this->edit($request, $page_id, $frame_id, $codestudy_id);
+        return $this->editcode($request, $page_id, $frame_id, $codestudy_id);
     }
 
     /**
@@ -311,9 +315,9 @@ class CodestudiesPlugin extends UserPluginBase
     public function run($request, $page_id, $frame_id, $codestudy_id)
     {
         // 権限チェック（run 関数は標準チェックにないので、独自チェック）
-        if ($this->can('posts.update', $this->getPost($codestudy_id))) {
-            return $this->view_error(403);
-        }
+        //if ($this->can('posts.update', $this->getPost($codestudy_id))) {
+        //    return $this->view_error(403);
+        //}
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -328,7 +332,7 @@ class CodestudiesPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             if ($codestudy_id) {
-                return $this->edit($request, $page_id, $frame_id, $codestudy_id, null, null, $validator->errors());
+                return $this->editcode($request, $page_id, $frame_id, $codestudy_id, null, null, $validator->errors());
             } else {
                 return $this->index($request, $page_id, $frame_id, $validator->errors());
             }
@@ -405,18 +409,18 @@ class CodestudiesPlugin extends UserPluginBase
         }
 
         // 登録後は表示用の初期処理を呼ぶ。
-        return $this->edit($request, $page_id, $frame_id, $codestudy_id, $result, $error_flag);
+        return $this->editcode($request, $page_id, $frame_id, $codestudy_id, $result, $error_flag);
     }
 
     /**
      *  削除処理
      */
-    public function delete($request, $page_id, $frame_id, $codestudy_id)
+    public function deletecode($request, $page_id, $frame_id, $codestudy_id)
     {
         // id がある場合、データを削除
         if ($codestudy_id) {
             // データを削除する。
-            Codestudies::delete($codestudy_id);
+            Codestudies::where('id', $codestudy_id)->delete();
         }
         // 削除後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
