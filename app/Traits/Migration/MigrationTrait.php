@@ -1163,6 +1163,13 @@ trait MigrationTrait
                     $this->putError(3, 'ログインIDとパスワードが同じ。', "userid = " . $user_item['userid'] . " name = " . $user_item['name']);
                 }
 
+                // パスワード変更
+                $nc2_override_pass = $this->getMigrationConfig('users', 'nc2_export_login_users_overridepass');
+                if (!empty($nc2_override_pass) && isset($nc2_override_pass[$user_item['userid']])) {
+                    $user_item['password'] = $nc2_override_pass[$user_item['userid']];
+                    $this->putError(3, 'パスワードを変更しました', "userid = " . $user_item['userid'] );
+                }
+
                 // ユーザがあるかの確認
                 if (empty($user)) {
                     // ユーザテーブルがなければ、追加
