@@ -527,19 +527,75 @@ class DatabasesPlugin extends UserPluginBase
             // 期間検索　［yyyymm(dd)|yyyymm(dd)...］で入力されているデータを検索
             // 検索対象の項目型は複数年月型（テキスト入力）が推奨だが、期間外データを入力する場合は1行文字列型でも可能
             if ($request->has('search_term') && is_array($request->search_term)) {
-                if (isset($request->search_term['term_value']) && isset($request->search_term['column_name'])) {
+                if (isset($request->search_term['column_name'])) {
                     $colname = $request->search_term['column_name'];
                     $tmp_request_search_term = $request->search_term;
                     $search_term_column_obj = $columns->where('column_name', $colname);
-                    if (!empty($option_search_column_obj)) {
+                    if (!empty($search_term_column_obj)) {
                         $search_term_column = $search_term_column_obj->first();
                         if (!empty($search_term_column)) {
                             $col_id = $search_term_column->id;
                             unset($tmp_request_search_term['column_name']);
+                            $term_month = 12;
+                            if (isset($request->search_term['term_month'])) {
+                                $term_month = (int)$request->search_term['term_month'];
+                                unset($tmp_request_search_term['term_month']);
+                            }
                             // datepickerで入力された場合にはyyyy/MMでくるので置換する
-                            $tmp_request_search_term['term_value'] = str_replace( "/", "", $tmp_request_search_term['term_value']);
+                            $search_vals = [];
+                            $term_value_from = "";
+                            $term_value_to = "";
+                            foreach($tmp_request_search_term as $key => $val){
+                                $search_vals[$key] = str_replace( "/", "", $val);
+                                if ($key == "term_value_from"){
+                                    $term_value_from = $val;
+                                }
+                                if ($key == "term_value_to"){
+                                    $term_value_to = $val;
+                                }
+                            }
+                            if(!empty($term_value_from) && empty($term_value_to)) {
+                                //検索前が入力　後が未入力
+                                $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
+                                for($i = 0; $i < $term_month; $i++){
+                                    // $term_value_to に12ヶ月分入れる
+                                    $month = date("Ym",strtotime($target_day . "+$i month"));
+                                    $search_vals["term_value_to_".$i] = $month;
+                                    unset($search_vals["term_value_from"]);
+                                    unset($search_vals["term_value_to"]);
+                                }
+                            } elseif (empty($term_value_from) && !empty($term_value_to)) {
+                                //検索前が未入力　後が入力
+                                $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
+                                for($i = 0; $i < $term_month; $i++){
+                                    // $term_value_from に前12ヶ月分入れる
+                                            $month = date("Ym",strtotime($target_day . "-$i month"));
+                                    $search_vals["term_value_from_".$i] = $month;
+                                    unset($search_vals["term_value_from"]);
+                                    unset($search_vals["term_value_to"]);
+                                }
+                            } elseif (!empty($term_value_from) && !empty($term_value_to)) {
+                                //検索前入力、後が入力
+                                $strtime_term_value_from = strtotime($term_value_from. "/01");
+                                $strtime_term_value_to = strtotime($term_value_to. "/01");
+                                // FROM TO が逆の場合は入れ替える
+                                if ($strtime_term_value_from > $strtime_term_value_to) {
+                                    $tmp_strtime_term_value_from = $strtime_term_value_from;
+                                    $tmp_strtime_term_value_to = $strtime_term_value_to;
+                                    $strtime_term_value_to = $tmp_strtime_term_value_from;
+                                    $strtime_term_value_from = $tmp_strtime_term_value_to;
+                                }
+                                $i = 0;
+                                unset($search_vals["term_value_from"]);
+                                unset($search_vals["term_value_to"]);
+                                $search_vals["term_value_".$i] = date("Ym", $strtime_term_value_from);
+                                while (($strtime_term_value_from = strtotime("+1 MONTH", $strtime_term_value_from)) <= $strtime_term_value_to) {
+                                    $i++;
+                                    $search_vals["term_value_".$i] = date("Ym", $strtime_term_value_from);
+                                }
+                            }
+                            
                             // テンプレートでsearch_term[XXXX]をセットすることで、ORの値を任意に増やすことができる（*や通年）等期間外のデータ
-                            $search_vals = $tmp_request_search_term;
                             $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
                                 $query->select('databases_inputs_id')
                                 ->from('databases_input_cols')
