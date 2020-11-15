@@ -825,10 +825,14 @@ trait MigrationTrait
                 continue;
             }
             foreach ($hrefs as $href) {
-                // 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
-                if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
-                    // NC2 ブロックID取得
-                    $nc2_block_id = mb_substr($href, mb_strripos($href, '#_') + 2);
+                // horiguchi 修正
+                //// 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
+                //if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
+                //    // NC2 ブロックID取得
+                //    $nc2_block_id = mb_substr($href, mb_strripos($href, '#_') + 2);
+                // #_が含まれているhrefを取得に変更 href="/hoge/fuga/#_123" に対応できないため
+                if (preg_match('/#_(.*?)$/', $href, $m)) {
+                    $nc2_block_id = $m[1];
                     // Connect-CMS フレームID
                     $map_frame = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $nc2_block_id)->first();
                     if (!empty($map_frame)) {
