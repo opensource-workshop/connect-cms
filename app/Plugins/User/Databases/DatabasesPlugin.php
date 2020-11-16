@@ -218,19 +218,19 @@ class DatabasesPlugin extends UserPluginBase
         // Frame データ
         $frame = DB::table('frames')
                  ->select(
-                    'frames.*', 
-                    'databases.id as databases_id', 
-                    'databases_frames.id as databases_frames_id', 
-                    'databases_name', 
-                    'use_search_flag', 
-                    'placeholder_search', 
-                    'use_select_flag', 
-                    'use_sort_flag', 
-                    'view_count', 
-                    'default_hide', 
-                    'view_page_id', 
-                    'view_frame_id'
-                )
+                     'frames.*',
+                     'databases.id as databases_id',
+                     'databases_frames.id as databases_frames_id',
+                     'databases_name',
+                     'use_search_flag',
+                     'placeholder_search',
+                     'use_select_flag',
+                     'use_sort_flag',
+                     'view_count',
+                     'default_hide',
+                     'view_page_id',
+                     'view_frame_id'
+                 )
                  ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
                  ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
                  ->where('frames.id', $frame_id)
@@ -502,24 +502,24 @@ class DatabasesPlugin extends UserPluginBase
                 }
 
                 foreach ($merge_search_options as $col_id => $search_vals) {
-                        // 検索方法
-                        $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
-                            $query->select('databases_inputs_id')
-                            ->from('databases_input_cols')
-                            ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                            ->where('databases_input_cols.databases_columns_id', $col_id);
+                    // 検索方法
+                    $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
+                        $query->select('databases_inputs_id')
+                        ->from('databases_input_cols')
+                        ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                        ->where('databases_input_cols.databases_columns_id', $col_id);
 
-                            $query->where(function($query) use($search_vals){
-                                foreach ($search_vals as $vals){
-                                    $reg_txt = $vals['reg_txt'];
-                                    $val = $vals['val'];
-                                    if ($reg_txt == 'ALL') {
-                                        $query->orwhere('value', $val);
-                                    } elseif ($reg_txt == 'PART') {
-                                        $query->orwhere('value', 'like', '%' . $val . '%');
-                                    }
+                        $query->where(function ($query) use ($search_vals) {
+                            foreach ($search_vals as $vals) {
+                                $reg_txt = $vals['reg_txt'];
+                                $val = $vals['val'];
+                                if ($reg_txt == 'ALL') {
+                                    $query->orwhere('value', $val);
+                                } elseif ($reg_txt == 'PART') {
+                                    $query->orwhere('value', 'like', '%' . $val . '%');
                                 }
-                            });
+                            }
+                        });
                         $query->groupBy('databases_inputs_id');
                     });
                 }
@@ -547,21 +547,21 @@ class DatabasesPlugin extends UserPluginBase
                             $search_vals = [];
                             $term_value_from = "";
                             $term_value_to = "";
-                            foreach($tmp_request_search_term as $key => $val){
-                                $search_vals[$key] = str_replace( "/", "", $val);
-                                if ($key == "term_value_from"){
+                            foreach ($tmp_request_search_term as $key => $val) {
+                                $search_vals[$key] = str_replace("/", "", $val);
+                                if ($key == "term_value_from") {
                                     $term_value_from = $val;
                                 }
-                                if ($key == "term_value_to"){
+                                if ($key == "term_value_to") {
                                     $term_value_to = $val;
                                 }
                             }
-                            if(!empty($term_value_from) && empty($term_value_to)) {
+                            if (!empty($term_value_from) && empty($term_value_to)) {
                                 //検索前が入力　後が未入力
                                 $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
-                                for($i = 0; $i < $term_month; $i++){
+                                for ($i = 0; $i < $term_month; $i++) {
                                     // $term_value_to に12ヶ月分入れる
-                                    $month = date("Ym",strtotime($target_day . "+$i month"));
+                                    $month = date("Ym", strtotime($target_day . "+$i month"));
                                     $search_vals["term_value_to_".$i] = $month;
                                     unset($search_vals["term_value_from"]);
                                     unset($search_vals["term_value_to"]);
@@ -569,9 +569,9 @@ class DatabasesPlugin extends UserPluginBase
                             } elseif (empty($term_value_from) && !empty($term_value_to)) {
                                 //検索前が未入力　後が入力
                                 $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
-                                for($i = 0; $i < $term_month; $i++){
+                                for ($i = 0; $i < $term_month; $i++) {
                                     // $term_value_from に前12ヶ月分入れる
-                                            $month = date("Ym",strtotime($target_day . "-$i month"));
+                                            $month = date("Ym", strtotime($target_day . "-$i month"));
                                     $search_vals["term_value_from_".$i] = $month;
                                     unset($search_vals["term_value_from"]);
                                     unset($search_vals["term_value_to"]);
@@ -596,15 +596,15 @@ class DatabasesPlugin extends UserPluginBase
                                     $search_vals["term_value_".$i] = date("Ym", $strtime_term_value_from);
                                 }
                             }
-                            
+
                             // テンプレートでsearch_term[XXXX]をセットすることで、ORの値を任意に増やすことができる（*や通年）等期間外のデータ
                             $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
                                 $query->select('databases_inputs_id')
                                 ->from('databases_input_cols')
                                 ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                 ->where('databases_input_cols.databases_columns_id', $col_id);
-                                $query->where(function($query) use($search_vals){
-                                    foreach ($search_vals as $val){
+                                $query->where(function ($query) use ($search_vals) {
+                                    foreach ($search_vals as $val) {
                                         $query->orwhere('value', 'like', '%' . $val . '%');
                                     }
                                 });
