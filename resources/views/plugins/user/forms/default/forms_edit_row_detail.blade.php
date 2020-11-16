@@ -164,7 +164,10 @@
                             <td>
                                 {{-- 選択肢名 --}}
                                 <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
-                                <small class="text-muted">※ 選択肢が１つの場合、選択状態で初期表示します。</small>
+                                <small class="text-muted">
+                                    ※ 選択肢が１つの場合、選択状態で初期表示します。<br>
+                                    ※ 選択肢名に | を含める事はできません<br>
+                                </small>
                             </td>
                             <td class="text-center">
                                 {{-- ＋ボタン --}}
