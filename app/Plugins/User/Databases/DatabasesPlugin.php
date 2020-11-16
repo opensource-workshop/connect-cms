@@ -54,6 +54,8 @@ use App\Utilities\String\StringUtils;
  */
 class DatabasesPlugin extends UserPluginBase
 {
+    const CHECKBOX_SEPARATOR = '|';
+
     /* オブジェクト変数 */
 
     /* コアから呼び出す関数 */
@@ -1384,7 +1386,7 @@ class DatabasesPlugin extends UserPluginBase
 
             $value = "";
             if (is_array($request->databases_columns_value[$databases_column->id])) {
-                $value = implode(',', $request->databases_columns_value[$databases_column->id]);
+                $value = implode(self::CHECKBOX_SEPARATOR, $request->databases_columns_value[$databases_column->id]);
             } else {
                 $value = $request->databases_columns_value[$databases_column->id];
             }
@@ -2332,10 +2334,14 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function addSelect($request, $page_id, $frame_id)
     {
-        // エラーチェック
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック  regex（|を含まない）
         $validator = Validator::make($request->all(), [
-            'select_name'  => ['required'],
-        ]);
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
         $validator->setAttributeNames([
             'select_name'  => '選択肢名',
         ]);
@@ -2401,10 +2407,14 @@ class DatabasesPlugin extends UserPluginBase
             "select_name" => $request->$str_select_name,
         ]);
 
-        // エラーチェック
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック regex（|を含まない）
         $validator = Validator::make($request->all(), [
-            'select_name'  => ['required'],
-        ]);
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
         $validator->setAttributeNames([
             'select_name'  => '選択肢名',
         ]);
@@ -3308,7 +3318,7 @@ class DatabasesPlugin extends UserPluginBase
                         // 複数選択型
                         if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
                             // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
-                            $csv_column = explode(',', $csv_column);
+                            $csv_column = explode(self::CHECKBOX_SEPARATOR, $csv_column);
                             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
                             $csv_column = StringUtils::trimInput($csv_column);
                             // Log::debug(var_export($csv_column, true));
@@ -3596,7 +3606,6 @@ class DatabasesPlugin extends UserPluginBase
             //
             // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
             //
-            // [TODO] status Enum作成したほうがよさそう。コードの意味の全体が把握できないため
             $query->Where($table_name . '.status', '=', \StatusType::active)
                     ->orWhere($table_name . '.status', '=', \StatusType::approval_pending);
         } elseif ($this->isCan('role_reporter')) {
