@@ -4253,7 +4253,15 @@ trait MigrationTrait
                 if ($nc2_sort_page->parent_id > 1) {
                     // マッピングテーブルから親のページのディレクトリを探す
                     $parent_page_mapping = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $nc2_sort_page->parent_id)->first();
-                    if (!empty($parent_page_mapping)) {
+                    //1ルームのみの移行の場合を考慮
+                    $parent_room_flg = true;
+                    $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+                    if(count($room_ids) == 1 && isset($room_ids[0])){
+                        if($nc2_sort_page->parent_id == $room_ids[0]){
+                            $parent_room_flg = false;
+                        }
+                    }
+                    if (!empty($parent_page_mapping) && $parent_room_flg) {
                         $page_ini .= "parent_page_dir = \"" . $parent_page_mapping->destination_key . "\"\n";
                     }
                 }
