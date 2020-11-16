@@ -209,6 +209,7 @@
                                     {{-- 選択肢名 --}}
                                     <td>
                                         <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
+                                        <small class="text-muted">※ 選択肢名に | を含める事はできません。</small>
                                     </td>
 
                                     {{-- ＋ボタン --}}
