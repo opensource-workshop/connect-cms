@@ -4,6 +4,7 @@ namespace App\Plugins\User;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
@@ -736,6 +737,11 @@ class UserPluginBase extends PluginBase
             if (empty($this->purifier)) {
                 // HTMLPurifierを設定するためのクラスを生成する
                 $config = HTMLPurifier_Config::createDefault();
+
+                if (!Storage::exists('tmp/htmlpurifier')) {
+                    Storage::makeDirectory('tmp/htmlpurifier');
+                }
+                $config->set('Cache.SerializerPath', storage_path('app/tmp/htmlpurifier'));
 
                 $config->set('Attr.AllowedClasses', array()); // class指定を許可する
                 $config->set('Attr.EnableID', true);          // id属性を許可する
