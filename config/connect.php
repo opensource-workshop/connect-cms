@@ -60,4 +60,10 @@ return [
 
     // OSWS 翻訳サービス使用の有無
     'OSWS_TRANSLATE_AGREEMENT' => env('OSWS_TRANSLATE_AGREEMENT', false),
+
+    // Cache-Control
+    'CACHE_CONTROL' => env('CACHE_CONTROL', 'no-store'),
+
+    // Expires
+    'EXPIRES' => env('EXPIRES', 'Thu, 01 Dec 1994 16:00:00 GMT'),
 ];
