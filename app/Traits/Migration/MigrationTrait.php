@@ -2218,6 +2218,17 @@ trait MigrationTrait
             }
             $bucket = Buckets::create(['bucket_name' => $form_name, 'plugin_name' => 'forms']);
 
+            // メールフォーマットの置換処理
+            $mail_format = str_replace('\n', "\n", $form_ini['form_base']['mail_format']);
+            // 登録日時、ルームの出力は未実装機能
+            $replace_tags = [
+                '{X-SITE_NAME}'=>'[[site_name]]',
+                '{X-ROOM}'=>'',
+                '{X-REGISTRATION_NAME}'=>'[[form_name]]',
+                '{X-TO_DATE}'=>'',
+                '{X-DATA}'=>'[[body]]',
+            ];
+            $mail_format = str_replace(array_keys( $replace_tags), array_values( $replace_tags), $mail_format);
             $form = Forms::create([
                 'bucket_id'           => $bucket->id,
                 'forms_name'          => $form_name,
@@ -2225,7 +2236,7 @@ trait MigrationTrait
                 'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
                 'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],
                 'mail_subject'        => $form_ini['form_base']['mail_subject'],
-                'mail_format'         => str_replace('\n', "\n", $form_ini['form_base']['mail_format']),
+                'mail_format'         => $mail_format,
                 'data_save_flag'      => $form_ini['form_base']['data_save_flag'],
                 'after_message'       => str_replace('\n', "\n", $form_ini['form_base']['after_message']),
                 'numbering_use_flag'  => $form_ini['form_base']['numbering_use_flag'],
