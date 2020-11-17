@@ -2225,7 +2225,7 @@ trait MigrationTrait
                 '{X-SITE_NAME}'=>'[[site_name]]',
                 '{X-ROOM}'=>'',
                 '{X-REGISTRATION_NAME}'=>'[[form_name]]',
-                '{X-TO_DATE}'=>'',
+                '{X-TO_DATE}'=>'[[to_datetime]]',
                 '{X-DATA}'=>'[[body]]',
             ];
             $mail_format = str_replace(array_keys( $replace_tags), array_values( $replace_tags), $mail_format);
