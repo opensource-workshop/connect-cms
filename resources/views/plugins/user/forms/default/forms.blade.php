@@ -24,15 +24,15 @@
 
         @if (isset($is_template_label_sm_4))
             {{-- label-sm-4テンプレート --}}
-            <label class="col-sm-4 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</label> @endif</label>
+            <label class="col-sm-4 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</label> @endif</label>
 
         @elseif (isset($is_template_label_sm_6))
             {{-- label-sm-6テンプレート --}}
-            <label class="col-sm-6 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif</label>
+            <label class="col-sm-6 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif</label>
 
         @else
             {{-- defaultテンプレート --}}
-            <label class="col-sm-2 control-label">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif</label>
+            <label class="col-sm-2 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif</label>
         @endif
 
         @switch($form_column->column_type)
@@ -45,16 +45,16 @@
                 }
             @endphp
             <div class="col-sm pr-0">
-            <div class="container-fluid row" style="padding: 0;">
+                <div class="container-fluid row p-0">
             @foreach($form_column->group as $group_row)
 
                 {{-- 項目名 --}}
                 @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
                     <div class="col-sm-{{$col_count}}" style="padding-left: 0px;">
-                    <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
+                    <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;" for="column-{{$group_row->id}}-{{$frame_id}}">{{$group_row->column_name}}</label>
                 @else
                     <div class="col-sm-{{$col_count}} pr-0">
-                    <label class="control-label">{{$group_row->column_name}}</label>
+                    <label class="control-label" for="column-{{$group_row->id}}-{{$frame_id}}">{{$group_row->column_name}}</label>
                 @endif
 
                 {{-- 必須 --}}
@@ -72,7 +72,7 @@
                 @endif
 
                 {{-- 項目 ※まとめ設定行 --}}
-                @include('plugins.user.forms.default.forms_input_' . $group_row->column_type,['form_obj' => $group_row])
+                @include('plugins.user.forms.default.forms_input_' . $group_row->column_type, ['form_obj' => $group_row, 'label_id' => 'column-'.$group_row->id.'-'.$frame_id])
                 <div class="small {{ $group_row->caption_color }}">{!! nl2br($group_row->caption) !!}</div>
                     </div>
             @endforeach
@@ -83,7 +83,7 @@
         {{-- 項目 ※まとめ未設定行 --}}
         @default
             <div class="col-sm">
-                @include('plugins.user.forms.default.forms_input_' . $form_column->column_type,['form_obj' => $form_column])
+                @include('plugins.user.forms.default.forms_input_' . $form_column->column_type, ['form_obj' => $form_column, 'label_id' => 'column-'.$form_column->id.'-'.$frame_id])
                 <div class="small {{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
             </div>
         @endswitch

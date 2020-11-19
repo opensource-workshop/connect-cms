@@ -29,6 +29,7 @@
             class="form-control datetimepicker-input" 
             data-target="#{{ $form_obj->id }}"
             placeholder="{{ $form_obj->place_holder }}"
+            id="{{$label_id}}"
         >
         <div class="input-group-append" data-target="#{{ $form_obj->id }}" data-toggle="datetimepicker">
             <div class="input-group-text"><i class="fa fa-calendar"></i></div>

@@ -54,7 +54,11 @@
         });
     });
 </script>
+
+<fieldset>
+<legend class="sr-only">{{$form_obj->column_name}}</legend>
 <div class="row">
+
     <div class="col-sm-5">
         {{-- 時間From --}}
         <div class="input-group date" id="{{ $form_obj->id }}_from" data-target-input="nearest">
@@ -64,6 +68,7 @@
                 value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_from.'.$form_obj->id, $request->forms_columns_value_for_time_from[$form_obj->id])}}@endif"
                 class="form-control datetimepicker-input" 
                 data-target="#{{ $form_obj->id }}_from"
+                id="{{$label_id}}"
             >
             <div class="input-group-append" data-target="#{{ $form_obj->id }}_from" data-toggle="datetimepicker">
                 <div class="input-group-text"><i class="fa fa-calendar"></i></div>
@@ -86,7 +91,9 @@
             </div>
         </div>
     </div>
+
 </div>
+</fieldset>
 @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
     <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>
 @endif

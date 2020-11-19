@@ -13,7 +13,10 @@
             $col_count = 3;
         }
     @endphp
+    <fieldset>
+    <legend class="sr-only">{{$form_obj->column_name}}</legend>
     <div class="container-fluid row">
+
         @foreach($forms_columns_id_select[$form_obj->id] as $select)
 
             @php
@@ -88,7 +91,9 @@
         </div>
 --}}
         @endforeach
+
     </div>
+    </fieldset>
     @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
         <div class="d-block text-danger">
             <i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}
