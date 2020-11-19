@@ -22,21 +22,21 @@
     @foreach($forms_columns as $form_column)
     <div class="form-group row">
 
-        @if (isset($is_template_label_sm_4))
-            {{-- label-sm-4テンプレート --}}
-            <label class="col-sm-4 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</span> @endif</label>
-
-        @elseif (isset($is_template_label_sm_6))
-            {{-- label-sm-6テンプレート --}}
-            <label class="col-sm-6 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
-
-        @else
-            {{-- defaultテンプレート --}}
-            <label class="col-sm-2 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
-        @endif
-
         @switch($form_column->column_type)
         @case("group")
+            @if (isset($is_template_label_sm_4))
+                {{-- label-sm-4テンプレート --}}
+                <label class="col-sm-4 control-label">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</span> @endif</label>
+
+            @elseif (isset($is_template_label_sm_6))
+                {{-- label-sm-6テンプレート --}}
+                <label class="col-sm-6 control-label">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
+
+            @else
+                {{-- defaultテンプレート --}}
+                <label class="col-sm-2 control-label">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
+            @endif
+
             @php
                 // グループカラムの幅の計算
                 $col_count = floor(12/count($form_column->group));
@@ -82,6 +82,19 @@
             @break
         {{-- 項目 ※まとめ未設定行 --}}
         @default
+            @if (isset($is_template_label_sm_4))
+                {{-- label-sm-4テンプレート --}}
+                <label class="col-sm-4 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</span> @endif</label>
+
+            @elseif (isset($is_template_label_sm_6))
+                {{-- label-sm-6テンプレート --}}
+                <label class="col-sm-6 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
+
+            @else
+                {{-- defaultテンプレート --}}
+                <label class="col-sm-2 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
+            @endif
+
             <div class="col-sm">
                 @include('plugins.user.forms.default.forms_input_' . $form_column->column_type, ['form_obj' => $form_column, 'label_id' => 'column-'.$form_column->id.'-'.$frame_id])
                 <div class="small {{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
