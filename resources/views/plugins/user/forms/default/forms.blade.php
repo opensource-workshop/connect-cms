@@ -24,15 +24,15 @@
 
         @if (isset($is_template_label_sm_4))
             {{-- label-sm-4テンプレート --}}
-            <label class="col-sm-4 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</label> @endif</label>
+            <label class="col-sm-4 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</span> @endif</label>
 
         @elseif (isset($is_template_label_sm_6))
             {{-- label-sm-6テンプレート --}}
-            <label class="col-sm-6 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif</label>
+            <label class="col-sm-6 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
 
         @else
             {{-- defaultテンプレート --}}
-            <label class="col-sm-2 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif</label>
+            <label class="col-sm-2 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
         @endif
 
         @switch($form_column->column_type)
@@ -60,15 +60,15 @@
                 {{-- 必須 --}}
                 @if (isset($is_template_label_sm_4))
                     {{-- label-sm-4テンプレート --}}
-                    @if ($group_row->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</label> @endif
+                    @if ($group_row->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</span> @endif
 
                 @elseif (isset($is_template_label_sm_6))
                     {{-- label-sm-6テンプレート --}}
-                    @if ($group_row->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif
+                    @if ($group_row->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif
 
                 @else
                     {{-- defaultテンプレート --}}
-                    @if ($group_row->required)<label class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</label> @endif
+                    @if ($group_row->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif
                 @endif
 
                 {{-- 項目 ※まとめ設定行 --}}
