@@ -48,10 +48,14 @@
                 <div class="container-fluid row p-0">
             @foreach($form_column->group as $group_row)
 
-                {{-- 項目名 --}}
+                {{-- 項目名。ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない。
+                    時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない。--}}
                 @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
-                    <div class="col-sm-{{$col_count}}" style="padding-left: 0px;">
-                    <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;" for="column-{{$group_row->id}}-{{$frame_id}}">{{$group_row->column_name}}</label>
+                    <div class="col-sm-{{$col_count}} pl-0">
+                    <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
+                @elseif ($group_row->column_type == 'time_from_to')
+                    <div class="col-sm-{{$col_count}} pr-0">
+                    <label class="control-label">{{$group_row->column_name}}</label>
                 @else
                     <div class="col-sm-{{$col_count}} pr-0">
                     <label class="control-label" for="column-{{$group_row->id}}-{{$frame_id}}">{{$group_row->column_name}}</label>
@@ -82,17 +86,27 @@
             @break
         {{-- 項目 ※まとめ未設定行 --}}
         @default
+            @php
+            // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
+            // 時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない
+            if ($form_column->column_type == 'radio' || $form_column->column_type == 'checkbox' || $form_column->column_type == 'time_from_to') {
+                $label_for = '';
+            } else {
+                $label_for = 'for=column-' . $form_column->id . '-' . $frame_id;
+            }
+            @endphp
+
             @if (isset($is_template_label_sm_4))
                 {{-- label-sm-4テンプレート --}}
-                <label class="col-sm-4 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</span> @endif</label>
+                <label class="col-sm-4 control-label" {{$label_for}}>{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</span> @endif</label>
 
             @elseif (isset($is_template_label_sm_6))
                 {{-- label-sm-6テンプレート --}}
-                <label class="col-sm-6 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
+                <label class="col-sm-6 control-label" {{$label_for}}>{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
 
             @else
                 {{-- defaultテンプレート --}}
-                <label class="col-sm-2 control-label" for="column-{{$form_column->id}}-{{$frame_id}}">{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
+                <label class="col-sm-2 control-label" {{$label_for}}>{{$form_column->column_name}} @if ($form_column->required)<span class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</span> @endif</label>
             @endif
 
             <div class="col-sm">
