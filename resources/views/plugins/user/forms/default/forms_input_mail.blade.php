@@ -23,6 +23,7 @@
     type="{{$form_obj->column_type}}" 
     value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_confirmation.'.$form_obj->id, $request->forms_columns_value_confirmation[$form_obj->id])}}@endif"
     placeholder="{{ __('messages.enter_same_email') }}"
+    title="{{ __('messages.enter_same_email') }}"
 >
 @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
     <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>

@@ -69,6 +69,7 @@
                 class="form-control datetimepicker-input" 
                 data-target="#{{ $form_obj->id }}_from"
                 id="{{$label_id}}"
+                title="{{$form_obj->column_name}}の開始時間"
             >
             <div class="input-group-append" data-target="#{{ $form_obj->id }}_from" data-toggle="datetimepicker">
                 <div class="input-group-text"><i class="fa fa-calendar"></i></div>
@@ -85,6 +86,7 @@
                 value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_to.'.$form_obj->id, $request->forms_columns_value_for_time_to[$form_obj->id])}}@endif"
                 class="form-control datetimepicker-input" 
                 data-target="#{{ $form_obj->id }}_to"
+                title="{{$form_obj->column_name}}の終了時間"
             >
             <div class="input-group-append" data-target="#{{ $form_obj->id }}_to" data-toggle="datetimepicker">
                 <div class="input-group-text"><i class="fa fa-calendar"></i></div>
