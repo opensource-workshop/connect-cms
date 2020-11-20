@@ -5,8 +5,6 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
-<fieldset>
-<legend class="sr-only">{{$form_obj->column_name}}</legend>
 
 <input 
     name="forms_columns_value[{{$form_obj->id}}]" 
@@ -28,5 +26,3 @@
 @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
     <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>
 @endif
-
-</fieldset>

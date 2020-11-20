@@ -55,8 +55,6 @@
     });
 </script>
 
-<fieldset>
-<legend class="sr-only">{{$form_obj->column_name}}</legend>
 <div class="row">
 
     <div class="col-sm-5">
@@ -95,7 +93,6 @@
     </div>
 
 </div>
-</fieldset>
 @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
     <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>
 @endif

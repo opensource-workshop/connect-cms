@@ -12,6 +12,8 @@
 @include('common.errors_form_line')
 
 <form action="{{URL::to('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_add_column{{$frame_id}}" method="POST" class="form-horizontal" aria-label="{{$form->forms_name}}" enctype="multipart/form-data">
+<fieldset>
+    <legend class="sr-only">{{$form->forms_name}}</legend>
     {{ csrf_field() }}
 
 {{--
@@ -120,5 +122,6 @@
     <div class="form-group text-center">
         <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> {{__('messages.to_confirm')}}</button>
     </div>
+</fieldset>
 </form>
 @endsection
