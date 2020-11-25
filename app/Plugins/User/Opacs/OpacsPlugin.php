@@ -840,14 +840,14 @@ class OpacsPlugin extends UserPluginBase
         $opacs_book->shelf             = $request->shelf;
         $opacs_book->lend_flag         = $request->lend_flag;
         $opacs_book->accept_flag       = $request->accept_flag;
-        $opacs_book->accept_date       = date('Y-m-d', strtotime($request->accept_date));
+        $opacs_book->accept_date       = empty($request->accept_date) ? null : date('Y-m-d', strtotime($request->accept_date));
         $opacs_book->accept_price      = $request->accept_price;
-        $opacs_book->storage_life      = date('Y-m-d', strtotime($request->storage_life));
+        $opacs_book->storage_life      = empty($request->storage_life) ? null : date('Y-m-d', strtotime($request->storage_life));
         $opacs_book->remove_flag       = $request->remove_flag;
-        $opacs_book->remove_date       = date('Y-m-d', strtotime($request->remove_date));
+        $opacs_book->remove_date       = empty($request->remove_date) ? null : date('Y-m-d', strtotime($request->remove_date));
         $opacs_book->possession        = $request->possession;
         $opacs_book->library           = $request->library;
-        $opacs_book->last_lending_date = date('Y-m-d', strtotime($request->last_lending_date));
+        $opacs_book->last_lending_date = empty($request->last_lending_date) ? null : date('Y-m-d', strtotime($request->last_lending_date));
         $opacs_book->total_lends       = $request->total_lends;
 
         // データ保存
