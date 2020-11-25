@@ -85,7 +85,6 @@ class BlogsPlugin extends UserPluginBase
      */
     public function getPost($id, $action = null)
     {
-
         // deleteCategories の場合は、Blogs_posts のオブジェクトではないので、nullで返す。
         if ($action == 'deleteCategories') {
             return null;
@@ -98,6 +97,11 @@ class BlogsPlugin extends UserPluginBase
 
         // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
         $arg_post = BlogsPosts::where('id', $id)->first();
+
+        // 指定されたPOST がない場合は、不正な処理として空で返す。
+        if (empty($arg_post)) {
+            return null;
+        }
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
         $this->post = BlogsPosts::select(
@@ -779,8 +783,8 @@ WHERE status = 0
         $blogs_post->categories_id = $request->categories_id;
         $blogs_post->important     = $request->important;
         $blogs_post->posted_at     = $request->posted_at . ':00';
-        $blogs_post->post_text     = $request->post_text;
-        $blogs_post->post_text2    = $request->post_text2;
+        $blogs_post->post_text     = $this->clean($request->post_text);
+        $blogs_post->post_text2    = $this->clean($request->post_text2);
         $blogs_post->read_more_flag = $request->read_more_flag ?? 0;
         $blogs_post->read_more_button = $request->read_more_button;
         $blogs_post->close_more_button = $request->close_more_button;

@@ -69,6 +69,19 @@
         </div>
     </div>
 
+    {{-- 検索窓のプレースホルダ --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">検索項目の<br>プレースホルダ</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="placeholder_search" value="{{old('placeholder_search', $view_frame->placeholder_search)}}" class="form-control">
+            @if ($errors && $errors->has('placeholder_search')) <div class="text-danger">{{$errors->first('placeholder_search')}}</div> @endif
+            <small class="text-muted">
+                ※ 検索テキストボックスに初期表示される補足テキストを設定できます。<br>
+                ※ 未設定時は「検索はキーワードを入力してください。」を表示します。
+            </small>
+        </div>
+    </div>
+
     {{-- 絞り込み機能の表示 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">絞り込み機能の表示</label>

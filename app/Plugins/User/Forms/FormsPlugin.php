@@ -44,6 +44,8 @@ use App\Utilities\Token\TokenUtils;
  */
 class FormsPlugin extends UserPluginBase
 {
+    const CHECKBOX_SEPARATOR = '|';
+
     /* オブジェクト変数 */
 
     /* コアから呼び出す関数 */
@@ -797,7 +799,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
             $value = "";
             if (is_array($request->forms_columns_value[$forms_column->id])) {
-                $value = implode(',', $request->forms_columns_value[$forms_column->id]);
+                $value = implode(self::CHECKBOX_SEPARATOR, $request->forms_columns_value[$forms_column->id]);
             } else {
                 $value = $request->forms_columns_value[$forms_column->id];
             }
@@ -852,6 +854,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $subject = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $subject);
             // メール件名内のフォーム名文字列を置換
             $subject = str_replace('[[form_name]]', $form->forms_name, $subject);
+            // メール件名内の登録日時を置換
+            $todatetime = date("Y/m/d H:i:s");
+            $subject = str_replace('[[to_datetime]]', $todatetime, $subject);
 
             // メール本文の組み立て
             $mail_format = $form->temporary_regist_mail_format;
@@ -864,6 +869,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
             // メール本文内のフォーム名文字列を置換
             $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
+            // メール本文内の登録日時を置換
+            $mail_text = str_replace('[[to_datetime]]', $todatetime, $mail_text);
 
             // メールオプション
             $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
@@ -897,6 +904,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $subject = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $subject);
                 // メール件名内のフォーム名文字列を置換
                 $subject = str_replace('[[form_name]]', $form->forms_name, $subject);
+                // メール件名内の登録日時を置換
+                $todatetime = date("Y/m/d H:i:s");
+                $subject = str_replace('[[to_datetime]]', $todatetime, $subject);
 
                 // メール本文の組み立て
                 $mail_format = $form->mail_format;
@@ -908,6 +918,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
                 // メール本文内のフォーム名文字列を置換
                 $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
+                // メール本文内の登録日時を置換
+                $mail_text = str_replace('[[to_datetime]]', $todatetime, $mail_text);
 
                 // メールオプション
                 $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
@@ -1135,7 +1147,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
             $value = "";
             if (is_array($forms_input_cols[$forms_column->id])) {
-                $value = implode(',', $forms_input_cols[$forms_column->id]->value);
+                $value = implode(self::CHECKBOX_SEPARATOR, $forms_input_cols[$forms_column->id]->value);
             } else {
                 $value = $forms_input_cols[$forms_column->id]->value;
             }
@@ -1183,6 +1195,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $subject = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $subject);
             // メール件名内のフォーム名文字列を置換
             $subject = str_replace('[[form_name]]', $form->forms_name, $subject);
+            // メール件名内の登録日時を置換
+            $todatetime = date("Y/m/d H:i:s");
+            $subject = str_replace('[[to_datetime]]', $todatetime, $subject);
 
             // メール本文の組み立て
             $mail_format = $form->mail_format;
@@ -1194,6 +1209,8 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $mail_text = str_replace('[[site_name]]', Configs::where('name', 'base_site_name')->first()->value, $mail_text);
             // メール本文内のフォーム名文字列を置換
             $mail_text = str_replace('[[form_name]]', $form->forms_name, $mail_text);
+            // メール本文内の登録日時を置換
+            $mail_text = str_replace('[[to_datetime]]', $todatetime, $mail_text);
 
             // メールオプション
             $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
@@ -1980,10 +1997,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
      */
     public function addSelect($request, $page_id, $frame_id)
     {
-        // エラーチェック
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック  regex（|を含まない）
         $validator = Validator::make($request->all(), [
-            'select_name'  => ['required'],
-        ]);
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
         $validator->setAttributeNames([
             'select_name'  => '選択肢名',
         ]);
@@ -2024,10 +2045,14 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             "select_name" => $request->$str_select_name,
         ]);
 
-        // エラーチェック
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック  regex（|を含まない）
         $validator = Validator::make($request->all(), [
-            'select_name'  => ['required'],
-        ]);
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
         $validator->setAttributeNames([
             'select_name'  => '選択肢名',
         ]);

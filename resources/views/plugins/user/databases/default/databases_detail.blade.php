@@ -13,11 +13,15 @@
 
 <div class="container">
     {{-- 行グループ ループ --}}
+    @php
+        $row_group_count = 1;
+        $column_group_count = 1;
+    @endphp
     @foreach($group_rows_cols_columns as $group_row_cols_columns)
-        <div class="row border-left border-right border-bottom @if($loop->first) border-top @endif">
+        <div class="row border-left border-right border-bottom @if($loop->first) border-top @endif {{ "row-group-" . $row_group_count++ }}">
         {{-- 列グループ ループ --}}
         @foreach($group_row_cols_columns as $group_col_columns)
-            <div class="col-sm">
+            <div class="col-sm {{ "column-group-" . $column_group_count++ }}">
             {{-- カラム ループ --}}
             @foreach($group_col_columns as $column)
                 <div class="row pt-2 pb-2">

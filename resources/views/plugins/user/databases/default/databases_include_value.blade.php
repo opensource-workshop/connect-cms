@@ -48,6 +48,15 @@
             $value = '<a href="' . $obj->value . '" target="_blank">' . $obj->value . '</a>';
         }
     }
+    // 日付型
+    elseif ($column->column_type == DatabaseColumnType::date) {
+        if (empty($obj) || empty($obj->value)) {
+            $value = '';
+        }
+        else {
+            $value = date('Y/m/d',  strtotime($obj->value));
+        }
+    }
     // 登録日型
     elseif ($column->column_type == DatabaseColumnType::created) {
         $value = $input->created_at;

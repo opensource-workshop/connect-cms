@@ -825,10 +825,14 @@ trait MigrationTrait
                 continue;
             }
             foreach ($hrefs as $href) {
-                // 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
-                if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
-                    // NC2 ブロックID取得
-                    $nc2_block_id = mb_substr($href, mb_strripos($href, '#_') + 2);
+                // horiguchi 修正
+                //// 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC2のページ内リンク)で始まっている）
+                //if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
+                //    // NC2 ブロックID取得
+                //    $nc2_block_id = mb_substr($href, mb_strripos($href, '#_') + 2);
+                // #_が含まれているhrefを取得に変更 href="/hoge/fuga/#_123" に対応できないため
+                if (preg_match('/#_(.*?)$/', $href, $m)) {
+                    $nc2_block_id = $m[1];
                     // Connect-CMS フレームID
                     $map_frame = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $nc2_block_id)->first();
                     if (!empty($map_frame)) {
@@ -1159,6 +1163,13 @@ trait MigrationTrait
                     $this->putError(3, 'ログインIDとパスワードが同じ。', "userid = " . $user_item['userid'] . " name = " . $user_item['name']);
                 }
 
+                // パスワード変更
+                $nc2_override_pass = $this->getMigrationConfig('users', 'nc2_export_login_users_overridepass');
+                if (!empty($nc2_override_pass) && isset($nc2_override_pass[$user_item['userid']])) {
+                    $user_item['password'] = $nc2_override_pass[$user_item['userid']];
+                    $this->putError(3, 'パスワードを変更しました', "userid = " . $user_item['userid'] );
+                }
+
                 // ユーザがあるかの確認
                 if (empty($user)) {
                     // ユーザテーブルがなければ、追加
@@ -1399,7 +1410,11 @@ trait MigrationTrait
                 */
             }
             // バルクINSERT
-            DB::table('permalinks')->insert($bulks);
+            $size = 1000; //Prepared statement contains too many placeholders 対策
+            $chunk_bulks = array_chunk($bulks, $size);
+            foreach ($chunk_bulks as $bulk) {
+                DB::table('permalinks')->insert($bulk);
+            }
         }
     }
 
@@ -1544,8 +1559,30 @@ trait MigrationTrait
                     $post_text2 = $this->changeWYSIWYG($blog_tsv_cols[6]);
                     $post_text2 = $this->addParagraph('blogs', $post_text2);
 
+                    // 続きを読む
+                    $read_more_flag = 0;
+                    $read_more_button = null;
+                    $close_more_button = null;
+                    if (!empty($post_text2)) {
+                        $read_more_flag = 1;
+                        $read_more_button = '続きを読む';
+                        $close_more_button = '閉じる';
+                    }
+
                     // ブログ記事テーブル追加
-                    $blogs_posts = BlogsPosts::create(['blogs_id' => $blog->id, 'post_title' => $blog_tsv_cols[4], 'post_text' => $post_text, 'post_text2' => $post_text2, 'categories_id' => $categories_id, 'important' => null, 'status' => 0, 'posted_at' => $posted_at]);
+                    $blogs_posts = BlogsPosts::create([
+                        'blogs_id' => $blog->id, 
+                        'post_title' => $blog_tsv_cols[4], 
+                        'post_text' => $post_text, 
+                        'post_text2' => $post_text2, 
+                        'read_more_flag' => $read_more_flag,
+                        'read_more_button' => $read_more_button,
+                        'close_more_button' => $close_more_button,
+                        'categories_id' => $categories_id, 
+                        'important' => null, 
+                        'status' => 0, 
+                        'posted_at' => $posted_at
+                    ]);
 
                     // contents_id を初回はid と同じものを入れて、更新
                     $blogs_posts->contents_id = $blogs_posts->id;
@@ -1659,9 +1696,11 @@ trait MigrationTrait
                 foreach ($faq_tsv_lines as $faq_tsv_line) {
                     // タブで項目に分割
                     $faq_tsv_cols = explode("\t", $faq_tsv_line);
-
+                    if (!isset($faq_tsv_cols[2])) {
+                        continue;
+                    }
                     // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
-                    $posted_at_ts = mktime(substr($faq_tsv_cols[2], 8, 2), substr($faq_tsv_cols[2], 10, 2), substr($faq_tsv_cols[2], 12, 2), substr($faq_tsv_cols[2], 4, 2), substr($faq_tsv_cols[2], 6, 2), substr($faq_tsv_cols[2], 0, 4));
+                    $posted_at_ts = mktime((int)substr($faq_tsv_cols[2], 8, 2), (int)substr($faq_tsv_cols[2], 10, 2), (int)substr($faq_tsv_cols[2], 12, 2), (int)substr($faq_tsv_cols[2], 4, 2), (int)substr($faq_tsv_cols[2], 6, 2), (int)substr($faq_tsv_cols[2], 0, 4));
                     $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
 
                     // 記事のカテゴリID
@@ -1672,6 +1711,8 @@ trait MigrationTrait
                     }
 
                     // 本文
+                    $faq_tsv_cols[3] = isset($faq_tsv_cols[3]) ? $faq_tsv_cols[3] : '';
+                    $faq_tsv_cols[4] = isset($faq_tsv_cols[4]) ? $faq_tsv_cols[4] : '';
                     $post_text = $this->changeWYSIWYG($faq_tsv_cols[4]);
                     $post_text = $this->addParagraph('faqs', $post_text);
 
@@ -2074,6 +2115,10 @@ trait MigrationTrait
                                         $database_tsv_col = $upload_mapping->destination_key;
                                     }
                                 }
+                            } elseif ($create_columns[$databases_columns_id_idx]->column_type == 'created' || $create_columns[$databases_columns_id_idx]->column_type == 'updated') {
+                                // 登録日、更新日の場合にはセルデータを作らず返却
+                                $databases_columns_id_idx++;
+                                continue;
                             }
 
                             // セルデータの追加
@@ -2173,6 +2218,17 @@ trait MigrationTrait
             }
             $bucket = Buckets::create(['bucket_name' => $form_name, 'plugin_name' => 'forms']);
 
+            // メールフォーマットの置換処理
+            $mail_format = str_replace('\n', "\n", $form_ini['form_base']['mail_format']);
+            // 登録日時、ルームの出力は未実装機能
+            $replace_tags = [
+                '{X-SITE_NAME}'=>'[[site_name]]',
+                '{X-ROOM}'=>'',
+                '{X-REGISTRATION_NAME}'=>'[[form_name]]',
+                '{X-TO_DATE}'=>'[[to_datetime]]',
+                '{X-DATA}'=>'[[body]]',
+            ];
+            $mail_format = str_replace(array_keys( $replace_tags), array_values( $replace_tags), $mail_format);
             $form = Forms::create([
                 'bucket_id'           => $bucket->id,
                 'forms_name'          => $form_name,
@@ -2180,7 +2236,7 @@ trait MigrationTrait
                 'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
                 'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],
                 'mail_subject'        => $form_ini['form_base']['mail_subject'],
-                'mail_format'         => str_replace('\n', "\n", $form_ini['form_base']['mail_format']),
+                'mail_format'         => $mail_format,
                 'data_save_flag'      => $form_ini['form_base']['data_save_flag'],
                 'after_message'       => str_replace('\n', "\n", $form_ini['form_base']['after_message']),
                 'numbering_use_flag'  => $form_ini['form_base']['numbering_use_flag'],
@@ -4208,7 +4264,15 @@ trait MigrationTrait
                 if ($nc2_sort_page->parent_id > 1) {
                     // マッピングテーブルから親のページのディレクトリを探す
                     $parent_page_mapping = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $nc2_sort_page->parent_id)->first();
-                    if (!empty($parent_page_mapping)) {
+                    //1ルームのみの移行の場合を考慮
+                    $parent_room_flg = true;
+                    $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+                    if(count($room_ids) == 1 && isset($room_ids[0])){
+                        if($nc2_sort_page->parent_id == $room_ids[0]){
+                            $parent_room_flg = false;
+                        }
+                    }
+                    if (!empty($parent_page_mapping) && $parent_room_flg) {
                         $page_ini .= "parent_page_dir = \"" . $parent_page_mapping->destination_key . "\"\n";
                     }
                 }
@@ -6356,7 +6420,7 @@ trait MigrationTrait
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
 
         // HTML からa タグの 相対パスリンクを絶対パスに修正
-        $content = $this->changeFullPath($content, $nc2_page);
+        //$content = $this->changeFullPath($content, $nc2_page);
 
 
         // HTML content の保存

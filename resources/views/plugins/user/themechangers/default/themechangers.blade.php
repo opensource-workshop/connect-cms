@@ -11,10 +11,11 @@
 @section("plugin_contents_$frame->id")
 
 <form action="{{url('/')}}/redirect/plugin/themechangers/select/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" aria-label="テーマチェンジャー">
-    {{csrf_field()}}
-    <div class="form-group mb-0">
-        <fieldset>
-            <legend class="h6">テーマを一時的に変更して、サイトの見た目や配色を確認する事ができます。</legend>
+    <fieldset>
+        <legend class="sr-only">一時的にテーマを変更</legend>
+        {{csrf_field()}}
+        <div class="form-group mb-0">
+            <p>テーマを一時的に変更して、サイトの見た目や配色を確認する事ができます。</p>
             <select class="form-control" name="session_theme" title="テーマの選択">
                 <option value="session:clear">元に戻す</option>
                 @foreach($themes as $theme)
@@ -34,15 +35,15 @@
                 <input type="checkbox" name="session_header_black" value="1" class="custom-control-input" id="session_header_black" @if(old('session_header_black', $session_header_black)) checked=checked @endif>
                 <label class="custom-control-label" for="session_header_black">ヘッダーは黒にする</label>
             </div>
-        </fieldset>
 
-        <div class="text-center mt-2">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-check"></i> 変更
-            </button>
+            <div class="text-center mt-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check"></i> 変更
+                </button>
+            </div>
+
         </div>
-
-    </div>
+    </fieldset>
 </form>
 
 @endsection

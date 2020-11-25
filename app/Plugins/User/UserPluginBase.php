@@ -4,6 +4,7 @@ namespace App\Plugins\User;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
@@ -12,6 +13,8 @@ use Monolog\Handler\RotatingFileHandler;
 
 use DB;
 use File;
+use HTMLPurifier;
+use HTMLPurifier_Config;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\BucketsRoles;
@@ -78,6 +81,12 @@ class UserPluginBase extends PluginBase
     public $id = null;
 
     /**
+     *  purifier
+     *  保存処理時にインスタンスが代入され、シングルトンで使うことを想定
+     */
+    public $purifier = null;
+
+    /**
      *  画面間用メッセージ
      */
     public $cc_massage = null;
@@ -85,7 +94,7 @@ class UserPluginBase extends PluginBase
     /**
      *  コンストラクタ
      */
-    function __construct($page = null, $frame = null, $pages = null)
+    public function __construct($page = null, $frame = null, $pages = null)
     {
         // ページの保持
         $this->page = $page;
@@ -717,6 +726,84 @@ class UserPluginBase extends PluginBase
         // ログ出力
         $log->pushHandler($handler->setFormatter($formatter));
         $log->error($e);
+    }
+
+    /**
+     *  HTMLPurifier の実行
+     */
+    public function clean($text)
+    {
+        if ($this->isHtmlPurifier()) {
+            if (empty($this->purifier)) {
+                // HTMLPurifierを設定するためのクラスを生成する
+                $config = HTMLPurifier_Config::createDefault();
+
+                if (!Storage::exists('tmp/htmlpurifier')) {
+                    Storage::makeDirectory('tmp/htmlpurifier');
+                }
+                $config->set('Cache.SerializerPath', storage_path('app/tmp/htmlpurifier'));
+
+                $config->set('Attr.AllowedClasses', array()); // class指定を許可する
+                $config->set('Attr.EnableID', true);          // id属性を許可する
+                $config->set('Filter.YouTube', true);         // Youtube埋め込みを許可する
+                $config->set('HTML.TargetBlank', true);       // target="_blank" が使えるようにする
+                $config->set('Attr.AllowedFrameTargets', ['_blank']);
+                $config->set('HTML.SafeIframe', true);
+                $config->set('URI.SafeIframeRegexp', '%^(https?:)?//(www\.youtube(?:-nocookie)?\.com/embed/|player\.vimeo\.com/video/)%'); //allow YouTube and Vimeo
+
+                $this->purifier = new HTMLPurifier($config);
+            }
+
+            return $this->purifier->purify($text);
+        }
+        return $text;
+    }
+
+    /**
+     *  HTMLPurifier 制限の判定
+     *
+     */
+    private function isHtmlPurifier()
+    {
+        // 初期値は HTML制限する。
+        $html_purifier = true;
+
+        // ログインしていない場合は、制限する。
+        if (!Auth::check()) {
+            return $html_purifier;
+        }
+
+        // ユーザ情報
+        $user = Auth::user();
+
+        // コンテンツ権限がついていること。
+        if (!empty($user->user_roles) && array_key_exists('base', $user->user_roles)) {
+            // セキュリティ管理のHTML制限を取得
+            $config_html_purifiers = $this->configs->where('category', 'html_purifier');
+
+            // 設定されている権限
+            $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');
+
+            // Config テーブルからHTML記述制限の取得
+            // Config テーブルにデータがあれば、配列を上書きする。
+            // 初期状態ではConfig テーブルはなく、cc_role.CC_HTMLPurifier_ROLE_LIST を初期値とするため。
+            $config_purifiers = $this->configs->where('category', 'html_purifier');
+            foreach ($config_purifiers as $config_purifier) {
+                if (array_key_exists($config_purifier->name, $purifiers)) {
+                    $purifiers[$config_purifier->name] = $config_purifier->value;
+                }
+            }
+
+            // ユーザが持つコンテンツ権限をループして、対応する権限のHTML制限を確認する。
+            foreach ($user->user_roles['base'] as $base_role_name => $base_role_value) {
+                if (!empty($purifiers) && $purifiers[$base_role_name] === '0') {
+                    // ひとつでも制限なしの権限を持っている場合は、HTML制限は「なし」
+                    return false;
+                }
+            }
+        }
+
+        return $html_purifier;
     }
 
     /**
