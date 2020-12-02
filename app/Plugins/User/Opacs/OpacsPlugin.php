@@ -49,7 +49,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingOpacFrame', 'rentlist'];
+        $functions['get']  = ['settingOpacFrame', 'rentlist', 'searchClear'];
         $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame'];
         return $functions;
     }
@@ -1395,6 +1395,21 @@ class OpacsPlugin extends UserPluginBase
 
         // キーワードをセッションに保存しておく。
         $request->session()->put('search_keyword', $request->keyword);
+
+        // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     *  検索条件クリア
+     */
+    public function searchClear($request, $page_id, $frame_id)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
+
+        // キーワードをセッションに保存しておく。
+        $request->session()->forget('search_keyword');
 
         // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
         return $this->index($request, $page_id, $frame_id);
