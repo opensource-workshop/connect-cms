@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- --}}
+--}}
 @if (array_key_exists($form_obj->id, $forms_columns_id_select))
     @php
         // グループカラムの幅の計算
@@ -14,6 +14,7 @@
         }
     @endphp
     <div class="container-fluid row">
+
         @foreach($forms_columns_id_select[$form_obj->id] as $select)
 
             @php
@@ -88,6 +89,7 @@
         </div>
 --}}
         @endforeach
+
     </div>
     @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
         <div class="d-block text-danger">

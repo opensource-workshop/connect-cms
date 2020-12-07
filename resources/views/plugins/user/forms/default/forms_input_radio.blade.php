@@ -14,6 +14,7 @@
         }
     @endphp
     <div class="container-fluid row">
+
         @foreach($forms_columns_id_select[$form_obj->id] as $select)
 
             <div class="custom-control custom-radio custom-control-inline">
@@ -58,6 +59,7 @@
         </div>
 --}}
         @endforeach
+
     </div>
     @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
         <div class="d-block text-danger">

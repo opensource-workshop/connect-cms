@@ -12,19 +12,25 @@
 {{-- OPAC表示 --}}
 {{--@if (isset($opacs_books)) --}}
 
-    <form action="{{url('/')}}/redirect/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
+<form action="{{url('/')}}/redirect/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_search" name="form_search" method="POST">
     {{ csrf_field() }}
     <div class="form-group">
         <div class="row">
-            <div class="col-sm-6">
+            <div class="col-sm-8">
                 <div class="input-group date">
                     <input type="text" name="keyword" value="{{Session::get('search_keyword')}}" class="form-control" placeholder="キーワード検索">
                     <span class="input-group-btn">
                         <button type="submit" class="btn btn-primary"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
                     </span>
                 </div>
+                <div class="row ml-0 mt-1">
+                    <a data-toggle="collapse" href="#search_collapse" role="button" aria-expanded="false" aria-controls="search_collapse">
+                        詳細検索
+                    </a>
+                    <div class="ml-3"><a href="{{url('/')}}/redirect/plugin/opacs/searchClear/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">キーワードクリア</a></div>
+                </div>
             </div>
-            <div class="col-sm-6">
+            <div class="col-sm-4">
 
             {{-- 新規登録 --}}
             @can("role_article")
@@ -47,7 +53,76 @@
             </div>
         </div>
     </div>
-    </form>
+</form>
+
+<div class="collapse" id="search_collapse">
+    <div class="card">
+        <div class="card-header" id="user_search_condition">
+            詳細検索条件（部分一致）
+        </div>
+        <div class="card-body">
+
+            <form name="form_search_detail" id="form_search_detail" class="form-horizontal" method="post" action="{{url('/')}}/redirect/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+                {{ csrf_field() }}
+
+                <div class="form-group row">
+                    <label for="opac_search_condition_title" class="col-md-2 col-form-label text-md-right">タイトル</label>
+                    <div class="col-md-10">
+                        <input type="text" name="opac_search_condition[title]" id="opac_search_condition_title" value="" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="opac_search_condition_name" class="col-md-2 col-form-label text-md-right">ISBN</label>
+                    <div class="col-md-10">
+                        <input type="text" name="opac_search_condition[isbn]" id="opac_search_condition_isbn" value="" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="opac_search_condition_creator" class="col-md-2 col-form-label text-md-right">著者</label>
+                    <div class="col-md-10">
+                        <input type="text" name="opac_search_condition[creator]" id="opac_search_condition_creator" value="" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="opac_search_condition_ndc" class="col-md-2 col-form-label text-md-right">NDC</label>
+                    <div class="col-md-10">
+                        <input type="text" name="opac_search_condition[ndc]" id="opac_search_condition_ndc" value="" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="opac_search_condition_publisher" class="col-md-2 col-form-label text-md-right">出版社</label>
+                    <div class="col-md-10">
+                        <input type="text" name="opac_search_condition[publisher]" id="opac_search_condition_publisher" value="" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="opac_search_condition_publication_year" class="col-md-2 col-form-label text-md-right">出版年</label>
+                    <div class="col-md-10">
+                        <input type="text" name="opac_search_condition[publication_year]" id="opac_search_condition_publication_year" value="" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group text-center">
+                    <div class="row">
+                        <div class="mx-auto">
+                            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/redirect/plugin/opacs/searchClear/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}'">
+                                <i class="fas fa-times"></i> 詳細条件クリア
+                            </button>
+                            <button type="submit" class="btn btn-primary form-horizontal">
+                                <i class="fas fa-check"></i> 詳細検索実行
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @if (isset($opacs_books))
 
