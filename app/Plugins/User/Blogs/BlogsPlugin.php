@@ -866,8 +866,8 @@ WHERE status = 0
         $blogs_post->categories_id = $request->categories_id;
         $blogs_post->important  = $request->important;
         $blogs_post->posted_at  = $request->posted_at . ':00';
-        $blogs_post->post_text  = $request->post_text;
-        $blogs_post->post_text2 = $request->post_text2;
+        $blogs_post->post_text  = $this->clean($request->post_text);
+        $blogs_post->post_text2 = $this->clean($request->post_text2);
 
         $blogs_post->save();
 
