@@ -459,7 +459,7 @@ class ContentsPlugin extends UserPluginBase
 
             // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
             $newrow = $oldrow->replicate();
-            $newrow->content_text = $request->contents;
+            $newrow->content_text = $this->clean($request->contents);
             $newrow->status = 1; //（一時保存）
             $newrow->save();
         }

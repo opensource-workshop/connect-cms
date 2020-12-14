@@ -4267,7 +4267,7 @@ trait MigrationTrait
                     //1ルームのみの移行の場合を考慮
                     $parent_room_flg = true;
                     $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
-                    if(count($room_ids) == 1 && isset($room_ids[0])){
+                    if(!empty($room_ids) && count($room_ids) == 1 && isset($room_ids[0])){
                         if($nc2_sort_page->parent_id == $room_ids[0]){
                             $parent_room_flg = false;
                         }

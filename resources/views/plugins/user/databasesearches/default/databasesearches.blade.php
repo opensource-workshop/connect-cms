@@ -16,6 +16,7 @@
 @endphp
 
 <table class="table table-bordered">
+    <caption class="sr-only">{{$databasesearches->databasesearches_name}}</caption>
     <thead>
     <tr>
     @foreach($view_columns as $view_column)
