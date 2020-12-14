@@ -36,7 +36,7 @@
                 {{ csrf_field() }}
                 <div class="row">
                     <div class="col-sm-4">
-                        <label class="control-label">学籍番号/教職員番号</label><label class="badge badge-danger">必須</label>
+                        <label class="control-label">学籍番号</label><label class="badge badge-danger">必須</label>
                         @can("role_article")
                             <input type="text" name="student_no" value="{{old('student_no')}}" class="form-control">
                         @else
@@ -103,7 +103,7 @@
                 {{ csrf_field() }}
                 <div class="row">
                     <div class="col-sm-4" style="margin-top: 8px;">
-                        <label class="control-label">学籍番号/教職員番号</label><label class="badge badge-danger">必須</label>
+                        <label class="control-label">学籍番号</label><label class="badge badge-danger">必須</label>
                         @can("role_article")
                             <input type="text" name="req_student_no" value="{{old('req_student_no')}}" class="form-control">
                         @else
@@ -169,7 +169,7 @@
             <div class="form-group">
                 <div class="row">
                     <div class="col-sm-4">
-                        <label class="control-label">学籍番号/教職員番号</label><label class="badge badge-danger">必須</label>
+                        <label class="control-label">学籍番号</label><label class="badge badge-danger">必須</label>
                         @can("role_article")
                             <input type="text" name="return_student_no" value="{{old('return_student_no')}}" class="form-control">
                         @else

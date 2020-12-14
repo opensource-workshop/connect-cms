@@ -89,7 +89,7 @@
                 <label class="{{$frame->getSettingLabelClass()}}">ログインID <label class="badge badge-danger">必須</label></label>
                 <div class="{{$frame->getSettingInputClass()}}">
                     <input type="text" name="student_no" value="{{old('student_no')}}" class="form-control">
-                    <small class="text-muted">モデレータの場合はログインID（学籍番号/教職員番号）を入力してください。</small>
+                    <small class="text-muted">モデレータの場合はログインID（学籍番号）を入力してください。</small>
                     @if ($errors && $errors->has('student_no')) <div class="text-danger">{{$errors->first('student_no')}}</div> @endif
                 </div>
             </div>
@@ -135,7 +135,7 @@
                 <label class="{{$frame->getSettingLabelClass()}}">ログインID <label class="badge badge-danger">必須</label></label>
                 <div class="{{$frame->getSettingInputClass()}}">
                     <input type="text" name="return_student_no" value="{{old('return_student_no')}}" class="form-control">
-                    <small class="text-muted">モデレータの場合はログインID（学籍番号/教職員番号）を入力してください。</small>
+                    <small class="text-muted">モデレータの場合はログインID（学籍番号）を入力してください。</small>
                     @if ($errors && $errors->has('return_student_no')) <div class="text-danger">{{$errors->first('return_student_no')}}</div> @endif
                 </div>
             </div>

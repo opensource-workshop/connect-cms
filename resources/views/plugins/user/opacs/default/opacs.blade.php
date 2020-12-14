@@ -9,14 +9,6 @@
 
 @section("plugin_contents_$frame->id")
 
-{{-- メッセージ表示 --}}
-@if ($messages)
-    <div class="alert alert-info" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        {{$messages}}
-    </div>
-@endif
-
 {{-- OPAC表示 --}}
 {{--@if (isset($opacs_books)) --}}
 
@@ -66,7 +58,7 @@
 <div class="collapse" id="search_collapse">
     <div class="card">
         <div class="card-header" id="user_search_condition">
-            詳細検索条件（中間一致）
+            詳細検索条件（部分一致）
         </div>
         <div class="card-body">
 
