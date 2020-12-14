@@ -808,7 +808,7 @@ Log::debug('indexSearch[message]：' . $messages);
     /**
      *  新規書誌データ画面
      */
-    public function create($request, $page_id, $frame_id, $opacs_books_id = null, $errors = null)
+    public function create($request, $page_id, $frame_id, $opacs_books_id = null)
     {
 // ★
 Log::debug('create関数[Start]');
@@ -819,7 +819,7 @@ Log::debug('create関数[Start]');
         }
 
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+//        $request->flash();
 
         // OPAC＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
@@ -840,7 +840,7 @@ Log::debug('create関数[Start]');
         }
 
 // ★
-Log::debug('create関数[errors]：' . $errors);
+//Log::debug('create関数[errors]：' . $errors);
 Log::debug('create関数[search_error_message]：' . $search_error_message);
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -848,7 +848,7 @@ Log::debug('create関数[search_error_message]：' . $search_error_message);
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_books,
             'book_search' => $request->book_search,
-            'errors'      => $errors,
+//            'errors'      => $errors,
             'search_error_message' => $search_error_message,
             ]
         )->withInput($request->all);
@@ -857,7 +857,7 @@ Log::debug('create関数[search_error_message]：' . $search_error_message);
     /**
      * 書誌データ編集画面
      */
-    public function edit($request, $page_id, $frame_id, $opacs_books_id = null, $errors = null)
+    public function edit($request, $page_id, $frame_id, $opacs_books_id = null)
     {
         // 権限チェック
         // 特別処理。role_article（記事修正）でチェック。
@@ -866,7 +866,7 @@ Log::debug('create関数[search_error_message]：' . $search_error_message);
         }
 
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+//        $request->flash();
 
         // Frame データ
         $opac_frame = $this->getOpacFrame($frame_id);
@@ -879,7 +879,7 @@ Log::debug('create関数[search_error_message]：' . $search_error_message);
             'opacs_input', [
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_book,
-            'errors'      => $errors,
+//            'errors'      => $errors,
             ]
         )->withInput($request->all);
     }
@@ -974,7 +974,8 @@ Log::debug('save関数[start]');
         if ($validator->fails()) {
 // ★
 Log::debug('save関数[入力エラー終了]');
-            return ( $this->create($request, $page_id, $frame_id, $opacs_books_id, $validator->errors()) );
+            return back()->withErrors($validator)->withInput();
+            //return ( $this->create($request, $page_id, $frame_id, $opacs_books_id, $validator->errors()) );
         }
 
         // 書誌データ取得の場合、入力画面に戻る

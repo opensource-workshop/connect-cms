@@ -28,9 +28,11 @@
 @if (empty($opacs_books->id))
 {{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="" onsubmit="return false;"> --}}
     <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" id="form_opac_book" name="form_opac_book" class="">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
 {{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="" onsubmit="return false;"> --}}
     <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="opacs_id" value="{{$opac_frame->opacs_id}}">
