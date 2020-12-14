@@ -145,6 +145,7 @@ class OpacsPlugin extends UserPluginBase
         if (!$xml) {
             return array($opacs_books, "取得した書誌データでエラーが発生しました。");
         } else {
+/*
             $target_item = null;
             $channel = get_object_vars($xml->channel);
 
@@ -157,9 +158,155 @@ class OpacsPlugin extends UserPluginBase
             $opacs_books->title   = $target_item->title;
             $opacs_books->creator = $target_item->author;
             $opacs_books->publisher = $target_item->children('dc', true)->publisher;
+*/
+
+            $channel = get_object_vars($xml->channel);
+            if (is_array($channel["item"])) {
+                // itemが複数ある場合
+                
+                // タイトル：どのitemにも必ずあるのでチェックせず、１つ目からそのまま取得
+                $opacs_books->title = $channel["item"][0]->title;
+                
+                // 著者：どのitemにも必ずあるのでチェックせず、１つ目からそのまま取得
+                $opacs_books->creator = $channel["item"][0]->author;
+                
+                // 出版社：どのitemにも必ずあるのでチェックせず、１つ目からそのまま取得
+                $opacs_books->publisher = $channel["item"][0]->children('dc', true)->publisher;
+                
+                // 請求番号：請求番号は分類コードをもとに作成する為、分類コードを入れる
+                $opacs_books->ndc = $this->getBookDetailByList( $channel["item"], 'dc:subject [@xsi:type="dcndl:NDC10" or @xsi:type="dcndl:NDC9" or @xsi:type="dcndl:NDC8" or @xsi:type="dcndl:NDC7" or @xsi:type="dcndl:NDC6"]' );
+                
+                // タイトルヨミ：どのitemにも必ずあるのでチェックせず、１つ目からそのまま取得
+                $opacs_books->title_read = $channel["item"][0]->children('dcndl', true)->titleTranscription;
+                
+                // シリーズ
+                $opacs_books->series = $this->getBookDetailByList( $channel["item"], 'dcndl:seriesTitle' );
+                
+                // 出版年
+                $opacs_books->publication_year = $this->getBookDetailByList( $channel["item"], 'dcterms:issued [@xsi:type="dcterms:W3CDTF"]' );
+                
+                // 分類：請求番号をそのまま入れる
+                $opacs_books->class = $opacs_books->ndc;
+                
+                // 頁数/大きさ：頁数と大きさは一緒に登録されている事がある。情報入力した方の情報の入れ方如何でどうとでも入力できてしまう為、確実に間違いなく取得できる方法がない。
+                // なので仮に、「dc:extent」が２つある時は、１つ目を頁数、２つ目を大きさと仮定して値を設定する
+                // １しかない時はページ数の方にのみ設定する
+                // ３つ以上ある時は最初の１つ目を頁数、２つ目を大きさとして設定して他を無視する
+                foreach( $channel["item"] as $item )
+                {
+                    $get_element = $item->xpath('dc:extent');
+                    $get_count = count( $get_element );
+                    if( $get_count == 1 )
+                    {
+                        $opacs_books->page_number = trim( $get_element[0]->__toString() );
+                        break;
+                    }
+                    elseif( $get_count > 1 )
+                    {
+                        $opacs_books->page_number = trim( $get_element[0]->__toString() );
+                        $opacs_books->size = trim( $get_element[1]->__toString() );
+                        break;
+                    }
+                }
+                
+                // MARC NO
+                $opacs_books->marc = $this->getBookDetailByList( $channel["item"], 'dc:identifier [@xsi:type="dcndl:NIIBibID"]' );
+                
+                // 金額
+                $get_value = $this->getBookDetailByList( $channel["item"], 'dcndl:price' );
+                $opacs_books->accept_price = str_replace( '円', '', $get_value );
+                
+                
+            } else {
+                // itemが１つだけの場合
+                
+                // タイトル
+                $opacs_books->title = $channel["item"]->title;
+                // 著者
+                $opacs_books->creator = $channel["item"]->author;
+                // 出版社
+                $opacs_books->publisher = $channel["item"]->children('dc', true)->publisher;
+                
+                // 請求番号：請求番号は分類コードをもとに作成する為、分類コードを入れる
+                $opacs_books->ndc = $this->getBookDetail( $channel["item"], 'dc:subject [@xsi:type="dcndl:NDC10" or @xsi:type="dcndl:NDC9" or @xsi:type="dcndl:NDC8" or @xsi:type="dcndl:NDC7" or @xsi:type="dcndl:NDC6"]' );
+                
+                // タイトルヨミ
+                $opacs_books->title_read = $channel["item"]->children('dcndl', true)->titleTranscription;
+                
+                // シリーズ
+                $opacs_books->series = $this->getBookDetail( $channel["item"], 'dcndl:seriesTitle' );
+                
+                // 出版年
+                $opacs_books->publication_year = $this->getBookDetail( $channel["item"], 'dcterms:issued [@xsi:type="dcterms:W3CDTF"]' );
+                
+                // 分類：請求番号をそのまま入れる
+                $opacs_books->class = $opacs_books->ndc;
+                
+                // 頁数/大きさ：頁数と大きさは一緒に登録されている事がある。情報入力した方の情報の入れ方如何でどうとでも入力できてしまう為、確実に間違いなく取得できる方法がない。
+                // なので仮に、「dc:extent」が２つある時は、１つ目を頁数、２つ目を大きさと仮定して値を設定する
+                // １しかない時はページ数の方にのみ設定する
+                // ３つ以上ある時は最初の１つ目を頁数、２つ目を大きさとして設定して他を無視する
+                $get_element = $channel["item"]->xpath('dc:extent');
+                $get_count = count( $get_element );
+                if( $get_count == 1 )
+                {
+                    $opacs_books->page_number = trim( $get_element[0]->__toString() );
+                }
+                elseif( $get_count > 1 )
+                {
+                    $opacs_books->page_number = trim( $get_element[0]->__toString() );
+                    $opacs_books->size = trim( $get_element[1]->__toString() );
+                }
+                
+                // MARC NO
+                $opacs_books->marc = $this->getBookDetail( $channel["item"], 'dc:identifier [@xsi:type="dcndl:NIIBibID"]' );
+                
+                // 金額
+                $get_value = $this->getBookDetail( $channel["item"], 'dcndl:price' );
+                $opacs_books->accept_price = str_replace( '円', '', $get_value );
+                
+            }
+
         }
 
         return array($opacs_books, "");
+    }
+    
+    /**
+     *  書籍詳細情報取得関数
+     */
+    private function getBookDetail( $channel_item, $xpath_string )
+    {
+        // itemの中から、xpathで指定された値を取得する。
+        // 取得した値をstring値で返却。ない場合は空の文字列を返却
+        $get_element = $channel_item->xpath($xpath_string);
+        if( count( $get_element ) > 0 )
+        {
+            return trim( $get_element[0]->__toString() );
+        }
+        
+        return "";
+    
+    }
+    
+    /**
+     *  書籍詳細情報取得関数
+     */
+    private function getBookDetailByList( $channel_items, $xpath_string )
+    {
+        // channelの中にある複数のitemリストの中から、xpathで指定された値を取得する。
+        // 取得した値をstring値で返却。ない場合は空の文字列を返却
+        
+        foreach( $channel_items as $item )
+        {
+            $get_value = $this->getBookDetail( $item, $xpath_string );
+            if( $get_value != "" )
+            {
+                return $get_value;
+            }
+        }
+        
+        return "";
     }
 
     /* 画面アクション関数 */
@@ -177,6 +324,9 @@ class OpacsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null, $messages = null)
     {
+// ★
+$dbg = debug_backtrace();
+Log::debug('index関数[呼び出し元]：' . $dbg[1]['function']);
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -193,7 +343,9 @@ class OpacsPlugin extends UserPluginBase
         if ($opacs_frames_setting->view_form == 0) {
             return $this->indexMyOpac($request, $page_id, $frame_id, $errors, $messages);
         } else {
-            return $this->indexSearch($request, $page_id, $frame_id);
+//            return $this->indexSearch($request, $page_id, $frame_id);
+// ★
+            return $this->indexSearch($request, $page_id, $frame_id, $errors, $messages);
         }
     }
 
@@ -352,7 +504,9 @@ class OpacsPlugin extends UserPluginBase
      *
      * @return view
      */
-    public function indexSearch($request, $page_id, $frame_id)
+//    public function indexSearch($request, $page_id, $frame_id)
+// ★
+    public function indexSearch($request, $page_id, $frame_id, $errors = null, $messages = null)
     {
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
@@ -402,11 +556,16 @@ class OpacsPlugin extends UserPluginBase
                           ->paginate($opac_frame->view_count, ["*"], "frame_{$opac_frame->id}_page");
         }
 
+// ★
+Log::debug('indexSearch[errors]：' . $errors);
+Log::debug('indexSearch[message]：' . $messages);
         // 表示テンプレートを呼び出す。
         return $this->view(
             'opacs', [
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_books,
+            'errors'         => $errors,		// ★
+            'messages'       => $messages,		// ★
             ]
         );
     }
@@ -651,6 +810,8 @@ class OpacsPlugin extends UserPluginBase
      */
     public function create($request, $page_id, $frame_id, $opacs_books_id = null, $errors = null)
     {
+// ★
+Log::debug('create関数[Start]');
         // 権限チェック
         // 特別処理。role_article（記事修正）でチェック。
         if ($this->can('role_article')) {
@@ -678,6 +839,9 @@ class OpacsPlugin extends UserPluginBase
             //echo $opacs_books->title;
         }
 
+// ★
+Log::debug('create関数[errors]：' . $errors);
+Log::debug('create関数[search_error_message]：' . $search_error_message);
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'opacs_input', [
@@ -789,6 +953,8 @@ class OpacsPlugin extends UserPluginBase
      */
     public function save($request, $page_id, $frame_id, $opacs_books_id = null)
     {
+// ★
+Log::debug('save関数[start]');
         // 権限チェック
         // 特別処理。role_article（記事修正）でチェック。
         if ($this->can('role_article')) {
@@ -798,6 +964,7 @@ class OpacsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'title' => ['required'],
+//            'isbn' => ['alpha_num'],
         ]);
         $validator->setAttributeNames([
             'title' => 'タイトル',
@@ -805,6 +972,8 @@ class OpacsPlugin extends UserPluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
+// ★
+Log::debug('save関数[入力エラー終了]');
             return ( $this->create($request, $page_id, $frame_id, $opacs_books_id, $validator->errors()) );
         }
 
@@ -853,8 +1022,12 @@ class OpacsPlugin extends UserPluginBase
         // データ保存
         $opacs_book->save();
 
+$messages = "登録しました。";
+
         // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
+//        return $this->index($request, $page_id, $frame_id);
+// ★
+        return $this->index($request, $page_id, $frame_id, null, $messages);
     }
 
     /**
@@ -1069,7 +1242,7 @@ class OpacsPlugin extends UserPluginBase
             // ログインID
             if (empty($request->student_no)) {
                 $messages = new MessageBag;
-                $messages->add('student_no', '借りる人のログインID（学籍番号）を指定してください。');
+                $messages->add('student_no', '借りる人のログインID（学籍番号/教職員番号）を指定してください。');
                 return $this->index($request, $page_id, $frame_id, $messages);
             }
             $student = User::where('userid', $request->student_no)->first();
@@ -1208,7 +1381,7 @@ class OpacsPlugin extends UserPluginBase
             'req_email'            => ['required'],
         ]);
         $validator->setAttributeNames([
-            'req_student_no'       => '学籍番号',
+            'req_student_no'       => '学籍番号/教職員番号',
             'req_return_scheduled' => '返却予定日',
             'req_phone_no'         => '連絡先電話番号',
             'req_email'            => '連絡先メールアドレス',
@@ -1306,7 +1479,7 @@ class OpacsPlugin extends UserPluginBase
             // ログインID
             if (empty($request->return_student_no)) {
                 $messages = new MessageBag;
-                $messages->add('return_student_no', '借りる人のログインID（学籍番号）を指定してください。');
+                $messages->add('return_student_no', '借りる人のログインID（学籍番号/教職員番号）を指定してください。');
                 return $this->index($request, $page_id, $frame_id, $messages);
             }
             $student = User::where('userid', $request->return_student_no)->first();
