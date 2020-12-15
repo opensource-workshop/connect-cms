@@ -1279,6 +1279,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             $plugin_name . '.' . $plugin_name . '_name',
                             'forms_inputs.forms_id'
                         )
+                        ->orderBy($plugin_name. '.id', 'desc')
                         ->orderBy($plugin_name . '.created_at', 'desc')
                         ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
