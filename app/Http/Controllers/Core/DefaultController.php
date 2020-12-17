@@ -59,6 +59,9 @@ class DefaultController extends ConnectController
             return $this->callSpecialPath($request->path(), $request);
         }
 
+        // 操作ログの処理
+        $this->putLog($request, $this->getConfigs(), 'page');
+
         // フレーム一覧取得（メインエリアのみ）
         $frames = $this->getFramesMain($this->page->id);
 
