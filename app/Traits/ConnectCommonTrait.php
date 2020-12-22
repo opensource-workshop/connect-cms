@@ -18,12 +18,12 @@ use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
 
-use App\Traits\ConnectLogTrait;
+//use App\Traits\ConnectLogTrait;
 
 trait ConnectCommonTrait
 {
-    // Connect-CMS 共通のログ管理
-    use ConnectLogTrait;
+//    // Connect-CMS 共通のログ管理
+//    use ConnectLogTrait;
 
     //var $directory_base = "uploads/";
     //var $directory_file_limit = 1000;
@@ -481,8 +481,8 @@ trait ConnectCommonTrait
             abort(403, 'ユーザーにメソッドに対する権限がありません。');
         }
 
-        // 操作ログの処理
-        $this->putLog($request, $this->getConfigs(), 'page');
+//        // 操作ログの処理
+//        $this->putAppLog($request, $this->getConfigs(), 'page');
 
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
