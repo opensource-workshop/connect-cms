@@ -585,11 +585,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $tmp_array = $request->forms_columns_value;
             $tmp_array[$forms_column->id] = null;
             if ($time_from && $time_to) {
-                // 両方入力時、時間の前後チェック
-                $validator_rule[] = new CustomVali_TimeFromTo(
-                    \Carbon::createFromTimeString($time_from . ':00'),
-                    \Carbon::createFromTimeString($time_to . ':00')
-                );
+                if(strtotime('1970-01-01 '. $time_from . ':00') && strtotime('1970-01-01 '. $time_to . ':00')){
+                    // 両方入力時、且つ、正常時間の場合、時間の前後チェック
+                    $validator_rule[] = new CustomVali_TimeFromTo(
+                        \Carbon::createFromTimeString($time_from . ':00'),
+                        \Carbon::createFromTimeString($time_to . ':00')
+                    );
+                }else{
+                    // 不正時間の為、dateバリデーションで弾く
+                    $validator_rule[] = 'date';
+                }
                 $tmp_array[$forms_column->id] = $time_from . '~' . $time_to;
             } elseif ($time_from || $time_to) {
                 // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
