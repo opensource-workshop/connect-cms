@@ -24,7 +24,7 @@ trait ConnectLogTrait
      *
      * @return boolean
      */
-    private function putLog($request, $config, $type = null, $send_address = null, $return_code = null, $value = null)
+    public function putAppLog($request, $config, $type = null, $send_address = null, $return_code = null, $value = null)
     {
         // ログ記録の対象かの判断
         $log_record_flag = false;
