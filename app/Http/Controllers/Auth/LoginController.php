@@ -104,4 +104,22 @@ class LoginController extends Controller
             throw $e;
         }
     }
+
+    /**
+     * shibboleth認証
+     */
+    public function shibboleth(Request $request)
+    {
+        // 外部認証の確認と外部認証の場合は関数側で認証してトップページを呼ぶ
+        // 外部認証でない場合は戻ってくる。
+        //
+        // メソッド内の return redirect("/"); は、すぐさまリダイレクトするのではなく、RedirectResponseオブジェクトを返して、後続は続行される。
+        // RedirectResponseオブジェクトなしの場合は、shibboleth認証設定なしとしてエラーにする。
+        // RedirectResponseオブジェクトありの場合は、ちゃんとreturnしてあげないと、1度目は処理されず白画面->同じURLをreloadすると2度目でログインとバグが出る。
+        $redirect = $this->authMethodShibboleth($request);
+        if (empty($redirect)) {
+            abort(403, "shibboleth認証を設定していないため、表示できません。");
+        }
+        return $redirect;
+    }
 }

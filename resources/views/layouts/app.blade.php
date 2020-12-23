@@ -8,6 +8,8 @@
 --}}
 {{-- ページ名 --}}
 <?php
+    use App\Models\Core\Configs;
+
     // URL から現在のURL パスを判定する。
     $current_url = url()->current();
     $base_url = url('/');
@@ -272,7 +274,24 @@ if(isset($configs_array['body_optional_class'])){
 
             @guest
                 @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
-                    <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
+                    @php
+                        // Config チェック
+                        $auth_method = Configs::where('name', 'auth_method')->first();
+                        $is_shibboleth = false;
+
+                        if (empty($auth_method) || $auth_method->value == '') {
+                            // 外部認証ではない場合、何もしない
+                        } elseif ($auth_method->value == 'shibboleth') {
+                            // 外部認証でshibboleth認証の場合
+                            $is_shibboleth = true;
+                        }
+                    @endphp
+
+                    @if ($is_shibboleth)
+                        <li><a class="nav-link" href="{{ route('shibboleth.login') }}">ログイン</a></li>
+                    @else
+                        <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
+                    @endif
                 @endif
                 @if (isset($configs) && ($configs['user_register_enable'] == '1'))
                     <li><a class="nav-link" href="{{ route('register') }}">ユーザ登録</a></li>

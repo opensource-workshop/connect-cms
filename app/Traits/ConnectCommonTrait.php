@@ -4,8 +4,9 @@ namespace App\Traits;
 
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 use Session;
 
@@ -801,12 +802,10 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  外部認証
-     *
+     * 外部認証
      */
     public function authMethod($request)
     {
-
         // Config チェック
         $auth_method = Configs::where('name', 'auth_method')->first();
 
@@ -867,6 +866,82 @@ trait ConnectCommonTrait
                     return redirect("/");
                 }
             }
+        }
+        return;
+    }
+
+    /**
+     * 外部認証: shibboleth 認証
+     */
+    public function authMethodShibboleth($request)
+    {
+        // Config チェック
+        $auth_method = Configs::where('name', 'auth_method')->first();
+
+        // 外部認証ではない場合は戻る
+        if (empty($auth_method) || $auth_method->value == '') {
+            return;
+        }
+
+        if ($auth_method->value == 'shibboleth') {
+            // shibboleth 認証
+            //
+            // 必須
+            // $userid = $request->server('REDIRECT_mail');
+            $userid = $request->server(config('cc_shibboleth_config.userid'));
+
+            // ログインするユーザの存在を確認
+            $user = User::where('userid', $userid)->first();
+
+            if (empty($user)) {
+                // ユーザが存在しない
+                //
+                // 必須
+                // $user_name = $request->server('REDIRECT_employeeNumber');
+                $user_name = $request->server(config('cc_shibboleth_config.user_name'));
+
+                // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム 
+                $password = Hash::make(Str::random(20));
+
+                // 任意, $request->server()は値がなければnullになる
+                // $email = $request->server('REDIRECT_mail');
+                $email = $request->server(config('cc_shibboleth_config.user_email'));
+
+                // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                $user           = new User;
+                $user->name     = $user_name;
+                $user->userid   = $userid;
+                $user->email    = $email;
+                $user->password = $password;
+                $user->save();
+
+                // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生) 
+                //        によって、シボレス認証初回時の自動アカウント設定、何か設定する？
+                // echo "<tr><td>区分</td><td>".$_SERVER['REDIRECT_unscoped-affiliation']."</td></tr>";
+
+                // 追加権限設定があれば作成
+                // if (!empty($auth_method['additional4'])) {
+                //     $original_rols_options = explode(':', $auth_method['additional4']);
+                //     UsersRoles::create([
+                //         'users_id'   => $user->id,
+                //         'target'     => 'original_role',
+                //         'role_name'  => $original_rols_options[1],
+                //         'role_value' => 1
+                //     ]);
+                // }
+            } else {
+                // ユーザが存在する
+                //
+                // 利用可能かチェック
+                if ($user->status != 0) {
+                    abort(403, "利用不可のため、ログインできません。");
+                }
+            }
+
+            // ログイン
+            Auth::login($user, true);
+            // トップページへ
+            return redirect("/");
         }
         return;
     }

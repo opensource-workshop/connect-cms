@@ -21,6 +21,8 @@
 Route::get('login', 'Auth\LoginController@showLoginForm')->name('login');
 Route::post('login', 'Auth\LoginController@login');
 Route::post('logout', 'Auth\LoginController@logout')->name('logout');
+// shibbolth認証
+Route::get(config('cc_shibboleth_config.location', 'secure'), 'Auth\LoginController@shibboleth')->name('shibboleth.login');
 
 Route::get('/password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
 Route::post('/password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
