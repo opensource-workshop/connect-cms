@@ -197,12 +197,23 @@ class LearningtasksTool
              ->get();
 
             // 総合評価の履歴
-            $this->evaluate_statuses = LearningtasksUsersStatuses::where(
-                'user_id', '=', $this->student_id
-            )->whereIn('task_status', [8])
-             ->orderBy('post_id', 'asc')
-             ->orderBy('id', 'asc')
-             ->get();
+            // POST のWHERE が抜けていたので、追加（2020-12-21）これがないと、他の科目の総合評価を引っ張ってきて、評価できない。
+            if ($this->post) {
+                $this->evaluate_statuses = LearningtasksUsersStatuses::where(
+                    'user_id', '=', $this->student_id
+                )->whereIn('task_status', [8])
+                 ->where('post_id', $this->post->id)
+                 ->orderBy('post_id', 'asc')
+                 ->orderBy('id', 'asc')
+                 ->get();
+            } else {
+                $this->evaluate_statuses = LearningtasksUsersStatuses::where(
+                    'user_id', '=', $this->student_id
+                )->whereIn('task_status', [8])
+                 ->orderBy('post_id', 'asc')
+                 ->orderBy('id', 'asc')
+                 ->get();
+            }
         }
 
         // 受講生一覧と教員一覧の取得
@@ -906,7 +917,9 @@ class LearningtasksTool
 
         // すでに試験の解答を提出している状態ならアップロード不可
         $examination_statuses = $this->examination_statuses->where('post_id', $post->id);
-        $examination_status = $examination_statuses->whereIn('task_status', [5, 6])->last();
+        // 2020-12-22 whereIn('task_status', [5, 6]) は不要。再提出＆再申し込みなら、最後に4（試験申し込み）があり、その前に5 がある。
+        //$examination_status = $examination_statuses->whereIn('task_status', [5, 6])->last();
+        $examination_status = $examination_statuses->last();
         if (!empty($examination_status)) {
             if ($examination_status->count() > 0 && $examination_status->task_status == 5) {
                 return false;
@@ -953,6 +966,16 @@ class LearningtasksTool
         // 申し込み中の試験がある
         if (!empty($this->getApplyingExamination($post->id))) {
             return array(false, $base_message . '<br />申し込み済み試験があります。');
+        }
+
+        // すでに試験を回答して、評価待ちである。（最新の履歴が task_status 5 試験の解答提出（再提出も同じ）である。）
+        $examination_statuses = $this->examination_statuses->where('post_id', $post->id);
+        $examination_last_status = $examination_statuses->last();
+        if (!empty($examination_last_status)) {
+            if ($examination_last_status->task_status == 5) {
+                return array(false, $base_message . '<br />試験解答済みで評価待ちです。');
+                return false;
+            }
         }
 
         // すでに試験に合格している
