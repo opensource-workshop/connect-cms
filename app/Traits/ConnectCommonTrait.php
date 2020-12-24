@@ -806,11 +806,11 @@ trait ConnectCommonTrait
      */
     public function authMethod($request)
     {
-        // Config チェック
-        $auth_method = Configs::where('name', 'auth_method')->first();
+        // 外部認証設定 取得
+        $auth_method = Configs::getAuthMethod();
 
-        // 外部認証ではない場合は戻る
-        if (empty($auth_method) || $auth_method->value == '') {
+        // 外部認証がない場合は戻る
+        if (empty($auth_method->value)) {
             return;
         }
 
@@ -875,11 +875,11 @@ trait ConnectCommonTrait
      */
     public function authMethodShibboleth($request)
     {
-        // Config チェック
-        $auth_method = Configs::where('name', 'auth_method')->first();
+        // 外部認証設定 取得
+        $auth_method = Configs::getAuthMethod();
 
-        // 外部認証ではない場合は戻る
-        if (empty($auth_method) || $auth_method->value == '') {
+        // 外部認証がない場合は戻る
+        if (empty($auth_method->value)) {
             return;
         }
 

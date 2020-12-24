@@ -275,13 +275,11 @@ if(isset($configs_array['body_optional_class'])){
             @guest
                 @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
                     @php
-                        // Config チェック
-                        $auth_method = Configs::where('name', 'auth_method')->first();
+                        // 外部認証設定 取得
+                        $auth_method = Configs::getAuthMethod();
                         $is_shibboleth = false;
 
-                        if (empty($auth_method) || $auth_method->value == '') {
-                            // 外部認証ではない場合、何もしない
-                        } elseif ($auth_method->value == 'shibboleth') {
+                        if ($auth_method->value == 'shibboleth') {
                             // 外部認証でshibboleth認証の場合
                             $is_shibboleth = true;
                         }

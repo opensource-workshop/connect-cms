@@ -118,7 +118,7 @@ class LoginController extends Controller
         // RedirectResponseオブジェクトありの場合は、ちゃんとreturnしてあげないと、1度目は処理されず白画面->同じURLをreloadすると2度目でログインとバグが出る。
         $redirect = $this->authMethodShibboleth($request);
         if (empty($redirect)) {
-            abort(403, "shibboleth認証を設定していないため、表示できません。");
+            abort(403, "外部認証を使用しないため、表示できません。");
         }
         return $redirect;
     }
