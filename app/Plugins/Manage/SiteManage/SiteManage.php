@@ -175,6 +175,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_header_login_link]
         );
 
+        // パスワードリセットの使用
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_login_password_reset'],
+            ['category' => 'general',
+             'value'    => $request->base_login_password_reset]
+        );
+
         // 自動ユーザ登録の使用
         $configs = Configs::updateOrCreate(
             ['name'     => 'user_register_enable'],

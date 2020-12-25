@@ -191,6 +191,35 @@
             <small class="form-text text-muted">ログインリンクを表示するかどうかを選択</small>
         </div>
 
+        {{-- パスワードリセット --}}
+        <div class="form-group">
+            <label class="col-form-label">パスワードリセットの使用</label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["base_login_password_reset"]) && $configs["base_login_password_reset"] == "1")
+                            <input type="radio" value="1" id="base_login_password_reset_on" name="base_login_password_reset" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="base_login_password_reset_on" name="base_login_password_reset" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_login_password_reset_on">許可する</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        {{-- 未設定か0なら、許可しない --}}
+                        @if(!isset($configs["base_login_password_reset"]) || (isset($configs["base_login_password_reset"]) && $configs["base_login_password_reset"] == "0"))
+                            <input type="radio" value="0" id="base_login_password_reset_off" name="base_login_password_reset" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="base_login_password_reset_off" name="base_login_password_reset" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_login_password_reset_off">許可しない</label>
+                    </div>
+                </div>
+            </div>
+            <small class="form-text text-muted">パスワードを忘れた場合に、ユーザ自身がリセットリンクをメール送信する機能を使用するかどうかを選択</small>
+        </div>
+
         {{-- 自動ユーザ登録の使用 --}}
         <div class="form-group">
             <label class="col-form-label">自動ユーザ登録の使用</label>
