@@ -510,6 +510,11 @@
                         </div>
                     </div>
                 @endif
+                @if ($errors && $errors->has('examination_time'))
+                    <div class="alert alert-danger" role="alert">
+                        試験解答のアップロードはできませんでした。
+                    </div>
+                @endif
             @endif
 
             @if ($tool->checkFunction('use_examination_evaluate') && $tool->isTeacher())

@@ -2270,6 +2270,18 @@ class LearningtasksPlugin extends UserPluginBase
         // 登録時のチェック
         $validator_values = array();
         $validator_attributes = array();
+        $validator_messages = array();
+
+        // 試験の解答の場合、該当の試験時間内かチェック
+        if ($task_status == 5) {
+            // tools クラスのcanExaminationUpload（試験の提出を行えるか？）でチェックする。
+            // この関数でチェックすることで、試験時間もチェックできる。
+            // required を使用しているが、メッセージはview で独自に記載。
+            if (!$tool->canExaminationUpload($post)) {
+                $validator_values['examination_time'] = ['required'];
+                $validator_attributes['examination_time'] = '試験時間';
+            }
+        }
 
         // アップロードファイルの指定があれば、必須チェック（必須は受講生側のレポート提出、試験提出のみ）
         if ($task_status == 1 || $task_status == 5) {
@@ -2278,6 +2290,7 @@ class LearningtasksPlugin extends UserPluginBase
                 $validator_attributes['upload_file'] = 'ファイル';
             }
         }
+
         // 評価の場合、評価を必須チェック
         if ($task_status == 2 || $task_status == 6 || $task_status == 8) {
             $validator_values['grade'] = ['required'];
