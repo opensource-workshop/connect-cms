@@ -4,14 +4,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Connect-CMS AuthType shibboleth location (mod_shib)
+    | Connect-CMS AuthType shibboleth login path (mod_shib)
     |--------------------------------------------------------------------------
     |
-    | AuthType shibboleth location in apache mod_shib.
+    | AuthType shibboleth login path in apache mod_shib.
     |
     */
 
-    'location' => 'secure',
+    'login_path' => 'secure',
 
     /*
     |--------------------------------------------------------------------------
