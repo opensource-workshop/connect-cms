@@ -18,8 +18,9 @@ class CreateAppLogs extends Migration
             $table->string('ip_address', 255)->nullable()->comment('IPアドレス');
             $table->string('plugin_name', 255)->nullable()->comment('プラグイン名');
             $table->string('uri')->nullable()->comment('URI');
-            $table->string('type', 255)->nullable()->comment('ログ種別');
-            $table->string('send_address', 255)->nullable()->comment('送信先');
+            $table->string('route_name', 255)->nullable()->comment('Route名');
+            $table->string('method', 255)->nullable()->comment('get,post,cron...');
+            $table->string('type', 255)->nullable()->comment('種別');
             $table->string('return_code', 255)->nullable()->comment('成否');
             $table->text('value')->nullable()->comment('値など');
             $table->text('userid')->nullable()->comment('ログインID');

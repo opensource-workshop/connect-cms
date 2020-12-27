@@ -18,5 +18,5 @@ class AppLog extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['ip_address', 'plugin_name', 'url', 'type', 'send_address', 'return_code', 'value'];
+    protected $fillable = ['ip_address', 'plugin_name', 'url', 'route_name', 'method', 'type', 'return_code', 'value'];
 }

@@ -51,16 +51,17 @@
 
             {{-- 記録するログ種別の選択 --}}
             <div class="form-group">
-                <label class="col-form-label">記録するログ種別</label>
+                <label class="col-form-label">記録するログ種別</label><small class="text-muted">（ひとつでも合致すれば記録します）</small>
                 <div class="row">
-                    <div class="col-md">
+                    <label class="col-md-3 mt-3 mt-md-0 text-md-right">ログイン関係</label>
+                    <div class="col-md-9">
                         <div class="custom-control custom-checkbox custom-control-inline">
                             @if(isset($configs["save_log_type_login"]) && $configs["save_log_type_login"] == "1")
                                 <input name="save_log_type_login" value="1" type="checkbox" class="custom-control-input" id="save_log_type_login" checked>
                             @else
                                 <input name="save_log_type_login" value="1" type="checkbox" class="custom-control-input" id="save_log_type_login">
                             @endif
-                            <label class="custom-control-label" for="save_log_type_login">ログイン操作</label>
+                            <label class="custom-control-label" for="save_log_type_login">ログイン・ログアウト</label>
                         </div>
                         <div class="custom-control custom-checkbox custom-control-inline">
                             @if(isset($configs["save_log_type_authed"]) && $configs["save_log_type_authed"] == "1")
@@ -70,6 +71,11 @@
                             @endif
                             <label class="custom-control-label" for="save_log_type_authed">ログイン後のページ操作</label>
                         </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <label class="col-md-3 mt-3 mt-md-0 text-md-right">種別</label>
+                    <div class="col-md-9">
                         <div class="custom-control custom-checkbox custom-control-inline">
                             @if(isset($configs["save_log_type_search_keyword"]) && $configs["save_log_type_search_keyword"] == "1")
                                 <input name="save_log_type_search_keyword" value="1" type="checkbox" class="custom-control-input" id="save_log_type_search_keyword" checked>
@@ -79,12 +85,33 @@
                             <label class="custom-control-label" for="save_log_type_search_keyword">検索キーワード</label>
                         </div>
                         <div class="custom-control custom-checkbox custom-control-inline">
-                            @if(isset($configs["save_log_type_search_keyword"]) && $configs["save_log_type_search_keyword"] == "1")
+                            @if(isset($configs["save_log_type_sendmail"]) && $configs["save_log_type_sendmail"] == "1")
                                 <input name="save_log_type_sendmail" value="1" type="checkbox" class="custom-control-input" id="save_log_type_sendmail" checked>
                             @else
                                 <input name="save_log_type_sendmail" value="1" type="checkbox" class="custom-control-input" id="save_log_type_sendmail">
                             @endif
                             <label class="custom-control-label" for="save_log_type_sendmail">メール送信</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <label class="col-md-3 mt-3 mt-md-0 text-md-right">HTTPメソッド</label>
+                    <div class="col-md-9">
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            @if(isset($configs["save_log_type_http_get"]) && $configs["save_log_type_http_get"] == "1")
+                                <input name="save_log_type_http_get" value="1" type="checkbox" class="custom-control-input" id="save_log_type_http_get" checked>
+                            @else
+                                <input name="save_log_type_http_get" value="1" type="checkbox" class="custom-control-input" id="save_log_type_http_get">
+                            @endif
+                            <label class="custom-control-label" for="save_log_type_http_get">GET</label>
+                        </div>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            @if(isset($configs["save_log_type_http_post"]) && $configs["save_log_type_http_post"] == "1")
+                                <input name="save_log_type_http_post" value="1" type="checkbox" class="custom-control-input" id="save_log_type_http_post" checked>
+                            @else
+                                <input name="save_log_type_http_post" value="1" type="checkbox" class="custom-control-input" id="save_log_type_http_post">
+                            @endif
+                            <label class="custom-control-label" for="save_log_type_http_post">POST</label>
                         </div>
                     </div>
                 </div>
