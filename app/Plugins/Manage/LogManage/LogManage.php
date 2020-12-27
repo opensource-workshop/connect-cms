@@ -60,25 +60,41 @@ class LogManage extends ManagePluginBase
             $app_logs_query->where('userid', 'like', '%' . $request->session()->get('app_log_search_condition.userid') . '%');
         }
 
-        // ログ種別
-        $where_type = array();
-
-        // ページ
-        if ($request->session()->has('app_log_search_condition.type_page')) {
-            $where_type[] = 'page';
-        }
-        // ログイン
-        if ($request->session()->has('app_log_search_condition.type_login')) {
-            $where_type[] = 'login';
-        }
-        // メール送信
-        if ($request->session()->has('app_log_search_condition.type_sendmail')) {
-            $where_type[] = 'sendmail';
-        }
-        // 絞り込み
-        if ($where_type) {
-            $app_logs_query->whereIn('type', $where_type);
-        }
+        // 詳細条件
+        $app_logs_query->where(function ($query) use ($request) {
+            // ログイン
+            if ($request->session()->has('app_log_search_condition.log_type_login')) {
+                $query->orWhere('type', '=', 'LOGIN');
+            }
+            // ログアウト
+            if ($request->session()->has('app_log_search_condition.log_type_logout')) {
+                $query->orWhere('type', '=', 'LOGOUT');
+            }
+            // ログイン後のページ操作
+            if ($request->session()->has('app_log_search_condition.log_type_authed')) {
+                $query->orWhereNotNull('userid');
+            }
+            // 検索キーワード
+            if ($request->session()->has('app_log_search_condition.log_type_search_keyword')) {
+                $query->orWhere('type', '=', 'SEARCH');
+            }
+            // メール送信
+            if ($request->session()->has('app_log_search_condition.log_type_sendmail')) {
+                $query->orWhere('type', '=', 'SENDMAIL');
+            }
+            // ページ操作
+            if ($request->session()->has('app_log_search_condition.log_type_page')) {
+                $query->orWhere('type', '=', 'PAGE');
+            }
+            // HTTPメソッド(GET)
+            if ($request->session()->has('app_log_search_condition.log_type_http_get')) {
+                $query->orWhere('METHOD', '=', 'GET');
+            }
+            // HTTPメソッド(POST)
+            if ($request->session()->has('app_log_search_condition.log_type_http_post')) {
+                $query->orWhere('METHOD', '=', 'POST');
+            }
+        });
 
         // データ取得
         $app_logs = $app_logs_query->orderBy('id', 'desc')->paginate(10);
@@ -98,15 +114,9 @@ class LogManage extends ManagePluginBase
     public function search($request, $id)
     {
         // 検索ボタンが押されたときはここが実行される。検索条件を設定してindex を呼ぶ。
-        $app_log_search_condition = [
-            "userid"        => $request->input('app_log_search_condition.userid'),
-
-            "type_page"     => $request->input('app_log_search_condition.type_page'),
-            "type_login"    => $request->input('app_log_search_condition.type_login'),
-            "type_sendmail" => $request->input('app_log_search_condition.type_sendmail'),
-        ];
-
-        session(["app_log_search_condition" => $app_log_search_condition]);
+        // 画面上、検索条件は app_log_search_condition という名前で配列になっているので、
+        // app_log_search_condition をセッションに持つことで、条件の持ち回りが可能。
+        session(["app_log_search_condition" => $request->input('app_log_search_condition')]);
 
         return redirect("/manage/log");
     }
@@ -188,6 +198,20 @@ class LogManage extends ManagePluginBase
             ['name'     => 'save_log_type_sendmail'],
             ['category' => 'app_log',
              'value'    => $request->save_log_type_sendmail]
+        );
+
+        // HTTPメソッド GET
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'save_log_type_http_get'],
+            ['category' => 'app_log',
+             'value'    => $request->save_log_type_http_get]
+        );
+
+        // HTTPメソッド POST
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'save_log_type_http_post'],
+            ['category' => 'app_log',
+             'value'    => $request->save_log_type_http_post]
         );
 
         // ログ設定画面に戻る

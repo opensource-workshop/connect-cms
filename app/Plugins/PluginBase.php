@@ -8,6 +8,7 @@ use Illuminate\View\FileViewFinder;
 use File;
 
 use App\Models\Common\Numbers;
+use App\Traits\ConnectMailTrait;
 
 /**
  * プラグイン基底クラス
@@ -21,6 +22,7 @@ use App\Models\Common\Numbers;
  */
 class PluginBase
 {
+    use ConnectMailTrait;
 
     /*
         コンストラクタ

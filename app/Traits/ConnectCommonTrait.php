@@ -18,13 +18,8 @@ use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
 
-//use App\Traits\ConnectLogTrait;
-
 trait ConnectCommonTrait
 {
-//    // Connect-CMS 共通のログ管理
-//    use ConnectLogTrait;
-
     //var $directory_base = "uploads/";
     //var $directory_file_limit = 1000;
 
