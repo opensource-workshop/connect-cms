@@ -116,13 +116,13 @@ class ConnectLog
             if ($configs->where('name', 'save_log_type_login')->where('value', '1')->isNotEmpty() && $route_name == 'login') {
                 $value = $request->input("userid");
                 $log_record_flag = true;
-                $type = 'LOGIN';
+                $type = 'Login';
             }
             // ログアウト
             if ($configs->where('name', 'save_log_type_login')->where('value', '1')->isNotEmpty() && $route_name == 'logout') {
                 $value = Auth::user() ? Auth::user()->userid : null;
                 $log_record_flag = true;
-                $type = 'LOGOUT';
+                $type = 'Logout';
             }
             // ログイン後のページ操作
             if ($configs->where('name', 'save_log_type_authed')->where('value', '1')->isNotEmpty() && Auth::check()) {
