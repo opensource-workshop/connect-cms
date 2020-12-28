@@ -14,7 +14,7 @@
 @endif
     {{ csrf_field() }}
 
-    @if (Auth::user() && Auth::user()->can('admin_page'))
+    @if (Auth::user() && Auth::user()->can('admin_user'))
         <div class="form-group row">
             <label for="name" class="col-md-4 col-form-label text-md-right">状態 <label class="badge badge-danger">必須</label></label>
             <div class="col-md-8 d-sm-flex align-items-center">
@@ -36,6 +36,9 @@
                 </div>
             </div>
         </div>
+    @else
+        {{-- 自動登録が許可されている場合の状態は利用可能とする --}}
+        <input type="hidden" value="0" name="status">
     @endif
 
     <div class="form-group row">
@@ -114,7 +117,7 @@
 
 
     {{-- コンテンツ権限 --}}
-    @if (Auth::user() && Auth::user()->can('admin_page'))
+    @if (Auth::user() && Auth::user()->can('admin_user'))
         <div class="form-group row">
             <label for="password-confirm" class="col-md-4 text-md-right">コンテンツ権限</label>
             <div class="col-md-8">
@@ -237,7 +240,7 @@
     <div class="form-group row text-center">
         <div class="col-sm-3"></div>
         <div class="col-sm-6">
-            @if (Auth::user() && Auth::user()->can('admin_page'))
+            @if (Auth::user() && Auth::user()->can('admin_user'))
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user')}}'">
                 <i class="fas fa-times"></i> キャンセル
             </button>

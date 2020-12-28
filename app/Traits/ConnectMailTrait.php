@@ -85,7 +85,7 @@ trait ConnectMailTrait
             $app_log->uri          = $this->request->getRequestUri();
             $app_log->route_name   = $route_name;
             $app_log->method       = $this->request->method();
-            $app_log->type         = 'SENDMAIL';
+            $app_log->type         = 'SendMail';
             //$app_log->return_code  = $return_code;
             $app_log->value        = $mail_address;
 

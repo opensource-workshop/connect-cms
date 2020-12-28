@@ -22,7 +22,7 @@
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
                     <div class="card-header" id="app_log_search_condition">
-                        絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_log_search_condition'))<i class="far fa-check-square ml-3"></i>@else<i class="far fa-square ml-3"></i>@endif
+                        絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_log_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>
                 </button>
                 <div id="search_collapse" class="collapse" aria-labelledby="app_log_search_condition" data-parent="#search_accordion">
@@ -64,6 +64,22 @@
                                 <label for="app_log_search_condition_type" class="col-md-3 text-md-right">種別</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_page]" value="1" type="checkbox" class="custom-control-input" id="log_type_page"@if(Session::get('app_log_search_condition.log_type_page') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_page">一般ページ</label>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_manage]" value="1" type="checkbox" class="custom-control-input" id="log_type_manage"@if(Session::get('app_log_search_condition.log_type_manage') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_manage">管理画面</label>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_mypage]" value="1" type="checkbox" class="custom-control-input" id="log_type_mypage"@if(Session::get('app_log_search_condition.log_type_mypage') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_mypage">マイページ</label>
+                                    </div>                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_api]" value="1" type="checkbox" class="custom-control-input" id="log_type_api"@if(Session::get('app_log_search_condition.log_type_api') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_api">API</label>
+                                    </div><br />
+
+                                    <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="app_log_search_condition[log_type_search_keyword]" value="1" type="checkbox" class="custom-control-input" id="log_type_search_keyword"@if(Session::get('app_log_search_condition.log_type_search_keyword') == "1") checked @endif>
                                         <label class="custom-control-label" for="log_type_search_keyword">検索キーワード</label>
                                     </div>
@@ -72,8 +88,39 @@
                                         <label class="custom-control-label" for="log_type_sendmail">メール送信</label>
                                     </div>
                                     <div class="custom-control custom-control-inline custom-checkbox">
-                                        <input name="app_log_search_condition[log_type_page]" value="1" type="checkbox" class="custom-control-input" id="log_type_page"@if(Session::get('app_log_search_condition.log_type_page') == "1") checked @endif>
-                                        <label class="custom-control-label" for="log_type_page">ページ操作</label>
+                                        <input name="app_log_search_condition[log_type_passwordpage]" value="1" type="checkbox" class="custom-control-input" id="log_type_passwordpage"@if(Session::get('app_log_search_condition.log_type_passwordpage') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_passwordpage">パスワードページ認証</label>
+                                    </div><br />
+
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_download]" value="1" type="checkbox" class="custom-control-input" id="log_type_download"@if(Session::get('app_log_search_condition.log_type_download') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_download">ダウンロード</label>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_css]" value="1" type="checkbox" class="custom-control-input" id="log_type_css"@if(Session::get('app_log_search_condition.log_type_css') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_css">CSS</label>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_file]" value="1" type="checkbox" class="custom-control-input" id="log_type_file"@if(Session::get('app_log_search_condition.log_type_file') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_file">ファイル</label>
+                                    </div><br />
+
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_password]" value="1" type="checkbox" class="custom-control-input" id="log_type_password"@if(Session::get('app_log_search_condition.log_type_password') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_password">パスワード関係</label>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_register]" value="1" type="checkbox" class="custom-control-input" id="log_type_register"@if(Session::get('app_log_search_condition.log_type_register') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_register">ユーザ登録</label>
+                                    </div><br />
+
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_core]" value="1" type="checkbox" class="custom-control-input" id="log_type_core"@if(Session::get('app_log_search_condition.log_type_core') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_core">コア側処理</label>
+                                    </div>
+                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                        <input name="app_log_search_condition[log_type_language]" value="1" type="checkbox" class="custom-control-input" id="log_type_language"@if(Session::get('app_log_search_condition.log_type_language') == "1") checked @endif>
+                                        <label class="custom-control-label" for="log_type_language">言語切り替え</label>
                                     </div>
                                 </div>
                             </div>
@@ -124,6 +171,7 @@
                     <th nowrap>値など</th>
                     <th nowrap>メソッド</th>
                     <th nowrap>プラグイン名</th>
+                    <th nowrap>Route名</th>
                     <th nowrap>URI</th>
                     {{-- <th nowrap>成否</th> --}}
                 </tr>
@@ -139,6 +187,7 @@
                     <td nowrap>{{$app_log->value}}</td>
                     <td nowrap>{{$app_log->method}}</td>
                     <td nowrap>{{$app_log->plugin_name}}</td>
+                    <td nowrap>{{$app_log->route_name}}</th>
                     <td nowrap>{{$app_log->uri}}</th>
                     {{-- <td nowrap>{{$app_log->return_code}}</td> --}}
                 </tr>
@@ -148,8 +197,15 @@
         </div>
 
         {{-- ページング処理 --}}
-        <div class="text-center">
-            {{ $app_logs->links() }}
+        <div class="row">
+            <div class="col-10 text-center">
+                {{ $app_logs->links() }}
+            </div>
+            <div class="col-2 text-right">
+                <a href="{{url('/')}}/manage/log/downloadCsv" target="_blank" onclick="return confirm('現在の絞り込み条件のログをダウンロードします。\nよろしいですか？')">
+                    <span class="btn btn-primary"><i class="fas fa-file-download"></i></span>
+                </a>
+            </div>
         </div>
     </div>
 </div>

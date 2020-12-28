@@ -2,6 +2,8 @@
 
 namespace App\Plugins\Manage\LogManage;
 
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -33,7 +35,121 @@ class LogManage extends ManagePluginBase
         $role_ckeck_table["clearSearch"] = array('admin_system');
         $role_ckeck_table["edit"]        = array('admin_system');
         $role_ckeck_table["update"]      = array('admin_system');
+        $role_ckeck_table["downloadCsv"] = array('admin_system');
         return $role_ckeck_table;
+    }
+
+    /**
+     *  ログデータSQL取得
+     *
+     * @return view
+     */
+    private function getQuery($request)
+    {
+        // ログデータ取得
+        $app_logs_query = AppLog::select('app_logs.*');
+
+        // ログインID
+        if ($request->session()->has('app_log_search_condition.userid')) {
+            $app_logs_query->where('userid', 'like', '%' . $request->session()->get('app_log_search_condition.userid') . '%');
+        }
+
+        // 詳細条件
+        $app_logs_query->where(function ($query) use ($request) {
+            // ログイン
+            if ($request->session()->has('app_log_search_condition.log_type_login')) {
+                $query->orWhere('type', '=', 'Login');
+            }
+            // ログアウト
+            if ($request->session()->has('app_log_search_condition.log_type_logout')) {
+                $query->orWhere('type', '=', 'logout');
+            }
+            // ログイン後のページ操作
+            if ($request->session()->has('app_log_search_condition.log_type_authed')) {
+                $query->orWhereNotNull('userid');
+            }
+            // 一般ページ
+            if ($request->session()->has('app_log_search_condition.log_type_search_keyword')) {
+                $query->orWhere('type', '=', 'Page');
+            }
+            // 管理画面
+            if ($request->session()->has('app_log_search_condition.log_type_manage')) {
+                $query->orWhere('type', '=', 'Manage');
+            }
+            // マイページ
+            if ($request->session()->has('app_log_search_condition.log_type_mypage')) {
+                $query->orWhere('type', '=', 'MyPage');
+            }
+            // API
+            if ($request->session()->has('app_log_search_condition.log_type_api')) {
+                $query->orWhere('type', '=', 'API');
+            }
+            // 検索キーワード
+            if ($request->session()->has('app_log_search_condition.log_type_search_keyword')) {
+                $query->orWhere('type', '=', 'Search');
+            }
+            // メール送信
+            if ($request->session()->has('app_log_search_condition.log_type_sendmail')) {
+                $query->orWhere('type', '=', 'SendMail');
+            }
+            // パスワードページ認証
+            if ($request->session()->has('app_log_search_condition.log_type_passwordpage')) {
+                $query->orWhere('type', '=', 'PasswordPage');
+            }
+            // ダウンロード
+            if ($request->session()->has('app_log_search_condition.log_type_download')) {
+                $query->orWhere('type', '=', 'Download');
+            }
+            // CSS
+            if ($request->session()->has('app_log_search_condition.log_type_css')) {
+                $query->orWhere('type', '=', 'CSS');
+            }
+            // ファイル
+            if ($request->session()->has('app_log_search_condition.log_type_file')) {
+                $query->orWhere('type', '=', 'File');
+            }
+            // パスワード関係
+            if ($request->session()->has('app_log_search_condition.log_type_password')) {
+                $query->orWhere('type', '=', 'Password');
+            }
+            // ユーザ登録
+            if ($request->session()->has('app_log_search_condition.log_type_register')) {
+                $query->orWhere('type', '=', 'Register');
+            }
+            // コア側処理
+            if ($request->session()->has('app_log_search_condition.log_type_core')) {
+                $query->orWhere('type', '=', 'Core');
+            }
+            // 言語切り替え
+            if ($request->session()->has('app_log_search_condition.log_type_language')) {
+                $query->orWhere('type', '=', 'Language');
+            }
+            // HTTPメソッド(GET)
+            if ($request->session()->has('app_log_search_condition.log_type_http_get')) {
+                $query->orWhere('METHOD', '=', 'GET');
+            }
+            // HTTPメソッド(POST)
+            if ($request->session()->has('app_log_search_condition.log_type_http_post')) {
+                $query->orWhere('METHOD', '=', 'POST');
+            }
+        });
+
+        // Query取得
+        return $app_logs_query;
+    }
+
+    /**
+     *  ログデータ取得
+     *
+     * @return view
+     */
+    private function getData($request)
+    {
+        // ログデータ取得
+        $app_logs_query = $this->getQuery($request);
+
+        // データ取得
+        return $app_logs_query->orderBy('id', 'desc')->paginate(10);
     }
 
     /**
@@ -52,52 +168,8 @@ class LogManage extends ManagePluginBase
             $configs_array[$config->name] = $config->value;
         }
 
-        // ログデータ取得
-        $app_logs_query = AppLog::select('app_logs.*');
-
-        // ログインID
-        if ($request->session()->has('app_log_search_condition.userid')) {
-            $app_logs_query->where('userid', 'like', '%' . $request->session()->get('app_log_search_condition.userid') . '%');
-        }
-
-        // 詳細条件
-        $app_logs_query->where(function ($query) use ($request) {
-            // ログイン
-            if ($request->session()->has('app_log_search_condition.log_type_login')) {
-                $query->orWhere('type', '=', 'LOGIN');
-            }
-            // ログアウト
-            if ($request->session()->has('app_log_search_condition.log_type_logout')) {
-                $query->orWhere('type', '=', 'LOGOUT');
-            }
-            // ログイン後のページ操作
-            if ($request->session()->has('app_log_search_condition.log_type_authed')) {
-                $query->orWhereNotNull('userid');
-            }
-            // 検索キーワード
-            if ($request->session()->has('app_log_search_condition.log_type_search_keyword')) {
-                $query->orWhere('type', '=', 'SEARCH');
-            }
-            // メール送信
-            if ($request->session()->has('app_log_search_condition.log_type_sendmail')) {
-                $query->orWhere('type', '=', 'SENDMAIL');
-            }
-            // ページ操作
-            if ($request->session()->has('app_log_search_condition.log_type_page')) {
-                $query->orWhere('type', '=', 'PAGE');
-            }
-            // HTTPメソッド(GET)
-            if ($request->session()->has('app_log_search_condition.log_type_http_get')) {
-                $query->orWhere('METHOD', '=', 'GET');
-            }
-            // HTTPメソッド(POST)
-            if ($request->session()->has('app_log_search_condition.log_type_http_post')) {
-                $query->orWhere('METHOD', '=', 'POST');
-            }
-        });
-
         // データ取得
-        $app_logs = $app_logs_query->orderBy('id', 'desc')->paginate(10);
+        $app_logs = $this->getData($request);
 
         // 画面の呼び出し
         return view('plugins.manage.log.log', [
@@ -158,6 +230,19 @@ class LogManage extends ManagePluginBase
     /**
      *  ログ設定更新
      */
+    private function updateImpl($request, $category, $name)
+    {
+        $configs = Configs::updateOrCreate(
+            ['name'     => $name],
+            ['category' => $category,
+             'value'    => $request->input($name)]
+        );
+        return;
+    }
+
+    /**
+     *  ログ設定更新
+     */
     public function update($request)
     {
         // httpメソッド確認
@@ -166,55 +251,121 @@ class LogManage extends ManagePluginBase
         }
 
         // 記録範囲
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'app_log_scope'],
-            ['category' => 'app_log',
-             'value'    => $request->app_log_scope]
-        );
+        $this->updateImpl($request, 'app_log', 'app_log_scope');
 
-        // ログイン操作
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'save_log_type_login'],
-            ['category' => 'app_log',
-             'value'    => $request->save_log_type_login]
-        );
+        // ログイン・ログアウト
+        $this->updateImpl($request, 'app_log', 'save_log_type_login');
 
         // ログイン後のページ操作
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'save_log_type_authed'],
-            ['category' => 'app_log',
-             'value'    => $request->save_log_type_authed]
-        );
+        $this->updateImpl($request, 'app_log', 'save_log_type_authed');
+
+        // 一般ページ
+        $this->updateImpl($request, 'app_log', 'save_log_type_page');
+
+        // 管理画面
+        $this->updateImpl($request, 'app_log', 'save_log_type_manage');
+
+        // マイページ
+        $this->updateImpl($request, 'app_log', 'save_log_type_mypage');
+
+        // API
+        $this->updateImpl($request, 'app_log', 'save_log_type_api');
 
         // 検索キーワード
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'save_log_type_search_keyword'],
-            ['category' => 'app_log',
-             'value'    => $request->save_log_type_search_keyword]
-        );
+        $this->updateImpl($request, 'app_log', 'save_log_type_search_keyword');
 
         // メール送信
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'save_log_type_sendmail'],
-            ['category' => 'app_log',
-             'value'    => $request->save_log_type_sendmail]
-        );
+        $this->updateImpl($request, 'app_log', 'save_log_type_sendmail');
+
+        // パスワードページ認証
+        $this->updateImpl($request, 'app_log', 'save_log_type_passwordpage');
+
+        // ダウンロード
+        $this->updateImpl($request, 'app_log', 'save_log_type_download');
+
+        // CSS
+        $this->updateImpl($request, 'app_log', 'save_log_type_css');
+
+        // ファイル
+        $this->updateImpl($request, 'app_log', 'save_log_type_file');
+
+        // パスワード関係
+        $this->updateImpl($request, 'app_log', 'save_log_type_password');
+
+        // ユーザ登録
+        $this->updateImpl($request, 'app_log', 'save_log_type_register');
+
+        // コア側処理
+        $this->updateImpl($request, 'app_log', 'save_log_type_core');
+
+        // 言語切り替え
+        $this->updateImpl($request, 'app_log', 'save_log_type_language');
 
         // HTTPメソッド GET
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'save_log_type_http_get'],
-            ['category' => 'app_log',
-             'value'    => $request->save_log_type_http_get]
-        );
+        $this->updateImpl($request, 'app_log', 'save_log_type_http_get');
 
         // HTTPメソッド POST
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'save_log_type_http_post'],
-            ['category' => 'app_log',
-             'value'    => $request->save_log_type_http_post]
-        );
+        $this->updateImpl($request, 'app_log', 'save_log_type_http_post');
 
         // ログ設定画面に戻る
         return redirect("/manage/log/edit");
+    }
+
+    /**
+     * データダウンロード
+     */
+    public function downloadCsv($request)
+    {
+        // セッションにある検索条件なども加味した検索クエリを取得
+        $query = $this->getQuery($request);
+
+        // Symfony の StreamedResponse で出力 ＆ chunk でデータ取得することにより
+        // 大容量の出力に対応
+        return new StreamedResponse(
+            function () use ($query) {
+                $stream = fopen('php://output', 'w');
+
+                // ヘッダの設定
+                $head = [
+                    'ID',
+                    '日時',
+                    'ログインID',
+                    'IPアドレス',
+                    '種別',
+                    '値など',
+                    'メソッド',
+                    'プラグイン名',
+                    'Route名',
+                    'URI',
+                ];
+                mb_convert_variables('SJIS-win', 'UTF-8', $head);
+                fputcsv($stream, $head);
+
+                // データの処理
+                $query->chunk(1000, function ($logs) use ($stream) {
+                    foreach ($logs as $log) {
+                        mb_convert_variables('SJIS-win', 'UTF-8', $log);
+                        fputcsv($stream, [
+                            $log->id,
+                            $log->created_at,
+                            $log->userid,
+                            $log->ip_address,
+                            $log->type,
+                            $log->value,
+                            $log->method,
+                            $log->plugin_name,
+                            $log->route_name,
+                            $log->uri,
+                        ]);
+                    }
+                });
+                fclose($stream);
+            },
+            200,
+            [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="users.csv"',
+            ]
+        );
     }
 }
