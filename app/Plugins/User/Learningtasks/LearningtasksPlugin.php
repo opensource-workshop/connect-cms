@@ -2341,7 +2341,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // メール送信：機能設定でメール送信あり＆対象ユーザにメールアドレスの設定がある場合
         if ($task_status == 1 || $task_status == 2 || $task_status == 3 || $task_status == 5 || $task_status == 6 || $task_status == 7 || $task_status == 8) {
-            $this->sendMail($post, $task_status, $tool, $user, $student_user_id);
+            $this->sendMailLocal($post, $task_status, $tool, $user, $student_user_id);
         }
 
         // ユーザーの進捗ステータス保存
@@ -2402,7 +2402,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  メール送信
      */
-    private function sendMail($post, $task_status, $tool, $login_user, $student_user_id)
+    private function sendMailLocal($post, $task_status, $tool, $login_user, $student_user_id)
     {
         // 送信するユーザオブジェクト
         $send_user = null;
