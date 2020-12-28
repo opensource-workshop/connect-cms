@@ -124,6 +124,18 @@ class LogManage extends ManagePluginBase
             if ($request->session()->has('app_log_search_condition.log_type_language')) {
                 $query->orWhere('type', '=', 'Language');
             }
+            // 検索キーワード
+            if ($request->session()->has('app_log_search_condition.log_type_search_keyword')) {
+                $query->orWhere('type', '=', 'Search');
+            }
+            // メール送信
+            if ($request->session()->has('app_log_search_condition.log_type_sendmail')) {
+                $query->orWhere('type', '=', 'SendMail');
+            }
+            // ページ操作
+            if ($request->session()->has('app_log_search_condition.log_type_page')) {
+                $query->orWhere('type', '=', 'Page');
+            }
             // HTTPメソッド(GET)
             if ($request->session()->has('app_log_search_condition.log_type_http_get')) {
                 $query->orWhere('METHOD', '=', 'GET');
@@ -364,7 +376,7 @@ class LogManage extends ManagePluginBase
             200,
             [
                 'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="users.csv"',
+                'Content-Disposition' => 'attachment; filename="log.csv"',
             ]
         );
     }

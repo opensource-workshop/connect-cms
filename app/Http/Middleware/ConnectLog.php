@@ -116,11 +116,13 @@ class ConnectLog
             if ($configs->where('name', 'save_log_type_login')->where('value', '1')->isNotEmpty() && $route_name == 'login') {
                 $value = $request->input("userid");
                 $log_record_flag = true;
+                $type = 'LOGIN';
             }
             // ログアウト
             if ($configs->where('name', 'save_log_type_login')->where('value', '1')->isNotEmpty() && $route_name == 'logout') {
                 $value = Auth::user() ? Auth::user()->userid : null;
                 $log_record_flag = true;
+                $type = 'LOGOUT';
             }
             // ログイン後のページ操作
             if ($configs->where('name', 'save_log_type_authed')->where('value', '1')->isNotEmpty() && Auth::check()) {
@@ -220,6 +222,9 @@ class ConnectLog
             if ($configs->where('name', 'save_log_type_http_post')->where('value', '1')->isNotEmpty() && $request->isMethod('post')) {
                 $log_record_flag = true;
             }
+
+            // メール送信（メール送信アクションの条件を後で確認）
+            // メール送信は、メール送信処理の際に、メール送信用共通関数を呼ぶようにして、そこでログを出力する。
         }
 
         // 条件に合致しない場合は、ログを記録しない。
