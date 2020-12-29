@@ -32,6 +32,23 @@
     @endif
 @endcan
 
+<div class="card mb-3">
+	<div class="card-header">タイトル</div>
+	<div class="card-body">
+		<p class="card-text">ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。</p>
+		<div class="card">
+			<div class="card-body">
+				<p class="card-text">ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。</p>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="card-body">
+				<p class="card-text">ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。ここは本文です。</p>
+			</div>
+		</div>
+	</div>
+</div>
+
 {{-- リンク表示 --}}
 @if (isset($posts))
     @if (!$plugin_frame->type)
@@ -62,19 +79,12 @@
         @else
         <li>
         @endif
-
+{{--
             @can('posts.update',[[null, 'bbses', $buckets]])
                 <a href="{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}"><i class="far fa-edit"></a></i>
             @endcan
-            @if (empty($post->url))
-                {{$post->title}}
-            @else
-                @if ($post->target_blank_flag)
-                    <a href="{{$post->url}}" target="_blank">{{$post->title}}</a>
-                @else
-                    <a href="{{$post->url}}">{{$post->title}}</a>
-                @endif
-            @endif
+--}}
+            <a href="{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">{{$post->title}}</a>
 
         @if (!$plugin_frame->type)
         </dd>

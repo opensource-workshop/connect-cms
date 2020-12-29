@@ -12,12 +12,27 @@
 {{-- 共通エラーメッセージ 呼び出し --}}
 @include('common.errors_form_line')
 
+{{-- WYSIWYG 呼び出し --}}
+@include('plugins.common.wysiwyg')
+
+{{-- 一時保存ボタンのアクション --}}
+<script type="text/javascript">
+    function save_action() {
+        @if (empty($bbses_posts->id))
+            form_bbses_posts{{$frame_id}}.action = "{{url('/')}}/plugin/bbses/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
+        @else
+            form_bbses_posts{{$frame_id}}.action = "{{url('/')}}/plugin/bbses/temporarysave/{{$page->id}}/{{$frame_id}}/{{$bbses_posts->id}}#frame-{{$frame->id}}";
+        @endif
+        form_bbses_posts{{$frame_id}}.submit();
+    }
+</script>
+
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))
-    <form action="{{url('/')}}/redirect/plugin/bbses/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/bbses/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_bbses_posts{{$frame_id}}">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/redirect/plugin/bbses/save/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/bbses/save/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_bbses_posts{{$frame_id}}">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
@@ -30,10 +45,10 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right">説明</label>
+        <label class="col-md-2 control-label text-md-right">本文 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
-            <textarea name="description" class="form-control" rows=2>{!!old('description', $post->description)!!}</textarea>
-            @if ($errors && $errors->has('description')) <div class="text-danger">{{$errors->first('description')}}</div> @endif
+            <textarea name="body" class="form-control" rows=2>{!!old('body', $post->body)!!}</textarea>
+            @if ($errors && $errors->has('body')) <div class="text-danger">{{$errors->first('body')}}</div> @endif
         </div>
     </div>
 
@@ -47,6 +62,7 @@
             @endif
                 <div class="text-center">
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($post->id))
                         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>

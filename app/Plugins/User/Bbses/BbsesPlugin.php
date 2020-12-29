@@ -122,9 +122,9 @@ class BbsesPlugin extends UserPluginBase
                                        $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
                                           ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
                                    })
+                                   ->where('bbs_posts.temporary_flag', 0)
                                    ->whereNull('bbs_posts.deleted_at')
-                                   ->orderBy('display_sequence', 'asc')
-                                   ->orderBy('created_at', 'asc');
+                                   ->orderBy('created_at', 'desc');
 
         // 取得
         return $posts_query->paginate($bbs_frame->view_count);
@@ -255,8 +255,6 @@ class BbsesPlugin extends UserPluginBase
     /**
      *  詳細表示関数
      */
-    /*
-    新着と検索で呼ばれたときの詳細画面のイメージ
     public function show($request, $page_id, $frame_id, $post_id)
     {
         // 記事取得
@@ -264,10 +262,9 @@ class BbsesPlugin extends UserPluginBase
 
         // 詳細画面を呼び出す。
         return $this->view('show', [
-            'post'         => $post,
+            'post' => $post,
         ]);
     }
-    */
 
     /**
      * 記事編集画面
@@ -290,12 +287,12 @@ class BbsesPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title'            => ['required'],
-            'display_sequence' => ['nullable', 'numeric'],
+            'title' => ['required'],
+            'body'  => ['required'],
         ]);
         $validator->setAttributeNames([
-            'title'            => 'タイトル',
-            'display_sequence' => '表示順',
+            'title' => 'タイトル',
+            'body'  => '本文',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -309,21 +306,11 @@ class BbsesPlugin extends UserPluginBase
         // フレームから bbs_id 取得
         $bbs_frame = $this->getPluginFrame($frame_id);
 
-        // 表示順が空なら、自分を省いた最後の番号+1 をセット
-        if ($request->filled('display_sequence')) {
-            $display_sequence = intval($request->display_sequence);
-        } else {
-            $max_display_sequence = BbsPost::where('bbs_id', $bbs_frame->bbs_id)->where('id', '<>', $post_id)->max('display_sequence');
-            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
-        }
-
         // 値のセット
-        $post->bbs_id       = $bbs_frame->bbs_id;
-        $post->title             = $request->title;
-        $post->url               = $request->url;
-        $post->target_blank_flag = $request->target_blank_flag;
-        $post->description       = $request->description;
-        $post->display_sequence  = $display_sequence;
+        $post->bbs_id         = $bbs_frame->bbs_id;
+        $post->title          = $request->title;
+        $post->body           = $request->body;
+        $post->temporary_flag = 0;
 
         // データ保存
         $post->save();

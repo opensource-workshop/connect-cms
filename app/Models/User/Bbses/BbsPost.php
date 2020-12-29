@@ -18,7 +18,7 @@ class BbsPost extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['bbs_id', 'title', 'body', 'root_id', 'thread_updated_at', '_lft', '_rgt', 'parent_id'];
+    protected $fillable = ['bbs_id', 'title', 'body', 'root_id', 'thread_updated_at', 'temporary_flag', '_lft', '_rgt', 'parent_id'];
 
     // 入れ子集合モデル
     use NodeTrait;
