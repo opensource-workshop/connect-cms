@@ -3,7 +3,7 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category 掲示板・プラグイン
+ * @category 掲示板プラグイン
 --}}
 @extends('core.cms_frame_base')
 
@@ -36,10 +36,17 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
+    @if (isset($parent_post))
+        <input type="hidden" name="parent_id" value="{{$parent_post->id}}">
+    @endif
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
+            @if (isset($reply_flag) && $reply_flag == true)
+            <input type="text" name="title" value="{{old('title', $parent_post->getReplyTitle())}}" class="form-control">
+            @else
             <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control">
+            @endif
             @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
         </div>
     </div>
@@ -47,7 +54,11 @@
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">本文 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
-            <textarea name="body" class="form-control" rows=2>{!!old('body', $post->body)!!}</textarea>
+            @if (isset($reply) && $reply == true)
+                <textarea name="body" class="form-control" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
+            @else
+                <textarea name="body" class="form-control" rows=2>{!!old('body', $post->body)!!}</textarea>
+            @endif
             @if ($errors && $errors->has('body')) <div class="text-danger">{{$errors->first('body')}}</div> @endif
         </div>
     </div>
@@ -61,7 +72,16 @@
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    @if (isset($parent_post))
+                        {{-- 返信 --}}
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$parent_post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    @elseif (empty($post->id))
+                        {{-- 新規 --}}
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    @else
+                        {{-- 編集 --}}
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    @endif
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($post->id))

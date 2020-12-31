@@ -50,7 +50,7 @@ class BbsesPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['editView'];
-        $functions['post'] = ['saveView'];
+        $functions['post'] = ['saveView', 'edit', 'reply'];
         return $functions;
     }
 
@@ -63,6 +63,7 @@ class BbsesPlugin extends UserPluginBase
         $role_ckeck_table = array();
         $role_ckeck_table["editView"] = array('role_article');
         $role_ckeck_table["saveView"] = array('role_article');
+        $role_ckeck_table["reply"]    = array('role_reporter');
         return $role_ckeck_table;
     }
 
@@ -82,11 +83,6 @@ class BbsesPlugin extends UserPluginBase
      */
     public function getPost($id)
     {
-        // 一度読んでいれば、そのPOSTを再利用する。
-        if (!empty($this->post)) {
-            return $this->post;
-        }
-
         // POST を取得する。
         $this->post = BbsPost::firstOrNew(['id' => $id]);
         return $this->post;
@@ -112,9 +108,9 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  POST一覧取得
+     *  Root の POST一覧取得
      */
-    private function getPosts($bbs_frame)
+    private function getRootPosts($bbs_frame)
     {
         // データ取得
         $posts_query = BbsPost::select('bbs_posts.*')
@@ -123,8 +119,37 @@ class BbsesPlugin extends UserPluginBase
                                           ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
                                    })
                                    ->where('bbs_posts.temporary_flag', 0)
+                                   ->whereNull('bbs_posts.parent_id')
                                    ->whereNull('bbs_posts.deleted_at')
                                    ->orderBy('created_at', 'desc');
+
+        // 取得
+        return $posts_query->paginate($bbs_frame->view_count);
+    }
+
+    /**
+     *  指定されたスレッドの記事一覧取得
+     */
+    private function getThreadPosts($bbs_frame, $thread_root_ids, $children_only = false)
+    {
+
+        // データ取得
+        $posts_query = BbsPost::select('bbs_posts.*')
+                                   ->join('bbses', function ($join) {
+                                       $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                                          ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+                                   });
+
+        // ルートのポストは含まない場合
+        if ($children_only) {
+            $posts_query->whereColumn('bbs_posts.id', '<>', 'bbs_posts.thread_root_id');
+        }
+
+        // その他条件指定
+        $posts_query->where('bbs_posts.temporary_flag', 0)
+                    ->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
+                    ->whereNull('bbs_posts.deleted_at')
+                    ->orderBy('created_at', 'asc');
 
         // 取得
         return $posts_query->paginate($bbs_frame->view_count);
@@ -209,6 +234,7 @@ class BbsesPlugin extends UserPluginBase
     private function newPost($no, $root_id = 0, $parent_id = null)
     {
         $post = new BbsPost;
+        $post->bbs_id            = 1;
         $post->title             = 'title-' . $no;
         $post->body              = 'body-' . $no;
         $post->root_id           = $root_id;
@@ -220,6 +246,7 @@ class BbsesPlugin extends UserPluginBase
             $post->root_id = $post->id;
             $post->save();
         }
+        return $post;
     }
 
     /* 画面アクション関数 */
@@ -239,16 +266,24 @@ class BbsesPlugin extends UserPluginBase
        $this->newPost(5, 1, 4);
 */
 
+//$root_posts = BbsPost::whereIsRoot()->get();
+//print_r($root_posts->pluck("id"));
+
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 掲示板データ一覧の取得
-        $posts = $this->getPosts($plugin_frame);
+        $posts = $this->getRootPosts($plugin_frame);
+
+        // 表示対象のスレッドの記事一覧
+        $thread_ids = $posts->pluck("id");
+        $children_posts = $this->getThreadPosts($plugin_frame, $thread_ids, true);
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-            'posts'        => $posts,
-            'plugin_frame' => $plugin_frame,
+            'posts'          => $posts,
+            'children_posts' => $children_posts,
+            'plugin_frame'   => $plugin_frame,
         ]);
     }
 
@@ -257,12 +292,30 @@ class BbsesPlugin extends UserPluginBase
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
+        // 変数準備
+        $thread_root_post = null;
+        $children_posts = null;
+
+        // プラグインのフレームデータ
+        $plugin_frame = $this->getPluginFrame($frame_id);
+
         // 記事取得
         $post = $this->getPost($post_id);
+
+        // 指定の記事がある場合
+        if ($post) {
+            // 根記事取得
+            $thread_root_post = $this->getPost($post->thread_root_id);
+
+            // 表示対象のスレッドの記事一覧
+            $children_posts = $this->getThreadPosts($plugin_frame, new Collection($post->thread_root_id), true);
+        }
 
         // 詳細画面を呼び出す。
         return $this->view('show', [
             'post' => $post,
+            'thread_root_post' => $thread_root_post,
+            'children_posts'   => $children_posts,
         ]);
     }
 
@@ -277,6 +330,23 @@ class BbsesPlugin extends UserPluginBase
         // 変更画面を呼び出す。
         return $this->view('edit', [
             'post' => $post,
+        ]);
+    }
+
+    /**
+     * 記事返信画面
+     */
+    public function reply($request, $page_id, $frame_id, $post_id)
+    {
+        // 記事取得
+        $post = $this->getPost($post_id);
+
+        // 変更画面を呼び出す。
+        return $this->view('edit', [
+            'post'        => new BbsPost(),
+            'parent_post' => $post,
+            'reply'       => $request->get('reply'),
+            'reply_flag'  => true,
         ]);
     }
 
@@ -307,15 +377,30 @@ class BbsesPlugin extends UserPluginBase
         $bbs_frame = $this->getPluginFrame($frame_id);
 
         // 値のセット
-        $post->bbs_id         = $bbs_frame->bbs_id;
-        $post->title          = $request->title;
-        $post->body           = $request->body;
-        $post->temporary_flag = 0;
+        $post->bbs_id            = $bbs_frame->bbs_id;
+        $post->title             = $request->title;
+        $post->body              = $request->body;
+        $post->thread_updated_at = date('Y-m-d H:i:s');
+        $post->temporary_flag    = 0;
+        $post->created_id        = Auth::user()->id;
 
-        // データ保存
-        $post->save();
+        // 返信の場合
+        if ($request->filled('parent_id')) {
+            // 親のpost を取得
+            $parent_post = BbsPost::find($request->parent_id);
+            // 親のpost からthread_root_id をコピー。これで同じスレッドの記事を取得できるようにする。
+            $post->thread_root_id = $parent_post->thread_root_id;
+            // 親のノードに追加
+            $post->prependToNode($parent_post)->save();
+        } else {
+            // root ノードで追加
+            $post->save();
+            // 保存後のid をthread_root_id にセットして更新しておく
+            $post->thread_root_id = $post->id;
+            $post->save();
+        }
 
-        // 登録後はリダイレクトして編集画面を開く。
+        // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
         return new Collection(['redirect_path' => url('/') . "/plugin/bbses/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
     }
 
@@ -327,7 +412,12 @@ class BbsesPlugin extends UserPluginBase
         // id がある場合、データを削除
         if ($post_id) {
             // データを削除する。
-            BbsPost::where('id', $post_id)->delete();
+            //BbsPost::where('id', $post_id)->delete();
+            BbsPost::where('id', $post_id)->update([
+                'deleted_at'   => date('Y-m-d H:i:s'),
+                'deleted_id'   => Auth::user()->id,
+                'deleted_name' => Auth::user()->name,
+            ]);
         }
         return;
     }

@@ -19,7 +19,7 @@ class CreateBbsPosts extends Migration
             $table->integer('bbs_id')->comment('掲示板ID');
             $table->string('title')->comment('タイトル');
             $table->text('body')->nullable()->comment('本文');
-            $table->integer('root_id')->default('0')->comment('根記事ID');
+            $table->integer('thread_root_id')->default('0')->comment('根記事ID');
             $table->timestamp('thread_updated_at')->nullable()->comment('スレッド更新日時');
             $table->integer('temporary_flag')->comment('一時フラグ')->default(0);
             $table->nestedSet();
