@@ -103,7 +103,7 @@
 @endif
 
     <!-- Connect-CMS Page CSS -->
-@if (isset($page))
+@if (isset($page) && !empty($page->id))
     <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
 @endif
 

@@ -18,10 +18,8 @@
 
 // 認証系アクション
 // Auth::routes();
-//Route::get('login', 'Auth\LoginController@showLoginForm')->name('login');
-//Route::post('login', 'Auth\LoginController@login');
 Route::get(config('connect.LOGIN_PATH'), 'Auth\LoginController@showLoginForm')->name('login');
-Route::post(config('connect.LOGIN_PATH'), 'Auth\LoginController@login');
+Route::post(config('connect.LOGIN_PATH'), 'Auth\LoginController@login')->name('login');
 Route::post('logout', 'Auth\LoginController@logout')->name('logout');
 // shibbolth認証
 Route::get(config('cc_shibboleth_config.login_path', 'secure'), 'Auth\LoginController@shibboleth')->name('shibboleth.login');
@@ -29,7 +27,7 @@ Route::get(config('cc_shibboleth_config.login_path', 'secure'), 'Auth\LoginContr
 Route::get('/password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
 Route::post('/password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
 Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
-Route::post('/password/reset', 'Auth\ResetPasswordController@reset');
+Route::post('/password/reset', 'Auth\ResetPasswordController@reset')->name('password.resetpost');
 
 //ユーザー登録
 Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('register');
@@ -37,7 +35,7 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
 // システム管理者 or ユーザ管理者の場合、OK
 //Route::group(['middleware' => ['auth', 'can:system_user-admin']], function () {
     //Route::post('register', 'Auth\RegisterController@register');
-    Route::post('register', 'Auth\RegisterController@register');
+    Route::post('register', 'Auth\RegisterController@register')->name('register');
 //});
 
 
@@ -79,6 +77,7 @@ Route::get('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}
 
 // 一般プラグインのダウンロード系アクション
 Route::post('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload')->name('post_download');
+Route::get('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload')->name('get_download');
 
 // CSS の取得アクション
 Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss')->name('get_css');

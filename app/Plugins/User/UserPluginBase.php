@@ -807,6 +807,18 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  プラグイン名の取得
+     *
+     */
+    protected function getPluginName()
+    {
+        if (empty($this->frame)) {
+            return "";
+        }
+        return $this->frame->plugin_name;
+    }
+
+    /**
      * 権限チェック
      * roll_or_auth : 権限 or 役割
      */

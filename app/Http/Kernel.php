@@ -40,6 +40,9 @@ class Kernel extends HttpKernel
             // Connect-CMS 初期処理
             \App\Http\Middleware\ConnectInit::class,
 
+            // Connect-CMS Log処理
+            \App\Http\Middleware\ConnectLog::class,
+
             // SQL ログのテスト
             // \App\Http\Middleware\QueryDebugMiddleware::class,
         ],

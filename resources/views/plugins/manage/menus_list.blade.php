@@ -109,4 +109,11 @@
             <a href="{{url('/')}}/manage/code" class="list-group-item">コード管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'log')
+            <a href="{{url('/')}}/manage/log" class="list-group-item active">ログ管理</a>
+        @else
+            <a href="{{url('/')}}/manage/log" class="list-group-item">ログ管理</a>
+        @endif
+    @endif
 </div>
