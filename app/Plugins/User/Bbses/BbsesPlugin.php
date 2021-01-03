@@ -146,6 +146,7 @@ class BbsesPlugin extends UserPluginBase
             // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
             //
             $query->where(function ($auth_query) use ($table_name) {
+                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
                 $auth_query->orWhere($table_name . '.status', '=', StatusType::approval_pending);
             });
         } elseif ($this->isCan('role_reporter')) {
