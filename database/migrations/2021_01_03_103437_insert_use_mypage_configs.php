@@ -17,10 +17,10 @@ class InsertUseMypageConfigs extends Migration
     {
         // マイページの使用. DBになければinsert, あればupdate(基本新しい設定のため、inserのみ動作の想定)
         $configs = Configs::updateOrCreate(
-            ['name'     => 'use_mypage'],
+            ['name' => 'use_mypage'],
             [
                 'category' => 'general',
-                'value'    => 1
+                'value' => 1
             ]
         );
     }

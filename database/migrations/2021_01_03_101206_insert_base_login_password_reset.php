@@ -17,10 +17,10 @@ class InsertBaseLoginPasswordReset extends Migration
     {
         // パスワードリセットの使用. DBになければinsert, あればupdate(基本base_login_password_resetは新しい設定のため、inserのみ動作の想定)
         $configs = Configs::updateOrCreate(
-            ['name'     => 'base_login_password_reset'],
+            ['name' => 'base_login_password_reset'],
             [
                 'category' => 'general',
-                'value'    => 1
+                'value' => 1
             ]
         );
     }
