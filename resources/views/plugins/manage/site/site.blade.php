@@ -207,8 +207,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
-                        {{-- 未設定か0なら、許可しない --}}
-                        @if(!isset($configs["base_login_password_reset"]) || (isset($configs["base_login_password_reset"]) && $configs["base_login_password_reset"] == "0"))
+                        @if((isset($configs["base_login_password_reset"]) && $configs["base_login_password_reset"] == "0"))
                             <input type="radio" value="0" id="base_login_password_reset_off" name="base_login_password_reset" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="base_login_password_reset_off" name="base_login_password_reset" class="custom-control-input">
