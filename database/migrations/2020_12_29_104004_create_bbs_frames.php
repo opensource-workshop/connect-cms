@@ -17,6 +17,7 @@ class CreateBbsFrames extends Migration
             $table->increments('id');
             $table->integer('bbs_id')->comment('掲示板ID');
             $table->integer('frame_id')->comment('フレームID');
+            $table->integer('view_format')->nullable()->comment('表示形式');
             $table->integer('thread_sort_flag')->nullable()->comment('根記事の表示順');
             $table->integer('view_count')->nullable()->comment('1ページの表示件数');
             $table->integer('created_id')->nullable();

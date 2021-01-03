@@ -103,9 +103,9 @@ return [
 
         'role_article_admin' => ['role_article_admin'],
         'role_arrangement'   => ['role_arrangement', 'role_article_admin'],
-        'role_reporter'      => ['role_reporter', 'role_article_admin'],
-        'role_approval'      => ['role_approval', 'role_article_admin'],
         'role_article'       => ['role_article', 'role_article_admin'],
+        'role_approval'      => ['role_approval', 'role_article_admin'],
+        'role_reporter'      => ['role_reporter', 'role_article', 'role_article_admin'],
         'role_guest'         => ['role_guest'],
 
         'admin_system'       => ['admin_system'],

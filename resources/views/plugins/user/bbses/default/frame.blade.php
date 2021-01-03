@@ -3,7 +3,7 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category 掲示板・プラグイン
+ * @category 掲示板プラグイン
 --}}
 @extends('core.cms_frame_base_setting')
 
@@ -33,20 +33,46 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/bbses/editView/{{$page->id}}/{{$frame_id}}/{{$bbs->bucket_id}}#frame-{{$frame_id}}">
 
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">表示形式</label>
-            <div class="{{$frame->getSettingInputClass()}}">
-                <select class="form-control" name="type" class="form-control">
-                    <option value="0" @if(old('type', $bbs_frame->type)==0) selected="selected" @endif>マークなし</option>
-                    <option value="1" @if(old('type', $bbs_frame->type)==1) selected="selected" @endif>黒丸</option>
-                    <option value="2" @if(old('type', $bbs_frame->type)==2) selected="selected" @endif>白丸</option>
-                    <option value="3" @if(old('type', $bbs_frame->type)==3) selected="selected" @endif>黒四角</option>
-                    <option value="4" @if(old('type', $bbs_frame->type)==4) selected="selected" @endif>1, 2, 3,...</option>
-                    <option value="5" @if(old('type', $bbs_frame->type)==5) selected="selected" @endif>a, b, c,...</option>
-                    <option value="6" @if(old('type', $bbs_frame->type)==6) selected="selected" @endif>A, B, C,...</option>
-                    <option value="7" @if(old('type', $bbs_frame->type)==7) selected="selected" @endif>ⅰ,ⅱ,ⅲ,...</option>
-                    <option value="8" @if(old('type', $bbs_frame->type)==8) selected="selected" @endif>Ⅰ,Ⅱ,Ⅲ,...</option>
-                </select>
-                @if ($errors && $errors->has('type')) <div class="text-danger">{{$errors->first('type')}}</div> @endif
+            <label class="{{$frame->getSettingLabelClass(true)}}">表示形式</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->view_format == 0)
+                        <input type="radio" value="0" id="view_format_0" name="view_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="0" id="view_format_0" name="view_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="view_format_0">フラット形式</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->view_format == 1)
+                        <input type="radio" value="1" id="view_format_1" name="view_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="view_format_1" name="view_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="view_format_1">スレッド形式</label>（※ 準備中）
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">根記事の表示順</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->thread_sort_flag == 0)
+                        <input type="radio" value="0" id="thread_sort_flag_0" name="thread_sort_flag" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="0" id="thread_sort_flag_0" name="thread_sort_flag" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="thread_sort_flag_0">スレッド内の新しい更新日時順</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->thread_sort_flag == 1)
+                        <input type="radio" value="1" id="thread_sort_flag_1" name="thread_sort_flag" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="thread_sort_flag_1" name="thread_sort_flag" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="thread_sort_flag_1">根記事の新しい日時順</label>
+                </div>
             </div>
         </div>
 

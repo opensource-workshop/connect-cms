@@ -4,11 +4,20 @@ namespace App\Models\User\Bbses;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 use Kalnoy\Nestedset\NodeTrait;
 
 use App\Userable;
 
+/**
+ * 掲示板・記事
+ *
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category 掲示板・プラグイン
+ * @package モデル
+ */
 class BbsPost extends Model
 {
     // 論理削除
@@ -18,7 +27,7 @@ class BbsPost extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['bbs_id', 'title', 'body', 'thread_root_id', 'thread_updated_at', 'temporary_flag', '_lft', '_rgt', 'parent_id'];
+    protected $fillable = ['bbs_id', 'title', 'body', 'thread_root_id', 'thread_updated_at', 'status', '_lft', '_rgt', 'parent_id'];
 
     // 入れ子集合モデル
     use NodeTrait;
@@ -67,5 +76,22 @@ class BbsPost extends Model
             $return_title = "Re: " . $this->title;
         }
         return $return_title;
+    }
+
+    /**
+     * 編集してよいか確認
+     */
+    public function canEdit()
+    {
+        $user = Auth::user();
+
+        // モデレータ以上の権限を持たずに、記事にすでに返信が付いている場合は、保存できない。
+        if (empty($user)) {
+            return false;
+        }
+        if (!$user->can('role_article') && $this->descendants->count() > 0) {
+            return false;
+        }
+        return true;
     }
 }

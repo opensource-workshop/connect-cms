@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Userable;
 
+/**
+ * 掲示板・バケツ
+ *
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category 掲示板・プラグイン
+ * @package モデル
+ */
 class Bbs extends Model
 {
     // 論理削除

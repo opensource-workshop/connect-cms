@@ -28,10 +28,19 @@
         form_bbses_posts{{$frame_id}}.action = "{{url('/')}}/plugin/bbses/reply/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}";
         form_bbses_posts{{$frame_id}}.submit();
     }
+    function approval_action() {
+        if (!confirm('承認します。\nよろしいですか？')) {
+            return false;
+        }
+        form_bbses_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/bbses/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}";
+        form_bbses_posts{{$frame_id}}.redirect_path.value = "{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}";
+        form_bbses_posts{{$frame_id}}.submit();
+    }
 </script>
 
 <form method="POST" class="" name="form_bbses_posts{{$frame_id}}">
-{{csrf_field()}}
+    {{csrf_field()}}
+    <input type="hidden" name="redirect_path" value="">
 <article>
     <header>
         {{-- タイトル --}}
@@ -47,16 +56,19 @@
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
     <footer class="row">
         <div class="col-12 text-right mb-1">
-        {{-- 一時保存の表示：自分が編集できる権限の場合 --}}
-        @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
-            @if ($post->temporary_flag == 1)
-                <span class="badge badge-warning align-bottom">一時保存</span>
-            @endif
-        @endcan
+        {{-- 一時保存 --}}
+        @if ($post->status == 1)
+            <span class="badge badge-warning align-bottom">一時保存</span>
+        @endif
+
+        {{-- 承認待ち --}}
+        @if ($post->status == 2)
+            <span class="badge badge-warning align-bottom">承認待ち</span>
+        @endif
 
         {{-- 返信ボタンの表示：一時保存でなく、自分が投稿できる権限の場合 --}}
         @can('posts.create',[[null, $frame->plugin_name, $buckets]])
-            @if ($post->temporary_flag == 0)
+            @if ($post->status == 0)
                 <div class="custom-control custom-checkbox custom-control-inline mr-0 align-bottom">
                     <input type="checkbox" name="reply" value="1" class="custom-control-input" id="reply{{$frame_id}}">
                     <label class="custom-control-label" for="reply{{$frame_id}}">引用する</label>
@@ -68,12 +80,24 @@
             @endif
         @endcan
 
-        {{-- 編集ボタンの表示：自分が更新できる権限の場合 --}}
-        @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
-            <button type="button" class="btn btn-sm btn-success" onclick="javascript:edit_action();">
-                <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+        {{-- 承認ボタンの表示：自分が承認できる権限の場合 --}}
+        @can('posts.approval',[[$post, $frame->plugin_name, $buckets]])
+            @if ($post->status == 2)
+            <button type="button" class="btn btn-sm btn-primary" onclick="javascript:approval_action();">
+                <i class="far fa-edit"></i> <span class="hidden-xs">承認</span>
             </button>
+            @endif
         @endcan
+
+        {{-- 編集ボタンの表示：返信の有無確認 --}}
+        @if ($post->canEdit())
+            {{-- 自分が更新できる権限の場合 --}}
+            @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
+                <button type="button" class="btn btn-sm btn-success" onclick="javascript:edit_action();">
+                    <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                </button>
+            @endcan
+        @endif
         </div>
     </footer>
 </article>
@@ -92,12 +116,12 @@
 @if ($thread_root_post)
     <span class="badge badge-primary mb-1">スレッドの記事一覧</span>
     <div class="card mb-3">
-        <div class="card-header">{{$thread_root_post->title}}</div>
+        <div class="card-header">{{$thread_root_post->title}}@if ($post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@elseif ($post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>@endif<span class="float-right">{{$post->updated_at->format('Y-m-d')}} [{{$post->created_name}}]</span></div>
         <div class="card-body">
             {!!$thread_root_post->body!!}
                 @foreach ($children_posts as $children_post)
                     <div class="card mt-3">
-                        <div class="card-header">{{$children_post->title}}</div>
+                        <div class="card-header">{{$children_post->title}}@if ($children_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@endif<span class="float-right">{{$children_post->updated_at->format('Y-m-d')}} [{{$children_post->created_name}}]</span></div>
                         <div class="card-body">
                             {!!$children_post->body!!}
                         </div>

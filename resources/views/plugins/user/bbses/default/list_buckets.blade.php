@@ -3,7 +3,7 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category 掲示板・プラグイン
+ * @category 掲示板プラグイン
  --}}
 @extends('core.cms_frame_base_setting')
 

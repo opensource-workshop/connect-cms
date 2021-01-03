@@ -18,14 +18,16 @@
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
     function save_action() {
-        @if (empty($bbses_posts->id))
-            form_bbses_posts{{$frame_id}}.action = "{{url('/')}}/plugin/bbses/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
-        @else
-            form_bbses_posts{{$frame_id}}.action = "{{url('/')}}/plugin/bbses/temporarysave/{{$page->id}}/{{$frame_id}}/{{$bbses_posts->id}}#frame-{{$frame->id}}";
-        @endif
+        form_bbses_posts{{$frame_id}}.status.value = "1";
         form_bbses_posts{{$frame_id}}.submit();
     }
 </script>
+
+@if ($errors && $errors->has('reply_role_error'))
+    <div class="alert alert-danger">
+        <span class="font-weight-bold">{{$errors->first('reply_role_error')}}</span>
+    </div>
+@endif
 
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))
@@ -36,9 +38,25 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
+    <input type="hidden" name="status" value="0">
     @if (isset($parent_post))
         <input type="hidden" name="parent_id" value="{{$parent_post->id}}">
     @endif
+    <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">状態</label>
+        <div class="col-md-10">
+            @if ($post->status === null)
+                <span class="badge badge-info align-bottom">新規</span>
+            @elseif ($post->status == 0)
+                <span class="badge badge-info align-bottom">公開中</span>
+            @elseif ($post->status == 1)
+                <span class="badge badge-warning align-bottom">一時保存</span>
+            @elseif ($post->status == 2)
+                <span class="badge badge-warning align-bottom">承認待ち</span>
+            @endif
+        </div>
+    </div>
+
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
@@ -85,9 +103,17 @@
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($post->id))
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+                        @if ($buckets->needApprovalUser(Auth::user()))
+                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
+                        @else
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+                        @endif
                     @else
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
+                        @if ($buckets->needApprovalUser(Auth::user()))
+                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
+                        @else
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
+                        @endif
                     @endif
                 </div>
             </div>
