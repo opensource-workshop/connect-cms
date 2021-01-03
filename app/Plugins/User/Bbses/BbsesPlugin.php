@@ -211,10 +211,12 @@ class BbsesPlugin extends UserPluginBase
         }
 
         // その他条件指定
-        $posts_query->where('bbs_posts.status', 0)
-                    ->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
+        $posts_query->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
                     ->whereNull('bbs_posts.deleted_at')
                     ->orderBy('created_at', 'asc');
+
+        // 権限によって表示する記事を絞る
+        $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
 
         // 取得
         return $posts_query->paginate($bbs_frame->getViewCount());
