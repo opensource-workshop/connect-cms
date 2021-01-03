@@ -446,13 +446,16 @@ class BbsesPlugin extends UserPluginBase
             // 根記事にスレッド更新日時をセット
             BbsPost::where('id', $post->thread_root_id)->update(['thread_updated_at' => date('Y-m-d H:i:s')]);
         } else {
-            // 根記事のため、スレッド更新日時をセット
+            // 根記事 or 編集のため、スレッド更新日時をセット
             $post->thread_updated_at = date('Y-m-d H:i:s');
-            // root ノードで追加
+            // 保存
             $post->save();
-            // 保存後のid をthread_root_id にセットして更新しておく
-            $post->thread_root_id = $post->id;
-            $post->save();
+
+            // 根記事の場合、保存後のid をthread_root_id にセットして更新（変更の場合はthread_root_id はそのまま）
+            if (empty($post->thread_root_id)) {
+                $post->thread_root_id = $post->id;
+                $post->save();
+            }
         }
 
         // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
