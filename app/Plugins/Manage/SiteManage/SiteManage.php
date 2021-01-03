@@ -189,6 +189,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->user_register_enable]
         );
 
+        // マイページの使用
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'use_mypage'],
+            ['category' => 'general',
+             'value'    => $request->use_mypage]
+        );
+
         // 画像の保存機能の無効化
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_mousedown_off'],

@@ -273,7 +273,7 @@ if(isset($configs_array['body_optional_class'])){
             @endif
 
             @guest
-                @if (isset($configs) && ($configs['base_header_login_link'] == '1'))
+                @if (isset($configs['base_header_login_link']) && ($configs['base_header_login_link'] == '1'))
                     @php
                         // 外部認証設定 取得
                         $auth_method = Configs::getAuthMethod();
@@ -291,7 +291,7 @@ if(isset($configs_array['body_optional_class'])){
                         <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
                     @endif
                 @endif
-                @if (isset($configs) && ($configs['user_register_enable'] == '1'))
+                @if (isset($configs['user_register_enable']) && ($configs['user_register_enable'] == '1'))
                     <li><a class="nav-link" href="{{ route('register') }}">ユーザ登録</a></li>
                 @endif
             @else
@@ -301,8 +301,10 @@ if(isset($configs_array['body_optional_class'])){
                         @if (\Route::currentRouteName() == 'get_mypage' || \Route::currentRouteName() == 'post_mypage')
                             {{-- マイページのトップ（get_allで来る）もしくは、ルートでget_mypage --}}
                         @else
-                            <a class="dropdown-item" href="{{url('/mypage')}}">マイページ</a>
-                            <div class="dropdown-divider"></div>
+                            @if (isset($configs['use_mypage']) && ($configs['use_mypage'] == '1'))
+                                <a class="dropdown-item" href="{{url('/mypage')}}">マイページ</a>
+                                <div class="dropdown-divider"></div>
+                            @endif
                         @endif
                         <a class="dropdown-item" href="{{route('logout')}}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">ログアウト</a>
                         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
