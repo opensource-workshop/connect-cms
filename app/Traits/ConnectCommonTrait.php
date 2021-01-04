@@ -845,10 +845,11 @@ trait ConnectCommonTrait
                     // ユーザが存在しない
                     if (empty($user)) {
                         // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
-                        $user           = new User;
-                        $user->name     = $request['userid'];
-                        $user->userid   = $request['userid'];
+                        $user = new User;
+                        $user->name = $request['userid'];
+                        $user->userid = $request['userid'];
                         $user->password = Hash::make($request['password']);
+                        $user->created_event = \AuthMethodType::netcommons2;
                         $user->save();
 
                         // 追加権限設定があれば作成
@@ -911,11 +912,12 @@ trait ConnectCommonTrait
                 $email = $request->server(config('cc_shibboleth_config.user_email'));
 
                 // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
-                $user           = new User;
-                $user->name     = $user_name;
-                $user->userid   = $userid;
-                $user->email    = $email;
+                $user = new User;
+                $user->name = $user_name;
+                $user->userid = $userid;
+                $user->email = $email;
                 $user->password = $password;
+                $user->created_event = \AuthMethodType::shibboleth;
                 $user->save();
 
                 // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生) 
