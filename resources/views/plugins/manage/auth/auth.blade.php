@@ -26,7 +26,7 @@
                         <div class="custom-control custom-radio custom-control-inline">
                             <input 
                                 type="radio" value="1" class="custom-control-input" id="use_auth_method_1" 
-                                name="use_auth_method" @if($use_auth_method) checked @endif>
+                                name="use_auth_method" @if(old('use_auth_method', $use_auth_method)) checked @endif>
                             <label class="custom-control-label" for="use_auth_method_1">
                                 使用する
                             </label>
@@ -36,7 +36,7 @@
                         <div class="custom-control custom-radio custom-control-inline">
                             <input 
                                 type="radio" value="0" class="custom-control-input" id="use_auth_method_0" 
-                                name="use_auth_method" @if(!$use_auth_method) checked @endif>
+                                name="use_auth_method" @if(!old('use_auth_method', $use_auth_method)) checked @endif>
                             <label class="custom-control-label" for="use_auth_method_0">
                                 使用しない
                             </label>
@@ -52,7 +52,7 @@
                     {{-- ラジオのチェック判定 --}}
                     @php
                         $checked = null;
-                        if($auth_method == $key){
+                        if(old('auth_method', $auth_method) == $key){
                             // 設定値があればそれに応じてチェックON
                             $checked = 'checked';
                         }
@@ -77,6 +77,68 @@
                     ※ Shibboleth認証を選択すると、画面上部のログインのリンク先がShibbolethログイン画面に変更されます。<br>
                     ※ Shibboleth認証はファイルで設定します。設定ファイル：<code>config/cc_shibboleth_config.php</code><br>
                 </small>
+            </div>
+
+            {{-- 外部認証と併せて通常ログインも使用 --}}
+            <div class="form-group">
+                <label class="col-form-label">通常ログインも使用</label>
+                <div class="row">
+                    {{-- ラジオ表示 --}}
+                    <div class="col-md-3">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input 
+                                type="radio" value="1" class="custom-control-input" id="use_normal_login_along_with_auth_method_1" 
+                                name="use_normal_login_along_with_auth_method" @if(old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
+                            <label class="custom-control-label" for="use_normal_login_along_with_auth_method_1">
+                                使用する
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input 
+                                type="radio" value="0" class="custom-control-input" id="use_normal_login_along_with_auth_method_0" 
+                                name="use_normal_login_along_with_auth_method" @if(!old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
+                            <label class="custom-control-label" for="use_normal_login_along_with_auth_method_0">
+                                使用しない
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <small class="form-text text-muted">
+                    ※ 「使用する」場合、外部認証毎に通常ログイン方法が異なります。<br>
+                    ※ NetCommons2認証で通常ログインも「使用する」場合、NetCommons2認証でログインできなかったら連続して通常ログインを行います。<br>
+                    ※ Shibboleth認証で通常ログインも「使用する」場合、ログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力して通常ログインを行います。<br>
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label class="col-form-label">注意 <span class="badge badge-danger">必須</span></label>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <input class="form-check-input" type="checkbox" name="confirm_auth" value="1">以下の通常ログインに対する注意点を理解して実行します。
+                            </label>
+                        </div>
+                        @if ($errors->has('confirm_auth'))
+                            <div class="alert alert-danger mb-0">
+                                <i class="fas fa-exclamation-circle"></i> 通常ログインに対する注意点の確認を行ってください。
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="row">
+                    <div class="col">
+                        <div class="alert alert-warning">
+                            通常ログインを「使用しない」ことで、管理機能が全て操作できなくなる危険性が発生します。<br />
+                            「使用しない」に設定する場合は、外部承認に連動したユーザに、システム管理者権限を含むユーザが存在する事を確認してから実行してください。
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- 更新ボタン --}}

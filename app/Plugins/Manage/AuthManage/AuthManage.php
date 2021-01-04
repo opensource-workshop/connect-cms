@@ -2,6 +2,8 @@
 
 namespace App\Plugins\Manage\AuthManage;
 
+use Illuminate\Support\Facades\Validator;
+
 use App\Models\Core\Configs;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -38,13 +40,17 @@ class AuthManage extends ManagePluginBase
      */
     public function index($request)
     {
-        // 外部認証を使用するフラグ
+        // 外部認証を使用
         $configs_use_auth_method = Configs::where('name', 'use_auth_method')->first();
         $use_auth_method = empty($configs_use_auth_method) ? null : $configs_use_auth_method->value;
 
         // 使用する外部認証
         $configs_auth_method = Configs::where('name', 'auth_method')->first();
         $auth_method = empty($configs_auth_method) ? null : $configs_auth_method->value;
+
+        // 通常ログインも使用
+        $configs_use_normal_login_along_with_auth_method = Configs::where('name', 'use_normal_login_along_with_auth_method')->first();
+        $use_normal_login_along_with_auth_method = empty($configs_use_normal_login_along_with_auth_method) ? null : $configs_use_normal_login_along_with_auth_method->value;
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
@@ -53,6 +59,7 @@ class AuthManage extends ManagePluginBase
             "plugin_name" => "auth",
             "use_auth_method" => $use_auth_method,
             "auth_method" => $auth_method,
+            "use_normal_login_along_with_auth_method" => $use_normal_login_along_with_auth_method,
         ]);
     }
 
@@ -61,8 +68,22 @@ class AuthManage extends ManagePluginBase
      */
     public function update($request, $id)
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'confirm_auth' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'confirm_auth' => '通常ログインに対する注意点',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect('manage/auth/')
+                       ->withErrors($validator)
+                       ->withInput();
+        }
+
         // --- 更新
-        // 外部認証を使用するフラグ
+        // 外部認証を使用
         $configs = Configs::updateOrCreate(
             ['name' => 'use_auth_method'],
             [
@@ -77,6 +98,15 @@ class AuthManage extends ManagePluginBase
             [
                 'category' => 'auth',
                 'value' => $request->auth_method
+            ]
+        );
+
+        // 通常ログインも使用
+        $configs = Configs::updateOrCreate(
+            ['name' => 'use_normal_login_along_with_auth_method'],
+            [
+                'category' => 'auth',
+                'value' => $request->use_normal_login_along_with_auth_method
             ]
         );
 
