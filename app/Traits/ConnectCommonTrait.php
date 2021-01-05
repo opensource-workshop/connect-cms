@@ -124,8 +124,9 @@ trait ConnectCommonTrait
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
                     // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
-                    // bugfix: 承認権限チェック（$authority == 'posts.approval'）なのに、ここでtureとならず、必要なロールを保持している（$user_role == 'role_article'）でtureとなっていた不具合あり。
-                    //         -> 承認権限チェックとそれ以外でif文見直す。
+                    // bugfix:  モデレータに「承認が必要」としても、モデレータは自分で承認できてしまう不具合修正
+                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtureとならず、必要なロールを保持している（$user_role == 'role_article'）でtureとなっていた。
+                    //          承認権限チェックとそれ以外でif文見直す。
                     // if ($authority == 'posts.approval' && $user_role == 'role_approval') {
                     //     return true;
                     // }
