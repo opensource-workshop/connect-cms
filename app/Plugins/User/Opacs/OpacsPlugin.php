@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
+use Illuminate\Support\Collection;
 
 use DB;
 
@@ -50,7 +51,7 @@ class OpacsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['settingOpacFrame', 'rentlist', 'searchClear'];
-        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame'];
+        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo'];
         return $functions;
     }
 
@@ -138,6 +139,10 @@ class OpacsPlugin extends UserPluginBase
 
         // 結果が取得できた場合
         //var_dump($xml);
+        
+        // ISBN設定
+        $opacs_books->isbn = $request->isbn;
+        
         $totalResults = $xml->channel->children('openSearch', true)->totalResults;
         if ($totalResults == 0) {
             return array($opacs_books, "書誌データが見つかりませんでした。");
@@ -145,21 +150,6 @@ class OpacsPlugin extends UserPluginBase
         if (!$xml) {
             return array($opacs_books, "取得した書誌データでエラーが発生しました。");
         } else {
-/*
-            $target_item = null;
-            $channel = get_object_vars($xml->channel);
-
-            if (is_array($channel["item"])) {
-                $target_item = end($channel["item"]);
-            } else {
-                $target_item = $channel["item"];
-            }
-
-            $opacs_books->title   = $target_item->title;
-            $opacs_books->creator = $target_item->author;
-            $opacs_books->publisher = $target_item->children('dc', true)->publisher;
-*/
-
             $channel = get_object_vars($xml->channel);
             if (is_array($channel["item"])) {
                 // itemが複数ある場合
@@ -324,9 +314,6 @@ class OpacsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null, $messages = null)
     {
-// ★
-$dbg = debug_backtrace();
-Log::debug('index関数[呼び出し元]：' . $dbg[1]['function']);
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -343,9 +330,7 @@ Log::debug('index関数[呼び出し元]：' . $dbg[1]['function']);
         if ($opacs_frames_setting->view_form == 0) {
             return $this->indexMyOpac($request, $page_id, $frame_id, $errors, $messages);
         } else {
-//            return $this->indexSearch($request, $page_id, $frame_id);
-// ★
-            return $this->indexSearch($request, $page_id, $frame_id, $errors, $messages);
+            return $this->indexSearch($request, $page_id, $frame_id);
         }
     }
 
@@ -504,9 +489,7 @@ Log::debug('index関数[呼び出し元]：' . $dbg[1]['function']);
      *
      * @return view
      */
-//    public function indexSearch($request, $page_id, $frame_id)
-// ★
-    public function indexSearch($request, $page_id, $frame_id, $errors = null, $messages = null)
+    public function indexSearch($request, $page_id, $frame_id)
     {
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
@@ -556,16 +539,11 @@ Log::debug('index関数[呼び出し元]：' . $dbg[1]['function']);
                           ->paginate($opac_frame->view_count, ["*"], "frame_{$opac_frame->id}_page");
         }
 
-// ★
-Log::debug('indexSearch[errors]：' . $errors);
-Log::debug('indexSearch[message]：' . $messages);
         // 表示テンプレートを呼び出す。
         return $this->view(
             'opacs', [
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_books,
-            'errors'         => $errors,		// ★
-            'messages'       => $messages,		// ★
             ]
         );
     }
@@ -810,8 +788,6 @@ Log::debug('indexSearch[message]：' . $messages);
      */
     public function create($request, $page_id, $frame_id, $opacs_books_id = null)
     {
-// ★
-Log::debug('create関数[Start]');
         // 権限チェック
         // 特別処理。role_article（記事修正）でチェック。
         if ($this->can('role_article')) {
@@ -827,29 +803,12 @@ Log::debug('create関数[Start]');
         // 空のデータ(画面で初期値設定で使用するため)
         $opacs_books = new OpacsBooks();
 
-        // 書誌データ取得の場合
-        $search_error_message = '';
-        if ($request->book_search == '1') {
-            list($tmp_opacs_books, $search_error_message) = $this->getBook($request, $opacs_books);
-            if (empty($tmp_opacs_books)) {
-                $search_error_message = '書誌データが検索できませんでした。';
-            } else {
-                $opacs_books = $tmp_opacs_books;
-            }
-            //echo $opacs_books->title;
-        }
-
-// ★
-//Log::debug('create関数[errors]：' . $errors);
-Log::debug('create関数[search_error_message]：' . $search_error_message);
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
             'opacs_input', [
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_books,
             'book_search' => $request->book_search,
-//            'errors'      => $errors,
-            'search_error_message' => $search_error_message,
             ]
         )->withInput($request->all);
     }
@@ -879,7 +838,6 @@ Log::debug('create関数[search_error_message]：' . $search_error_message);
             'opacs_input', [
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_book,
-//            'errors'      => $errors,
             ]
         )->withInput($request->all);
     }
@@ -953,8 +911,6 @@ Log::debug('create関数[search_error_message]：' . $search_error_message);
      */
     public function save($request, $page_id, $frame_id, $opacs_books_id = null)
     {
-// ★
-Log::debug('save関数[start]');
         // 権限チェック
         // 特別処理。role_article（記事修正）でチェック。
         if ($this->can('role_article')) {
@@ -972,15 +928,7 @@ Log::debug('save関数[start]');
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-// ★
-Log::debug('save関数[入力エラー終了]');
             return back()->withErrors($validator)->withInput();
-            //return ( $this->create($request, $page_id, $frame_id, $opacs_books_id, $validator->errors()) );
-        }
-
-        // 書誌データ取得の場合、入力画面に戻る
-        if ($request->book_search == '1') {
-            return ( $this->create($request, $page_id, $frame_id, $opacs_books_id, $validator->errors()) );
         }
 
         // id があれば更新、なければ登録
@@ -1023,12 +971,12 @@ Log::debug('save関数[入力エラー終了]');
         // データ保存
         $opacs_book->save();
 
-$messages = "登録しました。";
-
-        // 登録後は表示用の初期処理を呼ぶ。
-//        return $this->index($request, $page_id, $frame_id);
-// ★
-        return $this->index($request, $page_id, $frame_id, null, $messages);
+        // メッセージ表示
+        session()->flash('save_opacs', '登録しました。');
+        
+        // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
+        return new Collection(['redirect_path' => url('/') . "/plugin/opacs/edit/" . $page_id . "/" . $frame_id . "/" . $opacs_book->id . "#frame-" . $frame_id]);
+        
     }
 
     /**
@@ -1660,5 +1608,43 @@ $messages = "登録しました。";
             'books_lents' => $books_lents,
             ]
         );
+    }
+
+    /**
+     *  書籍データ検索
+     */
+    public function getBookInfo($request, $page_id, $frame_id, $opacs_books_id = null)
+    {
+        // 権限チェック
+        // 特別処理。role_article（記事修正）でチェック。
+        if ($this->can('role_article')) {
+            return $this->view_error(403);
+        }
+        
+        // OPAC＆フレームデータ
+        $opac_frame = $this->getOpacFrame($frame_id);
+
+        // 空のデータ(画面で初期値設定で使用するため)
+        $opacs_books = new OpacsBooks();
+
+       // 書籍データ取得
+        $search_error_message = '';
+        list($tmp_opacs_books, $search_error_message) = $this->getBook($request, $opacs_books);
+        if (empty($tmp_opacs_books)) {
+            $search_error_message = '書誌データが検索できませんでした。';
+        } else {
+            $opacs_books = $tmp_opacs_books;
+        }
+
+        // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
+        return $this->view(
+            'opacs_input', [
+            'opac_frame'  => $opac_frame,
+            'opacs_books' => $opacs_books,
+            'book_search' => $request->book_search,
+            'search_error_message' => $search_error_message,
+            ]
+        )->withInput($request->all);
+
     }
 }

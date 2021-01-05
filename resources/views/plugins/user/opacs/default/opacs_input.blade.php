@@ -11,16 +11,23 @@
 <script type="text/javascript">
     {{-- 項目追加のsubmit JavaScript --}}
     function submit_book_search() {
-        form_opac_book.action = "{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
-        form_opac_book.book_search.value = 1;
+        form_opac_book.action = "{{url('/')}}/plugin/opacs/getBookInfo/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
         form_opac_book.submit();
     }
 </script>
 
+{{-- メッセージ表示 --}}
 @if (isset($search_error_message) && $search_error_message)
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         {{$search_error_message}}
+    </div>
+@endif
+<!-- フラッシュメッセージ -->
+@if (session('save_opacs'))
+    <div class="alert alert-info" style="margin-top: 10px;">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ session('save_opacs') }}
     </div>
 @endif
 
@@ -28,7 +35,6 @@
 @if (empty($opacs_books->id))
 {{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}" method="POST" id="form_opac_book" name="form_opac_book" class="" onsubmit="return false;"> --}}
     <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" id="form_opac_book" name="form_opac_book" class="">
-        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
 {{--    <form action="{{url('/')}}/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="" onsubmit="return false;"> --}}
     <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="">

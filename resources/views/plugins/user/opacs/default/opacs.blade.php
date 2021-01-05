@@ -9,14 +9,6 @@
 
 @section("plugin_contents_$frame->id")
 
-{{-- メッセージ表示 --}}
-@if ($messages)
-    <div class="alert alert-info" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        {{$messages}}
-    </div>
-@endif
-
 {{-- OPAC表示 --}}
 {{--@if (isset($opacs_books)) --}}
 
