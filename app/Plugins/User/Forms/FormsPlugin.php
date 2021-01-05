@@ -585,11 +585,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $tmp_array = $request->forms_columns_value;
             $tmp_array[$forms_column->id] = null;
             if ($time_from && $time_to) {
-                // 両方入力時、時間の前後チェック
-                $validator_rule[] = new CustomVali_TimeFromTo(
-                    \Carbon::createFromTimeString($time_from . ':00'),
-                    \Carbon::createFromTimeString($time_to . ':00')
-                );
+                if (strtotime('1970-01-01 '. $time_from . ':00') && strtotime('1970-01-01 '. $time_to . ':00')) {
+                    // 両方入力時、且つ、正常時間の場合、時間の前後チェック
+                    $validator_rule[] = new CustomVali_TimeFromTo(
+                        \Carbon::createFromTimeString($time_from . ':00'),
+                        \Carbon::createFromTimeString($time_to . ':00')
+                    );
+                } else {
+                    // 不正時間の為、dateバリデーションで弾く
+                    $validator_rule[] = 'date';
+                }
                 $tmp_array[$forms_column->id] = $time_from . '~' . $time_to;
             } elseif ($time_from || $time_to) {
                 // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
@@ -880,7 +885,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // メール送信（ユーザー側）
             foreach ($user_mailaddresses as $user_mailaddress) {
                 if (!empty($user_mailaddress)) {
-                    Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                    // Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                    // メール送信はログ出力の追加に伴いTrait のメソッドに移行
+                    $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], $this->getPluginName());
                 }
             }
         } else {
@@ -930,7 +937,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 if ($form->mail_send_flag) {
                     $mail_addresses = explode(',', $form->mail_send_address);
                     foreach ($mail_addresses as $mail_address) {
-                        Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                        // Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                        // メール送信はログ出力の追加に伴いTrait のメソッドに移行
+                        $this->sendMail($mail_address, $mail_options, ['content' => $mail_text], $this->getPluginName());
                     }
                 }
 
@@ -938,7 +947,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 if ($form->user_mail_send_flag) {
                     foreach ($user_mailaddresses as $user_mailaddress) {
                         if (!empty($user_mailaddress)) {
-                            Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                            // Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                            // メール送信はログ出力の追加に伴いTrait のメソッドに移行
+                            $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], $this->getPluginName());
                         }
                     }
                 }
@@ -1221,7 +1232,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($form->mail_send_flag) {
                 $mail_addresses = explode(',', $form->mail_send_address);
                 foreach ($mail_addresses as $mail_address) {
-                    Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                    // Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                    // メール送信はログ出力の追加に伴いTrait のメソッドに移行
+                    $this->sendMail($mail_address, $mail_options, ['content' => $mail_text], $this->getPluginName());
                 }
             }
 
@@ -1229,7 +1242,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($form->user_mail_send_flag) {
                 foreach ($user_mailaddresses as $user_mailaddress) {
                     if (!empty($user_mailaddress)) {
-                        Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                        // Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
+                        // メール送信はログ出力の追加に伴いTrait のメソッドに移行
+                        $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], $this->getPluginName());
                     }
                 }
             }
@@ -1279,6 +1294,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                             $plugin_name . '.' . $plugin_name . '_name',
                             'forms_inputs.forms_id'
                         )
+                        ->orderBy($plugin_name. '.id', 'desc')
                         ->orderBy($plugin_name . '.created_at', 'desc')
                         ->paginate(10, ["*"], "frame_{$frame_id}_page");
 

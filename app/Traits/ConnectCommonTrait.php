@@ -476,6 +476,9 @@ trait ConnectCommonTrait
             abort(403, 'ユーザーにメソッドに対する権限がありません。');
         }
 
+//        // 操作ログの処理
+//        $this->putAppLog($request, $this->getConfigs(), 'page');
+
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
         // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。

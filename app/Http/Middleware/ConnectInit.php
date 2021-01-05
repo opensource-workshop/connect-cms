@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Core\Configs;
+
 use Closure;
 
 class ConnectInit
@@ -33,6 +35,11 @@ class ConnectInit
         } elseif ($debug_mode_session === '1') {
             config(['app.debug' => true]);
         }
+
+        /* --- 共通で使用するDB --- */
+
+        // Connect-CMS の各種設定
+        $request->attributes->add(['configs' => Configs::get()]);
 
         return $next($request);
     }

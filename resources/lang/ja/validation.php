@@ -31,7 +31,7 @@ return [
     ],
     'boolean'              => ':attributeには真偽値を指定してください。',
     'confirmed'            => ':attributeが確認用の値と一致しません。',
-    'date'                 => ':attributeには正しい形式の日付を指定してください。',
+    'date'                 => ':attributeには正しい形式の日付、又は、時間を指定してください。',
     'date_format'          => ':attributeには:format"という形式の日付を指定してください。',
     'different'            => ':attributeには:otherとは異なる値を指定してください。',
     'digits'               => ':attributeには:digits桁の数値を指定してください。',
