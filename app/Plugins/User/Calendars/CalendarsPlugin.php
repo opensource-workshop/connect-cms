@@ -7,15 +7,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use Carbon\Carbon;
 use DB;
 
 use App\Enums\StatusType;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-//use App\Models\User\Bbses\Bbs;
-//use App\Models\User\Bbses\BbsFrame;
-//use App\Models\User\Bbses\BbsPost;
+use App\Models\User\Calendars\Calendar;
+use App\Models\User\Calendars\CalendarFrame;
+use App\Models\User\Calendars\CalendarPost;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -30,9 +31,9 @@ use App\Plugins\User\UserPluginBase;
 class CalendarsPlugin extends UserPluginBase
 {
     /* DB migrate
-       php artisan make:migration create_bbses --create=bbses
-       php artisan make:migration create_bbs_posts --create=bbs_posts
-       php artisan make:migration create_bbs_frames --create=bbs_frames
+       php artisan make:migration create_calendars --create=calendars
+       php artisan make:migration create_calendar_posts --create=calendar_posts
+       php artisan make:migration create_calendar_frames --create=calendar_frames
     */
 
     /* オブジェクト変数 */
@@ -52,7 +53,7 @@ class CalendarsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['editView'];
-        $functions['post'] = ['saveView', 'edit', 'reply'];
+        $functions['post'] = ['saveView', 'edit'];
         return $functions;
     }
 
@@ -65,7 +66,6 @@ class CalendarsPlugin extends UserPluginBase
         $role_ckeck_table = array();
         $role_ckeck_table["editView"] = array('role_arrangement');
         $role_ckeck_table["saveView"] = array('role_arrangement');
-        $role_ckeck_table["reply"]    = array('role_reporter');
         return $role_ckeck_table;
     }
 
@@ -91,7 +91,7 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // POST を取得する。
-        $this->post = BbsPost::firstOrNew(['id' => $id]);
+        $this->post = CalendarPost::firstOrNew(['id' => $id]);
         return $this->post;
     }
 
@@ -102,7 +102,7 @@ class CalendarsPlugin extends UserPluginBase
      */
     private function getPluginFrame($frame_id)
     {
-        return BbsFrame::firstOrNew(['frame_id' => $frame_id]);
+        return CalendarFrame::firstOrNew(['frame_id' => $frame_id]);
     }
 
     /**
@@ -111,7 +111,7 @@ class CalendarsPlugin extends UserPluginBase
     public function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
-        return Bbs::firstOrNew(['bucket_id' => $bucket_id]);
+        return Calendar::firstOrNew(['bucket_id' => $bucket_id]);
     }
 
     /**
@@ -120,7 +120,7 @@ class CalendarsPlugin extends UserPluginBase
     protected function appendAuthWhere($query, $table_name)
     {
         // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
-        // クロージャなしで追記した場合、or は元の whereNull('bbs_posts.parent_id') を打ち消したりするので注意。
+        // クロージャなしで追記した場合、or は元の whereNull('calendar_posts.parent_id') を打ち消したりするので注意。
 
         if (empty($query)) {
             // 空なら何もしない
@@ -167,22 +167,22 @@ class CalendarsPlugin extends UserPluginBase
     /**
      *  Root の POST一覧取得
      */
-    private function getRootPosts($bbs_frame)
+    private function getRootPosts($calendar_frame)
     {
         // データ取得
-        $posts_query = BbsPost::select('bbs_posts.*')
-                                   ->join('bbses', function ($join) {
-                                       $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
-                                          ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+        $posts_query = CalendarPost::select('calendar_posts.*')
+                                   ->join('calendars', function ($join) {
+                                       $join->on('calendars.id', '=', 'calendar_posts.calendar_id')
+                                          ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
                                    })
-                                   ->whereNull('bbs_posts.parent_id')
-                                   ->whereNull('bbs_posts.deleted_at');
+                                   ->whereNull('calendar_posts.parent_id')
+                                   ->whereNull('calendar_posts.deleted_at');
 
         // 権限によって表示する記事を絞る
-        $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
+        $posts_query = $this->appendAuthWhere($posts_query, 'calendar_posts');
 
         // 根記事の表示順
-        if ($bbs_frame->thread_sort_flag == 1) {
+        if ($calendar_frame->thread_sort_flag == 1) {
             // 根記事の新しい日時順
             $posts_query->orderBy('thread_updated_at', 'desc');
         } else {
@@ -191,36 +191,36 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // 取得
-        return $posts_query->paginate($bbs_frame->getViewCount());
+        return $posts_query->paginate($calendar_frame->getViewCount());
     }
 
     /**
      *  指定されたスレッドの記事一覧取得
      */
-    private function getThreadPosts($bbs_frame, $thread_root_ids, $children_only = false)
+    private function getThreadPosts($calendar_frame, $thread_root_ids, $children_only = false)
     {
         // データ取得
-        $posts_query = BbsPost::select('bbs_posts.*')
-                                   ->join('bbses', function ($join) {
-                                       $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
-                                          ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+        $posts_query = CalendarPost::select('calendar_posts.*')
+                                   ->join('calendars', function ($join) {
+                                       $join->on('calendars.id', '=', 'calendar_posts.calendar_id')
+                                          ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
                                    });
 
         // ルートのポストは含まない場合
         if ($children_only) {
-            $posts_query->whereColumn('bbs_posts.id', '<>', 'bbs_posts.thread_root_id');
+            $posts_query->whereColumn('calendar_posts.id', '<>', 'calendar_posts.thread_root_id');
         }
 
         // その他条件指定
-        $posts_query->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
-                    ->whereNull('bbs_posts.deleted_at')
+        $posts_query->whereIn('calendar_posts.thread_root_id', $thread_root_ids)
+                    ->whereNull('calendar_posts.deleted_at')
                     ->orderBy('created_at', 'asc');
 
         // 権限によって表示する記事を絞る
-        $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
+        $posts_query = $this->appendAuthWhere($posts_query, 'calendar_posts');
 
         // 取得
-        return $posts_query->paginate($bbs_frame->getViewCount());
+        return $posts_query->paginate($calendar_frame->getViewCount());
     }
 
     /* スタティック関数 */
@@ -231,26 +231,26 @@ class CalendarsPlugin extends UserPluginBase
     public static function getWhatsnewArgs()
     {
         // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('bbses_posts')
+        $return[] = DB::table('calendars_posts')
                       ->select(
                           'frames.page_id           as page_id',
                           'frames.id                as frame_id',
-                          'bbses_posts.id           as post_id',
-                          'bbses_posts.title        as post_title',
+                          'calendars_posts.id           as post_id',
+                          'calendars_posts.title        as post_title',
                           DB::raw("null             as important"),
-                          'bbses_posts.created_at   as posted_at',
-                          'bbses_posts.created_name as posted_name',
+                          'calendars_posts.created_at   as posted_at',
+                          'calendars_posts.created_name as posted_name',
                           DB::raw("null             as classname"),
                           DB::raw("null             as category"),
-                          DB::raw('"bbses"          as plugin_name')
+                          DB::raw('"calendars"          as plugin_name')
                       )
-                      ->join('bbses', 'bbses.id', '=', 'bbses_posts.bbses_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+                      ->join('calendars', 'calendars.id', '=', 'calendars_posts.calendars_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'calendars.bucket_id')
                       ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('bbses_posts.deleted_at');
+                      ->whereNull('calendars_posts.deleted_at');
 
         $return[] = 'show_page_frame_post';
-        $return[] = '/plugin/bbses/show';
+        $return[] = '/plugin/calendars/show';
 
         return $return;
     }
@@ -261,34 +261,34 @@ class CalendarsPlugin extends UserPluginBase
     /*
     public static function getSearchArgs($search_keyword)
     {
-        $return[] = DB::table('bbses_posts')
+        $return[] = DB::table('calendars_posts')
                       ->select(
-                          'bbses_posts.id           as post_id',
+                          'calendars_posts.id           as post_id',
                           'frames.id                as frame_id',
                           'frames.page_id           as page_id',
                           'pages.permanent_link     as permanent_link',
-                          'bbses_posts.title        as post_title',
+                          'calendars_posts.title        as post_title',
                           DB::raw("null             as important"),
-                          'bbses_posts.created_at   as posted_at',
-                          'bbses_posts.created_name as posted_name',
+                          'calendars_posts.created_at   as posted_at',
+                          'calendars_posts.created_name as posted_name',
                           DB::raw("null             as classname"),
                           DB::raw("null             as category_id"),
                           DB::raw("null             as category"),
-                          DB::raw('"bbses"          as plugin_name')
+                          DB::raw('"calendars"          as plugin_name')
                       )
-                      ->join('bbses', 'bbses.id',  '=', 'bbses_posts.bbses_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+                      ->join('calendars', 'calendars.id',  '=', 'calendars_posts.calendars_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'calendars.bucket_id')
                       ->leftjoin('pages', 'pages.id',      '=', 'frames.page_id')
                       ->where(function ($plugin_query) use ($search_keyword) {
-                          $plugin_query->where('bbses_posts.title', 'like', '?')
-                                       ->orWhere('bbses_posts.body', 'like', '?');
+                          $plugin_query->where('calendars_posts.title', 'like', '?')
+                                       ->orWhere('calendars_posts.body', 'like', '?');
                       })
-                      ->whereNull('bbses_posts.deleted_at');
+                      ->whereNull('calendars_posts.deleted_at');
 
         $bind = array('%'.$search_keyword.'%', '%'.$search_keyword.'%');
         $return[] = $bind;
         $return[] = 'show_page_frame_post';
-        $return[] = '/plugin/bbses/show';
+        $return[] = '/plugin/calendars/show';
 
         return $return;
     }
@@ -338,7 +338,7 @@ class CalendarsPlugin extends UserPluginBase
         // 指定の記事がある場合
         if ($post) {
             // 根記事取得（getPost() はメインのPOST をシングルトンで保持するので、ここでは新たに取得する）
-            $thread_root_post = BbsPost::firstOrNew(['id' => $post->thread_root_id]);
+            $thread_root_post = CalendarPost::firstOrNew(['id' => $post->thread_root_id]);
 
             // 表示対象のスレッドの記事一覧
             $children_posts = $this->getThreadPosts($plugin_frame, new Collection($post->thread_root_id), true);
@@ -376,7 +376,7 @@ class CalendarsPlugin extends UserPluginBase
 
         // 変更画面を呼び出す。
         return $this->view('edit', [
-            'post'        => new BbsPost(),
+            'post'        => new CalendarPost(),
             'parent_post' => $post,
             'reply'       => $request->get('reply'),
             'reply_flag'  => true,
@@ -404,7 +404,7 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // POSTデータのモデル取得
-        $post = BbsPost::firstOrNew(['id' => $post_id]);
+        $post = CalendarPost::firstOrNew(['id' => $post_id]);
 
         // モデレータ以上の権限を持たずに、記事にすでに返信が付いている場合は、保存できない。
         if (!$this->isCan('role_article') && $post->descendants->count() > 0) {
@@ -413,11 +413,11 @@ class CalendarsPlugin extends UserPluginBase
             return back()->withErrors($validator)->withInput();
         }
 
-        // フレームから bbs_id 取得
-        $bbs_frame = $this->getPluginFrame($frame_id);
+        // フレームから calendar_id 取得
+        $calendar_frame = $this->getPluginFrame($frame_id);
 
         // 値のセット
-        $post->bbs_id            = $bbs_frame->bbs_id;
+        $post->calendar_id            = $calendar_frame->calendar_id;
         $post->title             = $request->title;
         $post->body              = $request->body;
 
@@ -438,13 +438,13 @@ class CalendarsPlugin extends UserPluginBase
         // 返信の場合
         if ($request->filled('parent_id')) {
             // 親のpost を取得
-            $parent_post = BbsPost::find($request->parent_id);
+            $parent_post = CalendarPost::find($request->parent_id);
             // 親のpost からthread_root_id をコピー。これで同じスレッドの記事を取得できるようにする。
             $post->thread_root_id = $parent_post->thread_root_id;
             // 親のノードに追加
             $post->prependToNode($parent_post)->save();
             // 根記事にスレッド更新日時をセット
-            BbsPost::where('id', $post->thread_root_id)->update(['thread_updated_at' => date('Y-m-d H:i:s')]);
+            CalendarPost::where('id', $post->thread_root_id)->update(['thread_updated_at' => date('Y-m-d H:i:s')]);
         } else {
             // 根記事 or 編集のため、スレッド更新日時をセット
             $post->thread_updated_at = date('Y-m-d H:i:s');
@@ -459,7 +459,7 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
-        return new Collection(['redirect_path' => url('/') . "/plugin/bbses/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/calendars/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
     }
 
     /**
@@ -492,7 +492,7 @@ class CalendarsPlugin extends UserPluginBase
         // id がある場合、データを削除
         if ($post_id) {
             // データを削除する。（論理削除で削除日、ID などを残すためにupdate）
-            BbsPost::where('id', $post_id)->update([
+            CalendarPost::where('id', $post_id)->update([
                 'deleted_at'   => date('Y-m-d H:i:s'),
                 'deleted_id'   => Auth::user()->id,
                 'deleted_name' => Auth::user()->name,
@@ -508,7 +508,7 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 表示テンプレートを呼び出す。
         return $this->view('list_buckets', [
-            'plugin_buckets' => Bbs::orderBy('created_at', 'desc')->paginate(10),
+            'plugin_buckets' => Calendar::orderBy('created_at', 'desc')->paginate(10),
         ]);
     }
 
@@ -529,15 +529,15 @@ class CalendarsPlugin extends UserPluginBase
         // 表示テンプレートを呼び出す。
         return $this->view('frame', [
             // 表示中のバケツデータ
-            'bbs'       => $this->getPluginBucket($this->getBucketId()),
-            'bbs_frame' => $this->getPluginFrame($frame_id),
+            'calendar'       => $this->getPluginBucket($this->getBucketId()),
+            'calendar_frame' => $this->getPluginFrame($frame_id),
         ]);
     }
 
     /**
      * フレーム表示設定の保存
      */
-    public function saveView($request, $page_id, $frame_id, $bbs_id)
+    public function saveView($request, $page_id, $frame_id, $calendar_id)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -557,8 +557,8 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // フレームごとの表示設定の更新
-        $bbs_frame = BbsFrame::updateOrCreate(
-            ['bbs_id' => $bbs_id, 'frame_id' => $frame_id],
+        $calendar_frame = CalendarFrame::updateOrCreate(
+            ['calendar_id' => $calendar_id, 'frame_id' => $frame_id],
             ['view_count'       => $request->view_count,
              'view_format'      => $request->view_format,
              'thread_sort_flag' => $request->thread_sort_flag],
@@ -582,7 +582,7 @@ class CalendarsPlugin extends UserPluginBase
         // 表示テンプレートを呼び出す。
         return $this->view('bucket', [
             // 表示中のバケツデータ
-            'bbs' => $this->getPluginBucket($bucket_id),
+            'calendar' => $this->getPluginBucket($bucket_id),
         ]);
     }
 
@@ -607,7 +607,7 @@ class CalendarsPlugin extends UserPluginBase
         // バケツの取得。なければ登録。
         $bucket = Buckets::updateOrCreate(
             ['id' => $bucket_id],
-            ['bucket_name' => $request->name, 'plugin_name' => 'bbses'],
+            ['bucket_name' => $request->name, 'plugin_name' => 'calendars'],
         );
 
         // フレームにバケツの紐づけ
@@ -615,46 +615,46 @@ class CalendarsPlugin extends UserPluginBase
 
         // プラグインバケツを取得(なければ新規オブジェクト)
         // プラグインバケツにデータを設定して保存
-        $bbs = $this->getPluginBucket($bucket->id);
-        $bbs->name = $request->name;
-        $bbs->save();
+        $calendar = $this->getPluginBucket($bucket->id);
+        $calendar->name = $request->name;
+        $calendar->save();
 
         // プラグインフレームを作成 or 更新
-        $bbs_frame = BbsFrame::updateOrCreate(
+        $calendar_frame = CalendarFrame::updateOrCreate(
             ['frame_id' => $frame_id],
-            ['bbs_id' => $bbs->id, 'frame_id' => $frame_id],
+            ['calendar_id' => $calendar->id, 'frame_id' => $frame_id],
         );
 
         // 登録後はリダイレクトして編集ページを開く。
-        return new Collection(['redirect_path' => url('/') . "/plugin/bbses/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/calendars/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
     }
 
     /**
      *  削除処理
      */
-    public function destroyBuckets($request, $page_id, $frame_id, $bbs_id)
+    public function destroyBuckets($request, $page_id, $frame_id, $calendar_id)
     {
         // プラグインバケツの取得
-        $bbs = Bbs::find($bbs_id);
-        if (empty($bbs)) {
+        $calendar = Calendar::find($calendar_id);
+        if (empty($calendar)) {
             return;
         }
 
         // POSTデータ削除(一気にDelete なので、deleted_id は入らない)
-        BbsPost::where('bbs_id', $bbs->id)->delete();
+        CalendarPost::where('calendar_id', $calendar->id)->delete();
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => null]);
 
         // プラグインフレームデータの削除(deleted_id を記録するために1回読んでから削除)
-        $bbs_frame = BbsFrame::where('frame_id', $frame_id)->first();
-        $bbs_frame->delete();
+        $calendar_frame = CalendarFrame::where('frame_id', $frame_id)->first();
+        $calendar_frame->delete();
 
         // バケツ削除
-        Buckets::find($bbs->bucket_id)->delete();
+        Buckets::find($calendar->bucket_id)->delete();
 
         // プラグインデータ削除
-        $bbs->delete();
+        $calendar->delete();
 
         return;
     }
@@ -667,14 +667,14 @@ class CalendarsPlugin extends UserPluginBase
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
 
-        // Bbses の特定
+        // Calendars の特定
         $plugin_bucket = $this->getPluginBucket($request->select_bucket);
 
         // フレームごとの表示設定の更新
-        $bbs_frame = $this->getPluginFrame($frame_id);
-        $bbs_frame->bbs_id = $plugin_bucket->id;
-        $bbs_frame->frame_id = $frame_id;
-        $bbs_frame->save();
+        $calendar_frame = $this->getPluginFrame($frame_id);
+        $calendar_frame->calendar_id = $plugin_bucket->id;
+        $calendar_frame->frame_id = $frame_id;
+        $calendar_frame->save();
 
         return;
     }
