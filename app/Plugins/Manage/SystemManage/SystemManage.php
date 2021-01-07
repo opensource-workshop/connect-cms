@@ -2,12 +2,12 @@
 
 namespace App\Plugins\Manage\SystemManage;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
+// use Illuminate\Http\Request;
+// use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Validator;
 
-use App;
-use DB;
+// use App;
+// use DB;
 use Session;
 
 use App\Models\Core\Configs;
@@ -33,8 +33,6 @@ class SystemManage extends ManagePluginBase
         $role_ckeck_table = array();
         $role_ckeck_table["index"]           = array('admin_system');
         $role_ckeck_table["updateDebugmode"] = array('admin_system');
-        $role_ckeck_table["auth"]            = array('admin_system');
-        $role_ckeck_table["updateAuth"]      = array('admin_system');
         $role_ckeck_table["log"]             = array('admin_system');
         $role_ckeck_table["updateLog"]       = array('admin_system');
         return $role_ckeck_table;
@@ -93,51 +91,6 @@ class SystemManage extends ManagePluginBase
 
         // システム管理画面に戻る
         return redirect("/manage/system");
-    }
-
-    /**
-     *  外部認証画面表示
-     *
-     * @return view
-     */
-    public function auth($request, $page_id = null, $errors = array())
-    {
-        // Config データの取得
-        $config = Configs::where('name', 'auth_method')->first();
-
-        // 管理画面プラグインの戻り値の返し方
-        // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
-        return view('plugins.manage.system.auth', [
-            "function"          => __FUNCTION__,
-            "plugin_name"       => "system",
-            "config"            => $config,
-        ]);
-    }
-
-    /**
-     *  外部認証設定の保存
-     */
-    public function updateAuth($request, $page_id = null, $errors = array())
-    {
-        // httpメソッド確認
-        if (!$request->isMethod('post')) {
-            abort(403, '権限がありません。');
-        }
-
-        // 設定内容の保存
-        $configs = Configs::updateOrCreate(
-            ['name'        => 'auth_method'],
-            ['category'    => 'auth',
-             'value'       => $request->auth_method,
-             'additional1' => $request->auth_netcomons2_site_url,
-             'additional2' => $request->auth_netcomons2_site_key,
-             'additional3' => $request->auth_netcomons2_salt,
-             'additional4' => $request->auth_netcomons2_add_role,
-             'additional5' => $request->auth_netcomons2_admin_password]
-        );
-
-        // システム管理画面に戻る
-        return redirect("/manage/system/auth");
     }
 
     /**

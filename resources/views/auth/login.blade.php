@@ -68,9 +68,17 @@
                                     <i class="fas fa-check"></i> ログイン
                                 </button>
 
-                                <a class="btn btn-link" href="{{ route('password.request') }}">
-                                    パスワードを忘れた場合。
-                                </a>
+                                @php
+                                    use App\Models\Core\Configs;
+
+                                    // パスワードリセットの使用
+                                    $base_login_password_reset = Configs::where('name', 'base_login_password_reset')->first();
+                                @endphp
+                                @if (isset($base_login_password_reset) && $base_login_password_reset->value == '1')
+                                    <a class="btn btn-link" href="{{ route('password.request') }}">
+                                        パスワードを忘れた場合。
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </form>
