@@ -276,16 +276,10 @@ if(isset($configs_array['body_optional_class'])){
                 @if (isset($configs['base_header_login_link']) && ($configs['base_header_login_link'] == '1'))
                     @php
                         // 外部認証設定 取得
-                        $auth_method = Configs::getAuthMethod();
-                        $is_shibboleth = false;
-
-                        if ($auth_method->value == 'shibboleth') {
-                            // 外部認証でshibboleth認証の場合
-                            $is_shibboleth = true;
-                        }
+                        $auth_method_event = Configs::getAuthMethodEvent();
                     @endphp
 
-                    @if ($is_shibboleth)
+                    @if ($auth_method_event->value == AuthMethodType::shibboleth)
                         <li><a class="nav-link" href="{{ route('shibboleth.login') }}">ログイン</a></li>
                     @else
                         <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>

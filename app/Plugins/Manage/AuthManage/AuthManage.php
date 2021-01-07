@@ -45,8 +45,8 @@ class AuthManage extends ManagePluginBase
         $use_auth_method = empty($configs_use_auth_method) ? null : $configs_use_auth_method->value;
 
         // 使用する外部認証
-        $configs_auth_method = Configs::where('name', 'auth_method')->first();
-        $auth_method = empty($configs_auth_method) ? null : $configs_auth_method->value;
+        $configs_auth_method_event = Configs::where('name', 'auth_method_event')->first();
+        $auth_method_event = empty($configs_auth_method_event) ? null : $configs_auth_method_event->value;
 
         // 通常ログインも使用
         $configs_use_normal_login_along_with_auth_method = Configs::where('name', 'use_normal_login_along_with_auth_method')->first();
@@ -58,7 +58,7 @@ class AuthManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "plugin_name" => "auth",
             "use_auth_method" => $use_auth_method,
-            "auth_method" => $auth_method,
+            "auth_method_event" => $auth_method_event,
             "use_normal_login_along_with_auth_method" => $use_normal_login_along_with_auth_method,
         ]);
     }
@@ -94,10 +94,10 @@ class AuthManage extends ManagePluginBase
 
         // 使用する外部認証
         $configs = Configs::updateOrCreate(
-            ['name' => 'auth_method'],
+            ['name' => 'auth_method_event'],
             [
                 'category' => 'auth',
-                'value' => $request->auth_method
+                'value' => $request->auth_method_event
             ]
         );
 
@@ -122,7 +122,7 @@ class AuthManage extends ManagePluginBase
     public function netcommons2($request)
     {
         // Config データの取得
-        $config = Configs::where('name', 'auth_method')->first();
+        $config = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
@@ -148,7 +148,7 @@ class AuthManage extends ManagePluginBase
             ['name' => 'auth_method'],
             [
                 'category' => 'auth',
-                'value' => $request->auth_method,
+                'value' => \AuthMethodType::netcommons2,
                 'additional1' => $request->auth_netcomons2_site_url,
                 'additional2' => $request->auth_netcomons2_site_key,
                 'additional3' => $request->auth_netcomons2_salt,

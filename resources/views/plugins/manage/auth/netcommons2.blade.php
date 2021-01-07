@@ -16,7 +16,6 @@
     <div class="card-body">
         <form name="form_auth" id="form_auth" class="form-horizontal" method="post" action="{{url('/')}}/manage/auth/netcommons2Update">
             {{ csrf_field() }}
-            <input type="hidden" value="{{$config->value}}" name="auth_method">
 
             {{-- サイトURL --}}
             <div class="form-group row">

@@ -39,11 +39,11 @@ class Configs extends Model
     }
 
     /**
-     * 外部認証設定 取得
+     * 使用する外部認証 取得
      */
-    public static function getAuthMethod()
+    public static function getAuthMethodEvent()
     {
-        // Config チェック
+        // 外部認証を使用
         $use_auth_method = Configs::where('name', 'use_auth_method')->first();
 
         // 外部認証を使用しない場合、newで戻す(空として扱う)
@@ -51,14 +51,15 @@ class Configs extends Model
             return new Configs();
         }
 
-        $auth_method = Configs::where('name', 'auth_method')->first();
+        // 使用する外部認証
+        $auth_method_event = Configs::where('name', 'auth_method_event')->first();
 
         // 使用する外部認証がない場合、newで戻す(空として扱う)
-        if (empty($auth_method) || $auth_method->value == '') {
+        if (empty($auth_method_event) || $auth_method_event->value == '') {
             return new Configs();
         }
 
-        // auth_methodで取得したconfigsを返す
-        return $auth_method;
+        // auth_method_eventで取得したconfigsを返す
+        return $auth_method_event;
     }
 }

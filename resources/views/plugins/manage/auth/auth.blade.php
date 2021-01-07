@@ -52,7 +52,7 @@
                     {{-- ラジオのチェック判定 --}}
                     @php
                         $checked = null;
-                        if(old('auth_method', $auth_method) == $key){
+                        if(old('auth_method_event', $auth_method_event) == $key){
                             // 設定値があればそれに応じてチェックON
                             $checked = 'checked';
                         }
@@ -62,10 +62,10 @@
                         <div class="col">
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input 
-                                    type="radio" value="{{ $key }}" class="custom-control-input" id="auth_method_{{ $key }}" 
-                                    name="auth_method" {{ $checked }}
+                                    type="radio" value="{{ $key }}" class="custom-control-input" id="auth_method_event_{{ $key }}" 
+                                    name="auth_method_event" {{ $checked }}
                                 >
-                                <label class="custom-control-label" for="{{ "auth_method_${key}" }}">
+                                <label class="custom-control-label" for="{{ "auth_method_event_${key}" }}">
                                     {{ $value }}
                                 </label>
                             </div>

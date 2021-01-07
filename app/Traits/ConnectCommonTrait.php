@@ -822,16 +822,19 @@ trait ConnectCommonTrait
      */
     public function authMethod($request)
     {
-        // 外部認証設定 取得
-        $auth_method = Configs::getAuthMethod();
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
 
         // 外部認証がない場合は戻る
-        if (empty($auth_method->value)) {
+        if (empty($auth_method_event->value)) {
             return;
         }
 
         // NetCommons2 認証
-        if ($auth_method->value == 'netcommons2') {
+        if ($auth_method_event->value == \AuthMethodType::netcommons2) {
+            // 外部認証設定 取得
+            $auth_method = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
+
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
             // Log::debug($request['password']);
@@ -892,15 +895,15 @@ trait ConnectCommonTrait
      */
     public function authMethodShibboleth($request)
     {
-        // 外部認証設定 取得
-        $auth_method = Configs::getAuthMethod();
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
 
         // 外部認証がない場合は戻る
-        if (empty($auth_method->value)) {
+        if (empty($auth_method_event->value)) {
             return;
         }
 
-        if ($auth_method->value == 'shibboleth') {
+        if ($auth_method_event->value == \AuthMethodType::shibboleth) {
             // shibboleth 認証
             //
             // 必須
@@ -965,22 +968,24 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  外部ユーザ情報取得
-     *
+     * 外部ユーザ情報取得
      */
     public function getOtherAuthUser($request, $userid)
     {
-        // Config チェック
-        $auth_method = Configs::where('name', 'auth_method')->first();
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
 
         // 外部認証ではない場合は戻る
-        if (empty($auth_method) || $auth_method->value == '') {
+        if (empty($auth_method_event->value)) {
             // 外部認証の対象外
             return array('code' => 100, 'message' => '', 'userid' => $userid, 'name' => '');
         }
 
         // NetCommons2 認証
-        if ($auth_method->value == 'netcommons2') {
+        if ($auth_method_event->value == \AuthMethodType::netcommons2) {
+            // 外部認証設定 取得
+            $auth_method = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
+
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_getuser&userid=' . $userid . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5($auth_method['additional5'] . $auth_method['additional3']);
             // Log::debug($request['password']);
