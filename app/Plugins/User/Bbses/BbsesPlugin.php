@@ -146,6 +146,7 @@ class BbsesPlugin extends UserPluginBase
             // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
             //
             $query->where(function ($auth_query) use ($table_name) {
+                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
                 $auth_query->orWhere($table_name . '.status', '=', StatusType::approval_pending);
             });
         } elseif ($this->isCan('role_reporter')) {
@@ -211,10 +212,12 @@ class BbsesPlugin extends UserPluginBase
         }
 
         // その他条件指定
-        $posts_query->where('bbs_posts.status', 0)
-                    ->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
+        $posts_query->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
                     ->whereNull('bbs_posts.deleted_at')
                     ->orderBy('created_at', 'asc');
+
+        // 権限によって表示する記事を絞る
+        $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
 
         // 取得
         return $posts_query->paginate($bbs_frame->getViewCount());
@@ -443,13 +446,16 @@ class BbsesPlugin extends UserPluginBase
             // 根記事にスレッド更新日時をセット
             BbsPost::where('id', $post->thread_root_id)->update(['thread_updated_at' => date('Y-m-d H:i:s')]);
         } else {
-            // 根記事のため、スレッド更新日時をセット
+            // 根記事 or 編集のため、スレッド更新日時をセット
             $post->thread_updated_at = date('Y-m-d H:i:s');
-            // root ノードで追加
+            // 保存
             $post->save();
-            // 保存後のid をthread_root_id にセットして更新しておく
-            $post->thread_root_id = $post->id;
-            $post->save();
+
+            // 根記事の場合、保存後のid をthread_root_id にセットして更新（変更の場合はthread_root_id はそのまま）
+            if (empty($post->thread_root_id)) {
+                $post->thread_root_id = $post->id;
+                $post->save();
+            }
         }
 
         // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)

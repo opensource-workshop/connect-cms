@@ -25,11 +25,11 @@ trait ConnectCommonTrait
     //var $directory_file_limit = 1000;
 
     /**
-     * Buckets のrole を配列で返却
+     * Buckets の投稿権限データをrole の配列で返却
      *
-     * @return boolean
+     * @return boolean|array
      */
-    private function getBucketsRoles($buckets)
+    private function getPostBucketsRoles($buckets)
     {
         // Buckets オブジェクトがない場合はfalse を返す。
         if (empty($buckets)) {
@@ -41,7 +41,8 @@ trait ConnectCommonTrait
             return false;
         }
 
-        return $buckets->getBucketsRoles();
+        // return $buckets->getBucketsRoles();
+        return $buckets->getPostArrayBucketsRoles();
 
 //        // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。
 //        if (empty($buckets)) {
@@ -97,15 +98,18 @@ trait ConnectCommonTrait
 
         // チェックする権限を決定
         // Backets にrole が指定されていれば、それを使用。
+        //   - Backets の role は post_flag(投稿できる), approval_flag(承認が必要)の２つのフラグあり。
+        //     ここではpost_flag(投稿できる)のみ取得してチェックする。
+        //     記事の承認は、ユーザ権限のrole_approvalでチェックするので、approval_flag(承認が必要)ではチェックしない。
         // Backets にrole が指定されていなければ、標準のrole を使用
         $check_roles = config('cc_role.CC_AUTHORITY')[$authority];
-        if (!empty($this->getBucketsRoles($buckets_obj))) {
+        if (!empty($this->getPostBucketsRoles($buckets_obj))) {
             $check_roles = array();
-            $buckets_roles = $this->getBucketsRoles($buckets_obj);
+            $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
 //Log::debug($buckets_roles);
             // Buckets に設定されたrole から、関連role を取得してチェック。
-            foreach ($buckets_roles as $buckets_role) {
-                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$buckets_role]);
+            foreach ($post_buckets_roles as $post_buckets_role) {
+                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
             }
             // 配列は添字型になるので、array_merge で結合してから重複を取り除く
             $check_roles = array_unique($check_roles);
@@ -113,7 +117,7 @@ trait ConnectCommonTrait
 
         // 指定された権限を含むロールをループする。
 //        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
-        foreach ($check_roles as $role) {
+        foreach ($check_roles as $check_role) {
             // ユーザの保持しているロールをループ
             // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
             //foreach ($user['user_roles'] as $target) {
@@ -121,37 +125,46 @@ trait ConnectCommonTrait
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
                     // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
-                    if ($authority == 'posts.approval' && $user_role == 'role_approval') {
-                        return true;
-                    }
-
-                    // 必要なロールを保持している
-                    if ($role == $user_role && $user_role_value) {
-                        // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                        if (($user_role == 'role_article_admin') ||
-                            ($user_role == 'role_article') ||
-                            ($user_role == 'role_approval')) {
+                    // bugfix:  モデレータに「承認が必要」としても、モデレータは自分で承認できてしまう不具合修正
+                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtureとならず、必要なロールを保持している（$user_role == 'role_article'）でtureとなっていた。
+                    //          承認権限チェックとそれ以外でif文見直す。
+                    // if ($authority == 'posts.approval' && $user_role == 'role_approval') {
+                    //     return true;
+                    // }
+                    if ($authority == 'posts.approval') {
+                        if ($user_role == 'role_approval') {
                             return true;
                         }
+                    } else {
+                        // 必要なロールを保持している
+                        if ($check_role == $user_role && $user_role_value) {
+                            // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
+                            if (($user_role == 'role_article_admin') ||
+                                ($user_role == 'role_article') ||
+                                ($user_role == 'role_approval')) {
+                                return true;
+                            }
 
-                        // 自分のオブジェクトチェックが必要ならチェックする
-                        if (empty($post)) {
-                            return true;
-                        } else {
-                            if ((($authority == 'buckets.delete') ||
-                                 ($authority == 'posts.create') ||
-                                 ($authority == 'posts.update') ||
-                                 ($authority == 'posts.delete')) &&
-                                ($user->id == $post->created_id)) {
+                            // 自分のオブジェクトチェックが必要ならチェックする
+                            if (empty($post)) {
                                 return true;
                             } else {
-                                // 複数ロールをチェックするため、ここではreturn しない。
-                                // return false;
+                                if ((($authority == 'buckets.delete') ||
+                                    ($authority == 'posts.create') ||
+                                    ($authority == 'posts.update') ||
+                                    ($authority == 'posts.delete')) &&
+                                    ($user->id == $post->created_id)) {
+                                    return true;
+                                } else {
+                                    // 複数ロールをチェックするため、ここではreturn しない。
+                                    // return false;
+                                }
                             }
+                            // 複数ロールをチェックするため、ここではreturn しない。
+                            // return true;
                         }
-                        // 複数ロールをチェックするため、ここではreturn しない。
-                        // return true;
                     }
+
                 }
             }
         }

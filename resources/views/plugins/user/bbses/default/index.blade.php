@@ -42,7 +42,7 @@
                 @if ($children_posts->where("thread_root_id", $post->id)->isNotEmpty())
                     @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
                         <div class="card mt-3">
-                            <div class="card-header"><a href="{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$children_post->id}}#frame-{{$frame_id}}">{{$children_post->title}}</a>@if ($children_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@endif<span class="float-right">{{$children_post->updated_at->format('Y-m-d')}} [{{$children_post->created_name}}]</span></div>
+                            <div class="card-header"><a href="{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$children_post->id}}#frame-{{$frame_id}}">{{$children_post->title}}</a>@if ($children_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@elseif ($children_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>@endif<span class="float-right">{{$children_post->updated_at->format('Y-m-d')}} [{{$children_post->created_name}}]</span></div>
                             <div class="card-body">
                                 {!!$children_post->body!!}
                             </div>
