@@ -76,11 +76,11 @@ class LoginController extends Controller
             ]);
         }
 
-        // 外部認証設定 取得
-        $auth_method = Configs::getAuthMethod();
+        // 外部認証を使用
+        $use_auth_method = Configs::where('name', 'use_auth_method')->first();
 
-        if (empty($auth_method->value)) {
-            // 外部認証なし(通常)
+        if (empty($use_auth_method) || $use_auth_method->value == '0') {
+            // 外部認証を使用しない(通常)
             //
             // 以下はもともとのAuthenticatesUsers@login 処理
             //return $this->laravelLogin($request);
@@ -100,7 +100,7 @@ class LoginController extends Controller
                 throw $e;
             }
         } else {
-            // 外部認証あり
+            // 外部認証を使用する
             //
             // 外部認証の確認と外部認証の場合は関数側で認証してトップページを呼ぶ
             // Shibboleth認証の場合は戻ってくる。
