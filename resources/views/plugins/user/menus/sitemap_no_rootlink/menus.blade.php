@@ -34,14 +34,17 @@
             @foreach($page->children as $children)
                 @include('plugins.user.menus.sitemap_no_rootlink.menu_children',['children' => $children, 'page_id' => $page_id])
             @endforeach
+
+            {{-- 表示のページのみ閉じタグを表示 --}}
+            @if ($page->isView(Auth::user(), false, true, $page_roles))
 </li>
+            @endif
 </ul>
         @else
-<ul>
             {{-- 非表示のページは対象外 --}}
             @if ($page->isView(Auth::user(), false, true, $page_roles))
+<ul>
 <li>
-
                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                 <h3>
                     {{-- 各ページの深さをもとにインデントの表現 --}}
@@ -51,8 +54,8 @@
                     {{$page->page_name}}
                 </h3>
 </li>
-            @endif
 </ul>
+            @endif
         @endif
     @endforeach
 
