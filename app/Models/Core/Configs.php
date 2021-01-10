@@ -3,7 +3,7 @@
 namespace App\Models\Core;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 
 class Configs extends Model
 {
@@ -36,5 +36,30 @@ class Configs extends Model
             $configs_array[$config->name] = $config->value;
         }
         return $configs_array;
+    }
+
+    /**
+     * 使用する外部認証 取得
+     */
+    public static function getAuthMethodEvent()
+    {
+        // 外部認証を使用
+        $use_auth_method = Configs::where('name', 'use_auth_method')->first();
+
+        // 外部認証を使用しない場合、newで戻す(空として扱う)
+        if (empty($use_auth_method) || $use_auth_method->value == '0') {
+            return new Configs();
+        }
+
+        // 使用する外部認証
+        $auth_method_event = Configs::where('name', 'auth_method_event')->first();
+
+        // 使用する外部認証がない場合、newで戻す(空として扱う)
+        if (empty($auth_method_event) || $auth_method_event->value == '') {
+            return new Configs();
+        }
+
+        // auth_method_eventで取得したconfigsを返す
+        return $auth_method_event;
     }
 }

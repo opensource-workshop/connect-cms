@@ -73,6 +73,13 @@
             <a href="{{url('/')}}/manage/message" class="list-group-item">メッセージ管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'auth')
+            <a href="{{url('/')}}/manage/auth" class="list-group-item active">外部認証</a>
+        @else
+            <a href="{{url('/')}}/manage/auth" class="list-group-item">外部認証</a>
+        @endif
+    @endif
     <div class="list-group-item text-secondary bg-light">データ管理系</div>
     @if (Auth::user()->can('admin_site'))
         @if (isset($plugin_name) && $plugin_name == 'uploadfile')

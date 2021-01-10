@@ -6,15 +6,24 @@
     RewriteEngine On
 
     # Handle Authorization Header
+    # Exclusion shibboleth.
+    RewriteCond %{REQUEST_URI} !(^/Shibboleth.sso/)
+    RewriteCond %{REQUEST_URI} !(^/Shibboleth/)
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
     # Redirect Trailing Slashes If Not A Folder...
+    # Exclusion shibboleth.
+    RewriteCond %{REQUEST_URI} !(^/Shibboleth.sso/)
+    RewriteCond %{REQUEST_URI} !(^/Shibboleth/)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
     # Handle Front Controller...
+    # Exclusion shibboleth.
+    RewriteCond %{REQUEST_URI} !(^/Shibboleth.sso/)
+    RewriteCond %{REQUEST_URI} !(^/Shibboleth/)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
