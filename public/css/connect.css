@@ -219,6 +219,9 @@ a.cc-cursor-text:hover {
 
 /* フォントサイズ
 ------------------------------------- */
+.cc-font-80 {
+    font-size: 80%;
+}
 .cc-font-90 {
     font-size: 90%;
 }
@@ -381,6 +384,9 @@ a.cc-cursor-text:hover {
 
 /* 幅
 ------------------------------------- */
+.cc-w13pct {
+    width: 13%;
+}
 .cc-w20pct {
     width: 20%;
 }

@@ -52,7 +52,7 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
+        $functions['get']  = ['index', 'editView'];
         $functions['post'] = ['saveView', 'edit'];
         return $functions;
     }
@@ -167,7 +167,7 @@ class CalendarsPlugin extends UserPluginBase
     /**
      *  Root の POST一覧取得
      */
-    private function getRootPosts($calendar_frame)
+    private function getPosts($year, $month)
     {
         // データ取得
         $posts_query = CalendarPost::select('calendar_posts.*')
@@ -175,23 +175,16 @@ class CalendarsPlugin extends UserPluginBase
                                        $join->on('calendars.id', '=', 'calendar_posts.calendar_id')
                                           ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
                                    })
-                                   ->whereNull('calendar_posts.parent_id')
                                    ->whereNull('calendar_posts.deleted_at');
 
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhere($posts_query, 'calendar_posts');
 
-        // 根記事の表示順
-        if ($calendar_frame->thread_sort_flag == 1) {
-            // 根記事の新しい日時順
-            $posts_query->orderBy('thread_updated_at', 'desc');
-        } else {
-            // スレッド内の新しい更新日時順
-            $posts_query->orderBy('created_at', 'desc');
-        }
+        // 記事の表示順
+        //$posts_query->orderBy('thread_updated_at', 'desc');
 
         // 取得
-        return $posts_query->paginate($calendar_frame->getViewCount());
+        return $posts_query->get();
     }
 
     /**
@@ -294,6 +287,32 @@ class CalendarsPlugin extends UserPluginBase
     }
     */
 
+    /**
+     *  カレンダー取得
+     */
+    private function getCalendarDates($year, $month)
+    {
+        $date_str = sprintf('%04d-%02d-01', $year, $month);
+        $date = new Carbon($date_str);
+
+        // 月末が日曜日の場合
+        $add_day = ($date->copy()->endOfMonth()->isSunday()) ? 7 : 0;
+
+        // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
+        $date->subDay($date->dayOfWeek);
+
+        // 同上。右下の隙間のための計算。
+        $count = 31 + $add_day + $date->dayOfWeek;
+        $count = ceil($count / 7) * 7;
+        $dates = [];
+
+        for ($i = 0; $i < $count; $i++, $date->addDay()) {
+            // copyしないと全部同じオブジェクトを入れてしまうことになる
+            $dates[] = $date->copy();
+        }
+        return $dates;
+    }
+
     /* 画面アクション関数 */
 
     /**
@@ -302,21 +321,41 @@ class CalendarsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
+        // 曜日表示のために日本語設定にする。
+        setlocale(LC_ALL, 'ja_JP.UTF-8');
+
         // プラグインのフレームデータ
-//        $plugin_frame = $this->getPluginFrame($frame_id);
+        $plugin_frame = $this->getPluginFrame($frame_id);
+
+        // 年月のセッション処理
+        if ($request->filled('year')) {
+            // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
+            $request->session()->put('calendar_year', $request->year);
+        } elseif (!session()->has('calendar_year')) {
+            // 画面の指定もセッションにも値がなければ当日をセット
+            $request->session()->put('calendar_year', date("Y"));
+        }
+        if ($request->filled('month')) {
+            // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
+            $request->session()->put('calendar_month', $request->month);
+        } elseif (!session()->has('calendar_month')) {
+            // 画面の指定もセッションにも値がなければ当日をセット
+            $request->session()->put('calendar_month', date("m"));
+        }
 
         // カレンダーデータ一覧の取得
-//        $posts = $this->getRootPosts($plugin_frame);
+        $dates = $this->getCalendarDates(session('calendar_year'), session('calendar_month'));
 
-        // 表示対象のスレッドの記事一覧
-//        $thread_ids = $posts->pluck("id");
-//        $children_posts = $this->getThreadPosts($plugin_frame, $thread_ids, true);
+        // 該当年月のデータの取得
+        $posts = $this->getPosts(session('calendar_year'), session('calendar_month'));
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-//            'posts'          => $posts,
-//            'children_posts' => $children_posts,
-//            'plugin_frame'   => $plugin_frame,
+            'dates'            => $dates,
+            'posts'            => $posts,
+            'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/01"),
+            'current_month'    => session('calendar_month'),
+            'plugin_frame'     => $plugin_frame,
         ]);
     }
 
@@ -325,30 +364,15 @@ class CalendarsPlugin extends UserPluginBase
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
-        // 変数準備
-        $thread_root_post = null;
-        $children_posts = null;
-
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 記事取得
         $post = $this->getPost($post_id);
 
-        // 指定の記事がある場合
-        if ($post) {
-            // 根記事取得（getPost() はメインのPOST をシングルトンで保持するので、ここでは新たに取得する）
-            $thread_root_post = CalendarPost::firstOrNew(['id' => $post->thread_root_id]);
-
-            // 表示対象のスレッドの記事一覧
-            $children_posts = $this->getThreadPosts($plugin_frame, new Collection($post->thread_root_id), true);
-        }
-
         // 詳細画面を呼び出す。
         return $this->view('show', [
             'post' => $post,
-            'thread_root_post' => $thread_root_post,
-            'children_posts'   => $children_posts,
         ]);
     }
 
@@ -359,6 +383,11 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 記事取得
         $post = $this->getPost($post_id);
+
+        // id が空なら、新規オブジェクトとみなして、デフォルトの日付を設定して画面を表示する。
+        if (empty($post->id) && $request->filled("date")) {
+            $post->start_date = $request->date;
+        }
 
         // 変更画面を呼び出す。
         return $this->view('edit', [
@@ -406,24 +435,22 @@ class CalendarsPlugin extends UserPluginBase
         // POSTデータのモデル取得
         $post = CalendarPost::firstOrNew(['id' => $post_id]);
 
-        // モデレータ以上の権限を持たずに、記事にすでに返信が付いている場合は、保存できない。
-        if (!$this->isCan('role_article') && $post->descendants->count() > 0) {
-            $validator = Validator::make($request->all(), []);
-            $validator->errors()->add('reply_role_error', '返信のある記事の編集はできません。');
-            return back()->withErrors($validator)->withInput();
-        }
-
         // フレームから calendar_id 取得
         $calendar_frame = $this->getPluginFrame($frame_id);
 
         // 値のセット
-        $post->calendar_id            = $calendar_frame->calendar_id;
-        $post->title             = $request->title;
-        $post->body              = $request->body;
+        $post->calendar_id = $calendar_frame->calendar_id;
+        $post->allday_flag = $request->get('allday_flag');
+        $post->start_date  = $request->start_date;
+        $post->start_time  = $request->start_time;
+        $post->end_date    = $request->end_date;
+        $post->end_time    = $request->end_time;
+        $post->title       = $request->title;
+        $post->body        = $request->body;
 
-        // 新規投稿、もしくは返信の場合は投稿者をセット
-        if (empty($post_id) || $request->filled('parent_id')) {
-            $post->created_id    = Auth::user()->id;
+        // 投稿者をセット
+        if (Auth::check()) {
+            $post->created_id = Auth::user()->id;
         }
 
         // 承認の要否確認とステータス処理
@@ -435,28 +462,8 @@ class CalendarsPlugin extends UserPluginBase
             $post->status = 0;  // 公開
         }
 
-        // 返信の場合
-        if ($request->filled('parent_id')) {
-            // 親のpost を取得
-            $parent_post = CalendarPost::find($request->parent_id);
-            // 親のpost からthread_root_id をコピー。これで同じスレッドの記事を取得できるようにする。
-            $post->thread_root_id = $parent_post->thread_root_id;
-            // 親のノードに追加
-            $post->prependToNode($parent_post)->save();
-            // 根記事にスレッド更新日時をセット
-            CalendarPost::where('id', $post->thread_root_id)->update(['thread_updated_at' => date('Y-m-d H:i:s')]);
-        } else {
-            // 根記事 or 編集のため、スレッド更新日時をセット
-            $post->thread_updated_at = date('Y-m-d H:i:s');
-            // 保存
-            $post->save();
-
-            // 根記事の場合、保存後のid をthread_root_id にセットして更新（変更の場合はthread_root_id はそのまま）
-            if (empty($post->thread_root_id)) {
-                $post->thread_root_id = $post->id;
-                $post->save();
-            }
-        }
+        // 保存
+        $post->save();
 
         // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
         return new Collection(['redirect_path' => url('/') . "/plugin/calendars/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
