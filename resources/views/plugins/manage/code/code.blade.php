@@ -68,31 +68,9 @@
 <tbody>
     <tr class="bg-light d-none d-sm-table-row">
         <th class="d-block d-sm-table-cell text-break">プラグイン</th>
-        @php
-        $colums = [
-            'codes_help_messages_name' => '注釈名',
-            'buckets_name' => 'buckets_name',
-            'buckets_id' => 'buckets_id',
-            'prefix' => 'prefix',
-            'type_name' => 'type_name',
-            'type_code1' => 'type_code1',
-            'type_code2' => 'type_code2',
-            'type_code3' => 'type_code3',
-            'type_code4' => 'type_code4',
-            'type_code5' => 'type_code5',
-            'code' => 'コード',
-            'value' => '値',
-            'additional1' => 'additional1',
-            'additional2' => 'additional2',
-            'additional3' => 'additional3',
-            'additional4' => 'additional4',
-            'additional5' => 'additional5',
-            'display_sequence' => '表示順',
-        ];
-        @endphp
-        @foreach($colums as $colum_key => $colum_value)
-            @if(in_array($colum_key, $config->value_array) == $colum_key)
-                <th class="d-block d-sm-table-cell text-break">{{$colum_value}}</th>
+        @foreach(CodeColumn::getIndexColumn() as $column_key => $column_value)
+            @if(in_array($column_key, $config->value_array) == $column_key)
+                <th class="d-block d-sm-table-cell text-break">{{$column_value}}</th>
             @endif
         @endforeach
     </tr>
@@ -103,12 +81,12 @@
             <a href="{{url('/')}}/manage/code/edit/{{$code->id}}?page={{$paginate_page}}&search_words={{$search_words}}"><i class="far fa-edit"></i></a>
             <span class="d-sm-none">プラグイン：</span>{{$code->plugin_name_full}}
         </th>
-        @foreach($colums as $colum_key => $colum_value)
-            @if(in_array($colum_key, $config->value_array) == $colum_key)
+        @foreach($colums as $column_key => $column_value)
+            @if(in_array($column_key, $config->value_array) == $column_key)
             {{-- 表示例
             <td class="d-block d-sm-table-cell"><span class="d-sm-none">buckets_id：</span>$code->buckets_id</td>
             --}}
-            <td class="d-block d-sm-table-cell"><span class="d-sm-none">{{$colum_value}}：</span>{{$code->$colum_key}}</td>
+            <td class="d-block d-sm-table-cell"><span class="d-sm-none">{{$column_value}}：</span>{{$code->$column_key}}</td>
             @endif
         @endforeach
     </tr>
