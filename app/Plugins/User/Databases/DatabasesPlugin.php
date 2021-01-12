@@ -3197,8 +3197,6 @@ class DatabasesPlugin extends UserPluginBase
         // $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
         $rules[0] = ['nullable', 'numeric'];
 
-        $attribute_names = [];
-
         // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
 
