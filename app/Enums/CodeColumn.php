@@ -10,8 +10,10 @@ use App\Enums\EnumsBase;
 final class CodeColumn extends EnumsBase
 {
     // 定数メンバ
-    const codes_help_messages_name = 'codes_help_messages_name';
+    const id = 'id';
     const plugin_name = 'plugin_name';
+    const codes_help_messages_name = 'codes_help_messages_name';
+    const codes_help_messages_alias_key = 'codes_help_messages_alias_key';
     const buckets_name = 'buckets_name';
     const buckets_id = 'buckets_id';
     const prefix = 'prefix';
@@ -32,8 +34,10 @@ final class CodeColumn extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::codes_help_messages_name => '注釈名',
+        self::id => 'id',
         self::plugin_name => 'プラグイン',
+        self::codes_help_messages_name => '注釈名',
+        self::codes_help_messages_alias_key => '注釈キー',
         self::buckets_name => 'buckets_name',
         self::buckets_id => 'buckets_id',
         self::prefix => 'prefix',
@@ -58,9 +62,23 @@ final class CodeColumn extends EnumsBase
      */
     public static function getIndexColumn()
     {
-        $sort_flags = static::enum;
+        $code_columns = static::enum;
+
         // plugin_nameは 一覧に必ず表示する項目 のため、取り除く
-        unset($sort_flags[self::plugin_name]);
-        return $sort_flags;
+        unset($code_columns[self::plugin_name]);
+        return $code_columns;
+    }
+
+    /**
+     * インポート のkey/valueの連想配列を返す
+     */
+    public static function getImportColumn()
+    {
+        $code_columns = static::enum;
+
+        // エクスポートに不要な項目 を取り除く
+        unset($code_columns[self::buckets_name]);
+        unset($code_columns[self::codes_help_messages_name]);
+        return $code_columns;
     }
 }
