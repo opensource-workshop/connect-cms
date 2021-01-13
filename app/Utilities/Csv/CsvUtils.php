@@ -25,6 +25,8 @@ class CsvUtils
             // UTF-8 BOMありなしに関わらず、先頭3バイトのBOMコードを置換して取り除く
             // BOMなしは、置換対象がないのでそのまま値が返る
             $header_columns[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header_columns[0]);
+            // UTF-8 BOMありの場合、先頭にBOMコードが邪魔して、両端のダブルクォーテーションが fgetcsv() で外れないため、ここで外す
+            $header_columns[0] = trim($header_columns[0], '"');
         }
         return $header_columns;
     }
