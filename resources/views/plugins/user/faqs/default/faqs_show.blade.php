@@ -14,7 +14,7 @@
     {{-- タイトル --}}
     <header class="d-flex flex-row">
         <div class="pr-2"><span class="h2"><span class="badge badge-primary">Q</span></span></div>
-        <div><h2>{!!$post->post_title!!}</h2></div>
+        <h2>{{$post->post_title}}</h2>
     </header>
 
     {{-- 記事本文 --}}
