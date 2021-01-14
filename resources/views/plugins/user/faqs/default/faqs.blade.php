@@ -47,7 +47,7 @@
                     <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}">
                         <span class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></span>
                         {{-- タイトル --}}
-                        {!!$post->getNobrPostTitle()!!}
+                        {{$post->getNobrPostTitle()}}
 
                         {{-- カテゴリ --}}
                         @if($post->category)
@@ -130,7 +130,7 @@
                                 @endcan
 
                                 {{-- 詳細画面 --}}
-                                <a class="ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
+                                <a class="ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" title="{{$post->getNobrPostTitle()}}の詳細へ">
                                     <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
                                 </a>
                             </div>
