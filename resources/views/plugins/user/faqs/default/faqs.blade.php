@@ -130,7 +130,7 @@
                                 @endcan
 
                                 {{-- 詳細画面 --}}
-                                <a class="ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" title="{{$post->getNobrPostTitle()}}の詳細へ">
+                                <a class="ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" title="{{$post->getNobrPostTitle()}}の詳細">
                                     <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
                                 </a>
                             </div>
