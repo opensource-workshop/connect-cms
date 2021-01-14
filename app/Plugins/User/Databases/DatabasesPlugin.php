@@ -2804,17 +2804,8 @@ class DatabasesPlugin extends UserPluginBase
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
         if ($character_code == \CsvCharacterCode::sjis_win) {
-            // ストリームフィルタとして登録.
-            // 5C問題対応：https://qiita.com/suin/items/3edfb9cb15e26bffba11
-            // 5C問題 詳細：https://qiita.com/Kohei-Sato-1221/items/c050bb23436f35666165
-            stream_filter_register(
-                'sjis_to_utf8_encoding_filter',
-                SjisToUtf8EncodingFilter::class
-            );
-
-            // ファイル読み込み時に使うストリームフィルタを指定.
-            // ストリームフィルタ内で、Shift-JIS -> UTF-8変換してる。UTF-8変換で5C問題対応になる
-            stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
+            // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
+            $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
         // 一行目（ヘッダ）
@@ -2825,7 +2816,7 @@ class DatabasesPlugin extends UserPluginBase
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
         // dd($csv_full_path);
-        // Log::debug('$header_columns:'. var_export($header_columns, true));
+        // \Log::debug('$header_columns:'. var_export($header_columns, true));
 
         // カラムの取得
         $databases_columns = DatabasesColumns::where('databases_id', $id)->orderBy('display_sequence', 'asc')->get();
@@ -3196,8 +3187,6 @@ class DatabasesPlugin extends UserPluginBase
         // bugfix: id存在チェクは id & databases_id でチェックしないと、コピーしたデータベースに上書き出来てしまうため、ここではなく別途チェックする。
         // $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
         $rules[0] = ['nullable', 'numeric'];
-
-        $attribute_names = [];
 
         // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
