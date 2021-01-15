@@ -170,7 +170,6 @@ trait ConnectCommonTrait
                             // return true;
                         }
                     }
-
                 }
             }
         }
@@ -926,7 +925,7 @@ trait ConnectCommonTrait
                 // $user_name = $request->server('REDIRECT_employeeNumber');
                 $user_name = $request->server(config('cc_shibboleth_config.user_name'));
 
-                // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム 
+                // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム
                 $password = Hash::make(Str::random(20));
 
                 // 任意, $request->server()は値がなければnullになる
@@ -942,7 +941,7 @@ trait ConnectCommonTrait
                 $user->created_event = \AuthMethodType::shibboleth;
                 $user->save();
 
-                // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生) 
+                // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生)
                 //        によって、シボレス認証初回時の自動アカウント設定、何か設定する？
                 // echo "<tr><td>区分</td><td>".$_SERVER['REDIRECT_unscoped-affiliation']."</td></tr>";
 
@@ -1160,7 +1159,7 @@ trait ConnectCommonTrait
     /**
      *  年の祝日を取得
      */
-    function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
+    public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
     {
         return Yasumi::create($country, (int)$year, $locale);
     }
@@ -1185,7 +1184,6 @@ trait ConnectCommonTrait
 
         // 独自設定祝日を加味する。
         foreach ($this->getHolidays($year, $month) as $holiday) {
-
             // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
             // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
             $found_flag = false;

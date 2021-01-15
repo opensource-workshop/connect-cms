@@ -86,7 +86,7 @@ class HolidayManage extends ManagePluginBase
     /**
      *  年の祝日を取得
      */
-    function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
+    public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
     {
         return Yasumi::create($country, (int)$year, $locale);
     }
@@ -94,7 +94,7 @@ class HolidayManage extends ManagePluginBase
     /**
      *  年の祝日を取得
      */
-    function getYasumi($date)
+    public function getYasumi($date)
     {
         $ymd = explode('-', $date);
         $holidays = $this->getYasumis($ymd[0]);
@@ -138,7 +138,6 @@ class HolidayManage extends ManagePluginBase
 
         // 独自設定祝日を加味する。
         foreach ($this->getPosts($request) as $post) {
-
             // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
             // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
             $found_flag = false;

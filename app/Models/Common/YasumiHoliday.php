@@ -25,7 +25,7 @@ class YasumiHoliday extends Holiday
         array $names,
         \DateTimeInterface $date,
         string $displayLocale = self::DEFAULT_LOCALE,
-        $orginal_holiday_status
+        $orginal_holiday_status = null
     ) {
         parent::__construct($key, $names, $date, $displayLocale);
         $this->orginal_holiday_status = $orginal_holiday_status;
