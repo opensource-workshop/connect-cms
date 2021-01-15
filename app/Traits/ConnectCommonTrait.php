@@ -8,16 +8,22 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
+//use Carbon\Carbon;
 use Session;
 
 use App\User;
+use App\Models\Common\ConnectCarbon;
 use App\Models\Common\Frame;
+use App\Models\Common\Holiday;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
+use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
+
+use Yasumi\Yasumi;
 
 trait ConnectCommonTrait
 {
@@ -164,7 +170,6 @@ trait ConnectCommonTrait
                             // return true;
                         }
                     }
-
                 }
             }
         }
@@ -920,7 +925,7 @@ trait ConnectCommonTrait
                 // $user_name = $request->server('REDIRECT_employeeNumber');
                 $user_name = $request->server(config('cc_shibboleth_config.user_name'));
 
-                // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム 
+                // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム
                 $password = Hash::make(Str::random(20));
 
                 // 任意, $request->server()は値がなければnullになる
@@ -936,7 +941,7 @@ trait ConnectCommonTrait
                 $user->created_event = \AuthMethodType::shibboleth;
                 $user->save();
 
-                // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生) 
+                // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生)
                 //        によって、シボレス認証初回時の自動アカウント設定、何か設定する？
                 // echo "<tr><td>区分</td><td>".$_SERVER['REDIRECT_unscoped-affiliation']."</td></tr>";
 
@@ -1149,5 +1154,64 @@ trait ConnectCommonTrait
 
         //return $this->page_role;
         return $page_role;
+    }
+
+    /**
+     *  年の祝日を取得
+     */
+    public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
+    {
+        return Yasumi::create($country, (int)$year, $locale);
+    }
+
+    /**
+     * 独自設定祝日データの呼び出し
+     */
+    public function getHolidays($year, $month)
+    {
+        // 独自設定祝日を取得する。
+        return Holiday::where('holiday_date', 'LIKE', $year . '-' .$month . '%')->orderBy('holiday_date')->get();
+    }
+
+    /**
+     *  祝日の追加
+     * date に holiday 属性を追加する。
+     */
+    protected function addHoliday($year, $month, $dates)
+    {
+        // 年の祝日一覧を取得する。
+        $yasumis = $this->getYasumis($year);
+
+        // 独自設定祝日を加味する。
+        foreach ($this->getHolidays($year, $month) as $holiday) {
+            // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
+            // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
+            $found_flag = false;
+            foreach ($yasumis as &$yasumi) {
+                if ($yasumi->format('Y-m-d') == $holiday->holiday_date) {
+                    // 独自設定の祝日と同じ日が計算の祝日にあれば、計算の祝日を消して、独自設定を有効にする。
+                    $found_flag = true;
+                    $yasumis->removeHoliday($yasumi->shortName);
+                    $new_holiday = new YasumiHoliday($holiday->id, ['ja_JP' => $holiday->holiday_name], new ConnectCarbon($holiday->holiday_date), 'ja_JP', 2);
+                    $yasumis->addHoliday($new_holiday);
+                    break;
+                }
+            }
+            // 計算の祝日にない独自設定は、追加祝日として扱う。
+            if ($found_flag == false) {
+                $new_holiday = new YasumiHoliday($holiday->id, ['ja_JP' => $holiday->holiday_name], new ConnectCarbon($holiday->holiday_date), 'ja_JP', 1);
+                $new_holiday->orginal_holiday_post = $holiday;
+                $yasumis->addHoliday($new_holiday);
+            }
+        }
+
+        // 独自祝日を加味した祝日一覧をループ。対象の年月があれば、date オブジェクトに holiday 属性として追加する。
+        foreach ($yasumis as $yasumi) {
+            if ($yasumi->format('Y-m') == $year . "-" . $month) {
+                $dates[$yasumi->format('Y-m-d')]->holiday = $yasumi;
+            }
+        }
+
+        return $dates;
     }
 }
