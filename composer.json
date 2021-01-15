@@ -6,6 +6,7 @@
     "type": "project",
     "require": {
         "php": ">=7.2.0",
+        "azuyalabs/yasumi": "^2.3",
         "bensampo/laravel-enum": "1.19",
         "doctrine/dbal": "^2.10",
         "ezyang/htmlpurifier": "^4.13",

@@ -116,4 +116,11 @@
             <a href="{{url('/')}}/manage/log" class="list-group-item">ログ管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_site'))
+        @if (isset($plugin_name) && $plugin_name == 'holiday')
+            <a href="{{url('/')}}/manage/holiday" class="list-group-item active">祝日管理</a>
+        @else
+            <a href="{{url('/')}}/manage/holiday" class="list-group-item">祝日管理</a>
+        @endif
+    @endif
 </div>

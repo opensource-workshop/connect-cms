@@ -7,12 +7,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use Carbon\Carbon;
+//use Carbon\Carbon;
 use DB;
 
 use App\Enums\StatusType;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\ConnectCarbon;
 use App\Models\Common\Frame;
 use App\Models\User\Calendars\Calendar;
 use App\Models\User\Calendars\CalendarFrame;
@@ -293,7 +294,7 @@ class CalendarsPlugin extends UserPluginBase
     private function getCalendarDates($year, $month)
     {
         $date_str = sprintf('%04d-%02d-01', $year, $month);
-        $date = new Carbon($date_str);
+        $date = new ConnectCarbon($date_str);
 
         // 月末が日曜日の場合
         $add_day = ($date->copy()->endOfMonth()->isSunday()) ? 7 : 0;
@@ -308,8 +309,10 @@ class CalendarsPlugin extends UserPluginBase
 
         for ($i = 0; $i < $count; $i++, $date->addDay()) {
             // copyしないと全部同じオブジェクトを入れてしまうことになる
-            $dates[] = $date->copy();
+            $dates[$date->format('Y-m-d')] = $date->copy();
         }
+        $dates = $this->addHoliday($year, $month, $dates);
+
         return $dates;
     }
 
@@ -419,12 +422,14 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title' => ['required'],
-            'body'  => ['required'],
+            'title'      => ['required'],
+            'body'       => ['required'],
+            'start_date' => ['required', 'date'],
         ]);
         $validator->setAttributeNames([
-            'title' => 'タイトル',
-            'body'  => '本文',
+            'title'      => 'タイトル',
+            'body'       => '本文',
+            'start_date' => '開始日時',
         ]);
 
         // エラーがあった場合は入力画面に戻る。

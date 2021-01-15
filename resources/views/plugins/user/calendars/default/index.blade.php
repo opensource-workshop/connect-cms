@@ -20,9 +20,11 @@
 <table class="table table-bordered">
     <thead>
     <tr class="thead d-none d-md-table-row">
-        @foreach (['日', '月', '火', '水', '木', '金', '土'] as $dayOfWeek)
+        <th class="cc-w13pct text-center cc-color-sunday">日</th>
+        @foreach (['月', '火', '水', '木', '金'] as $dayOfWeek)
         <th class="cc-w13pct text-center">{{ $dayOfWeek }}</th>
         @endforeach
+        <th class="cc-w13pct text-center cc-color-saturday">土</th>
     </tr>
     </thead>
     <tbody>
@@ -39,8 +41,19 @@
                 >
                 <div class="row">
                     <div class="col-6 font-weight-bold text-secondary">
+                        @if ($date->dayOfWeek == 0 || ($date->hasHoliday()))
+                        <span class="cc-color-sunday">{{$date->day}}</span>
+                        @elseif ($date->dayOfWeek == 6)
+                        <span class="cc-color-saturday">{{$date->day}}</span>
+                        @else
                         {{$date->day}}
-                        <div class="d-md-none d-inline">({{$date->formatLocalized("%a")}})</div>
+                        @endif
+                        <div class="d-md-none d-inline">
+                            ({{$date->formatLocalized("%a")}})
+                            <div class="col-12 pl-1 d-inline cc-font-90">
+                                <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-6 text-right">
                     @if ($date->month == $current_month)
@@ -53,6 +66,14 @@
                     @endif
                     </div>
                 </div>
+                {{-- 祝日 --}}
+                @if ($date->hasHoliday())
+                    <div class="row py-1 d-none d-md-block">
+                        <div class="col-12 cc-font-90">
+                            <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
+                        </div>
+                    </div>
+                @endif
                 {{-- 拡張Collection を使用して表示するべき予定を抽出する --}}
                 @foreach($posts->wherePostFromDate($date->format('Y-m-d')) as $post)
                     <div class="row py-1">

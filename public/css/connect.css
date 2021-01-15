@@ -264,6 +264,15 @@ a.cc-cursor-text:hover {
 */
 }
 
+/* カレンダー
+------------------------------------- */
+.cc-color-sunday {
+    color: #cc0033;
+}
+.cc-color-saturday {
+    color: #0000ff;
+}
+
 /* 開館カレンダー
 ------------------------------------- */
 .openingcalendar-pdf {
