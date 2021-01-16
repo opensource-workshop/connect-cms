@@ -400,10 +400,25 @@ class CalendarsPlugin extends UserPluginBase
             'body'       => '本文',
             'start_date' => '開始日時',
         ]);
-
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
+        }
+
+        // 開始日時 < 終了日時のチェック
+        if (!empty($request->end_date) && $request->start_date > $request->end_date) {
+            $validator = Validator::make($request->all(), []);
+            $validator->errors()->add('end_date', '終了日が開始日の前は設定できません。');
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 開始時間 < 終了時間のチェック
+        if (empty($request->end_date) || $request->start_date == $request->end_date) {
+            if (!empty($request->end_time) && $request->start_time > $request->end_time) {
+                $validator = Validator::make($request->all(), []);
+                $validator->errors()->add('end_date', '終了時間が開始日の前は設定できません。');
+                return back()->withErrors($validator)->withInput();
+            }
         }
 
         // POSTデータのモデル取得

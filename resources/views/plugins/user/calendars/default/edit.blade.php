@@ -44,7 +44,6 @@
         <span class="font-weight-bold">{{$errors->first('reply_role_error')}}</span>
     </div>
 @endif
-
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))
     <form action="{{url('/')}}/redirect/plugin/calendars/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_calendars_posts{{$frame_id}}">
@@ -91,7 +90,7 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row mb-0">
         <label class="col-md-2 control-label text-md-right"><label class="badge badge-danger">必須</label> 開始日時</label>
 
         <div class="col-md-3">
@@ -101,7 +100,6 @@
                     <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('start_date')) <div class="text-danger">{{$errors->first('start_date')}}</div> @endif
             <script type="text/javascript">
                 $(function () {
                     $('#start_date').datetimepicker({
@@ -115,11 +113,11 @@
 
         <div class="col-md-2">
             <div class="input-group date" id="start_time" data-target-input="nearest">
-				@if(old('allday_flag', $post->allday_flag))
+                @if(old('allday_flag', $post->allday_flag))
                 <input type="text" name="start_time" value="" class="form-control datetimepicker-input" data-target="#start_time" disabled />
-				@else
+                @else
                 <input type="text" name="start_time" value="{{old('start_time', $post->start_time)}}" class="form-control datetimepicker-input" data-target="#start_time" />
-				@endif
+                @endif
                 <div class="input-group-append" data-target="#start_time" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                 </div>
@@ -135,8 +133,14 @@
             </script>
         </div>
     </div>
-
     <div class="form-group row">
+    @if ($errors && $errors->has('start_date'))
+        <div class="col-md-2"></div>
+        <div class="col-md-10 text-danger">{{$errors->first('start_date')}}</div>
+    @endif
+    </div>
+
+    <div class="form-group row mb-0">
         <label class="col-md-2 control-label text-md-right">終了日時</label>
         <div class="col-md-3">
             <div class="input-group date" id="end_date" data-target-input="nearest">
@@ -145,7 +149,6 @@
                     <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('end_date')) <div class="text-danger">{{$errors->first('end_date')}}</div> @endif
             <script type="text/javascript">
                 $(function () {
                     $('#end_date').datetimepicker({
@@ -159,16 +162,15 @@
 
         <div class="col-md-2">
             <div class="input-group date" id="end_time" data-target-input="nearest">
-				@if(old('allday_flag', $post->allday_flag))
+                @if(old('allday_flag', $post->allday_flag))
                 <input type="text" name="end_time" value="" class="form-control datetimepicker-input" data-target="#end_time" disabled />
-				@else
+                @else
                 <input type="text" name="end_time" value="{{old('end_time', $post->end_time)}}" class="form-control datetimepicker-input" data-target="#end_time" />
-				@endif
+                @endif
                 <div class="input-group-append" data-target="#end_time" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('end_time')) <div class="text-danger">{{$errors->first('end_time')}}</div> @endif
             <script type="text/javascript">
                 $(function () {
                     $('#end_time').datetimepicker({
@@ -178,6 +180,13 @@
                 });
             </script>
         </div>
+    </div>
+
+    <div class="form-group row">
+    @if ($errors && $errors->has('end_date'))
+        <div class="col-md-2"></div>
+        <div class="col-md-10 text-danger">{{$errors->first('end_date')}}</div>
+    @endif
     </div>
 
     <div class="form-group row">
