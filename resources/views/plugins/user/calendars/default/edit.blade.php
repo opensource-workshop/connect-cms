@@ -26,7 +26,7 @@
 {{-- 全日予定をチェック --}}
 <script type="text/javascript">
     function check_allday() {
-        if (form_calendars_posts{{$frame_id}}.notime_flag.checked) {
+        if (form_calendars_posts{{$frame_id}}.allday_flag.checked) {
             {{-- 全日予定にする --}}
             form_calendars_posts{{$frame_id}}.start_time.value = '';
             form_calendars_posts{{$frame_id}}.start_time.disabled = true;
@@ -85,8 +85,8 @@
         <label class="col-md-2 control-label text-md-right">全日予定</label>
         <div class="col-md-10">
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="notime_flag" value="1" class="custom-control-input" id="notime_flag{{$frame_id}}" onclick="check_allday();"@if(old('notime_flag', $post->notime_flag)) checked=checked @endif>
-                <label class="custom-control-label" for="notime_flag{{$frame_id}}">チェックすると、全日予定として扱います。</label>
+                <input type="checkbox" name="allday_flag" value="1" class="custom-control-input" id="allday_flag{{$frame_id}}" onclick="check_allday();"@if(old('allday_flag', $post->allday_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="allday_flag{{$frame_id}}">チェックすると、全日予定として扱います。</label>
             </div>
         </div>
     </div>
@@ -115,7 +115,11 @@
 
         <div class="col-md-2">
             <div class="input-group date" id="start_time" data-target-input="nearest">
-                <input type="text" name="start_time" value="{{old('start_time', $post->start_time)}}" class="form-control datetimepicker-input" data-target="#start_time"/>
+				@if(old('allday_flag', $post->allday_flag))
+                <input type="text" name="start_time" value="" class="form-control datetimepicker-input" data-target="#start_time" disabled />
+				@else
+                <input type="text" name="start_time" value="{{old('start_time', $post->start_time)}}" class="form-control datetimepicker-input" data-target="#start_time" />
+				@endif
                 <div class="input-group-append" data-target="#start_time" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                 </div>
@@ -136,7 +140,7 @@
         <label class="col-md-2 control-label text-md-right">終了日時</label>
         <div class="col-md-3">
             <div class="input-group date" id="end_date" data-target-input="nearest">
-                <input type="text" name="end_date" value="{{old('end_date', $post->end_date)}}" class="form-control datetimepicker-input" data-target="#end_date"/>
+                <input type="text" name="end_date" value="{{old('end_date', $post->end_date)}}" class="form-control datetimepicker-input" data-target="#end_date" />
                 <div class="input-group-append" data-target="#end_date" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                 </div>
@@ -155,7 +159,11 @@
 
         <div class="col-md-2">
             <div class="input-group date" id="end_time" data-target-input="nearest">
-                <input type="text" name="end_time" value="{{old('end_time', $post->end_time)}}" class="form-control datetimepicker-input" data-target="#end_time"/>
+				@if(old('allday_flag', $post->allday_flag))
+                <input type="text" name="end_time" value="" class="form-control datetimepicker-input" data-target="#end_time" disabled />
+				@else
+                <input type="text" name="end_time" value="{{old('end_time', $post->end_time)}}" class="form-control datetimepicker-input" data-target="#end_time" />
+				@endif
                 <div class="input-group-append" data-target="#end_time" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                 </div>
