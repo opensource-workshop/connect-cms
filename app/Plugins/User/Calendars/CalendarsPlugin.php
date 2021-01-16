@@ -166,9 +166,9 @@ class CalendarsPlugin extends UserPluginBase
     }
 
     /**
-     *  Root の POST一覧取得
+     *  POST一覧取得
      */
-    private function getPosts($year, $month)
+    private function getPosts($from_date, $to_date)
     {
         // データ取得
         $posts_query = CalendarPost::select('calendar_posts.*')
@@ -176,45 +176,15 @@ class CalendarsPlugin extends UserPluginBase
                                        $join->on('calendars.id', '=', 'calendar_posts.calendar_id')
                                           ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
                                    })
+                                   ->where('calendar_posts.start_date', '<=', $to_date)
+                                   ->where('calendar_posts.end_date', '>=', $from_date)
                                    ->whereNull('calendar_posts.deleted_at');
 
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhere($posts_query, 'calendar_posts');
 
-        // 記事の表示順
-        //$posts_query->orderBy('thread_updated_at', 'desc');
-
         // 取得
         return $posts_query->get();
-    }
-
-    /**
-     *  指定されたスレッドの記事一覧取得
-     */
-    private function getThreadPosts($calendar_frame, $thread_root_ids, $children_only = false)
-    {
-        // データ取得
-        $posts_query = CalendarPost::select('calendar_posts.*')
-                                   ->join('calendars', function ($join) {
-                                       $join->on('calendars.id', '=', 'calendar_posts.calendar_id')
-                                          ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
-                                   });
-
-        // ルートのポストは含まない場合
-        if ($children_only) {
-            $posts_query->whereColumn('calendar_posts.id', '<>', 'calendar_posts.thread_root_id');
-        }
-
-        // その他条件指定
-        $posts_query->whereIn('calendar_posts.thread_root_id', $thread_root_ids)
-                    ->whereNull('calendar_posts.deleted_at')
-                    ->orderBy('created_at', 'asc');
-
-        // 権限によって表示する記事を絞る
-        $posts_query = $this->appendAuthWhere($posts_query, 'calendar_posts');
-
-        // 取得
-        return $posts_query->paginate($calendar_frame->getViewCount());
     }
 
     /* スタティック関数 */
@@ -293,17 +263,17 @@ class CalendarsPlugin extends UserPluginBase
      */
     private function getCalendarDates($year, $month)
     {
-        $date_str = sprintf('%04d-%02d-01', $year, $month);
-        $date = new ConnectCarbon($date_str);
+        $dateStr = sprintf('%04d-%02d-01', $year, $month);
+        $date = new ConnectCarbon($dateStr);
 
-        // 月末が日曜日の場合
-        $add_day = ($date->copy()->endOfMonth()->isSunday()) ? 7 : 0;
+        $daysInMonth = $date->daysInMonth;  // 右下をずらす際の計算で使用。月の日数
+        $add_day = $date->dayOfWeek;        // 右下をずらす際の計算で使用。月の最初の日付番号
 
-        // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
+        // カレンダーの前月分となる左上の隙間用のデータを入れるためずらす
         $date->subDay($date->dayOfWeek);
 
         // 同上。右下の隙間のための計算。
-        $count = 31 + $add_day + $date->dayOfWeek;
+        $count = $daysInMonth + $date->dayOfWeek + $add_day;
         $count = ceil($count / 7) * 7;
         $dates = [];
 
@@ -312,7 +282,6 @@ class CalendarsPlugin extends UserPluginBase
             $dates[$date->format('Y-m-d')] = $date->copy();
         }
         $dates = $this->addHoliday($year, $month, $dates);
-
         return $dates;
     }
 
@@ -350,7 +319,7 @@ class CalendarsPlugin extends UserPluginBase
         $dates = $this->getCalendarDates(session('calendar_year'), session('calendar_month'));
 
         // 該当年月のデータの取得
-        $posts = $this->getPosts(session('calendar_year'), session('calendar_month'));
+        $posts = $this->getPosts(array_key_first($dates), array_key_last($dates));
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [

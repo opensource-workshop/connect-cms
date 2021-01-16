@@ -41,29 +41,54 @@
                 >
                 <div class="row">
                     <div class="col-6 font-weight-bold text-secondary">
-                        @if ($date->dayOfWeek == 0 || ($date->hasHoliday()))
-                        <span class="cc-color-sunday">{{$date->day}}</span>
-                        @elseif ($date->dayOfWeek == 6)
-                        <span class="cc-color-saturday">{{$date->day}}</span>
+                        @if ($date->format('Y-m-d') == date('Y-m-d'))
+                            {{-- 今日 --}}
+                            @if ($date->dayOfWeek == 0 || ($date->hasHoliday()))
+                            <span class="fa-stack small cc-color-sunday">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-inverse fa-stack-1x">{{$date->day}}</i>
+                            </span>
+                            @elseif ($date->dayOfWeek == 6)
+                            <span class="fa-stack small cc-color-saturday">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-inverse fa-stack-1x">{{$date->day}}</i>
+                            </span>
+                            @else
+                            <span class="fa-stack small">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-inverse fa-stack-1x">{{$date->day}}</i>
+                            </span>
+                            @endif
                         @else
-                        {{$date->day}}
+                            {{-- 今日以外 --}}
+                            @if ($date->dayOfWeek == 0 || ($date->hasHoliday()))
+                            <span class="cc-color-sunday">{{$date->day}}</span>
+                            @elseif ($date->dayOfWeek == 6)
+                            <span class="cc-color-saturday">{{$date->day}}</span>
+                            @else
+                            {{$date->day}}
+                            @endif
                         @endif
                         <div class="d-md-none d-inline">
+                            @if ($date->dayOfWeek == 0 || ($date->hasHoliday()))
+                            <span class="cc-color-sunday">({{$date->formatLocalized("%a")}})</span>
+                            @elseif ($date->dayOfWeek == 6)
+                            <span class="cc-color-saturday">({{$date->formatLocalized("%a")}})</span>
+                            @else
                             ({{$date->formatLocalized("%a")}})
+                            @endif
                             <div class="col-12 pl-1 d-inline cc-font-90">
                                 <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
                             </div>
                         </div>
                     </div>
                     <div class="col-6 text-right">
-                    @if ($date->month == $current_month)
-                        @can('posts.create',[[null, 'calendars', $buckets]])
-                            @if (isset($frame) && $frame->bucket_id)
-                                {{-- 新規登録ボタン --}}
-                                <a href="{{url('/')}}/plugin/calendars/edit/{{$page->id}}/{{$frame_id}}?date={{$date->format('Y-m-d')}}#frame-{{$frame_id}}"><i class="fas fa-plus"></i></a>
-                            @endif
-                        @endcan
-                    @endif
+                    @can('posts.create',[[null, 'calendars', $buckets]])
+                        @if (isset($frame) && $frame->bucket_id)
+                            {{-- 新規登録ボタン --}}
+                            <a href="{{url('/')}}/plugin/calendars/edit/{{$page->id}}/{{$frame_id}}?date={{$date->format('Y-m-d')}}#frame-{{$frame_id}}"><i class="fas fa-plus"></i></a>
+                        @endif
+                    @endcan
                     </div>
                 </div>
                 {{-- 祝日 --}}
@@ -79,7 +104,9 @@
                     <div class="row py-1">
                         <div class="d-md-none col-1"></div>
                         <div class="col-11 col-md-12">
-                            <div class="cc-font-80">{{$post->getStartTime()}} - {{$post->getEndTime()}}</div>
+                            @if ($post->allday_flag == 0)
+                                <div class="cc-font-80">{{$post->getStartTime($date->format('Y-m-d'))}} - {{$post->getEndTime($date->format('Y-m-d'))}}</div>
+                            @endif
                             {!!$post->getStatusBadge(true)!!}
                             <div class="cc-font-90"><a href="{{url('/')}}/plugin/calendars/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">{{$post->title}}</a></div>
                         </div>

@@ -166,8 +166,14 @@ class CalendarPost extends Model
     /**
      * 開始時間の取得
      */
-    public function getStartTime()
+    public function getStartTime($y_m_d = null)
     {
+        if ($this->allday_flag == 1) {
+            return "";
+        }
+        if (!empty($y_m_d) && $y_m_d != $this->start_date) {
+            return "前日";
+        }
         if (empty($this->start_time)) {
             return "";
         } else {
@@ -178,8 +184,14 @@ class CalendarPost extends Model
     /**
      * 終了時間の取得
      */
-    public function getEndTime()
+    public function getEndTime($y_m_d = null)
     {
+        if ($this->allday_flag == 1) {
+            return "";
+        }
+        if (!empty($y_m_d) && $y_m_d != $this->end_date) {
+            return "翌日";
+        }
         if (empty($this->end_time)) {
             return "";
         } else {
