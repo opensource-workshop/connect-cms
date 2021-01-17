@@ -373,8 +373,9 @@ class UserManage extends ManagePluginBase
      */
     public function edit($request, $id)
     {
+        // bugfix: これがあると、なぜか管理プラグインではoldが設定されない
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // ユーザデータ取得
         $user = User::where('id', $id)->first();
@@ -425,7 +426,10 @@ class UserManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/user/edit/' . $id)->withErrors($validator)->withInput();
+            // Log::debug(var_export($request->old(), true));
+            // エラーと共に編集画面を呼び出す
+            // return redirect('manage/user/edit/' . $id)->withErrors($validator)->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 更新内容の配列
