@@ -15,7 +15,6 @@ class CreateUsersColumnsTable extends Migration
     {
         Schema::create('users_columns', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('users_id')->unsigned()->comment('users.id');
             $table->string('column_type', 255);
             $table->string('column_name', 255);
             $table->integer('required');

@@ -13,7 +13,6 @@ class UsersColumns extends Model
 
     // 更新する項目の定義
     protected $fillable = [
-        'users_id',
         'column_type',
         'column_name',
         'required',
