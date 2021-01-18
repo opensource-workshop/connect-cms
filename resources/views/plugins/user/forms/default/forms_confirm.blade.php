@@ -125,7 +125,7 @@
         @if ($form->use_temporary_regist_mail_flag)
             <button type="submit" class="btn btn-info" onclick="submit_forms_store();"><i class="fas fa-check"></i> {{__('messages.temporary_regist')}}</button>
         @else
-            <button type="submit" class="btn btn-primary" onclick="submit_forms_store();"><i class="fas fa-check"></i> {{__('messages.main_regist')}}</button>
+            <button type="submit" class="btn btn-primary" onclick="submit_forms_store();"><i class="fas fa-check"></i> {{__('messages.submit')}}</button>
         @endif
     </div>
 </form>
