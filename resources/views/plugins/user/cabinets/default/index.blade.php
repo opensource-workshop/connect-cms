@@ -9,12 +9,22 @@
 
 @section("plugin_contents_$frame->id")
 
-<span class="badge badge-pill badge-primary mb-1">参照フォルダ</span>
+<span class="badge badge-pill badge-primary mb-1">フォルダ一覧</span>
+<ul class="list-group">
+{{--    <li class="list-group-item"><i class="fas fa-arrow-circle-up"></i></li> --}}
+    <li class="list-group-item"><i class="far fa-folder"></i> Item #1</li>
+    <li class="list-group-item"><i class="far fa-chevron-right"></i> <i class="far fa-folder"></i> Item #1-1</li>
+    <li class="list-group-item">　<i class="far fa-chevron-right"></i> <i class="far fa-folder-open"></i> Item #1-1-1</li>
+    <li class="list-group-item"><i class="far fa-folder"></i> Item #3</li>
+    <li class="list-group-item"><i class="far fa-folder"></i> Item #3</li>
+</ul>
+
+<span class="badge badge-pill badge-primary mt-3 mb-1">参照フォルダ</span>
 <div class="clearfix d-xl-flex">
     <div class="alert alert-secondary mb-1 mr-1 p-2">
         Item #1 > Item #1 / Item #1-1 / Item #1-1-1
     </div>
-    <div class="text-nowrap my-1 my-xl-0">
+    <div class="text-nowrap">
         <button type="button" class="btn btn-success p-2" data-toggle="collapse" data-target="#fileUpload" aria-expanded="false" aria-controls="fileUpload" onclick="$('#folderCreate').collapse('hide')">
             <i class="fas fa-file-medical"></i> ファイル追加
         </button>
@@ -90,16 +100,6 @@
         </div>
     </div>
 </div>
-
-<span class="badge badge-pill badge-primary mt-3 mb-1">フォルダ一覧</span>
-<ul class="list-group">
-{{--    <li class="list-group-item"><i class="fas fa-arrow-circle-up"></i></li> --}}
-    <li class="list-group-item"><i class="fas fa-folder"></i> Item #1</li>
-    <li class="list-group-item"><i class="fas fa-chevron-right"></i> <i class="fas fa-folder"></i> Item #1-1</li>
-    <li class="list-group-item">　<i class="fas fa-chevron-right"></i> <i class="fas fa-folder-open"></i> Item #1-1-1</li>
-    <li class="list-group-item"><i class="fas fa-folder"></i> Item #3</li>
-    <li class="list-group-item"><i class="fas fa-folder"></i> Item #3</li>
-</ul>
 
 <span class="badge badge-pill badge-primary mt-3 mb-1">ファイル</span>
 <ul class="list-group">
