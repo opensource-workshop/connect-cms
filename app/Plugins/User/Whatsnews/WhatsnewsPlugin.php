@@ -131,7 +131,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                        ->whereIn('frames.plugin_name', array('blogs', 'databases'))
+                        ->whereIn('frames.plugin_name', array('blogs', 'bbses', 'databases'))
                         ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
                         ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
                         ->where('disable_whatsnews', 0)
