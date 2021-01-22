@@ -231,23 +231,23 @@ class BbsesPlugin extends UserPluginBase
     public static function getWhatsnewArgs()
     {
         // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('bbses_posts')
+        $return[] = DB::table('bbs_posts')
                       ->select(
-                          'frames.page_id           as page_id',
-                          'frames.id                as frame_id',
-                          'bbses_posts.id           as post_id',
-                          'bbses_posts.title        as post_title',
-                          DB::raw("null             as important"),
-                          'bbses_posts.created_at   as posted_at',
-                          'bbses_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category"),
-                          DB::raw('"bbses"          as plugin_name')
+                          'frames.page_id         as page_id',
+                          'frames.id              as frame_id',
+                          'bbs_posts.id           as post_id',
+                          'bbs_posts.title        as post_title',
+                          DB::raw("null           as important"),
+                          'bbs_posts.created_at   as posted_at',
+                          'bbs_posts.created_name as posted_name',
+                          DB::raw("null           as classname"),
+                          DB::raw("null           as category"),
+                          DB::raw('"bbses"        as plugin_name')
                       )
-                      ->join('bbses', 'bbses.id', '=', 'bbses_posts.bbses_id')
+                      ->join('bbses', 'bbses.id', '=', 'bbs_posts.bbs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
                       ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('bbses_posts.deleted_at');
+                      ->whereNull('bbs_posts.deleted_at');
 
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/bbses/show';
