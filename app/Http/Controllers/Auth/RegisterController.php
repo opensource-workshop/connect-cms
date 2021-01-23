@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 //use Illuminate\Foundation\Auth\RegistersUsers;
 use App\Http\Controllers\Auth\RegistersUsers;
@@ -52,19 +53,32 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         $validate_rule = [
-            'name' => 'required|string|max:255',
-            'userid' => 'required|max:255|unique:users',
-            'email' => 'nullable|email|max:255|unique:users',
+            'name'     => 'required|string|max:255',
+            'userid'   => 'required|max:255|unique:users',
+            'email'    => 'nullable|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'status' => 'required',
+            'status'   => 'required',
         ];
 
-        // ユーザ自動登録の場合（認証されていない）は、メールアドレスも必須にする。
+        // ユーザ自動登録の場合（認証されていない）は、メールアドレスと個人情報保護方針への同意も必須にする。
         if (!Auth::user()) {
             $validate_rule['email'] = 'required|string|email|max:255|unique:users';
+            $validate_rule['user_register_requre_privacy'] = 'required';
         }
 
-        return Validator::make($data, $validate_rule);
+        // 入力値チェック
+        $validator = Validator::make($data, $validate_rule);
+
+        // 項目名
+        $validator->setAttributeNames([
+            'name'                         => 'ユーザ名',
+            'userid'                       => 'ログインID',
+            'email'                        => 'eメールアドレス',
+            'password'                     => 'パスワード',
+            'user_register_requre_privacy' => '個人情報保護方針への同意',
+        ]);
+
+        return $validator;
     }
 
     /**
