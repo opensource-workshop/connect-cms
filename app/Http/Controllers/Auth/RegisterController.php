@@ -51,14 +51,20 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
+        $validate_rule = [
             'name' => 'required|string|max:255',
-            // 'email' => 'required|string|email|max:255|unique:users',
             'userid' => 'required|max:255|unique:users',
             'email' => 'nullable|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'status' => 'required',
-        ]);
+        ];
+
+        // ユーザ自動登録の場合（認証されていない）は、メールアドレスも必須にする。
+        if (!Auth::user()) {
+            $validate_rule['email'] = 'required|string|email|max:255|unique:users';
+        }
+
+        return Validator::make($data, $validate_rule);
     }
 
     /**
