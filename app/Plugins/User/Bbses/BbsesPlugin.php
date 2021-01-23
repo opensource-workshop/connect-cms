@@ -246,6 +246,7 @@ class BbsesPlugin extends UserPluginBase
                       )
                       ->join('bbses', 'bbses.id', '=', 'bbs_posts.bbs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+                      ->where('bbs_posts.status', 0)
                       ->where('frames.disable_whatsnews', 0)
                       ->whereNull('bbs_posts.deleted_at');
 
