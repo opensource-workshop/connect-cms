@@ -250,6 +250,8 @@ return [
         'StatusType' => \App\Enums\StatusType::class,
         'DisplayNumberType' => \App\Enums\DisplayNumberType::class,
         'FormStatusType' => \App\Enums\FormStatusType::class,
+        'AuthMethodType' => \App\Enums\AuthMethodType::class,
+        'CodeColumn' => \App\Enums\CodeColumn::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\User;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 //use Illuminate\Foundation\Auth\RegistersUsers;
 use App\Http\Controllers\Auth\RegistersUsers;
@@ -38,7 +39,7 @@ class RegisterController extends Controller
     public function __construct()
     {
         // mod by nagahara@opensource-workshop.jp
-//        $this->middleware('guest');
+        // $this->middleware('guest');
         // $this->middleware('auth');
     }
 
@@ -68,6 +69,11 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        // ユーザ自動登録の場合（認証されていない）は、トップページに遷移する。
+        if (!Auth::user()) {
+            $this->redirectTo = '/';
+        }
+
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],

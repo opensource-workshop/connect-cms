@@ -38,7 +38,7 @@
 
     <div class="form-group">
         <label class="control-label">タイトル <label class="badge badge-danger">必須</label></label>
-        <textarea name="post_title">{!!old('post_title', $faqs_posts->post_title)!!}</textarea>
+        <input type="text" name="post_title" value="{{old('post_title', $faqs_posts->post_title)}}" class="form-control">
         @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
     </div>
 

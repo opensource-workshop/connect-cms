@@ -23,11 +23,12 @@
 --}}
         {{$children->page_name}}
     </a>
-</li>
+
     @if ($children->children && count($children->children) > 0)
         @foreach($children->children as $grandchild)
             @include('plugins.user.menus.sitemap.menu_children',['children' => $grandchild])
         @endforeach
     @endif
+</li>
 </ul>
 @endif

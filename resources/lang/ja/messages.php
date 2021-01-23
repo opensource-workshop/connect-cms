@@ -19,7 +19,7 @@ return [
     'delete' => '削除',
     'to_confirm' => '確認画面へ',
     'cancel' => 'キャンセル',
-    // 'submit' => '送信',
+    'submit' => '送信',
     'temporary_regist' => '仮登録',
     'main_regist' => '本登録',
     'required' => '必須',

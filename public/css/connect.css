@@ -219,6 +219,9 @@ a.cc-cursor-text:hover {
 
 /* フォントサイズ
 ------------------------------------- */
+.cc-font-80 {
+    font-size: 80%;
+}
 .cc-font-90 {
     font-size: 90%;
 }
@@ -259,6 +262,15 @@ a.cc-cursor-text:hover {
     border:1px #333 solid;
     border-width: 0 1px 1px 0;
 */
+}
+
+/* カレンダー
+------------------------------------- */
+.cc-color-sunday {
+    color: #cc0033;
+}
+.cc-color-saturday {
+    color: #0000ff;
 }
 
 /* 開館カレンダー
@@ -381,6 +393,9 @@ a.cc-cursor-text:hover {
 
 /* 幅
 ------------------------------------- */
+.cc-w13pct {
+    width: 13%;
+}
 .cc-w20pct {
     width: 20%;
 }

@@ -28,14 +28,6 @@
                     <a href="{{url('/manage/system/log')}}" class="nav-link">エラーログ設定</a></li>
                 @endif
                 </li>
-
-                <li role="presentation" class="nav-item">
-                @if ($function == "auth")
-                    <span class="nav-link"><span class="active">外部認証</span></span>
-                @else
-                    <a href="{{url('/manage/system/auth')}}" class="nav-link">外部認証</a></li>
-                @endif
-                </li>
             </ul>
         </div>
     </nav>

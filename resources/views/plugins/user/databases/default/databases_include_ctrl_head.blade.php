@@ -60,7 +60,7 @@
                 @else
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
                 @endif
-                <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}">
+                <select class="form-control" name="search_column[{{$loop->index}}][value]" title="{{$select_column->column_name}}" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}">
                     <option value="">{{$select_column->column_name}}</option>
                     @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
                         <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>

@@ -18,6 +18,7 @@
     @else
         {{-- データのループ --}}
         <table class="table table-bordered">
+            <caption class="sr-only">{{$database_frame->databases_name}}</caption>
             <thead class="thead-light">
             <tr>
             @foreach($columns as $column)

@@ -66,4 +66,7 @@ return [
 
     // Expires
     'EXPIRES' => env('EXPIRES', 'Thu, 01 Dec 1994 16:00:00 GMT'),
+
+    // Login link path
+    'LOGIN_PATH' => env('LOGIN_PATH', 'login'),
 ];

@@ -175,11 +175,25 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_header_login_link]
         );
 
+        // パスワードリセットの使用
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_login_password_reset'],
+            ['category' => 'general',
+             'value'    => $request->base_login_password_reset]
+        );
+
         // 自動ユーザ登録の使用
         $configs = Configs::updateOrCreate(
             ['name'     => 'user_register_enable'],
             ['category' => 'user_register',
              'value'    => $request->user_register_enable]
+        );
+
+        // マイページの使用
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'use_mypage'],
+            ['category' => 'general',
+             'value'    => $request->use_mypage]
         );
 
         // 画像の保存機能の無効化
