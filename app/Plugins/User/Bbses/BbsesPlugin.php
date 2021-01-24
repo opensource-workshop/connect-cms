@@ -184,10 +184,10 @@ class BbsesPlugin extends UserPluginBase
         // 根記事の表示順
         if ($bbs_frame->thread_sort_flag == 1) {
             // 根記事の新しい日時順
-            $posts_query->orderBy('thread_updated_at', 'desc');
+            $posts_query->orderBy('created_at', 'desc');
         } else {
             // スレッド内の新しい更新日時順
-            $posts_query->orderBy('created_at', 'desc');
+            $posts_query->orderBy('thread_updated_at', 'desc');
         }
 
         // 取得
