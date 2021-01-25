@@ -131,7 +131,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                        ->whereIn('frames.plugin_name', array('blogs', 'databases'))
+                        ->whereIn('frames.plugin_name', array('blogs', 'bbses', 'databases'))
                         ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
                         ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
                         ->where('disable_whatsnews', 0)
@@ -602,7 +602,7 @@ class WhatsnewsPlugin extends UserPluginBase
         $base_site_name = Configs::where('name', 'base_site_name')->first();
 
         // URL
-        $url = url("/redirect/plugin/wahtsnews/rss/" . $page_id . "/" . $frame_id);
+        $url = url("/redirect/plugin/whatsnews/rss/" . $page_id . "/" . $frame_id);
 
         // HTTPヘッダー出力
         header('Content-Type: text/xml; charset=UTF-8');

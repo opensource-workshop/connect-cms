@@ -247,6 +247,38 @@
             <small class="form-text text-muted">自動ユーザ登録を使用するかどうかを選択</small>
         </div>
 
+        {{-- 自動ユーザ登録時に個人情報保護方針への同意を求めるか --}}
+        <div class="form-group">
+            <label class="col-form-label">個人情報保護方針への同意</label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-checkbox">
+                        @if(isset($configs["user_register_requre_privacy"]) && $configs["user_register_requre_privacy"] == "1")
+                            <input name="user_register_requre_privacy" value="1" type="checkbox" class="custom-control-input" id="user_register_requre_privacy" checked="checked">
+                        @else
+                            <input name="user_register_requre_privacy" value="1" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
+                        @endif
+                        <label class="custom-control-label" for="user_register_requre_privacy">同意を求める</label>
+                    </div>
+                </div>
+            </div>
+            <small class="form-text text-muted">自動ユーザ登録時に個人情報保護方針への同意を求めるか設定</small>
+        </div>
+
+        {{-- 自動ユーザ登録時に求める個人情報保護方針の表示内容 --}}
+        <div class="form-group">
+            <label class="col-form-label">個人情報保護方針の表示内容</label>
+            <textarea name="user_register_privacy_description" class="form-control" rows=3>{!!old('user_register_privacy_description', $configs["user_register_privacy_description"])!!}</textarea>
+            <small class="form-text text-muted">自動ユーザ登録時に求める個人情報保護方針への説明文</small>
+        </div>
+
+        {{-- 自動ユーザ登録時に求めるユーザ登録についての文言 --}}
+        <div class="form-group">
+            <label class="col-form-label">ユーザ登録について</label>
+            <textarea name="user_register_description" class="form-control" rows=3>{!!old('user_register_description', $configs["user_register_description"])!!}</textarea>
+            <small class="form-text text-muted">自動ユーザ登録時に求めるユーザ登録についての説明文</small>
+        </div>
+
         {{-- マイページ --}}
         <div class="form-group">
             <label class="col-form-label">マイページの使用</label>

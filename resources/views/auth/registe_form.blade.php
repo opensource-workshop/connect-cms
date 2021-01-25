@@ -65,17 +65,33 @@
         </div>
     </div>
 
-    <div class="form-group row">
-        <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
+    @if (Auth::user() && Auth::user()->can('admin_user'))
+        {{-- 管理者によるユーザ登録 --}}
+        <div class="form-group row">
+            <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
 
-        <div class="col-md-8">
-            <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
+            <div class="col-md-8">
+                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
 
-            @if ($errors->has('email'))
-                <div class="text-danger">{{ $errors->first('email') }}</div>
-            @endif
+                @if ($errors->has('email'))
+                    <div class="text-danger">{{ $errors->first('email') }}</div>
+                @endif
+            </div>
         </div>
-    </div>
+    @else
+        {{-- 自動登録 --}}
+        <div class="form-group row">
+            <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス <label class="badge badge-danger">必須</label></label>
+
+            <div class="col-md-8">
+                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。" required autofocus>
+
+                @if ($errors->has('email'))
+                    <div class="text-danger">{{ $errors->first('email') }}</div>
+                @endif
+            </div>
+        </div>
+    @endif
 
     <div class="form-group row">
         @if (isset($function) && $function == 'edit')
@@ -115,6 +131,27 @@
         </div>
     </div>
 
+    {{-- 未ログイン（自動登録）時に個人情報保護方針への同意関係が設定されている場合 --}}
+    @if (!Auth::user())
+        @if (isset($configs['user_register_requre_privacy']) && $configs['user_register_requre_privacy'] == 1)
+            <div class="form-group row">
+                <label for="password-confirm" class="col-md-4 col-form-label text-md-right">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
+
+                <div class="col-md-8">
+                    <div class="custom-control custom-checkbox custom-control-inline">
+                        <input name="user_register_requre_privacy" value="以下の内容に同意する。" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
+                        <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意する。</label>
+                    </div>
+                    @if ($errors->has('user_register_requre_privacy'))
+                        <div class="text-danger">{{ $errors->first('user_register_requre_privacy') }}</div>
+                    @endif
+                    @if (isset($configs['user_register_privacy_description']))
+                        {!!$configs['user_register_privacy_description']!!}
+                    @endif
+                </div>
+            </div>
+        @endif
+    @endif
 
     {{-- コンテンツ権限 --}}
     @if (Auth::user() && Auth::user()->can('admin_user'))
