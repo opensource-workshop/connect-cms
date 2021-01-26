@@ -131,6 +131,29 @@
         </div>
     </div>
 
+    @foreach($users_columns as $users_column)
+        @php
+            // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
+            // 時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない
+            if ($users_column->column_type == UserColumnType::radio || $users_column->column_type == UserColumnType::checkbox) {
+                $label_for = '';
+                $label_class = 'pt-0';
+            } else {
+                $label_for = 'for=user-column-' . $users_column->id;
+                $label_class = '';
+            }
+        @endphp
+
+        {{-- 通常の項目 --}}
+        <div class="form-group row">
+            <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$users_column->column_name}} @if ($users_column->required)<span class="badge badge-danger">必須</span> @endif</label>
+            <div class="col-md-8">
+                @include('auth.registe_form_' . $users_column->column_type, ['user_obj' => $users_column, 'label_id' => 'user-column-'.$users_column->id])
+                <div class="small {{ $users_column->caption_color }}">{!! nl2br($users_column->caption) !!}</div>
+            </div>
+        </div>
+    @endforeach
+
     {{-- 未ログイン（自動登録）時に個人情報保護方針への同意関係が設定されている場合 --}}
     @if (!Auth::user())
         @if (isset($configs['user_register_requre_privacy']) && $configs['user_register_requre_privacy'] == 1)

@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -22,7 +22,7 @@
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
                     <div class="card-header" id="user_search_condition">
                         絞り込み条件 <i class="fas fa-angle-down"></i>
-                   </div>
+                    </div>
                 </button>
                 @if (Session::has('user_search_condition'))
                 <div id="search_collapse" class="collapse show" aria-labelledby="user_search_condition" data-parent="#search_accordion">
@@ -57,6 +57,28 @@
                                     <input type="text" name="user_search_condition[email]" id="user_search_condition_email" value="{{Session::get('user_search_condition.email')}}" class="form-control">
                                 </div>
                             </div>
+
+                            @foreach($users_columns as $users_column)
+                                @php
+                                    // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
+                                    // 時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない
+                                    if ($users_column->column_type == UserColumnType::radio || $users_column->column_type == UserColumnType::checkbox) {
+                                        $label_for = '';
+                                        $label_class = 'pt-0';
+                                    } else {
+                                        $label_for = 'for=user-column-' . $users_column->id;
+                                        $label_class = '';
+                                    }
+                                @endphp
+
+                                {{-- 通常の項目 --}}
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$users_column->column_name}}</label>
+                                    <div class="col-md-9">
+                                        @include('auth.registe_form_' . $users_column->column_type, ['user_obj' => $users_column, 'label_id' => 'user-column-'.$users_column->id, 'value' => Session::get('user_search_condition.users_columns_value.' . $users_column->id)])
+                                    </div>
+                                </div>
+                            @endforeach
 
                             {{-- コンテンツ権限 --}}
                             <div class="form-group row">
@@ -130,6 +152,10 @@
                                         <option value="updated_at_desc"@if(Session::get('user_search_condition.sort') == "updated_at_desc") selected @endif>更新日時 降順</option>
                                         <option value="userid_asc"@if(Session::get('user_search_condition.sort') == "userid_asc") selected @endif>ログインID 昇順</option>
                                         <option value="userid_desc"@if(Session::get('user_search_condition.sort') == "userid_desc") selected @endif>ログインID 降順</option>
+                                        @foreach($users_columns as $users_column)
+                                            <option value="{{$users_column->id}}_asc" @if(Session::get('user_search_condition.sort') == $users_column->id . '_asc') selected @endif>{{  $users_column->column_name  }}(昇順)</option>
+                                            <option value="{{$users_column->id}}_desc" @if(Session::get('user_search_condition.sort') == $users_column->id . '_desc') selected @endif>{{  $users_column->column_name  }}(降順)</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -161,6 +187,9 @@
                     <th nowrap>ユーザー名</th>
                     <th nowrap><i class="fas fa-users" title="グループ参加"></i></th>
                     <th nowrap>eメール</th>
+                    @foreach($users_columns as $users_column)
+                        <th nowrap>{{$users_column->column_name}}</th>
+                    @endforeach
                     <th nowrap>権限</th>
                     <th nowrap>役割設定</th>
                     <th nowrap>作成日</th>
@@ -179,6 +208,9 @@
                     <td>{{$user->name}}</td>
                     <td nowrap><a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="fas fa-users"></i></a></th>
                     <td>{{$user->email}}</td>
+                    @foreach($users_columns as $users_column)
+                        <td>@include('plugins.manage.user.list_include_value')</td>
+                    @endforeach
                     <td nowrap>
                         @isset($user->view_user_roles)
                         <h6>
