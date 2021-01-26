@@ -75,7 +75,7 @@
                                 <div class="form-group row">
                                     <label class="col-md-3 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$users_column->column_name}}</label>
                                     <div class="col-md-9">
-                                        @include('auth.registe_form_input_' . $users_column->column_type, ['user_obj' => $users_column, 'label_id' => 'user-column-'.$users_column->id, 'value' => Session::get('user_search_condition.users_columns_value.' . $users_column->id)])
+                                        @include('plugins.manage.user.list_search_' . $users_column->column_type, ['user_obj' => $users_column, 'label_id' => 'user-column-'.$users_column->id])
                                     </div>
                                 </div>
                             @endforeach

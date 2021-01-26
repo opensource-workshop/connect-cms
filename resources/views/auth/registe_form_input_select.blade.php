@@ -15,10 +15,10 @@
         @foreach($users_columns_id_select[$user_obj->id] as $select)
 
             @if (old('users_columns_value.'.$user_obj->id) == $select['value'] ||
-                 ($select['value'] == $value) ||
-                 (isset($request->users_columns_value) &&
-                  array_key_exists($user_obj->id, $request->users_columns_value) &&
-                  $request->users_columns_value[$user_obj->id] == $select['value'])
+                $select['value'] == $value ||
+                (isset($request->users_columns_value) &&
+                    array_key_exists($user_obj->id, $request->users_columns_value) &&
+                    $request->users_columns_value[$user_obj->id] == $select['value'])
             )
                 <option value="{{$select['value']}}" selected>{{$select['value']}}</option>
             @else
