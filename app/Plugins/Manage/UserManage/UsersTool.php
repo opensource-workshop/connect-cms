@@ -10,6 +10,7 @@ use App\Models\Core\UsersInputCols;
 
 use App\Rules\CustomVali_AlphaNumForMultiByte;
 use App\Rules\CustomVali_CheckWidthForString;
+use App\Rules\CustomValiUserEmailUnique;
 
 /**
  * ユーザーの便利関数
@@ -19,7 +20,7 @@ class UsersTool
     const CHECKBOX_SEPARATOR = '|';
 
     /**
-     * カラムデータ取得
+     * カラム取得
      */
     public static function getUsersColumns()
     {
@@ -84,15 +85,11 @@ class UsersTool
      *
      * @param [array] $validator_array 二次元配列
      * @param [App\Models\User\Databases\DatabasesColumns] $users_column
+     * @param [int] $user_id
      * @return array
      */
-    public static function getValidatorRule($validator_array, $users_column)
+    public static function getValidatorRule($validator_array, $users_column, $user_id = null)
     {
-        // 入力しないカラム型は、バリデータチェックしない
-        // if (DatabasesColumns::isNotInputColumnType($users_column->column_type)) {
-        //     return $validator_array;
-        // }
-
         $validator_rule = null;
         // 必須チェック
         if ($users_column->required) {
@@ -101,6 +98,7 @@ class UsersTool
         // メールアドレスチェック
         if ($users_column->column_type == \UserColumnType::mail) {
             $validator_rule[] = 'email';
+            $validator_rule[] = new CustomValiUserEmailUnique($user_id);
             if ($users_column->required == 0) {
                 $validator_rule[] = 'nullable';
             }
@@ -135,31 +133,11 @@ class UsersTool
             $validator_rule[] = 'numeric';
             $validator_rule[] = 'min:' . $users_column->rule_min;
         }
-        // // ～日以降を許容
-        // if ($users_column->rule_date_after_equal) {
-        //     $comparison_date = \Carbon::now()->addDay($users_column->rule_date_after_equal)->databaseat('Y/m/d');
-        //     $validator_rule[] = 'after_or_equal:' . $comparison_date;
-        // }
-        // // 日付チェック
-        // if ($users_column->column_type == \UserColumnType::date) {
-        //     $validator_rule[] = 'nullable';
-        //     $validator_rule[] = 'date';
-        // }
-        // // 複数年月型（テキスト入力）チェック
-        // if ($users_column->column_type == \UserColumnType::dates_ym) {
-        //     $validator_rule[] = 'nullable';
-        //     $validator_rule[] = new CustomVali_DatesYm();
-        // }
-        // // 画像チェック
-        // if ($users_column->column_type == \UserColumnType::image) {
-        //     $validator_rule[] = 'nullable';
-        //     $validator_rule[] = 'image';
-        // }
-        // // 動画チェック
-        // if ($users_column->column_type == \UserColumnType::video) {
-        //     $validator_rule[] = 'nullable';
-        //     $validator_rule[] = 'mimes:mp4';
-        // }
+        // 正規表現チェック
+        if ($users_column->rule_regex) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'regex:' . $users_column->rule_regex;
+        }
         // 単一選択チェック
         // 複数選択チェック
         // リストボックスチェック

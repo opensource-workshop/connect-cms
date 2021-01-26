@@ -19,6 +19,8 @@ use App\User;
 
 use App\Plugins\Manage\ManagePluginBase;
 
+use App\Rules\CustomValiUserEmailUnique;
+
 /**
  * ユーザ管理クラス
  *
@@ -538,7 +540,7 @@ class UserManage extends ManagePluginBase
         $validator_array = [
             'column' => [
                 'name' => 'required|string|max:255',
-                'email' => ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)],
+                'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
                 'password' => 'nullable|string|min:6|confirmed',
                 'status' => 'required',
             ],
@@ -555,7 +557,7 @@ class UserManage extends ManagePluginBase
 
         foreach ($users_columns as $users_column) {
             // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column);
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
         }
 
         // 項目のエラーチェック

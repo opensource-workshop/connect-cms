@@ -15,6 +15,8 @@ use App\Models\Core\UsersInputCols;
 
 use App\Plugins\Manage\UserManage\UsersTool;
 
+use App\Rules\CustomValiUserEmailUnique;
+
 use App\Http\Controllers\Auth\RegistersUsers;
 
 class RegisterController extends Controller
@@ -71,10 +73,11 @@ class RegisterController extends Controller
             'column' => [
                 'name'     => 'required|string|max:255',
                 'userid'   => 'required|max:255|unique:users',
-                'email'    => 'nullable|email|max:255|unique:users',
+                'email'    => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique(null)],
                 'password' => 'required|string|min:6|confirmed',
                 'status'   => 'required',
             ],
+            // 項目名
             'message' => [
                 'name' => 'ユーザ名',
                 'email' => 'eメール',
@@ -89,7 +92,7 @@ class RegisterController extends Controller
             // change: ユーザーの追加項目に対応
             // $validate_rule['email'] = 'required|string|email|max:255|unique:users';
             // $validate_rule['user_register_requre_privacy'] = 'required';
-            $validator_array['column']['email'] = 'required|string|email|max:255|unique:users';
+            $validator_array['column']['email'] = ['required', 'email', 'max:255', new CustomValiUserEmailUnique(null)];
 
             // bugfix: 個人情報保護方針への同意を求める場合、必須にする
             $user_register_requre_privacy = Configs::where('name', 'user_register_requre_privacy')->first();
@@ -103,7 +106,7 @@ class RegisterController extends Controller
 
         foreach ($users_columns as $users_column) {
             // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column);
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, null);
         }
 
         // 入力値チェック

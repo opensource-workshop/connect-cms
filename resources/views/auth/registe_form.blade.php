@@ -148,7 +148,7 @@
         <div class="form-group row">
             <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$users_column->column_name}} @if ($users_column->required)<span class="badge badge-danger">必須</span> @endif</label>
             <div class="col-md-8">
-                @include('auth.registe_form_' . $users_column->column_type, ['user_obj' => $users_column, 'label_id' => 'user-column-'.$users_column->id])
+                @include('auth.registe_form_input_' . $users_column->column_type, ['user_obj' => $users_column, 'label_id' => 'user-column-'.$users_column->id])
                 <div class="small {{ $users_column->caption_color }}">{!! nl2br($users_column->caption) !!}</div>
             </div>
         </div>
