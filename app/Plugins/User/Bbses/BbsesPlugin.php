@@ -184,10 +184,10 @@ class BbsesPlugin extends UserPluginBase
         // 根記事の表示順
         if ($bbs_frame->thread_sort_flag == 1) {
             // 根記事の新しい日時順
-            $posts_query->orderBy('thread_updated_at', 'desc');
+            $posts_query->orderBy('created_at', 'desc');
         } else {
             // スレッド内の新しい更新日時順
-            $posts_query->orderBy('created_at', 'desc');
+            $posts_query->orderBy('thread_updated_at', 'desc');
         }
 
         // 取得
@@ -231,23 +231,24 @@ class BbsesPlugin extends UserPluginBase
     public static function getWhatsnewArgs()
     {
         // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('bbses_posts')
+        $return[] = DB::table('bbs_posts')
                       ->select(
-                          'frames.page_id           as page_id',
-                          'frames.id                as frame_id',
-                          'bbses_posts.id           as post_id',
-                          'bbses_posts.title        as post_title',
-                          DB::raw("null             as important"),
-                          'bbses_posts.created_at   as posted_at',
-                          'bbses_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category"),
-                          DB::raw('"bbses"          as plugin_name')
+                          'frames.page_id         as page_id',
+                          'frames.id              as frame_id',
+                          'bbs_posts.id           as post_id',
+                          'bbs_posts.title        as post_title',
+                          DB::raw("null           as important"),
+                          'bbs_posts.created_at   as posted_at',
+                          'bbs_posts.created_name as posted_name',
+                          DB::raw("null           as classname"),
+                          DB::raw("null           as category"),
+                          DB::raw('"bbses"        as plugin_name')
                       )
-                      ->join('bbses', 'bbses.id', '=', 'bbses_posts.bbses_id')
+                      ->join('bbses', 'bbses.id', '=', 'bbs_posts.bbs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+                      ->where('bbs_posts.status', 0)
                       ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('bbses_posts.deleted_at');
+                      ->whereNull('bbs_posts.deleted_at');
 
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/bbses/show';
@@ -359,6 +360,13 @@ class BbsesPlugin extends UserPluginBase
     {
         // 記事取得
         $post = $this->getPost($post_id);
+
+        // モデレータ以上の権限がなく、記事にすでに返信が付いている場合は、編集できない。
+
+
+//        if (empty($faqs_post)) {
+//            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+//        }
 
         // 変更画面を呼び出す。
         return $this->view('edit', [

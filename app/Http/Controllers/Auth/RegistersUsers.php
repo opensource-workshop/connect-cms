@@ -38,13 +38,12 @@ trait RegistersUsers
         // ログインしているユーザー情報を取得
         //$user = Auth::user();
 
-        // ユーザ登録の権限があればOK
+        // ユーザ登録の権限チェック
         //if (isset($user) && ($user->role == 1 || $user->role == 3)) {
         if ($this->isCan('admin_user')) {
-            // OK で画面へ
-        }
-        // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
-        elseif ($configs_array['user_register_enable'] != "1") {
+            // ユーザ登録の権限があればOK
+        } elseif ($configs_array['user_register_enable'] != "1") {
+            // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
             abort(403);
         }
 
@@ -72,13 +71,12 @@ trait RegistersUsers
             $configs_array[$config['name']] = $config['value'];
         }
 
-        // ユーザ登録の権限があればOK
+        // ユーザ登録の権限チェック
         //if (isset($user) && ($user->role == 1 || $user->role == 3)) {
         if ($this->isCan('admin_user')) {
-            // OK で画面へ
-        }
-        // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
-        elseif ($configs_array['user_register_enable'] != "1") {
+            // ユーザ登録の権限があればOK
+        } elseif ($configs_array['user_register_enable'] != "1") {
+            // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
             //Log::debug("register 403.");
             abort(403);
         }
@@ -123,6 +121,30 @@ trait RegistersUsers
                     ]);
                 }
             }
+        }
+
+        // ユーザー自動登録（未ログイン）の場合、.env のSELF_REGISTER_ROLE を元に権限登録する。
+        if (!Auth::user()) {
+            $self_register_base_roles_env = config('connect.SELF_REGISTER_BASE_ROLES');
+            $self_register_base_roles = array();
+            if (!empty($self_register_base_roles_env)) {
+                $self_register_base_roles = explode(',', $self_register_base_roles_env);
+            }
+            if (!empty($self_register_base_roles)) {
+                foreach ($self_register_base_roles as $self_register_base_role) {
+                    UsersRoles::create([
+                        'users_id'   => $user->id,
+                        'target'     => 'base',
+                        'role_name'  => $self_register_base_role,
+                        'role_value' => 1
+                    ]);
+                }
+            }
+        }
+
+        // ユーザー自動登録（未ログイン）の場合の登録完了メッセージ。
+        if (!Auth::user()) {
+            session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
         }
 
         // 作成したユーザでのログイン処理は行わない。mod by nagahara@opensource-workshop.jp
