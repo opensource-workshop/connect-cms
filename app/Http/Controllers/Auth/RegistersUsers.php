@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RedirectsUsers;
 
@@ -14,6 +14,8 @@ use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Traits\ConnectCommonTrait;
 
+use App\Plugins\Manage\UserManage\UsersTool;
+
 trait RegistersUsers
 {
     use RedirectsUsers;
@@ -21,12 +23,12 @@ trait RegistersUsers
 
     /**
      * Show the application registration form.
+     * ユーザー登録画面表示（自動登録）
      *
      * @return \Illuminate\Http\Response
      */
     public function showRegistrationForm()
     {
-
         // ユーザー登録関連設定の取得
         $configs = Configs::where('category', 'general')->orWhere('category', 'user_register')->get();
         $configs_array = array();
@@ -47,10 +49,21 @@ trait RegistersUsers
             abort(403);
         }
 
+        //// ユーザの追加項目.
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+        // カラムの選択肢
+        $users_columns_id_select = UsersTool::getUsersColumnsSelects();
+        // カラムの登録データ
+        $input_cols = null;
+
         // フォームの初期値として空のユーザオブジェクトを渡す。
         return view('auth.register', [
-            "user"    => new User(),
+            "user" => new User(),
             "configs" => $configs,
+            'users_columns' => $users_columns,
+            'users_columns_id_select' => $users_columns_id_select,
+            'input_cols' => $input_cols,
         ]);
     }
 

@@ -128,11 +128,10 @@ class LoginController extends Controller
                     if (!empty($redirectNc2)) {
                         return $redirectNc2;
                     }
-            
+
                     // ここに来るということは、NetCommons2 からの移行パスワードでの認証もNG
                     throw $e;
                 }
-    
             } else {
                 // 通常ログインを使用しない
                 //

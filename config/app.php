@@ -253,6 +253,7 @@ return [
         'FormStatusType' => \App\Enums\FormStatusType::class,
         'AuthMethodType' => \App\Enums\AuthMethodType::class,
         'CodeColumn' => \App\Enums\CodeColumn::class,
+        'UserColumnType' => \App\Enums\UserColumnType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

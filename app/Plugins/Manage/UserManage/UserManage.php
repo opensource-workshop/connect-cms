@@ -2,9 +2,9 @@
 
 namespace App\Plugins\Manage\UserManage;
 
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use DB;
@@ -13,10 +13,13 @@ use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
-use App\Models\Common\Page;
+// use App\Models\Common\Page;
+use App\Models\Core\UsersInputCols;
 use App\User;
 
 use App\Plugins\Manage\ManagePluginBase;
+
+use App\Rules\CustomValiUserEmailUnique;
 
 /**
  * ユーザ管理クラス
@@ -54,7 +57,7 @@ class UserManage extends ManagePluginBase
     /**
      *  データ取得
      */
-    private function getUsers($request, $page)
+    private function getUsers($request, $page, $users_columns)
     {
         /* 権限が指定されている場合は、権限を保持しているユーザID を抜き出しておき、後で whereIn する。
         ----------------------------------------------------------------------------------------------*/
@@ -137,27 +140,81 @@ class UserManage extends ManagePluginBase
         /* ユーザデータ取得
         ----------------------------------------------------------------------------------------------*/
 
+        // ユーザー追加項目のソートカラム
+        $sort_column_id = null;
+
+        // ユーザー追加項目のソート順
+        $sort_column_orders = [];
+        foreach ($users_columns as $users_column) {
+            // ソート順
+            $sort_column_orders[$users_column->id . '_asc'] = 'asc';
+            $sort_column_orders[$users_column->id . '_desc'] = 'desc';
+        }
+
+        if ($request->session()->has('user_search_condition.sort')) {
+            // ソートあり
+            $sort = session('user_search_condition.sort');
+
+            if (array_key_exists($sort, $sort_column_orders)) {
+                $sort_flag = explode('_', $sort);
+                if (count($sort_flag) == 2) {
+                    // ユーザー追加項目のソートカラム取得
+                    $sort_column_id = $sort_flag[0];
+                    //$sort_column_order = $sort_flag[1];
+                }
+            }
+        }
+
         // ユーザデータ取得
-        $users_query = User::select('users.*');
+        // $users_query = User::select('users.*');
+        // ユーザー追加項目のソートなし
+        if (empty($sort_column_id)) {
+            $users_query = User::select('users.*');
+        } else {
+            // ユーザー追加項目のソートあり
+            $users_query = User::select('users.*', 'users_input_cols.value')
+                ->leftjoin('users_input_cols', function ($join) use ($sort_column_id) {
+                    $join->on('users_input_cols.users_id', '=', 'users.id')
+                        ->where('users_input_cols.users_columns_id', '=', $sort_column_id);
+                });
+        }
 
         // 権限
         if ($in_users) {
-            $users_query->whereIn('id', $in_users->pluck('users_id'));
+            $users_query->whereIn('users.id', $in_users->pluck('users_id'));
         }
 
         // ログインID
         if ($request->session()->has('user_search_condition.userid')) {
-            $users_query->where('userid', 'like', '%' . $request->session()->get('user_search_condition.userid') . '%');
+            $users_query->where('users.userid', 'like', '%' . $request->session()->get('user_search_condition.userid') . '%');
         }
 
         // ユーザー名
         if ($request->session()->has('user_search_condition.name')) {
-            $users_query->where('name', 'like', '%' . $request->session()->get('user_search_condition.name') . '%');
+            $users_query->where('users.name', 'like', '%' . $request->session()->get('user_search_condition.name') . '%');
         }
 
         // eメール
         if ($request->session()->has('user_search_condition.email')) {
-            $users_query->where('email', 'like', '%' . $request->session()->get('user_search_condition.email') . '%');
+            $users_query->where('users.email', 'like', '%' . $request->session()->get('user_search_condition.email') . '%');
+        }
+
+        foreach ($users_columns as $users_column) {
+            if ($request->session()->has('user_search_condition.users_columns_value.'. $users_column->id)) {
+                $search_keyword = $request->session()->get('user_search_condition.users_columns_value.'. $users_column->id);
+
+                // $users_query->whereIn('users_inputs.id', function ($query) use ($search_keyword, $users_columns_id, $hide_columns_ids) {
+                $users_query->whereIn('users.id', function ($query) use ($search_keyword, $users_column) {
+                    // 縦持ちのvalue を検索して、行の id を取得。
+                    $query->select('users_id')
+                            ->from('users_input_cols')
+                            ->join('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
+                            ->where('users_columns.id', $users_column->id)
+                            //->whereNotIn('users_columns.id', $hide_columns_ids)
+                            ->where('value', 'like', '%' . $search_keyword . '%')
+                            ->groupBy('users_id');
+                });
+            }
         }
 
         // 表示順
@@ -166,18 +223,22 @@ class UserManage extends ManagePluginBase
             $sort = session('user_search_condition.sort');
         }
         if ($sort == 'created_at_asc') {
-            $users_query->orderBy('created_at', 'asc');
+            $users_query->orderBy('users.created_at', 'asc');
         } elseif ($sort == 'created_at_desc') {
-            $users_query->orderBy('created_at', 'desc');
+            $users_query->orderBy('users.created_at', 'desc');
         } elseif ($sort == 'updated_at_asc') {
-            $users_query->orderBy('updated', 'asc');
+            $users_query->orderBy('users.updated', 'asc');
         } elseif ($sort == 'updated_at_desc') {
-            $users_query->orderBy('updated', 'desc');
+            $users_query->orderBy('users.updated', 'desc');
         } elseif ($sort == 'userid_asc') {
-            $users_query->orderBy('userid', 'asc');
+            $users_query->orderBy('users.userid', 'asc');
         } elseif ($sort == 'userid_desc') {
-            $users_query->orderBy('userid', 'desc');
+            $users_query->orderBy('users.userid', 'desc');
+        } elseif (array_key_exists($sort, $sort_column_orders)) {
+            // ユーザー追加項目のソートあり
+            $users_query->orderBy('users_input_cols.value', $sort_column_orders[$sort]);
         }
+        // dd($sort_column_orders);
 
         // データ取得
         $users = $users_query->paginate(10, null, 'page', $page);
@@ -288,13 +349,24 @@ class UserManage extends ManagePluginBase
         /* データの取得（検索）
         ----------------------------------------------*/
 
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+        // カラムの選択肢
+        $users_columns_id_select = UsersTool::getUsersColumnsSelects();
+
         // User データの取得
-        $users = $this->getUsers($request, $page);
+        $users = $this->getUsers($request, $page, $users_columns);
+
+        // ユーザーの追加項目データ
+        $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
 
         return view('plugins.manage.user.list', [
-            "function"    => __FUNCTION__,
+            "function" => __FUNCTION__,
             "plugin_name" => "user",
-            "users"       => $users,
+            "users" => $users,
+            "users_columns" => $users_columns,
+            "users_columns_id_select" => $users_columns_id_select,
+            "input_cols" => $input_cols,
         ]);
     }
 
@@ -325,6 +397,23 @@ class UserManage extends ManagePluginBase
             "sort"               => $request->input('user_search_condition.sort'),
         ];
 
+        //// ユーザーの追加項目.
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        foreach ($users_columns as $users_column) {
+            $value = "";
+            if (!isset($request->users_columns_value[$users_column->id])) {
+                // 値なし
+                $value = null;
+            } elseif (is_array($request->users_columns_value[$users_column->id])) {
+                $value = implode(UsersTool::CHECKBOX_SEPARATOR, $request->users_columns_value[$users_column->id]);
+            } else {
+                $value = $request->users_columns_value[$users_column->id];
+            }
+            $user_search_condition['users_columns_value'][$users_column->id] = $value;
+        }
+
         session(["user_search_condition" => $user_search_condition]);
 
         return redirect("/manage/user");
@@ -353,18 +442,30 @@ class UserManage extends ManagePluginBase
         $original_role_configs = Configs::select('configs.*', 'users_roles.role_value')
                                         ->leftJoin('users_roles', function ($join) use ($id) {
                                             $join->on('users_roles.role_name', '=', 'configs.name')
-                                                 ->where('users_roles.users_id', '=', $id)
-                                                 ->where('users_roles.target', '=', 'original_role');
+                                                ->where('users_roles.users_id', '=', $id)
+                                                ->where('users_roles.target', '=', 'original_role');
                                         })
                                         ->where('category', 'original_role')
                                         ->orderBy('additional1', 'asc')
                                         ->get();
 
+        //// ユーザの追加項目.
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+        // カラムの選択肢
+        $users_columns_id_select = UsersTool::getUsersColumnsSelects();
+        // dd($users_columns, $users_columns_id_select);
+        // カラムの登録データ
+        $input_cols = null;
+
         return view('plugins.manage.user.regist', [
-            "function"              => __FUNCTION__,
-            "plugin_name"           => "user",
-            "user"                  => $user,
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "user" => $user,
             "original_role_configs" => $original_role_configs,
+            'users_columns' => $users_columns,
+            'users_columns_id_select' => $users_columns_id_select,
+            'input_cols' => $input_cols,
         ]);
     }
 
@@ -394,35 +495,75 @@ class UserManage extends ManagePluginBase
                                         ->orderBy('additional1', 'asc')
                                         ->get();
 
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+        // カラムの選択肢
+        $users_columns_id_select = UsersTool::getUsersColumnsSelects();
+        // dd($users_columns, $users_columns_id_select);
+        // カラムの登録データ
+        $input_cols = UsersTool::getUsersInputCols([$id]);
+
         // 画面呼び出し
         return view('plugins.manage.user.regist', [
-            "function"              => __FUNCTION__,
-            "plugin_name"           => "user",
-            "id"                    => $id,
-            "user"                  => $user,
-            "users_roles"           => $users_roles,
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "id" => $id,
+            "user" => $user,
+            "users_roles" => $users_roles,
             "original_role_configs" => $original_role_configs,
+            'users_columns' => $users_columns,
+            'users_columns_id_select' => $users_columns_id_select,
+            'input_cols' => $input_cols,
         ]);
     }
 
     /**
-     *  更新
+     * 更新
      */
     public function update($request, $id = null)
     {
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)],
-            'password' => 'nullable|string|min:6|confirmed',
-            'status'   => 'required',
-        ]);
-        $validator->setAttributeNames([
-            'name'     => 'ユーザ名',
-            'email'    => 'eメール',
-            'password' => 'パスワード',
-            'status'   => '状態',
-        ]);
+        // change: ユーザーの追加項目に対応
+        // $validator = Validator::make($request->all(), [
+        //     'name'     => 'required|string|max:255',
+        //     'email'    => ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)],
+        //     'password' => 'nullable|string|min:6|confirmed',
+        //     'status'   => 'required',
+        // ]);
+        // $validator->setAttributeNames([
+        //     'name'     => 'ユーザ名',
+        //     'email'    => 'eメール',
+        //     'password' => 'パスワード',
+        //     'status'   => '状態',
+        // ]);
+        $validator_array = [
+            'column' => [
+                'name' => 'required|string|max:255',
+                'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
+                'password' => 'nullable|string|min:6|confirmed',
+                'status' => 'required',
+            ],
+            'message' => [
+                'name' => 'ユーザ名',
+                'email' => 'eメール',
+                'password' => 'パスワード',
+                'status' => '状態',
+            ]
+        ];
+
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        foreach ($users_columns as $users_column) {
+            // バリデータールールをセット
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $validator_array['column']);
+        $validator->setAttributeNames($validator_array['message']);
+        // Log::debug(var_export($request->all(), true));
+        // Log::debug(var_export($validator_array, true));
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -448,8 +589,35 @@ class UserManage extends ManagePluginBase
         // ユーザデータの更新
         User::where('id', $id)->update($update_array);
 
+        // ユーザーの追加項目.
+        // id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
+        // delete -> insertのため、権限非表示カラムは消さずに残す。
+        UsersInputCols::where('users_id', $id)
+                            // ->whereNotIn('users_columns_id', $hide_columns_ids)
+                            ->delete();
+
+        // users_input_cols 登録
+        foreach ($users_columns as $users_column) {
+            $value = "";
+            if (!isset($request->users_columns_value[$users_column->id])) {
+                // 値なし
+                $value = null;
+            } elseif (is_array($request->users_columns_value[$users_column->id])) {
+                $value = implode(UsersTool::CHECKBOX_SEPARATOR, $request->users_columns_value[$users_column->id]);
+            } else {
+                $value = $request->users_columns_value[$users_column->id];
+            }
+
+            // データ登録フラグを見て登録
+            $users_input_cols = new UsersInputCols();
+            $users_input_cols->users_id = $id;
+            $users_input_cols->users_columns_id = $users_column->id;
+            $users_input_cols->value = $value;
+            $users_input_cols->save();
+        }
+
         // ユーザ権限の更新（権限データの delete & insert）
-        DB::table('users_roles')->where('users_id', '=', $id)->delete();
+        UsersRoles::where('users_id', '=', $id)->delete();
 
         // ユーザ権限の登録
         if (!empty($request->base)) {

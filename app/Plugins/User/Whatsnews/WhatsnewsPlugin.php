@@ -602,7 +602,7 @@ class WhatsnewsPlugin extends UserPluginBase
         $base_site_name = Configs::where('name', 'base_site_name')->first();
 
         // URL
-        $url = url("/redirect/plugin/wahtsnews/rss/" . $page_id . "/" . $frame_id);
+        $url = url("/redirect/plugin/whatsnews/rss/" . $page_id . "/" . $frame_id);
 
         // HTTPヘッダー出力
         header('Content-Type: text/xml; charset=UTF-8');
