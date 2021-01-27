@@ -131,6 +131,7 @@
         </div>
     </div>
 
+    {{-- ユーザーの追加カラム --}}
     @foreach($users_columns as $users_column)
         @php
             // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
@@ -144,7 +145,6 @@
             }
         @endphp
 
-        {{-- 通常の項目 --}}
         <div class="form-group row">
             <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$users_column->column_name}} @if ($users_column->required)<span class="badge badge-danger">必須</span> @endif</label>
             <div class="col-md-8">

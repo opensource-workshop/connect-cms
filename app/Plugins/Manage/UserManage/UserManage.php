@@ -496,9 +496,9 @@ class UserManage extends ManagePluginBase
                                         ->orderBy('additional1', 'asc')
                                         ->get();
 
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
-        // カラムの選択肢用データ
+        // カラムの選択肢
         $users_columns_id_select = UsersTool::getUsersColumnsSelects();
         // dd($users_columns, $users_columns_id_select);
         // カラムの登録データ
