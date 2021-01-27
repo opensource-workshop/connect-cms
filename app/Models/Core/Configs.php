@@ -3,6 +3,7 @@
 namespace App\Models\Core;
 
 use Illuminate\Database\Eloquent\Model;
+
 // use Illuminate\Support\Facades\Log;
 
 class Configs extends Model
