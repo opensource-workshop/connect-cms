@@ -349,9 +349,9 @@ class UserManage extends ManagePluginBase
         /* データの取得（検索）
         ----------------------------------------------*/
 
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
-        // カラムの選択肢用データ
+        // カラムの選択肢
         $users_columns_id_select = UsersTool::getUsersColumnsSelects();
 
         // User データの取得
@@ -398,10 +398,9 @@ class UserManage extends ManagePluginBase
         ];
 
         //// ユーザーの追加項目.
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
 
-        // users_input_cols
         foreach ($users_columns as $users_column) {
             $value = "";
             if (!isset($request->users_columns_value[$users_column->id])) {
@@ -443,17 +442,17 @@ class UserManage extends ManagePluginBase
         $original_role_configs = Configs::select('configs.*', 'users_roles.role_value')
                                         ->leftJoin('users_roles', function ($join) use ($id) {
                                             $join->on('users_roles.role_name', '=', 'configs.name')
-                                                 ->where('users_roles.users_id', '=', $id)
-                                                 ->where('users_roles.target', '=', 'original_role');
+                                                ->where('users_roles.users_id', '=', $id)
+                                                ->where('users_roles.target', '=', 'original_role');
                                         })
                                         ->where('category', 'original_role')
                                         ->orderBy('additional1', 'asc')
                                         ->get();
 
         //// ユーザの追加項目.
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
-        // カラムの選択肢用データ
+        // カラムの選択肢
         $users_columns_id_select = UsersTool::getUsersColumnsSelects();
         // dd($users_columns, $users_columns_id_select);
         // カラムの登録データ
@@ -552,7 +551,7 @@ class UserManage extends ManagePluginBase
             ]
         ];
 
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
 
         foreach ($users_columns as $users_column) {

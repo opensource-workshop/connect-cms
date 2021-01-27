@@ -101,7 +101,7 @@ class RegisterController extends Controller
             }
         }
 
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
 
         foreach ($users_columns as $users_column) {
@@ -158,7 +158,7 @@ class RegisterController extends Controller
         ]);
 
         //// ユーザーの追加項目の登録.
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
 
         // users_input_cols 登録

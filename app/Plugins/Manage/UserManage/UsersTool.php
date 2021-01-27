@@ -20,11 +20,11 @@ class UsersTool
     const CHECKBOX_SEPARATOR = '|';
 
     /**
-     * カラム取得
+     * ユーザーのカラム取得
      */
     public static function getUsersColumns()
     {
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersColumns::orderBy('display_sequence')->get();
 
         // カラムデータがない場合
@@ -36,11 +36,11 @@ class UsersTool
     }
 
     /**
-     * カラムの選択肢用データ取得
+     * カラムの選択肢 取得
      */
     public static function getUsersColumnsSelects()
     {
-        // カラムの選択肢用データ
+        // カラムの選択肢
         $users_columns_selects = UsersColumnsSelects::select('users_columns_selects.*')
                 ->join('users_columns', 'users_columns.id', '=', 'users_columns_selects.users_columns_id')
                 ->orderBy('users_columns_selects.users_columns_id', 'asc')
@@ -69,7 +69,7 @@ class UsersTool
      */
     public static function getUsersInputCols($users_ids)
     {
-        // データ詳細の取得
+        // カラムの登録データ
         $input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name', 'uploads.client_original_name')
                                         ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')

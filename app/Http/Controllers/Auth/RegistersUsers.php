@@ -50,9 +50,9 @@ trait RegistersUsers
         }
 
         //// ユーザの追加項目.
-        // ユーザーのカラムデータ
+        // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
-        // カラムの選択肢用データ
+        // カラムの選択肢
         $users_columns_id_select = UsersTool::getUsersColumnsSelects();
         // カラムの登録データ
         $input_cols = null;
