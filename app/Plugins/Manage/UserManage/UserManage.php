@@ -5,8 +5,9 @@ namespace App\Plugins\Manage\UserManage;
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 // use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+// use Illuminate\Validation\Rule;
 use DB;
 
 use App\Models\Core\Configs;
@@ -583,7 +584,9 @@ class UserManage extends ManagePluginBase
 
         // パスワードの入力があれば、更新
         if (!empty($request->password)) {
-            $update_array['password'] = bcrypt($request->password);
+            // change to laravel6.
+            // $update_array['password'] = bcrypt($request->password);
+            $update_array['password'] = Hash::make($request->password);
         }
 
         // ユーザデータの更新
