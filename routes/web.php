@@ -1,11 +1,15 @@
 <?php
 
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Log;
-
-// use App\Http\Controllers\Core\ClassController;
-// use App\Http\Controllers\Core\DefaultController;
-
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
 /*
     [URL ルール]
     コアURL          /core/{action_type(frame等)}/{action}/{page_id?}/{frame_id?}
@@ -100,5 +104,4 @@ Route::get( '{all}', 'Core\DefaultController')->where('all', '.*')->name('get_al
 Route::post('{all}', 'Core\DefaultController')->where('all', '.*')->name('post_all');
 
 // ログの書式
-//Log::debug($request->action);
-
+//\Log::debug($request->action);

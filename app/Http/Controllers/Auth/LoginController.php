@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Providers\RouteServiceProvider;
 use App\Traits\ConnectCommonTrait;
 
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -38,8 +39,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/';
-    //protected $redirectTo = '/home';
+    protected $redirectTo = RouteServiceProvider::HOME;
 
     /**
      * Create a new controller instance.
@@ -95,7 +95,7 @@ class LoginController extends Controller
                 if (!empty($redirectNc2)) {
                     return $redirectNc2;
                 }
-        
+
                 // ここに来るということは、NetCommons2 からの移行パスワードでの認証もNG
                 throw $e;
             }

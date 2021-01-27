@@ -68,6 +68,7 @@ return [
     |
     */
 
+    //'timezone' => 'UTC',
     'timezone' => 'Asia/Tokyo',
 
     /*
@@ -81,6 +82,7 @@ return [
     |
     */
 
+    //'locale' => 'en',
     'locale' => 'ja',
 
     /*

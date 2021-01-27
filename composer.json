@@ -1,67 +1,74 @@
 {
     "name": "opensource-workshop/connect-cms",
-    "description": "Connect-CMS is a content management system for easily creating websites.",
-    "keywords": ["cms", "connect-cms", "laravel"],
-    "license": "MIT",
     "type": "project",
+    "description": "Connect-CMS is a content management system for easily creating websites.",
+    "keywords": [
+        "cms",
+        "connect-cms",
+        "laravel"
+    ],
+    "license": "MIT",
     "require": {
-        "php": ">=7.2.0",
+        "php": ">=7.2.5",
         "azuyalabs/yasumi": "^2.3",
         "bensampo/laravel-enum": "1.38.*",
         "doctrine/dbal": "^2.10",
         "ezyang/htmlpurifier": "^4.13",
-        "fideloper/proxy": "^4.0",
+        "fideloper/proxy": "^4.4",
         "kalnoy/nestedset": "5.0.3",
         "laravel/framework": "6.*",
         "laravel/helpers": "^1.4",
-        "laravel/tinker": "~1.0",
+        "laravel/tinker": "^2.5",
         "laravelcollective/html": "^6.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.3",
-        "filp/whoops": "~2.0",
-        "fzaninotto/faker": "~1.4",
-        "mockery/mockery": "~1.0",
+        "facade/ignition": "^1.16.4",
+        "fakerphp/faker": "^1.9.1",
+        "mockery/mockery": "^1.0",
+        "nunomaduro/collision": "^3.0",
         "phpunit/phpunit": "^8.5.8|^9.3.3",
-        "squizlabs/php_codesniffer": "^3.5",
-        "symfony/thanks": "^1.0"
+        "squizlabs/php_codesniffer": "^3.5"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
     },
     "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
         "classmap": [
             "database/seeds",
             "database/factories"
-        ],
-        "psr-4": {
-            "App\\": "app/"
-        }
+        ]
     },
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/"
         }
     },
-    "extra": {
-        "laravel": {
-            "dont-discover": [
-            ]
-        }
-    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
         "post-create-project-cmd": [
-            "@php artisan key:generate"
-        ],
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover"
+            "@php artisan key:generate --ansi"
         ],
         "phpcs": [
             "phpcs --standard=phpcs.xml ./"
-        ],
-        "phpcs-color": [
-            "@phpcs --colors"
         ],
         "phpcs-any": [
             "phpcs --standard=phpcs.xml"
@@ -75,14 +82,8 @@
     },
     "scripts-descriptions": {
         "phpcs": "Run all phpcs (Dev Only, require ./vendor/bin/phpcs).",
-        "phpcs-color": "Run all phpcs add option colors (Linux Only & Dev Only, require ./vendor/bin/phpcs).",
         "phpcs-any": "Phpcs without check PATH, Use -- specify the PATH to check (Dev Only, require ./vendor/bin/phpcs).",
         "phpcbf": "Run all phpcbf (Dev Only, require ./vendor/bin/phpcbf).",
         "phpcbf-any": "Phpcbf without check PATH, Use -- specify the PATH to check (Dev Only, require ./vendor/bin/phpcbf)."
-    },
-    "config": {
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "optimize-autoloader": true
     }
 }
