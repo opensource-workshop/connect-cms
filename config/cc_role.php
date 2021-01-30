@@ -145,6 +145,8 @@ return [
         'changeBuckets'       => ['frames.change'],
         'editBucketsRoles'    => ['frames.edit'],
         'saveBucketsRoles'    => ['frames.edit'],
+        'editBucketsMails'    => ['frames.edit'],
+        'saveBucketsMails'    => ['frames.edit'],
 
         'addColumn'           => ['buckets.addColumn'],
         'editColumn'          => ['buckets.editColumn'],
@@ -183,10 +185,12 @@ return [
         'createBuckets'       => ['get'],
         'editBuckets'         => ['get'],
         'editBucketsRoles'    => ['get'],
+        'editBucketsMails'    => ['get'],
         'saveBuckets'         => ['post'],
         'destroyBuckets'      => ['post'],
         'changeBuckets'       => ['post'],
         'saveBucketsRoles'    => ['post'],
+        'saveBucketsMails'    => ['post'],
 
         'addColumn'           => ['post'],
         'editColumn'          => ['get'],

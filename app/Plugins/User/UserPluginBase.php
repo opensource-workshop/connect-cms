@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,7 @@ use HTMLPurifier;
 use HTMLPurifier_Config;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
@@ -528,6 +530,17 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  Buckets のメール設定取得
+     */
+    protected function getBucketMail($backet)
+    {
+        if (empty($backet)) {
+            return new BucketsMail();
+        }
+        return BucketsMail::firstOrNew(['buckets_id' => $backet->id]);
+    }
+
+    /**
      * 権限設定 変更画面
      */
     public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
@@ -539,6 +552,29 @@ class UserPluginBase extends PluginBase
             'buckets'      => $buckets,
             'plugin_name'  => $this->frame->plugin_name,
             'use_approval' => $use_approval,
+        ]);
+    }
+
+    /**
+     * メール送信設定 変更画面
+     */
+    public function editBucketsMails($request, $page_id, $frame_id, $id = null)
+    {
+        // Buckets の取得
+        $bucket = $this->getBuckets($frame_id);
+
+        // Backet が取れない場合はエラー。
+        if (empty($bucket)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($bucket);
+
+        return $this->commonView('frame_edit_mails', [
+            'bucket'       => $bucket,
+            'bucket_mail'  => $bucket_mail,
+            'plugin_name'  => $this->frame->plugin_name,
         ]);
     }
 
@@ -590,6 +626,11 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
+        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
+        if (empty($bucket)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
         // buckets がまだない & 固定記事プラグインの場合
         if (empty($buckets) && $this->frame->plugin_name == 'contents') {
             $buckets = new Buckets;
@@ -613,6 +654,73 @@ class UserPluginBase extends PluginBase
             'plugin_name'  => $this->frame->plugin_name,
             'use_approval' => $use_approval,
         ]);
+    }
+
+    /**
+     * リクエストで指定の値が空なら 0 を返す
+     */
+    protected function inputNullToZero($request, $name)
+    {
+        if (empty($request->$name)) {
+            return 0;
+        }
+        return $request->$name;
+    }
+
+    /**
+     * 権限設定 保存処理
+     */
+    public function saveBucketsMails($request, $page_id, $frame_id, $block_id)
+    {
+        // Buckets の取得
+        $bucket = $this->getBuckets($frame_id);
+
+        // buckets がない場合
+        if (empty($bucket)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($bucket);
+
+        // BucketsMails の設定受け取り
+        $bucket_mail->buckets_id         = $bucket->id;  // メール設定がまだ存在しない場合は buckets_id がないので、設定する。
+
+        // 投稿通知
+        $bucket_mail->timing             = $this->inputNullToZero($request, "timing");
+        $bucket_mail->notice_on          = $this->inputNullToZero($request, "notice_on");
+        $bucket_mail->notice_create      = $this->inputNullToZero($request, "notice_create");
+        $bucket_mail->notice_update      = $this->inputNullToZero($request, "notice_update");
+        $bucket_mail->notice_delete      = $this->inputNullToZero($request, "notice_delete");
+        $bucket_mail->notice_addresses   = $request->notice_addresses;
+        $bucket_mail->notice_groups      = $request->notice_groups;
+        $bucket_mail->notice_roles       = $request->notice_roles;
+        $bucket_mail->notice_subject     = $request->notice_subject;
+        $bucket_mail->notice_body        = $request->notice_body;
+
+        // 関連記事通知
+        $bucket_mail->relate_on          = $this->inputNullToZero($request, "relate_on");
+        $bucket_mail->relate_subject     = $request->relate_subject;
+        $bucket_mail->relate_body        = $request->relate_body;
+
+        // 承認通知
+        $bucket_mail->approval_on        = $this->inputNullToZero($request, "approval_on");
+        $bucket_mail->approval_addresses = $request->approval_addresses;
+        $bucket_mail->approval_subject   = $request->approval_subject;
+        $bucket_mail->approval_body      = $request->approval_body;
+
+        // 承認済み通知
+        $bucket_mail->approved_on        = $this->inputNullToZero($request, "approved_on");
+        $bucket_mail->approved_author    = $this->inputNullToZero($request, "approved_author");
+        $bucket_mail->approved_addresses = $request->approved_addresses;
+        $bucket_mail->approved_subject   = $request->approved_subject;
+        $bucket_mail->approved_body      = $request->approved_body;
+
+        // BucketsMails の更新
+        $bucket_mail->save();
+
+        // 登録後はリダイレクトしてメール設定ページを開く。
+        return new Collection(['redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
     }
 
     /**
