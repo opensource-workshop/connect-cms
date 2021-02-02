@@ -473,9 +473,10 @@ class DatabasesPlugin extends UserPluginBase
 
             // カスタムテンプレート用
             // 項目名|検索区分|値　→　項目名（id）でマージしてor検索
-            if ($request->has('search_options_or') && is_array($request->search_options_or)) {
+            if (!empty(session('search_options_or.'.$frame_id))) {
+                $search_options_or = session('search_options_or.'.$frame_id);
                 $merge_search_options = [];
-                foreach ($request->search_options_or as $search_option) {
+                foreach ($search_options_or as $search_option) {
                     list($colname, $reg_txt, $val) = explode('|', $search_option);
                     if (count(explode('|', $search_option)) != 3) {
                         continue;  // 指定が正しくなければ飛ばす
@@ -528,10 +529,11 @@ class DatabasesPlugin extends UserPluginBase
             // カスタムテンプレート用
             // 期間検索　［yyyymm(dd)|yyyymm(dd)...］で入力されているデータを検索
             // 検索対象の項目型は複数年月型（テキスト入力）が推奨だが、期間外データを入力する場合は1行文字列型でも可能
-            if ($request->has('search_term') && is_array($request->search_term)) {
-                if (isset($request->search_term['column_name'])) {
-                    $colname = $request->search_term['column_name'];
-                    $tmp_request_search_term = $request->search_term;
+            if (!empty(session('search_term.'.$frame_id))) {
+                $search_term = session('search_term.'.$frame_id);
+                if (isset($search_term['column_name'])) {
+                    $colname = $search_term['column_name'];
+                    $tmp_request_search_term = $search_term;
                     $search_term_column_obj = $columns->where('column_name', $colname);
                     if (!empty($search_term_column_obj)) {
                         $search_term_column = $search_term_column_obj->first();
@@ -539,8 +541,8 @@ class DatabasesPlugin extends UserPluginBase
                             $col_id = $search_term_column->id;
                             unset($tmp_request_search_term['column_name']);
                             $term_month = 12;
-                            if (isset($request->search_term['term_month'])) {
-                                $term_month = (int)$request->search_term['term_month'];
+                            if (isset($search_term['term_month'])) {
+                                $term_month = (int)$search_term['term_month'];
                                 unset($tmp_request_search_term['term_month']);
                             }
                             // datepickerで入力された場合にはyyyy/MMでくるので置換する
@@ -852,6 +854,9 @@ class DatabasesPlugin extends UserPluginBase
             // オプション検索OR
             session(['search_options_or.'.$frame_id => $request->search_options_or]);
 
+            // オプション検索期間
+            session(['search_term.'.$frame_id => $request->search_term]);
+
             // ランダム読み込みのための Seed をセッション中に作っておく
             if (empty(session('sort_seed.'.$frame_id))) {
                 session(['sort_seed.'.$frame_id => rand()]);
@@ -870,6 +875,15 @@ class DatabasesPlugin extends UserPluginBase
                 session(['sort_column_order.'.$frame_id => '']);
             }
             // var_dump($sort_column_parts);
+
+            // 検索条件を削除
+            if($request->has('clear')){
+                session(['search_keyword.'.$frame_id => '']);
+                session(['search_column.'.$frame_id => '']);
+                session(['search_options.'.$frame_id => '']);
+                session(['search_options_or.'.$frame_id => '']);
+                session(['search_term.'.$frame_id => '']);
+            }
         }
         return $this->index($request, $page_id, $frame_id);
     }
