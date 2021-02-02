@@ -14,7 +14,9 @@
         "kalnoy/nestedset": "4.3.4",
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0",
-        "laravelcollective/html": "^5.5.0"
+        "laravelcollective/html": "^5.5.0",
+        "setasign/fpdi": "^2.3",
+        "tecnickcom/tcpdf": "^6.3"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.3",
