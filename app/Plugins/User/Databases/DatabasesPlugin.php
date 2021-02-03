@@ -493,7 +493,10 @@ class DatabasesPlugin extends UserPluginBase
                         continue;  // 指定が正しくなければ飛ばす
                     }
                     if (empty($val)) {
-                        continue;  // 指定が正しくなければ飛ばす
+                        // 0 を検索したい場合もあるので追加
+                        if($val !== "0" ){
+                            continue;  // 指定が正しくなければ飛ばす
+                        }
                     }
                     // カラムIDでマージする
                     $merge_search_options[$option_search_column->id][] = [
@@ -558,6 +561,7 @@ class DatabasesPlugin extends UserPluginBase
                                     $term_value_to = $val;
                                 }
                             }
+                            $add_const_word_search_flg = false;
                             if (!empty($term_value_from) && empty($term_value_to)) {
                                 //検索前が入力　後が未入力
                                 $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
@@ -568,6 +572,7 @@ class DatabasesPlugin extends UserPluginBase
                                     unset($search_vals["term_value_from"]);
                                     unset($search_vals["term_value_to"]);
                                 }
+                                $add_const_word_search_flg = true;
                             } elseif (empty($term_value_from) && !empty($term_value_to)) {
                                 //検索前が未入力　後が入力
                                 $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
@@ -578,6 +583,7 @@ class DatabasesPlugin extends UserPluginBase
                                     unset($search_vals["term_value_from"]);
                                     unset($search_vals["term_value_to"]);
                                 }
+                                $add_const_word_search_flg = true;
                             } elseif (!empty($term_value_from) && !empty($term_value_to)) {
                                 //検索前入力、後が入力
                                 $strtime_term_value_from = strtotime($term_value_from. "/01");
@@ -597,21 +603,24 @@ class DatabasesPlugin extends UserPluginBase
                                     $i++;
                                     $search_vals["term_value_".$i] = date("Ym", $strtime_term_value_from);
                                 }
+                                $add_const_word_search_flg = true;
                             }
 
                             // テンプレートでsearch_term[XXXX]をセットすることで、ORの値を任意に増やすことができる（*や通年）等期間外のデータ
-                            $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
-                                $query->select('databases_inputs_id')
-                                ->from('databases_input_cols')
-                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                ->where('databases_input_cols.databases_columns_id', $col_id);
-                                $query->where(function ($query) use ($search_vals) {
-                                    foreach ($search_vals as $val) {
-                                        $query->orwhere('value', 'like', '%' . $val . '%');
-                                    }
+                            if($add_const_word_search_flg){
+                                $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
+                                    $query->select('databases_inputs_id')
+                                    ->from('databases_input_cols')
+                                    ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                    ->where('databases_input_cols.databases_columns_id', $col_id);
+                                    $query->where(function ($query) use ($search_vals) {
+                                        foreach ($search_vals as $val) {
+                                            $query->orwhere('value', 'like', '%' . $val . '%');
+                                        }
+                                    });
+                                    $query->groupBy('databases_inputs_id');
                                 });
-                                $query->groupBy('databases_inputs_id');
-                            });
+                            }
                         }
                     }
                 }
