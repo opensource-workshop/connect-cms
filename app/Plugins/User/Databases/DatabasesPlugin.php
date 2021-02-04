@@ -1320,12 +1320,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 表示順が空なら、自分を省いた最後の番号+1 をセット
-        if ($request->filled('display_sequence')) {
-            $display_sequence = intval($request->display_sequence);
-        } else {
-            $max_display_sequence = DatabasesInputs::where('databases_id', $database->id)->where('id', '<>', $id)->max('display_sequence');
-            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
-        }
+        $display_sequence = $this->getSaveDisplaySequence($request->display_sequence, $database->id, $id);
 
         // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
         if (empty($id)) {
@@ -1483,6 +1478,21 @@ class DatabasesPlugin extends UserPluginBase
             'after_message' => $after_message
         ]);
         */
+    }
+
+    /**
+     * 登録する表示順を取得
+     */
+    private function getSaveDisplaySequence($display_sequence, $databases_id, $databases_inputs_id)
+    {
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        if (!is_null($display_sequence)) {
+            $display_sequence = intval($display_sequence);
+        } else {
+            $max_display_sequence = DatabasesInputs::where('databases_id', $databases_id)->where('id', '<>', $databases_inputs_id)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+        }
+        return $display_sequence;
     }
 
     /**
@@ -2907,15 +2917,23 @@ class DatabasesPlugin extends UserPluginBase
                 // Log::debug(var_export($filesystem->extension($unzip_uploads_full_path), true));
                 // Log::debug(var_export($filesystem->size($unzip_uploads_full_path), true));
 
-                // ファイル保存
-                $directory = $this->getDirectory($upload->id);
-
                 // // 一時ファイルの削除
                 // fclose($fp);
                 // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
                 // dd('ここまで');
 
+                ////
+                //// ファイル保存
+                ////
+                $directory = $this->getDirectory($upload->id);
+
                 // $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
+                //
+                // zipで添付ファイルアップロードのため、$request->file($req_filename)->storeAs($directory, $upload->id...) を使えない。
+                // storeAs内で $directory を作成してると思われ、uploadsディレクトリが無い場合もありえる（他機能で１度もアップロードしてない場合等）ため、自分でアップロードディレクトリを作成する。
+                // $recursive=trueは再回帰的にディレクトリ作成.
+                $filesystem->makeDirectory(storage_path('app/') . $directory . '/', 0775, true);
+
                 // 一時ディレクトリから、uploadsディレクトリに移動
                 // 拡張子なしに対応
                 // $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . '.' . $filesystem->extension($unzip_uploads_full_path));
@@ -3046,6 +3064,7 @@ class DatabasesPlugin extends UserPluginBase
             // 配列末尾：表示順
             // 次の末尾：公開日時
             $display_sequence = array_pop($csv_columns);
+            $display_sequence = $this->getSaveDisplaySequence($display_sequence, $database->id, $databases_inputs_id);
             $posted_at = array_pop($csv_columns);
             $posted_at = new Carbon($posted_at);
 
