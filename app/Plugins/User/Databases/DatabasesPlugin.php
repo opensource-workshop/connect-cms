@@ -2932,7 +2932,9 @@ class DatabasesPlugin extends UserPluginBase
                 // zipで添付ファイルアップロードのため、$request->file($req_filename)->storeAs($directory, $upload->id...) を使えない。
                 // storeAs内で $directory を作成してると思われ、uploadsディレクトリが無い場合もありえる（他機能で１度もアップロードしてない場合等）ため、自分でアップロードディレクトリを作成する。
                 // $recursive=trueは再回帰的にディレクトリ作成.
-                $filesystem->makeDirectory(storage_path('app/') . $directory . '/', 0775, true);
+                if (! $filesystem->exists(storage_path('app/') . $directory . '/')) {
+                    $filesystem->makeDirectory(storage_path('app/') . $directory . '/', 0775, true);
+                }
 
                 // 一時ディレクトリから、uploadsディレクトリに移動
                 // 拡張子なしに対応
