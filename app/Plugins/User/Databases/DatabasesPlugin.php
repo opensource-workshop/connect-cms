@@ -35,7 +35,6 @@ use App\Rules\CustomVali_CsvExtensions;
 // use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
-use App\Utilities\Csv\SjisToUtf8EncodingFilter;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\Zip\UnzipUtils;
 use App\Utilities\String\StringUtils;
