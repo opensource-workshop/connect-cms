@@ -29,15 +29,15 @@
         {{-- ラベル --}}
         @if (isset($is_template_label_sm_4))
             {{-- label-sm-4テンプレート --}}
-            <label class="col-sm-4 control-label text-nowrap">{{$form_column->column_name}}</label>
+            <label class="col-sm-4 control-label">{{$form_column->column_name}}</label>
 
         @elseif (isset($is_template_label_sm_6))
             {{-- label-sm-6テンプレート --}}
-            <label class="col-sm-6 control-label text-nowrap">{{$form_column->column_name}}</label>
+            <label class="col-sm-6 control-label">{{$form_column->column_name}}</label>
 
         @else
             {{-- defaultテンプレート --}}
-            <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+            <label class="col-sm-2 control-label">{{$form_column->column_name}}</label>
         @endif
 
         {{-- 項目 --}}
