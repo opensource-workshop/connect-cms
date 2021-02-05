@@ -5,6 +5,7 @@ namespace App\Plugins\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 use Monolog\Logger;
@@ -16,6 +17,9 @@ use DB;
 use File;
 use HTMLPurifier;
 use HTMLPurifier_Config;
+
+use App\Jobs\DeleteNoticeJob;
+use App\Jobs\PostNoticeJob;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
@@ -721,6 +725,91 @@ class UserPluginBase extends PluginBase
 
         // 登録後はリダイレクトしてメール設定ページを開く。
         return new Collection(['redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+    }
+
+    /**
+     * 投稿通知の送信
+     */
+    public function sendPostNotice($post_row, $before_first_committed_at, $show_method)
+    {
+        // 行を表すレコードかのチェック
+        if (Schema::hasColumn($post_row->getTable(), 'id') && Schema::hasColumn($post_row->getTable(), 'first_committed_at') && Schema::hasColumn($post_row->getTable(), 'status')) {
+            // 続き
+        } else {
+            // 通知の送信をしない
+            return;
+        }
+
+        // buckets がない場合
+        if (empty($this->buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($this->buckets);
+
+        // 投稿通知の送信 on の確認
+        if ($bucket_mail->notice_on == 0) {
+            return;
+        }
+
+        // メールを送信すべき命令を確認
+        $notice_method = empty($before_first_committed_at) ? "notice_create" : "notice_update";
+
+        // メールを送信すべき命令が送信対象か確認
+        if ($notice_method == "notice_create" && $bucket_mail->notice_create == 1 && $post_row->status == 0) {
+            // 対象（登録）
+        } elseif ($notice_method == "notice_update" && $bucket_mail->notice_update == 1 && $post_row->status == 0) {
+            // 対象（変更）
+        } else {
+            // 対象外
+            return;
+        }
+
+        // 送信方法の確認
+        if ($bucket_mail->timing == 0) {
+            // 即時送信
+            dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, $notice_method));
+        } else {
+            // スケジュール送信
+            PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, $notice_method);
+        }
+    }
+
+    /**
+     * 削除通知の送信
+     */
+    public function sendDeleteNotice($id, $show_method, $delete_comment)
+    {
+        // buckets がない場合
+        if (empty($this->buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($this->buckets);
+
+        // 投稿通知の送信 on の確認
+        if ($bucket_mail->notice_on == 0) {
+            return;
+        }
+
+        // メールを送信すべき命令が送信対象か確認
+        if ($bucket_mail->notice_delete == 1) {
+            // 対象（登録）
+        } else {
+            // 対象外
+            return;
+        }
+
+        // 送信方法の確認
+        if ($bucket_mail->timing == 0) {
+            // 即時送信
+            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $id, $show_method, $delete_comment));
+        } else {
+            // スケジュール送信
+            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $id, $show_method, $delete_comment);
+        }
     }
 
     /**

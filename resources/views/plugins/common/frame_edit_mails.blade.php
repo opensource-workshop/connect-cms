@@ -85,11 +85,20 @@
                 <div class="form-group mb-0">
                     <textarea name="notice_body" class="form-control" rows=5>{!!old('notice_body', $bucket_mail->notice_body)!!}</textarea>
                 </div>
+
+<div class="card bg-light mt-1">
+  <div class="card-body px-2 pt-0 pb-1">
+    <span class="small">※ [[method]] を記述すると該当部分に処理名が入ります。<br />
+    ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
+    ※ [[delete_comment]] を記述すると該当部分に削除時のコメントが入ります。</span>
+  </div>
+</div>
             </div>
         </div>
     </div>
 
     {{-- 関連記事通知 --}}
+    {{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0">関連記事通知</label>
         <div class="{{$frame->getSettingInputClass(false)}}">
@@ -113,6 +122,7 @@
             </div>
         </div>
     </div>
+    --}}
 
     {{-- 承認通知 --}}
     <div class="form-group row">

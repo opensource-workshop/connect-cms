@@ -11,14 +11,27 @@ class PostNotice extends Mailable
 {
     use Queueable, SerializesModels;
 
+    private $frame = null;
+    private $bucket = null;
+    private $id = null;
+    private $show_method = null;
+    private $notice_method = null;
+    private $bucket_mail = null;
+
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($frame, $bucket, $id, $show_method, $notice_method, $bucket_mail)
     {
-        //
+        // 引数の保持
+        $this->frame         = $frame;
+        $this->bucket        = $bucket;
+        $this->id            = $id;
+        $this->notice_method = $notice_method;
+        $this->show_method   = $show_method;
+        $this->bucket_mail   = $bucket_mail;
     }
 
     /**
@@ -28,6 +41,16 @@ class PostNotice extends Mailable
      */
     public function build()
     {
-        return $this->markdown('emails.post.notice');
+        //return $this->markdown('emails.post.notice');
+        return $this->text('emails.post.notice_text')
+                    ->subject($this->bucket_mail->notice_subject)
+                    ->with([
+                        'frame'         => $this->frame,
+                        'bucket'        => $this->bucket,
+                        'id'            => $this->id,
+                        'show_method'   => $this->show_method,
+                        'notice_method' => $this->notice_method,
+                        'bucket_mail'   => $this->bucket_mail,
+                    ]);
     }
 }
