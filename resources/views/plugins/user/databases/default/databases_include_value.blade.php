@@ -57,6 +57,15 @@
             $value = date('Y/m/d',  strtotime($obj->value));
         }
     }
+    // 複数選択型
+    elseif ($column->column_type == DatabaseColumnType::checkbox) {
+        if (empty($obj)) {
+            $value = '';
+        }
+        else {
+            $value = str_replace('|', ', ', $obj->value);
+        }
+    }
     // 登録日型
     elseif ($column->column_type == DatabaseColumnType::created) {
         $value = $input->created_at;
