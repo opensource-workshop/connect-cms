@@ -116,7 +116,7 @@
 @if ($thread_root_post)
     <span class="badge badge-primary mb-1">スレッドの記事一覧</span>
     <div class="card mb-3">
-        <div class="card-header">{{$thread_root_post->title}}@if ($post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@elseif ($thread_root_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>@endif<span class="float-right">{{$post->updated_at->format('Y-m-d')}} [{{$post->created_name}}]</span></div>
+        <div class="card-header">{{$thread_root_post->title}}<span class="float-right">{{$thread_root_post->updated_at->format('Y-m-d')}} [{{$thread_root_post->created_name}}]</span></div>
         <div class="card-body">
             {!!$thread_root_post->body!!}
                 @foreach ($children_posts as $children_post)
