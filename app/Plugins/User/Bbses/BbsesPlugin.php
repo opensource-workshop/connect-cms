@@ -219,8 +219,8 @@ class BbsesPlugin extends UserPluginBase
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
 
-        // 取得（ここは対象スレッドの記事全てなので、get() で件数指定しない）
-        return $posts_query->get();
+        // 取得
+        return $posts_query->paginate($bbs_frame->getViewCount());
     }
 
     /* スタティック関数 */
