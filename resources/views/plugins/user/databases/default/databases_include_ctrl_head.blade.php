@@ -45,7 +45,7 @@
     </div>
     @endif
 
-    @if(($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
+    @if(($databases_frames->use_select_flag && $select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
         <div class="form-group form-row mb-3">
         {{-- 絞り込み --}}
         @foreach($select_columns as $select_column)

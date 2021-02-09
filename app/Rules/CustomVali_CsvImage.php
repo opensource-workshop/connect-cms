@@ -14,7 +14,7 @@ class CustomVali_CsvImage extends CustomVali_CsvExtensions
      *
      * @return void
      */
-    public function __construct(array $allow_extension = ['jpeg', 'png', 'gif', 'bmp', 'svg'])
+    public function __construct(array $allow_extension = ['jpeg', 'jpg', 'png', 'gif', 'bmp', 'svg'])
     {
         $this->allow_extension = $allow_extension;
     }

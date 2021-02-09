@@ -1,0 +1,16 @@
+@echo off
+
+rem Windows開発環境から、GitHub同期ディレクトリへコピー
+rem GitHub同期ディレクトリからWindows開発環境へのコピーは手動で行う。
+
+rem Model
+xcopy C:\path_to_local_connect-cms\app\ModelsOption "C:\path_to_github_dir\app\ModelsOption" /d /s
+
+rem Plugin
+xcopy C:\path_to_local_connect-cms\app\PluginsOption "C:\path_to_github_dir\app\PluginsOption" /d /s
+
+rem Databases
+xcopy C:\path_to_local_connect-cms\database\migrations_option "C:\path_to_github_dir\database\migrations_option" /d /s
+
+rem View
+xcopy C:\path_to_local_connect-cms\resources\views\plugins_option "C:\path_to_github_dir\resources\views\plugins_option" /d /s
