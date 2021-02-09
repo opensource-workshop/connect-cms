@@ -2,20 +2,19 @@
 
 namespace App\Plugins\User\Learningtasks;
 
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
+// use Carbon\Carbon;
+// use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use DB;
-use Session;
+// use Session;
 use App\Plugins\User\Learningtasks\LearningtasksTool;
 
-use App\Models\Core\Configs;
+// use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
@@ -38,6 +37,7 @@ use App\User;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * 課題管理プラグイン
@@ -1795,6 +1795,95 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 表示課題管理選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * 試験申し込み者一覧ダウンロード
+     */
+    public function downloadCsv($request, $page_id, $frame_id, $id)
+    {
+        // id で対象のデータの取得
+
+        // データベースの取得
+        $learningtask = Learningtasks::where('id', $id)->first();
+
+        /*
+        SELECT p.post_title, us.examination_id, u.name, e.start_at, us.created_at
+        FROM learningtasks_users_statuses AS us
+            LEFT JOIN users AS u ON u.id = us.user_id
+            LEFT JOIN learningtasks_posts AS p ON p.id = us.post_id
+            LEFT JOIN learningtasks_examinations AS e ON e.id = us.examination_id
+        WHERE `task_status` = 4
+        ORDER BY e.start_at, p.post_title
+        */
+        $learningtasks_users_statuses = LearningtasksUsersStatuses::
+                select(
+                    'learningtasks_posts.post_title',
+                    'learningtasks_users_statuses.examination_id',
+                    'users.name',
+                    'learningtasks_examinations.start_at',
+                    'learningtasks_users_statuses.created_at'
+                )
+                ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+                ->leftJoin('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                ->where('learningtasks_users_statuses.task_status', 4)
+                ->where('learningtasks_posts.learningtasks_id', $id)
+                ->orderBy('learningtasks_examinations.start_at', 'asc')
+                ->orderBy('learningtasks_posts.post_title', 'asc')
+                ->get();
+
+
+        // 返却用配列
+        $csv_array = array();
+
+        // 見出し行
+        $csv_array[0]['post_title'] = '科目名';
+        $csv_array[0]['examination_id'] = '試験ID';
+        $csv_array[0]['name'] = '氏名';
+        $csv_array[0]['start_at'] = '試験開始日時';
+        $csv_array[0]['created_at'] = '登録日時';
+
+        // データ
+        foreach ($learningtasks_users_statuses as $learningtasks_users_status) {
+            $csv_line['post_title'] = $learningtasks_users_status->post_title;
+            $csv_line['examination_id'] = $learningtasks_users_status->examination_id;
+            $csv_line['name'] = $learningtasks_users_status->name;
+            $csv_line['start_at'] = $learningtasks_users_status->start_at;
+            $csv_line['created_at'] = $learningtasks_users_status->created_at;
+            $csv_array[] = $csv_line;
+        }
+
+        // レスポンス版
+        $filename = $learningtask->learningtasks_name . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // Log::debug(var_export($request->character_code, true));
+
+        // 文字コード変換
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 
     /**

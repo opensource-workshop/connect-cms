@@ -1,6 +1,6 @@
 <?php
 
-return [
+$app_array = [
 
     /*
     |--------------------------------------------------------------------------
@@ -263,3 +263,23 @@ return [
     ],
 
 ];
+
+/**
+ * 外部プラグイン用に定義したenumファイル（enums_optionディレクトリ）をaliasesに登録
+ */
+// configディレクトリを起点に「App\EnumsOption」ディレクトリを取得
+$path_enums_option = str_replace(DIRECTORY_SEPARATOR . 'config', '', dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'EnumsOption' . DIRECTORY_SEPARATOR;
+// 「App\EnumsOption」ディレクトリ配下のファイルをフルパスで取得
+$fullpaths = glob($path_enums_option . '*');
+foreach ($fullpaths as $fullpath) {
+    // 拡張子を除外
+    $fullpath_omit_extention = str_replace('.php', '', $fullpath);
+    // ディレクトリ部分を除外
+    $enums_option_name = str_replace($path_enums_option, '', $fullpath_omit_extention);
+    // ネームスペースを追加
+    $enums_option_name_with_namespace = '\\App\\EnumsOption\\' . $enums_option_name;
+    // Laravelのエイリアスに登録
+    $app_array['aliases'][$enums_option_name] = get_class(new $enums_option_name_with_namespace);
+}
+
+return $app_array;
