@@ -86,13 +86,15 @@
                     <textarea name="notice_body" class="form-control" rows=5>{!!old('notice_body', $bucket_mail->notice_body)!!}</textarea>
                 </div>
 
-<div class="card bg-light mt-1">
-  <div class="card-body px-2 pt-0 pb-1">
-    <span class="small">※ [[method]] を記述すると該当部分に処理名が入ります。<br />
-    ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
-    ※ [[delete_comment]] を記述すると該当部分に削除時のコメントが入ります。</span>
-  </div>
-</div>
+                <div class="card bg-light mt-1">
+                    <div class="card-body px-2 pt-0 pb-1">
+                        <span class="small">
+                            ※ [[method]] を記述すると該当部分に処理名が入ります。<br />
+                            ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
+                            ※ [[delete_comment]] を記述すると該当部分に削除時のコメントが入ります。
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -154,6 +156,14 @@
                 <div class="form-group mb-0">
                     <textarea name="approval_body" class="form-control" rows=5>{!!old('approval_body', $bucket_mail->approval_body)!!}</textarea>
                 </div>
+
+                <div class="card bg-light mt-1">
+                    <div class="card-body px-2 pt-0 pb-1">
+                        <span class="small">
+                            ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -195,6 +205,14 @@
                 <span class="badge badge-secondary mt-3 mb-1">承認済み通知の本文</span>
                 <div class="form-group">
                     <textarea name="approved_body" class="form-control" rows=5>{!!old('approved_body', $bucket_mail->approved_body)!!}</textarea>
+                </div>
+
+                <div class="card bg-light mt-1">
+                    <div class="card-body px-2 pt-0 pb-1">
+                        <span class="small">
+                            ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

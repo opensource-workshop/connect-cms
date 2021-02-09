@@ -3629,7 +3629,7 @@ class DatabasesPlugin extends UserPluginBase
             //
             // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
             //
-            $query->where(function($tmp_query) use($table_name){
+            $query->where(function ($tmp_query) use ($table_name) {
                     $tmp_query->where($table_name . '.status', '=', \StatusType::active)
                     ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
             });

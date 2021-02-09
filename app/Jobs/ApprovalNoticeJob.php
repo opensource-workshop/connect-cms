@@ -31,10 +31,10 @@ class ApprovalNoticeJob implements ShouldQueue
     public function __construct($frame, $bucket, $id, $show_method)
     {
         // buckets などの受け取り
-        $this->frame  = $frame;
-        $this->bucket = $bucket;
-        $this->id     = $id;
-        $this->show_method   = $show_method;
+        $this->frame       = $frame;
+        $this->bucket      = $bucket;
+        $this->id          = $id;
+        $this->show_method = $show_method;
     }
 
     /**

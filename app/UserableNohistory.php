@@ -62,8 +62,6 @@ trait UserableNohistory
             // 初回確定日時カラム（first_committed_at）と status カラムがある場合、行を表すレコードとみなし、
             // status = 0（確定）の場合、現在日付を入れる。
             if (Schema::hasColumn($model->getTable(), 'first_committed_at') && Schema::hasColumn($model->getTable(), 'status') && $model->status == 0) {
-                //$model->before_first_committed_at = $model->first_committed_at;
-//                $model->appends['before_first_committed_at'] = $model->first_committed_at;
                 $model->first_committed_at = date('Y-m-d H:i:s');
             }
         });

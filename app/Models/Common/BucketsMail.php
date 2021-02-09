@@ -19,15 +19,15 @@ class BucketsMail extends Model
     {
         $notice_body = $this->notice_body;
 
-        // {X-METHOD}
-        $notice_body = str_ireplace('{X-METHOD}', NoticeJobType::getDescription($notice_method), $notice_body);
+        // [[method]]
+        $notice_body = str_ireplace('[[method]]', NoticeJobType::getDescription($notice_method), $notice_body);
 
-        // {X-URL}
+        // [[url]]
         $url = url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $id . '#frame-' . $frame->id;
-        $notice_body = str_ireplace('{X-URL}', $url, $notice_body);
+        $notice_body = str_ireplace('[[url]]', $url, $notice_body);
 
-        // {X-DELETE-COMMENT}
-        $notice_body = str_ireplace('{X-DELETE-COMMENT}', $delete_comment, $notice_body);
+        // [[delete_comment]]
+        $notice_body = str_ireplace('[[delete_comment]]', $delete_comment, $notice_body);
 
         return $notice_body;
     }
@@ -39,9 +39,9 @@ class BucketsMail extends Model
     {
         $approval_body = $this->approval_body;
 
-        // {X-URL}
+        // [[url]]
         $url = url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $id . '#frame-' . $frame->id;
-        $approval_body = str_ireplace('{X-URL}', $url, $approval_body);
+        $approval_body = str_ireplace('[[url]]', $url, $approval_body);
 
         return $approval_body;
     }
@@ -53,9 +53,9 @@ class BucketsMail extends Model
     {
         $approved_body = $this->approved_body;
 
-        // {X-URL}
+        // [[url]]
         $url = url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $id . '#frame-' . $frame->id;
-        $approved_body = str_ireplace('{X-URL}', $url, $approved_body);
+        $approved_body = str_ireplace('[[url]]', $url, $approved_body);
 
         return $approved_body;
     }
