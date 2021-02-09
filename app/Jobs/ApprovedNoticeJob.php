@@ -56,7 +56,13 @@ class ApprovedNoticeJob implements ShouldQueue
         }
 
         // メール送信（送信先メールアドレス）
-        Mail::to($bucket_mail->approved_addresses)->send(new ApprovedNotice($this->frame, $this->bucket, $this->id, $this->show_method, $bucket_mail));
+        $approved_addresses = explode(',', $bucket_mail->approved_addresses);
+        if (empty($approved_addresses)) {
+            return;
+        }
+        foreach ($approved_addresses as $approved_address) {
+            Mail::to($approved_address)->send(new ApprovedNotice($this->frame, $this->bucket, $this->id, $this->show_method, $bucket_mail));
+        }
 
         // メール送信（投稿者へ通知する）
         if ($bucket_mail->approved_author) {

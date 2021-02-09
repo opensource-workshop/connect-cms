@@ -53,6 +53,12 @@ class ApprovalNoticeJob implements ShouldQueue
         }
 
         // メール送信
-        Mail::to($bucket_mail->approval_addresses)->send(new ApprovalNotice($this->frame, $this->bucket, $this->id, $this->show_method, $bucket_mail));
+        $approval_addresses = explode(',', $bucket_mail->approval_addresses);
+        if (empty($approval_addresses)) {
+            return;
+        }
+        foreach ($approval_addresses as $approval_address) {
+            Mail::to($approval_address)->send(new ApprovalNotice($this->frame, $this->bucket, $this->id, $this->show_method, $bucket_mail));
+        }
     }
 }

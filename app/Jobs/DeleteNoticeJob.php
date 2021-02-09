@@ -55,6 +55,12 @@ class DeleteNoticeJob implements ShouldQueue
         }
 
         // メール送信
-        Mail::to($bucket_mail->notice_addresses)->send(new DeleteNotice($this->frame, $this->bucket, $this->id, $this->show_method, $this->delete_comment, $bucket_mail));
+        $notice_addresses = explode(',', $bucket_mail->notice_addresses);
+        if (empty($notice_addresses)) {
+            return;
+        }
+        foreach ($notice_addresses as $notice_address) {
+            Mail::to($notice_address)->send(new DeleteNotice($this->frame, $this->bucket, $this->id, $this->show_method, $this->delete_comment, $bucket_mail));
+        }
     }
 }
