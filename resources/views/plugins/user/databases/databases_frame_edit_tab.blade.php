@@ -65,3 +65,12 @@
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">権限設定</a>
     </li>
 @endif
+@if ($action == 'editBucketsMails' || $action == 'saveBucketsMails')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">メール設定</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editBucketsMails/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">メール設定</a>
+    </li>
+@endif

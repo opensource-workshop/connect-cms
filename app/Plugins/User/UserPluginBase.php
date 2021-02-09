@@ -2,8 +2,10 @@
 
 namespace App\Plugins\User;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 use Monolog\Logger;
@@ -16,7 +18,13 @@ use File;
 use HTMLPurifier;
 use HTMLPurifier_Config;
 
+use App\Jobs\ApprovalNoticeJob;
+use App\Jobs\ApprovedNoticeJob;
+use App\Jobs\DeleteNoticeJob;
+use App\Jobs\PostNoticeJob;
+
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
@@ -528,6 +536,17 @@ class UserPluginBase extends PluginBase
     }
 
     /**
+     *  Buckets のメール設定取得
+     */
+    protected function getBucketMail($backet)
+    {
+        if (empty($backet)) {
+            return new BucketsMail();
+        }
+        return BucketsMail::firstOrNew(['buckets_id' => $backet->id]);
+    }
+
+    /**
      * 権限設定 変更画面
      */
     public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
@@ -539,6 +558,29 @@ class UserPluginBase extends PluginBase
             'buckets'      => $buckets,
             'plugin_name'  => $this->frame->plugin_name,
             'use_approval' => $use_approval,
+        ]);
+    }
+
+    /**
+     * メール送信設定 変更画面
+     */
+    public function editBucketsMails($request, $page_id, $frame_id, $id = null)
+    {
+        // Buckets の取得
+        $bucket = $this->getBuckets($frame_id);
+
+        // Backet が取れない場合はエラー。
+        if (empty($bucket)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($bucket);
+
+        return $this->commonView('frame_edit_mails', [
+            'bucket'       => $bucket,
+            'bucket_mail'  => $bucket_mail,
+            'plugin_name'  => $this->frame->plugin_name,
         ]);
     }
 
@@ -590,6 +632,11 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
+        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
+        if (empty($buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
         // buckets がまだない & 固定記事プラグインの場合
         if (empty($buckets) && $this->frame->plugin_name == 'contents') {
             $buckets = new Buckets;
@@ -613,6 +660,242 @@ class UserPluginBase extends PluginBase
             'plugin_name'  => $this->frame->plugin_name,
             'use_approval' => $use_approval,
         ]);
+    }
+
+    /**
+     * リクエストで指定の値が空なら 0 を返す
+     */
+    protected function inputNullToZero($request, $name)
+    {
+        if (empty($request->$name)) {
+            return 0;
+        }
+        return $request->$name;
+    }
+
+    /**
+     * 権限設定 保存処理
+     */
+    public function saveBucketsMails($request, $page_id, $frame_id, $block_id)
+    {
+        // Buckets の取得
+        $bucket = $this->getBuckets($frame_id);
+
+        // buckets がない場合
+        if (empty($bucket)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($bucket);
+
+        // BucketsMails の設定受け取り
+        $bucket_mail->buckets_id         = $bucket->id;  // メール設定がまだ存在しない場合は buckets_id がないので、設定する。
+
+        // 投稿通知
+        $bucket_mail->timing             = $this->inputNullToZero($request, "timing");
+        $bucket_mail->notice_on          = $this->inputNullToZero($request, "notice_on");
+        $bucket_mail->notice_create      = $this->inputNullToZero($request, "notice_create");
+        $bucket_mail->notice_update      = $this->inputNullToZero($request, "notice_update");
+        $bucket_mail->notice_delete      = $this->inputNullToZero($request, "notice_delete");
+        $bucket_mail->notice_addresses   = $request->notice_addresses;
+        $bucket_mail->notice_groups      = $request->notice_groups;
+        $bucket_mail->notice_roles       = $request->notice_roles;
+        $bucket_mail->notice_subject     = $request->notice_subject;
+        $bucket_mail->notice_body        = $request->notice_body;
+
+        // 関連記事通知
+        $bucket_mail->relate_on          = $this->inputNullToZero($request, "relate_on");
+        $bucket_mail->relate_subject     = $request->relate_subject;
+        $bucket_mail->relate_body        = $request->relate_body;
+
+        // 承認通知
+        $bucket_mail->approval_on        = $this->inputNullToZero($request, "approval_on");
+        $bucket_mail->approval_addresses = $request->approval_addresses;
+        $bucket_mail->approval_subject   = $request->approval_subject;
+        $bucket_mail->approval_body      = $request->approval_body;
+
+        // 承認済み通知
+        $bucket_mail->approved_on        = $this->inputNullToZero($request, "approved_on");
+        $bucket_mail->approved_author    = $this->inputNullToZero($request, "approved_author");
+        $bucket_mail->approved_addresses = $request->approved_addresses;
+        $bucket_mail->approved_subject   = $request->approved_subject;
+        $bucket_mail->approved_body      = $request->approved_body;
+
+        // BucketsMails の更新
+        $bucket_mail->save();
+
+        // 登録後はリダイレクトしてメール設定ページを開く。
+        return new Collection(['redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+    }
+
+    /**
+     * 投稿通知の送信
+     */
+    public function sendPostNotice($post_row, $before_row, $show_method)
+    {
+        // 行を表すレコードかのチェック
+        //if (Schema::hasColumn($post_row->getTable(), 'id') && Schema::hasColumn($post_row->getTable(), 'first_committed_at') && Schema::hasColumn($post_row->getTable(), 'status')) {
+        //    // 続き
+        //} else {
+        //    // 通知の送信をしない
+        //    return;
+        //}
+
+        // buckets がない場合
+        if (empty($this->buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($this->buckets);
+
+        // --- メール送信の条件を確認
+
+        // メールを送信すべき命令を確認
+        $notice_methods = array();
+
+        // 記事が一時保存（status === 1）状態の場合は何もしない。
+        if ($post_row->status === 1) {
+            return;
+        }
+
+        // 承認通知がon の場合
+        // 記事が承認待ち（status === 2）の場合は、承認待ちメールを送る。（notice_approval）
+        // before_row（更新前）をチェックしない。
+        // 承認待ちの記事を変更した場合は、再度、承認待ちメールが飛ぶが、それでOKだと考える。
+        if ($bucket_mail->approval_on === 1 && $post_row->status === 2) {
+            $notice_methods[] = "notice_approval";
+        }
+
+        // 承認済み通知がon の場合
+        // before_row（更新前）の（status === 2）でpost_row の status が公開（=== 0）の場合に送信（notice_approved）
+        if ($bucket_mail->approved_on === 1 && $before_row->status === 2 && $post_row->status === 0) {
+            $notice_methods[] = "notice_approved";
+        }
+
+        // 投稿通知がon の場合
+        // before_row（更新前）のfirst_committed_at が空でstatus が公開（=== 0）は「登録」（notice_create）
+        // before_row（更新前）のfirst_committed_at が空ではなく、status が公開（=== 0）は「更新」（notice_update）
+        if ($bucket_mail->notice_on === 1) {
+            if ($bucket_mail->notice_create === 1 && empty($before_row->first_committed_at) && $post_row->status === 0) {
+                // 対象（登録）
+                $notice_methods[] = "notice_create";
+            } elseif ($bucket_mail->notice_update === 1 && !empty($before_row->first_committed_at) && $post_row->status === 0) {
+                // 対象（変更）
+                $notice_methods[] = "notice_update";
+            }
+        }
+
+        // 関連記事通知がon の場合
+        // status が公開（=== 0）は「関連記事通知」（notice_relate）
+        // 送信先はJob クラスのhandle() メソッドで取得する。
+        if ($bucket_mail->relate_on === 1 && $post_row->status === 0) {
+            $notice_methods[] = "notice_relate";
+        }
+
+        // 送信対象の命令がなかった場合は何もせずに戻る。
+        if (empty($notice_methods)) {
+            return;
+        }
+
+        // --- メール送信の処理を呼ぶ
+
+        // 承認通知
+        if (in_array("notice_approval", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method));
+            } else {
+                // スケジュール送信
+                ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method);
+            }
+        }
+
+        // 承認済み通知
+        if (in_array("notice_approved", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row->id, $post_row->created_id, $show_method));
+            } else {
+                // スケジュール送信
+                ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $post_row->created_id, $show_method);
+            }
+        }
+
+        // 投稿通知（登録）
+        if (in_array("notice_create", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, "notice_create"));
+            } else {
+                // スケジュール送信
+                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, "notice_create");
+            }
+        }
+
+        // 投稿通知（変更）
+        if (in_array("notice_update", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, "notice_update"));
+            } else {
+                // スケジュール送信
+                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, "notice_update");
+            }
+        }
+
+        // 関連記事通知
+        if (in_array("notice_relate", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method));
+            } else {
+                // スケジュール送信
+                RelateNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method);
+            }
+        }
+    }
+
+    /**
+     * 削除通知の送信
+     */
+    public function sendDeleteNotice($id, $show_method, $delete_comment)
+    {
+        // buckets がない場合
+        if (empty($this->buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($this->buckets);
+
+        // 投稿通知の送信 on の確認
+        if ($bucket_mail->notice_on == 0) {
+            return;
+        }
+
+        // メールを送信すべき命令が送信対象か確認
+        if ($bucket_mail->notice_delete == 1) {
+            // 対象（登録）
+        } else {
+            // 対象外
+            return;
+        }
+
+        // 送信方法の確認
+        if ($bucket_mail->timing == 0) {
+            // 即時送信
+            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $id, $show_method, $delete_comment));
+        } else {
+            // スケジュール送信
+            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $id, $show_method, $delete_comment);
+        }
     }
 
     /**

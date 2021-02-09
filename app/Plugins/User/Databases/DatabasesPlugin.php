@@ -4,6 +4,7 @@ namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
 // use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
@@ -243,7 +244,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesInputCols($id)
     {
         // データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'databases_columns.classname', 'uploads.client_original_name')
+        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'databases_columns.classname', 'databases_columns.role_display_control_flag', 'uploads.client_original_name')
                                         ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                         ->where('databases_inputs_id', $id)
@@ -1324,6 +1325,11 @@ class DatabasesPlugin extends UserPluginBase
         // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
         if (empty($id)) {
             $databases_inputs = new DatabasesInputs();
+
+            // 新規登録の判定のために、保存する前のレコードを退避しておく。
+            $before_databases_inputs = clone $databases_inputs;
+
+            // 値の保存
             $databases_inputs->databases_id = $database->id;
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
@@ -1331,6 +1337,10 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
+
+            // 新規登録の判定のために、保存する前のレコードを退避しておく。
+            $before_databases_inputs = clone $databases_inputs;
+
             // 更新されたら、行レコードの updated_at を更新したいので、update()
             $databases_inputs->updated_at = now();
             $databases_inputs->status = $status;
@@ -1434,6 +1444,13 @@ class DatabasesPlugin extends UserPluginBase
             // }
         }
 
+        // メール送信 引数(詳細表示メソッド, 登録したid, 登録か更新か)
+        //$this->sendPostNotice($databases_inputs->id, 'detail', empty($databases_inputs->first_committed_at) ? "notice_create" : "notice_update");
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
+//        $this->sendPostNotice($databases_inputs, 'detail');
+
         // delete: フォームの名残で残っていたメール送信処理をコメントアウト
         // // 最後の改行を除去
         // $contents_text = trim($contents_text);
@@ -1505,7 +1522,7 @@ class DatabasesPlugin extends UserPluginBase
             return $this->index($request, $page_id, $frame_id);
         }
 
-        // ファイル型の調査のため、詳細カラムデータを取得
+        // ファイル型の調査のため、詳細カラムデータを取得（削除通知でも使用）
         $input_cols = $this->getDatabasesInputCols($id);
 
         // ファイル型のファイル、uploads テーブルを削除
@@ -1531,6 +1548,17 @@ class DatabasesPlugin extends UserPluginBase
         // 行データを削除
         DatabasesInputs::where('id', $id)->delete();
 
+        // 削除通知に渡すために、項目の編集（最初の公開（権限で制御しない）の項目名と値）
+        $notice_cols = $input_cols->where("role_display_control_flag", 0);
+        $delete_comment = "";
+        if ($notice_cols->isNotEmpty()) {
+            $notice_cols_first = $notice_cols->first();
+            $delete_comment  = "以下、削除されたデータの最初の公開項目です。\n";
+            $delete_comment .= "「" . $notice_cols_first->column_name . "：" . $notice_cols_first->value . "」の行を削除しました。";
+        }
+
+        // メール送信 引数(削除した行ID, 詳細表示メソッド, 削除データを表すメッセージ)
+        $this->sendDeleteNotice($id, 'detail', $delete_comment);
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
@@ -3644,7 +3672,7 @@ class DatabasesPlugin extends UserPluginBase
             //
             // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
             //
-            $query->where(function($tmp_query) use($table_name){
+            $query->where(function ($tmp_query) use ($table_name) {
                     $tmp_query->where($table_name . '.status', '=', \StatusType::active)
                     ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
             });
@@ -3671,6 +3699,9 @@ class DatabasesPlugin extends UserPluginBase
         // 登録データ行の取得
         $databases_inputs = $this->getDatabasesInputs($id);
 
+        // 承認済みの判定のために、保存する前に初回確定日時を退避しておく。
+        $before_databases_inputs = clone $databases_inputs;
+
         // データがあることを確認
         if (empty($databases_inputs)) {
             return;
@@ -3680,6 +3711,9 @@ class DatabasesPlugin extends UserPluginBase
         $databases_inputs->updated_at = now();
         $databases_inputs->status = 0;  // 公開
         $databases_inputs->update();
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);

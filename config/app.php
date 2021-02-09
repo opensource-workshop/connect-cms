@@ -253,6 +253,7 @@ $app_array = [
         'AuthMethodType' => \App\Enums\AuthMethodType::class,
         'CodeColumn' => \App\Enums\CodeColumn::class,
         'UserColumnType' => \App\Enums\UserColumnType::class,
+        'NoticeJobType' => \App\Enums\NoticeJobType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
