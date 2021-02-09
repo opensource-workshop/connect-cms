@@ -703,7 +703,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         'plugin_name'          => 'forms',
                         'page_id'              => $page_id,
                         'temporary_flag'       => 1,
-                        'created_id'           => Auth::user()->id,
+                        'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
                     ]);
 
                     // ファイル保存
