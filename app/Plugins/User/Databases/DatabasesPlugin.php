@@ -1305,13 +1305,14 @@ class DatabasesPlugin extends UserPluginBase
             $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
         }
 
-// 新規登録の判定のために、保存する前に初回確定日時を退避しておく。
-$before_first_committed_at = null;
-
-
         // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
         if (empty($id)) {
             $databases_inputs = new DatabasesInputs();
+
+            // 新規登録の判定のために、保存する前のレコードを退避しておく。
+            $before_databases_inputs = clone $databases_inputs;
+
+            // 値の保存
             $databases_inputs->databases_id = $database->id;
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
@@ -1319,16 +1320,16 @@ $before_first_committed_at = null;
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
-// 新規登録の判定のために、保存する前に初回確定日時を退避しておく。
-$before_first_committed_at = $databases_inputs->first_committed_at;
+
+            // 新規登録の判定のために、保存する前のレコードを退避しておく。
+            $before_databases_inputs = clone $databases_inputs;
+
             // 更新されたら、行レコードの updated_at を更新したいので、update()
             $databases_inputs->updated_at = now();
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
-//Log::debug(print_r($databases_inputs, true));
             $databases_inputs->update();
-//Log::debug(print_r($databases_inputs, true));
         }
 
         // ファイル（uploadsテーブル＆実ファイル）の削除。データ登録前に削除する。（後からだと内容が変わっていてまずい）
@@ -1429,8 +1430,8 @@ $before_first_committed_at = $databases_inputs->first_committed_at;
         // メール送信 引数(詳細表示メソッド, 登録したid, 登録か更新か)
         //$this->sendPostNotice($databases_inputs->id, 'detail', empty($databases_inputs->first_committed_at) ? "notice_create" : "notice_update");
 
-        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前の初回確定日時, 詳細表示メソッド)
-        $this->sendPostNotice($databases_inputs, $before_first_committed_at, 'detail');
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
 //        $this->sendPostNotice($databases_inputs, 'detail');
 
         // delete: フォームの名残で残っていたメール送信処理をコメントアウト
@@ -1510,10 +1511,10 @@ $before_first_committed_at = $databases_inputs->first_committed_at;
         }
 
         // 詳細カラムデータを削除
-//        DatabasesInputCols::where('databases_inputs_id', $id)->delete();
+        DatabasesInputCols::where('databases_inputs_id', $id)->delete();
 
         // 行データを削除
-//        DatabasesInputs::where('id', $id)->delete();
+        DatabasesInputs::where('id', $id)->delete();
 
         // 削除通知に渡すために、項目の編集（最初の公開（権限で制御しない）の項目名と値）
         $notice_cols = $input_cols->where("role_display_control_flag", 0);
@@ -3655,6 +3656,9 @@ $before_first_committed_at = $databases_inputs->first_committed_at;
         // 登録データ行の取得
         $databases_inputs = $this->getDatabasesInputs($id);
 
+        // 承認済みの判定のために、保存する前に初回確定日時を退避しておく。
+        $before_databases_inputs = clone $databases_inputs;
+
         // データがあることを確認
         if (empty($databases_inputs)) {
             return;
@@ -3664,6 +3668,9 @@ $before_first_committed_at = $databases_inputs->first_committed_at;
         $databases_inputs->updated_at = now();
         $databases_inputs->status = 0;  // 公開
         $databases_inputs->update();
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);

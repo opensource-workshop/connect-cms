@@ -41,7 +41,7 @@ class DeleteNotice extends Mailable
      */
     public function build()
     {
-        return $this->text('emails.delete.notice_text')
+        return $this->text('mail.post.delete_text')
                     ->subject($this->bucket_mail->notice_subject)
                     ->with([
                         'frame'          => $this->frame,

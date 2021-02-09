@@ -18,6 +18,8 @@ use File;
 use HTMLPurifier;
 use HTMLPurifier_Config;
 
+use App\Jobs\ApprovalNoticeJob;
+use App\Jobs\ApprovedNoticeJob;
 use App\Jobs\DeleteNoticeJob;
 use App\Jobs\PostNoticeJob;
 
@@ -631,7 +633,7 @@ class UserPluginBase extends PluginBase
         $buckets = $this->getBuckets($frame_id);
 
         // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
-        if (empty($bucket)) {
+        if (empty($buckets)) {
             return $this->view_error("error_inframe", "存在しないBucket");
         }
 
@@ -730,15 +732,15 @@ class UserPluginBase extends PluginBase
     /**
      * 投稿通知の送信
      */
-    public function sendPostNotice($post_row, $before_first_committed_at, $show_method)
+    public function sendPostNotice($post_row, $before_row, $show_method)
     {
         // 行を表すレコードかのチェック
-        if (Schema::hasColumn($post_row->getTable(), 'id') && Schema::hasColumn($post_row->getTable(), 'first_committed_at') && Schema::hasColumn($post_row->getTable(), 'status')) {
-            // 続き
-        } else {
-            // 通知の送信をしない
-            return;
-        }
+        //if (Schema::hasColumn($post_row->getTable(), 'id') && Schema::hasColumn($post_row->getTable(), 'first_committed_at') && Schema::hasColumn($post_row->getTable(), 'status')) {
+        //    // 続き
+        //} else {
+        //    // 通知の送信をしない
+        //    return;
+        //}
 
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -748,31 +750,115 @@ class UserPluginBase extends PluginBase
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($this->buckets);
 
-        // 投稿通知の送信 on の確認
-        if ($bucket_mail->notice_on == 0) {
-            return;
-        }
+        // --- メール送信の条件を確認
 
         // メールを送信すべき命令を確認
-        $notice_method = empty($before_first_committed_at) ? "notice_create" : "notice_update";
+        $notice_methods = array();
 
-        // メールを送信すべき命令が送信対象か確認
-        if ($notice_method == "notice_create" && $bucket_mail->notice_create == 1 && $post_row->status == 0) {
-            // 対象（登録）
-        } elseif ($notice_method == "notice_update" && $bucket_mail->notice_update == 1 && $post_row->status == 0) {
-            // 対象（変更）
-        } else {
-            // 対象外
+        // 記事が一時保存（status === 1）状態の場合は何もしない。
+        if ($post_row->status === 1) {
             return;
         }
 
-        // 送信方法の確認
-        if ($bucket_mail->timing == 0) {
-            // 即時送信
-            dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, $notice_method));
-        } else {
-            // スケジュール送信
-            PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, $notice_method);
+        // 承認通知がon の場合
+        // 記事が承認待ち（status === 2）の場合は、承認待ちメールを送る。（notice_approval）
+        // before_row（更新前）をチェックしない。
+        // 承認待ちの記事を変更した場合は、再度、承認待ちメールが飛ぶが、それでOKだと考える。
+        if ($bucket_mail->approval_on === 1 && $post_row->status === 2) {
+            $notice_methods[] = "notice_approval";
+        }
+
+        // 承認済み通知がon の場合
+        // before_row（更新前）の（status === 2）でpost_row の status が公開（=== 0）の場合に送信（notice_approved）
+        if ($bucket_mail->approved_on === 1 && $before_row->status === 2 && $post_row->status === 0) {
+            $notice_methods[] = "notice_approved";
+        }
+
+        // 投稿通知がon の場合
+        // before_row（更新前）のfirst_committed_at が空でstatus が公開（=== 0）は「登録」（notice_create）
+        // before_row（更新前）のfirst_committed_at が空ではなく、status が公開（=== 0）は「更新」（notice_update）
+        if ($bucket_mail->notice_on === 1) {
+            if ($bucket_mail->notice_create === 1 && empty($before_row->first_committed_at) && $post_row->status === 0) {
+                // 対象（登録）
+                $notice_methods[] = "notice_create";
+            } elseif ($bucket_mail->notice_update === 1 && !empty($before_row->first_committed_at) && $post_row->status === 0) {
+                // 対象（変更）
+                $notice_methods[] = "notice_update";
+            }
+        }
+
+        // 関連記事通知がon の場合
+        // status が公開（=== 0）は「関連記事通知」（notice_relate）
+        // 送信先はJob クラスのhandle() メソッドで取得する。
+        if ($bucket_mail->relate_on === 1 && $post_row->status === 0) {
+            $notice_methods[] = "notice_relate";
+        }
+
+        // 送信対象の命令がなかった場合は何もせずに戻る。
+        if (empty($notice_methods)) {
+            return;
+        }
+
+        // --- メール送信の処理を呼ぶ
+
+        // 承認通知
+        if (in_array("notice_approval", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method));
+            } else {
+                // スケジュール送信
+                ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method);
+            }
+        }
+
+        // 承認済み通知
+        if (in_array("notice_approved", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row->id, $post_row->created_id, $show_method));
+            } else {
+                // スケジュール送信
+                ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $post_row->created_id, $show_method);
+            }
+        }
+
+        // 投稿通知（登録）
+        if (in_array("notice_create", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, "notice_create"));
+            } else {
+                // スケジュール送信
+                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, "notice_create");
+            }
+        }
+
+        // 投稿通知（変更）
+        if (in_array("notice_update", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, "notice_update"));
+            } else {
+                // スケジュール送信
+                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, "notice_update");
+            }
+        }
+
+        // 関連記事通知
+        if (in_array("notice_relate", $notice_methods, true)) {
+            // 送信方法の確認
+            if ($bucket_mail->timing == 0) {
+                // 即時送信
+                dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method));
+            } else {
+                // スケジュール送信
+                RelateNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method);
+            }
         }
     }
 
