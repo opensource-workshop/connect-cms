@@ -315,6 +315,7 @@ class BbsesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
+            'bbs'            => $this->getPluginBucket($this->getBucketId()),
             'posts'          => $posts,
             'children_posts' => $children_posts,
             'plugin_frame'   => $plugin_frame,
