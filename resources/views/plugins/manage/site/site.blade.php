@@ -230,7 +230,7 @@
                         @else
                             <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="user_register_enable_on">許可する</label>
+                        <label class="custom-control-label" for="user_register_enable_on" id="label_user_register_enable_on">許可する</label>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -240,7 +240,7 @@
                         @else
                             <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="user_register_enable_off">許可しない</label>
+                        <label class="custom-control-label" for="user_register_enable_off" id="label_user_register_enable_off">許可しない</label>
                     </div>
                 </div>
             </div>

@@ -36,7 +36,7 @@
                         @else
                             <input name="browser_width_header" value="100%" type="checkbox" class="custom-control-input" id="browser_width_header">
                         @endif
-                        <label class="custom-control-label" for="browser_width_header">ヘッダーエリア</label>
+                        <label class="custom-control-label" for="browser_width_header" id="label_browser_width_header">ヘッダーエリア</label>
                     </div>
                 </div>
                 <div class="col-md-5">
@@ -48,7 +48,7 @@
                         @else
                             <input name="browser_width_center" value="100%" type="checkbox" class="custom-control-input" id="browser_width_center">
                         @endif
-                        <label class="custom-control-label" for="browser_width_center">センターエリア（左、メイン、右）</label>
+                        <label class="custom-control-label" for="browser_width_center" id="label_browser_width_center">センターエリア（左、メイン、右）</label>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -60,7 +60,7 @@
                         @else
                             <input name="browser_width_footer" value="100%" type="checkbox" class="custom-control-input" id="browser_width_footer">
                         @endif
-                        <label class="custom-control-label" for="browser_width_footer">フッター</label>
+                        <label class="custom-control-label" for="browser_width_footer" id="label_browser_width_footer">フッター</label>
                     </div>
                 </div>
             </div>
