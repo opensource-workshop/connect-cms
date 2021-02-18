@@ -188,7 +188,7 @@
                     @else
                         <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin">
                     @endif
-                    <label class="custom-control-label" for="role_article_admin">コンテンツ管理者</label>
+                    <label class="custom-control-label" for="role_article_admin" id="label_role_article_admin">コンテンツ管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_arrangement"]) && $users_roles["base"]["role_arrangement"] == 1) ||
@@ -197,7 +197,7 @@
                     @else
                         <input name="base[role_arrangement]" value="1" type="checkbox" class="custom-control-input" id="role_arrangement">
                     @endif
-                    <label class="custom-control-label" for="role_arrangement">プラグイン管理者</label>
+                    <label class="custom-control-label" for="role_arrangement" id="label_role_arrangement">プラグイン管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_article"]) && $users_roles["base"]["role_article"] == 1) ||
@@ -206,7 +206,7 @@
                     @else
                         <input name="base[role_article]" value="1" type="checkbox" class="custom-control-input" id="role_article">
                     @endif
-                    <label class="custom-control-label" for="role_article">モデレータ（他ユーザの記事も更新）</label>
+                    <label class="custom-control-label" for="role_article" id="label_role_article">モデレータ（他ユーザの記事も更新）</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_approval"]) && $users_roles["base"]["role_approval"] == 1) ||
@@ -215,7 +215,7 @@
                     @else
                         <input name="base[role_approval]" value="1" type="checkbox" class="custom-control-input" id="role_approval">
                     @endif
-                    <label class="custom-control-label" for="role_approval">承認者</label>
+                    <label class="custom-control-label" for="role_approval" id="label_role_approval">承認者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_reporter"]) && $users_roles["base"]["role_reporter"] == 1) ||
@@ -224,7 +224,7 @@
                     @else
                         <input name="base[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter">
                     @endif
-                    <label class="custom-control-label" for="role_reporter">編集者</label>
+                    <label class="custom-control-label" for="role_reporter" id="label_role_reporter">編集者</label>
                 </div>
                 <small class="text-muted">
                     ※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。<br>
@@ -244,7 +244,7 @@
                     @else
                         <input name="manage[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system">
                     @endif
-                    <label class="custom-control-label" for="admin_system">システム管理者</label>
+                    <label class="custom-control-label" for="admin_system" id="label_admin_system">システム管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_site"]) && $users_roles["manage"]["admin_site"] == 1) ||
@@ -253,7 +253,7 @@
                     @else
                         <input name="manage[admin_site]" value="1" type="checkbox" class="custom-control-input" id="admin_site">
                     @endif
-                    <label class="custom-control-label" for="admin_site">サイト管理者</label>
+                    <label class="custom-control-label" for="admin_site" id="label_admin_site">サイト管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_page"]) && $users_roles["manage"]["admin_page"] == 1) ||
@@ -262,7 +262,7 @@
                     @else
                         <input name="manage[admin_page]" value="1" type="checkbox" class="custom-control-input" id="admin_page">
                     @endif
-                    <label class="custom-control-label" for="admin_page">ページ管理者</label>
+                    <label class="custom-control-label" for="admin_page" id="label_admin_page">ページ管理者</label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_user"]) && $users_roles["manage"]["admin_user"] == 1) ||
@@ -271,7 +271,7 @@
                     @else
                         <input name="manage[admin_user]" value="1" type="checkbox" class="custom-control-input" id="admin_user">
                     @endif
-                    <label class="custom-control-label" for="admin_user">ユーザ管理者</label>
+                    <label class="custom-control-label" for="admin_user" id="label_admin_user">ユーザ管理者</label>
                 </div>
             </div>
         </div>
@@ -290,7 +290,7 @@
                 @else
                     <input name="original_role[{{$original_role_config->name}}]" value="1" type="checkbox" class="custom-control-input" id="original_role{{$original_role_config->id}}">
                 @endif
-                <label class="custom-control-label" for="original_role{{$original_role_config->id}}">{{$original_role_config->value}}</label>
+                <label class="custom-control-label" for="original_role{{$original_role_config->id}}" id="label_original_role{{$original_role_config->id}}">{{$original_role_config->value}}</label>
             </div>
             @endforeach
         </div>

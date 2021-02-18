@@ -27,7 +27,7 @@
                             <input 
                                 type="radio" value="1" class="custom-control-input" id="use_auth_method_1" 
                                 name="use_auth_method" @if(old('use_auth_method', $use_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_auth_method_1">
+                            <label class="custom-control-label" for="use_auth_method_1" id="label_use_auth_method_1">
                                 使用する
                             </label>
                         </div>
@@ -37,7 +37,7 @@
                             <input 
                                 type="radio" value="0" class="custom-control-input" id="use_auth_method_0" 
                                 name="use_auth_method" @if(!old('use_auth_method', $use_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_auth_method_0">
+                            <label class="custom-control-label" for="use_auth_method_0" id="label_use_auth_method_0">
                                 使用しない
                             </label>
                         </div>

@@ -168,7 +168,7 @@
                             @else
                             <input type="radio" value="0" id="add_reject_on" name="add_reject" class="custom-control-input">
                             @endif
-                            <label class="custom-control-label" for="add_reject_on">許可する</label>
+                            <label class="custom-control-label" for="add_reject_on" id="label_add_reject_on">許可する</label>
                         </div>
 
                         <div class="custom-control custom-radio custom-control-inline">
@@ -177,7 +177,7 @@
                             @else
                             <input type="radio" value="1" id="add_reject_off" name="add_reject" class="custom-control-input">
                             @endif
-                            <label class="custom-control-label" for="add_reject_off">拒否する</label>
+                            <label class="custom-control-label" for="add_reject_off" id="label_add_reject_off">拒否する</label>
                         </div>
                     </td>
                     <td nowrap>
@@ -194,12 +194,12 @@
                     <td nowrap>
                         <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="0" id="add_reject_on" name="add_reject" class="custom-control-input">
-                            <label class="custom-control-label" for="add_reject_on">許可する</label>
+                            <label class="custom-control-label" for="add_reject_on" id="label_add_reject_on">許可する</label>
                         </div>
 
                         <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="1" id="add_reject_off" name="add_reject" class="custom-control-input">
-                            <label class="custom-control-label" for="add_reject_off">拒否する</label>
+                            <label class="custom-control-label" for="add_reject_off" id="label_add_reject_off">拒否する</label>
                         </div>
                     </td>
                     <td nowrap>

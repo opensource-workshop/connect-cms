@@ -45,7 +45,7 @@
                                     type="radio" value="{{ $key }}" class="custom-control-input" id="message_first_show_type_{{ $key }}" 
                                     name="message_first_show_type" {{ $checked }}
                                 >
-                                <label class="custom-control-label" for="{{ "message_first_show_type_${key}" }}">
+                                <label class="custom-control-label" for="{{ "message_first_show_type_${key}" }}" id="label_{{ "message_first_show_type_${key}" }}">
                                     {{ $value }}
                                 </label>
                             </div>

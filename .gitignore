@@ -9,13 +9,14 @@
 /public/uploads/*
 /storage/*.key
 /vendor
-/.idea
-/.vagrant
+.env
+.env.backup
+.env.testing
+.phpunit.result.cache
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
-.env
 !.gitkeep
 /connect-cms.code-workspace
 .vscode/launch.json

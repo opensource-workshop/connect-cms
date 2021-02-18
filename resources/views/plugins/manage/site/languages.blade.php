@@ -68,7 +68,7 @@
                         @else
                             <input type="radio" value="0" id="language_multi_on_off" name="language_multi_on" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="language_multi_on_off">使用しない</label>
+                        <label class="custom-control-label" for="language_multi_on_off" id="label_language_multi_on_off">使用しない</label>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -78,7 +78,7 @@
                         @else
                             <input type="radio" value="1" id="language_multi_on_on" name="language_multi_on" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="language_multi_on_on">使用する</label>
+                        <label class="custom-control-label" for="language_multi_on_on" id="label_language_multi_on_on">使用する</label>
                     </div>
                 </div>
             </div>
