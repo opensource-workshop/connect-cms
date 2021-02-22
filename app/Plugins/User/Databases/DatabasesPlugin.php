@@ -886,7 +886,7 @@ class DatabasesPlugin extends UserPluginBase
             // var_dump($sort_column_parts);
 
             // 検索条件を削除
-            if($request->has('clear')){
+            if ($request->has('clear')) {
                 session(['search_keyword.'.$frame_id => '']);
                 session(['search_column.'.$frame_id => '']);
                 session(['search_options.'.$frame_id => '']);
@@ -1178,9 +1178,26 @@ class DatabasesPlugin extends UserPluginBase
 
         // --- 入力値変換
         // 入力値をトリム
-        $request->merge(StringUtils::trimInput($request->all()));
+        // bugfix: $request->all()を取得して全て$request->merge()すると、「Serialization of 'Illuminate\Http\UploadedFile' is not allowed」エラーが発生する時がある。
+        // Illuminate\Session\Store.phpでセッションのserialize()を行っており、oldセッションにUploadオブジェクトが混ざるとシリアライズできずにエラーになっていた。
+        // $request->all()で全てトリムする必要はなく、アップロードファイル以外の必要な入力値のみトリムするよう見直す。
+        //$request->merge(StringUtils::trimInput($request->all()));
 
         foreach ($databases_columns as $databases_column) {
+            // ファイルタイプ以外の入力値をトリム
+            if (! DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                if (isset($request->databases_columns_value[$databases_column->id])) {
+                    // 一度配列にして、trim後、また文字列に戻す。
+                    $tmp_columns_value = StringUtils::trimInput($request->databases_columns_value[$databases_column->id]);
+
+                    $tmp_array = $request->databases_columns_value;
+                    $tmp_array[$databases_column->id] = $tmp_columns_value;
+                    $request->merge([
+                        "databases_columns_value" => $tmp_array,
+                    ]);
+                }
+            }
+
             // 数値チェック
             if ($databases_column->rule_allowed_numeric) {
                 // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
