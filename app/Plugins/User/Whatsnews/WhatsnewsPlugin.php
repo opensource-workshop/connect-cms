@@ -3,7 +3,7 @@
 namespace App\Plugins\User\Whatsnews;
 
 // use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 // use Carbon\Carbon;
@@ -321,6 +321,11 @@ class WhatsnewsPlugin extends UserPluginBase
         // Log::debug(DB::getQueryLog());
         // Log::debug($whatsnews);
 
+        // bugfix: 新着タイトルにウィジウィグが入る事がある（databaseのウィジウィグ型をタイトルに指定）ため、タグ除去する。
+        $whatsnews->transform(function ($whatsnew, $key) {
+            $whatsnew->post_title = strip_tags($whatsnew->post_title);
+            return $whatsnew;
+        });
 
         // 取得後の絞り込み
 
