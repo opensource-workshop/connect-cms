@@ -132,7 +132,12 @@
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">未ログイン時にヘッダーを表示するかどうかを選択</small>
+            <small class="form-text text-muted">
+                未ログイン時にヘッダーを表示するかどうかを選択<br />
+                ヘッダーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
+                PC時のヘッダー表示例）<br />
+                <img class="img-fluid" src="/images/core/top_header/top_header.jpg" alt="画面最上部に表示されるヘッダー">
+            </small>
         </div>
 
         {{-- ヘッダーの固定指定 --}}
@@ -188,7 +193,10 @@
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">ログインリンクを表示するかどうかを選択</small>
+            <small class="form-text text-muted">
+                ログインリンクを表示するかどうかを選択<br />
+                ログインリンクを「表示しない」場合、ログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。
+            </small>
         </div>
 
         {{-- パスワードリセット --}}
