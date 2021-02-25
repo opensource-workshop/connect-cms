@@ -257,6 +257,7 @@ $app_array = [
         'CodeColumn' => \App\Enums\CodeColumn::class,
         'UserColumnType' => \App\Enums\UserColumnType::class,
         'NoticeJobType' => \App\Enums\NoticeJobType::class,
+        'CountryCodeAlpha3' => \App\Enums\CountryCodeAlpha3::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
