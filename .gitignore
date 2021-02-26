@@ -24,6 +24,8 @@ composer.phar
 
 # Option Plugins (対象外部分はオプションプラグインのサンプル)
 github_copy.bat
+dev_2_option_private.ps1
+option_private_2_dev.ps1
 
 /app/ModelsOption/*
 !/app/ModelsOption/User\Optionsamples/*
