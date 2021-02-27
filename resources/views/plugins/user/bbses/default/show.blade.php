@@ -114,21 +114,90 @@
 
 {{-- スレッドの投稿一覧 --}}
 @if ($thread_root_post)
-    <span class="badge badge-primary mb-1">スレッドの記事一覧</span>
-    <div class="card mb-3">
-        <div class="card-header">{{$thread_root_post->title}}<span class="float-right">{{$thread_root_post->updated_at->format('Y-m-d')}} [{{$thread_root_post->created_name}}]</span></div>
-        <div class="card-body">
-            {!!$thread_root_post->body!!}
-                @foreach ($children_posts as $children_post)
-                    <div class="card mt-3">
-                        <div class="card-header">{{$children_post->title}}@if ($children_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@elseif ($children_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>@endif<span class="float-right">{{$children_post->updated_at->format('Y-m-d')}} [{{$children_post->created_name}}]</span></div>
-                        <div class="card-body">
-                            {!!$children_post->body!!}
-                        </div>
-                    </div>
+
+    {{-- 詳細でのスレッド記事の展開方法の判定 --}}
+    @if ($plugin_frame->thread_format == 2)
+        {{-- 詳細でのスレッド記事の展開方法：すべて閉じる --}}
+        <div class="card mb-3">
+            {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
+            <div class="card-header">
+                {{$thread_root_post->title}}@if ($thread_root_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@elseif ($thread_root_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>@endif<span class="float-right">{{$thread_root_post->created_at->format('Y-m-d')}} [{{$thread_root_post->created_name}}]</span>
+            </div>
+            {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
+            <div class="card-body">
+                {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
+                @include('plugins.user.bbses.default.post_title_div', ['view_post' => $thread_root_post, 'current_post' => $post])
+                {{-- スレッド記事 --}}
+                @foreach ($children_posts->where("thread_root_id", $thread_root_post->id) as $children_post)
+                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post])
                 @endforeach
+            </div>
         </div>
-    </div>
+    @else
+        {{-- 詳細でのスレッド記事の展開方法：すべて展開 or すべて閉じておく --}}
+        <span class="badge badge-primary mb-1">スレッドの記事一覧</span>
+        <div class="card mb-3">
+            {{-- 詳細でのスレッド記事の展開方法の判定 --}}
+            @if ($plugin_frame->thread_format != 0)
+                {{-- 詳細でのスレッド記事の展開方法が詳細表示している記事のみ展開の場合 --}}
+                <div class="card-header">
+                    @include('plugins.user.bbses.default.post_title', ['view_post' => $thread_root_post, 'current_post' => $post])
+                </div>
+                {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
+                <div class="card-body">
+                    {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
+                    @if ($thread_root_post->id == $post->id)
+                        <div class="card mb-2">
+                            <div class="card-header">
+                                @include('plugins.user.bbses.default.post_title_div', ['view_post' => $thread_root_post, 'current_post' => $post])
+                            </div>
+                            <div class="card-body">
+                                {!!$thread_root_post->body!!}
+                            </div>
+                        </div>
+                    @else
+                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $thread_root_post, 'current_post' => $post])
+                    @endif
+
+                    {{-- スレッド記事 --}}
+                    @foreach ($children_posts->where("thread_root_id", $thread_root_post->id) as $children_post)
+                        @if ($children_post->id == $post->id)
+                            <div class="card mb-2">
+                                <div class="card-header">
+                                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post])
+                                </div>
+                                <div class="card-body">
+                                    {!!$children_post->body!!}
+                                </div>
+                            </div>
+                        @else
+                            @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post])
+                        @endif
+                    @endforeach
+                </div>
+            @else
+                <div class="card-header">
+                    @include('plugins.user.bbses.default.post_title', ['view_post' => $thread_root_post, 'current_post' => $post])
+                </div>
+                <div class="card-body">
+                    {!!$thread_root_post->body!!}
+                    @foreach ($children_posts as $children_post)
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                @include('plugins.user.bbses.default.post_title', ['view_post' => $children_post, 'current_post' => $post])
+                            </div>
+                            <div class="card-body">
+                                {!!$children_post->body!!}
+                            </div>
+                        </div>
+                    @endforeach
+            </div>
+            @endif
+        </div>
+    @endif
+
+
+
 @endif
 
 {{-- / post がある想定の処理 --}}

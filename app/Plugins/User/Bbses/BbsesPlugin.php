@@ -351,6 +351,7 @@ class BbsesPlugin extends UserPluginBase
             'post' => $post,
             'thread_root_post' => $thread_root_post,
             'children_posts'   => $children_posts,
+            'plugin_frame'     => $plugin_frame,
         ]);
     }
 
@@ -550,14 +551,20 @@ class BbsesPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'view_count'       => ['nullable', 'numeric'],
             'view_format'      => ['nullable', 'numeric'],
             'thread_sort_flag' => ['nullable', 'numeric'],
+            'view_count'       => ['nullable', 'numeric'],
+            'list_format'      => ['nullable', 'numeric'],
+            'thread_format'    => ['nullable', 'numeric'],
+            'list_underline'   => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'view_count'       => '表示件数',
             'view_format'      => '表示形式',
             'thread_sort_flag' => '根記事の表示順',
+            'view_count'       => '表示件数',
+            'list_format'      => '一覧での展開方法',
+            'thread_format'    => '詳細でのスレッド記事の展開方法',
+            'list_underline'   => 'スレッド記事の下線',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -568,9 +575,13 @@ class BbsesPlugin extends UserPluginBase
         // フレームごとの表示設定の更新
         $bbs_frame = BbsFrame::updateOrCreate(
             ['bbs_id' => $bbs_id, 'frame_id' => $frame_id],
-            ['view_count'       => $request->view_count,
-             'view_format'      => $request->view_format,
-             'thread_sort_flag' => $request->thread_sort_flag],
+            ['view_format'      => $request->view_format,
+             'thread_sort_flag' => $request->thread_sort_flag,
+             'view_count'       => $request->view_count,
+             'list_format'      => $request->list_format,
+             'thread_format'    => $request->thread_format,
+             'list_underline'   => $request->list_underline,
+             'thread_caption'   => $request->thread_caption],
         );
 
         return;
