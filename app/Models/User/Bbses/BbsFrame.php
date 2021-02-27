@@ -24,7 +24,7 @@ class BbsFrame extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['bbs_id', 'frame_id', 'view_format', 'thread_sort_flag', 'view_count'];
+    protected $fillable = ['bbs_id', 'frame_id', 'view_format', 'thread_sort_flag', 'list_format', 'thread_format', 'list_underline', 'thread_caption', 'view_count'];
 
     /**
      * 表示件数
