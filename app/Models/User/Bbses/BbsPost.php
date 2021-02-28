@@ -94,4 +94,20 @@ class BbsPost extends Model
         }
         return true;
     }
+
+    /**
+     * 更新日時の取得
+     */
+    public function getUpdatedAt($wrong_only = true)
+    {
+        // 必ず返却
+        if ($wrong_only == false) {
+            return $this->updated_at->format('Y年n月j日 H時i分');
+        }
+
+        // 登録日時と更新日時が違う場合のみ返却
+        if ($this->updated_at && $this->created_at != $this->updated_at) {
+            return "（更新：" . $this->updated_at->format('Y年n月j日 H時i分') . "）";
+        }
+    }
 }
