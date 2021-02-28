@@ -46,10 +46,10 @@
                 {{-- 一覧での展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
                 <div class="card-body">
                     {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
-                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $post, 'current_post' => null])
+                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $post, 'current_post' => null, 'list_class' => 'mb-2'])
                     {{-- スレッド記事 --}}
                     @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
-                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null])
+                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
                     @endforeach
                 </div>
             </div>
@@ -57,8 +57,8 @@
             {{-- 一覧での展開方法：すべて展開 or すべて閉じておく --}}
             <div class="card mb-3">
                 <div class="card-header">
-                    @include('plugins.user.bbses.default.post_title', ['view_post' => $post, 'current_post' => null])
-                    <span class="float-right">{{$post->updated_at->format('Y-m-d')}} [{{$post->created_name}}]</span>
+                    @include('plugins.user.bbses.default.post_title', ['view_post' => $post, 'current_post' => null, 'list_class' => ''])
+                    <span class="float-right">{{$post->created_at->format('Y-m-d')}} [{{$post->created_name}}]</span>
                 </div>
                 <div class="card-body">
                     {!!$post->body!!}
@@ -72,7 +72,7 @@
                                 @endif
                                 <div class="card-body">
                                     @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
-                                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null])
+                                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
                                     @endforeach
                                 </div>
                             </div>
@@ -81,8 +81,8 @@
                             @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
                                 <div class="card mt-3">
                                     <div class="card-header">
-                                        @include('plugins.user.bbses.default.post_title', ['view_post' => $children_post, 'current_post' => null])
-                                        <span class="float-right">{{$children_post->updated_at->format('Y-m-d')}} [{{$children_post->created_name}}]</span>
+                                        @include('plugins.user.bbses.default.post_title', ['view_post' => $children_post, 'current_post' => null, 'list_class' => ''])
+                                        <span class="float-right">{{$children_post->created_at->format('Y-m-d')}} [{{$children_post->created_name}}]</span>
                                     </div>
                                     <div class="card-body">
                                         {!!$children_post->body!!}
