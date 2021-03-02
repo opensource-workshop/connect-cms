@@ -20,7 +20,7 @@ class DeleteNoticeJob implements ShouldQueue
 
     private $frame = null;
     private $bucket = null;
-    private $id = null;
+    private $post = null;
     private $show_method = null;
     private $delete_comment = null;
 
@@ -29,12 +29,12 @@ class DeleteNoticeJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $id, $show_method, $delete_comment)
+    public function __construct($frame, $bucket, $post, $show_method, $delete_comment)
     {
         // buckets などの受け取り
         $this->frame  = $frame;
         $this->bucket = $bucket;
-        $this->id     = $id;
+        $this->post   = $post;
         $this->show_method    = $show_method;
         $this->delete_comment = $delete_comment;
     }
@@ -60,7 +60,7 @@ class DeleteNoticeJob implements ShouldQueue
             return;
         }
         foreach ($notice_addresses as $notice_address) {
-            Mail::to($notice_address)->send(new DeleteNotice($this->frame, $this->bucket, $this->id, $this->show_method, $this->delete_comment, $bucket_mail));
+            Mail::to($notice_address)->send(new DeleteNotice($this->frame, $this->bucket, $this->post, $this->show_method, $this->delete_comment, $bucket_mail));
         }
     }
 }

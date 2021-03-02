@@ -7,13 +7,13 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class ApprovalNotice extends Mailable
+class RelateNotice extends Mailable
 {
     use Queueable, SerializesModels;
 
     private $frame = null;
     private $bucket = null;
-    private $post = null;
+    private $id = null;
     private $show_method = null;
     private $bucket_mail = null;
 
@@ -39,14 +39,14 @@ class ApprovalNotice extends Mailable
      */
     public function build()
     {
-        return $this->text('mail.post.approval_text')
-                    ->subject($this->bucket_mail->approval_subject)
+        return $this->text('mail.post.relate_text')
+                    ->subject($this->bucket_mail->relate_subject)
                     ->with([
-                        'frame'         => $this->frame,
-                        'bucket'        => $this->bucket,
-                        'post'          => $this->post,
-                        'show_method'   => $this->show_method,
-                        'bucket_mail'   => $this->bucket_mail,
+                        'frame'       => $this->frame,
+                        'bucket'      => $this->bucket,
+                        'post'        => $this->post,
+                        'show_method' => $this->show_method,
+                        'bucket_mail' => $this->bucket_mail,
                     ]);
     }
 }

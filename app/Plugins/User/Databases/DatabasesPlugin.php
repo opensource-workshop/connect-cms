@@ -94,6 +94,14 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
+     * メール送信で使用するメソッド
+     */
+    public function useBucketMailMethods()
+    {
+        return ['notice', 'approval', 'approved'];
+    }
+
+    /**
      * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
@@ -494,7 +502,7 @@ class DatabasesPlugin extends UserPluginBase
                     }
                     if (empty($val)) {
                         // 0 を検索したい場合もあるので追加
-                        if($val !== "0" ){
+                        if ($val !== "0") {
                             continue;  // 指定が正しくなければ飛ばす
                         }
                     }
@@ -607,7 +615,7 @@ class DatabasesPlugin extends UserPluginBase
                             }
 
                             // テンプレートでsearch_term[XXXX]をセットすることで、ORの値を任意に増やすことができる（*や通年）等期間外のデータ
-                            if($add_const_word_search_flg){
+                            if ($add_const_word_search_flg) {
                                 $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
                                     $query->select('databases_inputs_id')
                                     ->from('databases_input_cols')
@@ -1562,6 +1570,9 @@ class DatabasesPlugin extends UserPluginBase
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $delete_input = DatabasesInputs::firstOrNew(['id' => $id]);
+
         // 行データを削除
         DatabasesInputs::where('id', $id)->delete();
 
@@ -1575,7 +1586,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // メール送信 引数(削除した行ID, 詳細表示メソッド, 削除データを表すメッセージ)
-        $this->sendDeleteNotice($id, 'detail', $delete_comment);
+        $this->sendDeleteNotice($delete_input, 'detail', $delete_comment);
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);

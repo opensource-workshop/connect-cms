@@ -13,7 +13,7 @@ class PostNotice extends Mailable
 
     private $frame = null;
     private $bucket = null;
-    private $id = null;
+    private $post = null;
     private $show_method = null;
     private $notice_method = null;
     private $bucket_mail = null;
@@ -23,12 +23,12 @@ class PostNotice extends Mailable
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $id, $show_method, $notice_method, $bucket_mail)
+    public function __construct($frame, $bucket, $post, $show_method, $notice_method, $bucket_mail)
     {
         // 引数の保持
         $this->frame         = $frame;
         $this->bucket        = $bucket;
-        $this->id            = $id;
+        $this->post          = $post;
         $this->notice_method = $notice_method;
         $this->show_method   = $show_method;
         $this->bucket_mail   = $bucket_mail;
@@ -46,7 +46,7 @@ class PostNotice extends Mailable
                     ->with([
                         'frame'         => $this->frame,
                         'bucket'        => $this->bucket,
-                        'id'            => $this->id,
+                        'post'          => $this->post,
                         'show_method'   => $this->show_method,
                         'notice_method' => $this->notice_method,
                         'bucket_mail'   => $this->bucket_mail,
