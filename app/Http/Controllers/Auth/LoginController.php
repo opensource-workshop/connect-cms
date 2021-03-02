@@ -171,12 +171,17 @@ class LoginController extends Controller
      */
     public function showLoginForm()
     {
-        // ログイン時に元いたページに遷移
-        if (array_key_exists('HTTP_REFERER', $_SERVER)) {
-            $path = parse_url($_SERVER['HTTP_REFERER']); // URLを分解
-            if (array_key_exists('host', $path)) {
-                if ($path['host'] == $_SERVER['HTTP_HOST']) { // ホスト部分が自ホストと同じ
-                    session(['url.intended' => $_SERVER['HTTP_REFERER']]);
+        // ログイン時に元いたページに遷移 設定
+        $base_login_redirect_previous_page = Configs::where('name', 'base_login_redirect_previous_page')->first();
+
+        if (!empty($base_login_redirect_previous_page) && $base_login_redirect_previous_page->value == '1') {
+            // ログイン時に元いたページに遷移
+            if (array_key_exists('HTTP_REFERER', $_SERVER)) {
+                $path = parse_url($_SERVER['HTTP_REFERER']); // URLを分解
+                if (array_key_exists('host', $path)) {
+                    if ($path['host'] == $_SERVER['HTTP_HOST']) { // ホスト部分が自ホストと同じ
+                        session(['url.intended' => $_SERVER['HTTP_REFERER']]);
+                    }
                 }
             }
         }

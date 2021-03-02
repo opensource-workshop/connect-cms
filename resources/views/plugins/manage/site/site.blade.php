@@ -227,6 +227,33 @@
             <small class="form-text text-muted">パスワードを忘れた場合に、ユーザ自身がリセットリンクをメール送信する機能を使用するかどうかを選択</small>
         </div>
 
+        {{-- ログイン後に移動するページ --}}
+        <div class="form-group">
+            <label class="col-form-label">ログイン後に移動するページ</label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["base_login_redirect_previous_page"]) && $configs["base_login_redirect_previous_page"] == "1")
+                            <input type="radio" value="1" id="base_login_redirect_previous_page_on" name="base_login_redirect_previous_page" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="base_login_redirect_previous_page_on" name="base_login_redirect_previous_page" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_login_redirect_previous_page_on">元いたページ</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if((isset($configs["base_login_redirect_previous_page"]) && $configs["base_login_redirect_previous_page"] == "0"))
+                            <input type="radio" value="0" id="base_login_redirect_previous_page_off" name="base_login_redirect_previous_page" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="base_login_redirect_previous_page_off" name="base_login_redirect_previous_page" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_login_redirect_previous_page_off">トップページ</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- 自動ユーザ登録の使用 --}}
         <div class="form-group">
             <label class="col-form-label">自動ユーザ登録の使用</label>

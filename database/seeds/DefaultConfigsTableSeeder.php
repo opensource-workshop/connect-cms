@@ -124,5 +124,14 @@ class DefaultConfigsTableSeeder extends Seeder
             ]);
         }
 
+        if (DB::table('configs')->where('name', 'base_login_redirect_previous_page')->count() == 0) {
+            // ログイン時に元いたページに遷移 設定
+            $configs = Configs::create([
+                'name' => 'base_login_redirect_previous_page',
+                'category' => 'general',
+                'value' => 0
+            ]);
+        }
+
     }
 }
