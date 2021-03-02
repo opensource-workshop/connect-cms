@@ -163,4 +163,24 @@ class LoginController extends Controller
         }
         return $redirect;
     }
+
+    /**
+     * Show the application's login form.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function showLoginForm()
+    {
+        // ログイン時に元いたページに遷移
+        if (array_key_exists('HTTP_REFERER', $_SERVER)) {
+            $path = parse_url($_SERVER['HTTP_REFERER']); // URLを分解
+            if (array_key_exists('host', $path)) {
+                if ($path['host'] == $_SERVER['HTTP_HOST']) { // ホスト部分が自ホストと同じ
+                    session(['url.intended' => $_SERVER['HTTP_REFERER']]);
+                }
+            }
+        }
+
+        return view('auth.login');
+    }
 }
