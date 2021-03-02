@@ -21,7 +21,7 @@ class ApprovedNoticeJob implements ShouldQueue
 
     private $frame = null;
     private $bucket = null;
-    private $id = null;
+    private $post = null;
     private $created_id = null;
     private $show_method = null;
 
@@ -30,12 +30,12 @@ class ApprovedNoticeJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $id, $created_id, $show_method)
+    public function __construct($frame, $bucket, $post, $created_id, $show_method)
     {
         // buckets などの受け取り
         $this->frame       = $frame;
         $this->bucket      = $bucket;
-        $this->id          = $id;
+        $this->post        = $post;
         $this->created_id  = $created_id;
         $this->show_method = $show_method;
     }
@@ -61,14 +61,14 @@ class ApprovedNoticeJob implements ShouldQueue
             return;
         }
         foreach ($approved_addresses as $approved_address) {
-            Mail::to($approved_address)->send(new ApprovedNotice($this->frame, $this->bucket, $this->id, $this->show_method, $bucket_mail));
+            Mail::to($approved_address)->send(new ApprovedNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
         }
 
         // メール送信（投稿者へ通知する）
         if ($bucket_mail->approved_author) {
             $post_user = User::findOrNew($this->created_id);
             if ($post_user->email) {
-                Mail::to($post_user->email)->send(new ApprovedNotice($this->frame, $this->bucket, $this->id, $this->show_method, $bucket_mail));
+                Mail::to($post_user->email)->send(new ApprovedNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
             }
         }
     }

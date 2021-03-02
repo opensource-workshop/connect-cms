@@ -416,6 +416,9 @@ class BbsesPlugin extends UserPluginBase
         // POSTデータのモデル取得
         $post = BbsPost::firstOrNew(['id' => $post_id]);
 
+        // 新規登録の判定のために、保存する前のレコードを退避しておく。
+        $before_post = clone $post;
+
         // モデレータ以上の権限を持たずに、記事にすでに返信が付いている場合は、保存できない。
         if (!$this->isCan('role_article') && $post->descendants->count() > 0) {
             $validator = Validator::make($request->all(), []);
@@ -468,8 +471,24 @@ class BbsesPlugin extends UserPluginBase
             }
         }
 
-        // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
-        return new Collection(['redirect_path' => url('/') . "/plugin/bbses/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        // 投稿通知メール
+        $this->sendPostNotice($post, $before_post, 'show');
+
+        // 関連記事通知メール
+        // この post の thread_root_id と同じ post でかつ、この post 自身ではなく、データの status は公開のもの。
+        $mail_users = BbsPost::select('users.name', 'users.email')
+                             ->join('users', 'users.id', '=', 'bbs_posts.created_id')
+                             ->where('users.status', 0)
+                             ->whereNotNull('users.email')
+                             ->where('bbs_posts.thread_root_id', $post->thread_root_id)
+                             ->where('bbs_posts.id', '!=', $post->id)
+                             ->where('bbs_posts.status', 0)
+                             ->distinct()
+                             ->get();
+        $this->sendRelateNotice($post, $mail_users, 'show');
+
+        // 登録後はリダイレクトして詳細画面を開く。(form のリダイレクト指定では post した id が渡せないため)
+        return new Collection(['redirect_path' => url('/') . "/plugin/bbses/show/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
     }
 
     /**
@@ -480,6 +499,9 @@ class BbsesPlugin extends UserPluginBase
         // 記事取得
         $post = $this->getPost($post_id);
 
+        // 承認済みの判定のために、保存する前にpost を退避しておく。
+        $before_post = clone $post;
+
         // データがあることを確認
         if (empty($post)) {
             return;
@@ -489,6 +511,9 @@ class BbsesPlugin extends UserPluginBase
         $post->updated_at = now();
         $post->status = 0;  // 公開
         $post->update();
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($post, $before_post, 'show');
 
         // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
         return;
@@ -501,12 +526,24 @@ class BbsesPlugin extends UserPluginBase
     {
         // id がある場合、データを削除
         if ($post_id) {
+            // メール送信のために、削除する前にレコードを退避しておく。
+            $delete_post = BbsPost::firstOrNew(['id' => $post_id]);
+
+            $delete_comment = "";
+            if ($delete_post) {
+                $delete_comment  = "以下、削除されたデータのタイトルです。\n";
+                $delete_comment .= "「" . $delete_post->title . "」を削除しました。";
+            }
+
             // データを削除する。（論理削除で削除日、ID などを残すためにupdate）
             BbsPost::where('id', $post_id)->update([
                 'deleted_at'   => date('Y-m-d H:i:s'),
                 'deleted_id'   => Auth::user()->id,
                 'deleted_name' => Auth::user()->name,
             ]);
+
+            // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ)
+            $this->sendDeleteNotice($delete_post, 'show', $delete_comment);
         }
         return;
     }

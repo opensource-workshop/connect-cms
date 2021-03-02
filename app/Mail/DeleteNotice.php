@@ -23,12 +23,12 @@ class DeleteNotice extends Mailable
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $id, $show_method, $delete_comment, $bucket_mail)
+    public function __construct($frame, $bucket, $post, $show_method, $delete_comment, $bucket_mail)
     {
         // 引数の保持
         $this->frame          = $frame;
         $this->bucket         = $bucket;
-        $this->id             = $id;
+        $this->post           = $post;
         $this->delete_comment = $delete_comment;
         $this->show_method    = $show_method;
         $this->bucket_mail    = $bucket_mail;
@@ -46,7 +46,7 @@ class DeleteNotice extends Mailable
                     ->with([
                         'frame'          => $this->frame,
                         'bucket'         => $this->bucket,
-                        'id'             => $this->id,
+                        'post'           => $this->post,
                         'show_method'    => $this->show_method,
                         'delete_comment' => $this->delete_comment,
                         'bucket_mail'    => $this->bucket_mail,

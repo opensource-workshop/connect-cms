@@ -11,10 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-use App\Mail\ApprovalNotice;
+use App\Mail\RelateNotice;
 use App\Models\Common\BucketsMail;
 
-class ApprovalNoticeJob implements ShouldQueue
+class RelateNoticeJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -22,19 +22,21 @@ class ApprovalNoticeJob implements ShouldQueue
     private $bucket = null;
     private $post = null;
     private $show_method = null;
+    private $mail_users = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $post, $show_method)
+    public function __construct($frame, $bucket, $post, $show_method, $mail_users)
     {
         // buckets などの受け取り
-        $this->frame       = $frame;
-        $this->bucket      = $bucket;
-        $this->post        = $post;
+        $this->frame  = $frame;
+        $this->bucket = $bucket;
+        $this->post   = $post;
         $this->show_method = $show_method;
+        $this->mail_users  = $mail_users;
     }
 
     /**
@@ -47,18 +49,14 @@ class ApprovalNoticeJob implements ShouldQueue
         // buckets_mails の取得
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
-        // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
-        if (!$bucket_mail->approval_addresses) {
-            Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
-        }
-
         // メール送信
-        $approval_addresses = explode(',', $bucket_mail->approval_addresses);
-        if (empty($approval_addresses)) {
+        if (empty($this->mail_users)) {
             return;
         }
-        foreach ($approval_addresses as $approval_address) {
-            Mail::to($approval_address)->send(new ApprovalNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
+        foreach ($this->mail_users as $relate_user) {
+            if ($relate_user->email) {
+                Mail::to($relate_user->email)->send(new RelateNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
+            }
         }
     }
 }

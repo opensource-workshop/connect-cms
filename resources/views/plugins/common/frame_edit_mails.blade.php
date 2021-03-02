@@ -42,6 +42,7 @@
     </div>
 
     {{-- 投稿通知 --}}
+    @if (isset($use_bucket_mail_methods) && in_array('notice', $use_bucket_mail_methods))
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0">投稿通知</label>
         <div class="{{$frame->getSettingInputClass(false)}}">
@@ -90,6 +91,7 @@
                     <div class="card-body px-2 pt-0 pb-1">
                         <span class="small">
                             ※ [[method]] を記述すると該当部分に処理名が入ります。<br />
+                            ※ [[title]] を記述すると該当部分に記事のタイトルが入ります。<br />
                             ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
                             ※ [[delete_comment]] を記述すると該当部分に削除時のコメントが入ります。
                         </span>
@@ -98,9 +100,10 @@
             </div>
         </div>
     </div>
+    @endif
 
     {{-- 関連記事通知 --}}
-    {{--
+    @if (isset($use_bucket_mail_methods) && in_array('relate', $use_bucket_mail_methods))
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0">関連記事通知</label>
         <div class="{{$frame->getSettingInputClass(false)}}">
@@ -121,12 +124,22 @@
                 <div class="form-group mb-0">
                     <textarea name="relate_body" class="form-control" rows=5>{!!old('relate_body', $bucket_mail->relate_body)!!}</textarea>
                 </div>
+
+                <div class="card bg-light mt-1">
+                    <div class="card-body px-2 pt-0 pb-1">
+                        <span class="small">
+                            ※ [[title]] を記述すると該当部分に記事のタイトルが入ります。<br />
+                            ※ [[url]] を記述すると該当部分に記事のURLが入ります。
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    --}}
+    @endif
 
     {{-- 承認通知 --}}
+    @if (isset($use_bucket_mail_methods) && in_array('approval', $use_bucket_mail_methods))
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0">承認通知</label>
         <div class="{{$frame->getSettingInputClass(false)}}">
@@ -160,6 +173,7 @@
                 <div class="card bg-light mt-1">
                     <div class="card-body px-2 pt-0 pb-1">
                         <span class="small">
+                            ※ [[title]] を記述すると該当部分に記事のタイトルが入ります。<br />
                             ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
                         </span>
                     </div>
@@ -167,8 +181,10 @@
             </div>
         </div>
     </div>
+    @endif
 
     {{-- 承認済み通知 --}}
+    @if (isset($use_bucket_mail_methods) && in_array('approved', $use_bucket_mail_methods))
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0">承認済み通知</label>
         <div class="{{$frame->getSettingInputClass(false)}}">
@@ -210,6 +226,7 @@
                 <div class="card bg-light mt-1">
                     <div class="card-body px-2 pt-0 pb-1">
                         <span class="small">
+                            ※ [[title]] を記述すると該当部分に記事のタイトルが入ります。<br />
                             ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
                         </span>
                     </div>
@@ -217,6 +234,8 @@
             </div>
         </div>
     </div>
+    @endif
+
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 更新</button>
