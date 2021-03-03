@@ -66,7 +66,7 @@
                 <input type="text" name="search_words" id="search_words" value="{{old('search_words', $codes_search->search_words)}}" class="form-control" aria-describedby="basic-addon2">
                 <div class="ml-2">
                     <a href="https://connect-cms.jp/manual/manager/code#collapse-search-help" target="_brank">
-                        <span class="btn btn-light"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></span>
+                        <span class="btn btn-link"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></span>
                     </a>
                 </div>
             </div>

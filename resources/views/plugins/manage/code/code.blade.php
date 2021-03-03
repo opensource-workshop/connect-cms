@@ -33,7 +33,7 @@
                 </div>
                 <div class="ml-2">
                     <a href="https://connect-cms.jp/manual/manager/code#collapse-search-help" target="_brank">
-                        <span class="btn btn-light"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></span>
+                        <span class="btn btn-link"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></span>
                     </a>
                 </div>
             </div>
