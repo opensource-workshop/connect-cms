@@ -7,7 +7,7 @@ use App\Enums\EnumsBase;
 /**
  * 国名コード（ISO 3166-1）
  * ※ラテン文字3文字版
- * 
+ *
  * 引用：https://ja.wikipedia.org/wiki/ISO_3166-1
  */
 final class CountryCodeAlpha3 extends EnumsBase
@@ -263,7 +263,7 @@ final class CountryCodeAlpha3 extends EnumsBase
     const LBN = 'LBN';
     const REU = 'REU';
     const RUS = 'RUS';
-    
+
     // key/valueの連想配列
     const enum = [
         self::not_set=>null,
