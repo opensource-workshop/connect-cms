@@ -1178,5 +1178,4 @@ class CodeManage extends ManagePluginBase
 
         return response()->make($csv_data, 200, $headers);
     }
-
 }
