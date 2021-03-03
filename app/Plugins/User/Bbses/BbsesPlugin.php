@@ -219,8 +219,8 @@ class BbsesPlugin extends UserPluginBase
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
 
-        // 取得
-        return $posts_query->paginate($bbs_frame->getViewCount());
+        // 取得（ここは対象スレッドの記事全てなので、get() で件数指定しない）
+        return $posts_query->get();
     }
 
     /* スタティック関数 */
@@ -315,6 +315,7 @@ class BbsesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
+            'bbs'            => $this->getPluginBucket($this->getBucketId()),
             'posts'          => $posts,
             'children_posts' => $children_posts,
             'plugin_frame'   => $plugin_frame,
@@ -350,6 +351,7 @@ class BbsesPlugin extends UserPluginBase
             'post' => $post,
             'thread_root_post' => $thread_root_post,
             'children_posts'   => $children_posts,
+            'plugin_frame'     => $plugin_frame,
         ]);
     }
 
@@ -414,6 +416,9 @@ class BbsesPlugin extends UserPluginBase
         // POSTデータのモデル取得
         $post = BbsPost::firstOrNew(['id' => $post_id]);
 
+        // 新規登録の判定のために、保存する前のレコードを退避しておく。
+        $before_post = clone $post;
+
         // モデレータ以上の権限を持たずに、記事にすでに返信が付いている場合は、保存できない。
         if (!$this->isCan('role_article') && $post->descendants->count() > 0) {
             $validator = Validator::make($request->all(), []);
@@ -466,8 +471,24 @@ class BbsesPlugin extends UserPluginBase
             }
         }
 
-        // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
-        return new Collection(['redirect_path' => url('/') . "/plugin/bbses/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        // 投稿通知メール
+        $this->sendPostNotice($post, $before_post, 'show');
+
+        // 関連記事通知メール
+        // この post の thread_root_id と同じ post でかつ、この post 自身ではなく、データの status は公開のもの。
+        $mail_users = BbsPost::select('users.name', 'users.email')
+                             ->join('users', 'users.id', '=', 'bbs_posts.created_id')
+                             ->where('users.status', 0)
+                             ->whereNotNull('users.email')
+                             ->where('bbs_posts.thread_root_id', $post->thread_root_id)
+                             ->where('bbs_posts.id', '!=', $post->id)
+                             ->where('bbs_posts.status', 0)
+                             ->distinct()
+                             ->get();
+        $this->sendRelateNotice($post, $mail_users, 'show');
+
+        // 登録後はリダイレクトして詳細画面を開く。(form のリダイレクト指定では post した id が渡せないため)
+        return new Collection(['redirect_path' => url('/') . "/plugin/bbses/show/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
     }
 
     /**
@@ -478,6 +499,9 @@ class BbsesPlugin extends UserPluginBase
         // 記事取得
         $post = $this->getPost($post_id);
 
+        // 承認済みの判定のために、保存する前にpost を退避しておく。
+        $before_post = clone $post;
+
         // データがあることを確認
         if (empty($post)) {
             return;
@@ -487,6 +511,9 @@ class BbsesPlugin extends UserPluginBase
         $post->updated_at = now();
         $post->status = 0;  // 公開
         $post->update();
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($post, $before_post, 'show');
 
         // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
         return;
@@ -499,12 +526,24 @@ class BbsesPlugin extends UserPluginBase
     {
         // id がある場合、データを削除
         if ($post_id) {
+            // メール送信のために、削除する前にレコードを退避しておく。
+            $delete_post = BbsPost::firstOrNew(['id' => $post_id]);
+
+            $delete_comment = "";
+            if ($delete_post) {
+                $delete_comment  = "以下、削除されたデータのタイトルです。\n";
+                $delete_comment .= "「" . $delete_post->title . "」を削除しました。";
+            }
+
             // データを削除する。（論理削除で削除日、ID などを残すためにupdate）
             BbsPost::where('id', $post_id)->update([
                 'deleted_at'   => date('Y-m-d H:i:s'),
                 'deleted_id'   => Auth::user()->id,
                 'deleted_name' => Auth::user()->name,
             ]);
+
+            // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ)
+            $this->sendDeleteNotice($delete_post, 'show', $delete_comment);
         }
         return;
     }
@@ -549,14 +588,20 @@ class BbsesPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'view_count'       => ['nullable', 'numeric'],
             'view_format'      => ['nullable', 'numeric'],
             'thread_sort_flag' => ['nullable', 'numeric'],
+            'view_count'       => ['nullable', 'numeric'],
+            'list_format'      => ['nullable', 'numeric'],
+            'thread_format'    => ['nullable', 'numeric'],
+            'list_underline'   => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'view_count'       => '表示件数',
             'view_format'      => '表示形式',
             'thread_sort_flag' => '根記事の表示順',
+            'view_count'       => '表示件数',
+            'list_format'      => '一覧での展開方法',
+            'thread_format'    => '詳細でのスレッド記事の展開方法',
+            'list_underline'   => 'スレッド記事の下線',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -567,9 +612,13 @@ class BbsesPlugin extends UserPluginBase
         // フレームごとの表示設定の更新
         $bbs_frame = BbsFrame::updateOrCreate(
             ['bbs_id' => $bbs_id, 'frame_id' => $frame_id],
-            ['view_count'       => $request->view_count,
-             'view_format'      => $request->view_format,
-             'thread_sort_flag' => $request->thread_sort_flag],
+            ['view_format'      => $request->view_format,
+             'thread_sort_flag' => $request->thread_sort_flag,
+             'view_count'       => $request->view_count,
+             'list_format'      => $request->list_format,
+             'thread_format'    => $request->thread_format,
+             'list_underline'   => $request->list_underline,
+             'thread_caption'   => $request->thread_caption],
         );
 
         return;

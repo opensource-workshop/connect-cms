@@ -132,7 +132,12 @@
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">未ログイン時にヘッダーを表示するかどうかを選択</small>
+            <small class="form-text text-muted">
+                未ログイン時にヘッダーを表示するかどうかを選択<br />
+                ヘッダーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
+                PC時のヘッダー表示例）<br />
+                <img class="img-fluid" src="/images/core/top_header/top_header.jpg" alt="画面最上部に表示されるヘッダー">
+            </small>
         </div>
 
         {{-- ヘッダーの固定指定 --}}
@@ -188,7 +193,10 @@
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">ログインリンクを表示するかどうかを選択</small>
+            <small class="form-text text-muted">
+                ログインリンクを表示するかどうかを選択<br />
+                ログインリンクを「表示しない」場合、ログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。
+            </small>
         </div>
 
         {{-- パスワードリセット --}}
@@ -219,6 +227,33 @@
             <small class="form-text text-muted">パスワードを忘れた場合に、ユーザ自身がリセットリンクをメール送信する機能を使用するかどうかを選択</small>
         </div>
 
+        {{-- ログイン後に移動するページ --}}
+        <div class="form-group">
+            <label class="col-form-label">ログイン後に移動するページ</label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["base_login_redirect_previous_page"]) && $configs["base_login_redirect_previous_page"] == "1")
+                            <input type="radio" value="1" id="base_login_redirect_previous_page_on" name="base_login_redirect_previous_page" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="base_login_redirect_previous_page_on" name="base_login_redirect_previous_page" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_login_redirect_previous_page_on">元いたページ</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if((isset($configs["base_login_redirect_previous_page"]) && $configs["base_login_redirect_previous_page"] == "0"))
+                            <input type="radio" value="0" id="base_login_redirect_previous_page_off" name="base_login_redirect_previous_page" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="base_login_redirect_previous_page_off" name="base_login_redirect_previous_page" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_login_redirect_previous_page_off">トップページ</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- 自動ユーザ登録の使用 --}}
         <div class="form-group">
             <label class="col-form-label">自動ユーザ登録の使用</label>
@@ -230,7 +265,7 @@
                         @else
                             <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="user_register_enable_on">許可する</label>
+                        <label class="custom-control-label" for="user_register_enable_on" id="label_user_register_enable_on">許可する</label>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -240,7 +275,7 @@
                         @else
                             <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="user_register_enable_off">許可しない</label>
+                        <label class="custom-control-label" for="user_register_enable_off" id="label_user_register_enable_off">許可しない</label>
                     </div>
                 </div>
             </div>

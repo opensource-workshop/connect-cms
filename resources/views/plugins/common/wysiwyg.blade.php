@@ -132,6 +132,7 @@
         @endif
 
         language : 'ja',
+        base_url : '{{url("/")}}',
 
         {{-- plugins --}}
         {!!$plugins!!}

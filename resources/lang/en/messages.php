@@ -29,6 +29,7 @@ return [
     'enter_same_email' => 'Enter the same email address',
     'not_match_confirmation_value' => ' does not match the confirmation value.',
     'entered_time_is_invalid' => 'The context of the entered time is invalid.',
+    'cannot_be_delete_refers_to_the_information' => 'It cannot be deleted because there is a part that refers to the information you are trying to delete.',
     'both_required' => 'Please enter both.',
     'search_results' => 'Search Results',
     'cases' => 'cases',

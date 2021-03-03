@@ -105,7 +105,7 @@
                             @else
                                 <input type="checkbox" name="apis[{{$api_name}}]" value="{{$api_name}}" id="apis_{{$api_name}}" class="custom-control-input">
                             @endif
-                            <label class="custom-control-label" for="apis_{{$api_name}}">{{$api_check['plugin_name_full']}}</label>
+                            <label class="custom-control-label" for="apis_{{$api_name}}" id="label_apis_{{$api_name}}">{{$api_check['plugin_name_full']}}</label>
                         </div>
                     @endforeach
                     </div>

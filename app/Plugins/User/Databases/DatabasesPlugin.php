@@ -4,6 +4,7 @@ namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
 // use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
@@ -35,7 +36,6 @@ use App\Rules\CustomVali_CsvExtensions;
 // use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
-use App\Utilities\Csv\SjisToUtf8EncodingFilter;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\Zip\UnzipUtils;
 use App\Utilities\String\StringUtils;
@@ -91,6 +91,14 @@ class DatabasesPlugin extends UserPluginBase
             'search',
         ];
         return $functions;
+    }
+
+    /**
+     * メール送信で使用するメソッド
+     */
+    public function useBucketMailMethods()
+    {
+        return ['notice', 'approval', 'approved'];
     }
 
     /**
@@ -244,7 +252,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesInputCols($id)
     {
         // データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'databases_columns.classname', 'uploads.client_original_name')
+        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'databases_columns.classname', 'databases_columns.role_display_control_flag', 'uploads.client_original_name')
                                         ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                         ->where('databases_inputs_id', $id)
@@ -473,9 +481,10 @@ class DatabasesPlugin extends UserPluginBase
 
             // カスタムテンプレート用
             // 項目名|検索区分|値　→　項目名（id）でマージしてor検索
-            if ($request->has('search_options_or') && is_array($request->search_options_or)) {
+            if (!empty(session('search_options_or.'.$frame_id))) {
+                $search_options_or = session('search_options_or.'.$frame_id);
                 $merge_search_options = [];
-                foreach ($request->search_options_or as $search_option) {
+                foreach ($search_options_or as $search_option) {
                     list($colname, $reg_txt, $val) = explode('|', $search_option);
                     if (count(explode('|', $search_option)) != 3) {
                         continue;  // 指定が正しくなければ飛ばす
@@ -492,7 +501,10 @@ class DatabasesPlugin extends UserPluginBase
                         continue;  // 指定が正しくなければ飛ばす
                     }
                     if (empty($val)) {
-                        continue;  // 指定が正しくなければ飛ばす
+                        // 0 を検索したい場合もあるので追加
+                        if ($val !== "0") {
+                            continue;  // 指定が正しくなければ飛ばす
+                        }
                     }
                     // カラムIDでマージする
                     $merge_search_options[$option_search_column->id][] = [
@@ -528,10 +540,11 @@ class DatabasesPlugin extends UserPluginBase
             // カスタムテンプレート用
             // 期間検索　［yyyymm(dd)|yyyymm(dd)...］で入力されているデータを検索
             // 検索対象の項目型は複数年月型（テキスト入力）が推奨だが、期間外データを入力する場合は1行文字列型でも可能
-            if ($request->has('search_term') && is_array($request->search_term)) {
-                if (isset($request->search_term['column_name'])) {
-                    $colname = $request->search_term['column_name'];
-                    $tmp_request_search_term = $request->search_term;
+            if (!empty(session('search_term.'.$frame_id))) {
+                $search_term = session('search_term.'.$frame_id);
+                if (isset($search_term['column_name'])) {
+                    $colname = $search_term['column_name'];
+                    $tmp_request_search_term = $search_term;
                     $search_term_column_obj = $columns->where('column_name', $colname);
                     if (!empty($search_term_column_obj)) {
                         $search_term_column = $search_term_column_obj->first();
@@ -539,8 +552,8 @@ class DatabasesPlugin extends UserPluginBase
                             $col_id = $search_term_column->id;
                             unset($tmp_request_search_term['column_name']);
                             $term_month = 12;
-                            if (isset($request->search_term['term_month'])) {
-                                $term_month = (int)$request->search_term['term_month'];
+                            if (isset($search_term['term_month'])) {
+                                $term_month = (int)$search_term['term_month'];
                                 unset($tmp_request_search_term['term_month']);
                             }
                             // datepickerで入力された場合にはyyyy/MMでくるので置換する
@@ -556,6 +569,7 @@ class DatabasesPlugin extends UserPluginBase
                                     $term_value_to = $val;
                                 }
                             }
+                            $add_const_word_search_flg = false;
                             if (!empty($term_value_from) && empty($term_value_to)) {
                                 //検索前が入力　後が未入力
                                 $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
@@ -566,6 +580,7 @@ class DatabasesPlugin extends UserPluginBase
                                     unset($search_vals["term_value_from"]);
                                     unset($search_vals["term_value_to"]);
                                 }
+                                $add_const_word_search_flg = true;
                             } elseif (empty($term_value_from) && !empty($term_value_to)) {
                                 //検索前が未入力　後が入力
                                 $target_day = date("Y-m-1", strtotime($term_value_from. "/01"));
@@ -576,6 +591,7 @@ class DatabasesPlugin extends UserPluginBase
                                     unset($search_vals["term_value_from"]);
                                     unset($search_vals["term_value_to"]);
                                 }
+                                $add_const_word_search_flg = true;
                             } elseif (!empty($term_value_from) && !empty($term_value_to)) {
                                 //検索前入力、後が入力
                                 $strtime_term_value_from = strtotime($term_value_from. "/01");
@@ -595,21 +611,24 @@ class DatabasesPlugin extends UserPluginBase
                                     $i++;
                                     $search_vals["term_value_".$i] = date("Ym", $strtime_term_value_from);
                                 }
+                                $add_const_word_search_flg = true;
                             }
 
                             // テンプレートでsearch_term[XXXX]をセットすることで、ORの値を任意に増やすことができる（*や通年）等期間外のデータ
-                            $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
-                                $query->select('databases_inputs_id')
-                                ->from('databases_input_cols')
-                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                ->where('databases_input_cols.databases_columns_id', $col_id);
-                                $query->where(function ($query) use ($search_vals) {
-                                    foreach ($search_vals as $val) {
-                                        $query->orwhere('value', 'like', '%' . $val . '%');
-                                    }
+                            if ($add_const_word_search_flg) {
+                                $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
+                                    $query->select('databases_inputs_id')
+                                    ->from('databases_input_cols')
+                                    ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                    ->where('databases_input_cols.databases_columns_id', $col_id);
+                                    $query->where(function ($query) use ($search_vals) {
+                                        foreach ($search_vals as $val) {
+                                            $query->orwhere('value', 'like', '%' . $val . '%');
+                                        }
+                                    });
+                                    $query->groupBy('databases_inputs_id');
                                 });
-                                $query->groupBy('databases_inputs_id');
-                            });
+                            }
                         }
                     }
                 }
@@ -852,6 +871,9 @@ class DatabasesPlugin extends UserPluginBase
             // オプション検索OR
             session(['search_options_or.'.$frame_id => $request->search_options_or]);
 
+            // オプション検索期間
+            session(['search_term.'.$frame_id => $request->search_term]);
+
             // ランダム読み込みのための Seed をセッション中に作っておく
             if (empty(session('sort_seed.'.$frame_id))) {
                 session(['sort_seed.'.$frame_id => rand()]);
@@ -870,6 +892,15 @@ class DatabasesPlugin extends UserPluginBase
                 session(['sort_column_order.'.$frame_id => '']);
             }
             // var_dump($sort_column_parts);
+
+            // 検索条件を削除
+            if ($request->has('clear')) {
+                session(['search_keyword.'.$frame_id => '']);
+                session(['search_column.'.$frame_id => '']);
+                session(['search_options.'.$frame_id => '']);
+                session(['search_options_or.'.$frame_id => '']);
+                session(['search_term.'.$frame_id => '']);
+            }
         }
         return $this->index($request, $page_id, $frame_id);
     }
@@ -1155,9 +1186,26 @@ class DatabasesPlugin extends UserPluginBase
 
         // --- 入力値変換
         // 入力値をトリム
-        $request->merge(StringUtils::trimInput($request->all()));
+        // bugfix: $request->all()を取得して全て$request->merge()すると、「Serialization of 'Illuminate\Http\UploadedFile' is not allowed」エラーが発生する時がある。
+        // Illuminate\Session\Store.phpでセッションのserialize()を行っており、oldセッションにUploadオブジェクトが混ざるとシリアライズできずにエラーになっていた。
+        // $request->all()で全てトリムする必要はなく、アップロードファイル以外の必要な入力値のみトリムするよう見直す。
+        //$request->merge(StringUtils::trimInput($request->all()));
 
         foreach ($databases_columns as $databases_column) {
+            // ファイルタイプ以外の入力値をトリム
+            if (! DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                if (isset($request->databases_columns_value[$databases_column->id])) {
+                    // 一度配列にして、trim後、また文字列に戻す。
+                    $tmp_columns_value = StringUtils::trimInput($request->databases_columns_value[$databases_column->id]);
+
+                    $tmp_array = $request->databases_columns_value;
+                    $tmp_array[$databases_column->id] = $tmp_columns_value;
+                    $request->merge([
+                        "databases_columns_value" => $tmp_array,
+                    ]);
+                }
+            }
+
             // 数値チェック
             if ($databases_column->rule_allowed_numeric) {
                 // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
@@ -1297,16 +1345,16 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 表示順が空なら、自分を省いた最後の番号+1 をセット
-        if ($request->filled('display_sequence')) {
-            $display_sequence = intval($request->display_sequence);
-        } else {
-            $max_display_sequence = DatabasesInputs::where('databases_id', $database->id)->where('id', '<>', $id)->max('display_sequence');
-            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
-        }
+        $display_sequence = $this->getSaveDisplaySequence($request->display_sequence, $database->id, $id);
 
         // 変更の場合（行 idが渡ってきたら）、既存の行データを使用。新規の場合は行レコード取得
         if (empty($id)) {
             $databases_inputs = new DatabasesInputs();
+
+            // 新規登録の判定のために、保存する前のレコードを退避しておく。
+            $before_databases_inputs = clone $databases_inputs;
+
+            // 値の保存
             $databases_inputs->databases_id = $database->id;
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
@@ -1314,6 +1362,10 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
+
+            // 新規登録の判定のために、保存する前のレコードを退避しておく。
+            $before_databases_inputs = clone $databases_inputs;
+
             // 更新されたら、行レコードの updated_at を更新したいので、update()
             $databases_inputs->updated_at = now();
             $databases_inputs->status = $status;
@@ -1417,6 +1469,13 @@ class DatabasesPlugin extends UserPluginBase
             // }
         }
 
+        // メール送信 引数(詳細表示メソッド, 登録したid, 登録か更新か)
+        //$this->sendPostNotice($databases_inputs->id, 'detail', empty($databases_inputs->first_committed_at) ? "notice_create" : "notice_update");
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
+//        $this->sendPostNotice($databases_inputs, 'detail');
+
         // delete: フォームの名残で残っていたメール送信処理をコメントアウト
         // // 最後の改行を除去
         // $contents_text = trim($contents_text);
@@ -1463,6 +1522,21 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
+     * 登録する表示順を取得
+     */
+    private function getSaveDisplaySequence($display_sequence, $databases_id, $databases_inputs_id)
+    {
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        if (!is_null($display_sequence)) {
+            $display_sequence = intval($display_sequence);
+        } else {
+            $max_display_sequence = DatabasesInputs::where('databases_id', $databases_id)->where('id', '<>', $databases_inputs_id)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+        }
+        return $display_sequence;
+    }
+
+    /**
      * データ削除
      */
     public function delete($request, $page_id, $frame_id, $id)
@@ -1473,7 +1547,7 @@ class DatabasesPlugin extends UserPluginBase
             return $this->index($request, $page_id, $frame_id);
         }
 
-        // ファイル型の調査のため、詳細カラムデータを取得
+        // ファイル型の調査のため、詳細カラムデータを取得（削除通知でも使用）
         $input_cols = $this->getDatabasesInputCols($id);
 
         // ファイル型のファイル、uploads テーブルを削除
@@ -1496,9 +1570,23 @@ class DatabasesPlugin extends UserPluginBase
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $delete_input = DatabasesInputs::firstOrNew(['id' => $id]);
+
         // 行データを削除
         DatabasesInputs::where('id', $id)->delete();
 
+        // 削除通知に渡すために、項目の編集（最初の公開（権限で制御しない）の項目名と値）
+        $notice_cols = $input_cols->where("role_display_control_flag", 0);
+        $delete_comment = "";
+        if ($notice_cols->isNotEmpty()) {
+            $notice_cols_first = $notice_cols->first();
+            $delete_comment  = "以下、削除されたデータの最初の公開項目です。\n";
+            $delete_comment .= "「" . $notice_cols_first->column_name . "：" . $notice_cols_first->value . "」の行を削除しました。";
+        }
+
+        // メール送信 引数(削除した行ID, 詳細表示メソッド, 削除データを表すメッセージ)
+        $this->sendDeleteNotice($delete_input, 'detail', $delete_comment);
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
@@ -2884,15 +2972,25 @@ class DatabasesPlugin extends UserPluginBase
                 // Log::debug(var_export($filesystem->extension($unzip_uploads_full_path), true));
                 // Log::debug(var_export($filesystem->size($unzip_uploads_full_path), true));
 
-                // ファイル保存
-                $directory = $this->getDirectory($upload->id);
-
                 // // 一時ファイルの削除
                 // fclose($fp);
                 // $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
                 // dd('ここまで');
 
+                ////
+                //// ファイル保存
+                ////
+                $directory = $this->getDirectory($upload->id);
+
                 // $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
+                //
+                // zipで添付ファイルアップロードのため、$request->file($req_filename)->storeAs($directory, $upload->id...) を使えない。
+                // storeAs内で $directory を作成してると思われ、uploadsディレクトリが無い場合もありえる（他機能で１度もアップロードしてない場合等）ため、自分でアップロードディレクトリを作成する。
+                // $recursive=trueは再回帰的にディレクトリ作成.
+                if (! $filesystem->exists(storage_path('app/') . $directory . '/')) {
+                    $filesystem->makeDirectory(storage_path('app/') . $directory . '/', 0775, true);
+                }
+
                 // 一時ディレクトリから、uploadsディレクトリに移動
                 // 拡張子なしに対応
                 // $filesystem->move($unzip_uploads_full_path, storage_path('app/') . $directory . '/' . $upload->id . '.' . $filesystem->extension($unzip_uploads_full_path));
@@ -3023,6 +3121,7 @@ class DatabasesPlugin extends UserPluginBase
             // 配列末尾：表示順
             // 次の末尾：公開日時
             $display_sequence = array_pop($csv_columns);
+            $display_sequence = $this->getSaveDisplaySequence($display_sequence, $database->id, $databases_inputs_id);
             $posted_at = array_pop($csv_columns);
             $posted_at = new Carbon($posted_at);
 
@@ -3601,8 +3700,10 @@ class DatabasesPlugin extends UserPluginBase
             //
             // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
             //
-            $query->Where($table_name . '.status', '=', \StatusType::active)
+            $query->where(function ($tmp_query) use ($table_name) {
+                    $tmp_query->where($table_name . '.status', '=', \StatusType::active)
                     ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+            });
         } else {
             // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
             // 未ログイン
@@ -3626,6 +3727,9 @@ class DatabasesPlugin extends UserPluginBase
         // 登録データ行の取得
         $databases_inputs = $this->getDatabasesInputs($id);
 
+        // 承認済みの判定のために、保存する前に初回確定日時を退避しておく。
+        $before_databases_inputs = clone $databases_inputs;
+
         // データがあることを確認
         if (empty($databases_inputs)) {
             return;
@@ -3635,6 +3739,9 @@ class DatabasesPlugin extends UserPluginBase
         $databases_inputs->updated_at = now();
         $databases_inputs->status = 0;  // 公開
         $databases_inputs->update();
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);

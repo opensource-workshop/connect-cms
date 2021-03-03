@@ -3,6 +3,7 @@
 namespace app\Plugins\Mypage\ProfileMypage;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -83,7 +84,9 @@ class ProfileMypage extends MypagePluginBase
 
         // パスワードの入力があれば、更新
         if (!empty($request->new_password)) {
-            $update_array['password'] = bcrypt($request->new_password);
+            // change to laravel6.
+            // $update_array['password'] = bcrypt($request->new_password);
+            $update_array['password'] = Hash::make($request->new_password);
         }
 
         // ユーザデータの更新

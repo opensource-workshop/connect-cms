@@ -672,7 +672,23 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
 
         // 入力値をトリム
-        $request->merge(StringUtils::trimInput($request->all()));
+        // bugfix: 【データベース】（Laravel6テスト）ファイル型項目にファイルをアップするとシステムエラーと同じ対応 https://github.com/opensource-workshop/connect-cms/issues/732
+        // $request->merge(StringUtils::trimInput($request->all()));
+        foreach ($forms_columns as $forms_column) {
+            // ファイルタイプ以外の入力値をトリム
+            if (! FormsColumns::isFileColumnType($forms_column->column_type)) {
+                if (isset($request->forms_columns_value[$forms_column->id])) {
+                    // 一度配列にして、trim後、また文字列に戻す。
+                    $tmp_columns_value = StringUtils::trimInput($request->forms_columns_value[$forms_column->id]);
+
+                    $tmp_array = $request->forms_columns_value;
+                    $tmp_array[$forms_column->id] = $tmp_columns_value;
+                    $request->merge([
+                        "forms_columns_value" => $tmp_array,
+                    ]);
+                }
+            }
+        }
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
@@ -703,7 +719,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         'plugin_name'          => 'forms',
                         'page_id'              => $page_id,
                         'temporary_flag'       => 1,
-                        'created_id'           => Auth::user()->id,
+                        'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
                     ]);
 
                     // ファイル保存

@@ -182,6 +182,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_login_password_reset]
         );
 
+        // ログイン時に元いたページに遷移 設定
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_login_redirect_previous_page'],
+            ['category' => 'general',
+             'value'    => $request->base_login_redirect_previous_page]
+        );
+
         // 自動ユーザ登録の使用
         $configs = Configs::updateOrCreate(
             ['name'     => 'user_register_enable'],

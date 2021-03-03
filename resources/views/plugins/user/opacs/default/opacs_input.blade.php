@@ -179,9 +179,9 @@
         <div class="col-md-10">
             <select class="form-control" name="type" class="form-control">
                 <option value=""></option>
-                <option value="1:一般書" @if(Input::old('type', $opacs_books->type)=="1:一般書") selected @endif>1:一般書</option>
-                <option value="3:雑誌" @if(Input::old('type', $opacs_books->type)=="3:雑誌") selected @endif>3:雑誌</option>
-                <option value="4:ＡＶ" @if(Input::old('type', $opacs_books->type)=="4:ＡＶ") selected @endif>4:ＡＶ</option>
+                <option value="1:一般書" @if(old('type', $opacs_books->type)=="1:一般書") selected @endif>1:一般書</option>
+                <option value="3:雑誌" @if(old('type', $opacs_books->type)=="3:雑誌") selected @endif>3:雑誌</option>
+                <option value="4:ＡＶ" @if(old('type', $opacs_books->type)=="4:ＡＶ") selected @endif>4:ＡＶ</option>
             </select>
             @if ($errors && $errors->has('type')) <div class="text-danger">{{$errors->first('type')}}</div> @endif
         </div>
@@ -201,10 +201,10 @@
         <div class="col-md-10">
             <select class="form-control" name="lend_flag" class="form-control">
                 <option value=""></option>
-                <option value="1" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="1") selected @endif>1</option>
-                <option value="0:一般" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="0:一般") selected @endif>0:一般</option>
-                <option value="2:館内" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="2:館内") selected @endif>2:館内</option>
-                <option value="9:禁帯出" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="9:禁帯出") selected @endif>9:禁帯出</option>
+                <option value="1" @if(old('lend_flag', $opacs_books->lend_flag)=="1") selected @endif>1</option>
+                <option value="0:一般" @if(old('lend_flag', $opacs_books->lend_flag)=="0:一般") selected @endif>0:一般</option>
+                <option value="2:館内" @if(old('lend_flag', $opacs_books->lend_flag)=="2:館内") selected @endif>2:館内</option>
+                <option value="9:禁帯出" @if(old('lend_flag', $opacs_books->lend_flag)=="9:禁帯出") selected @endif>9:禁帯出</option>
             </select>
             @if ($errors && $errors->has('lend_flag')) <div class="text-danger">{{$errors->first('lend_flag')}}</div> @endif
         </div>
@@ -215,9 +215,9 @@
         <div class="col-md-10">
             <select class="form-control" name="accept_flag" class="form-control">
                 <option value=""></option>
-                <option value="0" @if(Input::old('accept_flag', $opacs_books->accept_flag)=="0") selected @endif>0</option>
-                <option value="0:購入" @if(Input::old('accept_flag', $opacs_books->accept_flag)=="0:購入") selected @endif>0:一般</option>
-                <option value="1:寄贈" @if(Input::old('accept_flag', $opacs_books->accept_flag)=="1:寄贈") selected @endif>1:寄贈</option>
+                <option value="0" @if(old('accept_flag', $opacs_books->accept_flag)=="0") selected @endif>0</option>
+                <option value="0:購入" @if(old('accept_flag', $opacs_books->accept_flag)=="0:購入") selected @endif>0:一般</option>
+                <option value="1:寄贈" @if(old('accept_flag', $opacs_books->accept_flag)=="1:寄贈") selected @endif>1:寄贈</option>
             </select>
             @if ($errors && $errors->has('accept_flag')) <div class="text-danger">{{$errors->first('accept_flag')}}</div> @endif
         </div>
@@ -280,8 +280,8 @@
         <div class="col-md-10">
             <select class="form-control" name="remove_flag" class="form-control">
                 <option value=""></option>
-                <option value="" @if(Input::old('remove_flag', $opacs_books->remove_flag)=="0") selected @endif>0</option>
-                <option value="5:その他" @if(Input::old('remove_flag', $opacs_books->remove_flag)=="5:その他") selected @endif>5:その他</option>
+                <option value="" @if(old('remove_flag', $opacs_books->remove_flag)=="0") selected @endif>0</option>
+                <option value="5:その他" @if(old('remove_flag', $opacs_books->remove_flag)=="5:その他") selected @endif>5:その他</option>
             </select>
             @if ($errors && $errors->has('remove_flag')) <div class="text-danger">{{$errors->first('remove_flag')}}</div> @endif
         </div>
@@ -314,7 +314,7 @@
         <div class="col-md-10">
             <select class="form-control" name="possession" class="form-control">
                 <option value=""></option>
-                <option value="所蔵" @if(Input::old('possession', $opacs_books->possession)=="所蔵") selected @endif>所蔵</option>
+                <option value="所蔵" @if(old('possession', $opacs_books->possession)=="所蔵") selected @endif>所蔵</option>
             </select>
             @if ($errors && $errors->has('possession')) <div class="text-danger">{{$errors->first('possession')}}</div> @endif
         </div>
@@ -325,7 +325,7 @@
         <div class="col-md-10">
             <select class="form-control" name="library" class="form-control">
                 <option value=""></option>
-                <option value="00:図書館" @if(Input::old('library', $opacs_books->library)=="00:図書館") selected @endif>00:図書館</option>
+                <option value="00:図書館" @if(old('library', $opacs_books->library)=="00:図書館") selected @endif>00:図書館</option>
             </select>
             @if ($errors && $errors->has('library')) <div class="text-danger">{{$errors->first('library')}}</div> @endif
         </div>

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DefaultUsersTableSeeder extends Seeder
 {
@@ -16,11 +17,13 @@ class DefaultUsersTableSeeder extends Seeder
                 [
                     /** 初期管理者 */
                     [
-                        'name'=>'システム管理者',
-                        'email'=>'',
-                        'userid'=>'admin',
-                        'password'=>bcrypt('C-admin'),
-                        'remember_token'=>'',
+                        'name' => 'システム管理者',
+                        'email' => '',
+                        'userid' => 'admin',
+                        // change to laravel6.
+                        // 'password' => bcrypt('C-admin'),
+                        'password' => Hash::make('C-admin'),
+                        'remember_token' => '',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
