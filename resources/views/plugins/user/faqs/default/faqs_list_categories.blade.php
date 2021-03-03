@@ -189,9 +189,7 @@
         </tbody>
         </table>
 
-        <div class="card card-body bg-light p-2 m-2">
-            クラス名は cc_category_xxxx で使用できます。
-        </div>
+        @include('plugins.common.description_plugin_category')
     </div>
 
     <div class="form-group text-center">
