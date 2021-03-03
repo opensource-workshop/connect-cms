@@ -132,6 +132,11 @@ class CodeManage extends ManagePluginBase
             'additional3' => 'codes.additional3',
             'additional4' => 'codes.additional4',
             'additional5' => 'codes.additional5',
+            'additional6' => 'codes.additional6',
+            'additional7' => 'codes.additional7',
+            'additional8' => 'codes.additional8',
+            'additional9' => 'codes.additional9',
+            'additional10' => 'codes.additional10',
             'display_sequence' => 'codes.display_sequence',
         ];
 
@@ -329,10 +334,12 @@ class CodeManage extends ManagePluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
+            'buckets_id' => ['nullable', 'numeric'],
             'code' => ['required'],
             'value' => ['required'],
         ]);
         $validator->setAttributeNames([
+            'buckets_id' => 'buckets_id',
             'code' => 'コード',
             'value' => '値',
         ]);
@@ -366,7 +373,12 @@ class CodeManage extends ManagePluginBase
         $codes->additional3          = $request->additional3;
         $codes->additional4          = $request->additional4;
         $codes->additional5          = $request->additional5;
-        $codes->display_sequence     = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
+        $codes->additional6          = $request->additional6;
+        $codes->additional7          = $request->additional7;
+        $codes->additional8          = $request->additional8;
+        $codes->additional9          = $request->additional9;
+        $codes->additional10         = $request->additional10;
+        $codes->display_sequence     = isset($request->display_sequence) ? (int)$request->display_sequence : 0;
         $codes->save();
 
 
@@ -754,6 +766,11 @@ class CodeManage extends ManagePluginBase
         $codes_help_messages->additional3_help_message          = $request->additional3_help_message;
         $codes_help_messages->additional4_help_message          = $request->additional4_help_message;
         $codes_help_messages->additional5_help_message          = $request->additional5_help_message;
+        $codes_help_messages->additional6_help_message          = $request->additional6_help_message;
+        $codes_help_messages->additional7_help_message          = $request->additional7_help_message;
+        $codes_help_messages->additional8_help_message          = $request->additional8_help_message;
+        $codes_help_messages->additional9_help_message          = $request->additional9_help_message;
+        $codes_help_messages->additional10_help_message          = $request->additional10_help_message;
         $codes_help_messages->display_sequence_help_message     = $request->display_sequence_help_message;
         $codes_help_messages->display_sequence                  = (isset($request->display_sequence) ? (int)$request->display_sequence : 0);
         $codes_help_messages->save();
@@ -956,7 +973,12 @@ class CodeManage extends ManagePluginBase
             $codes->additional3          = $csv_columns[14];
             $codes->additional4          = $csv_columns[15];
             $codes->additional5          = $csv_columns[16];
-            $codes->display_sequence     = isset($csv_columns[17]) ? (int)$csv_columns[17] : 0;
+            $codes->additional6          = $csv_columns[17];
+            $codes->additional7          = $csv_columns[18];
+            $codes->additional8          = $csv_columns[19];
+            $codes->additional9          = $csv_columns[20];
+            $codes->additional10         = $csv_columns[21];
+            $codes->display_sequence     = isset($csv_columns[22]) ? (int)$csv_columns[22] : 0;
             $codes->save();
         }
 
@@ -1011,7 +1033,7 @@ class CodeManage extends ManagePluginBase
             0 => ['nullable', 'numeric', 'exists:codes,id,deleted_at,NULL'],    // id
             1 => ['nullable', 'exists:plugins,plugin_name'],                    // プラグイン(英語)
             2 => ['nullable', 'exists:codes_help_messages,alias_key,deleted_at,NULL'],    // 注釈キー
-            3 => [],
+            3 => ['nullable', 'numeric'],    // buckets_id
             4 => [],
             5 => [],
             6 => [],
@@ -1156,5 +1178,4 @@ class CodeManage extends ManagePluginBase
 
         return response()->make($csv_data, 200, $headers);
     }
-
 }
