@@ -44,6 +44,7 @@ class CustomValiUserEmailUnique implements Rule
                 ->first();
 
         if (!empty($input_cols)) {
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
             // 値ありはメール重複
             return false;
         }
@@ -56,16 +57,20 @@ class CustomValiUserEmailUnique implements Rule
 
         $users_column_ids = [];
         foreach ($users_columns as $users_column) {
-            if ($users_column->column_type = \UserColumnType::mail) {
+            if ($users_column->column_type == \UserColumnType::mail) {
                 // メールのカラムidのみ抽出
                 $users_column_ids[] = $users_column->id;
             }
         }
 
         if (empty($users_column_ids)) {
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
             // 追加項目でメール項目がなければチェックしない（チェックOKとみなす）
             return true;
         }
+
+        // debug:確認したいSQLの前にこれを仕込んで
+        // \DB::enableQueryLog();
 
         // 自分以外でメール項目に同じメールがあるか
         $input_cols = UsersInputCols::where('users_id', '!=', $this->user_id)
@@ -73,7 +78,12 @@ class CustomValiUserEmailUnique implements Rule
                 ->where('value', $value)
                 ->first();
 
+        // debug: sql dumpする
+        // \Log::debug(var_export(\DB::getQueryLog(), true));
+
         if (!empty($input_cols)) {
+            // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+            // \Log::debug(var_export($input_cols, true));
             // 値ありはメール重複
             return false;
         }
