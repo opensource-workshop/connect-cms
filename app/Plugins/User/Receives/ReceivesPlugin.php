@@ -99,15 +99,14 @@ class ReceivesPlugin extends UserPluginBase
                            ->count();
 
         // 最終登録日時
-        $receive_last = DB::table('receive_records')
-                           ->join('receives', 'receive_records.receive_id', '=', 'receives.id')
-                           ->join('frames', function ($join) use ($frame_id) {
-                               $join->on('frames.bucket_id', '=', 'receives.bucket_id')
+        $receive_last = ReceiveRecord::select('receive_records.*')
+                            ->join('receives', 'receive_records.receive_id', '=', 'receives.id')
+                            ->join('frames', function ($join) use ($frame_id) {
+                                $join->on('frames.bucket_id', '=', 'receives.bucket_id')
                                     ->where('frames.id', $frame_id);
-                           })
-                           ->orderBy('receive_records.created_at', 'desc')
-                           ->first();
-
+                            })
+                            ->orderBy('receive_records.created_at', 'desc')
+                            ->first();
 
         // 表示テンプレートを呼び出す。
         return $this->view(
