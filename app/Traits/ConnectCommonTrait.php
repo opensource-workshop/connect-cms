@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 // use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 //use Carbon\Carbon;
 use Session;
@@ -815,11 +816,19 @@ trait ConnectCommonTrait
         }
 
         // 利用不可ならfalse
-        if ($user->status == 0) {
-            return true;
+        if ($user->status == 1) {
+            $error_msg = "利用不可のため、ログインできません。";
+            return false;
         }
-        $error_msg = "利用不可のため、ログインできません。";
-        return false;
+
+        // メール認証チェック
+        // copy by Illuminate\Auth\Middleware\EnsureEmailIsVerified::handle(). $this->middleware('verified') の実クラス
+        if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
+            $error_msg = "メール認証が完了していないため、ログインできません。";
+            return false;
+        }
+
+        return true;
     }
 
     /**
