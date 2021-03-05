@@ -157,7 +157,9 @@ trait RegistersUsers
 
         // ユーザー自動登録（未ログイン）の場合の登録完了メッセージ。
         if (!Auth::user()) {
-            session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
+            // [TODO] 仮対応。メール認証ON・OFFでメッセージ切替 必須
+            // session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
+            session()->flash('flash_message_for_header', 'メールに記載されているリンクをクリックしてユーザ登録を完了してください。');
         }
 
         // 作成したユーザでのログイン処理は行わない。mod by nagahara@opensource-workshop.jp

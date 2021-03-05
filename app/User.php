@@ -7,8 +7,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 use App\Notifications\PasswordResetNotification;
+use App\Notifications\EmailVerifyNotification;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use Notifiable;
 
@@ -54,6 +55,17 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new PasswordResetNotification($token));
+    }
+
+    /**
+     * Send the email verification notification.
+     * (OverWrite) 親クラス Illuminate\Foundation\Auth\User 定義のtrait Illuminate\Auth\MustVerifyEmail::sendEmailVerificationNotification();
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new EmailVerifyNotification);
     }
 
     /**

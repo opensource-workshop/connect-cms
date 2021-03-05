@@ -823,6 +823,7 @@ trait ConnectCommonTrait
 
         // メール認証チェック
         // copy by Illuminate\Auth\Middleware\EnsureEmailIsVerified::handle(). $this->middleware('verified') の実クラス
+        // [TODO] メール認証設定でON・OFF対応まだ
         if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
             $error_msg = "メール認証が完了していないため、ログインできません。";
             return false;
