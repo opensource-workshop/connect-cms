@@ -19,7 +19,7 @@
         <dd class="col-sm-10">@isset($receives_last){{$receives_last->created_at}}@endif</dd>
     </dl>
 
-    <form action="/download/plugin/receives/downloadCsv/{{$page->id}}/{{$frame_id}}/{{$receive_frame->receive_id}}" method="POST" class="">
+    <form action="{{url('/')}}/download/plugin/receives/downloadCsv/{{$page->id}}/{{$frame_id}}/{{$receive_frame->receive_id}}" method="POST" class="">
         {{ csrf_field() }}
         <button type="submit" class="btn btn-success btn-sm">
             <i class="fas fa-file-download"></i> ダウンロード
