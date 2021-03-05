@@ -48,6 +48,7 @@ class LoginController extends Controller
      */
     public function __construct()
     {
+        // exceptで指定されたメソッドは除外する
         $this->middleware('guest')->except('logout');
     }
 
