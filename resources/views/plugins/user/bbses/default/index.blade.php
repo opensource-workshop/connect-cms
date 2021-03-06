@@ -53,9 +53,6 @@
                     @if ($post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
                     @elseif ($post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
                     @endif
-                    <span class="float-right">
-                        @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $post])
-                    </span>
                 </div>
                 {{-- 一覧での展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
                 <div class="card-body">
