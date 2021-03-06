@@ -136,7 +136,7 @@
                 未ログイン時にヘッダーを表示するかどうかを選択<br />
                 ヘッダーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
                 PC時のヘッダー表示例）<br />
-                <img class="img-fluid" src="/images/core/top_header/top_header.jpg" alt="画面最上部に表示されるヘッダー">
+                <img class="img-fluid" src="{{url('/')}}/images/core/top_header/top_header.jpg" alt="画面最上部に表示されるヘッダー">
             </small>
         </div>
 
