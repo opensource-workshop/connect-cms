@@ -2,12 +2,20 @@
  * 掲示板画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上　雅人 <inoue@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 掲示板プラグイン
 --}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+<script type="text/javascript">
+    // ツールチップ有効化
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
 
 @if (isset($frame) && $frame->bucket_id)
     {{-- バケツあり --}}
@@ -41,7 +49,13 @@
             <div class="card mb-3">
                 {{-- 一覧での展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
                 <div class="card-header">
-                    {{$post->title}}@if ($post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@elseif ($post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>@endif<span class="float-right">{{$post->created_at->format('Y-m-d')}} [{{$post->created_name}}]</span>
+                    {{$post->title}}
+                    @if ($post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
+                    @elseif ($post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
+                    @endif
+                    <span class="float-right">
+                        @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $post])
+                    </span>
                 </div>
                 {{-- 一覧での展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
                 <div class="card-body">
@@ -58,7 +72,9 @@
             <div class="card mb-3">
                 <div class="card-header">
                     @include('plugins.user.bbses.default.post_title', ['view_post' => $post, 'current_post' => null, 'list_class' => ''])
-                    <span class="float-right">{{$post->created_at->format('Y-m-d')}} [{{$post->created_name}}]</span>
+                    <span class="float-right">
+                        @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $post])
+                    </span>
                 </div>
                 <div class="card-body">
                     {!!$post->body!!}
@@ -82,7 +98,9 @@
                                 <div class="card mt-3">
                                     <div class="card-header">
                                         @include('plugins.user.bbses.default.post_title', ['view_post' => $children_post, 'current_post' => null, 'list_class' => ''])
-                                        <span class="float-right">{{$children_post->created_at->format('Y-m-d')}} [{{$children_post->created_name}}]</span>
+                                        <span class="float-right">
+                                            @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $children_post])
+                                        </span>
                                     </div>
                                     <div class="card-body">
                                         {!!$children_post->body!!}

@@ -2,6 +2,7 @@
  * 掲示板記事詳細画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上　雅人 <inoue@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 掲示板プラグイン
 --}}
@@ -18,8 +19,8 @@
 @else
     {{-- 以下、post がある想定の処理 --}}
 
-{{-- 編集、返信ボタンのアクション --}}
 <script type="text/javascript">
+    // 編集、返信、承認ボタンのアクション
     function edit_action() {
         form_bbses_posts{{$frame_id}}.action = "{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}";
         form_bbses_posts{{$frame_id}}.submit();
@@ -36,6 +37,10 @@
         form_bbses_posts{{$frame_id}}.redirect_path.value = "{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}";
         form_bbses_posts{{$frame_id}}.submit();
     }
+    // ツールチップ有効化
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 </script>
 
 <form method="POST" class="" name="form_bbses_posts{{$frame_id}}">
@@ -124,7 +129,13 @@
         <div class="card mb-3">
             {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
             <div class="card-header">
-                {{$thread_root_post->title}}@if ($thread_root_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>@elseif ($thread_root_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>@endif<span class="float-right">{{$thread_root_post->created_at->format('Y年n月j日')}} [{{$thread_root_post->created_name}}]</span>
+                {{$thread_root_post->title}}
+                @if ($thread_root_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
+                @elseif ($thread_root_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
+                @endif
+                <span class="float-right">
+                    @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $thread_root_post])
+                </span>
             </div>
             {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
             <div class="card-body">
