@@ -553,19 +553,25 @@ class ContentsPlugin extends UserPluginBase
         // データリストの場合の追加処理
         // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
         // * 現在のものを最初に表示する。orderByRaw('buckets.id = ' . $this->buckets->id . ' desc') ※ desc 指定が必要だった。
-        $buckets_list = DB::table('buckets')
-                          ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
-                          ->join('contents', function ($join) {
-                              $join->on('contents.bucket_id', '=', 'buckets.id');
-                              $join->where('contents.status', '=', 0);
-                              $join->whereNull('contents.deleted_at');
-                          })
-                          ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
-                          ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
-                          ->where('buckets.plugin_name', 'contents')
-                          ->orderByRaw('buckets.id = ' . $this->buckets->id . ' desc')
-                          ->orderBy($request_order_by[0], $request_order_by[1])
-                          ->paginate(10, ["*"], "frame_{$frame_id}_page");
+        $buckets_query = DB::table('buckets')
+                           ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
+                           ->join('contents', function ($join) {
+                               $join->on('contents.bucket_id', '=', 'buckets.id');
+                               $join->where('contents.status', '=', 0);
+                               $join->whereNull('contents.deleted_at');
+                           })
+                           ->leftJoin('frames', 'buckets.id', '=', 'frames.bucket_id')
+                           ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
+                           ->where('buckets.plugin_name', 'contents');
+
+        // buckets を作っていない状態で、設定の表示コンテンツ選択を開くこともあるので、バケツがあるかの判定
+        if (!empty($this->buckets)) {
+            // buckets がある場合は、該当buckets を一覧の最初に持ってくる。
+            $buckets_query->orderByRaw('buckets.id = ' . $this->buckets->id . ' desc');
+        }
+
+        $buckets_list = $buckets_query->orderBy($request_order_by[0], $request_order_by[1])
+                                      ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         return $this->view(
             'contents_list_buckets', [
