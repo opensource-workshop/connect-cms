@@ -42,7 +42,7 @@ class DateUtils
                 } else {
                     $ret = $value;
                 }
-            } elseif (mb_strlen($value) == 4) {
+            } elseif (mb_strlen($value) == 4 && $value != '9999') {
                 // 4桁の場合
                 if (checkdate(1, 1, substr($value, 0, 4))) {
                     // 日付として正常
@@ -50,6 +50,8 @@ class DateUtils
                 } else {
                     $ret = $value;
                 }
+            } elseif ($value == '9999') {
+                $ret = '現在';
             } else {
                 $ret = $value;
             }
