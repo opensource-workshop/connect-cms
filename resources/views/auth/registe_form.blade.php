@@ -18,22 +18,16 @@
         <div class="form-group row">
             <label for="name" class="col-md-4 col-form-label text-md-right">状態 <label class="badge badge-danger">必須</label></label>
             <div class="col-md-8 d-sm-flex align-items-center">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('status', $user->status) == 0)
-                        <input type="radio" value="0" id="status_0" name="status" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="0" id="status_0" name="status" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="status_0">利用可能</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('status', $user->status) == 1)
-                        <input type="radio" value="1" id="status_1" name="status" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="status_1" name="status" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="status_1">利用不可</label>
-                </div>
+                @foreach (UserStatus::getMembers() as $enum_value => $enum_label)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if (old('status', $user->status) == $enum_value)
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="status_{{$enum_value}}">{{$enum_label}}</label>
+                    </div>
+                @endforeach
             </div>
         </div>
     @else

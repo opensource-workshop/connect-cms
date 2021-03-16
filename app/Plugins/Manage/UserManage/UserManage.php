@@ -200,6 +200,11 @@ class UserManage extends ManagePluginBase
             $users_query->where('users.email', 'like', '%' . $request->session()->get('user_search_condition.email') . '%');
         }
 
+        // 状態
+        if ($request->session()->has('user_search_condition.status')) {
+            $users_query->where('users.status', $request->session()->get('user_search_condition.status'));
+        }
+
         foreach ($users_columns as $users_column) {
             if ($request->session()->has('user_search_condition.users_columns_value.'. $users_column->id)) {
                 $search_keyword = $request->session()->get('user_search_condition.users_columns_value.'. $users_column->id);
@@ -394,6 +399,8 @@ class UserManage extends ManagePluginBase
             "admin_user"         => $request->input('user_search_condition.admin_user'),
 
             "guest"              => $request->input('user_search_condition.guest'),
+
+            "status"             => $request->input('user_search_condition.status'),
 
             "sort"               => $request->input('user_search_condition.sort'),
         ];
