@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
 --}}
+@php
+use App\Models\Core\UsersColumns;
+@endphp
+
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -61,8 +65,7 @@
                             @foreach($users_columns as $users_column)
                                 @php
                                     // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
-                                    // 時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない
-                                    if ($users_column->column_type == UserColumnType::radio || $users_column->column_type == UserColumnType::checkbox) {
+                                    if (UsersColumns::isChoicesColumnType($users_column->column_type)) {
                                         $label_for = '';
                                         $label_class = 'pt-0';
                                     } else {

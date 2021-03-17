@@ -28,4 +28,18 @@ class UsersColumns extends Model
         'rule_word_count',
         'display_sequence',
     ];
+
+    /**
+     * 選択肢系のカラム型か
+     */
+    public static function isChoicesColumnType($column_type)
+    {
+        // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
+        if ($column_type == \UserColumnType::radio ||
+                $column_type == \UserColumnType::checkbox ||
+                $column_type == \UserColumnType::agree) {
+            return true;
+        }
+        return false;
+    }
 }

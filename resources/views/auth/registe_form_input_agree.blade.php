@@ -1,5 +1,5 @@
 {{--
- * 登録画面 ○○への同意(agree)テンプレート。
+ * 登録画面 ○○への同意(input agree)テンプレート。
 --}}
 @if (array_key_exists($user_obj->id, $users_columns_id_select))
     @php
@@ -10,11 +10,10 @@
             $value = $value_obj->value;
         }
 
+        $label_value = "以下の内容に同意する。";
 
         // 1番目の選択肢のみ取得
         $select = current($users_columns_id_select[$user_obj->id]);
-        //dd($users_columns_id_select[$user_obj->id]);
-        //$select = null;
 
         // チェック用変数
         $column_checkbox_checked = "";
@@ -22,7 +21,7 @@
         // old でチェックされていたもの
         if (!empty(old('users_columns_value.'.$user_obj->id))) {
             foreach(old('users_columns_value.'.$user_obj->id) as $old_value) {
-                if ( $old_value == "以下の内容に同意する。" ) {
+                if ( $old_value == $label_value ) {
                     $column_checkbox_checked = " checked";
                 }
             }
@@ -33,7 +32,7 @@
             array_key_exists($user_obj->id, $request->users_columns_value)) {
 
             foreach($request->users_columns_value[$user_obj->id] as $request_value) {
-                if ( $request_value == "以下の内容に同意する。" ) {
+                if ( $request_value == $label_value ) {
                     $column_checkbox_checked = " checked";
                 }
             }
@@ -43,14 +42,14 @@
         if (!empty($value)) {
             // 入力されたデータの中に選択肢が含まれているか否か
             // 選択肢にカンマが含まれている可能性を考慮
-            if(strpos($value,"以下の内容に同意する。") !== false){
+            if(strpos($value,$label_value) !== false){
                 $column_checkbox_checked = " checked";
             }
         }
     @endphp
     <div class="custom-control custom-checkbox custom-control-inline">
-        <input name="users_columns_value[{{$user_obj->id}}][]" value="以下の内容に同意する。" type="checkbox" class="custom-control-input" id="users_columns_value[{{$user_obj->id}}]" {{$column_checkbox_checked}}>
-        <label class="custom-control-label" for="users_columns_value[{{$user_obj->id}}]"> 以下の内容に同意する。</label>
+        <input name="users_columns_value[{{$user_obj->id}}][]" value="{{$label_value}}" type="checkbox" class="custom-control-input" id="users_columns_value[{{$user_obj->id}}]" {{$column_checkbox_checked}}>
+        <label class="custom-control-label" for="users_columns_value[{{$user_obj->id}}]"> {{$label_value}}</label>
     </div>
     @if ($errors && $errors->has("users_columns_value.$user_obj->id"))
         <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}</div>
