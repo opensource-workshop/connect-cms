@@ -10,8 +10,6 @@
             $value = $value_obj->value;
         }
 
-        $label_value = "以下の内容に同意する。";
-
         // 1番目の選択肢のみ取得
         $select = current($users_columns_id_select[$user_obj->id]);
 
@@ -21,7 +19,7 @@
         // old でチェックされていたもの
         if (!empty(old('users_columns_value.'.$user_obj->id))) {
             foreach(old('users_columns_value.'.$user_obj->id) as $old_value) {
-                if ( $old_value == $label_value ) {
+                if ( $old_value == $select['value'] ) {
                     $column_checkbox_checked = " checked";
                 }
             }
@@ -32,7 +30,7 @@
             array_key_exists($user_obj->id, $request->users_columns_value)) {
 
             foreach($request->users_columns_value[$user_obj->id] as $request_value) {
-                if ( $request_value == $label_value ) {
+                if ( $request_value == $select['value'] ) {
                     $column_checkbox_checked = " checked";
                 }
             }
@@ -42,18 +40,18 @@
         if (!empty($value)) {
             // 入力されたデータの中に選択肢が含まれているか否か
             // 選択肢にカンマが含まれている可能性を考慮
-            if(strpos($value,$label_value) !== false){
+            if(strpos($value,$select['value']) !== false){
                 $column_checkbox_checked = " checked";
             }
         }
     @endphp
     <div class="custom-control custom-checkbox custom-control-inline">
-        <input name="users_columns_value[{{$user_obj->id}}][]" value="{{$label_value}}" type="checkbox" class="custom-control-input" id="users_columns_value[{{$user_obj->id}}]" {{$column_checkbox_checked}}>
-        <label class="custom-control-label" for="users_columns_value[{{$user_obj->id}}]"> {{$label_value}}</label>
+        <input name="users_columns_value[{{$user_obj->id}}][]" value="{{$select['value']}}" type="checkbox" class="custom-control-input" id="users_columns_value[{{$user_obj->id}}]"{{$column_checkbox_checked}}>
+        <label class="custom-control-label" for="users_columns_value[{{$user_obj->id}}]"> {{$select['value']}}</label>
     </div>
     @if ($errors && $errors->has("users_columns_value.$user_obj->id"))
         <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}</div>
     @endif
 
-    {!!$select['value']!!}
+    {!!$select['agree_description']!!}
 @endif
