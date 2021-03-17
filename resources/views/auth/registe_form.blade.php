@@ -130,7 +130,7 @@
         @php
             // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
             // 時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない
-            if ($users_column->column_type == UserColumnType::radio || $users_column->column_type == UserColumnType::checkbox) {
+            if ($users_column->column_type == UserColumnType::radio || $users_column->column_type == UserColumnType::checkbox || $users_column->column_type == UserColumnType::agree) {
                 $label_for = '';
                 $label_class = 'pt-0';
             } else {
@@ -152,7 +152,7 @@
     @if (!Auth::user())
         @if (isset($configs['user_register_requre_privacy']) && $configs['user_register_requre_privacy'] == 1)
             <div class="form-group row">
-                <label for="password-confirm" class="col-md-4 col-form-label text-md-right">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
+                <label for="password-confirm" class="col-md-4 col-form-label text-md-right pt-0">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
 
                 <div class="col-md-8">
                     <div class="custom-control custom-checkbox custom-control-inline">

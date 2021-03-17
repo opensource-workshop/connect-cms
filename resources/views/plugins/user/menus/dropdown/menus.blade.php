@@ -49,9 +49,9 @@
                 @else
                     <li class="nav-item {{$page_obj->getClass()}}">
                     @if ($ancestors->contains('id', $page_obj->id))
-                        <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
+                        <a class="nav-link text-nowrap active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
                     @else
-                        <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
+                        <a class="nav-link text-nowrap" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                             {{$page_obj->page_name}}
                         </a>
@@ -69,9 +69,9 @@
                 @else
                     <li class="nav-item {{$page_obj->getClass()}}">
                     @if ($ancestors->contains('id', $page_obj->id))
-                        <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
+                        <a class="nav-link text-nowrap active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
                     @else
-                        <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
+                        <a class="nav-link text-nowrap" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                 @endif
                         {{$page_obj->page_name}}
