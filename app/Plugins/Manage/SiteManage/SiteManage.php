@@ -196,6 +196,27 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->user_register_enable]
         );
 
+        // 自己承認メールの使用
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'self_approval_mail_send_flag'],
+            ['category' => 'user_register',
+             'value'    => $request->self_approval_mail_send_flag]
+        );
+
+        // 自動ユーザ登録時に以下のアドレスにメール送信する
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'user_register_admin_mail_send_flag'],
+            ['category' => 'user_register',
+             'value'    => isset($request->user_register_admin_mail_send_flag) ? $request->user_register_admin_mail_send_flag : 0]
+        );
+
+        // 自動ユーザ登録時に送信するメールアドレス
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'user_register_admin_mail_send_address'],
+            ['category' => 'user_register',
+             'value'    => $request->user_register_admin_mail_send_address]
+        );
+
         // 自動ユーザ登録時に個人情報保護方針への同意を求めるか
         $configs = Configs::updateOrCreate(
             ['name'     => 'user_register_requre_privacy'],

@@ -133,5 +133,23 @@ class DefaultConfigsTableSeeder extends Seeder
             ]);
         }
 
+        if (DB::table('configs')->where('name', 'self_approval_mail_send_flag')->count() == 0) {
+            // 自己承認メールの使用
+            $configs = Configs::create([
+                'name' => 'self_approval_mail_send_flag',
+                'category' => 'user_register',
+                'value' => 0
+            ]);
+        }
+
+        if (DB::table('configs')->where('name', 'user_register_admin_mail_send_flag')->count() == 0) {
+            // 自動ユーザ登録時に以下のアドレスにメール送信する
+            $configs = Configs::create([
+                'name' => 'user_register_admin_mail_send_flag',
+                'category' => 'user_register',
+                'value' => 0
+            ]);
+        }
+
     }
 }

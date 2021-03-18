@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -280,6 +280,60 @@
                 </div>
             </div>
             <small class="form-text text-muted">自動ユーザ登録を使用するかどうかを選択</small>
+        </div>
+
+        {{-- 自己承認メールの使用 --}}
+        <div class="form-group">
+            <label class="col-form-label">自己承認メールの使用</label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["self_approval_mail_send_flag"]) && $configs["self_approval_mail_send_flag"] == "1")
+                            <input type="radio" value="1" id="self_approval_mail_send_flag_on" name="self_approval_mail_send_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="self_approval_mail_send_flag_on" name="self_approval_mail_send_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="self_approval_mail_send_flag_on" id="label_self_approval_mail_send_flag_on">メール送信する</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(isset($configs["self_approval_mail_send_flag"]) && $configs["self_approval_mail_send_flag"] == "0")
+                            <input type="radio" value="0" id="self_approval_mail_send_flag_off" name="self_approval_mail_send_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="self_approval_mail_send_flag_off" name="self_approval_mail_send_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="self_approval_mail_send_flag_off" id="label_self_approval_mail_send_flag_off">メール送信しない</label>
+                    </div>
+                </div>
+            </div>
+            <small class="form-text text-muted">
+                自動ユーザ登録時に登録者へ承認メールを送信するかどうかを選択<br>
+            </small>
+        </div>
+
+        {{-- 自動ユーザ登録時に以下のアドレスにメール送信する --}}
+        <div class="form-group">
+            <label class="col-form-label">自動ユーザ登録時のメール送信先</label>
+            <div class="row">
+                <div class="col">
+                    <div class="custom-control custom-checkbox">
+                        @if(isset($configs["user_register_admin_mail_send_flag"]) && $configs["user_register_admin_mail_send_flag"] == "1")
+                            <input name="user_register_admin_mail_send_flag" value="1" type="checkbox" class="custom-control-input" id="user_register_admin_mail_send_flag" checked="checked">
+                        @else
+                            <input name="user_register_admin_mail_send_flag" value="1" type="checkbox" class="custom-control-input" id="user_register_admin_mail_send_flag">
+                        @endif
+                        <label class="custom-control-label" for="user_register_admin_mail_send_flag">以下のアドレスにメール送信する</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- 自動ユーザ登録時に送信するメールアドレス --}}
+        <div class="form-group">
+            <label class="col-form-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
+            <input type="text" name="user_register_admin_mail_send_address" value="{{$configs["user_register_admin_mail_send_address"]}}" class="form-control">
+            <small class="form-text text-muted">自動ユーザ登録時に管理者や担当者等に通知するメールアドレスを設定</small>
         </div>
 
         {{-- 自動ユーザ登録時に個人情報保護方針への同意を求めるか --}}
