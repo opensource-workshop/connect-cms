@@ -15,6 +15,7 @@ class UsersColumnsSelects extends Model
     protected $fillable = [
         'users_columns_id',
         'value',
+        'agree_description',
         'display_sequence',
     ];
 }
