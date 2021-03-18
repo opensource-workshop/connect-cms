@@ -58,6 +58,7 @@ class UsersTool
             }
 
             $users_columns_id_select[$users_columns_select->users_columns_id][$index]['value'] = $users_columns_select->value;
+            $users_columns_id_select[$users_columns_select->users_columns_id][$index]['agree_description'] = $users_columns_select->agree_description;
             $index++;
         }
 
