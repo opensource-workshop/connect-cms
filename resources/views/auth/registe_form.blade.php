@@ -1,3 +1,6 @@
+@php
+use App\Models\Core\UsersColumns;
+@endphp
 
 @include('common.errors_form_line')
 
@@ -135,8 +138,7 @@
     @foreach($users_columns as $users_column)
         @php
             // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
-            // 時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない
-            if ($users_column->column_type == UserColumnType::radio || $users_column->column_type == UserColumnType::checkbox) {
+            if (UsersColumns::isChoicesColumnType($users_column->column_type)) {
                 $label_for = '';
                 $label_class = 'pt-0';
             } else {
@@ -158,12 +160,12 @@
     @if (!Auth::user())
         @if (isset($configs['user_register_requre_privacy']) && $configs['user_register_requre_privacy'] == 1)
             <div class="form-group row">
-                <label for="password-confirm" class="col-md-4 col-form-label text-md-right">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
+                <label for="password-confirm" class="col-md-4 col-form-label text-md-right pt-0">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
 
                 <div class="col-md-8">
                     <div class="custom-control custom-checkbox custom-control-inline">
-                        <input name="user_register_requre_privacy" value="以下の内容に同意する。" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
-                        <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意する。</label>
+                        <input name="user_register_requre_privacy" value="以下の内容に同意します。" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
+                        <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意します。</label>
                     </div>
                     @if ($errors->has('user_register_requre_privacy'))
                         <div class="text-danger">{{ $errors->first('user_register_requre_privacy') }}</div>
