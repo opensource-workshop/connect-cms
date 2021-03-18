@@ -164,8 +164,8 @@ use App\Models\Core\UsersColumns;
 
                 <div class="col-md-8">
                     <div class="custom-control custom-checkbox custom-control-inline">
-                        <input name="user_register_requre_privacy" value="以下の内容に同意する。" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
-                        <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意する。</label>
+                        <input name="user_register_requre_privacy" value="以下の内容に同意します。" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
+                        <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意します。</label>
                     </div>
                     @if ($errors->has('user_register_requre_privacy'))
                         <div class="text-danger">{{ $errors->first('user_register_requre_privacy') }}</div>
