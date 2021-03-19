@@ -859,6 +859,9 @@ class DatabasesPlugin extends UserPluginBase
     {
         // POST されたときは、新しい絞り込み条件が設定された。ということになるので、セッションの書き換え
         if ($request->isMethod('post')) {
+            // 検索ON
+            session(['is_search.'.$frame_id => 1]);
+
             // キーワード
             session(['search_keyword.'.$frame_id => $request->search_keyword]);
 
@@ -895,6 +898,7 @@ class DatabasesPlugin extends UserPluginBase
 
             // 検索条件を削除
             if ($request->has('clear')) {
+                session(['is_search.'.$frame_id => '']);
                 session(['search_keyword.'.$frame_id => '']);
                 session(['search_column.'.$frame_id => '']);
                 session(['search_options.'.$frame_id => '']);
