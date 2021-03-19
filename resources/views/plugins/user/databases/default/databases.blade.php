@@ -17,7 +17,7 @@
 
     @if ($default_hide_list)
     @else
-        @foreach($inputs as $input)
+        @forelse($inputs as $input)
             <div class="container @if(! $loop->first) mt-4 @endif">
                 {{-- 行グループ ループ --}}
                 @foreach($group_rows_cols_columns as $group_row_cols_columns)
@@ -91,7 +91,12 @@
                     </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            {{-- 検索結果0件 --}}
+            @if (session('is_search.'.$frame_id))
+                検索結果が見つかりませんでした。
+            @endif
+        @endforelse
 
         {{-- ページング処理 --}}
         {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
