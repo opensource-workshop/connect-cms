@@ -105,6 +105,8 @@
     <!-- Connect-CMS Page CSS -->
 @if (isset($page) && !empty($page->id))
     <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
+@else
+    <link href="{{url('/')}}/file/css/0.css" rel="stylesheet">
 @endif
 
     <!-- Context -->
