@@ -8,6 +8,7 @@ use Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 
 use App\Traits\ConnectCommonTrait;
+use App\Models\Core\Configs;
 
 //class AppServiceProvider extends ServiceProvider
 class AppServiceProvider extends AuthServiceProvider
@@ -50,6 +51,12 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function boot()
     {
+        // *** 全ビュー間のデータ共有
+        // サイト名
+        $base_site_name = Configs::where('name', 'base_site_name')->first();
+        $configs_base_site_name = isset($base_site_name) ? $base_site_name->value : config('app.name', 'Connect-CMS');
+        \View::share('configs_base_site_name', $configs_base_site_name);
+
         // 認可サービス(Gate)利用の準備
         $this->registerPolicies();
 
