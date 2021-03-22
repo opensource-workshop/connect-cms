@@ -42,17 +42,18 @@ class ConnectInit
         // bugfix:【サイト管理・バグ】サイト名が サイト管理＞サイト基本設定 以外適用されない対応
         // $request->attributes->add(['configs' => Configs::get()]);
         $configs = Configs::get();
+
+        // requestにセット
+        $request->attributes->add(['configs' => $configs]);
+
+        // *** 全ビュー間のデータ共有
+        // サイト名
         if (isset($configs)) {
             $base_site_name = $configs->firstWhere('name', 'base_site_name');
             $configs_base_site_name = $base_site_name->value;
         } else {
             $configs_base_site_name = config('app.name', 'Connect-CMS');
         }
-        // requestにセット
-        $request->attributes->add(['configs' => $configs]);
-
-        // *** 全ビュー間のデータ共有
-        // サイト名
         \View::share('configs_base_site_name', $configs_base_site_name);
 
         return $next($request);
