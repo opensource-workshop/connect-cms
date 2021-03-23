@@ -21,6 +21,7 @@ use App\User;
 use App\Plugins\Manage\ManagePluginBase;
 
 use App\Rules\CustomValiUserEmailUnique;
+use App\Rules\CustomValiEmails;
 
 /**
  * ユーザ管理クラス
@@ -890,12 +891,12 @@ class UserManage extends ManagePluginBase
             abort(403, '権限がありません。');
         }
 
-        $validator_values = [];
+        $validator_values['user_register_mail_send_address'] = ['nullable', new CustomValiEmails()];
+        $validator_attributes['user_register_mail_send_address'] = '送信するメールアドレス';
 
         // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
         if ($request->user_register_mail_send_flag) {
-            $validator_values['user_register_mail_send_address'] = ['required'];
-            $validator_attributes['user_register_mail_send_address'] = '送信するメールアドレス';
+            $validator_values['user_register_mail_send_address'] = ['required', new CustomValiEmails()];
         }
 
         $validator_attributes['user_register_user_mail_send_flag'] = '登録者にメール送信する';
