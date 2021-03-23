@@ -97,13 +97,13 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right pt-0">仮登録メール</label>
                 <div class="col">
                     <div class="custom-control custom-checkbox">
-                        <input type="hidden" name="use_user_register_temporary_regist_mail_flag" value="0">
-                        @if(Configs::getConfigsValue($configs, "use_user_register_temporary_regist_mail_flag") == "1")
-                            <input type="checkbox" name="use_user_register_temporary_regist_mail_flag" value="1" class="custom-control-input" id="use_user_register_temporary_regist_mail_flag" checked=checked>
+                        <input type="hidden" name="user_register_temporary_regist_mail_flag" value="0">
+                        @if(Configs::getConfigsValue($configs, "user_register_temporary_regist_mail_flag") == "1")
+                            <input type="checkbox" name="user_register_temporary_regist_mail_flag" value="1" class="custom-control-input" id="user_register_temporary_regist_mail_flag" checked=checked>
                         @else
-                            <input type="checkbox" name="use_user_register_temporary_regist_mail_flag" value="1" class="custom-control-input" id="use_user_register_temporary_regist_mail_flag">
+                            <input type="checkbox" name="user_register_temporary_regist_mail_flag" value="1" class="custom-control-input" id="user_register_temporary_regist_mail_flag">
                         @endif
-                        <label class="custom-control-label" for="use_user_register_temporary_regist_mail_flag">登録者に仮登録メールを送信する</label>
+                        <label class="custom-control-label" for="user_register_temporary_regist_mail_flag">登録者に仮登録メールを送信する</label>
                     </div>
                     <div>
                         <small class="text-muted">
@@ -143,7 +143,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right">仮登録後のメッセージ</label>
                 <div class="col">
                     <input type="text" name="user_register_temporary_regist_after_message" value="{{Configs::getConfigsValue($configs, 'user_register_temporary_regist_after_message')}}" class="form-control">
-                    <small class="text-muted">※ （例）メールに記載されているリンクから、ユーザ登録を完了してください。</small>
+                    <small class="text-muted">※ （例）メールに記載されているリンクをクリックしてユーザ登録を完了してください。</small>
                 </div>
             </div>
 

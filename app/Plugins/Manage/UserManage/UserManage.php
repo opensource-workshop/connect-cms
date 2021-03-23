@@ -912,11 +912,11 @@ class UserManage extends ManagePluginBase
 
         $validator->sometimes("user_register_user_mail_send_flag", 'accepted', function ($input) {
             // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
-            return $input->use_user_register_temporary_regist_mail_flag;
+            return $input->user_register_temporary_regist_mail_flag;
         });
         $validator->sometimes("user_register_temporary_regist_mail_format", 'regex:/\[\[entry_url\]\]/', function ($input) {
             // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
-            return $input->use_user_register_temporary_regist_mail_flag;
+            return $input->user_register_temporary_regist_mail_flag;
         });
 
         if ($validator->fails()) {
@@ -963,10 +963,10 @@ class UserManage extends ManagePluginBase
 
         // 登録者に仮登録メールを送信する
         $configs = Configs::updateOrCreate(
-            ['name' => 'use_user_register_temporary_regist_mail_flag'],
+            ['name' => 'user_register_temporary_regist_mail_flag'],
             [
                 'category' => 'user_register',
-                'value' => $request->use_user_register_temporary_regist_mail_flag ?? 0
+                'value' => $request->user_register_temporary_regist_mail_flag ?? 0
             ]
         );
 

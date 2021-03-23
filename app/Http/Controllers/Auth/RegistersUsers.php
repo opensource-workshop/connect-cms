@@ -79,16 +79,13 @@ trait RegistersUsers
 
         // ユーザー登録関連設定の取得
         $configs = Configs::where('category', 'user_register')->get();
-        $configs_array = array();
-        foreach ($configs as $config) {
-            $configs_array[$config['name']] = $config['value'];
-        }
+        $user_register_enable = $configs->firstWhere('name', 'user_register_enable');
 
         // ユーザ登録の権限チェック
         //if (isset($user) && ($user->role == 1 || $user->role == 3)) {
         if ($this->isCan('admin_user')) {
             // ユーザ登録の権限があればOK
-        } elseif ($configs_array['user_register_enable'] != "1") {
+        } elseif ($user_register_enable->value != "1") {
             // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
             //Log::debug("register 403.");
             abort(403);
@@ -157,9 +154,20 @@ trait RegistersUsers
 
         // ユーザー自動登録（未ログイン）の場合の登録完了メッセージ。
         if (!Auth::user()) {
-            // [TODO] 仮対応。メール認証ON・OFFでメッセージ切替 必須
+            // change: ユーザ仮登録対応
             // session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
-            session()->flash('flash_message_for_header', 'メールに記載されているリンクをクリックしてユーザ登録を完了してください。');
+            //
+            // 登録者に仮登録メールを送信する
+            $user_register_temporary_regist_mail_flag = $configs->firstWhere('name', 'user_register_temporary_regist_mail_flag');
+            if ($user_register_temporary_regist_mail_flag->value) {
+                // 仮登録
+                $user_register_temporary_regist_after_message = $configs->firstWhere('name', 'user_register_temporary_regist_after_message');
+                session()->flash('flash_message_for_header', $user_register_temporary_regist_after_message->value);
+            } else {
+                // 本登録
+                $user_register_after_message = $configs->firstWhere('name', 'user_register_after_message');
+                session()->flash('flash_message_for_header', $user_register_after_message->value);
+            }
         }
 
         // 作成したユーザでのログイン処理は行わない。mod by nagahara@opensource-workshop.jp
