@@ -51,6 +51,8 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["deleteOriginalRole"] = array('admin_user');
         $role_ckeck_table["groups"]             = array('admin_user');
         $role_ckeck_table["saveGroups"]         = array('admin_user');
+        $role_ckeck_table["autoRegist"]         = array('admin_user');
+        $role_ckeck_table["autoRegistUpdate"]   = array('admin_user');
 
         return $role_ckeck_table;
     }
@@ -861,5 +863,196 @@ class UserManage extends ManagePluginBase
 
         // 削除後は一覧画面へ
         return redirect('manage/user/groups/' . $id);
+    }
+
+    /**
+     * 自動ユーザ登録設定 画面表示
+     */
+    public function autoRegist($request, $id)
+    {
+        // Config データの取得
+        $configs = Configs::where('category', 'user_register')->get();
+
+        return view('plugins.manage.user.auto_regist', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "configs" => $configs,
+        ]);
+    }
+
+    /**
+     * 自動ユーザ登録設定 更新
+     */
+    public function autoRegistUpdate($request, $page_id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        $validator_values = [];
+
+        // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
+        if ($request->user_register_mail_send_flag) {
+            $validator_values['user_register_mail_send_address'] = ['required'];
+            $validator_attributes['user_register_mail_send_address'] = '送信するメールアドレス';
+        }
+
+        $validator_attributes['user_register_user_mail_send_flag'] = '登録者にメール送信する';
+        $validator_attributes['user_register_temporary_regist_mail_format'] = '仮登録メールフォーマット';
+
+        $messages = [
+            'user_register_user_mail_send_flag.accepted' => '仮登録メールを送信する場合、:attribute にチェックを付けてください。',
+            'user_register_temporary_regist_mail_format.regex' => '仮登録メールを送信する場合、:attribute に[[entry_url]]を含めてください。',
+        ];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $validator_values, $messages);
+        $validator->setAttributeNames($validator_attributes);
+
+        $validator->sometimes("user_register_user_mail_send_flag", 'accepted', function ($input) {
+            // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
+            return $input->use_user_register_temporary_regist_mail_flag;
+        });
+        $validator->sometimes("user_register_temporary_regist_mail_format", 'regex:/\[\[entry_url\]\]/', function ($input) {
+            // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
+            return $input->use_user_register_temporary_regist_mail_flag;
+        });
+
+        if ($validator->fails()) {
+            // Log::debug(var_export($validator->errors(), true));
+            // エラーと共に編集画面を呼び出す
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 自動ユーザ登録の使用
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_enable'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_enable
+            ]
+        );
+
+        // 以下のアドレスにメール送信する
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_send_flag'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_send_flag ?? 0
+            ]
+        );
+
+        // 送信するメールアドレス
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_send_address'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_send_address
+            ]
+        );
+
+        // 登録者にメール送信する
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_user_mail_send_flag'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_user_mail_send_flag ?? 0
+            ]
+        );
+
+        // 登録者に仮登録メールを送信する
+        $configs = Configs::updateOrCreate(
+            ['name' => 'use_user_register_temporary_regist_mail_flag'],
+            [
+                'category' => 'user_register',
+                'value' => $request->use_user_register_temporary_regist_mail_flag ?? 0
+            ]
+        );
+
+        // 仮登録メール件名
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_temporary_regist_mail_subject'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_temporary_regist_mail_subject
+            ]
+        );
+
+        // 仮登録メールフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_temporary_regist_mail_format'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_temporary_regist_mail_format
+            ]
+        );
+
+        // 仮登録後のメッセージ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_temporary_regist_after_message'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_temporary_regist_after_message
+            ]
+        );
+
+        // 本登録メール件名
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_subject'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_subject
+            ]
+        );
+
+        // 本登録メールフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_format'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_format
+            ]
+        );
+
+        // 本登録後のメッセージ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_after_message'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_after_message
+            ]
+        );
+
+        // *** ユーザ登録画面
+        // 自動ユーザ登録時に個人情報保護方針への同意を求めるか
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_requre_privacy'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_requre_privacy
+            ]
+        );
+
+        // 自動ユーザ登録時に求める個人情報保護方針の表示内容
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_privacy_description'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_privacy_description
+            ]
+        );
+
+        // 自動ユーザ登録時に求めるユーザ登録についての文言
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_description'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_description
+            ]
+        );
+
+        // ページ管理画面に戻る
+        return redirect("/manage/user/autoRegist");
     }
 }

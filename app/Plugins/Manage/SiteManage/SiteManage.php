@@ -189,55 +189,6 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_login_redirect_previous_page]
         );
 
-        // 自動ユーザ登録の使用
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'user_register_enable'],
-            ['category' => 'user_register',
-             'value'    => $request->user_register_enable]
-        );
-
-        // 自己承認メールの使用
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'self_approval_mail_send_flag'],
-            ['category' => 'user_register',
-             'value'    => $request->self_approval_mail_send_flag]
-        );
-
-        // 自動ユーザ登録時に以下のアドレスにメール送信する
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'user_register_admin_mail_send_flag'],
-            ['category' => 'user_register',
-             'value'    => isset($request->user_register_admin_mail_send_flag) ? $request->user_register_admin_mail_send_flag : 0]
-        );
-
-        // 自動ユーザ登録時に送信するメールアドレス
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'user_register_admin_mail_send_address'],
-            ['category' => 'user_register',
-             'value'    => $request->user_register_admin_mail_send_address]
-        );
-
-        // 自動ユーザ登録時に個人情報保護方針への同意を求めるか
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'user_register_requre_privacy'],
-            ['category' => 'user_register',
-             'value'    => $request->user_register_requre_privacy]
-        );
-
-        // 自動ユーザ登録時に求める個人情報保護方針の表示内容
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'user_register_privacy_description'],
-            ['category' => 'user_register',
-             'value'    => $request->user_register_privacy_description]
-        );
-
-        // 自動ユーザ登録時に求めるユーザ登録についての文言
-        $configs = Configs::updateOrCreate(
-            ['name'     => 'user_register_description'],
-            ['category' => 'user_register',
-             'value'    => $request->user_register_description]
-        );
-
         // マイページの使用
         $configs = Configs::updateOrCreate(
             ['name'     => 'use_mypage'],
