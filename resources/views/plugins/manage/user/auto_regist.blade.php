@@ -29,7 +29,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right pt-0">自動ユーザ登録の使用</label>
                 <div class="col pt-0">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValue($configs, "user_register_enable") == "1")
+                        @if(Configs::getConfigsValueAndOld($configs, "user_register_enable") == "1")
                             <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input">
@@ -37,7 +37,7 @@ use App\Models\Core\Configs;
                         <label class="custom-control-label" for="user_register_enable_on" id="label_user_register_enable_on">許可する</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValue($configs, "user_register_enable") == "0")
+                        @if(Configs::getConfigsValueAndOld($configs, "user_register_enable") == "0")
                             <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input">
@@ -54,7 +54,7 @@ use App\Models\Core\Configs;
                 <div class="col pt-0">
                     <div class="custom-control custom-checkbox">
                         <input type="hidden" name="user_register_mail_send_flag" value="0">
-                        @if(Configs::getConfigsValue($configs, "user_register_mail_send_flag") == "1")
+                        @if(Configs::getConfigsValueAndOld($configs, "user_register_mail_send_flag") == "1")
                             <input name="user_register_mail_send_flag" value="1" type="checkbox" class="custom-control-input" id="user_register_mail_send_flag" checked="checked">
                         @else
                             <input name="user_register_mail_send_flag" value="1" type="checkbox" class="custom-control-input" id="user_register_mail_send_flag">
@@ -69,7 +69,7 @@ use App\Models\Core\Configs;
                 <div class="col-md-3"></div>
                 <div class="col">
                     <label class="col-form-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
-                    <input type="text" name="user_register_mail_send_address" value="{{Configs::getConfigsValue($configs, 'user_register_mail_send_address')}}" class="form-control">
+                    <input type="text" name="user_register_mail_send_address" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_send_address')}}" class="form-control">
                     <small class="form-text text-muted">自動ユーザ登録時に管理者や担当者等に通知するメールアドレスを設定</small>
                     @if ($errors && $errors->has('user_register_mail_send_address')) <div class="text-danger">{{$errors->first('user_register_mail_send_address')}}</div> @endif
                 </div>
@@ -81,7 +81,7 @@ use App\Models\Core\Configs;
                 <div class="col">
                     <div class="custom-control custom-checkbox">
                         <input type="hidden" name="user_register_user_mail_send_flag" value="0">
-                        @if(Configs::getConfigsValue($configs, "user_register_user_mail_send_flag") == "1")
+                        @if(Configs::getConfigsValueAndOld($configs, "user_register_user_mail_send_flag") == "1")
                             <input name="user_register_user_mail_send_flag" value="1" type="checkbox" class="custom-control-input" id="user_register_user_mail_send_flag"checked="checked">
                         @else
                             <input name="user_register_user_mail_send_flag" value="1" type="checkbox" class="custom-control-input" id="user_register_user_mail_send_flag">
@@ -98,7 +98,7 @@ use App\Models\Core\Configs;
                 <div class="col">
                     <div class="custom-control custom-checkbox">
                         <input type="hidden" name="user_register_temporary_regist_mail_flag" value="0">
-                        @if(Configs::getConfigsValue($configs, "user_register_temporary_regist_mail_flag") == "1")
+                        @if(Configs::getConfigsValueAndOld($configs, "user_register_temporary_regist_mail_flag") == "1")
                             <input type="checkbox" name="user_register_temporary_regist_mail_flag" value="1" class="custom-control-input" id="user_register_temporary_regist_mail_flag" checked=checked>
                         @else
                             <input type="checkbox" name="user_register_temporary_regist_mail_flag" value="1" class="custom-control-input" id="user_register_temporary_regist_mail_flag">
@@ -118,7 +118,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right"></label>
                 <div class="col">
                     <label class="control-label">仮登録メール件名</label>
-                    <input type="text" name="user_register_temporary_regist_mail_subject" value="{{Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_subject')}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
+                    <input type="text" name="user_register_temporary_regist_mail_subject" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_temporary_regist_mail_subject')}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
                     <small class="text-muted">
                         ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                     </small>
@@ -129,7 +129,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right"></label>
                 <div class="col">
                     <label class="control-label">仮登録メールフォーマット</label>
-                    <textarea name="user_register_temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、本登録を行ってください。&#13;&#10;&#13;&#10;↓本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValue($configs, "user_register_temporary_regist_mail_format")}}</textarea>
+                    <textarea name="user_register_temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、本登録を行ってください。&#13;&#10;&#13;&#10;↓本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, "user_register_temporary_regist_mail_format")}}</textarea>
                     <small class="text-muted">
                         ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
                         ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
@@ -142,7 +142,7 @@ use App\Models\Core\Configs;
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right">仮登録後のメッセージ</label>
                 <div class="col">
-                    <input type="text" name="user_register_temporary_regist_after_message" value="{{Configs::getConfigsValue($configs, 'user_register_temporary_regist_after_message')}}" class="form-control">
+                    <input type="text" name="user_register_temporary_regist_after_message" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_temporary_regist_after_message')}}" class="form-control">
                     <small class="text-muted">※ （例）メールに記載されているリンクをクリックしてユーザ登録を完了してください。</small>
                 </div>
             </div>
@@ -151,7 +151,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right pt-0">本登録メール</label>
                 <div class="col">
                     <label class="control-label">本登録メール件名</label>
-                    <input type="text" name="user_register_mail_subject" value="{{Configs::getConfigsValue($configs, 'user_register_mail_subject')}}" class="form-control">
+                    <input type="text" name="user_register_mail_subject" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_subject')}}" class="form-control">
                     <small class="text-muted">
                         ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                     </small>
@@ -162,7 +162,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right"></label>
                 <div class="col">
                     <label class="control-label">本登録メールフォーマット</label>
-                    <textarea name="user_register_mail_format" class="form-control" rows=5 placeholder="（例）受付内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValue($configs, 'user_register_mail_format')}}</textarea>
+                    <textarea name="user_register_mail_format" class="form-control" rows=5 placeholder="（例）登録内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_format')}}</textarea>
                     <small class="text-muted">
                         ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                         ※ [[body]] を記述すると該当部分に登録内容が入ります。<br>
@@ -173,7 +173,7 @@ use App\Models\Core\Configs;
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right">本登録後のメッセージ</label>
                 <div class="col">
-                    <input type="text" name="user_register_after_message" value="{{Configs::getConfigsValue($configs, 'user_register_after_message')}}" class="form-control">
+                    <input type="text" name="user_register_after_message" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_after_message')}}" class="form-control">
                     <small class="text-muted">※ （例）ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。</small>
                 </div>
             </div>
@@ -185,7 +185,7 @@ use App\Models\Core\Configs;
                 <div class="col-md-9">
                     <div class="custom-control custom-checkbox">
                         <input type="hidden" name="user_register_requre_privacy" value="0">
-                        @if(Configs::getConfigsValue($configs, "user_register_requre_privacy") == "1")
+                        @if(Configs::getConfigsValueAndOld($configs, "user_register_requre_privacy") == "1")
                             <input name="user_register_requre_privacy" value="1" type="checkbox" class="custom-control-input" id="user_register_requre_privacy" checked="checked">
                         @else
                             <input name="user_register_requre_privacy" value="1" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
@@ -201,7 +201,7 @@ use App\Models\Core\Configs;
                 <div class="col-md-3"></div>
                 <div class="col">
                     <label class="col-form-label">個人情報保護方針の表示内容</label>
-                    <textarea name="user_register_privacy_description" class="form-control" rows=3>{!!Configs::getConfigsValue($configs, "user_register_privacy_description")!!}</textarea>
+                    <textarea name="user_register_privacy_description" class="form-control" rows=3>{!!Configs::getConfigsValueAndOld($configs, "user_register_privacy_description")!!}</textarea>
                     <small class="form-text text-muted">自動ユーザ登録時に求める個人情報保護方針への説明文</small>
                 </div>
             </div>
@@ -210,7 +210,7 @@ use App\Models\Core\Configs;
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">ユーザ登録について</label>
                 <div class="col-md-9">
-                    <textarea name="user_register_description" class="form-control" rows=3>{!!Configs::getConfigsValue($configs, "user_register_description")!!}</textarea>
+                    <textarea name="user_register_description" class="form-control" rows=3>{!!Configs::getConfigsValueAndOld($configs, "user_register_description")!!}</textarea>
                     <small class="form-text text-muted">自動ユーザ登録時に求めるユーザ登録についての説明文</small>
                 </div>
             </div>
