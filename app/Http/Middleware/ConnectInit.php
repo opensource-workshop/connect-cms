@@ -50,7 +50,7 @@ class ConnectInit
         // サイト名
         if (isset($configs)) {
             $base_site_name = $configs->firstWhere('name', 'base_site_name');
-            $configs_base_site_name = $base_site_name->value;
+            $configs_base_site_name = $base_site_name->value ?? config('app.name', 'Connect-CMS');
         } else {
             $configs_base_site_name = config('app.name', 'Connect-CMS');
         }
