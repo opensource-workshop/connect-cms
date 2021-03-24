@@ -7,9 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 use App\Notifications\PasswordResetNotification;
-// use App\Notifications\EmailVerifyNotification;
 
-// class User extends Authenticatable implements MustVerifyEmail
 class User extends Authenticatable
 {
     use Notifiable;
@@ -26,7 +24,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'userid', 'password', 'status',
+        'name', 'email', 'userid', 'password', 'status', 'add_token', 'add_token_created_at',
     ];
 
     /**
@@ -58,16 +56,6 @@ class User extends Authenticatable
         $this->notify(new PasswordResetNotification($token));
     }
 
-    // /**
-    //  * Send the email verification notification.
-    //  * (OverWrite) 親クラス Illuminate\Foundation\Auth\User 定義のtrait Illuminate\Auth\MustVerifyEmail::sendEmailVerificationNotification();
-    //  *
-    //  * @return void
-    //  */
-    // public function sendEmailVerificationNotification()
-    // {
-    //     $this->notify(new EmailVerifyNotification);
-    // }
 
     /**
      * 状態から一覧表示の背景クラスを返却
@@ -76,10 +64,11 @@ class User extends Authenticatable
     {
         if ($this->status == \UserStatus::not_active) {
             // 利用停止中
-            return "bg-warning";
-        } elseif ($this->status == \UserStatus::approval_pending) {
-            // 承認待ち
+            // return "bg-warning";
             return "bg-secondary text-white";
+        } elseif ($this->status == \UserStatus::temporary) {
+            // 仮登録
+            return "bg-warning";
         }
         return "";
     }
