@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use App\User;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\Core\UsersInputCols;
 use App\Traits\ConnectCommonTrait;
 use App\Traits\ConnectMailTrait;
 
@@ -162,45 +163,6 @@ trait RegistersUsers
         if (!Auth::user()) {
             // session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
 
-            // 登録者のメールアドレス
-            // $user_mailaddresses = array();
-
-            // メールの内容
-            $contents_text = '';
-            $contents_text .= "ユーザ名： " . $user->name . "\n";
-            $contents_text .= "ログインID： " . $user->userid . "\n";
-            $contents_text .= "eメールアドレス： " . $user->email . "\n";
-            if (Configs::getConfigsValue($configs, 'user_register_requre_privacy')) {
-                $privacy_text = $request->user_register_requre_privacy ? '以下の内容に同意します。' : '';
-                $contents_text .= "個人情報保護方針への同意 ： {$privacy_text}\n";
-            }
-
-            // ユーザーのカラム
-            $users_columns = UsersTool::getUsersColumns();
-
-            foreach ($users_columns as $users_column) {
-                $value = "";
-                if (!isset($request->users_columns_value[$users_column->id])) {
-                    // 値なし
-                    $value = null;
-                } elseif (is_array($request->users_columns_value[$users_column->id])) {
-                    $value = implode(UsersTool::CHECKBOX_SEPARATOR, $request->users_columns_value[$users_column->id]);
-                } else {
-                    $value = $request->users_columns_value[$users_column->id];
-                }
-
-                // メールの内容
-                $contents_text .= $users_column->column_name . "：" . $value . "\n";
-
-                // // メール型
-                // if ($users_column->column_type == \UserColumnType::mail) {
-                //     $user_mailaddresses[] = $value;
-                // }
-            }
-
-            // 最後の改行を除去
-            $contents_text = trim($contents_text);
-
 
             // 登録者に仮登録メールを送信する
             if (Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
@@ -229,6 +191,7 @@ trait RegistersUsers
 
                 // メール本文の組み立て
                 $mail_format = Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_format');
+                $contents_text = $this->getMailContentsText($configs, $user);
                 $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
 
                 // 本登録URL
@@ -243,67 +206,19 @@ trait RegistersUsers
                 $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
 
                 // メール送信（ユーザー側）
-                // foreach ($user_mailaddresses as $user_mailaddress) {
                 $user_mailaddress = $user->email;
                 if (!empty($user_mailaddress)) {
                     // メール送信はログ出力の追加に伴いTrait のメソッドに移行
                     $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], 'RegisterController');
                 }
-                // }
 
                 // ユーザー自動登録（未ログイン）の場合の登録完了メッセージ。
                 session()->flash('flash_message_for_header', Configs::getConfigsValue($configs, 'user_register_temporary_regist_after_message'));
             } else {
                 // *** 本登録
 
-                // 以下のアドレスにメール送信する
-                $user_register_mail_send_flag = Configs::getConfigsValue($configs, 'user_register_mail_send_flag');
-                // 登録者にメール送信する
-                $user_register_user_mail_send_flag = Configs::getConfigsValue($configs, 'user_register_user_mail_send_flag');
-
-                // メール送信
-                if ($user_register_mail_send_flag || $user_register_user_mail_send_flag) {
-                    // メール件名の組み立て
-                    $subject = Configs::getConfigsValue($configs, 'user_register_mail_subject');
-
-                    // メール件名内のサイト名文字列を置換
-                    $subject = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $subject);
-                    // メール件名内の登録日時を置換
-                    $todatetime = date("Y/m/d H:i:s");
-                    $subject = str_replace('[[to_datetime]]', $todatetime, $subject);
-
-                    // メール本文の組み立て
-                    $mail_format = Configs::getConfigsValue($configs, 'user_register_mail_format');
-                    $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
-
-                    // メール本文内のサイト名文字列を置換
-                    $mail_text = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $mail_text);
-                    // メール本文内の登録日時を置換
-                    $mail_text = str_replace('[[to_datetime]]', $todatetime, $mail_text);
-
-                    // メールオプション
-                    $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
-
-                    // メール送信（管理者側）
-                    if ($user_register_mail_send_flag) {
-                        $mail_addresses = explode(',', Configs::getConfigsValue($configs, 'user_register_mail_send_address'));
-                        foreach ($mail_addresses as $mail_address) {
-                            // メール送信はログ出力の追加に伴いTrait のメソッドに移行
-                            $this->sendMail($mail_address, $mail_options, ['content' => $mail_text], 'RegisterController');
-                        }
-                    }
-
-                    // メール送信（ユーザー側）
-                    if ($user_register_user_mail_send_flag) {
-                        // foreach ($user_mailaddresses as $user_mailaddress) {
-                        $user_mailaddress = $user->email;
-                        if (!empty($user_mailaddress)) {
-                            // メール送信はログ出力の追加に伴いTrait のメソッドに移行
-                            $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], 'RegisterController');
-                        }
-                        // }
-                    }
-                }
+                // 本登録時のメール送信
+                $this->sendMailToActive($configs, $user);
 
                 // ユーザー自動登録（未ログイン）の場合の登録完了メッセージ。
                 session()->flash('flash_message_for_header', Configs::getConfigsValue($configs, 'user_register_after_message'));
@@ -316,6 +231,104 @@ trait RegistersUsers
         //Log::debug("register end brfore.");
         return $this->registered($request, $user)
                         ?: redirect($this->redirectPath());
+    }
+
+    /**
+     * トークンを使った本登録の確定画面表示
+     */
+    private function getMailContentsText($configs, $user)
+    {
+        // メールの内容
+        $contents_text = '';
+        $contents_text .= "ユーザ名： " . $user->name . "\n";
+        $contents_text .= "ログインID： " . $user->userid . "\n";
+        $contents_text .= "eメールアドレス： " . $user->email . "\n";
+
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        // ユーザーカラムの登録データ
+        $users_input_cols = UsersInputCols::where('users_id', $user->id)
+                                            ->get()
+                                            // keyをusers_input_colsにした結果をセット
+                                            ->mapWithKeys(function ($item) {
+                                                return [$item['users_columns_id'] => $item];
+                                            });
+
+        foreach ($users_columns as $users_column) {
+            $value = "";
+            if (is_array($users_input_cols[$users_column->id])) {
+                $value = implode(UsersTool::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
+            } else {
+                $value = $users_input_cols[$users_column->id]->value;
+            }
+
+            // メールの内容
+            $contents_text .= $users_column->column_name . "：" . $value . "\n";
+        }
+
+        if (Configs::getConfigsValue($configs, 'user_register_requre_privacy')) {
+            // 同意設定ONの場合、同意は必須のため、必ず文字列をセットする。
+            $contents_text .= "個人情報保護方針への同意 ： 以下の内容に同意します。\n";
+        }
+
+        // 最後の改行を除去
+        $contents_text = trim($contents_text);
+        return $contents_text;
+    }
+
+    /**
+     * 本登録時のメール送信
+     */
+    private function sendMailToActive($configs, $user)
+    {
+        // 以下のアドレスにメール送信する
+        $user_register_mail_send_flag = Configs::getConfigsValue($configs, 'user_register_mail_send_flag');
+        // 登録者にメール送信する
+        $user_register_user_mail_send_flag = Configs::getConfigsValue($configs, 'user_register_user_mail_send_flag');
+
+        // メール送信
+        if ($user_register_mail_send_flag || $user_register_user_mail_send_flag) {
+            // メール件名の組み立て
+            $subject = Configs::getConfigsValue($configs, 'user_register_mail_subject');
+
+            // メール件名内のサイト名文字列を置換
+            $subject = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $subject);
+            // メール件名内の登録日時を置換
+            $todatetime = date("Y/m/d H:i:s");
+            $subject = str_replace('[[to_datetime]]', $todatetime, $subject);
+
+            // メール本文の組み立て
+            $mail_format = Configs::getConfigsValue($configs, 'user_register_mail_format');
+            $contents_text = $this->getMailContentsText($configs, $user);
+            $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
+
+            // メール本文内のサイト名文字列を置換
+            $mail_text = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $mail_text);
+            // メール本文内の登録日時を置換
+            $mail_text = str_replace('[[to_datetime]]', $todatetime, $mail_text);
+
+            // メールオプション
+            $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+
+            // メール送信（管理者側）
+            if ($user_register_mail_send_flag) {
+                $mail_addresses = explode(',', Configs::getConfigsValue($configs, 'user_register_mail_send_address'));
+                foreach ($mail_addresses as $mail_address) {
+                    // メール送信はログ出力の追加に伴いTrait のメソッドに移行
+                    $this->sendMail($mail_address, $mail_options, ['content' => $mail_text], 'RegistersUsers');
+                }
+            }
+
+            // メール送信（ユーザー側）
+            if ($user_register_user_mail_send_flag) {
+                $user_mailaddress = $user->email;
+                if (!empty($user_mailaddress)) {
+                    // メール送信はログ出力の追加に伴いTrait のメソッドに移行
+                    $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], 'RegistersUsers');
+                }
+            }
+        }
     }
 
     /**
@@ -387,7 +400,7 @@ trait RegistersUsers
     public function storeToken(Request $request)
     {
         // 設定の取得
-        $configs = Configs::where('category', 'user_register')->get();
+        $configs = Configs::get();
 
         // 仮登録機能OFFは、エラー画面へ
         if (!Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
@@ -440,6 +453,9 @@ trait RegistersUsers
         // 登録完了
         $user->status = \UserStatus::active;
         $user->save();
+
+        // 本登録時のメール送信
+        $this->sendMailToActive($configs, $user);
 
         // 登録完了メッセージ。
         session()->flash('flash_message_for_header', Configs::getConfigsValue($configs, 'user_register_after_message'));
