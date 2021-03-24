@@ -129,7 +129,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right"></label>
                 <div class="col">
                     <label class="control-label">仮登録メールフォーマット</label>
-                    <textarea name="user_register_temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、本登録を行ってください。&#13;&#10;&#13;&#10;↓本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, "user_register_temporary_regist_mail_format")}}</textarea>
+                    <textarea name="user_register_temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）ユーザ仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、ユーザ本登録を行ってください。&#13;&#10;&#13;&#10;↓ユーザ本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, "user_register_temporary_regist_mail_format")}}</textarea>
                     <small class="text-muted">
                         ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
                         ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
@@ -143,7 +143,7 @@ use App\Models\Core\Configs;
                 <label class="col-md-3 col-form-label text-md-right">仮登録後のメッセージ</label>
                 <div class="col">
                     <input type="text" name="user_register_temporary_regist_after_message" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_temporary_regist_after_message')}}" class="form-control">
-                    <small class="text-muted">※ （例）メールに記載されているリンクをクリックしてユーザ登録を完了してください。</small>
+                    <small class="text-muted">※ （例）ユーザを仮登録しました。メールを送信しましたので、記載されているリンクより登録を完了してください。</small>
                 </div>
             </div>
 
