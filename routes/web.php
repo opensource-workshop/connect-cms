@@ -42,6 +42,9 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
     Route::post('register', 'Auth\RegisterController@register')->name('register');
 //});
 
+// ユーザ仮登録ONのトークンを使った本登録の確定画面
+Route::get('register/confirmToken/{id}/{token}', 'Auth\RegisterController@confirmToken')->name('register.confirmToken');
+Route::post('register/storeToken/{id}/{token}', 'Auth\RegisterController@storeToken')->name('register.storeToken');
 
 // テスト用アクション
 //Route::get('/test/{language}/{any}', 'Core\TestController@invokeGet')->where('any', '.*');

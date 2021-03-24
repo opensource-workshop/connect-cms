@@ -24,7 +24,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'userid', 'password', 'status',
+        'name', 'email', 'userid', 'password', 'status', 'add_token', 'add_token_created_at',
     ];
 
     /**
@@ -56,13 +56,18 @@ class User extends Authenticatable
         $this->notify(new PasswordResetNotification($token));
     }
 
+
     /**
      * 状態から一覧表示の背景クラスを返却
      */
     public function getStstusBackgroundClass()
     {
-        if ($this->status == 1) {
+        if ($this->status == \UserStatus::not_active) {
             // 利用停止中
+            // return "bg-warning";
+            return "bg-secondary text-white";
+        } elseif ($this->status == \UserStatus::temporary) {
+            // 仮登録
             return "bg-warning";
         }
         return "";

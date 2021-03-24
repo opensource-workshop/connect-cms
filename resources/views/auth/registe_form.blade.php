@@ -21,27 +21,26 @@ use App\Models\Core\UsersColumns;
         <div class="form-group row">
             <label for="name" class="col-md-4 col-form-label text-md-right">状態 <label class="badge badge-danger">必須</label></label>
             <div class="col-md-8 d-sm-flex align-items-center">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('status', $user->status) == 0)
-                        <input type="radio" value="0" id="status_0" name="status" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="0" id="status_0" name="status" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="status_0">利用可能</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('status', $user->status) == 1)
-                        <input type="radio" value="1" id="status_1" name="status" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="status_1" name="status" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="status_1">利用不可</label>
-                </div>
+                @foreach (UserStatus::getMembers() as $enum_value => $enum_label)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if (old('status', $user->status) == $enum_value)
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="status_{{$enum_value}}">{{$enum_label}}</label>
+                    </div>
+                @endforeach
             </div>
         </div>
     @else
         {{-- 自動登録が許可されている場合の状態は利用可能とする --}}
-        <input type="hidden" value="0" name="status">
+        {{-- ユーザ仮登録ON --}}
+        @if (isset($configs['user_register_temporary_regist_mail_flag']) && $configs['user_register_temporary_regist_mail_flag'] == 1)
+            <input type="hidden" value="{{UserStatus::temporary}}" name="status">
+        @else
+            <input type="hidden" value="{{UserStatus::active}}" name="status">
+        @endif
     @endif
 
     <div class="form-group row">
@@ -311,13 +310,16 @@ use App\Models\Core\UsersColumns;
                 <i class="fas fa-times"></i> キャンセル
             </button>
             @endif
-            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
-                @if (isset($function) && $function == 'edit')
-                    ユーザ変更
+            @if (isset($function) && $function == 'edit')
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ変更</button>
+            @else
+                {{-- ユーザ仮登録ON --}}
+                @if (isset($configs['user_register_temporary_regist_mail_flag']) && $configs['user_register_temporary_regist_mail_flag'] == 1)
+                    <button type="submit" class="btn btn-info"><i class="fas fa-check"></i> ユーザ仮登録</button>
                 @else
-                    ユーザ登録
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ登録</button>
                 @endif
-            </button>
+            @endif
         </div>
         {{-- 既存ユーザの場合は削除処理のボタンも表示(自分自身の場合は表示しない) --}}
         @if (isset($id) && $id && $id != Auth::user()->id)

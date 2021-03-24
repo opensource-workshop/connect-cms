@@ -258,6 +258,7 @@ $app_array = [
         'UserColumnType' => \App\Enums\UserColumnType::class,
         'NoticeJobType' => \App\Enums\NoticeJobType::class,
         'CountryCodeAlpha3' => \App\Enums\CountryCodeAlpha3::class,
+        'UserStatus' => \App\Enums\UserStatus::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

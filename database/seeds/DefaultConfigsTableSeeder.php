@@ -133,5 +133,14 @@ class DefaultConfigsTableSeeder extends Seeder
             ]);
         }
 
+        if (DB::table('configs')->where('name', 'user_register_after_message')->count() == 0) {
+            // 本登録後のメッセージ
+            $configs = Configs::create([
+                'name' => 'user_register_after_message',
+                'category' => 'user_register',
+                'value' => 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。'
+            ]);
+        }
+
     }
 }

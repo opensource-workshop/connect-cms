@@ -85,7 +85,7 @@ use App\Models\Core\UsersColumns;
 
                             {{-- コンテンツ権限 --}}
                             <div class="form-group row">
-                                <label for="user_search_condition_email" class="col-md-3 text-md-right">コンテンツ権限</label>
+                                <label class="col-md-3 text-md-right">コンテンツ権限</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin"@if(Session::get('user_search_condition.role_article_admin') == "1") checked @endif>
@@ -112,7 +112,7 @@ use App\Models\Core\UsersColumns;
 
                             {{-- 管理権限 --}}
                             <div class="form-group row">
-                                <label for="user_search_condition_email" class="col-md-3 text-md-right">管理権限</label>
+                                <label class="col-md-3 text-md-right">管理権限</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system"@if(Session::get('user_search_condition.admin_system') == "1") checked @endif>
@@ -135,12 +135,31 @@ use App\Models\Core\UsersColumns;
 
                             {{-- ゲスト --}}
                             <div class="form-group row">
-                                <label for="user_search_condition_email" class="col-md-3 text-md-right">ゲスト</label>
+                                <label class="col-md-3 text-md-right">ゲスト</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-checkbox">
                                         <input name="user_search_condition[guest]" value="1" type="checkbox" class="custom-control-input" id="guest"@if(Session::get('user_search_condition.guest') == "1") checked @endif>
                                         <label class="custom-control-label" for="guest">ゲスト</label>
                                     </div>
+                                </div>
+                            </div>
+
+                            {{-- 状態 --}}
+                            <div class="form-group row">
+                                <label for="user_search_condition_status" class="col-md-3 col-form-label text-md-right">状態</label>
+                                <div class="col-md">
+                                    <select id="user_search_condition_status" name="user_search_condition[status]" class="form-control">
+                                        <option value=""></option>
+                                        @foreach (UserStatus::getMembers() as $enum_value => $enum_label)
+                                            <div class="custom-control custom-radio custom-control-inline">
+                                                @if (Session::get('user_search_condition.status') === (string)$enum_value)
+                                                    <option value="{{$enum_value}}" selected>{{$enum_label}}</option>
+                                                @else
+                                                    <option value="{{$enum_value}}">{{$enum_label}}</option>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
 
@@ -195,6 +214,7 @@ use App\Models\Core\UsersColumns;
                     @endforeach
                     <th nowrap>権限</th>
                     <th nowrap>役割設定</th>
+                    <th nowrap>状態</th>
                     <th nowrap>作成日</th>
                     <th nowrap>更新日</th>
                 </tr>
@@ -237,6 +257,7 @@ use App\Models\Core\UsersColumns;
                         @endforeach
                         @endif
                     </td>
+                    <td nowrap>{{UserStatus::getDescription($user->status)}}</td>
                     <td>{{$user->created_at->format('Y/m/d')}}</td>
                     <td>{{$user->updated_at->format('Y/m/d')}}</td>
                 </tr>
