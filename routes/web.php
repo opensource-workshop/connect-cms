@@ -42,6 +42,9 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
     Route::post('register', 'Auth\RegisterController@register')->name('register');
 //});
 
+// ユーザ仮登録ONのトークンを使った本登録の確定画面
+Route::get('register/confirmToken/{id}/{token}', 'Auth\RegisterController@confirmToken')->name('register.confirmToken');
+Route::post('register/storeToken/{id}/{token}', 'Auth\RegisterController@storeToken')->name('register.storeToken');
 
 // テスト用アクション
 //Route::get('/test/{language}/{any}', 'Core\TestController@invokeGet')->where('any', '.*');
@@ -97,13 +100,6 @@ Route::get('/language/{language_or_1stdir?}/{link_or_after2nd?}', 'Core\DefaultC
 
 // パスワード付きページのアクション
 Route::match(['get', 'post'], '/password/{action}/{page_id?}', 'Core\PasswordController@invoke')->name('password_input');
-
-// メール認証
-// copy to Illuminate\Routing\Router::emailVerification(). Auth::routes(['verify' => true]); のメール認証部分と同等.
-// 参考：https://igatea.hatenablog.com/entry/2018/01/02/022341
-Route::get('email/verify', 'Auth\VerificationController@show')->name('verification.notice');
-Route::get('email/verify/{id}/{hash}', 'Auth\VerificationController@verify')->name('verification.verify');
-Route::post('email/resend', 'Auth\VerificationController@resend')->name('verification.resend');
 
 // 基本のアクション
 // コアの画面処理や各プラグインの処理はここから呼び出す。
