@@ -110,6 +110,16 @@
         </div>
     </div>
 
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">検索結果0件メッセージ</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="search_results_empty_message" value="{{old('search_results_empty_message', $database->search_results_empty_message)}}" class="form-control">
+            <small class="text-muted">
+                ※ 空の場合「{{config('connect.CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE')}}」を表示します。
+            </small>
+        </div>
+    </div>
+
 {{--
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
@@ -234,7 +244,7 @@
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($database) || $create_flag)
                         登録確定

@@ -229,7 +229,8 @@ class DatabasesPlugin extends UserPluginBase
                      'frames.*',
                      'databases.id as databases_id',
                      'databases_frames.id as databases_frames_id',
-                     'databases_name',
+                     'databases.databases_name',
+                     'databases.search_results_empty_message',
                      'use_search_flag',
                      'placeholder_search',
                      'use_select_flag',
@@ -746,31 +747,28 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databases',
-            [
-                // 'request'  => $request,
-                // 'frame_id' => $frame_id,
-                // 'database' => $database,
-                // 'databases_columns' => $databases_columns,
-                // 'databases_columns_id_select' => $databases_columns_id_select,
-                'errors' => $errors,
-                'setting_error_messages' => $setting_error_messages,
+        return $this->view('databases', [
+            // 'request'  => $request,
+            // 'frame_id' => $frame_id,
+            // 'database' => $database,
+            // 'databases_columns' => $databases_columns,
+            // 'databases_columns_id_select' => $databases_columns_id_select,
+            'errors' => $errors,
+            'setting_error_messages' => $setting_error_messages,
 
-                // 'databases'        => $databases,
-                'database_frame'   => $database_frame,
-                'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
-                'columns'          => $columns,
-                'group_rows_cols_columns' => $group_rows_cols_columns,
-                'select_columns'   => $select_columns,
-                'sort_columns'     => $sort_columns,
-                'sort_count'       => $sort_count,
-                'inputs'           => $inputs,
-                'input_cols'       => $input_cols,
-                'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
-                'default_hide_list' => $default_hide_list,
-            ]
-        )->withInput($request->all);
+            // 'databases'        => $databases,
+            'database_frame'   => $database_frame,
+            'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
+            'columns'          => $columns,
+            'group_rows_cols_columns' => $group_rows_cols_columns,
+            'select_columns'   => $select_columns,
+            'sort_columns'     => $sort_columns,
+            'sort_count'       => $sort_count,
+            'inputs'           => $inputs,
+            'input_cols'       => $input_cols,
+            'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
+            'default_hide_list' => $default_hide_list,
+        ])->withInput($request->all);
     }
 
     /**
@@ -1781,6 +1779,7 @@ class DatabasesPlugin extends UserPluginBase
         // データベース設定
         $databases->databases_name      = $request->databases_name;
         $databases->posted_role_display_control_flag = (empty($request->posted_role_display_control_flag)) ? 0 : $request->posted_role_display_control_flag;
+        $databases->search_results_empty_message = $request->search_results_empty_message;
 
         $databases->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $databases->mail_send_address   = $request->mail_send_address;

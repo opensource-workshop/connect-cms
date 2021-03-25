@@ -72,4 +72,7 @@ return [
 
     // Self register base role.(comma separator. Not set is guest)
     'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', ''),
+
+    // データベースプラグインの検索結果0件メッセージ
+    'CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE' => env('CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE', '検索結果が見つかりませんでした。'),
 ];

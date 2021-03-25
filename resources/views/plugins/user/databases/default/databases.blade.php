@@ -94,7 +94,11 @@
         @empty
             {{-- 検索結果0件 --}}
             @if (session('is_search.'.$frame_id))
-                検索結果が見つかりませんでした。
+                @if ($database_frame->search_results_empty_message)
+                    {{$database_frame->search_results_empty_message}}
+                @else
+                    {{config('connect.CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE')}}
+                @endif
             @endif
         @endforelse
 
