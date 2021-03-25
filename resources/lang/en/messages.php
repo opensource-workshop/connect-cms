@@ -37,4 +37,9 @@ return [
     'cases' => 'cases',
     'people' => 'people',
     'search_results_empty' => 'Search results could not be found.',
+    'input_user_name' => 'Enter the displayed user name.',
+    'input_login_id' => 'Enter the ID to login.',
+    'input_email' => 'Enter your email address.',
+    'input_password' => 'Enter the password to login.',
+    'input_password_confirm' => 'Enter the same password.',
 ];

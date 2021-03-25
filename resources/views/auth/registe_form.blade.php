@@ -47,7 +47,7 @@ use App\Models\Core\UsersColumns;
         <label for="name" class="col-md-4 col-form-label text-md-right">ユーザ名 <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
-            <input id="name" type="text" class="form-control" name="name" value="{{ old('name', $user->name) }}" placeholder="表示されるユーザ名を入力します。" required autofocus>
+            <input id="name" type="text" class="form-control" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ __('messages.input_user_name') }}" required autofocus>
 
             @if ($errors->has('name'))
                 <div class="text-danger">{{ $errors->first('name') }}</div>
@@ -59,7 +59,7 @@ use App\Models\Core\UsersColumns;
         <label for="userid" class="col-md-4 col-form-label text-md-right">ログインID <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
-            <input id="userid" type="text" class="form-control" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="ログインするときのIDを入力します。" required autofocus>
+            <input id="userid" type="text" class="form-control" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ __('messages.input_login_id') }}" required autofocus>
 
             @if ($errors->has('userid'))
                 <div class="text-danger">{{ $errors->first('userid') }}</div>
@@ -73,7 +73,7 @@ use App\Models\Core\UsersColumns;
             <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
 
             <div class="col-md-8">
-                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
+                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}">
 
                 @if ($errors->has('email'))
                     <div class="text-danger">{{ $errors->first('email') }}</div>
@@ -86,7 +86,7 @@ use App\Models\Core\UsersColumns;
             <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス <label class="badge badge-danger">必須</label></label>
 
             <div class="col-md-8">
-                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。" required autofocus>
+                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required autofocus>
 
                 @if ($errors->has('email'))
                     <div class="text-danger">{{ $errors->first('email') }}</div>
@@ -104,9 +104,9 @@ use App\Models\Core\UsersColumns;
 
         <div class="col-md-8">
             @if (isset($function) && $function == 'edit')
-                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" placeholder="ログインするためのパスワードを入力します。">
+                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" placeholder="{{ __('messages.input_password') }}">
             @else
-                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" required placeholder="ログインするためのパスワードを入力します。">
+                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" required placeholder="{{ __('messages.input_password') }}">
             @endif
 
             @if ($errors->has('password'))
@@ -126,9 +126,9 @@ use App\Models\Core\UsersColumns;
 
         <div class="col-md-8">
             @if (isset($function) && $function == 'edit')
-                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" placeholder="パスワードと同じものを入力してください。">
+                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" placeholder="{{ __('messages.input_password_confirm') }}">
             @else
-                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required placeholder="パスワードと同じものを入力してください。">
+                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required placeholder="{{ __('messages.input_password_confirm') }}">
             @endif
         </div>
     </div>

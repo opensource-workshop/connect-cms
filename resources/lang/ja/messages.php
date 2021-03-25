@@ -36,6 +36,11 @@ $messages = [
     'cases' => '件',
     'people' => '名',
     'search_results_empty' => '検索結果が見つかりませんでした。',
+    'input_user_name' => '表示されるユーザ名を入力します。',
+    'input_login_id' => 'ログインするときのIDを入力します。',
+    'input_email' => 'メールアドレスを入力します。',
+    'input_password' => 'ログインするためのパスワードを入力します。',
+    'input_password_confirm' => 'パスワードと同じものを入力してください。',
 ];
 
 foreach ($messages as $key => $message) {
