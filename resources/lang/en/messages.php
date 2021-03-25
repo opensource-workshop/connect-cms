@@ -36,4 +36,5 @@ return [
     'search_results' => 'Search Results',
     'cases' => 'cases',
     'people' => 'people',
+    'search_results_empty' => 'Search results could not be found.',
 ];

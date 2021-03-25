@@ -97,7 +97,7 @@
                 @if ($database_frame->search_results_empty_message)
                     {{$database_frame->search_results_empty_message}}
                 @else
-                    {{config('connect.CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE')}}
+                    {{ __('messages.search_results_empty') }}
                 @endif
             @endif
         @endforelse

@@ -115,7 +115,7 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="search_results_empty_message" value="{{old('search_results_empty_message', $database->search_results_empty_message)}}" class="form-control">
             <small class="text-muted">
-                ※ 空の場合「{{config('connect.CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE')}}」を表示します。
+                ※ 空の場合「{{ __('messages.search_results_empty') }}」を表示します。
             </small>
         </div>
     </div>

@@ -73,9 +73,7 @@ return [
     // Self register base role.(comma separator. Not set is guest)
     'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', ''),
 
-    // データベースプラグインの検索結果0件メッセージ
-    'CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE' => env('CC_DATABASE_PLUGIN_SEARCH_RESULTS_EMPTY_MESSAGE', '検索結果が見つかりませんでした。'),
-
-    // メール入力の２つ目確認欄のプレースホルダー
-    'CC_LANG_JA_MESSAGES_ENTER_SAME_EMAIL' => env('CC_LANG_JA_MESSAGES_ENTER_SAME_EMAIL', '同じメールアドレスを入力'),
+    // カスタムメッセージ
+    'cc_lang_ja_messages_search_results_empty' => env('cc_lang_ja_messages_search_results_empty'),
+    'cc_lang_ja_messages_enter_same_email' => env('cc_lang_ja_messages_enter_same_email'),
 ];
