@@ -67,7 +67,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}}">RSS</label>
+        <label class="{{$frame->getSettingLabelClass(true)}}">RSSの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if(old('rss', $faq->rss) == 1)
@@ -127,7 +127,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}}">公開日時</label>
+        <label class="{{$frame->getSettingLabelClass(true)}}">公開日時の表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @php
