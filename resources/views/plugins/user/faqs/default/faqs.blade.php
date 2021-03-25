@@ -83,8 +83,10 @@
 
                     <footer>
                         <div class="pt-1">
-                            {{-- 投稿日時 --}}
-                            公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
+                            @if ($faq_frame->display_posted_at_flag)
+                                {{-- 投稿日時 --}}
+                                公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
+                            @endif
 
                             {{-- 重要記事 --}}
                             @if($post->important == 1)

@@ -123,7 +123,7 @@ class FaqsPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*', 'faqs.id as faqs_id', 'faqs.faq_name', 'faqs.view_count', 'faqs.rss', 'faqs.rss_count', 'faqs.sequence_conditions')
+                 ->select('frames.*', 'faqs.id as faqs_id', 'faqs.faq_name', 'faqs.view_count', 'faqs.rss', 'faqs.rss_count', 'faqs.sequence_conditions', 'faqs.display_posted_at_flag')
                  ->leftJoin('faqs', 'faqs.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -836,8 +836,7 @@ class FaqsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'faq_name'            => ['required'],
-            'view_count'          => ['required'],
-            'view_count'          => ['numeric'],
+            'view_count'          => ['required', 'numeric'],
             'rss_count'           => ['nullable', 'numeric'],
             'sequence_conditions' => ['nullable', 'numeric'],
         ]);
@@ -867,8 +866,8 @@ class FaqsPlugin extends UserPluginBase
         if (empty($request->faqs_id)) {
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => $request->faq_name,
-                  'plugin_name' => 'faqs'
+                'bucket_name' => $request->faq_name,
+                'plugin_name' => 'faqs'
             ]);
 
             // FAQデータ新規オブジェクト
@@ -899,6 +898,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs->view_count          = $request->view_count;
         $faqs->rss                 = $request->rss;
         $faqs->rss_count           = $request->rss_count;
+        $faqs->display_posted_at_flag = $request->display_posted_at_flag ?? 0;
         $faqs->sequence_conditions = intval($request->sequence_conditions);
         //$faqs->approval_flag = $request->approval_flag;
 
