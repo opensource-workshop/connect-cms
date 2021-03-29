@@ -49,6 +49,7 @@
                                     <div class="{{$column->classname}}">
                                         @include('plugins.user.databases.default.databases_include_value')
                                     </div>
+                                    <div class="small {{ $column->caption_list_detail_color }}">{!! nl2br($column->caption_list_detail) !!}</div>
                                 </div>
                             </div>
                         @endforeach
