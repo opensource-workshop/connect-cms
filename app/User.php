@@ -56,7 +56,6 @@ class User extends Authenticatable
         $this->notify(new PasswordResetNotification($token));
     }
 
-
     /**
      * 状態から一覧表示の背景クラスを返却
      */
@@ -64,8 +63,8 @@ class User extends Authenticatable
     {
         if ($this->status == \UserStatus::not_active) {
             // 利用停止中
-            // return "bg-warning";
-            return "bg-secondary text-white";
+            return "bg-warning";
+            // return "bg-secondary text-white";
         } elseif ($this->status == \UserStatus::temporary) {
             // 仮登録
             return "bg-warning";
@@ -126,6 +125,25 @@ class User extends Authenticatable
         }
 
         return $content_roles . $admin_roles;
+    }
+
+    /**
+     * 仮登録のinput disable 属性の要否を判断して返す。
+     */
+    public function getStstusTemporaryDisabled($enum_value)
+    {
+        // 選択肢が仮登録の場合のみ、disabled の判定をする。
+        if ($enum_value != \UserStatus::temporary) {
+            return "";
+        }
+
+        // 仮登録は、ユーザが自分で登録する際のメールアドレス確認用という位置づけ。
+        // そのため、新規登録時や利用可能、利用不可状態からの仮登録への変更はできないようにする。
+        // 判定としては、現在、仮登録の場合のみ、仮登録は選択可能だが、違う場合は、仮登録へ変更させない。
+        if ($this->status == \UserStatus::temporary) {
+            return "";
+        }
+        return "disabled";
     }
 
     /**

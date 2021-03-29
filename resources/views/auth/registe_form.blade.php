@@ -24,9 +24,9 @@ use App\Models\Core\UsersColumns;
                 @foreach (UserStatus::getMembers() as $enum_value => $enum_label)
                     <div class="custom-control custom-radio custom-control-inline">
                         @if (old('status', $user->status) == $enum_value)
-                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" checked="checked">
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" checked="checked" {{$user->getStstusTemporaryDisabled($enum_value)}}>
                         @else
-                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input">
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" {{$user->getStstusTemporaryDisabled($enum_value)}}>
                         @endif
                         <label class="custom-control-label" for="status_{{$enum_value}}">{{$enum_label}}</label>
                     </div>
