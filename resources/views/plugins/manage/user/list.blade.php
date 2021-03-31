@@ -202,6 +202,7 @@ use App\Models\Core\UsersColumns;
         </div>
 
         <div class="form-group table-responsive">
+            <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $users->total() }} 件</span></div>
             <table class="table table-hover cc-font-90">
             <thead>
                 <tr>
