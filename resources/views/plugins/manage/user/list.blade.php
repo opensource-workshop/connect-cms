@@ -208,7 +208,7 @@ use App\Models\Core\UsersColumns;
                 <tr>
                     <th nowrap>ログインID</th>
                     <th nowrap>ユーザー名</th>
-                    <th nowrap><i class="fas fa-users" title="グループ参加"></i></th>
+                    <th nowrap><i class="fas fa-users"></i> グループ</th>
                     <th nowrap>eメール</th>
                     @foreach($users_columns as $users_column)
                         <th nowrap>{{$users_column->column_name}}</th>
@@ -224,13 +224,16 @@ use App\Models\Core\UsersColumns;
             @foreach($users as $user)
                 <tr class="{{$user->getStstusBackgroundClass()}}">
                     <td nowrap>
-                        <a href="{{url('/')}}/manage/user/edit/{{$user->id}}">
-                            <i class="far fa-edit"></i>
-                        </a>
+                        <a href="{{url('/')}}/manage/user/edit/{{$user->id}}" title="ユーザ変更"><i class="far fa-edit"></i></a>
                         {{$user->userid}}
                     </td>
                     <td>{{$user->name}}</td>
-                    <td nowrap><a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="fas fa-users"></i></a></th>
+                    <td>
+                        <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a>
+                        @foreach($user->group_users as $group_user)
+                            {{$group_user->name}}@if (!$loop->last), @endif
+                        @endforeach
+                    </td>
                     <td>{{$user->email}}</td>
                     @foreach($users_columns as $users_column)
                         <td>@include('plugins.manage.user.list_include_value')</td>
@@ -238,7 +241,7 @@ use App\Models\Core\UsersColumns;
                     <td nowrap>
                         @isset($user->view_user_roles)
                         <h6>
-{!!$user->getRoleStringTag()!!}
+                            {!!$user->getRoleStringTag()!!}
 {{--
                         @foreach($user->view_user_roles as $view_user_role)
                             @if ($view_user_role->role_name == 'role_article_admin')<span class="badge badge-danger">コ</span> @endif
@@ -253,9 +256,9 @@ use App\Models\Core\UsersColumns;
                     </td>
                     <td>
                         @isset($user->user_original_roles)
-                        @foreach($user->user_original_roles as $user_original_role)
-                            {{$user_original_role->value}}@if (!$loop->last) ,@endif
-                        @endforeach
+                            @foreach($user->user_original_roles as $user_original_role)
+                                {{$user_original_role->value}}@if (!$loop->last), @endif
+                            @endforeach
                         @endif
                     </td>
                     <td nowrap>{{UserStatus::getDescription($user->status)}}</td>

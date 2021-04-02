@@ -307,6 +307,28 @@ class UserManage extends ManagePluginBase
             }
         }
 
+        // グループ取得
+        $group_users = null;
+        if ($user_ids) {
+            // グループ取得
+            $group_users = Group::select('groups.*', 'group_users.user_id', 'group_users.group_role')
+                                ->leftJoin('group_users', function ($join) {
+                                    $join->on('groups.id', '=', 'group_users.group_id')
+                                        ->whereNull('group_users.deleted_at');
+                                })
+                                ->whereIn('group_users.user_id', $user_ids)
+                                ->orderBy('group_users.user_id', 'asc')
+                                ->orderBy('groups.name', 'asc')
+                                ->get();
+        }
+
+        if ($group_users) {
+            foreach ($users as &$user) {
+                $user->group_users = $group_users->where('user_id', $user->id);
+            }
+        }
+
+
         //$users = DB::table('users')
         //         ->orderBy('id', 'asc')
         //         ->paginate(10);
