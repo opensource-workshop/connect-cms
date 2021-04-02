@@ -131,7 +131,10 @@
         </div><!-- /.accordion -->
         <div class="text-center row mt-3">
             <div class="col-12">
+{{-- bugfix: グループ権限はページ一覧から遷移するため、キャンセルで表示するページはページ一覧に修正
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/page/edit')}}/{{$page->id}}'">
+--}}
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/page')}}'">
                     <i class="fas fa-times"></i> キャンセル
                 </button>
             </div>
