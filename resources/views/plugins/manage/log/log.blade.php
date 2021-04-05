@@ -196,8 +196,8 @@
             </table>
         </div>
 
-        {{-- ページング処理 --}}
         <div class="row">
+            {{-- ページング処理 --}}
             <div class="col-10 text-center">
                 {{ $app_logs->links() }}
             </div>
