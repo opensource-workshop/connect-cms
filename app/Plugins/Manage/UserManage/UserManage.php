@@ -1162,38 +1162,36 @@ class UserManage extends ManagePluginBase
 
         // $data_output_flag = falseは、CSVフォーマットダウンロード処理
         if ($data_output_flag) {
-            // 登録データの取得
+            // usersデータ
+            foreach ($users as $user) {
+                // ベースをセット
+                $csv_array[$user->id] = $copy_base;
+
+                // 初回で固定項目をセット
+                $csv_array[$user->id]['id'] = $user->id;
+                $csv_array[$user->id]['userid'] = $user->userid;     // ログインID
+                $csv_array[$user->id]['name'] = $user->name;
+
+                // グループ
+                $csv_array[$user->id]['group'] = $user->convertLoopValue('group_users', 'name', '|');
+
+                $csv_array[$user->id]['email'] = $user->email;
+                $csv_array[$user->id]['password'] = '';              // パスワード、中身は空で出力
+
+                // 権限
+                $csv_array[$user->id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', '|');
+
+                // 役割設定
+                $csv_array[$user->id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', '|');
+
+                $csv_array[$user->id]['status'] = $user->status;
+            }
+
+            // 追加項目データの取得
             $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
 
-            // データ
+            // 追加項目データ
             foreach ($input_cols as $input_col) {
-                if (!array_key_exists($input_col->users_id, $csv_array)) {
-                    // 初回のみベースをセット
-                    $csv_array[$input_col->users_id] = $copy_base;
-
-                    // 初回で固定項目をセット
-                    $csv_array[$input_col->users_id]['id'] = $input_col->users_id;
-
-                    $user = $users->where('id', $input_col->users_id)->first();
-
-                    $csv_array[$input_col->users_id]['userid'] = $user->userid;     // ログインID
-                    $csv_array[$input_col->users_id]['name'] = $user->name;
-
-                    // グループ
-                    $csv_array[$input_col->users_id]['group'] = $user->convertLoopValue('group_users', 'name', '|');
-
-                    $csv_array[$input_col->users_id]['email'] = $user->email;
-                    $csv_array[$input_col->users_id]['password'] = '';              // パスワード、中身は空で出力
-
-                    // 権限
-                    $csv_array[$input_col->users_id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', '|');
-
-                    // 役割設定
-                    $csv_array[$input_col->users_id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', '|');
-
-                    $csv_array[$input_col->users_id]['status'] = $user->status;
-                }
-
                 $csv_array[$input_col->users_id][$input_col->users_columns_id] = $input_col->value;
             }
         }
