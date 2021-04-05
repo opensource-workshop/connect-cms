@@ -15,6 +15,30 @@ use App\Models\Core\UsersColumns;
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+{{-- ダウンロード用フォーム --}}
+<form method="post" name="user_download" action="{{url('/')}}/manage/user/downloadCsv">
+    {{ csrf_field() }}
+    <input type="hidden" name="character_code" value="">
+</form>
+
+<script type="text/javascript">
+    {{-- ダウンロードのsubmit JavaScript --}}
+    function submit_download_shift_jis() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        user_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+        user_download.submit();
+    }
+    function submit_download_utf_8() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        user_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
+        user_download.submit();
+    }
+</script>
+
 <div class="card">
     <div class="card-header p-0">
         {{-- 機能選択タブ --}}
@@ -185,13 +209,31 @@ use App\Models\Core\UsersColumns;
                             {{-- ボタンエリア --}}
                             <div class="form-group text-center">
                                 <div class="row">
-                                    <div class="mx-auto">
+                                    <div class="col-3"></div>
+                                    <div class="col-6">
                                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user/clearSearch')}}'">
                                             <i class="fas fa-times"></i> クリア
                                         </button>
                                         <button type="submit" class="btn btn-primary form-horizontal">
                                             <i class="fas fa-check"></i> 絞り込み
                                         </button>
+                                    </div>
+                                    <div class="col-3 text-right">
+                                        <div class="btn-group dropup">
+                                            <button type="button" class="btn btn-primary" onclick="submit_download_shift_jis();">
+                                                <i class="fas fa-file-download"></i><span class="d-none d-md-inline"> ダウンロード</span>
+                                            </button>
+                                            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span class="sr-only">ドロップダウンボタン</span>
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                                                <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                                                <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
+                                                    <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -230,9 +272,7 @@ use App\Models\Core\UsersColumns;
                     <td>{{$user->name}}</td>
                     <td>
                         <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a>
-                        @foreach($user->group_users as $group_user)
-                            {{$group_user->name}}@if (!$loop->last), @endif
-                        @endforeach
+                        {{$user->convertLoopValue('group_users', 'name')}}
                     </td>
                     <td>{{$user->email}}</td>
                     @foreach($users_columns as $users_column)
@@ -255,11 +295,7 @@ use App\Models\Core\UsersColumns;
                         @endif
                     </td>
                     <td>
-                        @isset($user->user_original_roles)
-                            @foreach($user->user_original_roles as $user_original_role)
-                                {{$user_original_role->value}}@if (!$loop->last), @endif
-                            @endforeach
-                        @endif
+                        {{$user->convertLoopValue('user_original_roles', 'value')}}
                     </td>
                     <td nowrap>{{UserStatus::getDescription($user->status)}}</td>
                     <td>{{$user->created_at->format('Y/m/d')}}</td>
