@@ -12,16 +12,18 @@ use DB;
 
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\Core\UsersInputCols;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
 // use App\Models\Common\Page;
-use App\Models\Core\UsersInputCols;
 use App\User;
 
 use App\Plugins\Manage\ManagePluginBase;
 
 use App\Rules\CustomValiUserEmailUnique;
 use App\Rules\CustomValiEmails;
+
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * ユーザ管理クラス
@@ -54,14 +56,23 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["saveGroups"]         = array('admin_user');
         $role_ckeck_table["autoRegist"]         = array('admin_user');
         $role_ckeck_table["autoRegistUpdate"]   = array('admin_user');
+        $role_ckeck_table["downloadCsv"] = array('admin_user');
 
         return $role_ckeck_table;
     }
 
     /**
-     *  データ取得
+     * データgetで取得
      */
-    private function getUsers($request, $page, $users_columns)
+    private function getUsers($request, $users_columns)
+    {
+        return $this->getUsersPaginate($request, null, $users_columns, false);
+    }
+
+    /**
+     * データ取得(paginate or get)
+     */
+    private function getUsersPaginate($request, $page, $users_columns, $is_paginate = true)
     {
         /* 権限が指定されている場合は、権限を保持しているユーザID を抜き出しておき、後で whereIn する。
         ----------------------------------------------------------------------------------------------*/
@@ -250,7 +261,13 @@ class UserManage extends ManagePluginBase
         // dd($sort_column_orders);
 
         // データ取得
-        $users = $users_query->paginate(10, null, 'page', $page);
+        if ($is_paginate) {
+            // ページャーで取得
+            $users = $users_query->paginate(10, null, 'page', $page);
+        } else {
+            // getで取得
+            $users = $users_query->get();
+        }
 
         // ユーザデータからID の配列生成
         $user_ids = array();
@@ -386,7 +403,7 @@ class UserManage extends ManagePluginBase
         $users_columns_id_select = UsersTool::getUsersColumnsSelects();
 
         // User データの取得
-        $users = $this->getUsers($request, $page, $users_columns);
+        $users = $this->getUsersPaginate($request, $page, $users_columns);
 
         // ユーザーの追加項目データ
         $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
@@ -1077,5 +1094,139 @@ class UserManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/user/autoRegist");
+    }
+
+    /**
+     * データダウンロード
+     */
+    public function downloadCsv($request, $id = null, $sub_id = null, $data_output_flag = true)
+    {
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        // User データの取得
+        $users = $this->getUsers($request, $users_columns);
+
+        /*
+        ダウンロード前の配列イメージ。
+        0行目をUsersColumns から生成して、1行目以降は0行目の キーのみのコピーを作成し、データを入れ込んでいく。
+        1行目以降の行番号は users_id の値を使用
+
+        0 [
+            37 => 姓
+            40 => 名
+            45 => テキスト
+        ]
+        1 [
+            37 => 永原
+            40 => 篤
+            45 => テストです。
+        ]
+        2 [
+            37 => 田中
+            40 =>
+            45 =>
+        ]
+        */
+        // 返却用配列
+        $csv_array = array();
+
+        // データ行用の空配列
+        $copy_base = array();
+
+        // 見出し行-頭（固定項目）
+        $csv_array[0]['id'] = 'id';
+        $csv_array[0]['userid'] = 'ログインID';
+        $csv_array[0]['name'] = 'ユーザ名';
+        $csv_array[0]['group'] = 'グループ';
+        $csv_array[0]['email'] = 'eメールアドレス';
+        $csv_array[0]['password'] = 'パスワード';     // パスワード、中身は空で出力
+        $copy_base['id'] = '';
+        $copy_base['userid'] = '';
+        $copy_base['name'] = '';
+        $copy_base['group'] = '';
+        $copy_base['email'] = '';
+        $copy_base['password'] = '';
+        // 見出し行
+        foreach ($users_columns as $column) {
+            $csv_array[0][$column->id] = $column->column_name;
+            $copy_base[$column->id] = '';
+        }
+        // 見出し行-末尾（固定項目）
+        $csv_array[0]['view_user_roles'] = '権限';
+        $csv_array[0]['user_original_roles'] = '役割設定';
+        $csv_array[0]['status'] = '状態';
+        $copy_base['view_user_roles'] = '';
+        $copy_base['user_original_roles'] = '';
+        $copy_base['status'] = '';
+
+        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
+        if ($data_output_flag) {
+            // 登録データの取得
+            $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
+
+            // データ
+            foreach ($input_cols as $input_col) {
+                if (!array_key_exists($input_col->users_id, $csv_array)) {
+                    // 初回のみベースをセット
+                    $csv_array[$input_col->users_id] = $copy_base;
+
+                    // 初回で固定項目をセット
+                    $csv_array[$input_col->users_id]['id'] = $input_col->users_id;
+
+                    $user = $users->where('id', $input_col->users_id)->first();
+
+                    $csv_array[$input_col->users_id]['userid'] = $user->userid;     // ログインID
+                    $csv_array[$input_col->users_id]['name'] = $user->name;
+
+                    // グループ
+                    $csv_array[$input_col->users_id]['group'] = $user->convertLoopValue('group_users', 'name', '|');
+
+                    $csv_array[$input_col->users_id]['email'] = $user->email;
+                    $csv_array[$input_col->users_id]['password'] = '';              // パスワード、中身は空で出力
+
+                    // 権限
+                    $csv_array[$input_col->users_id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', '|');
+
+                    // 役割設定
+                    $csv_array[$input_col->users_id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', '|');
+
+                    $csv_array[$input_col->users_id]['status'] = $user->status;
+                }
+
+                $csv_array[$input_col->users_id][$input_col->users_columns_id] = $input_col->value;
+            }
+        }
+
+        // レスポンス
+        $filename = 'users.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // Log::debug(var_export($request->character_code, true));
+
+        // 文字コード変換
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 }
