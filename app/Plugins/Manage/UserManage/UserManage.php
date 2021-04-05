@@ -1173,16 +1173,16 @@ class UserManage extends ManagePluginBase
                 $csv_array[$user->id]['name'] = $user->name;
 
                 // グループ
-                $csv_array[$user->id]['group'] = $user->convertLoopValue('group_users', 'name', '|');
+                $csv_array[$user->id]['group'] = $user->convertLoopValue('group_users', 'name', UsersTool::CHECKBOX_SEPARATOR);
 
                 $csv_array[$user->id]['email'] = $user->email;
                 $csv_array[$user->id]['password'] = '';              // パスワード、中身は空で出力
 
                 // 権限
-                $csv_array[$user->id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', '|');
+                $csv_array[$user->id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', UsersTool::CHECKBOX_SEPARATOR);
 
                 // 役割設定
-                $csv_array[$user->id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', '|');
+                $csv_array[$user->id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', UsersTool::CHECKBOX_SEPARATOR);
 
                 $csv_array[$user->id]['status'] = $user->status;
             }
