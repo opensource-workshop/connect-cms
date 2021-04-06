@@ -40,8 +40,9 @@
     }
 </script>
 
-<form action="{{url('/')}}/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/redirect/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     <div class="form-group">
         <table class="table table-hover {{$frame->getSettingTableClass()}}">

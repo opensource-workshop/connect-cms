@@ -1780,16 +1780,15 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-    * データ紐づけ変更関数
-    */
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
 
-        // 表示課題管理選択画面を呼ぶ
-        return $this->listBuckets($request, $page_id, $frame_id, $id);
+        // changeBuckets は redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
