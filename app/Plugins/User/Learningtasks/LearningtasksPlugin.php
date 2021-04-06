@@ -231,24 +231,24 @@ class LearningtasksPlugin extends UserPluginBase
         return $learningtasks_categories;
     }
 
-    /**
-     *  課題管理記事チェック設定
-     */
-    private function makeValidator($request)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'post_title' => ['required'],
-            'posted_at'  => ['required', 'date_format:Y-m-d H:i'],
-            'post_text'  => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'post_title' => 'タイトル',
-            'posted_at'  => '投稿日時',
-            'post_text'  => '本文',
-        ]);
-        return $validator;
-    }
+    // /**
+    //  * 課題管理記事チェック設定
+    //  */
+    // private function makeValidator($request)
+    // {
+    //     // 項目のエラーチェック
+    //     $validator = Validator::make($request->all(), [
+    //         'post_title' => ['required'],
+    //         'posted_at'  => ['required', 'date_format:Y-m-d H:i'],
+    //         'post_text'  => ['required'],
+    //     ]);
+    //     $validator->setAttributeNames([
+    //         'post_title' => 'タイトル',
+    //         'posted_at'  => '投稿日時',
+    //         'post_text'  => '本文',
+    //     ]);
+    //     return $validator;
+    // }
 
     /**
      *  記事の取得権限に対する条件追加
@@ -526,23 +526,24 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 課題ファイルがアップロードされた。
         if ($request->hasFile('add_task_file')) {
-            // Scratchを許可
-            $extension = $request->file('add_task_file')->getClientOriginalExtension();
-            if ($extension == 'sb2' || $extension == 'sb3') {
-                // OK
-            } else {
-                // ファイルチェック
-                $validator = Validator::make($request->all(), [
-                    'add_task_file' => 'required|mimes:pdf,doc,docx',
-                ]);
-                $validator->setAttributeNames([
-                    'add_task_file' => '課題ファイル',
-                ]);
-                if ($validator->fails()) {
-                    // エラー時はエラー内容を引き継いで入力画面に戻る
-                    return redirect()->back()->withErrors($validator)->withInput();
-                }
-            }
+            // move: validatorは、各saveメソッドの手前のvalidatorでそれぞれチェックする
+            // // Scratchを許可
+            // $extension = $request->file('add_task_file')->getClientOriginalExtension();
+            // if ($extension == 'sb2' || $extension == 'sb3') {
+            //     // OK
+            // } else {
+            //     // ファイルチェック
+            //     $validator = Validator::make($request->all(), [
+            //         'add_task_file' => 'required|mimes:pdf,doc,docx',
+            //     ]);
+            //     $validator->setAttributeNames([
+            //         'add_task_file' => '課題ファイル',
+            //     ]);
+            //     if ($validator->fails()) {
+            //         // エラー時はエラー内容を引き継いで入力画面に戻る
+            //         return redirect()->back()->withErrors($validator)->withInput();
+            //     }
+            // }
 
             // uploads テーブルに情報追加、ファイルのid を取得する
             $upload = Uploads::create([
@@ -1374,12 +1375,40 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  課題管理記事登録処理
+     * 課題管理記事登録処理
      */
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
         // 項目のエラーチェック
-        $validator = $this->makeValidator($request);
+        // $validator = $this->makeValidator($request);
+        $validate_value = [
+            'post_title' => ['required'],
+            'posted_at' => ['required', 'date_format:Y-m-d H:i'],
+            'post_text' => ['required'],
+        ];
+
+        $validate_attribute = [
+            'post_title' => 'タイトル',
+            'posted_at' => '投稿日時',
+            'post_text' => '本文',
+        ];
+
+        // 課題ファイルがアップロードされた。
+        if ($request->hasFile('add_task_file')) {
+            // Scratchを許可. アップロードされないと拡張子判定できない。
+            $extension = $request->file('add_task_file')->getClientOriginalExtension();
+            if ($extension == 'sb2' || $extension == 'sb3') {
+                // OK
+            } else {
+                // ファイルチェック
+                $validate_value['add_task_file'] = ['required', 'mimes:pdf,doc,docx'];
+                $validate_attribute['add_task_file'] = '課題ファイル';
+            }
+        }
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), $validate_value);
+        $validator->setAttributeNames($validate_attribute);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -2184,14 +2213,33 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
+        $validate_value = [
             'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at'],
             'end_at'   => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at'],
-        ]);
-        $validator->setAttributeNames([
+        ];
+
+        $validate_attribute = [
             'start_at' => '開始日時',
             'end_at'   => '終了日時',
-        ]);
+        ];
+
+        // 課題ファイルがアップロードされた。
+        if ($request->hasFile('add_task_file')) {
+            // Scratchを許可. アップロードされないと拡張子判定できない。
+            $extension = $request->file('add_task_file')->getClientOriginalExtension();
+            if ($extension == 'sb2' || $extension == 'sb3') {
+                // OK
+            } else {
+                // ファイルチェック
+                $validate_value['add_task_file'] = ['required', 'mimes:pdf,doc,docx'];
+                $validate_attribute['add_task_file'] = '課題ファイル';
+            }
+        }
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), $validate_value);
+        $validator->setAttributeNames($validate_attribute);
+
         if ($validator->fails()) {
             // エラー時はエラー内容を引き継いで入力画面に戻る
             return redirect()->back()->withErrors($validator)->withInput();
