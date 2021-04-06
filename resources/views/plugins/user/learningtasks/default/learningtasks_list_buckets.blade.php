@@ -55,9 +55,9 @@
         </thead>
         <tbody>
         @foreach($learningtasks as $learningtask)
-            <tr @if ($frame->bucket_id == $learningtask->bucket_id) class="cc-active-tr"@endif>
+            <tr @if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) class="cc-active-tr"@endif>
                 <td>
-                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($frame->bucket_id == $learningtask->bucket_id) checked @endif>
+                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) checked @endif>
                     <span class="{{$frame->getSettingCaptionClass()}}">{{$learningtask->learningtasks_name}}</span>
                 </td>
                 <td class="{{$frame->getNarrowDisplayNone()}}">{{$learningtask->learningtasks_name}}</td>
@@ -83,10 +83,10 @@
     </div>
 
     <div class="text-center">
-        {{ $learningtasks->links() }}
+        {{ $learningtasks->fragment('frame-' . $frame_id)->links() }}
     </div>
 
-    <div class="form-group text-center">
+    <div class="form-group text-center mt-3">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示課題管理変更</button>
     </div>

@@ -1467,9 +1467,9 @@ class LearningtasksPlugin extends UserPluginBase
         //return $this->index($request, $page_id, $frame_id);
     }
 
-   /**
-    * データ一時保存関数
-    */
+    /**
+     * データ一時保存関数
+     */
     //public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     //{
     //    // 項目のエラーチェック
@@ -1488,7 +1488,7 @@ class LearningtasksPlugin extends UserPluginBase
     //        $learningtasks_post->created_id  = Auth::user()->id;
     //    } else {
     //        $learningtasks_post = LearningtasksPosts::find($id)->replicate();
- 
+
     //        // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
     //        $check_learningtasks_post = $this->getPost($id);
 
@@ -1545,9 +1545,9 @@ class LearningtasksPlugin extends UserPluginBase
         return $this->index($request, $page_id, $frame_id);
     }
 
-   /**
-    * 承認
-    */
+    /**
+     * 承認
+     */
     //public function approval($request, $page_id = null, $frame_id = null, $id = null)
     //{
     //    // 新規オブジェクト生成
@@ -1584,8 +1584,7 @@ class LearningtasksPlugin extends UserPluginBase
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // Frame データ
-        $learningtasks_frame = DB::table('frames')
-                      ->select('frames.*', 'learningtasks.id as learningtasks_id', 'learningtasks.view_count')
+        $learningtasks_frame = Frame::select('frames.*', 'learningtasks.id as learningtasks_id', 'learningtasks.view_count')
                       ->leftJoin('learningtasks', 'learningtasks.bucket_id', '=', 'frames.bucket_id')
                       ->where('frames.id', $frame_id)->first();
 
@@ -1594,12 +1593,10 @@ class LearningtasksPlugin extends UserPluginBase
                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'learningtasks_list_buckets', [
+        return $this->view('learningtasks_list_buckets', [
             'learningtasks_frame' => $learningtasks_frame,
-            'learningtasks'       => $learningtasks,
-            ]
-        );
+            'learningtasks' => $learningtasks,
+        ]);
     }
 
     /**
@@ -1784,7 +1781,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
+    /**
     * データ紐づけ変更関数
     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
