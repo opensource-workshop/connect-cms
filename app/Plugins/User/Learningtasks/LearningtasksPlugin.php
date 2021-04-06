@@ -195,6 +195,12 @@ class LearningtasksPlugin extends UserPluginBase
                                     ->join('frames', 'frames.bucket_id', '=', 'learningtasks.bucket_id')
                                     ->where('frames.id', $frame_id)
                                     ->first();
+
+        // bugfix: 空の場合newする。課題管理未選択 & カテゴリ設定画面でエラーになるため。
+        if (is_null($learningtask)) {
+            $learningtask = new Learningtasks();
+        }
+
         return $learningtask;
 
         // Frame データ
