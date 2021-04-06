@@ -2095,6 +2095,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.title_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
+                'databases_columns.caption_list_detail',
+                'databases_columns.caption_list_detail_color',
                 'databases_columns.classname',
                 'databases_columns.display_sequence',
                 'databases_columns.row_group',
@@ -2117,6 +2119,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.title_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
+                'databases_columns.caption_list_detail',
+                'databases_columns.caption_list_detail_color',
                 'databases_columns.classname',
                 'databases_columns.display_sequence',
                 'databases_columns.row_group',
@@ -2135,16 +2139,13 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 編集画面テンプレートを呼び出す。
-        return $this->view(
-            'databases_edit',
-            [
-                'databases_id'   => $databases_id,
-                'columns'    => $columns,
-                'title_flag' => $title_flag,
-                'message'    => $message,
-                'errors'     => $errors,
-            ]
-        );
+        return $this->view('databases_edit', [
+            'databases_id' => $databases_id,
+            'columns' => $columns,
+            'title_flag' => $title_flag,
+            'message' => $message,
+            'errors' => $errors,
+        ]);
     }
 
     /**
@@ -2343,6 +2344,8 @@ class DatabasesPlugin extends UserPluginBase
         // 項目の更新処理
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
+        $column->caption_list_detail = $request->caption_list_detail;
+        $column->caption_list_detail_color = $request->caption_list_detail_color;
         $column->frame_col = $request->frame_col;
         $column->classname = $request->classname;
         // 分刻み指定

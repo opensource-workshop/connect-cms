@@ -12,16 +12,18 @@ use DB;
 
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\Core\UsersInputCols;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
 // use App\Models\Common\Page;
-use App\Models\Core\UsersInputCols;
 use App\User;
 
 use App\Plugins\Manage\ManagePluginBase;
 
 use App\Rules\CustomValiUserEmailUnique;
 use App\Rules\CustomValiEmails;
+
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * ユーザ管理クラス
@@ -54,14 +56,23 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["saveGroups"]         = array('admin_user');
         $role_ckeck_table["autoRegist"]         = array('admin_user');
         $role_ckeck_table["autoRegistUpdate"]   = array('admin_user');
+        $role_ckeck_table["downloadCsv"] = array('admin_user');
 
         return $role_ckeck_table;
     }
 
     /**
-     *  データ取得
+     * データgetで取得
      */
-    private function getUsers($request, $page, $users_columns)
+    private function getUsers($request, $users_columns)
+    {
+        return $this->getUsersPaginate($request, null, $users_columns, false);
+    }
+
+    /**
+     * データ取得(paginate or get)
+     */
+    private function getUsersPaginate($request, $page, $users_columns, $is_paginate = true)
     {
         /* 権限が指定されている場合は、権限を保持しているユーザID を抜き出しておき、後で whereIn する。
         ----------------------------------------------------------------------------------------------*/
@@ -80,6 +91,7 @@ class UserManage extends ManagePluginBase
             $request->session()->has('user_search_condition.admin_user')) {
             $in_users_query = UsersRoles::select('users_roles.users_id');
 
+            // [TODO] 権限複数チェックするとOR検索になる, 複数チェック付けたらAND検索が妥当だろう。対応方法わからず。
             // コンテンツ管理者
             if ($request->session()->get('user_search_condition.role_article_admin') == 1) {
                 $in_users_query->orWhere('role_name', 'role_article_admin');
@@ -198,6 +210,43 @@ class UserManage extends ManagePluginBase
             $users_query->where('users.name', 'like', '%' . $request->session()->get('user_search_condition.name') . '%');
         }
 
+        // グループ
+        if ($request->session()->has('user_search_condition.groups')) {
+            // [TODO] グループ複数チェック AND検索 試し
+            // $groups = $request->session()->get('user_search_condition.groups');
+            // $in_group_user_ids = collect();
+            // foreach ($groups as $group) {
+            //     $tmp_in_group_user_ids = GroupUser::select('user_id')->where('group_id', $group)->pluck('user_id');
+            //
+            //     if ($in_group_user_ids->isEmpty()) {
+            //         // 空なら初回セット
+            //         $in_group_user_ids = $tmp_in_group_user_ids;
+            //     } else {
+            //         // [TODO] 未対応：user_idが全ての条件で残ってるもののみ残す。diffとかで抽出できないかなぁ？
+            //     }
+            // }
+            // $users_query->whereIn('users.id', $in_group_user_ids);
+
+            // [TODO] グループ複数チェックするとOR検索になる
+            $groups = $request->session()->get('user_search_condition.groups');
+            $in_group_users_query = GroupUser::select('group_users.user_id');
+            foreach ($groups as $group) {
+                $in_group_users = $in_group_users_query->orWhere('group_id', $group);
+            }
+            $users_query->whereIn('users.id', $in_group_users->pluck('user_id'));
+
+            // [TODO] グループ複数チェックするとOR検索になる
+            // $groups = $request->session()->get('user_search_condition.groups');
+            // $users_query->whereIn('users.id', function ($query) use ($groups) {
+            //     // 縦持ちのvalue を検索して、行の id を取得。
+            //     $query->select('user_id')
+            //             ->from('group_users')
+            //             ->whereIn('group_id', $groups)
+            //             ->whereNull('deleted_at')
+            //             ->groupBy('user_id');
+            // });
+        }
+
         // eメール
         if ($request->session()->has('user_search_condition.email')) {
             $users_query->where('users.email', 'like', '%' . $request->session()->get('user_search_condition.email') . '%');
@@ -250,7 +299,13 @@ class UserManage extends ManagePluginBase
         // dd($sort_column_orders);
 
         // データ取得
-        $users = $users_query->paginate(10, null, 'page', $page);
+        if ($is_paginate) {
+            // ページャーで取得
+            $users = $users_query->paginate(10, null, 'page', $page);
+        } else {
+            // getで取得
+            $users = $users_query->get();
+        }
 
         // ユーザデータからID の配列生成
         $user_ids = array();
@@ -306,6 +361,28 @@ class UserManage extends ManagePluginBase
                 }
             }
         }
+
+        // グループ取得
+        $group_users = null;
+        if ($user_ids) {
+            // グループ取得
+            $group_users = Group::select('groups.*', 'group_users.user_id', 'group_users.group_role')
+                                ->leftJoin('group_users', function ($join) {
+                                    $join->on('groups.id', '=', 'group_users.group_id')
+                                        ->whereNull('group_users.deleted_at');
+                                })
+                                ->whereIn('group_users.user_id', $user_ids)
+                                ->orderBy('group_users.user_id', 'asc')
+                                ->orderBy('groups.name', 'asc')
+                                ->get();
+        }
+
+        if ($group_users) {
+            foreach ($users as &$user) {
+                $user->group_users = $group_users->where('user_id', $user->id);
+            }
+        }
+
 
         //$users = DB::table('users')
         //         ->orderBy('id', 'asc')
@@ -364,10 +441,14 @@ class UserManage extends ManagePluginBase
         $users_columns_id_select = UsersTool::getUsersColumnsSelects();
 
         // User データの取得
-        $users = $this->getUsers($request, $page, $users_columns);
+        $users = $this->getUsersPaginate($request, $page, $users_columns);
 
         // ユーザーの追加項目データ
         $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
+
+        // get()で取得すると、ソフトデリート（deleted_at）は取得されない
+        $groups_select = Group::get();
+        // dd($groups);
 
         return view('plugins.manage.user.list', [
             "function" => __FUNCTION__,
@@ -376,6 +457,7 @@ class UserManage extends ManagePluginBase
             "users_columns" => $users_columns,
             "users_columns_id_select" => $users_columns_id_select,
             "input_cols" => $input_cols,
+            "groups_select" => $groups_select,
         ]);
     }
 
@@ -388,6 +470,7 @@ class UserManage extends ManagePluginBase
         $user_search_condition = [
             "userid"             => $request->input('user_search_condition.userid'),
             "name"               => $request->input('user_search_condition.name'),
+            "groups"             => $request->input('user_search_condition.groups'),
             "email"              => $request->input('user_search_condition.email'),
 
             "role_article_admin" => $request->input('user_search_condition.role_article_admin'),
@@ -1055,5 +1138,137 @@ class UserManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/user/autoRegist");
+    }
+
+    /**
+     * データダウンロード
+     */
+    public function downloadCsv($request, $id = null, $sub_id = null, $data_output_flag = true)
+    {
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        // User データの取得
+        $users = $this->getUsers($request, $users_columns);
+
+        /*
+        ダウンロード前の配列イメージ。
+        0行目をUsersColumns から生成して、1行目以降は0行目の キーのみのコピーを作成し、データを入れ込んでいく。
+        1行目以降の行番号は users_id の値を使用
+
+        0 [
+            37 => 姓
+            40 => 名
+            45 => テキスト
+        ]
+        1 [
+            37 => 永原
+            40 => 篤
+            45 => テストです。
+        ]
+        2 [
+            37 => 田中
+            40 =>
+            45 =>
+        ]
+        */
+        // 返却用配列
+        $csv_array = array();
+
+        // データ行用の空配列
+        $copy_base = array();
+
+        // 見出し行-頭（固定項目）
+        $csv_array[0]['id'] = 'id';
+        $csv_array[0]['userid'] = 'ログインID';
+        $csv_array[0]['name'] = 'ユーザ名';
+        $csv_array[0]['group'] = 'グループ';
+        $csv_array[0]['email'] = 'eメールアドレス';
+        $csv_array[0]['password'] = 'パスワード';     // パスワード、中身は空で出力
+        $copy_base['id'] = '';
+        $copy_base['userid'] = '';
+        $copy_base['name'] = '';
+        $copy_base['group'] = '';
+        $copy_base['email'] = '';
+        $copy_base['password'] = '';
+        // 見出し行
+        foreach ($users_columns as $column) {
+            $csv_array[0][$column->id] = $column->column_name;
+            $copy_base[$column->id] = '';
+        }
+        // 見出し行-末尾（固定項目）
+        $csv_array[0]['view_user_roles'] = '権限';
+        $csv_array[0]['user_original_roles'] = '役割設定';
+        $csv_array[0]['status'] = '状態';
+        $copy_base['view_user_roles'] = '';
+        $copy_base['user_original_roles'] = '';
+        $copy_base['status'] = '';
+
+        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
+        if ($data_output_flag) {
+            // usersデータ
+            foreach ($users as $user) {
+                // ベースをセット
+                $csv_array[$user->id] = $copy_base;
+
+                // 初回で固定項目をセット
+                $csv_array[$user->id]['id'] = $user->id;
+                $csv_array[$user->id]['userid'] = $user->userid;     // ログインID
+                $csv_array[$user->id]['name'] = $user->name;
+
+                // グループ
+                $csv_array[$user->id]['group'] = $user->convertLoopValue('group_users', 'name', UsersTool::CHECKBOX_SEPARATOR);
+
+                $csv_array[$user->id]['email'] = $user->email;
+                $csv_array[$user->id]['password'] = '';              // パスワード、中身は空で出力
+
+                // 権限
+                $csv_array[$user->id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', UsersTool::CHECKBOX_SEPARATOR);
+
+                // 役割設定
+                $csv_array[$user->id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', UsersTool::CHECKBOX_SEPARATOR);
+
+                $csv_array[$user->id]['status'] = $user->status;
+            }
+
+            // 追加項目データの取得
+            $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
+
+            // 追加項目データ
+            foreach ($input_cols as $input_col) {
+                $csv_array[$input_col->users_id][$input_col->users_columns_id] = $input_col->value;
+            }
+        }
+
+        // レスポンス
+        $filename = 'users.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // Log::debug(var_export($request->character_code, true));
+
+        // 文字コード変換
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 }
