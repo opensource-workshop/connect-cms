@@ -1606,14 +1606,13 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 新規作成フラグを付けて課題管理設定変更画面を呼ぶ
         $create_flag = true;
-        $message = null;
-        return $this->editBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag);
     }
 
     /**
      * 課題管理設定変更画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $learningtask_id = null, $create_flag = false, $message = null)
+    public function editBuckets($request, $page_id, $frame_id, $learningtask_id = null, $create_flag = false)
     {
         // セッション初期化などのLaravel 処理。
         //$request->flash();
@@ -1644,7 +1643,6 @@ class LearningtasksPlugin extends UserPluginBase
             //'base_settings' => $base_settings,
             'tool'          => $tool,
             'create_flag'   => $create_flag,
-            'message'       => $message,
             //'errors'        => $errors,
         ]);
     }
@@ -1667,13 +1665,9 @@ class LearningtasksPlugin extends UserPluginBase
         ]);
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-
-        // 更新後のメッセージ
-        $message = null;
 
         if (empty($request->learningtask_id)) {
             // 画面から渡ってくるlearningtask_id が空ならバケツと課題管理を新規登録
@@ -1697,13 +1691,13 @@ class LearningtasksPlugin extends UserPluginBase
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = '課題管理設定を追加しました。';
+            $request->flash_message = '課題管理設定を追加しました。';
         } else {
             // learningtask_id があれば、課題管理を更新
             // 課題管理データ取得
             $learningtask = Learningtasks::where('id', $request->learningtask_id)->first();
 
-            $message = '課題管理設定を変更しました。';
+            $request->flash_message = '課題管理設定を変更しました。';
         }
 
         // 課題管理設定

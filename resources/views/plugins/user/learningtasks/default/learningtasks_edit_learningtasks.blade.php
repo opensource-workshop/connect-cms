@@ -16,25 +16,28 @@
 
 @include('common.errors_form_line')
 
-@if (empty($learningtask) || !$learningtask->id)
-    <div class="alert alert-warning" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する課題管理を選択するか、作成してください。
+@if (!$learningtask->id && !$create_flag)
+    {{-- idなし & 変更 = DB未選択&変更:初期表示 --}}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-circle"></i> 設定画面から、使用する課題管理を選択するか、作成してください。
     </div>
 @else
-    <div class="alert alert-info" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-
-        @if ($message)
-            {{$message}}
-        @else
+    @if (session('flash_message'))
+        <div class="alert alert-success">
+            <i class="fas fa-exclamation-circle"></i> {{ session('flash_message') }}
+        </div>
+    @else
+        <div class="alert alert-info">
+            <i class="fas fa-exclamation-circle"></i>
             @if (empty($learningtask) || $create_flag)
+                {{-- 登録：初期表示 --}}
                 新しい課題管理設定を登録します。
             @else
+                {{-- 変更：初期表示 --}}
                 課題管理設定を変更します。
             @endif
-        @endif
-    </div>
+        </div>
+    @endif
 @endif
 
 @if (empty($learningtask) || (!$learningtask->id && !$create_flag))
