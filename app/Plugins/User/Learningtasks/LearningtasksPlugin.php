@@ -1997,10 +1997,10 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      * カテゴリ表示関数
      */
-    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
+    public function listCategories($request, $page_id, $frame_id, $id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
         if ($this->can('role_arrangement')) {
@@ -2035,8 +2035,6 @@ class LearningtasksPlugin extends UserPluginBase
             'general_categories' => $general_categories,
             'plugin_categories'  => $plugin_categories,
             'learningtask'       => $learningtask,
-            'errors'             => $errors,
-            'create_flag'        => $create_flag,
         ]);
     }
 
@@ -2103,7 +2101,8 @@ class LearningtasksPlugin extends UserPluginBase
         $validator->setAttributeNames($setAttributeNames);
 
         if ($validator->fails()) {
-            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         /* カテゴリ追加
@@ -2185,7 +2184,8 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // saveCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
@@ -2204,7 +2204,8 @@ class LearningtasksPlugin extends UserPluginBase
         // 削除(カテゴリ)
         Categories::where('id', $id)->delete();
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // sdeleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**

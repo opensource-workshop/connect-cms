@@ -24,7 +24,7 @@
 {{-- 最後にendif --}}
 
 {{-- エラーメッセージ --}}
-@if ($errors)
+@if ($errors->count() > 0)
     <div class="card border-danger">
         <div class="card-body">
             <span class="text-danger">
@@ -45,14 +45,19 @@
 <script type="text/javascript">
     function form_delete(id) {
         if (confirm('カテゴリを削除します。\nよろしいですか？')) {
-            form_delete_category.action = "{{url('/')}}/plugin/learningtasks/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame->id}}";
+            form_delete_category.action = "{{url('/')}}/redirect/plugin/learningtasks/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame->id}}";
             form_delete_category.submit();
         }
     }
 </script>
-
-<form action="{{url('/')}}/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+<form action="" method="POST" name="form_delete_category">
     {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/listCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+</form>
+
+<form action="{{url('/')}}/redirect/plugin/learningtasks/saveCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
+    {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/listCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     <div class="form-group table-responsive">
         <table class="table table-hover table-sm mb-0">
@@ -154,19 +159,19 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_display_sequence')}}" @endif name="add_display_sequence" class="form-control @if ($errors && $errors->has('add_display_sequence')) border-danger @endif">
+                    <input type="text" value="{{old('add_display_sequence')}}" name="add_display_sequence" class="form-control @if ($errors && $errors->has('add_display_sequence')) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_classname')}}" @endif name="add_classname" class="form-control">
+                    <input type="text" value="{{old('add_classname')}}" name="add_classname" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_category')}}" @endif name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
+                    <input type="text" value="{{old('add_category')}}" name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_color')}}" @endif name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000">
+                    <input type="text" value="{{old('add_color')}}" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000">
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_background_color')}}" @endif name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
+                    <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
                 </td>
                 <td nowrap>
                 </td>
@@ -183,8 +188,5 @@
     </div>
 </form>
 
-<form action="" method="POST" name="form_delete_category" class="">
-    {{ csrf_field() }}
-</form>
 @endif
 @endsection
