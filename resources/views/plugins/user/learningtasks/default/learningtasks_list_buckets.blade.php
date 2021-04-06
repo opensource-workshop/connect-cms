@@ -40,7 +40,7 @@
     }
 </script>
 
-<form action="{{url('/')}}/redirect/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/redirect/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
