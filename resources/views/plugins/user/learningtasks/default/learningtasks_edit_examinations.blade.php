@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 {{-- 編集画面側のフレームメニュー --}}
@@ -37,7 +37,7 @@
         <label class="col-md-3 text-md-right">試験提出機能</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(empty($tool->getFunction('post_examination_setting', true)))
+                @if(empty(old("post_examination_setting", $tool->getFunction('post_examination_setting', true))))
                     <input type="radio" value="" id="examination_null" name="post_examination_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_examination.show">
                 @else
                     <input type="radio" value="" id="examination_null" name="post_examination_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_examination.show">
@@ -45,7 +45,7 @@
                 <label class="custom-control-label" for="examination_null">課題管理設定に従う</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_setting', true) == 'off')
+                @if(old("post_examination_setting", $tool->getFunction('post_examination_setting', true)) == 'off')
                     <input type="radio" value="off" id="use_examination_off" name="post_examination_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_examination.show">
                 @else
                     <input type="radio" value="off" id="use_examination_off" name="post_examination_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_examination.show">
@@ -53,7 +53,7 @@
                 <label class="custom-control-label" for="use_examination_off">使用しない</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_setting', true) == 'on')
+                @if(old("post_examination_setting", $tool->getFunction('post_examination_setting', true)) == 'on')
                     <input type="radio" value="on" id="use_examination_on" name="post_examination_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_examination:not(.show)" aria-expanded="true" aria-controls="collapse_post_examination">
                 @else
                     <input type="radio" value="on" id="use_examination_on" name="post_examination_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_examination:not(.show)" aria-expanded="true" aria-controls="collapse_post_examination">
@@ -156,7 +156,7 @@
         <label class="col-md-3 text-md-right">申し込み可能判定</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(empty($tool->getFunction('post_examination_timing', true)))
+                @if(empty(old("post_examination_timing", $tool->getFunction('post_examination_timing', true))))
                     <input type="radio" value="" id="post_examination_timing_null" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="" id="post_examination_timing_null" name="post_examination_timing" class="custom-control-input">
@@ -164,7 +164,7 @@
                 <label class="custom-control-label" for="post_examination_timing_null">レポートが合格してから</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_timing', true) == 'one')
+                @if(old("post_examination_timing", $tool->getFunction('post_examination_timing', true)) == 'one')
                     <input type="radio" value="one" id="post_examination_timing_one" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="one" id="post_examination_timing_one" name="post_examination_timing" class="custom-control-input">
@@ -172,7 +172,7 @@
                 <label class="custom-control-label" for="post_examination_timing_one">レポートが1回でも提出済みなら（合否のチェックはしない）</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_timing', true) == 'no_fail')
+                @if(old("post_examination_timing", $tool->getFunction('post_examination_timing', true)) == 'no_fail')
                     <input type="radio" value="no_fail" id="examination_timing_no_fail" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="no_fail" id="examination_timing_no_fail" name="post_examination_timing" class="custom-control-input">
