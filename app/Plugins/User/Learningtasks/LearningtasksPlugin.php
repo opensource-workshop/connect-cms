@@ -457,46 +457,46 @@ class LearningtasksPlugin extends UserPluginBase
         return $learningtasks_posts_recored;
     }
 
-    /**
-     *  要承認の判断
-     */
-    private function isApproval($frame_id)
-    {
-        return $this->buckets->needApprovalUser(Auth::user());
+    // /**
+    //  *  要承認の判断
+    //  */
+    // private function isApproval($frame_id)
+    // {
+    //     return $this->buckets->needApprovalUser(Auth::user());
 
-//        // 承認の要否確認とステータス処理
-//        $learningtasks_frame = $this->getLearningTask($frame_id);
-//        if ($learningtasks_frame->approval_flag == 1) {
-//
-//            // 記事修正、コンテンツ管理者権限がない場合は要承認
-//            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-//                return true;
-//            }
-//        }
-//        return false;
-    }
+    //     //    // 承認の要否確認とステータス処理
+    //     //    $learningtasks_frame = $this->getLearningTask($frame_id);
+    //     //    if ($learningtasks_frame->approval_flag == 1) {
 
-//    /**
-//     *  タグの保存
-//     */
-//    private function saveTag($request, $learningtasks_post, $old_learningtasks_post)
-//    {
-//        // タグの保存
-//        if ($request->tags) {
-//            $tags = explode(',', $request->tags);
-//            foreach ($tags as $tag) {
-//                // 新規オブジェクト生成
-//                $learningtasks_posts_tags = new LearningtasksPostsTags();
+    //     //        // 記事修正、コンテンツ管理者権限がない場合は要承認
+    //     //        if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
+    //     //            return true;
+    //     //        }
+    //     //    }
+    //     //    return false;
+    // }
 
-//                // タグ登録
-//                $learningtasks_posts_tags->created_id     = $learningtasks_post->created_id;
-//                $learningtasks_posts_tags->learningtasks_posts_id = $learningtasks_post->id;
-//                $learningtasks_posts_tags->tags           = $tag;
-//                $learningtasks_posts_tags->save();
-//            }
-//        }
-//        return;
-//    }
+    // /**
+    //  *  タグの保存
+    //  */
+    // private function saveTag($request, $learningtasks_post, $old_learningtasks_post)
+    // {
+    //     // タグの保存
+    //     if ($request->tags) {
+    //         $tags = explode(',', $request->tags);
+    //         foreach ($tags as $tag) {
+    //             // 新規オブジェクト生成
+    //             $learningtasks_posts_tags = new LearningtasksPostsTags();
+
+    //             // タグ登録
+    //             $learningtasks_posts_tags->created_id     = $learningtasks_post->created_id;
+    //             $learningtasks_posts_tags->learningtasks_posts_id = $learningtasks_post->id;
+    //             $learningtasks_posts_tags->tags           = $tag;
+    //             $learningtasks_posts_tags->save();
+    //         }
+    //     }
+    //     return;
+    // }
 
     // /**
     //  *  タグのコピー
