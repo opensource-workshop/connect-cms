@@ -67,7 +67,7 @@
             </tr>
             <tr>
                 <th nowrap>表示</th>
-                <th nowrap>表示順</th>
+                <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
                 <th nowrap>クラス名</th>
                 <th nowrap>カテゴリ</th>
                 <th nowrap>文字色</th>
@@ -106,11 +106,11 @@
             </tr>
             <tr>
                 <th nowrap>表示</th>
-                <th nowrap>表示順</th>
+                <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
                 <th nowrap>クラス名</th>
-                <th nowrap>カテゴリ</th>
-                <th nowrap>文字色</th>
-                <th nowrap>背景色</th>
+                <th nowrap>カテゴリ <span class="badge badge-danger">必須</span></th>
+                <th nowrap>文字色 <span class="badge badge-danger">必須</span></th>
+                <th nowrap>背景色 <span class="badge badge-danger">必須</span></th>
                 <th nowrap><i class="fas fa-trash-alt"></i></th>
             </tr>
 
