@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category LearningTaskプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -55,7 +55,7 @@
     {{ csrf_field() }}
 
     <div class="form-group table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-sm mb-0">
         <thead>
             <tr>
                 <th nowrap colspan="7"><h5 class="mb-0"><span class="badge badge-secondary">共通カテゴリ</span></h5></th>
@@ -73,22 +73,25 @@
         <tbody>
         @foreach($general_categories as $category)
             <tr>
-                <td nowrap>
+                <td nowrap class="align-middle text-center">
                     <input type="hidden" value="{{$category->id}}" name="general_categories_id[{{$category->id}}]">
                     <input type="hidden" value="{{$category->learningtasks_categories_id}}" name="general_learningtasks_categories_id[{{$category->id}}]">
 
                     <div class="custom-control custom-checkbox">
+                        {{-- チェック外した場合にも値を飛ばす対応 --}}
+                        <input type="hidden" value="0" name="general_view_flag[{{$category->id}}]">
+
                         <input type="checkbox" value="1" name="general_view_flag[{{$category->id}}]" class="custom-control-input" id="general_view_flag[{{$category->id}}]"@if ($category->view_flag == 1) checked="checked"@endif>
                         <label class="custom-control-label" for="general_view_flag[{{$category->id}}]"></label>
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('general_display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control">
                 </td>
-                <td nowrap>{{$category->classname}}</td>
-                <td nowrap>{{$category->category}}</td>
-                <td nowrap>{{$category->color}}</td>
-                <td nowrap>{{$category->background_color}}</td>
+                <td nowrap class="align-middle">{{$category->classname}}</td>
+                <td nowrap class="align-middle">{{$category->category}}</td>
+                <td nowrap class="align-middle">{{$category->color}}</td>
+                <td nowrap class="align-middle">{{$category->background_color}}</td>
                 <td nowrap></td>
             </tr>
         @endforeach
@@ -109,11 +112,14 @@
         @if ($plugin_categories)
         @foreach($plugin_categories as $category)
             <tr>
-                <td nowrap>
+                <td nowrap class="align-middle text-center">
                     <input type="hidden" value="{{$category->id}}" name="plugin_categories_id[{{$category->id}}]">
                     <input type="hidden" value="{{$category->learningtasks_categories_id}}" name="plugin_learningtasks_categories_id[{{$category->id}}]">
 
                     <div class="custom-control custom-checkbox">
+                        {{-- チェック外した場合にも値を飛ばす対応 --}}
+                        <input type="hidden" value="0" name="plugin_view_flag[{{$category->id}}]">
+
                         <input type="checkbox" value="1" name="plugin_view_flag[{{$category->id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->id}}]"@if ($category->view_flag) checked="checked"@endif>
                         <label class="custom-control-label" for="plugin_view_flag[{{$category->id}}]"></label>
                     </div>
@@ -122,7 +128,7 @@
                     <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_display_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('plugin_category.'.$category->id, $category->category)}}" name="plugin_category[{{$category->id}}]" class="form-control">
@@ -139,59 +145,32 @@
             </tr>
         @endforeach
         @endif
-        @if ($create_flag)
+
             <tr>
-                <td nowrap>
+                <td nowrap class="align-middle text-center">
                     <div class="custom-control custom-checkbox">
                         <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
                         <label class="custom-control-label" for="add_view_flag"></label>
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_display_sequence" class="form-control">
+                    <input type="text" @if (!$create_flag) value="{{old('add_display_sequence')}}" @endif name="add_display_sequence" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_classname" class="form-control">
+                    <input type="text" @if (!$create_flag) value="{{old('add_classname')}}" @endif name="add_classname" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_category" class="form-control">
+                    <input type="text" @if (!$create_flag) value="{{old('add_category')}}" @endif name="add_category" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_color" class="form-control" placeholder="(例) #000">
+                    <input type="text" @if (!$create_flag) value="{{old('add_color')}}" @endif name="add_color" class="form-control" placeholder="(例)#000000">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_background_color" class="form-control" placeholder="(例) #FFF">
-                </td>
-                <td nowrap>
-                </td>
-            </tr>
-        @else
-            <tr>
-                <td nowrap>
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
-                        <label class="custom-control-label" for="add_view_flag"></label>
-                    </div>
-                </td>
-                <td nowrap>
-                    <input type="text" value="{{old('add_display_sequence', '')}}" name="add_display_sequence" class="form-control">
-                </td>
-                <td nowrap>
-                    <input type="text" value="{{old('add_classname', '')}}" name="add_classname" class="form-control">
-                </td>
-                <td nowrap>
-                    <input type="text" value="{{old('add_category', '')}}" name="add_category" class="form-control">
-                </td>
-                <td nowrap>
-                    <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control" placeholder="(例) #000">
-                </td>
-                <td nowrap>
-                    <input type="text" value="{{old('add_background_color', '')}}" name="add_background_color" class="form-control" placeholder="(例) #FFF">
+                    <input type="text" @if (!$create_flag) value="{{old('add_background_color')}}" @endif name="add_background_color" class="form-control" placeholder="(例)#ffffff">
                 </td>
                 <td nowrap>
                 </td>
             </tr>
-        @endif
         </tbody>
         </table>
 
