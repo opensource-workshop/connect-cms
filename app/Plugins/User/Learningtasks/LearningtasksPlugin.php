@@ -492,24 +492,24 @@ class LearningtasksPlugin extends UserPluginBase
 //        return;
 //    }
 
-    /**
-     *  タグのコピー
-     */
-    private function copyTag($from_post, $to_post)
-    {
-        // タグの保存
-        $learningtasks_posts_tags = LearningtasksPostsTags::where('learningtasks_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
-        foreach ($learningtasks_posts_tags as $learningtasks_posts_tag) {
-            $new_tag = $learningtasks_posts_tag->replicate();
-            $new_tag->learningtasks_posts_id = $to_post->id;
-            $new_tag->save();
-        }
+    // /**
+    //  *  タグのコピー
+    //  */
+    // private function copyTag($from_post, $to_post)
+    // {
+    //     // タグの保存
+    //     $learningtasks_posts_tags = LearningtasksPostsTags::where('learningtasks_posts_id', $from_post->id)->orderBy('id', 'asc')->get();
+    //     foreach ($learningtasks_posts_tags as $learningtasks_posts_tag) {
+    //         $new_tag = $learningtasks_posts_tag->replicate();
+    //         $new_tag->learningtasks_posts_id = $to_post->id;
+    //         $new_tag->save();
+    //     }
 
-        return;
-    }
+    //     return;
+    // }
 
     /**
-     *  課題ファイルの保存
+     * 課題ファイルの保存
      */
     private function saveTaskFile($request, $page_id, $post_id, $task_flag)
     {
@@ -533,9 +533,8 @@ class LearningtasksPlugin extends UserPluginBase
                     'add_task_file' => '課題ファイル',
                 ]);
                 if ($validator->fails()) {
-                // return ( $this->create($request, $page_id, $frame_id, $learningtasks_posts_id, $validator->errors()) );
-                // エラーの表示方法を検討する。
-                    return;
+                    // エラー時はエラー内容を引き継いで入力画面に戻る
+                    return redirect()->back()->withErrors($validator)->withInput();
                 }
             }
 
@@ -548,14 +547,14 @@ class LearningtasksPlugin extends UserPluginBase
                 'plugin_name'          => 'learningtasks',
                 'check_method'         => 'checkUploadPost',
                 'page_id'              => $page_id,
-             ]);
+            ]);
 
             // learningtasks_posts_files テーブルに情報追加
             $learningtasks_posts_files = LearningtasksPostsFiles::create([
                 'post_id'   => $post_id,
                 'task_flag' => $task_flag,
                 'upload_id' => $upload->id,
-             ]);
+            ]);
 
             // 課題ファイル保存
             $directory = $this->getDirectory($upload->id);
@@ -2167,7 +2166,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  試験登録処理
+     * 試験登録処理
      */
     public function saveExaminations($request, $page_id, $frame_id, $post_id)
     {

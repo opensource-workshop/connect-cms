@@ -12,6 +12,8 @@
 
 @section("plugin_contents_$frame->id")
 
+@include('common.errors_form_line')
+
 {{-- 試験設定フォーム --}}
 @if (empty($learningtasks_posts->id))
     <div class="card border-danger">
@@ -267,7 +269,8 @@
         <div class="col-md-9">
             <div class="custom-file">
                 <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
-                <label class="custom-file-label" for="add_task_file" data-browse="参照">試験問題など</label>
+                <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
+                @if ($errors && $errors->has('add_task_file')) <div class="text-danger">{{$errors->first('add_task_file')}}</div> @endif
             </div>
         </div>
     </div>
