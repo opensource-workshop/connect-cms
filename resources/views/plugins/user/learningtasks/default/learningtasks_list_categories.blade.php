@@ -86,7 +86,7 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('general_display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('general_display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('general_display_sequence.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap class="align-middle">{{$category->classname}}</td>
                 <td nowrap class="align-middle">{{$category->category}}</td>
@@ -125,19 +125,19 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_display_sequence.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('plugin_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_category.'.$category->id, $category->category)}}" name="plugin_category[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_category.'.$category->id, $category->category)}}" name="plugin_category[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_category.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_color.'.$category->id, $category->color)}}" name="plugin_color[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_color.'.$category->id, $category->color)}}" name="plugin_color[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_color.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_background_color.'.$category->id, $category->background_color)}}" name="plugin_background_color[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_background_color.'.$category->id, $category->background_color)}}" name="plugin_background_color[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_background_color.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap>
                     <a href="javascript:form_delete('{{$category->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
@@ -154,19 +154,19 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_display_sequence')}}" @endif name="add_display_sequence" class="form-control">
+                    <input type="text" @if (!$create_flag) value="{{old('add_display_sequence')}}" @endif name="add_display_sequence" class="form-control @if ($errors && $errors->has('add_display_sequence')) border-danger @endif">
                 </td>
                 <td nowrap>
                     <input type="text" @if (!$create_flag) value="{{old('add_classname')}}" @endif name="add_classname" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_category')}}" @endif name="add_category" class="form-control">
+                    <input type="text" @if (!$create_flag) value="{{old('add_category')}}" @endif name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_color')}}" @endif name="add_color" class="form-control" placeholder="(例)#000000">
+                    <input type="text" @if (!$create_flag) value="{{old('add_color')}}" @endif name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000">
                 </td>
                 <td nowrap>
-                    <input type="text" @if (!$create_flag) value="{{old('add_background_color')}}" @endif name="add_background_color" class="form-control" placeholder="(例)#ffffff">
+                    <input type="text" @if (!$create_flag) value="{{old('add_background_color')}}" @endif name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
                 </td>
                 <td nowrap>
                 </td>
