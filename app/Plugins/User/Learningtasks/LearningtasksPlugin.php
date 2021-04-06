@@ -2031,15 +2031,13 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'learningtasks_list_categories', [
+        return $this->view('learningtasks_list_categories', [
             'general_categories' => $general_categories,
             'plugin_categories'  => $plugin_categories,
             'learningtask'       => $learningtask,
             'errors'             => $errors,
             'create_flag'        => $create_flag,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -2055,48 +2053,57 @@ class LearningtasksPlugin extends UserPluginBase
         /* エラーチェック
         ------------------------------------ */
 
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_display_sequence' => ['required'],
-                'add_category'         => ['required'],
-                'add_color'            => ['required'],
-                'add_background_color' => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_display_sequence' => '追加行の表示順',
-                'add_category'         => '追加行のカテゴリ',
-                'add_color'            => '追加行の文字色',
-                'add_background_color' => '追加行の背景色',
-            ]);
+        $rules = [];
 
-            if ($validator->fails()) {
-                return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
+            // 項目のエラーチェック
+            $rules['add_display_sequence'] = ['required'];
+            $rules['add_category'] = ['required'];
+            $rules['add_color'] = ['required'];
+            $rules['add_background_color'] = ['required'];
+
+            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
+            $setAttributeNames['add_category'] = '追加行のカテゴリ';
+            $setAttributeNames['add_color'] = '追加行の文字色';
+            $setAttributeNames['add_background_color'] = '追加行の背景色';
+        }
+
+        // 共通項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->general_categories_id)) {
+            foreach ($request->general_categories_id as $category_id) {
+                // 項目のエラーチェック
+                $rules['general_display_sequence.'.$category_id] = ['required'];
+
+                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
             }
         }
 
-        // 既存項目のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->learningtasks_categories_id)) {
-            foreach ($request->learningtasks_categories_id as $category_id) {
+        // 既存項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->plugin_categories_id)) {
+            foreach ($request->plugin_categories_id as $category_id) {
                 // 項目のエラーチェック
-                $validator = Validator::make($request->all(), [
-                    'plugin_display_sequence.'.$category_id => ['required'],
-                    'plugin_category.'.$category_id         => ['required'],
-                    'plugin_color.'.$category_id            => ['required'],
-                    'plugin_background_color.'.$category_id => ['required'],
-                ]);
-                $validator->setAttributeNames([
-                    'plugin_display_sequence.'.$category_id => '表示順',
-                    'plugin_category.'.$category_id         => 'カテゴリ',
-                    'plugin_color.'.$category_id            => '文字色',
-                    'plugin_background_color.'.$category_id => '背景色',
-                ]);
+                $rules['plugin_display_sequence.'.$category_id] = ['required'];
+                $rules['plugin_category.'.$category_id] = ['required'];
+                $rules['plugin_color.'.$category_id] = ['required'];
+                $rules['plugin_background_color.'.$category_id] = ['required'];
 
-                if ($validator->fails()) {
-                    return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
-                }
+                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
+                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
+                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
+                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
         }
 
         /* カテゴリ追加
@@ -2108,20 +2115,20 @@ class LearningtasksPlugin extends UserPluginBase
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             $add_category = Categories::create([
-                                'classname'        => $request->add_classname,
-                                'category'         => $request->add_category,
-                                'color'            => $request->add_color,
-                                'background_color' => $request->add_background_color,
-                                'target'           => 'learningtasks',
-                                'plugin_id'        => $learningtask->id,
-                                'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color,
+                'target'           => 'learningtasks',
+                'plugin_id'        => $learningtask->id,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
             LearningtasksCategories::create([
-                                'learningtasks_id' => $learningtask->id,
-                                'categories_id'    => $add_category->id,
-                                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                                'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                'learningtasks_id' => $learningtask->id,
+                'categories_id'    => $add_category->id,
+                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
         }
 
         // 既存項目アリ
@@ -2152,10 +2159,10 @@ class LearningtasksPlugin extends UserPluginBase
                 LearningtasksCategories::updateOrCreate(
                     ['categories_id'    => $general_categories_id, 'learningtasks_id' => $learningtask->id],
                     [
-                     'learningtasks_id' => $learningtask->id,
-                     'categories_id'    => $general_categories_id,
-                     'view_flag'        => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->general_display_sequence[$general_categories_id],
+                        'learningtasks_id' => $learningtask->id,
+                        'categories_id'    => $general_categories_id,
+                        'view_flag'        => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => $request->general_display_sequence[$general_categories_id],
                     ]
                 );
             }
@@ -2169,10 +2176,10 @@ class LearningtasksPlugin extends UserPluginBase
                 LearningtasksCategories::updateOrCreate(
                     ['categories_id'    => $plugin_categories_id, 'learningtasks_id' => $learningtask->id],
                     [
-                     'learningtasks_id' => $learningtask->id,
-                     'categories_id'    => $plugin_categories_id,
-                     'view_flag'        => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
+                        'learningtasks_id' => $learningtask->id,
+                        'categories_id'    => $plugin_categories_id,
+                        'view_flag'        => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
                     ]
                 );
             }
