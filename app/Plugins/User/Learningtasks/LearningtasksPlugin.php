@@ -1602,10 +1602,11 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      * 課題管理新規作成画面
      */
-    public function createBuckets($request, $page_id, $frame_id, $learningtask_id = null, $create_flag = false, $message = null)
+    public function createBuckets($request, $page_id, $frame_id, $learningtask_id = null)
     {
         // 新規作成フラグを付けて課題管理設定変更画面を呼ぶ
         $create_flag = true;
+        $message = null;
         return $this->editBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag, $message);
     }
 
@@ -1638,16 +1639,14 @@ class LearningtasksPlugin extends UserPluginBase
         $tool = new LearningtasksTool($request, $page_id, $learningtask);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'learningtasks_edit_learningtasks', [
+        return $this->view('learningtasks_edit_learningtasks', [
             'learningtask'  => $learningtask,
             //'base_settings' => $base_settings,
             'tool'          => $tool,
             'create_flag'   => $create_flag,
             'message'       => $message,
             //'errors'        => $errors,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -1680,8 +1679,8 @@ class LearningtasksPlugin extends UserPluginBase
             // 画面から渡ってくるlearningtask_id が空ならバケツと課題管理を新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => $request->learningtasks_name,
-                  'plugin_name' => 'learningtasks'
+                'bucket_name' => $request->learningtasks_name,
+                'plugin_name' => 'learningtasks'
             ]);
 
             // 課題管理データ新規オブジェクト
@@ -1748,9 +1747,8 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
 
-        // 新規作成フラグを付けて課題管理設定変更画面を呼ぶ
-        $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $learningtask_id, $create_flag, $message);
+        // 登録後はリダイレクトして編集ページを開く。
+        return collect(['redirect_path' => url('/') . "/plugin/learningtasks/editBuckets/" . $page_id . "/" . $frame_id . "/" . $learningtask->id . "#frame-" . $frame_id]);
     }
 
     /**
