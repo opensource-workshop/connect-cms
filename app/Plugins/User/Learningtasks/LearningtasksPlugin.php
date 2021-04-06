@@ -2011,7 +2011,14 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtask = $this->getLearningTask($frame_id);
 
         // カテゴリ（全体）
-        $general_categories = Categories::select('categories.*', 'learningtasks_categories.id as learningtasks_categories_id', 'learningtasks_categories.categories_id', 'learningtasks_categories.view_flag')
+        $general_categories = Categories::
+                                        select(
+                                            'categories.*',
+                                            'learningtasks_categories.id as learningtasks_categories_id',
+                                            'learningtasks_categories.categories_id',
+                                            'learningtasks_categories.view_flag',
+                                            'learningtasks_categories.display_sequence as learningtasks_categories_display_sequence'
+                                        )
                                         ->leftJoin('learningtasks_categories', function ($join) use ($learningtask) {
                                             $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
                                                  ->where('learningtasks_categories.learningtasks_id', '=', $learningtask->id);
@@ -2022,12 +2029,19 @@ class LearningtasksPlugin extends UserPluginBase
         // カテゴリ（この課題管理）
         $plugin_categories = null;
         if ($learningtask->id) {
-            $plugin_categories = Categories::select('categories.*', 'learningtasks_categories.id as learningtasks_categories_id', 'learningtasks_categories.categories_id', 'learningtasks_categories.view_flag')
-                                           ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
-                                           ->where('target', 'learningtasks')
-                                           ->where('plugin_id', $learningtask->id)
-                                           ->orderBy('display_sequence', 'asc')
-                                           ->get();
+            $plugin_categories = Categories::
+                                            select(
+                                                'categories.*',
+                                                'learningtasks_categories.id as learningtasks_categories_id',
+                                                'learningtasks_categories.categories_id',
+                                                'learningtasks_categories.view_flag',
+                                                'learningtasks_categories.display_sequence as learningtasks_categories_display_sequence'
+                                            )
+                                            ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
+                                            ->where('target', 'learningtasks')
+                                            ->where('plugin_id', $learningtask->id)
+                                            ->orderBy('display_sequence', 'asc')
+                                            ->get();
         }
 
         // 表示テンプレートを呼び出す。
