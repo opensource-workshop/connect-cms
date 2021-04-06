@@ -16,7 +16,7 @@
 
 {{-- エラーメッセージ --}}
 @if (empty($learningtask) || empty($learningtask->id))
-    <div class="alert alert-warning" style="margin-top: 10px;">
+    <div class="alert alert-warning">
         <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用する課題管理を選択するか、作成してください。
     </div>
@@ -55,8 +55,11 @@
     {{ csrf_field() }}
 
     <div class="form-group table-responsive">
-        <table class="table table-hover" style="margin-bottom: 0;">
+        <table class="table table-hover mb-0">
         <thead>
+            <tr>
+                <th nowrap colspan="7"><h5 class="mb-0"><span class="badge badge-secondary">共通カテゴリ</span></h5></th>
+            </tr>
             <tr>
                 <th nowrap>表示</th>
                 <th nowrap>表示順</th>
@@ -90,6 +93,9 @@
             </tr>
         @endforeach
 
+            <tr>
+                <th nowrap colspan="7"><h5 class="mb-0"><span class="badge badge-secondary">個別カテゴリ</span></h5></th>
+            </tr>
             <tr>
                 <th nowrap>表示</th>
                 <th nowrap>表示順</th>
@@ -151,10 +157,10 @@
                     <input type="text" value="" name="add_category" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_color" class="form-control">
+                    <input type="text" value="" name="add_color" class="form-control" placeholder="(例) #000">
                 </td>
                 <td nowrap>
-                    <input type="text" value="" name="add_background_color" class="form-control">
+                    <input type="text" value="" name="add_background_color" class="form-control" placeholder="(例) #FFF">
                 </td>
                 <td nowrap>
                 </td>
@@ -177,10 +183,10 @@
                     <input type="text" value="{{old('add_category', '')}}" name="add_category" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control">
+                    <input type="text" value="{{old('add_color', '')}}" name="add_color" class="form-control" placeholder="(例) #000">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_background_color', '')}}" name="add_background_color" class="form-control">
+                    <input type="text" value="{{old('add_background_color', '')}}" name="add_background_color" class="form-control" placeholder="(例) #FFF">
                 </td>
                 <td nowrap>
                 </td>
