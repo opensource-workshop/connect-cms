@@ -91,6 +91,7 @@ class UserManage extends ManagePluginBase
             $request->session()->has('user_search_condition.admin_user')) {
             $in_users_query = UsersRoles::select('users_roles.users_id');
 
+            // [TODO] 権限複数チェックするとOR検索になる, 複数チェック付けたらAND検索が妥当だろう。対応方法わからず。
             // コンテンツ管理者
             if ($request->session()->get('user_search_condition.role_article_admin') == 1) {
                 $in_users_query->orWhere('role_name', 'role_article_admin');
@@ -207,6 +208,43 @@ class UserManage extends ManagePluginBase
         // ユーザー名
         if ($request->session()->has('user_search_condition.name')) {
             $users_query->where('users.name', 'like', '%' . $request->session()->get('user_search_condition.name') . '%');
+        }
+
+        // グループ
+        if ($request->session()->has('user_search_condition.groups')) {
+            // [TODO] グループ複数チェック AND検索 試し
+            // $groups = $request->session()->get('user_search_condition.groups');
+            // $in_group_user_ids = collect();
+            // foreach ($groups as $group) {
+            //     $tmp_in_group_user_ids = GroupUser::select('user_id')->where('group_id', $group)->pluck('user_id');
+            //
+            //     if ($in_group_user_ids->isEmpty()) {
+            //         // 空なら初回セット
+            //         $in_group_user_ids = $tmp_in_group_user_ids;
+            //     } else {
+            //         // [TODO] 未対応：user_idが全ての条件で残ってるもののみ残す。diffとかで抽出できないかなぁ？
+            //     }
+            // }
+            // $users_query->whereIn('users.id', $in_group_user_ids);
+
+            // [TODO] グループ複数チェックするとOR検索になる
+            $groups = $request->session()->get('user_search_condition.groups');
+            $in_group_users_query = GroupUser::select('group_users.user_id');
+            foreach ($groups as $group) {
+                $in_group_users = $in_group_users_query->orWhere('group_id', $group);
+            }
+            $users_query->whereIn('users.id', $in_group_users->pluck('user_id'));
+
+            // [TODO] グループ複数チェックするとOR検索になる
+            // $groups = $request->session()->get('user_search_condition.groups');
+            // $users_query->whereIn('users.id', function ($query) use ($groups) {
+            //     // 縦持ちのvalue を検索して、行の id を取得。
+            //     $query->select('user_id')
+            //             ->from('group_users')
+            //             ->whereIn('group_id', $groups)
+            //             ->whereNull('deleted_at')
+            //             ->groupBy('user_id');
+            // });
         }
 
         // eメール
@@ -408,6 +446,10 @@ class UserManage extends ManagePluginBase
         // ユーザーの追加項目データ
         $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
 
+        // get()で取得すると、ソフトデリート（deleted_at）は取得されない
+        $groups_select = Group::get();
+        // dd($groups);
+
         return view('plugins.manage.user.list', [
             "function" => __FUNCTION__,
             "plugin_name" => "user",
@@ -415,6 +457,7 @@ class UserManage extends ManagePluginBase
             "users_columns" => $users_columns,
             "users_columns_id_select" => $users_columns_id_select,
             "input_cols" => $input_cols,
+            "groups_select" => $groups_select,
         ]);
     }
 
@@ -427,6 +470,7 @@ class UserManage extends ManagePluginBase
         $user_search_condition = [
             "userid"             => $request->input('user_search_condition.userid'),
             "name"               => $request->input('user_search_condition.name'),
+            "groups"             => $request->input('user_search_condition.groups'),
             "email"              => $request->input('user_search_condition.email'),
 
             "role_article_admin" => $request->input('user_search_condition.role_article_admin'),

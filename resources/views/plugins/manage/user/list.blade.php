@@ -78,6 +78,36 @@ use App\Models\Core\UsersColumns;
                                 </div>
                             </div>
 
+                            {{-- グループ --}}
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right pt-0">グループ</label>
+                                <div class="col-md-9">
+                                    @php
+                                        $values = Session::get('user_search_condition.groups');
+                                        //dd($value);
+                                    @endphp
+                                    <div class="container-fluid row">
+                                        @foreach($groups_select as $group_select)
+                                            @php
+                                                // チェック用変数
+                                                $column_checkbox_checked = "";
+
+                                                // 入力されたデータの中に選択肢が含まれているか否か
+                                                if (in_array($group_select->id, $values)) {
+                                                    $column_checkbox_checked = " checked";
+                                                }
+                                            @endphp
+
+                                            <div class="custom-control custom-checkbox custom-control-inline">
+                                                <input name="user_search_condition[groups][]" value="{{$group_select->id}}" type="checkbox" class="custom-control-input" id="user_search_condition[groups]_{{$loop->iteration}}"{{$column_checkbox_checked}}>
+                                                <label class="custom-control-label" for="user_search_condition[groups]_{{$loop->iteration}}"> {{$group_select->name}}</label>
+                                            </div>
+
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- eメール --}}
                             <div class="form-group row">
                                 <label for="user_search_condition_email" class="col-md-3 col-form-label text-md-right">eメール</label>
