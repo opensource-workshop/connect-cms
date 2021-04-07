@@ -1019,48 +1019,57 @@ class FaqsPlugin extends UserPluginBase
         /* エラーチェック
         ------------------------------------ */
 
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_display_sequence' => ['required'],
-                'add_category'         => ['required'],
-                'add_color'            => ['required'],
-                'add_background_color' => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_display_sequence' => '追加行の表示順',
-                'add_category'         => '追加行のカテゴリ',
-                'add_color'            => '追加行の文字色',
-                'add_background_color' => '追加行の背景色',
-            ]);
+        $rules = [];
 
-            if ($validator->fails()) {
-                return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
+            // 項目のエラーチェック
+            $rules['add_display_sequence'] = ['required'];
+            $rules['add_category'] = ['required'];
+            $rules['add_color'] = ['required'];
+            $rules['add_background_color'] = ['required'];
+
+            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
+            $setAttributeNames['add_category'] = '追加行のカテゴリ';
+            $setAttributeNames['add_color'] = '追加行の文字色';
+            $setAttributeNames['add_background_color'] = '追加行の背景色';
+        }
+
+        // 共通項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->general_categories_id)) {
+            foreach ($request->general_categories_id as $category_id) {
+                // 項目のエラーチェック
+                $rules['general_display_sequence.'.$category_id] = ['required'];
+
+                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
             }
         }
 
-        // 既存項目のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->faqs_categories_id)) {
-            foreach ($request->faqs_categories_id as $category_id) {
+        // 既存項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->plugin_categories_id)) {
+            foreach ($request->plugin_categories_id as $category_id) {
                 // 項目のエラーチェック
-                $validator = Validator::make($request->all(), [
-                    'plugin_display_sequence.'.$category_id => ['required'],
-                    'plugin_category.'.$category_id         => ['required'],
-                    'plugin_color.'.$category_id            => ['required'],
-                    'plugin_background_color.'.$category_id => ['required'],
-                ]);
-                $validator->setAttributeNames([
-                    'plugin_display_sequence.'.$category_id => '表示順',
-                    'plugin_category.'.$category_id         => 'カテゴリ',
-                    'plugin_color.'.$category_id            => '文字色',
-                    'plugin_background_color.'.$category_id => '背景色',
-                ]);
+                $rules['plugin_display_sequence.'.$category_id] = ['required'];
+                $rules['plugin_category.'.$category_id] = ['required'];
+                $rules['plugin_color.'.$category_id] = ['required'];
+                $rules['plugin_background_color.'.$category_id] = ['required'];
 
-                if ($validator->fails()) {
-                    return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
-                }
+                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
+                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
+                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
+                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
         }
 
         /* カテゴリ追加

@@ -80,7 +80,7 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('general_display_sequence.'.$category->id, $category->display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control">
                 </td>
                 <td nowrap>{{$category->classname}}</td>
                 <td nowrap>{{$category->category}}</td>
@@ -116,7 +116,7 @@
                     <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_display_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('plugin_category.'.$category->id, $category->category)}}" name="plugin_category[{{$category->id}}]" class="form-control">
