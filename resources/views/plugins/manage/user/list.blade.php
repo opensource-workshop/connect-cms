@@ -105,6 +105,7 @@ use App\Models\Core\UsersColumns;
 
                                         @endforeach
                                     </div>
+                                    <small class="form-text text-muted">※ 複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -161,6 +162,7 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter"@if(Session::get('user_search_condition.role_reporter') == "1") checked @endif>
                                         <label class="custom-control-label" for="role_reporter">編集者</label><h6><span class="badge badge-info ml-1">編</span></h6>
                                     </div>
+                                    <small class="form-text text-muted">※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -184,6 +186,7 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[admin_user]" value="1" type="checkbox" class="custom-control-input" id="admin_user"@if(Session::get('user_search_condition.admin_user') == "1") checked @endif>
                                         <label class="custom-control-label" for="admin_user">ユーザ管理者</label><h6><span class="badge badge-warning ml-1">ユ</span></h6>
                                     </div>
+                                    <small class="form-text text-muted">※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -195,6 +198,10 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[guest]" value="1" type="checkbox" class="custom-control-input" id="guest"@if(Session::get('user_search_condition.guest') == "1") checked @endif>
                                         <label class="custom-control-label" for="guest">ゲスト</label>
                                     </div>
+                                    <small class="form-text text-muted">
+                                        ※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）<br />
+                                        ※ 「ゲスト」とは、「コンテンツ権限」「管理権限」のいずれの権限もない状態です。<br />
+                                    </small>
                                 </div>
                             </div>
 

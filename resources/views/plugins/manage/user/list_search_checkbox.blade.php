@@ -28,4 +28,7 @@
 
         @endforeach
     </div>
+
+    {{-- [TODO] 今後OR検索にする。既にデータベースで対応しているようだ --}}
+    <small class="form-text text-muted">※ 複数チェックを付けると、全てに該当する内容で絞り込みます。（AND検索）</small>
 @endif
