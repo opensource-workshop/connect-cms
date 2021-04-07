@@ -2159,7 +2159,7 @@ class LearningtasksPlugin extends UserPluginBase
                 $category->background_color = $request->plugin_background_color[$plugin_categories_id];
                 $category->target           = 'learningtasks';
                 $category->plugin_id        = $learningtask->id;
-                $category->display_sequence = $request->plugin_display_sequence[$plugin_categories_id];
+                $category->display_sequence = intval($request->plugin_display_sequence[$plugin_categories_id]);
 
                 // 保存
                 $category->save();
@@ -2177,7 +2177,7 @@ class LearningtasksPlugin extends UserPluginBase
                         'learningtasks_id' => $learningtask->id,
                         'categories_id'    => $general_categories_id,
                         'view_flag'        => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => $request->general_display_sequence[$general_categories_id],
+                        'display_sequence' => intval($request->general_display_sequence[$general_categories_id]),
                     ]
                 );
             }
@@ -2194,7 +2194,7 @@ class LearningtasksPlugin extends UserPluginBase
                         'learningtasks_id' => $learningtask->id,
                         'categories_id'    => $plugin_categories_id,
                         'view_flag'        => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
+                        'display_sequence' => intval($request->plugin_display_sequence[$plugin_categories_id]),
                     ]
                 );
             }
