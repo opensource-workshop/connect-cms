@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -13,37 +13,44 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-@if (empty($learningtask) || !$learningtask->id)
-    <div class="alert alert-warning" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する課題管理を選択するか、作成してください。
+
+@include('common.errors_form_line')
+
+@if (!$learningtask->id && !$create_flag)
+    {{-- idなし & 変更 = DB未選択&変更:初期表示 --}}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-circle"></i> 設定画面から、使用する課題管理を選択するか、作成してください。
     </div>
 @else
-    <div class="alert alert-info" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-
-        @if ($message)
-            {{$message}}
-        @else
+    @if (session('flash_message'))
+        <div class="alert alert-success">
+            <i class="fas fa-exclamation-circle"></i> {{ session('flash_message') }}
+        </div>
+    @else
+        <div class="alert alert-info">
+            <i class="fas fa-exclamation-circle"></i>
             @if (empty($learningtask) || $create_flag)
+                {{-- 登録：初期表示 --}}
                 新しい課題管理設定を登録します。
             @else
+                {{-- 変更：初期表示 --}}
                 課題管理設定を変更します。
             @endif
-        @endif
-    </div>
+        </div>
+    @endif
 @endif
 
 @if (empty($learningtask) || (!$learningtask->id && !$create_flag))
 @else
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     {{-- create_flag がtrue の場合、新規作成するためにlearningtask_id を空にする --}}
     @if ($create_flag)
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="">
     @else
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
     @endif
 
@@ -100,7 +107,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">順序条件</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->sequence_conditions == 0)
+                @if(old("sequence_conditions", $learningtask->sequence_conditions) == 0)
                     <input type="radio" value="0" id="sequence_conditions_0" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="sequence_conditions_0" name="sequence_conditions" class="custom-control-input">
@@ -108,7 +115,7 @@
                 <label class="custom-control-label" for="sequence_conditions_0">最新順</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->sequence_conditions == 1)
+                @if(old("sequence_conditions", $learningtask->sequence_conditions) == 1)
                     <input type="radio" value="1" id="sequence_conditions_1" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="1" id="sequence_conditions_1" name="sequence_conditions" class="custom-control-input">
@@ -116,7 +123,7 @@
                 <label class="custom-control-label" for="sequence_conditions_1">投稿順</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->sequence_conditions == 2)
+                @if(old("sequence_conditions", $learningtask->sequence_conditions) == 2)
                     <input type="radio" value="2" id="sequence_conditions_2" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="2" id="sequence_conditions_2" name="sequence_conditions" class="custom-control-input">
@@ -131,7 +138,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">ログインの要否</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('use_need_auth') == 'off')
+                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'off')
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input">
@@ -139,7 +146,7 @@
                 <label class="custom-control-label" for="use_need_auth_0">非ログインでも閲覧可能</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('use_need_auth') == 'on')
+                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'on')
                     <input type="radio" value="on" id="use_need_auth_1" name="base_settings[use_need_auth]" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="on" id="use_need_auth_1" name="base_settings[use_need_auth]" class="custom-control-input">
@@ -355,7 +362,7 @@
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($learningtask) || $create_flag)
                         登録確定

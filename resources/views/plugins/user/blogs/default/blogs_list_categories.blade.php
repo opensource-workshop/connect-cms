@@ -16,7 +16,7 @@
 
 {{-- エラーメッセージ --}}
 @if (empty($blog_frame) || empty($blog_frame->blogs_id))
-    <div class="alert alert-warning" style="margin-top: 10px;">
+    <div class="alert alert-warning">
         <i class="fas fa-exclamation-circle"></i>
         表示するコンテンツを選択するか、新規作成してください。
     </div>

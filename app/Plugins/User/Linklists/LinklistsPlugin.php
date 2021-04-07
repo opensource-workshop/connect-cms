@@ -464,9 +464,9 @@ class LinklistsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新

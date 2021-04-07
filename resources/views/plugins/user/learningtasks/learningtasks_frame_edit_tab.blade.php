@@ -43,11 +43,11 @@
 @endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
-        <span class="nav-link"><span class="active">表示選択</span></span>
+        <span class="nav-link"><span class="active">課題管理選択</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示選択</a>
+        <a href="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">課題管理選択</a>
     </li>
 @endif
 @if ($action == 'editBucketsRoles' || $action == '')
