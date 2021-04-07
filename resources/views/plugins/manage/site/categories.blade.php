@@ -48,15 +48,15 @@
         }
     </script>
 
-    <form action="" method="POST" name="form_delete_category" class="">
+    <form action="" method="POST" name="form_delete_category">
         {{ csrf_field() }}
     </form>
 
-    <form action="{{url('/')}}/manage/site/saveCategories" method="POST" class="">
+    <form action="{{url('/')}}/manage/site/saveCategories" method="POST">
         {{ csrf_field() }}
 
         <div class="form-group table-responsive">
-            <table class="table table-hover" style="margin-bottom: 0;">
+            <table class="table table-hover mb-0">
             <thead>
                 <tr>
                     <th nowrap>表示順</th>
@@ -101,7 +101,7 @@
                         {{$category->plugin_id}}
                     </td>
                     <td nowrap>
-                        <a href="form_delete('{{$category->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
+                        <a href="javascript:form_delete('{{$category->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
                     </td>
                 </tr>
             @endforeach
