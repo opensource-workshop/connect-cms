@@ -2024,7 +2024,8 @@ class LearningtasksPlugin extends UserPluginBase
                                                  ->where('learningtasks_categories.learningtasks_id', '=', $learningtask->id);
                                         })
                                         ->where('target', null)
-                                        ->orderBy('display_sequence', 'asc')
+                                        ->orderBy('learningtasks_categories.display_sequence', 'asc')
+                                        ->orderBy('categories.display_sequence', 'asc')
                                         ->get();
         // カテゴリ（この課題管理）
         $plugin_categories = null;
@@ -2040,15 +2041,16 @@ class LearningtasksPlugin extends UserPluginBase
                                             ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
                                             ->where('target', 'learningtasks')
                                             ->where('plugin_id', $learningtask->id)
-                                            ->orderBy('display_sequence', 'asc')
+                                            ->orderBy('learningtasks_categories.display_sequence', 'asc')
+                                            ->orderBy('categories.display_sequence', 'asc')
                                             ->get();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view('learningtasks_list_categories', [
             'general_categories' => $general_categories,
-            'plugin_categories'  => $plugin_categories,
-            'learningtask'       => $learningtask,
+            'plugin_categories' => $plugin_categories,
+            'learningtask' => $learningtask,
         ]);
     }
 
