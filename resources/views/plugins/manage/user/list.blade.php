@@ -84,10 +84,9 @@ use App\Models\Core\UsersColumns;
                                 <div class="col-md-9">
                                     @php
                                         $values = Session::get('user_search_condition.groups');
-                                        //dd($value);
                                     @endphp
                                     <div class="container-fluid row">
-                                        @foreach($groups_select as $group_select)
+                                        @forelse($groups_select as $group_select)
                                             @php
                                                 // チェック用変数
                                                 $column_checkbox_checked = "";
@@ -102,8 +101,9 @@ use App\Models\Core\UsersColumns;
                                                 <input name="user_search_condition[groups][]" value="{{$group_select->id}}" type="checkbox" class="custom-control-input" id="user_search_condition[groups]_{{$loop->iteration}}"{{$column_checkbox_checked}}>
                                                 <label class="custom-control-label" for="user_search_condition[groups]_{{$loop->iteration}}"> {{$group_select->name}}</label>
                                             </div>
-
-                                        @endforeach
+                                        @empty
+                                            グループなし
+                                        @endforelse
                                     </div>
                                     <small class="form-text text-muted">※ 複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
