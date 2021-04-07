@@ -926,7 +926,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_posts->posted_at = date('Y-m-d H:i:00');
 
         // カテゴリ
-        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
+        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
 
         // タグ
         $learningtasks_posts_tags = "";
@@ -1052,7 +1052,9 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // カテゴリ
-        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
+        // bugfix: カテゴリ選択が表示されないバグ修正
+        // $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
+        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
 
         // タグ取得
         $learningtasks_posts_tags_array = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
@@ -1065,17 +1067,14 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題管理データを取得
         $learningtasks_posts_files = $this->getTaskFile([$learningtasks_post->id]);
 
-        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'learningtasks_input', [
-            'learningtask'              => $learningtask,
-            'learningtasks_posts'       => $learningtasks_post,
-            'learningtasks_categories'  => $learningtasks_categories,
-            'learningtasks_posts_tags'  => $learningtasks_posts_tags,
+        // 変更画面を呼び出す。
+        return $this->view('learningtasks_input', [
+            'learningtask' => $learningtask,
+            'learningtasks_posts' => $learningtasks_post,
+            'learningtasks_categories' => $learningtasks_categories,
+            'learningtasks_posts_tags' => $learningtasks_posts_tags,
             'learningtasks_posts_files' => (array_key_exists($learningtasks_post->id, $learningtasks_posts_files)) ? $learningtasks_posts_files[$learningtasks_post->id] : null,
-            //'errors'           => $errors,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -1245,9 +1244,6 @@ class LearningtasksPlugin extends UserPluginBase
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
-        // カテゴリ
-        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
-
         // タグ取得
         //$learningtasks_posts_tags_array = LearningtasksPostsTags::where('post_id', $learningtasks_post->id)->get();
         //$learningtasks_posts_tags = "";
@@ -1272,7 +1268,6 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_edit_examinations', [
             'learningtask'              => $learningtask,
             'learningtasks_posts'       => $learningtasks_post,
-            'learningtasks_categories'  => $learningtasks_categories,
             //'learningtasks_posts_tags'  => $learningtasks_posts_tags,
             'post_files'                => (array_key_exists($learningtasks_post->id, $post_files)) ? $post_files[$learningtasks_post->id] : null,
             'examinations'              => $examinations,
