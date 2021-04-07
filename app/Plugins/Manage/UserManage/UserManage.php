@@ -91,7 +91,7 @@ class UserManage extends ManagePluginBase
             $request->session()->has('user_search_condition.admin_user')) {
             $in_users_query = UsersRoles::select('users_roles.users_id');
 
-            // [TODO] 権限複数チェックするとOR検索になる, 複数チェック付けたらAND検索が妥当だろう。対応方法わからず。
+            // 権限複数チェックするとOR検索
             // コンテンツ管理者
             if ($request->session()->get('user_search_condition.role_article_admin') == 1) {
                 $in_users_query->orWhere('role_name', 'role_article_admin');
@@ -212,39 +212,13 @@ class UserManage extends ManagePluginBase
 
         // グループ
         if ($request->session()->has('user_search_condition.groups')) {
-            // [TODO] グループ複数チェック AND検索 試し
-            // $groups = $request->session()->get('user_search_condition.groups');
-            // $in_group_user_ids = collect();
-            // foreach ($groups as $group) {
-            //     $tmp_in_group_user_ids = GroupUser::select('user_id')->where('group_id', $group)->pluck('user_id');
-            //
-            //     if ($in_group_user_ids->isEmpty()) {
-            //         // 空なら初回セット
-            //         $in_group_user_ids = $tmp_in_group_user_ids;
-            //     } else {
-            //         // [TODO] 未対応：user_idが全ての条件で残ってるもののみ残す。diffとかで抽出できないかなぁ？
-            //     }
-            // }
-            // $users_query->whereIn('users.id', $in_group_user_ids);
-
-            // [TODO] グループ複数チェックするとOR検索になる
+            // グループ複数チェックするとOR検索
             $groups = $request->session()->get('user_search_condition.groups');
             $in_group_users_query = GroupUser::select('group_users.user_id');
             foreach ($groups as $group) {
                 $in_group_users = $in_group_users_query->orWhere('group_id', $group);
             }
             $users_query->whereIn('users.id', $in_group_users->pluck('user_id'));
-
-            // [TODO] グループ複数チェックするとOR検索になる
-            // $groups = $request->session()->get('user_search_condition.groups');
-            // $users_query->whereIn('users.id', function ($query) use ($groups) {
-            //     // 縦持ちのvalue を検索して、行の id を取得。
-            //     $query->select('user_id')
-            //             ->from('group_users')
-            //             ->whereIn('group_id', $groups)
-            //             ->whereNull('deleted_at')
-            //             ->groupBy('user_id');
-            // });
         }
 
         // eメール
@@ -259,6 +233,7 @@ class UserManage extends ManagePluginBase
 
         foreach ($users_columns as $users_column) {
             if ($request->session()->has('user_search_condition.users_columns_value.'. $users_column->id)) {
+                // [TODO] 追加項目でチェックボックスを複数チェック入れるとAND検索。OR検索に今後見直す。既にデータベースで対応しているようだ。
                 $search_keyword = $request->session()->get('user_search_condition.users_columns_value.'. $users_column->id);
 
                 // $users_query->whereIn('users_inputs.id', function ($query) use ($search_keyword, $users_columns_id, $hide_columns_ids) {
