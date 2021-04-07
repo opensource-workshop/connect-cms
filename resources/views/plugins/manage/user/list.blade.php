@@ -251,9 +251,14 @@ use App\Models\Core\UsersColumns;
             </div>
         </div>
 
-        <div class="form-group table-responsive">
-            {{-- ダウンロードボタン --}}
-            <div class="text-right mt-2">
+        <div class="row mt-2">
+            <div class="col text-left d-flex align-items-end">
+                {{-- (左側)件数 --}}
+                <span class="badge badge-pill badge-light">{{ $users->total() }} 件</span>
+            </div>
+
+            <div class="col text-right">
+                {{-- (右側)ダウンロードボタン --}}
                 <div class="btn-group">
                     <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
                         <i class="fas fa-file-download"></i><span class=""> ダウンロード</span>
@@ -270,10 +275,9 @@ use App\Models\Core\UsersColumns;
                     </div>
                 </div>
             </div>
+        </div>
 
-            {{-- 件数 --}}
-            <div class="text-right"><span class="badge badge-pill badge-light">{{ $users->total() }} 件</span></div>
-
+        <div class="form-group table-responsive">
             <table class="table table-hover cc-font-90">
             <thead>
                 <tr>
