@@ -261,7 +261,7 @@ use App\Models\Core\UsersColumns;
                 {{-- (右側)ダウンロードボタン --}}
                 <div class="btn-group">
                     <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
-                        <i class="fas fa-file-download"></i><span class=""> ダウンロード</span>
+                        <i class="fas fa-file-download"></i> ダウンロード
                     </button>
                     <button type="button" class="btn btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="sr-only">ドロップダウンボタン</span>
