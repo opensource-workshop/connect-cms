@@ -238,34 +238,12 @@ use App\Models\Core\UsersColumns;
 
                             {{-- ボタンエリア --}}
                             <div class="form-group text-center">
-                                <div class="row">
-                                    <div class="col-3"></div>
-                                    <div class="col-6">
-                                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user/clearSearch')}}'">
-                                            <i class="fas fa-times"></i> クリア
-                                        </button>
-                                        <button type="submit" class="btn btn-primary form-horizontal">
-                                            <i class="fas fa-check"></i> 絞り込み
-                                        </button>
-                                    </div>
-                                    <div class="col-3 text-right">
-                                        <div class="btn-group dropup">
-                                            <button type="button" class="btn btn-primary" onclick="submit_download_shift_jis();">
-                                                <i class="fas fa-file-download"></i><span class="d-none d-md-inline"> ダウンロード</span>
-                                            </button>
-                                            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <span class="sr-only">ドロップダウンボタン</span>
-                                            </button>
-                                            <div class="dropdown-menu">
-                                                <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
-                                                <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
-                                                <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
-                                                    <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user/clearSearch')}}'">
+                                    <i class="fas fa-times"></i> クリア
+                                </button>
+                                <button type="submit" class="btn btn-primary form-horizontal">
+                                    <i class="fas fa-check"></i> 絞り込み
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -273,8 +251,33 @@ use App\Models\Core\UsersColumns;
             </div>
         </div>
 
+        <div class="row mt-2">
+            <div class="col text-left d-flex align-items-end">
+                {{-- (左側)件数 --}}
+                <span class="badge badge-pill badge-light">{{ $users->total() }} 件</span>
+            </div>
+
+            <div class="col text-right">
+                {{-- (右側)ダウンロードボタン --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
+                        <i class="fas fa-file-download"></i><span class=""> ダウンロード</span>
+                    </button>
+                    <button type="button" class="btn btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="sr-only">ドロップダウンボタン</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                        <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                        <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
+                            <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group table-responsive">
-            <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $users->total() }} 件</span></div>
             <table class="table table-hover cc-font-90">
             <thead>
                 <tr>
