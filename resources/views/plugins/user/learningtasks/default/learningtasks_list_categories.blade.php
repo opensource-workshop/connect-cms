@@ -86,12 +86,12 @@
                         {{-- チェック外した場合にも値を飛ばす対応 --}}
                         <input type="hidden" value="0" name="general_view_flag[{{$category->id}}]">
 
-                        <input type="checkbox" value="1" name="general_view_flag[{{$category->id}}]" class="custom-control-input" id="general_view_flag[{{$category->id}}]"@if ($category->view_flag == 1) checked="checked"@endif>
+                        <input type="checkbox" value="1" name="general_view_flag[{{$category->id}}]" class="custom-control-input" id="general_view_flag[{{$category->id}}]"@if (old('general_view_flag.'.$category->id, $category->view_flag)) checked="checked"@endif>
                         <label class="custom-control-label" for="general_view_flag[{{$category->id}}]"></label>
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('general_display_sequence.'.$category->id, $category->learningtasks_categories_display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('general_display_sequence.'.$category->id)) border-danger @endif">
+                    <input type="text" value="{{old('general_display_sequence.'.$category->id, $category->general_display_sequence)}}" name="general_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('general_display_sequence.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap class="align-middle">{{$category->classname}}</td>
                 <td nowrap class="align-middle">{{$category->category}}</td>
@@ -125,12 +125,12 @@
                         {{-- チェック外した場合にも値を飛ばす対応 --}}
                         <input type="hidden" value="0" name="plugin_view_flag[{{$category->id}}]">
 
-                        <input type="checkbox" value="1" name="plugin_view_flag[{{$category->id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->id}}]"@if ($category->view_flag) checked="checked"@endif>
+                        <input type="checkbox" value="1" name="plugin_view_flag[{{$category->id}}]" class="custom-control-input" id="plugin_view_flag[{{$category->id}}]"@if (old('plugin_view_flag.'.$category->id, $category->view_flag)) checked="checked"@endif>
                         <label class="custom-control-label" for="plugin_view_flag[{{$category->id}}]"></label>
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->learningtasks_categories_display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_display_sequence.'.$category->id)) border-danger @endif">
+                    <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->plugin_display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_display_sequence.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('plugin_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
@@ -154,7 +154,10 @@
             <tr>
                 <td nowrap class="align-middle text-center">
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
+                        {{-- チェック外した場合にも値を飛ばす対応 --}}
+                        <input type="hidden" value="0" name="add_view_flag">
+
+                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag"@if (old('add_view_flag')) checked="checked"@endif>
                         <label class="custom-control-label" for="add_view_flag"></label>
                     </div>
                 </td>

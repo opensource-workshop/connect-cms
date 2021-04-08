@@ -2012,7 +2012,7 @@ class LearningtasksPlugin extends UserPluginBase
                                             'learningtasks_categories.id as learningtasks_categories_id',
                                             'learningtasks_categories.categories_id',
                                             'learningtasks_categories.view_flag',
-                                            'learningtasks_categories.display_sequence as learningtasks_categories_display_sequence'
+                                            'learningtasks_categories.display_sequence as general_display_sequence'
                                         )
                                         ->leftJoin('learningtasks_categories', function ($join) use ($learningtask) {
                                             $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
@@ -2022,6 +2022,14 @@ class LearningtasksPlugin extends UserPluginBase
                                         ->orderBy('learningtasks_categories.display_sequence', 'asc')
                                         ->orderBy('categories.display_sequence', 'asc')
                                         ->get();
+
+        foreach ($general_categories as $general_categorie) {
+            // （初期登録時を想定）課題管理カテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
+            if (is_null($general_categorie->general_display_sequence)) {
+                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
+            }
+        }
+
         // カテゴリ（この課題管理）
         $plugin_categories = null;
         if ($learningtask->id) {
@@ -2031,7 +2039,7 @@ class LearningtasksPlugin extends UserPluginBase
                                                 'learningtasks_categories.id as learningtasks_categories_id',
                                                 'learningtasks_categories.categories_id',
                                                 'learningtasks_categories.view_flag',
-                                                'learningtasks_categories.display_sequence as learningtasks_categories_display_sequence'
+                                                'learningtasks_categories.display_sequence as plugin_display_sequence'
                                             )
                                             ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
                                             ->where('target', 'learningtasks')
