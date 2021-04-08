@@ -163,9 +163,10 @@
 
             <div class="card card-body bg-light p-2 m-2">
                 <ul>
-                    <li>クラス名は cc_category_xxxx で使用できます。</li>
                     <li>カテゴリ設定後は、各プラグインのカテゴリ設定で表示設定が必要です。</li>
                     <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
+                    <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>
+                    <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
                 </ul>
             </div>
         </div>
