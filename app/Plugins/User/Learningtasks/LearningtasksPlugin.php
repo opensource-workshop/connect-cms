@@ -2224,7 +2224,7 @@ class LearningtasksPlugin extends UserPluginBase
         Categories::where('id', $id)->delete();
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
-        // sdeleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        // deleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
