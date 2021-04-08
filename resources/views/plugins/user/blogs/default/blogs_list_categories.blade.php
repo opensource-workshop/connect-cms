@@ -14,7 +14,7 @@
 
 @section("plugin_setting_$frame->id")
 
-{{-- エラーメッセージ --}}
+{{-- ワーニングメッセージ --}}
 @if (empty($blog_frame) || empty($blog_frame->blogs_id))
     <div class="alert alert-warning">
         <i class="fas fa-exclamation-circle"></i> 設定画面から、使用するブログを選択するか、作成してください。
