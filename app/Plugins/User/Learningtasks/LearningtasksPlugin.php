@@ -95,21 +95,22 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function declareRole()
     {
+        // [TODO] role_article(モデレータ)で設定画面いじれる所は見直し予定。おおよそrole_arrangement（プラグイン管理者）になる見込み
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["editMail"]         = array('role_article');
-        $role_ckeck_table["listCategories"]   = array('role_article');
-        $role_ckeck_table["editBucketsRoles"] = array('role_article');
+        $role_ckeck_table["editMail"]         = array('role_arrangement');
+        $role_ckeck_table["listCategories"]   = array('role_arrangement');
+        $role_ckeck_table["editBucketsRoles"] = array('role_arrangement');
         $role_ckeck_table["editUsers"]        = array('role_article');
         $role_ckeck_table["editReport"]       = array('role_article');
         $role_ckeck_table["editExaminations"] = array('role_article');
         $role_ckeck_table["editEvaluate"]     = array('role_article');
         $role_ckeck_table["listGrade"]        = array('role_article');
 
-        $role_ckeck_table["saveMail"]         = array('role_article');
-        $role_ckeck_table["saveCategories"]   = array('role_article');
-        $role_ckeck_table["deleteCategories"] = array('role_article');
-        $role_ckeck_table["saveBucketsRoles"] = array('role_article');
+        $role_ckeck_table["saveMail"]         = array('role_arrangement');
+        $role_ckeck_table["saveCategories"]   = array('role_arrangement');
+        $role_ckeck_table["deleteCategories"] = array('role_arrangement');
+        $role_ckeck_table["saveBucketsRoles"] = array('role_arrangement');
         $role_ckeck_table["saveUsers"]        = array('role_article');
         $role_ckeck_table["saveReport"]       = array('role_article');
         $role_ckeck_table["saveExaminations"] = array('role_article');
@@ -275,27 +276,27 @@ class LearningtasksPlugin extends UserPluginBase
     //    return $query;
     //}
 
-    /**
-     *  表示条件に対するソート条件追加
-     */
-    private function appendOrder($query, $learningtasks_frame)
-    {
-        if ($learningtasks_frame->sequence_conditions == 0) {
-            // 最新順
-            $query->orderBy('posted_at', 'desc');
-        } elseif ($learningtasks_frame->sequence_conditions == 1) {
-            // 投稿順
-            $query->orderBy('posted_at', 'asc');
-        } elseif ($learningtasks_frame->sequence_conditions == 2) {
-            // 指定順
-            $query->orderBy('display_sequence', 'asc');
-        }
+    // /**
+    //  * 表示条件に対するソート条件追加
+    //  */
+    // private function appendOrder($query, $learningtasks_frame)
+    // {
+    //     if ($learningtasks_frame->sequence_conditions == 0) {
+    //         // 最新順
+    //         $query->orderBy('posted_at', 'desc');
+    //     } elseif ($learningtasks_frame->sequence_conditions == 1) {
+    //         // 投稿順
+    //         $query->orderBy('posted_at', 'asc');
+    //     } elseif ($learningtasks_frame->sequence_conditions == 2) {
+    //         // 指定順
+    //         $query->orderBy('display_sequence', 'asc');
+    //     }
 
-        return $query;
-    }
+    //     return $query;
+    // }
 
     /**
-     *  課題管理記事一覧取得
+     * 課題管理記事一覧取得
      */
     private function getPosts($learningtasks_frame, $tool, $option_count = null)
     {
