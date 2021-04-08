@@ -48,8 +48,8 @@ class FaqsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles'];
+        $functions['get']  = ['rss'];
+        $functions['post'] = [];
         return $functions;
     }
 
@@ -966,28 +966,23 @@ class FaqsPlugin extends UserPluginBase
         // セッション初期化などのLaravel 処理。
         // $request->flash();
 
-        // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // FAQ
         $faq_frame = $this->getFaqFrame($frame_id);
 
         // カテゴリ（全体）
         $general_categories = Categories::
-                                        select(
-                                            'categories.*',
-                                            'faqs_categories.view_flag',
-                                            'faqs_categories.display_sequence as general_display_sequence'
-                                        )
-                                        ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
-                                            $join->on('faqs_categories.categories_id', '=', 'categories.id')
-                                                 ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id);
-                                        })
-                                        ->where('target', null)
-                                        ->orderBy('display_sequence', 'asc')
-                                        ->get();
+                select(
+                    'categories.*',
+                    'faqs_categories.view_flag',
+                    'faqs_categories.display_sequence as general_display_sequence'
+                )
+                ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
+                    $join->on('faqs_categories.categories_id', '=', 'categories.id')
+                            ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id);
+                })
+                ->where('target', null)
+                ->orderBy('display_sequence', 'asc')
+                ->get();
 
         foreach ($general_categories as $general_categorie) {
             // （初期登録時を想定）FAQカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
@@ -1000,16 +995,16 @@ class FaqsPlugin extends UserPluginBase
         $plugin_categories = null;
         if ($faq_frame->faqs_id) {
             $plugin_categories = Categories::
-                                            select(
-                                                'categories.*',
-                                                'faqs_categories.view_flag',
-                                                'faqs_categories.display_sequence as plugin_display_sequence'
-                                            )
-                                            ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
-                                            ->where('target', 'faqs')
-                                            ->where('plugin_id', $faq_frame->faqs_id)
-                                            ->orderBy('display_sequence', 'asc')
-                                            ->get();
+                    select(
+                        'categories.*',
+                        'faqs_categories.view_flag',
+                        'faqs_categories.display_sequence as plugin_display_sequence'
+                    )
+                    ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
+                    ->where('target', 'faqs')
+                    ->where('plugin_id', $faq_frame->faqs_id)
+                    ->orderBy('display_sequence', 'asc')
+                    ->get();
         }
 
         // 表示テンプレートを呼び出す。
@@ -1025,11 +1020,6 @@ class FaqsPlugin extends UserPluginBase
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（saveCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         /* エラーチェック
         ------------------------------------ */
 
@@ -1175,11 +1165,6 @@ class FaqsPlugin extends UserPluginBase
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 削除(FAQプラグインのカテゴリ表示データ)
         FaqsCategories::where('categories_id', $id)->delete();
 

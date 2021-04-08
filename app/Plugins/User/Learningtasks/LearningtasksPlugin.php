@@ -2194,11 +2194,6 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 削除(課題管理プラグインのカテゴリ表示データ)
         LearningtasksCategories::where('categories_id', $id)->delete();
 

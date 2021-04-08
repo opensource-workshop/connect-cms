@@ -50,8 +50,8 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'settingBlogFrame'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveBlogFrame'];
+        $functions['get']  = ['rss', 'settingBlogFrame'];
+        $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
 
@@ -1136,31 +1136,26 @@ WHERE status = 0
         // セッション初期化などのLaravel 処理。
         // $request->flash();
 
-        // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
 
         // カテゴリ（全体）
         $general_categories = Categories::
-                                        select(
-                                            'categories.*',
-                                            'blogs_categories.id as blogs_categories_id',
-                                            'blogs_categories.categories_id',
-                                            'blogs_categories.view_flag',
-                                            'blogs_categories.display_sequence as general_display_sequence'
-                                        )
-                                        ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
-                                            $join->on('blogs_categories.categories_id', '=', 'categories.id')
-                                                 ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
-                                        })
-                                        ->where('target', null)
-                                        ->orderBy('blogs_categories.display_sequence', 'asc')
-                                        ->orderBy('categories.display_sequence', 'asc')
-                                        ->get();
+                select(
+                    'categories.*',
+                    'blogs_categories.id as blogs_categories_id',
+                    'blogs_categories.categories_id',
+                    'blogs_categories.view_flag',
+                    'blogs_categories.display_sequence as general_display_sequence'
+                )
+                ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
+                    $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                            ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
+                })
+                ->where('target', null)
+                ->orderBy('blogs_categories.display_sequence', 'asc')
+                ->orderBy('categories.display_sequence', 'asc')
+                ->get();
 
         foreach ($general_categories as $general_categorie) {
             // （初期登録時を想定）ブログカテゴリのカテゴリIDが空なので、カテゴリのIDを初期値にセット
@@ -1178,19 +1173,19 @@ WHERE status = 0
         $plugin_categories = null;
         if ($blog_frame->blogs_id) {
             $plugin_categories = Categories::
-                                            select(
-                                                'categories.*',
-                                                'blogs_categories.id as blogs_categories_id',
-                                                'blogs_categories.categories_id',
-                                                'blogs_categories.view_flag',
-                                                'blogs_categories.display_sequence as plugin_display_sequence'
-                                            )
-                                            ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
-                                            ->where('target', 'blogs')
-                                            ->where('plugin_id', $blog_frame->blogs_id)
-                                            ->orderBy('blogs_categories.display_sequence', 'asc')
-                                            ->orderBy('categories.display_sequence', 'asc')
-                                            ->get();
+                    select(
+                        'categories.*',
+                        'blogs_categories.id as blogs_categories_id',
+                        'blogs_categories.categories_id',
+                        'blogs_categories.view_flag',
+                        'blogs_categories.display_sequence as plugin_display_sequence'
+                    )
+                    ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                    ->where('target', 'blogs')
+                    ->where('plugin_id', $blog_frame->blogs_id)
+                    ->orderBy('blogs_categories.display_sequence', 'asc')
+                    ->orderBy('categories.display_sequence', 'asc')
+                    ->get();
         }
 
         // 表示テンプレートを呼び出す。
@@ -1206,11 +1201,6 @@ WHERE status = 0
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（saveCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         /* エラーチェック
         ------------------------------------ */
 
@@ -1360,11 +1350,6 @@ WHERE status = 0
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 削除(ブログプラグインのカテゴリ表示データ)
         BlogsCategories::where('categories_id', $id)->delete();
 
