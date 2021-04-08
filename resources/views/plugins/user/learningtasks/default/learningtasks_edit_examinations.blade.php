@@ -286,10 +286,17 @@
                 <div class="text-center">
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span> キャンセル</span></button>
                     <input type="hidden" name="bucket_id" value="">
+                    {{-- change: 課題管理の試験設定は、登録・更新時に確認ダイアログを表示しない（試験日時登録で何度も確定ボタン押すため）
                     @if (empty($learningtasks_posts->id))
                         <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('更新します。\nよろしいですか？')"><i class="fas fa-check"></i> 登録確定</button>
                     @else
                         <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('更新します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>
+                    @endif
+                    --}}
+                    @if (empty($learningtasks_posts->id))
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+                    @else
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
                     @endif
                 </div>
             </div>
