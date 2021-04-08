@@ -975,7 +975,14 @@ class FaqsPlugin extends UserPluginBase
         $faq_frame = $this->getFaqFrame($frame_id);
 
         // カテゴリ（全体）
-        $general_categories = Categories::select('categories.*', 'faqs_categories.id as faqs_categories_id', 'faqs_categories.categories_id', 'faqs_categories.view_flag')
+        $general_categories = Categories::
+                                        select(
+                                            'categories.*',
+                                            'faqs_categories.id as faqs_categories_id',
+                                            'faqs_categories.categories_id',
+                                            'faqs_categories.view_flag',
+                                            'faqs_categories.display_sequence as general_display_sequence'
+                                        )
                                         ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
                                             $join->on('faqs_categories.categories_id', '=', 'categories.id')
                                                  ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id);
@@ -983,27 +990,40 @@ class FaqsPlugin extends UserPluginBase
                                         ->where('target', null)
                                         ->orderBy('display_sequence', 'asc')
                                         ->get();
+
+        foreach ($general_categories as $general_categorie) {
+            // （初期登録時を想定）FAQカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
+            if (is_null($general_categorie->general_display_sequence)) {
+                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
+            }
+        }
+
         // カテゴリ（このFAQ）
         $plugin_categories = null;
         if ($faq_frame->faqs_id) {
-            $plugin_categories = Categories::select('categories.*', 'faqs_categories.id as faqs_categories_id', 'faqs_categories.categories_id', 'faqs_categories.view_flag')
-                                           ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
-                                           ->where('target', 'faqs')
-                                           ->where('plugin_id', $faq_frame->faqs_id)
-                                           ->orderBy('display_sequence', 'asc')
-                                           ->get();
+            $plugin_categories = Categories::
+                                            select(
+                                                'categories.*',
+                                                'faqs_categories.id as faqs_categories_id',
+                                                'faqs_categories.categories_id',
+                                                'faqs_categories.view_flag',
+                                                'faqs_categories.display_sequence as plugin_display_sequence'
+                                            )
+                                            ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
+                                            ->where('target', 'faqs')
+                                            ->where('plugin_id', $faq_frame->faqs_id)
+                                            ->orderBy('display_sequence', 'asc')
+                                            ->get();
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'faqs_list_categories', [
+        return $this->view('faqs_list_categories', [
             'general_categories' => $general_categories,
-            'plugin_categories'  => $plugin_categories,
-            'faq_frame'         => $faq_frame,
-            'errors'             => $errors,
-            'create_flag'        => $create_flag,
-            ]
-        )->withInput($request->all);
+            'plugin_categories' => $plugin_categories,
+            'faq_frame' => $faq_frame,
+            'errors' => $errors,
+            'create_flag' => $create_flag,
+        ]);
     }
 
     /**
