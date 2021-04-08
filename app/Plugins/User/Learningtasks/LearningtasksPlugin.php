@@ -85,8 +85,8 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editMail', 'listCategories', 'editBucketsRoles', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade'];
-        $functions['post'] = ['saveMail', 'saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveUsers', 'saveReport', 'saveExaminations', 'saveEvaluate', 'downloadGrade', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7', 'changeStatus8'];
+        $functions['get']  = ['editMail', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade'];
+        $functions['post'] = ['saveMail', 'saveUsers', 'saveReport', 'saveExaminations', 'saveEvaluate', 'downloadGrade', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7', 'changeStatus8'];
         return $functions;
     }
 
@@ -99,8 +99,6 @@ class LearningtasksPlugin extends UserPluginBase
         // 権限チェックテーブル
         $role_ckeck_table = array();
         $role_ckeck_table["editMail"]         = array('role_arrangement');
-        $role_ckeck_table["listCategories"]   = array('role_arrangement');
-        $role_ckeck_table["editBucketsRoles"] = array('role_arrangement');
         $role_ckeck_table["editUsers"]        = array('role_article');
         $role_ckeck_table["editReport"]       = array('role_article');
         $role_ckeck_table["editExaminations"] = array('role_article');
@@ -108,9 +106,6 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["listGrade"]        = array('role_article');
 
         $role_ckeck_table["saveMail"]         = array('role_arrangement');
-        $role_ckeck_table["saveCategories"]   = array('role_arrangement');
-        $role_ckeck_table["deleteCategories"] = array('role_arrangement');
-        $role_ckeck_table["saveBucketsRoles"] = array('role_arrangement');
         $role_ckeck_table["saveUsers"]        = array('role_article');
         $role_ckeck_table["saveReport"]       = array('role_article');
         $role_ckeck_table["saveExaminations"] = array('role_article');
@@ -1998,11 +1993,6 @@ class LearningtasksPlugin extends UserPluginBase
         // セッション初期化などのLaravel 処理。
         // $request->flash();
 
-        // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 課題管理
         $learningtask = $this->getLearningTask($frame_id);
 
@@ -2059,11 +2049,6 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（saveCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         /* エラーチェック
         ------------------------------------ */
 
