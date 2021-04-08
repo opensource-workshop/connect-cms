@@ -14,11 +14,10 @@
 
 @section("plugin_setting_$frame->id")
 
-{{-- エラーメッセージ --}}
+{{-- ワーニングメッセージ --}}
 @if (empty($learningtask) || empty($learningtask->id))
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する課題管理を選択するか、作成してください。
+        <i class="fas fa-exclamation-circle"></i> 設定画面から、使用する課題管理を選択するか、作成してください。
     </div>
 @else
 {{-- 最後にendif --}}
