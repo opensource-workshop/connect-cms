@@ -17,8 +17,7 @@
 {{-- エラーメッセージ --}}
 @if (empty($blog_frame) || empty($blog_frame->blogs_id))
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i>
-        表示するコンテンツを選択するか、新規作成してください。
+        <i class="fas fa-exclamation-circle"></i> 設定画面から、使用するブログを選択するか、作成してください。
     </div>
 @else
 {{-- 最後にendif --}}
