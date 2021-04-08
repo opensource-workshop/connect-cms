@@ -74,7 +74,6 @@
             <tr>
                 <td nowrap class="align-middle text-center">
                     <input type="hidden" value="{{$category->id}}" name="general_categories_id[{{$category->id}}]">
-                    <input type="hidden" value="{{$category->faqs_categories_id}}" name="general_faqs_categories_id[{{$category->id}}]">
 
                     <div class="custom-control custom-checkbox">
                         {{-- チェック外した場合にも値を飛ばす対応 --}}
@@ -113,7 +112,6 @@
             <tr>
                 <td nowrap class="align-middle text-center">
                     <input type="hidden" value="{{$category->id}}" name="plugin_categories_id[{{$category->id}}]">
-                    <input type="hidden" value="{{$category->faqs_categories_id}}" name="plugin_faqs_categories_id[{{$category->id}}]">
 
                     <div class="custom-control custom-checkbox">
                         {{-- チェック外した場合にも値を飛ばす対応 --}}

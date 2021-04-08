@@ -978,8 +978,6 @@ class FaqsPlugin extends UserPluginBase
         $general_categories = Categories::
                                         select(
                                             'categories.*',
-                                            'faqs_categories.id as faqs_categories_id',
-                                            'faqs_categories.categories_id',
                                             'faqs_categories.view_flag',
                                             'faqs_categories.display_sequence as general_display_sequence'
                                         )
@@ -1004,8 +1002,6 @@ class FaqsPlugin extends UserPluginBase
             $plugin_categories = Categories::
                                             select(
                                                 'categories.*',
-                                                'faqs_categories.id as faqs_categories_id',
-                                                'faqs_categories.categories_id',
                                                 'faqs_categories.view_flag',
                                                 'faqs_categories.display_sequence as plugin_display_sequence'
                                             )
