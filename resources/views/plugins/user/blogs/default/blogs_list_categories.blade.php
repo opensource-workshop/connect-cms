@@ -91,7 +91,7 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('general_display_sequence.'.$category->categories_id, $category->blogs_categories_display_sequence)}}" name="general_display_sequence[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('general_display_sequence.'.$category->categories_id)) border-danger @endif">
+                    <input type="text" value="{{old('general_display_sequence.'.$category->categories_id, $category->general_display_sequence)}}" name="general_display_sequence[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('general_display_sequence.'.$category->categories_id)) border-danger @endif">
                 </td>
                 <td nowrap class="align-middle">{{$category->classname}}</td>
                 <td nowrap class="align-middle">{{$category->category}}</td>
@@ -130,7 +130,7 @@
                     </div>
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_display_sequence.'.$category->categories_id, $category->blogs_categories_display_sequence)}}" name="plugin_display_sequence[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('plugin_display_sequence.'.$category->categories_id)) border-danger @endif">
+                    <input type="text" value="{{old('plugin_display_sequence.'.$category->categories_id, $category->plugin_display_sequence)}}" name="plugin_display_sequence[{{$category->categories_id}}]" class="form-control @if ($errors && $errors->has('plugin_display_sequence.'.$category->categories_id)) border-danger @endif">
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('plugin_classname.'.$category->categories_id, $category->classname)}}" name="plugin_classname[{{$category->categories_id}}]" class="form-control">

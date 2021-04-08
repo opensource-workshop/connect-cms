@@ -1151,7 +1151,7 @@ WHERE status = 0
                                             'blogs_categories.id as blogs_categories_id',
                                             'blogs_categories.categories_id',
                                             'blogs_categories.view_flag',
-                                            'blogs_categories.display_sequence as blogs_categories_display_sequence'
+                                            'blogs_categories.display_sequence as general_display_sequence'
                                         )
                                         ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
                                             $join->on('blogs_categories.categories_id', '=', 'categories.id')
@@ -1169,8 +1169,8 @@ WHERE status = 0
             }
 
             // （初期登録時を想定）ブログカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
-            if (is_null($general_categorie->blogs_categories_display_sequence)) {
-                $general_categorie->blogs_categories_display_sequence = $general_categorie->display_sequence;
+            if (is_null($general_categorie->general_display_sequence)) {
+                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
             }
         }
 
@@ -1183,7 +1183,7 @@ WHERE status = 0
                                                 'blogs_categories.id as blogs_categories_id',
                                                 'blogs_categories.categories_id',
                                                 'blogs_categories.view_flag',
-                                                'blogs_categories.display_sequence as blogs_categories_display_sequence'
+                                                'blogs_categories.display_sequence as plugin_display_sequence'
                                             )
                                             ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
                                             ->where('target', 'blogs')
