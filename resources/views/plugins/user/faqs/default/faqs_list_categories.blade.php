@@ -23,7 +23,7 @@
 {{-- 最後にendif --}}
 
 {{-- エラーメッセージ --}}
-@if ($errors)
+@if ($errors->count() > 0)
     <div class="card border-danger">
         <div class="card-body">
             <span class="text-danger">
@@ -44,14 +44,19 @@
 <script type="text/javascript">
     function form_delete(id) {
         if (confirm('カテゴリを削除します。\nよろしいですか？')) {
-            form_delete_category.action = "{{url('/')}}/plugin/faqs/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame->id}}";
+            form_delete_category.action = "{{url('/')}}/redirect/plugin/faqs/deleteCategories/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame->id}}";
             form_delete_category.submit();
         }
     }
 </script>
-
-<form action="{{url('/')}}/plugin/faqs/saveCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
+<form action="" method="POST" name="form_delete_category">
     {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/faqs/listCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+</form>
+
+<form action="{{url('/')}}/redirect/plugin/faqs/saveCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
+    {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/faqs/listCategories/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     <div class="form-group table-responsive">
         <table class="table table-hover table-sm mb-0">
@@ -142,33 +147,7 @@
             </tr>
         @endforeach
         @endif
-        @if ($create_flag)
-            <tr>
-                <td nowrap class="align-middle text-center">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" value="1" name="add_view_flag" class="custom-control-input" id="add_view_flag">
-                        <label class="custom-control-label" for="add_view_flag"></label>
-                    </div>
-                </td>
-                <td nowrap>
-                    <input type="text" value="" name="add_display_sequence" class="form-control">
-                </td>
-                <td nowrap>
-                    <input type="text" value="" name="add_classname" class="form-control">
-                </td>
-                <td nowrap>
-                    <input type="text" value="" name="add_category" class="form-control">
-                </td>
-                <td nowrap>
-                    <input type="text" value="" name="add_color" class="form-control">
-                </td>
-                <td nowrap>
-                    <input type="text" value="" name="add_background_color" class="form-control">
-                </td>
-                <td nowrap>
-                </td>
-            </tr>
-        @else
+
             <tr>
                 <td nowrap class="align-middle text-center">
                     <div class="custom-control custom-checkbox">
@@ -197,7 +176,6 @@
                 <td nowrap>
                 </td>
             </tr>
-        @endif
         </tbody>
         </table>
 
@@ -210,8 +188,5 @@
     </div>
 </form>
 
-<form action="" method="POST" name="form_delete_category" class="">
-    {{ csrf_field() }}
-</form>
 @endif
 @endsection

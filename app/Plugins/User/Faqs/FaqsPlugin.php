@@ -961,10 +961,10 @@ class FaqsPlugin extends UserPluginBase
     /**
      * カテゴリ表示関数
      */
-    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
+    public function listCategories($request, $page_id, $frame_id, $id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
         if ($this->can('role_arrangement')) {
@@ -1017,8 +1017,6 @@ class FaqsPlugin extends UserPluginBase
             'general_categories' => $general_categories,
             'plugin_categories' => $plugin_categories,
             'faq_frame' => $faq_frame,
-            'errors' => $errors,
-            'create_flag' => $create_flag,
         ]);
     }
 
@@ -1085,7 +1083,8 @@ class FaqsPlugin extends UserPluginBase
         $validator->setAttributeNames($setAttributeNames);
 
         if ($validator->fails()) {
-            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         /* カテゴリ追加
@@ -1097,20 +1096,20 @@ class FaqsPlugin extends UserPluginBase
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             $add_category = Categories::create([
-                                'classname'        => $request->add_classname,
-                                'category'         => $request->add_category,
-                                'color'            => $request->add_color,
-                                'background_color' => $request->add_background_color,
-                                'target'           => 'faqs',
-                                'plugin_id'        => $faq_frame->faqs_id,
-                                'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color,
+                'target'           => 'faqs',
+                'plugin_id'        => $faq_frame->faqs_id,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
             FaqsCategories::create([
-                                'faqs_id'         => $faq_frame->faqs_id,
-                                'categories_id'    => $add_category->id,
-                                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                                'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                'faqs_id'         => $faq_frame->faqs_id,
+                'categories_id'    => $add_category->id,
+                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
         }
 
         // 既存項目アリ
@@ -1141,10 +1140,10 @@ class FaqsPlugin extends UserPluginBase
                 FaqsCategories::updateOrCreate(
                     ['categories_id' => $general_categories_id, 'faqs_id' => $faq_frame->faqs_id],
                     [
-                     'faqs_id' => $faq_frame->faqs_id,
-                     'categories_id' => $general_categories_id,
-                     'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->general_display_sequence[$general_categories_id],
+                        'faqs_id' => $faq_frame->faqs_id,
+                        'categories_id' => $general_categories_id,
+                        'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => $request->general_display_sequence[$general_categories_id],
                     ]
                 );
             }
@@ -1158,16 +1157,17 @@ class FaqsPlugin extends UserPluginBase
                 FaqsCategories::updateOrCreate(
                     ['categories_id' => $plugin_categories_id, 'faqs_id' => $faq_frame->faqs_id],
                     [
-                     'faqs_id' => $faq_frame->faqs_id,
-                     'categories_id' => $plugin_categories_id,
-                     'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
+                        'faqs_id' => $faq_frame->faqs_id,
+                        'categories_id' => $plugin_categories_id,
+                        'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
                     ]
                 );
             }
         }
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
@@ -1186,7 +1186,8 @@ class FaqsPlugin extends UserPluginBase
         // 削除(カテゴリ)
         Categories::where('id', $id)->delete();
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
