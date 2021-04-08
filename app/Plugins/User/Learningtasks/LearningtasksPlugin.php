@@ -2009,8 +2009,6 @@ class LearningtasksPlugin extends UserPluginBase
         $general_categories = Categories::
                                         select(
                                             'categories.*',
-                                            'learningtasks_categories.id as learningtasks_categories_id',
-                                            'learningtasks_categories.categories_id',
                                             'learningtasks_categories.view_flag',
                                             'learningtasks_categories.display_sequence as general_display_sequence'
                                         )
@@ -2036,8 +2034,6 @@ class LearningtasksPlugin extends UserPluginBase
             $plugin_categories = Categories::
                                             select(
                                                 'categories.*',
-                                                'learningtasks_categories.id as learningtasks_categories_id',
-                                                'learningtasks_categories.categories_id',
                                                 'learningtasks_categories.view_flag',
                                                 'learningtasks_categories.display_sequence as plugin_display_sequence'
                                             )
