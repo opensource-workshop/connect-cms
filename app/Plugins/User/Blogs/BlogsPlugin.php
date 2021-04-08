@@ -1131,10 +1131,10 @@ WHERE status = 0
     /**
      * カテゴリ表示関数
      */
-    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
+    public function listCategories($request, $page_id, $frame_id, $id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
         if ($this->can('role_arrangement')) {
@@ -1196,10 +1196,8 @@ WHERE status = 0
         // 表示テンプレートを呼び出す。
         return $this->view('blogs_list_categories', [
             'general_categories' => $general_categories,
-            'plugin_categories'  => $plugin_categories,
-            'blog_frame'         => $blog_frame,
-            'errors'             => $errors,
-            'create_flag'        => $create_flag,
+            'plugin_categories' => $plugin_categories,
+            'blog_frame' => $blog_frame,
         ])->withInput($request->all);
     }
 
@@ -1270,7 +1268,8 @@ WHERE status = 0
         $validator->setAttributeNames($setAttributeNames);
 
         if ($validator->fails()) {
-            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         /* カテゴリ追加
@@ -1282,20 +1281,20 @@ WHERE status = 0
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             $add_category = Categories::create([
-                                'classname'        => $request->add_classname,
-                                'category'         => $request->add_category,
-                                'color'            => $request->add_color,
-                                'background_color' => $request->add_background_color,
-                                'target'           => 'blogs',
-                                'plugin_id'        => $blog_frame->blogs_id,
-                                'display_sequence' => intval($request->add_display_sequence),
-                            ]);
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color,
+                'target'           => 'blogs',
+                'plugin_id'        => $blog_frame->blogs_id,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
             BlogsCategories::create([
-                                'blogs_id'         => $blog_frame->blogs_id,
-                                'categories_id'    => $add_category->id,
-                                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                                'display_sequence' => intval($request->add_display_sequence),
-                            ]);
+                'blogs_id'         => $blog_frame->blogs_id,
+                'categories_id'    => $add_category->id,
+                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
         }
 
         // 既存項目アリ
@@ -1352,7 +1351,8 @@ WHERE status = 0
             }
         }
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
@@ -1371,7 +1371,8 @@ WHERE status = 0
         // 削除(カテゴリ)
         Categories::where('id', $id)->delete();
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
