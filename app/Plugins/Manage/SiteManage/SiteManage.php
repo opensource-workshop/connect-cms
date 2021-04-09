@@ -234,9 +234,9 @@ class SiteManage extends ManagePluginBase
 
         // カテゴリデータの取得
         $categories = Categories::orderBy('target', 'asc')
-                                ->orderBy('plugin_id', 'asc')
-                                ->orderBy('display_sequence', 'asc')
-                                ->get();
+                ->orderBy('plugin_id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->get();
 
         return view('plugins.manage.site.categories', [
             "function"    => __FUNCTION__,
@@ -253,63 +253,61 @@ class SiteManage extends ManagePluginBase
      */
     public function saveCategories($request, $id)
     {
+        /* エラーチェック
+        ------------------------------------ */
+        $rules = [];
+
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color) || !empty($request->add_background_color)) {
             // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_display_sequence' => ['required'],
-                //'add_classname'        => ['required'],
-                'add_category'         => ['required'],
-                'add_color'            => ['required'],
-                'add_background_color' => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_display_sequence' => '追加行の表示順',
-                //'add_classname'        => '追加行のクラス名',
-                'add_category'         => '追加行のカテゴリ',
-                'add_color'            => '追加行の文字色',
-                'add_background_color' => '追加行の背景色',
-            ]);
+            $rules['add_display_sequence'] = ['required'];
+            $rules['add_category'] = ['required'];
+            $rules['add_color'] = ['required'];
+            $rules['add_background_color'] = ['required'];
 
-            if ($validator->fails()) {
-                return $this->categories($request, $id, $validator->errors());
-            }
+            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
+            $setAttributeNames['add_category'] = '追加行のカテゴリ';
+            $setAttributeNames['add_color'] = '追加行の文字色';
+            $setAttributeNames['add_background_color'] = '追加行の背景色';
         }
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->categories_id)) {
             foreach ($request->categories_id as $category_id) {
                 // 項目のエラーチェック
-                $validator = Validator::make($request->all(), [
-                    'display_sequence.'.$category_id => ['required'],
-                    // 'classname.'.$category_id        => ['required'],
-                    'category.'.$category_id         => ['required'],
-                    'color.'.$category_id            => ['required'],
-                    'background_color.'.$category_id => ['required'],
-                ]);
-                $validator->setAttributeNames([
-                    'display_sequence.'.$category_id => '表示順',
-                    // 'classname.'.$category_id        => 'クラス名',
-                    'category.'.$category_id         => 'カテゴリ',
-                    'color.'.$category_id            => '文字色',
-                    'background_color.'.$category_id => '背景色',
-                ]);
+                $rules['display_sequence.'.$category_id] = ['required'];
+                $rules['category.'.$category_id] = ['required'];
+                $rules['color.'.$category_id] = ['required'];
+                $rules['background_color.'.$category_id] = ['required'];
 
-                if ($validator->fails()) {
-                    return $this->categories($request, $id, $validator->errors());
-                }
+                $setAttributeNames['display_sequence.'.$category_id] = '表示順';
+                $setAttributeNames['category.'.$category_id] = 'カテゴリ';
+                $setAttributeNames['color.'.$category_id] = '文字色';
+                $setAttributeNames['background_color.'.$category_id] = '背景色';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            return $this->categories($request, $id, $validator->errors());
+            // return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             Categories::create([
-                            'display_sequence' => intval($request->add_display_sequence),
-                            'classname'        => $request->add_classname,
-                            'category'         => $request->add_category,
-                            'color'            => $request->add_color,
-                            'background_color' => $request->add_background_color
-                        ]);
+                'display_sequence' => intval($request->add_display_sequence),
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color
+            ]);
         }
 
         // 既存項目アリ
@@ -382,9 +380,11 @@ class SiteManage extends ManagePluginBase
 
         // サイト名
         $configs = Configs::updateOrCreate(
-            ['name'     => 'language_multi_on'],
-            ['category' => 'general',
-             'value'    => $request->language_multi_on]
+            ['name' => 'language_multi_on'],
+            [
+                'category' => 'general',
+                'value' => $request->language_multi_on
+            ]
         );
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
@@ -426,11 +426,11 @@ class SiteManage extends ManagePluginBase
         // 追加項目アリ
         if (!empty($request->add_language)) {
             $new_configs = Configs::create([
-                         'name'        => 'language',
-                         'category'    => 'language',
-                         'value'       => $request->add_language,
-                         'additional1' => $request->add_url,
-                     ]);
+                'name'        => 'language',
+                'category'    => 'language',
+                'value'       => $request->add_language,
+                'additional1' => $request->add_url,
+            ]);
 
             // name をユニークにするために更新(languageのname は特に使用していない)
             $new_configs->name = $new_configs->name . '_' . $new_configs->id;
