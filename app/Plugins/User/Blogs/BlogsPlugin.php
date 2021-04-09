@@ -1150,7 +1150,8 @@ WHERE status = 0
                 )
                 ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
                     $join->on('blogs_categories.categories_id', '=', 'categories.id')
-                            ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
+                            ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
+                            ->where('blogs_categories.deleted_at', null);
                 })
                 ->where('target', null)
                 ->orderBy('blogs_categories.display_sequence', 'asc')
@@ -1180,7 +1181,11 @@ WHERE status = 0
                         'blogs_categories.view_flag',
                         'blogs_categories.display_sequence as plugin_display_sequence'
                     )
-                    ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
+                    ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
+                        $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                                ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
+                                ->where('blogs_categories.deleted_at', null);
+                    })
                     ->where('target', 'blogs')
                     ->where('plugin_id', $blog_frame->blogs_id)
                     ->orderBy('blogs_categories.display_sequence', 'asc')

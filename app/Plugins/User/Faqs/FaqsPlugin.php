@@ -978,7 +978,8 @@ class FaqsPlugin extends UserPluginBase
                 )
                 ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
                     $join->on('faqs_categories.categories_id', '=', 'categories.id')
-                            ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id);
+                            ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id)
+                            ->where('faqs_categories.deleted_at', null);
                 })
                 ->where('target', null)
                 ->orderBy('display_sequence', 'asc')
@@ -1000,7 +1001,11 @@ class FaqsPlugin extends UserPluginBase
                         'faqs_categories.view_flag',
                         'faqs_categories.display_sequence as plugin_display_sequence'
                     )
-                    ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
+                    ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
+                        $join->on('faqs_categories.categories_id', '=', 'categories.id')
+                                ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id)
+                                ->where('faqs_categories.deleted_at', null);
+                    })
                     ->where('target', 'faqs')
                     ->where('plugin_id', $faq_frame->faqs_id)
                     ->orderBy('display_sequence', 'asc')
