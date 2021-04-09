@@ -227,10 +227,10 @@ class SiteManage extends ManagePluginBase
     /**
      *  カテゴリ表示画面
      */
-    public function categories($request, $id, $errors = null, $create_flag = false)
+    public function categories($request, $id)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // カテゴリデータの取得
         $categories = Categories::orderBy('target', 'asc')
@@ -243,8 +243,6 @@ class SiteManage extends ManagePluginBase
             "plugin_name" => "site",
             "id"          => $id,
             "categories"  => $categories,
-            "create_flag" => $create_flag,
-            "errors"      => $errors,
         ]);
     }
 
@@ -295,8 +293,8 @@ class SiteManage extends ManagePluginBase
         $validator->setAttributeNames($setAttributeNames);
 
         if ($validator->fails()) {
-            return $this->categories($request, $id, $validator->errors());
-            // return redirect()->back()->withErrors($validator)->withInput();
+            // return $this->categories($request, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 追加項目アリ
@@ -328,7 +326,8 @@ class SiteManage extends ManagePluginBase
             }
         }
 
-        return $this->categories($request, $id, null, true);
+        // return $this->categories($request, $id, null, true);
+        return redirect()->back();
     }
 
     /**
@@ -339,7 +338,8 @@ class SiteManage extends ManagePluginBase
         // カテゴリ削除
         Categories::where('id', $id)->delete();
 
-        return $this->categories($request, $id, null, true);
+        // return $this->categories($request, $id, null, true);
+        return redirect()->back();
     }
 
     /**

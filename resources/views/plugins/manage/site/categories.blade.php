@@ -20,7 +20,7 @@
     <div class="card-body">
 
         {{-- エラーメッセージ --}}
-        @if ($errors)
+        @if ($errors->count() > 0)
             <div class="card border-danger">
                 <div class="card-body">
                     <span class="text-danger">
@@ -108,59 +108,31 @@
                             </tr>
                         @endforeach
 
-                        @if ($create_flag)
-                            <tr>
-                                <td nowrap>
-                                    <input type="text" value="" name="add_display_sequence" class="form-control">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="" name="add_classname" class="form-control">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="" name="add_category" class="form-control">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="" name="add_color" class="form-control" placeholder="(例)#000000">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="" name="add_background_color" class="form-control" placeholder="(例)#ffffff">
-                                </td>
-                                <td nowrap>
-                                    <input type="hidden" value="" name="add_target" class="form-control">
-                                </td>
-                                <td nowrap>
-                                    <input type="hidden" value="" name="add_plugin_id">
-                                </td>
-                                <td nowrap>
-                                </td>
-                            </tr>
-                        @else
-                            <tr>
-                                <td nowrap>
-                                    <input type="text" value="{{old('add_display_sequence')}}" name="add_display_sequence" class="form-control @if ($errors && $errors->has('add_display_sequence')) border-danger @endif">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="{{old('add_classname')}}" name="add_classname" class="form-control @if ($errors && $errors->has('add_classname')) border-danger @endif">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="{{old('add_category')}}" name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="{{old('add_color')}}" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000">
-                                </td>
-                                <td nowrap>
-                                    <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
-                                </td>
-                                <td nowrap>
-                                    <input type="hidden" value="{{old('add_target')}}" name="add_target" class="form-control">
-                                </td>
-                                <td nowrap>
-                                    <input type="hidden" value="{{old('add_plugin_id')}}" name="add_plugin_id">
-                                </td>
-                                <td nowrap>
-                                </td>
-                            </tr>
-                        @endif
+                        <tr>
+                            <td nowrap>
+                                <input type="text" value="{{old('add_display_sequence')}}" name="add_display_sequence" class="form-control @if ($errors && $errors->has('add_display_sequence')) border-danger @endif">
+                            </td>
+                            <td nowrap>
+                                <input type="text" value="{{old('add_classname')}}" name="add_classname" class="form-control @if ($errors && $errors->has('add_classname')) border-danger @endif">
+                            </td>
+                            <td nowrap>
+                                <input type="text" value="{{old('add_category')}}" name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
+                            </td>
+                            <td nowrap>
+                                <input type="text" value="{{old('add_color')}}" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000">
+                            </td>
+                            <td nowrap>
+                                <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
+                            </td>
+                            <td nowrap>
+                                <input type="hidden" value="{{old('add_target')}}" name="add_target" class="form-control">
+                            </td>
+                            <td nowrap>
+                                <input type="hidden" value="{{old('add_plugin_id')}}" name="add_plugin_id">
+                            </td>
+                            <td nowrap>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
