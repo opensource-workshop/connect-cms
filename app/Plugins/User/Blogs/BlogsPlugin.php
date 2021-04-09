@@ -152,8 +152,6 @@ class BlogsPlugin extends UserPluginBase
      */
     private function getBlogsCategories($blogs_id)
     {
-        $plugin_id = Plugins::where('plugin_name', \PluginName::blogs)->first()->id;
-
         $blogs_categories = Categories::select('categories.*')
                           ->join('blogs_categories', function ($join) use ($blogs_id) {
                               $join->on('blogs_categories.categories_id', '=', 'categories.id')
@@ -161,7 +159,7 @@ class BlogsPlugin extends UserPluginBase
                                    ->where('blogs_categories.view_flag', 1);
                           })
                           ->whereNull('plugin_id')
-                          ->orWhere('plugin_id', $plugin_id)
+                          ->orWhere('plugin_id', $blogs_id)
                           ->orderBy('target', 'asc')
                           ->orderBy('display_sequence', 'asc')
                           ->get();

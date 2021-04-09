@@ -136,8 +136,6 @@ class FaqsPlugin extends UserPluginBase
      */
     private function getFaqsCategories($faqs_id)
     {
-        $plugin_id = Plugins::where('plugin_name', \PluginName::faqs)->first()->id;
-
         $faqs_categories = Categories::select('categories.*')
                           ->join('faqs_categories', function ($join) use ($faqs_id) {
                               $join->on('faqs_categories.categories_id', '=', 'categories.id')
@@ -145,7 +143,7 @@ class FaqsPlugin extends UserPluginBase
                                    ->where('faqs_categories.view_flag', 1);
                           })
                           ->whereNull('plugin_id')
-                          ->orWhere('plugin_id', $plugin_id)
+                          ->orWhere('plugin_id', $faqs_id)
                           ->orderBy('target', 'asc')
                           ->orderBy('display_sequence', 'asc')
                           ->get();
