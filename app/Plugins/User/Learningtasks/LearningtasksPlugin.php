@@ -16,7 +16,6 @@ use App\Plugins\User\Learningtasks\LearningtasksTool;
 
 // use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
-use App\Models\Core\Plugins;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -2002,19 +2001,19 @@ class LearningtasksPlugin extends UserPluginBase
 
         // カテゴリ（全体）
         $general_categories = Categories::
-                select(
-                    'categories.*',
-                    'learningtasks_categories.view_flag',
-                    'learningtasks_categories.display_sequence as general_display_sequence'
-                )
-                ->leftJoin('learningtasks_categories', function ($join) use ($learningtask) {
-                    $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
-                            ->where('learningtasks_categories.learningtasks_id', '=', $learningtask->id);
-                })
-                ->where('target', null)
-                ->orderBy('learningtasks_categories.display_sequence', 'asc')
-                ->orderBy('categories.display_sequence', 'asc')
-                ->get();
+                                        select(
+                                            'categories.*',
+                                            'learningtasks_categories.view_flag',
+                                            'learningtasks_categories.display_sequence as general_display_sequence'
+                                        )
+                                        ->leftJoin('learningtasks_categories', function ($join) use ($learningtask) {
+                                            $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
+                                                 ->where('learningtasks_categories.learningtasks_id', '=', $learningtask->id);
+                                        })
+                                        ->where('target', null)
+                                        ->orderBy('learningtasks_categories.display_sequence', 'asc')
+                                        ->orderBy('categories.display_sequence', 'asc')
+                                        ->get();
 
         foreach ($general_categories as $general_categorie) {
             // （初期登録時を想定）課題管理カテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
@@ -2027,17 +2026,17 @@ class LearningtasksPlugin extends UserPluginBase
         $plugin_categories = null;
         if ($learningtask->id) {
             $plugin_categories = Categories::
-                    select(
-                        'categories.*',
-                        'learningtasks_categories.view_flag',
-                        'learningtasks_categories.display_sequence as plugin_display_sequence'
-                    )
-                    ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
-                    ->where('target', 'learningtasks')
-                    ->where('plugin_id', $learningtask->id)
-                    ->orderBy('learningtasks_categories.display_sequence', 'asc')
-                    ->orderBy('categories.display_sequence', 'asc')
-                    ->get();
+                                            select(
+                                                'categories.*',
+                                                'learningtasks_categories.view_flag',
+                                                'learningtasks_categories.display_sequence as plugin_display_sequence'
+                                            )
+                                            ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
+                                            ->where('target', 'learningtasks')
+                                            ->where('plugin_id', $learningtask->id)
+                                            ->orderBy('learningtasks_categories.display_sequence', 'asc')
+                                            ->orderBy('categories.display_sequence', 'asc')
+                                            ->get();
         }
 
         // 表示テンプレートを呼び出す。
@@ -2115,8 +2114,6 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 課題管理
         $learningtask = $this->getLearningTask($frame_id);
-        // プラグインID
-        $plugin_id = Plugins::where('plugin_name', \PluginName::learningtasks)->first()->id;
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
@@ -2125,8 +2122,8 @@ class LearningtasksPlugin extends UserPluginBase
                 'category'         => $request->add_category,
                 'color'            => $request->add_color,
                 'background_color' => $request->add_background_color,
-                'target'           => \PluginName::learningtasks,
-                'plugin_id'        => $plugin_id,
+                'target'           => 'learningtasks',
+                'plugin_id'        => $learningtask->id,
                 'display_sequence' => intval($request->add_display_sequence),
             ]);
             LearningtasksCategories::create([
@@ -2148,8 +2145,8 @@ class LearningtasksPlugin extends UserPluginBase
                 $category->category         = $request->plugin_category[$plugin_categories_id];
                 $category->color            = $request->plugin_color[$plugin_categories_id];
                 $category->background_color = $request->plugin_background_color[$plugin_categories_id];
-                $category->target           = \PluginName::learningtasks;
-                $category->plugin_id        = $plugin_id;
+                $category->target           = 'learningtasks';
+                $category->plugin_id        = $learningtask->id;
                 $category->display_sequence = intval($request->plugin_display_sequence[$plugin_categories_id]);
 
                 // 保存

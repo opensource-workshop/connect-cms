@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 
 use App\Models\Core\Configs;
-use App\Models\Core\Plugins;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -1083,8 +1082,6 @@ class FaqsPlugin extends UserPluginBase
 
         // FAQ
         $faq_frame = $this->getFaqFrame($frame_id);
-        // プラグインID
-        $plugin_id = Plugins::where('plugin_name', \PluginName::faqs)->first()->id;
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
@@ -1093,8 +1090,8 @@ class FaqsPlugin extends UserPluginBase
                 'category'         => $request->add_category,
                 'color'            => $request->add_color,
                 'background_color' => $request->add_background_color,
-                'target'           => \PluginName::faqs,
-                'plugin_id'        => $plugin_id,
+                'target'           => 'faqs',
+                'plugin_id'        => $faq_frame->faqs_id,
                 'display_sequence' => intval($request->add_display_sequence),
             ]);
             FaqsCategories::create([
@@ -1116,8 +1113,8 @@ class FaqsPlugin extends UserPluginBase
                 $category->category         = $request->plugin_category[$plugin_categories_id];
                 $category->color            = $request->plugin_color[$plugin_categories_id];
                 $category->background_color = $request->plugin_background_color[$plugin_categories_id];
-                $category->target           = \PluginName::faqs;
-                $category->plugin_id        = $plugin_id;
+                $category->target           = 'faqs';
+                $category->plugin_id        = $faq_frame->faqs_id;
                 $category->display_sequence = $request->plugin_display_sequence[$plugin_categories_id];
 
                 // 保存

@@ -10,7 +10,6 @@ use DB;
 use Session;
 
 use App\Models\Core\Configs;
-use App\Models\Core\Plugins;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -1268,8 +1267,6 @@ WHERE status = 0
 
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
-        // プラグインID
-        $plugin_id = Plugins::where('plugin_name', \PluginName::blogs)->first()->id;
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
@@ -1278,8 +1275,8 @@ WHERE status = 0
                 'category'         => $request->add_category,
                 'color'            => $request->add_color,
                 'background_color' => $request->add_background_color,
-                'target'           => \PluginName::blogs,
-                'plugin_id'        => $plugin_id,
+                'target'           => 'blogs',
+                'plugin_id'        => $blog_frame->blogs_id,
                 'display_sequence' => intval($request->add_display_sequence),
             ]);
             BlogsCategories::create([
@@ -1301,8 +1298,8 @@ WHERE status = 0
                 $category->category         = $request->plugin_category[$plugin_categories_id];
                 $category->color            = $request->plugin_color[$plugin_categories_id];
                 $category->background_color = $request->plugin_background_color[$plugin_categories_id];
-                $category->target           = \PluginName::blogs;
-                $category->plugin_id        = $plugin_id;
+                $category->target           = 'blogs';
+                $category->plugin_id        = $blog_frame->blogs_id;
                 $category->display_sequence = intval($request->plugin_display_sequence[$plugin_categories_id]);
 
                 // 保存
