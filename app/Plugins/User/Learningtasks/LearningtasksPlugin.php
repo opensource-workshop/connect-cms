@@ -213,10 +213,13 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  カテゴリデータの取得
+     * カテゴリデータの取得
      */
     private function getLearningtasksCategories($learningtask_id)
     {
+        // プラグインID
+        $plugin_id = Plugins::where('plugin_name', \PluginName::learningtasks)->first()->id;
+
         $learningtasks_categories = Categories::select('categories.*')
                           ->join('learningtasks_categories', function ($join) use ($learningtask_id) {
                               $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
@@ -224,7 +227,7 @@ class LearningtasksPlugin extends UserPluginBase
                                    ->where('learningtasks_categories.view_flag', 1);
                           })
                           ->whereNull('plugin_id')
-                          ->orWhere('plugin_id', $learningtask_id)
+                          ->orWhere('plugin_id', $plugin_id)
                           ->orderBy('target', 'asc')
                           ->orderBy('display_sequence', 'asc')
                           ->get();
