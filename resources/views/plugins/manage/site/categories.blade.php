@@ -56,17 +56,20 @@
         {{ csrf_field() }}
 
         <div class="form-group table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover table-sm mb-0">
             <thead>
                 <tr>
-                    <th nowrap>表示順</th>
+                    <th nowrap colspan="8"><h5 class="mb-0"><span class="badge badge-secondary">共通カテゴリ</span></h5></th>
+                </tr>
+                <tr>
+                    <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
                     <th nowrap>クラス名</th>
-                    <th nowrap>カテゴリ</th>
-                    <th nowrap>文字色</th>
-                    <th nowrap>背景色</th>
+                    <th nowrap>カテゴリ <span class="badge badge-danger">必須</span></th>
+                    <th nowrap>文字色 <span class="badge badge-danger">必須</span></th>
+                    <th nowrap>背景色 <span class="badge badge-danger">必須</span></th>
                     <th nowrap>対象</th>
                     <th nowrap>プラグインID</th>
-                    <th nowrap><i class="fas fa-trash-alt"></i></th>
+                    <th nowrap class="text-center"><i class="fas fa-trash-alt"></i></th>
                 </tr>
             </thead>
             <tbody>
@@ -88,7 +91,7 @@
                     <td nowrap>
                         <input type="text" value="{{old('background_color.'.$category->id, $category->background_color)}}" name="background_color[{{$category->id}}]" class="form-control @if ($errors && $errors->has('background_color.'.$category->id)) border-danger @endif">
                     </td>
-                    <td nowrap>
+                    <td nowrap class="align-middle">
                         <input type="hidden" value="{{old('target.'.$category->id, $category->target)}}" name="target[{{$category->id}}]" class="form-control">
                         @if ($category->target)
                             <span class="badge" style="color:{{$category->color}};background-color:{{$category->background_color}};">{{$category->target}}</span>
@@ -96,7 +99,7 @@
                             <span class="badge" style="color:{{$category->color}};background-color:{{$category->background_color}};">ALL</span>
                         @endif
                     </td>
-                    <td nowrap>
+                    <td nowrap class="align-middle">
                         <input type="hidden" value="{{old('plugin_id.'.$category->id, $category->plugin_id)}}" name="plugin_id[{{$category->id}}]">
                         {{$category->plugin_id}}
                     </td>
@@ -117,10 +120,10 @@
                         <input type="text" value="" name="add_category" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_color" class="form-control">
+                        <input type="text" value="" name="add_color" class="form-control" placeholder="(例)#000000">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_background_color" class="form-control">
+                        <input type="text" value="" name="add_background_color" class="form-control" placeholder="(例)#ffffff">
                     </td>
                     <td nowrap>
                         <input type="hidden" value="" name="add_target" class="form-control">
@@ -143,10 +146,10 @@
                         <input type="text" value="{{old('add_category')}}" name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_color')}}" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif">
+                        <input type="text" value="{{old('add_color')}}" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000">
                     </td>
                     <td nowrap>
-                        <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif">
+                        <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
                     </td>
                     <td nowrap>
                         <input type="hidden" value="{{old('add_target')}}" name="add_target" class="form-control">
@@ -160,15 +163,15 @@
             @endif
             </tbody>
             </table>
+        </div>
 
-            <div class="card card-body bg-light p-2 m-2">
-                <ul>
-                    <li>カテゴリ設定後は、各プラグインのカテゴリ設定で表示設定が必要です。</li>
-                    <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
-                    <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>
-                    <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
-                </ul>
-            </div>
+        <div class="card card-body bg-light p-2 mb-3">
+            <ul>
+                <li>カテゴリ設定後は、各プラグインのカテゴリ設定で表示設定が必要です。</li>
+                <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
+                <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>
+                <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
+            </ul>
         </div>
 
         <div class="form-group text-center">
