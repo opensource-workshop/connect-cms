@@ -67,7 +67,7 @@
                             <th nowrap>文字色 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>背景色 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>対象</th>
-                            <th nowrap>プラグインID</th>
+                            <th nowrap>対象カテゴリID</th>
                             <th nowrap class="text-center"><i class="fas fa-trash-alt"></i></th>
                         </tr>
                     </thead>
