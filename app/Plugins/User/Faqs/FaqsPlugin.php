@@ -49,7 +49,7 @@ class FaqsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['rss'];
+        $functions['get']  = [];
         $functions['post'] = [];
         return $functions;
     }

@@ -179,6 +179,7 @@ return [
         'approval'            => ['post'],
 
         // ゲストでも実行されるメソッド
+        'rss'                 => ['get'],
         'index'               => ['post'],
         'publicConfirm'       => ['post'],
         'publicStore'         => ['post'],
