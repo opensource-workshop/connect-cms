@@ -1173,8 +1173,6 @@ WHERE status = 0
         // カテゴリ（このブログ）
         $plugin_categories = null;
         if ($blog_frame->blogs_id) {
-            $plugin_id = Plugins::where('plugin_name', \PluginName::blogs)->first()->id;
-
             $plugin_categories = Categories::
                     select(
                         'categories.*',
@@ -1184,8 +1182,8 @@ WHERE status = 0
                         'blogs_categories.display_sequence as plugin_display_sequence'
                     )
                     ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
-                    ->where('target', \PluginName::blogs)
-                    ->where('plugin_id', $plugin_id)
+                    ->where('target', 'blogs')
+                    ->where('plugin_id', $blog_frame->blogs_id)
                     ->orderBy('blogs_categories.display_sequence', 'asc')
                     ->orderBy('categories.display_sequence', 'asc')
                     ->get();

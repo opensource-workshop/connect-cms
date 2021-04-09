@@ -2026,8 +2026,6 @@ class LearningtasksPlugin extends UserPluginBase
         // カテゴリ（この課題管理）
         $plugin_categories = null;
         if ($learningtask->id) {
-            $plugin_id = Plugins::where('plugin_name', \PluginName::learningtasks)->first()->id;
-
             $plugin_categories = Categories::
                     select(
                         'categories.*',
@@ -2035,8 +2033,8 @@ class LearningtasksPlugin extends UserPluginBase
                         'learningtasks_categories.display_sequence as plugin_display_sequence'
                     )
                     ->leftJoin('learningtasks_categories', 'learningtasks_categories.categories_id', '=', 'categories.id')
-                    ->where('target', \PluginName::learningtasks)
-                    ->where('plugin_id', $plugin_id)
+                    ->where('target', 'learningtasks')
+                    ->where('plugin_id', $learningtask->id)
                     ->orderBy('learningtasks_categories.display_sequence', 'asc')
                     ->orderBy('categories.display_sequence', 'asc')
                     ->get();

@@ -995,8 +995,6 @@ class FaqsPlugin extends UserPluginBase
         // カテゴリ（このFAQ）
         $plugin_categories = null;
         if ($faq_frame->faqs_id) {
-            $plugin_id = Plugins::where('plugin_name', \PluginName::faqs)->first()->id;
-
             $plugin_categories = Categories::
                     select(
                         'categories.*',
@@ -1004,8 +1002,8 @@ class FaqsPlugin extends UserPluginBase
                         'faqs_categories.display_sequence as plugin_display_sequence'
                     )
                     ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
-                    ->where('target', \PluginName::faqs)
-                    ->where('plugin_id', $plugin_id)
+                    ->where('target', 'faqs')
+                    ->where('plugin_id', $faq_frame->faqs_id)
                     ->orderBy('display_sequence', 'asc')
                     ->get();
         }
