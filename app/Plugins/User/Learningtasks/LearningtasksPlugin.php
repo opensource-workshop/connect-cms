@@ -96,17 +96,20 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // [TODO] role_article(モデレータ)で設定画面いじれる所は見直し予定。おおよそrole_arrangement（プラグイン管理者）になる見込み
         // 権限チェックテーブル
         $role_ckeck_table = array();
+
+        // プラグイン管理者
         $role_ckeck_table["editMail"]         = array('role_arrangement');
+        $role_ckeck_table["saveMail"]         = array('role_arrangement');
+
+        // モデレータ（科目の編集から飛べる処理のため）
         $role_ckeck_table["editUsers"]        = array('role_article');
         $role_ckeck_table["editReport"]       = array('role_article');
         $role_ckeck_table["editExaminations"] = array('role_article');
         $role_ckeck_table["editEvaluate"]     = array('role_article');
         $role_ckeck_table["listGrade"]        = array('role_article');
 
-        $role_ckeck_table["saveMail"]         = array('role_arrangement');
         $role_ckeck_table["saveUsers"]        = array('role_article');
         $role_ckeck_table["saveReport"]       = array('role_article');
         $role_ckeck_table["saveExaminations"] = array('role_article');
