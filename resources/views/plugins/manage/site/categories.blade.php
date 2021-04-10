@@ -124,14 +124,9 @@
                             <td nowrap>
                                 <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
                             </td>
-                            <td nowrap>
-                                <input type="hidden" value="{{old('add_target')}}" name="add_target" class="form-control">
-                            </td>
-                            <td nowrap>
-                                <input type="hidden" value="{{old('add_plugin_id')}}" name="add_plugin_id">
-                            </td>
-                            <td nowrap>
-                            </td>
+                            <td nowrap></td>
+                            <td nowrap></td>
+                            <td nowrap></td>
                         </tr>
                     </tbody>
                 </table>
