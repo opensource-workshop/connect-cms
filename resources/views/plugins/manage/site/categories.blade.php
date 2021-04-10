@@ -20,22 +20,7 @@
     <div class="card-body">
 
         {{-- エラーメッセージ --}}
-        @if ($errors->count() > 0)
-            <div class="card border-danger">
-                <div class="card-body">
-                    <span class="text-danger">
-                        @foreach($errors->all() as $error)
-                            <i class="fas fa-exclamation-triangle"></i> {{$error}}<br />
-                        @endforeach
-                    </span>
-                    <span class="text-secondary">
-                        @if ($errors->has('add_display_sequence') || $errors->has('add_category') || $errors->has('color') || $errors->has('background_color'))
-                            <i class="fas fa-exclamation-circle"></i> 追加行を入力する場合は、すべての項目を入力してください。
-                        @endif
-                    </span>
-                </div>
-            </div>
-        @endif
+        @include('common.category_errors')
 
         {{-- 削除ボタンのアクション --}}
         <script type="text/javascript">
