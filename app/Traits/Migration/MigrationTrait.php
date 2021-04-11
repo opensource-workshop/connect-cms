@@ -500,7 +500,11 @@ trait MigrationTrait
         //    $this->migration_config = parse_ini_file(storage_path() . '/app/migration_config/migration_config.ini', true);
         //}
         if (File::exists(config('migration.MIGRATION_CONFIG_PATH'))) {
+            // 手動で設置のmigration config がある場合
             $this->migration_config = parse_ini_file(config('migration.MIGRATION_CONFIG_PATH'), true);
+        } elseif (File::exists(storage_path('app/migration/oneclick/migration_config.oneclick.ini'))) {
+            // NetCommons2 からのワンクリック移行用の migration config がある場合
+            $this->migration_config = parse_ini_file(storage_path('app/migration/oneclick/migration_config.oneclick.ini'), true);
         }
 
         // uploads のini ファイルの読み込み
@@ -702,8 +706,15 @@ trait MigrationTrait
                 $this->putMonitor(1, "Page data loop.", "dir = " . basename($path));
 
                 // ページの設定取得
-                $page_ini = parse_ini_file($path. '/page.ini', true);
+                $page_ini = parse_ini_file($path . '/page.ini', true);
                 //print_r($page_ini);
+
+                // @insert で page.ini がない場合は、import から参照する。
+                if ($this->import_base == '@insert/') {
+                    if (!File::exists($path . '/page.ini')) {
+                        $page_ini = parse_ini_file(str_replace('@insert', 'import', $path . '/page.ini'), true);
+                    }
+                }
 
                 // ルーム指定を探しておく。
                 $room_id = null;
@@ -1167,7 +1178,7 @@ trait MigrationTrait
                 $nc2_override_pass = $this->getMigrationConfig('users', 'nc2_export_login_users_overridepass');
                 if (!empty($nc2_override_pass) && isset($nc2_override_pass[$user_item['userid']])) {
                     $user_item['password'] = $nc2_override_pass[$user_item['userid']];
-                    $this->putError(3, 'パスワードを変更しました', "userid = " . $user_item['userid'] );
+                    $this->putError(3, 'パスワードを変更しました', "userid = " . $user_item['userid']);
                 }
 
                 // ユーザがあるかの確認
@@ -1571,16 +1582,16 @@ trait MigrationTrait
 
                     // ブログ記事テーブル追加
                     $blogs_posts = BlogsPosts::create([
-                        'blogs_id' => $blog->id, 
-                        'post_title' => $blog_tsv_cols[4], 
-                        'post_text' => $post_text, 
-                        'post_text2' => $post_text2, 
+                        'blogs_id' => $blog->id,
+                        'post_title' => $blog_tsv_cols[4],
+                        'post_text' => $post_text,
+                        'post_text2' => $post_text2,
                         'read_more_flag' => $read_more_flag,
                         'read_more_button' => $read_more_button,
                         'close_more_button' => $close_more_button,
-                        'categories_id' => $categories_id, 
-                        'important' => null, 
-                        'status' => 0, 
+                        'categories_id' => $categories_id,
+                        'important' => null,
+                        'status' => 0,
                         'posted_at' => $posted_at
                     ]);
 
@@ -2228,7 +2239,7 @@ trait MigrationTrait
                 '{X-TO_DATE}'=>'[[to_datetime]]',
                 '{X-DATA}'=>'[[body]]',
             ];
-            $mail_format = str_replace(array_keys( $replace_tags), array_values( $replace_tags), $mail_format);
+            $mail_format = str_replace(array_keys($replace_tags), array_values($replace_tags), $mail_format);
             $form = Forms::create([
                 'bucket_id'           => $bucket->id,
                 'forms_name'          => $form_name,
@@ -4104,8 +4115,15 @@ trait MigrationTrait
         // 移行の初期処理
         $this->migrationInit();
 
-        // uploads_path の最後に / がなければ追加
+        // uploads_path の取得
         $uploads_path = config('migration.NC2_EXPORT_UPLOADS_PATH');
+
+        // NC2_EXPORT_UPLOADS_PATH にない場合は、NetCommons2 ワンクリックディレクトリを確認する。
+        if (!File::exists($uploads_path)) {
+            $uploads_path = storage_path('app/migration/oneclick/htdocs/webapp/uploads/');
+        }
+
+        // uploads_path の最後に / がなければ追加
         if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
             $uploads_path = $uploads_path . '/';
         }
@@ -4267,8 +4285,8 @@ trait MigrationTrait
                     //1ルームのみの移行の場合を考慮
                     $parent_room_flg = true;
                     $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
-                    if(!empty($room_ids) && count($room_ids) == 1 && isset($room_ids[0])){
-                        if($nc2_sort_page->parent_id == $room_ids[0]){
+                    if (!empty($room_ids) && count($room_ids) == 1 && isset($room_ids[0])) {
+                        if ($nc2_sort_page->parent_id == $room_ids[0]) {
                             $parent_room_flg = false;
                         }
                     }
@@ -5969,8 +5987,17 @@ trait MigrationTrait
             // フレーム設定の保存用変数
             $frame_ini = "[frame_base]\n";
             $frame_ini .= "area_id = " . $this->nc2BlockArea($nc2_block) . "\n";
-            $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
-            if (!empty($nc2_block->frame_design)) {
+
+            // フレームタイトル＆メニューの特別処理
+            if ($nc2_block->getModuleName() == 'menu') {
+                $frame_ini .= "frame_title = \"\"\n";
+            } else {
+                $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
+            }
+
+            if ($nc2_block->getModuleName() == 'menu') {
+                $frame_ini .= "frame_design = \"none\"\n";
+            } elseif (!empty($nc2_block->frame_design)) {
                 $frame_ini .= "frame_design = \"" . $nc2_block->frame_design . "\"\n";
             } else {
                 $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
