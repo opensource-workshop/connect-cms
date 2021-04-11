@@ -123,4 +123,11 @@
             <a href="{{url('/')}}/manage/holiday" class="list-group-item">祝日管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'migration')
+            <a href="{{url('/')}}/manage/migration" class="list-group-item active">他システム移行</a>
+        @else
+            <a href="{{url('/')}}/manage/migration" class="list-group-item">他システム移行</a>
+        @endif
+    @endif
 </div>
