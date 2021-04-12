@@ -1,10 +1,10 @@
 {{--
- * 編集画面tabテンプレート
+ * 設定画面tabテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コンテンツプラグイン
- --}}
+ * @category 課題管理プラグイン
+--}}
 @if ($action == 'editBuckets')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">設定変更</span></span>
