@@ -770,13 +770,6 @@
     <div class="row mt-3">
         <div class="col-12 text-right mb-1">
             @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
-                {{-- delete
-                @if ($post->status == 1)
-                    @can('preview',[[$post, 'learningtasks', 'preview_off']])
-                        <span class="badge badge-warning align-bottom">一時保存</span>
-                    @endcan
-                @endif
-                --}}
                 <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
                     <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                 </a>
