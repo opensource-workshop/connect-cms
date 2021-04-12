@@ -1474,63 +1474,6 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     * データ一時保存関数
-     */
-    //public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
-    //{
-    //    // 項目のエラーチェック
-    //    $validator = $this->makeValidator($request);
-
-    //    // エラーがあった場合は入力画面に戻る。
-    //    if ($validator->fails()) {
-    //        return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
-    //    }
-
-    //    // 新規オブジェクト生成
-    //    if (empty($id)) {
-    //        $learningtasks_post = new LearningtasksPosts();
-
-    //        // 登録ユーザ
-    //        $learningtasks_post->created_id  = Auth::user()->id;
-    //    } else {
-    //        $learningtasks_post = LearningtasksPosts::find($id)->replicate();
-
-    //        // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
-    //        $check_learningtasks_post = $this->getPost($id);
-
-    //        // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-    //        if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $id) {
-    //            return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
-    //        }
-    //    }
-
-    //    // 課題管理記事設定
-    //    $learningtasks_post->status = 1;
-    //    $learningtasks_post->learningtasks_id          = $request->learningtasks_id;
-    //    $learningtasks_post->post_title       = $request->post_title;
-    //    $learningtasks_post->important        = $request->important;
-    //    $learningtasks_post->posted_at        = $request->posted_at . ':00';
-    //    $learningtasks_post->post_text        = $request->post_text;
-    //    $learningtasks_post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
-
-    //    $learningtasks_post->save();
-
-    //    if (empty($id)) {
-    //        // 新規登録の場合、contents_id を最初のレコードのid と同じにする。
-    //        LearningtasksPosts::where('id', $learningtasks_post->id)->update(['contents_id' => $learningtasks_post->id]);
-    //    }
-
-    //    // タグの保存
-    //    //$this->this->saveTag($request, $learningtasks_post, $old_learningtasks_post);
-
-    //    // 課題ファイルの保存
-    //    $this->saveTaskFile($request, $page_id, $learningtasks_post, $old_learningtasks_post);
-
-    //    // 登録後は表示用の初期処理を呼ぶ。
-    //    return $this->index($request, $page_id, $frame_id);
-    //}
-
-    /**
      *  削除処理
      */
     public function delete($request, $page_id, $frame_id, $post_id)
