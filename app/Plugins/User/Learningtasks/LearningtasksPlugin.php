@@ -943,7 +943,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  教員用、ユーザ切り替え
+     * 教員用、ユーザ切り替え
      */
     public function switchUser($request, $page_id, $frame_id, $post_id)
     {
@@ -960,7 +960,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 受講生のID
         if (empty($request->student_id)) {
-             session()->forget('student_id');
+            session()->forget('student_id');
         } else {
             session(['student_id' => $request->student_id]);
         }
@@ -974,14 +974,14 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  詳細表示関数
+     * 詳細表示関数
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
         // 課題のIDが変わったら、受講生を選びなおす。
         if (session('learningtask_post_id') != $post_id) {
-             session()->forget('student_id');
-             session()->forget('learningtask_post_id');
+            session()->forget('student_id');
+            session()->forget('learningtask_post_id');
         }
 
         // 課題管理
@@ -994,43 +994,45 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 課題の添付ファイル（学習指導書など）を取得
-        $post_files = LearningtasksPostsFiles::select(
-            'learningtasks_posts_files.*',
-            'uploads.id as uploads_id', 'uploads.client_original_name'
-        )->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
-         ->where('post_id', $post->id)
-         ->where('task_flag', 0)
-         ->get();
+        $post_files = LearningtasksPostsFiles::
+                select(
+                    'learningtasks_posts_files.*',
+                    'uploads.id as uploads_id', 'uploads.client_original_name'
+                )
+                ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+                ->where('post_id', $post->id)
+                ->where('task_flag', 0)
+                ->get();
 
         // 試験の添付ファイル（試験問題、解答用ファイルなど）を取得
-        $examination_files = LearningtasksPostsFiles::select(
-            'learningtasks_posts_files.*',
-            'uploads.id as uploads_id', 'uploads.client_original_name'
-        )->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
-         ->where('post_id', $post->id)
-         ->where('task_flag', 1)
-         ->get();
+        $examination_files = LearningtasksPostsFiles::
+                select(
+                    'learningtasks_posts_files.*',
+                    'uploads.id as uploads_id', 'uploads.client_original_name'
+                )
+                ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+                ->where('post_id', $post->id)
+                ->where('task_flag', 1)
+                ->get();
 
         // 試験情報(申し込み可能な分 = 終了日時が現在より後のもの)
         $examinations = LearningtasksExaminations::where('post_id', $post->id)
-                                                 ->where('end_at', '>', date('Y-m-d H:i:s'))
-                                                 ->orderBy('start_at', 'asc')
-                                                 ->get();
+                ->where('end_at', '>', date('Y-m-d H:i:s'))
+                ->orderBy('start_at', 'asc')
+                ->get();
 
         // ユーザー関連情報のまとめ
         $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
 
         // 詳細画面を呼び出す。
-        return $this->view(
-            'learningtasks_show', [
+        return $this->view('learningtasks_show', [
             'learningtask'      => $learningtask,
             'post'              => $post,
             'post_files'        => $post_files,
             'examination_files' => $examination_files,
             'examinations'      => $examinations,
             'tool'              => $tool,
-            ]
-        );
+        ]);
     }
 
     /**
