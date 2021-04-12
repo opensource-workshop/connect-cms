@@ -259,6 +259,7 @@ $app_array = [
         'NoticeJobType' => \App\Enums\NoticeJobType::class,
         'CountryCodeAlpha3' => \App\Enums\CountryCodeAlpha3::class,
         'UserStatus' => \App\Enums\UserStatus::class,
+        'ContentOpenType' => \App\Enums\ContentOpenType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
