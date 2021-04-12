@@ -261,6 +261,7 @@ $app_array = [
         'UserStatus' => \App\Enums\UserStatus::class,
         'PluginName' => \App\Enums\PluginName::class,
         'LearningtaskUseFunction' => \App\Enums\LearningtaskUseFunction::class,
+        'ContentOpenType' => \App\Enums\ContentOpenType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
