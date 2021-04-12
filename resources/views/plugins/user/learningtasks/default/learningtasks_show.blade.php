@@ -769,30 +769,18 @@
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
     <div class="row mt-3">
         <div class="col-12 text-right mb-1">
-        @if ($post->status == 2)
-            @can('preview',[[null, 'learningtasks', 'preview_off']])
-                <span class="badge badge-warning align-bottom">承認待ち</span>
+            @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
+                {{-- delete
+                @if ($post->status == 1)
+                    @can('preview',[[$post, 'learningtasks', 'preview_off']])
+                        <span class="badge badge-warning align-bottom">一時保存</span>
+                    @endcan
+                @endif
+                --}}
+                <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
+                    <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
+                </a>
             @endcan
-            @can('posts.approval',[[$post, 'learningtasks', 'preview_off']])
-                <form action="{{url('/')}}/redirect/plugin/learningtasks/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
-                    {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
-                    <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                        <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
-                    </button>
-                </form>
-            @endcan
-        @endif
-        @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
-            @if ($post->status == 1)
-                @can('preview',[[$post, 'learningtasks', 'preview_off']])
-                    <span class="badge badge-warning align-bottom">一時保存</span>
-                @endcan
-            @endif
-            <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
-            </a>
-        @endcan
         </div>
     </div>
 

@@ -457,25 +457,6 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     // /**
-    //  *  要承認の判断
-    //  */
-    // private function isApproval($frame_id)
-    // {
-    //     return $this->buckets->needApprovalUser(Auth::user());
-
-    //     //    // 承認の要否確認とステータス処理
-    //     //    $learningtasks_frame = $this->getLearningTask($frame_id);
-    //     //    if ($learningtasks_frame->approval_flag == 1) {
-
-    //     //        // 記事修正、コンテンツ管理者権限がない場合は要承認
-    //     //        if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-    //     //            return true;
-    //     //        }
-    //     //    }
-    //     //    return false;
-    // }
-
-    // /**
     //  *  タグの保存
     //  */
     // private function saveTag($request, $learningtasks_post, $old_learningtasks_post)
@@ -1026,12 +1007,12 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 詳細画面を呼び出す。
         return $this->view('learningtasks_show', [
-            'learningtask'      => $learningtask,
-            'post'              => $post,
-            'post_files'        => $post_files,
+            'learningtask' => $learningtask,
+            'post' => $post,
+            'post_files' => $post_files,
             'examination_files' => $examination_files,
-            'examinations'      => $examinations,
-            'tool'              => $tool,
+            'examinations' => $examinations,
+            'tool' => $tool,
         ]);
     }
 
@@ -1448,11 +1429,6 @@ class LearningtasksPlugin extends UserPluginBase
         $post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
         $post->save();
 
-        // 承認の要否確認とステータス処理
-        //if ($this->isApproval($frame_id)) {
-        //    $learningtasks_post->status = 2;
-        //}
-
         //if (empty($learningtasks_posts_id)) {
         //    // 新規
         //    // 登録ユーザ
@@ -1574,39 +1550,6 @@ class LearningtasksPlugin extends UserPluginBase
         // 削除後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
     }
-
-    /**
-     * 承認
-     */
-    //public function approval($request, $page_id = null, $frame_id = null, $id = null)
-    //{
-    //    // 新規オブジェクト生成
-    //    $learningtasks_post = LearningtasksPosts::find($id)->replicate();
-
-    //    // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
-    //    $check_learningtasks_post = $this->getPost($id);
-
-    //    // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-    //    if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $id) {
-    //        return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
-    //    }
-
-    //    // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
-    //    LearningtasksPosts::where('contents_id', $learningtasks_post->contents_id)->where('status', 0)->update(['status' => 9]);
-
-    //    // 課題管理記事設定
-    //    $learningtasks_post->status = 0;
-    //    $learningtasks_post->save();
-
-    //    // タグもコピー
-    //    $this->copyTag($check_learningtasks_post, $learningtasks_post);
-
-    //    // 課題ファイル情報もコピー
-    //    $this->copyTaskFile($request, $check_learningtasks_post, $learningtasks_post);
-
-    //    // 登録後は表示用の初期処理を呼ぶ。
-    //    return $this->index($request, $page_id, $frame_id);
-    //}
 
     /**
      * データ選択表示関数
@@ -1743,7 +1686,6 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtask->rss                 = 0;
         $learningtask->rss_count           = 0;
         $learningtask->sequence_conditions = intval($request->sequence_conditions);
-        //$learningtask->approval_flag = $request->approval_flag;
 
         // データ保存
         $learningtask->save();
@@ -2222,19 +2164,21 @@ class LearningtasksPlugin extends UserPluginBase
         // 削除対象の試験を削除する。
         if ($request->del_examinations) {
             foreach ($request->del_examinations as $examination_id => $examination_value) {
-                LearningtasksExaminations::find($examination_id)->delete();
+                if ($examination_value) {
+                    LearningtasksExaminations::find($examination_id)->delete();
+                }
             }
         }
 
         // 項目のエラーチェック
         $validate_value = [
-            'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at'],
-            'end_at'   => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at'],
+            'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at,report_end_at'],
+            'end_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at,report_end_at'],
         ];
 
         $validate_attribute = [
             'start_at' => '開始日時',
-            'end_at'   => '終了日時',
+            'end_at' => '終了日時',
         ];
 
         // 課題ファイルがアップロードされた。
@@ -2980,6 +2924,16 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
         return [false, '提出関係のファイルに対する権限なし'];
+    }
+
+    /**
+     * 権限設定 変更画面
+     */
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    {
+        // 承認は使用しない
+        $use_approval = false;
+        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }
 
     /**
