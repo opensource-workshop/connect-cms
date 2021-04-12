@@ -130,7 +130,7 @@
 
             <tr>
                 <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
-                 @if (Auth::check() && $learningtask->useReport())
+                @if (Auth::check() && $learningtask->useReport())
                     <td>{{$tool->getReportStatus($post->id)}}</td>
                 @endif
                 @if (Auth::check() && $learningtask->useExamination())
@@ -145,7 +145,7 @@
     @endforeach
     {{-- ページング処理 --}}
     <div class="text-center">
-        {{ $posts->links() }}
+        {{ $posts->fragment('frame-' . $frame_id)->links() }}
     </div>
 @endif
 
