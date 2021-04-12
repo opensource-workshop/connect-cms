@@ -260,6 +260,7 @@ $app_array = [
         'CountryCodeAlpha3' => \App\Enums\CountryCodeAlpha3::class,
         'UserStatus' => \App\Enums\UserStatus::class,
         'PluginName' => \App\Enums\PluginName::class,
+        'LearningtaskUseFunction' => \App\Enums\LearningtaskUseFunction::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
