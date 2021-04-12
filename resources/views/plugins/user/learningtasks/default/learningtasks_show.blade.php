@@ -147,43 +147,48 @@
             @endif
 
             @if ($tool->isStudent())
-                <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
-
                 @if ($tool->canReportUpload($post->id))
-                    <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
-                        {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
-                        <div class="form-group row mb-1">
+                    @if ($tool->checkFunction(LearningtaskUseFunction::use_report_file) || $tool->checkFunction(LearningtaskUseFunction::use_report_comment))
 
-                            <label class="col-sm-3 text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
-                            <div class="col-sm-9">
-                                <div class="custom-file">
-                                    <input type="file" class="custom-file-input" id="report_file" name="upload_file">
-                                    <label class="custom-file-label" for="report_file" data-browse="参照">レポートファイルを選んでください。</label>
+                        <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
+                        <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+
+                            @if ($tool->checkFunction(LearningtaskUseFunction::use_report_file))
+                                <div class="form-group row mb-1">
+                                    <label class="col-sm-3 text-sm-right">提出レポート <label class="badge badge-danger">必須</label></label>
+                                    <div class="col-sm-9">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="report_file" name="upload_file">
+                                            <label class="custom-file-label" for="report_file" data-browse="参照">レポートファイルを選んでください。</label>
+                                        </div>
+                                        @if ($errors && $errors->has('upload_file')) <div class="text-danger">{{$errors->first('upload_file')}}</div> @endif
+                                    </div>
                                 </div>
-                                @if ($errors && $errors->has('upload_file')) <div class="text-danger">{{$errors->first('upload_file')}}</div> @endif
-                            </div>
-                        </div>
+                            @endif
 
-                        @if ($tool->checkFunction('use_report_comment'))
-                        <div class="form-group row mb-1">
-                            <label class="col-sm-3 text-sm-right">本文</label>
-                            <div class="col-sm-9">
-                                <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
-                            </div>
-                        </div>
-                        @endif
+                            @if ($tool->checkFunction(LearningtaskUseFunction::use_report_comment))
+                                <div class="form-group row mb-1">
+                                    <label class="col-sm-3 text-sm-right">本文</label>
+                                    <div class="col-sm-9">
+                                        <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            @endif
 
-                        <div class="form-group row mb-1">
-                            <label class="col-sm-3 text-right"></label>
-                            <div class="col-sm-9">
-                                <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポートを提出します。\nよろしいですか？');">
-                                    <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
-                                </button>
+                            <div class="form-group row mb-1">
+                                <label class="col-sm-3 text-right"></label>
+                                <div class="col-sm-9">
+                                    <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポートを提出します。\nよろしいですか？');">
+                                        <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    @endif
                 @else
+                    <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
                     <div class="card mb-3">
                         <div class="card-body p-3">
                             {{$tool->getReportUploadMessage($post->id)}}
