@@ -220,7 +220,7 @@
                         type="text" 
                         name="content_open_date_from" 
                         value="{{old('content_open_date_from', $frame ? $frame->content_open_date_from : '')}}" 
-                        class="form-control datetimepicker-input col-md-3 {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
+                        class="form-control datetimepicker-input {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_from"
                         :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
@@ -244,7 +244,7 @@
                         type="text" 
                         name="content_open_date_to" 
                         value="{{old('content_open_date_to', $frame ? $frame->content_open_date_to : '')}}" 
-                        class="form-control datetimepicker-input col-md-3 {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
+                        class="form-control datetimepicker-input {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_to"
                         :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
