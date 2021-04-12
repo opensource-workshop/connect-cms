@@ -4,13 +4,15 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 {{-- 編集画面側のフレームメニュー --}}
 @include('plugins.user.learningtasks.learningtasks_setting_edit_tab')
 
 @section("plugin_contents_$frame->id")
+
+@include('common.errors_form_line')
 
 {{-- 試験設定フォーム --}}
 @if (empty($learningtasks_posts->id))
@@ -35,7 +37,7 @@
         <label class="col-md-3 text-md-right">試験提出機能</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(empty($tool->getFunction('post_examination_setting', true)))
+                @if(empty(old("post_examination_setting", $tool->getFunction('post_examination_setting', true))))
                     <input type="radio" value="" id="examination_null" name="post_examination_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_examination.show">
                 @else
                     <input type="radio" value="" id="examination_null" name="post_examination_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_examination.show">
@@ -43,7 +45,7 @@
                 <label class="custom-control-label" for="examination_null">課題管理設定に従う</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_setting', true) == 'off')
+                @if(old("post_examination_setting", $tool->getFunction('post_examination_setting', true)) == 'off')
                     <input type="radio" value="off" id="use_examination_off" name="post_examination_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_examination.show">
                 @else
                     <input type="radio" value="off" id="use_examination_off" name="post_examination_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_examination.show">
@@ -51,7 +53,7 @@
                 <label class="custom-control-label" for="use_examination_off">使用しない</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_setting', true) == 'on')
+                @if(old("post_examination_setting", $tool->getFunction('post_examination_setting', true)) == 'on')
                     <input type="radio" value="on" id="use_examination_on" name="post_examination_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_examination:not(.show)" aria-expanded="true" aria-controls="collapse_post_examination">
                 @else
                     <input type="radio" value="on" id="use_examination_on" name="post_examination_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_examination:not(.show)" aria-expanded="true" aria-controls="collapse_post_examination">
@@ -154,7 +156,7 @@
         <label class="col-md-3 text-md-right">申し込み可能判定</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(empty($tool->getFunction('post_examination_timing', true)))
+                @if(empty(old("post_examination_timing", $tool->getFunction('post_examination_timing', true))))
                     <input type="radio" value="" id="post_examination_timing_null" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="" id="post_examination_timing_null" name="post_examination_timing" class="custom-control-input">
@@ -162,7 +164,7 @@
                 <label class="custom-control-label" for="post_examination_timing_null">レポートが合格してから</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_timing', true) == 'one')
+                @if(old("post_examination_timing", $tool->getFunction('post_examination_timing', true)) == 'one')
                     <input type="radio" value="one" id="post_examination_timing_one" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="one" id="post_examination_timing_one" name="post_examination_timing" class="custom-control-input">
@@ -170,7 +172,7 @@
                 <label class="custom-control-label" for="post_examination_timing_one">レポートが1回でも提出済みなら（合否のチェックはしない）</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_examination_timing', true) == 'no_fail')
+                @if(old("post_examination_timing", $tool->getFunction('post_examination_timing', true)) == 'no_fail')
                     <input type="radio" value="no_fail" id="examination_timing_no_fail" name="post_examination_timing" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="no_fail" id="examination_timing_no_fail" name="post_examination_timing" class="custom-control-input">
@@ -267,7 +269,8 @@
         <div class="col-md-9">
             <div class="custom-file">
                 <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
-                <label class="custom-file-label" for="add_task_file" data-browse="参照">試験問題など</label>
+                <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
+                @if ($errors && $errors->has('add_task_file')) <div class="text-danger">{{$errors->first('add_task_file')}}</div> @endif
             </div>
         </div>
     </div>
@@ -283,10 +286,17 @@
                 <div class="text-center">
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span> キャンセル</span></button>
                     <input type="hidden" name="bucket_id" value="">
+                    {{-- change: 課題管理の試験設定は、登録・更新時に確認ダイアログを表示しない（試験日時登録で何度も確定ボタン押すため）
                     @if (empty($learningtasks_posts->id))
                         <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('更新します。\nよろしいですか？')"><i class="fas fa-check"></i> 登録確定</button>
                     @else
                         <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('更新します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>
+                    @endif
+                    --}}
+                    @if (empty($learningtasks_posts->id))
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+                    @else
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
                     @endif
                 </div>
             </div>

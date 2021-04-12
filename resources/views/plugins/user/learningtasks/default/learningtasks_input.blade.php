@@ -4,13 +4,15 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 {{-- 編集画面側のフレームメニュー --}}
 @include('plugins.user.learningtasks.learningtasks_setting_edit_tab')
 
 @section("plugin_contents_$frame->id")
+
+@include('common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
@@ -61,6 +63,7 @@
             <div class="custom-file">
                 <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
                 <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
+                @if ($errors && $errors->has('add_task_file')) <div class="text-danger">{{$errors->first('add_task_file')}}</div> @endif
             </div>
         </div>
     </div>

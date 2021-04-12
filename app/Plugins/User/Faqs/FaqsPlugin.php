@@ -48,8 +48,8 @@ class FaqsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles'];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
@@ -961,49 +961,63 @@ class FaqsPlugin extends UserPluginBase
     /**
      * カテゴリ表示関数
      */
-    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
+    public function listCategories($request, $page_id, $frame_id, $id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
-
-        // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
+        // $request->flash();
 
         // FAQ
         $faq_frame = $this->getFaqFrame($frame_id);
 
         // カテゴリ（全体）
-        $general_categories = Categories::select('categories.*', 'faqs_categories.id as faqs_categories_id', 'faqs_categories.categories_id', 'faqs_categories.view_flag')
-                                        ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
-                                            $join->on('faqs_categories.categories_id', '=', 'categories.id')
-                                                 ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id);
-                                        })
-                                        ->where('target', null)
-                                        ->orderBy('display_sequence', 'asc')
-                                        ->get();
+        $general_categories = Categories::
+                select(
+                    'categories.*',
+                    'faqs_categories.view_flag',
+                    'faqs_categories.display_sequence as general_display_sequence'
+                )
+                ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
+                    $join->on('faqs_categories.categories_id', '=', 'categories.id')
+                            ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id)
+                            ->where('faqs_categories.deleted_at', null);
+                })
+                ->where('target', null)
+                ->orderBy('display_sequence', 'asc')
+                ->get();
+
+        foreach ($general_categories as $general_categorie) {
+            // （初期登録時を想定）FAQカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
+            if (is_null($general_categorie->general_display_sequence)) {
+                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
+            }
+        }
+
         // カテゴリ（このFAQ）
         $plugin_categories = null;
         if ($faq_frame->faqs_id) {
-            $plugin_categories = Categories::select('categories.*', 'faqs_categories.id as faqs_categories_id', 'faqs_categories.categories_id', 'faqs_categories.view_flag')
-                                           ->leftJoin('faqs_categories', 'faqs_categories.categories_id', '=', 'categories.id')
-                                           ->where('target', 'faqs')
-                                           ->where('plugin_id', $faq_frame->faqs_id)
-                                           ->orderBy('display_sequence', 'asc')
-                                           ->get();
+            $plugin_categories = Categories::
+                    select(
+                        'categories.*',
+                        'faqs_categories.view_flag',
+                        'faqs_categories.display_sequence as plugin_display_sequence'
+                    )
+                    ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
+                        $join->on('faqs_categories.categories_id', '=', 'categories.id')
+                                ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id)
+                                ->where('faqs_categories.deleted_at', null);
+                    })
+                    ->where('target', 'faqs')
+                    ->where('plugin_id', $faq_frame->faqs_id)
+                    ->orderBy('display_sequence', 'asc')
+                    ->get();
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'faqs_list_categories', [
+        return $this->view('faqs_list_categories', [
             'general_categories' => $general_categories,
-            'plugin_categories'  => $plugin_categories,
-            'faq_frame'         => $faq_frame,
-            'errors'             => $errors,
-            'create_flag'        => $create_flag,
-            ]
-        )->withInput($request->all);
+            'plugin_categories' => $plugin_categories,
+            'faq_frame' => $faq_frame,
+        ]);
     }
 
     /**
@@ -1011,56 +1025,61 @@ class FaqsPlugin extends UserPluginBase
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（saveCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         /* エラーチェック
         ------------------------------------ */
 
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_display_sequence' => ['required'],
-                'add_category'         => ['required'],
-                'add_color'            => ['required'],
-                'add_background_color' => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_display_sequence' => '追加行の表示順',
-                'add_category'         => '追加行のカテゴリ',
-                'add_color'            => '追加行の文字色',
-                'add_background_color' => '追加行の背景色',
-            ]);
+        $rules = [];
 
-            if ($validator->fails()) {
-                return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
+        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
+        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
+            // 項目のエラーチェック
+            $rules['add_display_sequence'] = ['required'];
+            $rules['add_category'] = ['required'];
+            $rules['add_color'] = ['required'];
+            $rules['add_background_color'] = ['required'];
+
+            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
+            $setAttributeNames['add_category'] = '追加行のカテゴリ';
+            $setAttributeNames['add_color'] = '追加行の文字色';
+            $setAttributeNames['add_background_color'] = '追加行の背景色';
+        }
+
+        // 共通項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->general_categories_id)) {
+            foreach ($request->general_categories_id as $category_id) {
+                // 項目のエラーチェック
+                $rules['general_display_sequence.'.$category_id] = ['required'];
+
+                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
             }
         }
 
-        // 既存項目のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->faqs_categories_id)) {
-            foreach ($request->faqs_categories_id as $category_id) {
+        // 既存項目 のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->plugin_categories_id)) {
+            foreach ($request->plugin_categories_id as $category_id) {
                 // 項目のエラーチェック
-                $validator = Validator::make($request->all(), [
-                    'plugin_display_sequence.'.$category_id => ['required'],
-                    'plugin_category.'.$category_id         => ['required'],
-                    'plugin_color.'.$category_id            => ['required'],
-                    'plugin_background_color.'.$category_id => ['required'],
-                ]);
-                $validator->setAttributeNames([
-                    'plugin_display_sequence.'.$category_id => '表示順',
-                    'plugin_category.'.$category_id         => 'カテゴリ',
-                    'plugin_color.'.$category_id            => '文字色',
-                    'plugin_background_color.'.$category_id => '背景色',
-                ]);
+                $rules['plugin_display_sequence.'.$category_id] = ['required'];
+                $rules['plugin_category.'.$category_id] = ['required'];
+                $rules['plugin_color.'.$category_id] = ['required'];
+                $rules['plugin_background_color.'.$category_id] = ['required'];
 
-                if ($validator->fails()) {
-                    return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
-                }
+                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
+                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
+                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
+                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         /* カテゴリ追加
@@ -1072,20 +1091,20 @@ class FaqsPlugin extends UserPluginBase
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             $add_category = Categories::create([
-                                'classname'        => $request->add_classname,
-                                'category'         => $request->add_category,
-                                'color'            => $request->add_color,
-                                'background_color' => $request->add_background_color,
-                                'target'           => 'faqs',
-                                'plugin_id'        => $faq_frame->faqs_id,
-                                'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color,
+                'target'           => 'faqs',
+                'plugin_id'        => $faq_frame->faqs_id,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
             FaqsCategories::create([
-                                'faqs_id'         => $faq_frame->faqs_id,
-                                'categories_id'    => $add_category->id,
-                                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                                'display_sequence' => intval($request->add_display_sequence),
-                             ]);
+                'faqs_id'         => $faq_frame->faqs_id,
+                'categories_id'    => $add_category->id,
+                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
         }
 
         // 既存項目アリ
@@ -1116,10 +1135,10 @@ class FaqsPlugin extends UserPluginBase
                 FaqsCategories::updateOrCreate(
                     ['categories_id' => $general_categories_id, 'faqs_id' => $faq_frame->faqs_id],
                     [
-                     'faqs_id' => $faq_frame->faqs_id,
-                     'categories_id' => $general_categories_id,
-                     'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->general_display_sequence[$general_categories_id],
+                        'faqs_id' => $faq_frame->faqs_id,
+                        'categories_id' => $general_categories_id,
+                        'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => $request->general_display_sequence[$general_categories_id],
                     ]
                 );
             }
@@ -1133,16 +1152,17 @@ class FaqsPlugin extends UserPluginBase
                 FaqsCategories::updateOrCreate(
                     ['categories_id' => $plugin_categories_id, 'faqs_id' => $faq_frame->faqs_id],
                     [
-                     'faqs_id' => $faq_frame->faqs_id,
-                     'categories_id' => $plugin_categories_id,
-                     'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                     'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
+                        'faqs_id' => $faq_frame->faqs_id,
+                        'categories_id' => $plugin_categories_id,
+                        'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
+                        'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
                     ]
                 );
             }
         }
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
@@ -1150,18 +1170,14 @@ class FaqsPlugin extends UserPluginBase
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 削除(FAQプラグインのカテゴリ表示データ)
         FaqsCategories::where('categories_id', $id)->delete();
 
         // 削除(カテゴリ)
         Categories::where('id', $id)->delete();
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**

@@ -15,6 +15,30 @@ use App\Models\Core\UsersColumns;
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+{{-- ダウンロード用フォーム --}}
+<form method="post" name="user_download" action="{{url('/')}}/manage/user/downloadCsv">
+    {{ csrf_field() }}
+    <input type="hidden" name="character_code" value="">
+</form>
+
+<script type="text/javascript">
+    {{-- ダウンロードのsubmit JavaScript --}}
+    function submit_download_shift_jis() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        user_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+        user_download.submit();
+    }
+    function submit_download_utf_8() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        user_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
+        user_download.submit();
+    }
+</script>
+
 <div class="card">
     <div class="card-header p-0">
         {{-- 機能選択タブ --}}
@@ -51,6 +75,37 @@ use App\Models\Core\UsersColumns;
                                 <label for="user_search_condition_name" class="col-md-3 col-form-label text-md-right">ユーザー名</label>
                                 <div class="col-md-9">
                                     <input type="text" name="user_search_condition[name]" id="user_search_condition_name" value="{{Session::get('user_search_condition.name')}}" class="form-control">
+                                </div>
+                            </div>
+
+                            {{-- グループ --}}
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right pt-0">グループ</label>
+                                <div class="col-md-9">
+                                    @php
+                                        $values = Session::get('user_search_condition.groups');
+                                    @endphp
+                                    <div class="container-fluid row">
+                                        @forelse($groups_select as $group_select)
+                                            @php
+                                                // チェック用変数
+                                                $column_checkbox_checked = "";
+
+                                                // 入力されたデータの中に選択肢が含まれているか否か
+                                                if (in_array($group_select->id, $values)) {
+                                                    $column_checkbox_checked = " checked";
+                                                }
+                                            @endphp
+
+                                            <div class="custom-control custom-checkbox custom-control-inline">
+                                                <input name="user_search_condition[groups][]" value="{{$group_select->id}}" type="checkbox" class="custom-control-input" id="user_search_condition[groups]_{{$loop->iteration}}"{{$column_checkbox_checked}}>
+                                                <label class="custom-control-label" for="user_search_condition[groups]_{{$loop->iteration}}"> {{$group_select->name}}</label>
+                                            </div>
+                                        @empty
+                                            グループなし
+                                        @endforelse
+                                    </div>
+                                    <small class="form-text text-muted">※ 複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -107,6 +162,7 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter"@if(Session::get('user_search_condition.role_reporter') == "1") checked @endif>
                                         <label class="custom-control-label" for="role_reporter">編集者</label><h6><span class="badge badge-info ml-1">編</span></h6>
                                     </div>
+                                    <small class="form-text text-muted">※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -130,6 +186,7 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[admin_user]" value="1" type="checkbox" class="custom-control-input" id="admin_user"@if(Session::get('user_search_condition.admin_user') == "1") checked @endif>
                                         <label class="custom-control-label" for="admin_user">ユーザ管理者</label><h6><span class="badge badge-warning ml-1">ユ</span></h6>
                                     </div>
+                                    <small class="form-text text-muted">※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -141,6 +198,10 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[guest]" value="1" type="checkbox" class="custom-control-input" id="guest"@if(Session::get('user_search_condition.guest') == "1") checked @endif>
                                         <label class="custom-control-label" for="guest">ゲスト</label>
                                     </div>
+                                    <small class="form-text text-muted">
+                                        ※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）<br />
+                                        ※ 「ゲスト」とは、「コンテンツ権限」「管理権限」のいずれの権限もない状態です。<br />
+                                    </small>
                                 </div>
                             </div>
 
@@ -184,16 +245,12 @@ use App\Models\Core\UsersColumns;
 
                             {{-- ボタンエリア --}}
                             <div class="form-group text-center">
-                                <div class="row">
-                                    <div class="mx-auto">
-                                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user/clearSearch')}}'">
-                                            <i class="fas fa-times"></i> クリア
-                                        </button>
-                                        <button type="submit" class="btn btn-primary form-horizontal">
-                                            <i class="fas fa-check"></i> 絞り込み
-                                        </button>
-                                    </div>
-                                </div>
+                                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user/clearSearch')}}'">
+                                    <i class="fas fa-times"></i> クリア
+                                </button>
+                                <button type="submit" class="btn btn-primary form-horizontal">
+                                    <i class="fas fa-check"></i> 絞り込み
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -201,14 +258,39 @@ use App\Models\Core\UsersColumns;
             </div>
         </div>
 
+        <div class="row mt-2">
+            <div class="col text-left d-flex align-items-end">
+                {{-- (左側)件数 --}}
+                <span class="badge badge-pill badge-light">{{ $users->total() }} 件</span>
+            </div>
+
+            <div class="col text-right">
+                {{-- (右側)ダウンロードボタン --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
+                        <i class="fas fa-file-download"></i> ダウンロード
+                    </button>
+                    <button type="button" class="btn btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="sr-only">ドロップダウンボタン</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                        <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                        <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
+                            <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group table-responsive">
-            <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $users->total() }} 件</span></div>
             <table class="table table-hover cc-font-90">
             <thead>
                 <tr>
                     <th nowrap>ログインID</th>
                     <th nowrap>ユーザー名</th>
-                    <th nowrap><i class="fas fa-users" title="グループ参加"></i></th>
+                    <th nowrap><i class="fas fa-users"></i> グループ</th>
                     <th nowrap>eメール</th>
                     @foreach($users_columns as $users_column)
                         <th nowrap>{{$users_column->column_name}}</th>
@@ -224,13 +306,14 @@ use App\Models\Core\UsersColumns;
             @foreach($users as $user)
                 <tr class="{{$user->getStstusBackgroundClass()}}">
                     <td nowrap>
-                        <a href="{{url('/')}}/manage/user/edit/{{$user->id}}">
-                            <i class="far fa-edit"></i>
-                        </a>
+                        <a href="{{url('/')}}/manage/user/edit/{{$user->id}}" title="ユーザ変更"><i class="far fa-edit"></i></a>
                         {{$user->userid}}
                     </td>
                     <td>{{$user->name}}</td>
-                    <td nowrap><a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="fas fa-users"></i></a></th>
+                    <td>
+                        <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a>
+                        {{$user->convertLoopValue('group_users', 'name')}}
+                    </td>
                     <td>{{$user->email}}</td>
                     @foreach($users_columns as $users_column)
                         <td>@include('plugins.manage.user.list_include_value')</td>
@@ -238,7 +321,7 @@ use App\Models\Core\UsersColumns;
                     <td nowrap>
                         @isset($user->view_user_roles)
                         <h6>
-{!!$user->getRoleStringTag()!!}
+                            {!!$user->getRoleStringTag()!!}
 {{--
                         @foreach($user->view_user_roles as $view_user_role)
                             @if ($view_user_role->role_name == 'role_article_admin')<span class="badge badge-danger">コ</span> @endif
@@ -252,11 +335,7 @@ use App\Models\Core\UsersColumns;
                         @endif
                     </td>
                     <td>
-                        @isset($user->user_original_roles)
-                        @foreach($user->user_original_roles as $user_original_role)
-                            {{$user_original_role->value}}@if (!$loop->last) ,@endif
-                        @endforeach
-                        @endif
+                        {{$user->convertLoopValue('user_original_roles', 'value')}}
                     </td>
                     <td nowrap>{{UserStatus::getDescription($user->status)}}</td>
                     <td>{{$user->created_at->format('Y/m/d')}}</td>

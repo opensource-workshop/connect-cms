@@ -177,42 +177,41 @@ class LearningtasksTool
         // ユーザーstatusテーブル
         if (!empty($this->student_id)) {
             // レポートの履歴
-            $this->report_statuses = LearningtasksUsersStatuses::where(
-                'user_id', '=', $this->student_id
-            )->whereIn('task_status', [1, 2, 3])
-             ->orderBy('post_id', 'asc')
-             ->orderBy('id', 'asc')
-             ->get();
+            $this->report_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                    ->whereIn('task_status', [1, 2, 3])
+                    ->orderBy('post_id', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
 
             // 試験の履歴
-            $this->examination_statuses = LearningtasksUsersStatuses::select(
-                'learningtasks_users_statuses.*',
-                'learningtasks_examinations.start_at',
-                'learningtasks_examinations.end_at'
-            )->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
-             ->where('learningtasks_users_statuses.user_id', '=', $this->student_id)
-             ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
-             ->orderBy('learningtasks_users_statuses.post_id', 'asc')
-             ->orderBy('learningtasks_users_statuses.id', 'asc')
-             ->get();
+            $this->examination_statuses = LearningtasksUsersStatuses::
+                    select(
+                        'learningtasks_users_statuses.*',
+                        'learningtasks_examinations.start_at',
+                        'learningtasks_examinations.end_at'
+                    )
+                    ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                    ->where('learningtasks_users_statuses.user_id', '=', $this->student_id)
+                    ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
+                    ->orderBy('learningtasks_users_statuses.post_id', 'asc')
+                    ->orderBy('learningtasks_users_statuses.id', 'asc')
+                    ->get();
 
             // 総合評価の履歴
             // POST のWHERE が抜けていたので、追加（2020-12-21）これがないと、他の科目の総合評価を引っ張ってきて、評価できない。
             if ($this->post) {
-                $this->evaluate_statuses = LearningtasksUsersStatuses::where(
-                    'user_id', '=', $this->student_id
-                )->whereIn('task_status', [8])
-                 ->where('post_id', $this->post->id)
-                 ->orderBy('post_id', 'asc')
-                 ->orderBy('id', 'asc')
-                 ->get();
+                $this->evaluate_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                        ->whereIn('task_status', [8])
+                        ->where('post_id', $this->post->id)
+                        ->orderBy('post_id', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->get();
             } else {
-                $this->evaluate_statuses = LearningtasksUsersStatuses::where(
-                    'user_id', '=', $this->student_id
-                )->whereIn('task_status', [8])
-                 ->orderBy('post_id', 'asc')
-                 ->orderBy('id', 'asc')
-                 ->get();
+                $this->evaluate_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                        ->whereIn('task_status', [8])
+                        ->orderBy('post_id', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->get();
             }
         }
 

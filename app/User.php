@@ -147,6 +147,25 @@ class User extends Authenticatable
     }
 
     /**
+     * ループ項目を区切り文字を使って文字列に変換する
+     */
+    public function convertLoopValue($LoopColums, $childColum, $separator = ', ')
+    {
+        $value = '';
+
+        // ループ項目が無ければ終了
+        if (isset($this->$LoopColums)) {
+            foreach ($this->$LoopColums as $LoopColum) {
+                // 区切り文字で連結
+                $value .= $LoopColum->$childColum . $separator;
+            }
+            // 末尾区切り文字を削除
+            $value = rtrim($value, $separator);
+        }
+        return $value;
+    }
+
+    /**
      * hasMany 設定
      */
 /*

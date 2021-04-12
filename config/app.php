@@ -259,6 +259,8 @@ $app_array = [
         'NoticeJobType' => \App\Enums\NoticeJobType::class,
         'CountryCodeAlpha3' => \App\Enums\CountryCodeAlpha3::class,
         'UserStatus' => \App\Enums\UserStatus::class,
+        'PluginName' => \App\Enums\PluginName::class,
+        'LearningtaskUseFunction' => \App\Enums\LearningtaskUseFunction::class,
         'ContentOpenType' => \App\Enums\ContentOpenType::class,
 
         // utils

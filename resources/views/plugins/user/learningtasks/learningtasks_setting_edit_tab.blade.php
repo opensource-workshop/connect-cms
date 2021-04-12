@@ -3,8 +3,8 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コンテンツプラグイン
- --}}
+ * @category 課題管理プラグイン
+--}}
 @if (!empty($learningtasks_posts->id))
 <div class="frame-setting-menu">
     <nav class="navbar navbar-expand-md navbar-light bg-light">
