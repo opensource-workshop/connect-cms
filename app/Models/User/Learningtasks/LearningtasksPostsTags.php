@@ -15,6 +15,6 @@ class LearningtasksPostsTags extends Model
     // 保存時のユーザー関連データの保持
     use Userable;
 
-    // 日付型の場合、$dates にカラムを指定しておく。
+    // Carbonインスタンス（日付）に自動的に変換
     protected $dates = ['posted_at'];
 }
