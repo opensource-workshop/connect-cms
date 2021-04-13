@@ -222,12 +222,16 @@
                         value="{{old('content_open_date_from', $frame ? $frame->content_open_date_from : '')}}" 
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_from"
+                        placeholder="YYYY-MM-DD hh:mm:ss"
                         :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_from" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
                     </div>
                 </div>
+                <small class="offset-md-3 col-md-9 text-muted">
+                    ※右のボタンからカレンダー入力も可能です。
+                </small>
                 @if ($errors && $errors->has('content_open_date_from'))
                     <label class="{{$frame->getSettingLabelClass(true)}}"></label>
                     <div class="text-danger" style="padding-left:15px;">
@@ -246,12 +250,16 @@
                         value="{{old('content_open_date_to', $frame ? $frame->content_open_date_to : '')}}" 
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_to"
+                        placeholder="YYYY-MM-DD hh:mm:ss"
                         :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_to" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
                     </div>
                 </div>
+                <small class="offset-md-3 col-md-9 text-muted">
+                    ※右のボタンからカレンダー入力も可能です。
+                </small>
                 @if ($errors && $errors->has('content_open_date_to'))
                     <label class="{{$frame->getSettingLabelClass(true)}}"></label>
                     <div class="text-danger" style="padding-left:15px;">
