@@ -40,7 +40,7 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
             $frame->content_open_type == ContentOpenType::always_close ||
             (
                 $frame->content_open_type == ContentOpenType::limited_open && 
-                Carbon::now()->between($frame->content_open_date_from, $frame->content_open_date_to)
+                !Carbon::now()->between($frame->content_open_date_from, $frame->content_open_date_to)
             )
         )
     )
