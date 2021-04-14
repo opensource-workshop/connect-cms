@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -129,7 +129,15 @@
         @foreach($categories_and_post as $post)  {{-- 課題のループ --}}
 
             <tr>
-                <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
+                <th>
+                    @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
+                        <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
+                            <i class="far fa-edit"></i>
+                        </a>
+                    @endcan
+                    {{-- タイトル --}}
+                    <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{!!$post->getNobrPostTitle()!!}</a>
+                </th>
                 @if (Auth::check() && $learningtask->useReport())
                     <td>{{$tool->getReportStatus($post->id)}}</td>
                 @endif
