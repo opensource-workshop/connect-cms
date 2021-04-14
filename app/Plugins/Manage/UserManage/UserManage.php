@@ -785,23 +785,46 @@ class UserManage extends ManagePluginBase
      */
     public function saveOriginalRoles($request, $id)
     {
+        /* エラーチェック
+        ------------------------------------ */
+        $rules = [];
+
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_additional1) || !empty($request->add_name) || !empty($request->add_value)) {
             // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_additional1' => ['required', 'numeric'],
-                'add_name'        => ['required', 'alpha_num'],
-                'add_value'       => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_additional1' => '追加行の表示順',
-                'add_name'        => '追加行の定義名',
-                'add_value'       => '追加行の表示名',
-            ]);
+            $rules['add_additional1'] = ['required', 'numeric'];
+            $rules['add_name'] = ['required', 'alpha_num'];
+            $rules['add_value'] = ['required'];
 
-            if ($validator->fails()) {
-                return $this->originalRole($request, $id, $validator->errors());
+            $setAttributeNames['add_additional1'] = '追加行の表示順';
+            $setAttributeNames['add_name'] = '追加行の定義名';
+            $setAttributeNames['add_value'] = '追加行の表示名';
+        }
+
+        // 既存項目のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->configs_id)) {
+            foreach ($request->configs_id as $config_id) {
+                // 項目のエラーチェック
+                $rules['additional1.'.$config_id] = ['required', 'numeric'];
+                $rules['name.'.$config_id] = ['required', 'alpha_num'];
+                $rules['value.'.$config_id] = ['required'];
+
+                $setAttributeNames['additional1.'.$config_id] = '表示順';
+                $setAttributeNames['name.'.$config_id] = '定義名';
+                $setAttributeNames['value.'.$config_id] = '表示名';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            return $this->originalRole($request, $id, $validator->errors());
+            // return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須

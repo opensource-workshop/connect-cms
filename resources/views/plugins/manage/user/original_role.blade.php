@@ -19,22 +19,7 @@
     <div class="card-body">
 
         {{-- エラーメッセージ --}}
-        @if ($errors)
-            <div class="card border-danger">
-                <div class="card-body">
-                    <span class="text-danger">
-                        @foreach($errors->all() as $error)
-                        <i class="fas fa-exclamation-triangle"></i> {{$error}}<br />
-                        @endforeach
-                    </span>
-                    <span class="text-secondary">
-                        @if ($errors->has('additional1') || $errors->has('name') || $errors->has('value'))
-                        <i class="fas fa-exclamation-circle"></i> 追加行を入力する場合は、すべての項目を入力してください。
-                        @endif
-                    </span>
-                </div>
-            </div>
-        @endif
+        @include('common.category_errors')
 
         {{-- 削除ボタンのアクション --}}
         <script type="text/javascript">
@@ -46,15 +31,15 @@
             }
         </script>
 
-        <form action="" method="POST" name="form_delete_original_role" class="">
+        <form action="" method="POST" name="form_delete_original_role">
             {{ csrf_field() }}
         </form>
 
-        <form action="{{url('/')}}/manage/user/saveOriginalRoles" method="POST" class="">
+        <form action="{{url('/')}}/manage/user/saveOriginalRoles" method="POST">
             {{ csrf_field() }}
 
             <div class="form-group table-responsive">
-                <table class="table table-hover" style="margin-bottom: 0;">
+                <table class="table table-hover table-sm mb-0">
                     <thead>
                         <tr>
                             <th nowrap>表示順</th>
@@ -68,13 +53,13 @@
                             <tr>
                                 <td nowrap>
                                     <input type="hidden" value="{{$config->id}}" name="configs_id[{{$config->id}}]">
-                                    <input type="text" value="{{old('additional1.'.$config->id, $config->additional1)}}" name="additional1[{{$config->id}}]" class="form-control">
+                                    <input type="text" value="{{old('additional1.'.$config->id, $config->additional1)}}" name="additional1[{{$config->id}}]" class="form-control @if ($errors && $errors->has('additional1.'.$config->id)) border-danger @endif">
                                 </td>
                                 <td nowrap>
-                                    <input type="text" value="{{old('name.'.$config->id, $config->name)}}" name="name[{{$config->id}}]" class="form-control">
+                                    <input type="text" value="{{old('name.'.$config->id, $config->name)}}" name="name[{{$config->id}}]" class="form-control @if ($errors && $errors->has('name.'.$config->id)) border-danger @endif">
                                 </td>
                                 <td nowrap>
-                                    <input type="text" value="{{old('value.'.$config->id, $config->value)}}" name="value[{{$config->id}}]" class="form-control">
+                                    <input type="text" value="{{old('value.'.$config->id, $config->value)}}" name="value[{{$config->id}}]" class="form-control @if ($errors && $errors->has('value.'.$config->id)) border-danger @endif">
                                 </td>
                                 <td nowrap>
                                     <a href="javascript:form_delete('{{$config->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
@@ -84,13 +69,13 @@
 
                         <tr>
                             <td nowrap>
-                                <input type="text" value="{{old('add_additional1')}}" name="add_additional1" class="form-control">
+                                <input type="text" value="{{old('add_additional1')}}" name="add_additional1" class="form-control @if ($errors && $errors->has('add_additional1')) border-danger @endif">
                             </td>
                             <td nowrap>
-                                <input type="text" value="{{old('add_name')}}" name="add_name" class="form-control">
+                                <input type="text" value="{{old('add_name')}}" name="add_name" class="form-control @if ($errors && $errors->has('add_name')) border-danger @endif">
                             </td>
                             <td nowrap>
-                                <input type="text" value="{{old('add_value')}}" name="add_value" class="form-control">
+                                <input type="text" value="{{old('add_value')}}" name="add_value" class="form-control @if ($errors && $errors->has('add_value')) border-danger @endif">
                             </td>
                             <td nowrap>
                             </td>
