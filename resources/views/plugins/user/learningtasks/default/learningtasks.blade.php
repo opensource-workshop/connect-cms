@@ -130,12 +130,12 @@
                         <tr>
                             <th>
                                 @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
-                                    <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
+                                    <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                                         <i class="far fa-edit"></i>
                                     </a>
                                 @endcan
                                 {{-- タイトル --}}
-                                <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{!!$post->getNobrPostTitle()!!}</a>
+                                <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">{!!$post->getNobrPostTitle()!!}</a>
                             </th>
                             @if (Auth::check() && $learningtask->useReport())
                                 <td>{{$tool->getReportStatus($post->id)}}</td>
