@@ -16,6 +16,8 @@ use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 use App\Models\User\Learningtasks\LearningtasksUseSettings;
 use App\User;
 
+use Carbon\Carbon;
+
 /**
  * 課題管理のユーザ情報保持クラス
  *
@@ -325,7 +327,7 @@ class LearningtasksTool
     }
 
     /**
-     *  使用機能の取得
+     * 使用機能の取得
      */
     public function getFunction($function, $post_check = false)
     {
@@ -337,13 +339,36 @@ class LearningtasksTool
         }
         // 該当機能の設定がないと、空なので、チェックしてから値を取得
         if (!empty($setting_obj)) {
-            $setting_value = $setting_obj->value;
+            if (LearningtasksUseSettings::isDatetimeUseFunction($function)) {
+                // 日時を使う機能
+                $setting_value = $setting_obj->datetime_value;
+            } else {
+                // 通常
+                $setting_value = $setting_obj->value;
+            }
         }
         return $setting_value;
     }
 
     /**
-     *  使用機能のチェック
+     * post, baseの両方から順で使用機能の取得
+     */
+    public function getFunctionBoth($function)
+    {
+        // postから取得
+        $setting_value = $this->getFunction($function, true);
+        if ($setting_value) {
+            // 値があったら返却
+            return $setting_value;
+        }
+
+        // baseから取得
+        $setting_value = $this->getFunction($function, false);
+        return $setting_value;
+    }
+
+    /**
+     * 使用機能のチェック
      */
     public function checkFunction($function)
     {
@@ -365,11 +390,24 @@ class LearningtasksTool
                 return false;
             } elseif ($category_setting_value == 'on') {
                 // 機能判定
-                $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
-                if ($post_setting_value == 'on') {
-                    return true;
+                // bugfix: post側に設定ない事をも考慮する。 例）レポート提出 use_report のチェックが付いてない時
+                // $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
+                $post_setting = $this->post_use_functions->where('use_function', $function)->first();
+                if (empty($post_setting)) {
+                    $post_setting_value = null;
                 } else {
+                    $post_setting_value = $post_setting->value;
+                }
+
+                if (empty($post_setting_value)) {
+                    // 設定がない＝false
                     return false;
+                } elseif ($post_setting_value == 'off') {
+                    // この機能を使わないため、false
+                    return false;
+                } elseif ($post_setting_value == 'on') {
+                    // 機能を使う
+                    return true;
                 }
             }
         }
@@ -723,7 +761,7 @@ class LearningtasksTool
     }
 
     /**
-     *  レポートの状況取得
+     * レポートの状況取得
      */
     private function canReportUploadImpl($post_id)
     {
@@ -733,6 +771,9 @@ class LearningtasksTool
 
         // 初めはOK。提出済みならNO、再提出があればOK。合格ならその時点でNO
         $can_report_upload = array(true, '未提出');
+
+        // レポート提出期限チェック
+        $can_report_upload = $this->checkReportUploadDeadline($can_report_upload);
 
         $report_statuses = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2]);
         foreach ($report_statuses as $report_status) {
@@ -745,9 +786,39 @@ class LearningtasksTool
                 $can_report_upload = array(false, '提出済みのため、現在は提出できません。');
             } elseif ($report_status->task_status == 2 && $report_status->grade == 'D') {
                 $can_report_upload = array(true, '再提出が必要');
+
+                // レポート提出期限チェック
+                $can_report_upload = $this->checkReportUploadDeadline($can_report_upload);
             }
         }
         return $can_report_upload;
+    }
+
+    /**
+     * レポート提出期限チェック
+     */
+    private function checkReportUploadDeadline($can_report_upload)
+    {
+        // レポート提出期限オーバーか
+        if ($this->isOutOfDeadlineReportUpload()) {
+            $can_report_upload = array(false, '提出期限を過ぎたのため、現在は提出できません。');
+        }
+        return $can_report_upload;
+    }
+
+    /**
+     * レポート提出期限オーバーか
+     */
+    public function isOutOfDeadlineReportUpload()
+    {
+        // 提出終了日時の制御ON
+        if ($this->checkFunction(\LearningtaskUseFunction::use_report_end)) {
+            // 今より提出期限[以上(gte)]なら、提出できない. use_report_end=on なら report_end_at は必須のため、値がある想定
+            if (Carbon::now()->gte($this->getFunctionBoth(\LearningtaskUseFunction::report_end_at))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

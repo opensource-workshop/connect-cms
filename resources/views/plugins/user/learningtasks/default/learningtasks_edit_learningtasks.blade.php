@@ -16,6 +16,19 @@
 
 @include('common.errors_form_line')
 
+<script>
+    $(function () {
+        /**
+         * カレンダーボタン押下
+         */
+        $('#report_end_at{{$frame_id}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            dayViewHeaderFormat: 'YYYY MMM',
+            sideBySide: true,
+        });
+    });
+</script>
+
 @if (!$learningtask->id && !$create_flag)
     {{-- idなし & 変更 = DB未選択&変更:初期表示 --}}
     <div class="alert alert-warning">
@@ -58,16 +71,16 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">課題管理名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="learningtasks_name" value="{{old('learningtasks_name', $learningtask->learningtasks_name)}}" class="form-control">
-            @if ($errors && $errors->has('learningtasks_name')) <div class="text-danger">{{$errors->first('learningtasks_name')}}</div> @endif
+            <input type="text" name="learningtasks_name" value="{{old('learningtasks_name', $learningtask->learningtasks_name)}}" class="form-control @if ($errors && $errors->has('learningtasks_name')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'learningtasks_name'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="view_count" value="{{old('view_count', $learningtask->view_count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
+            <input type="text" name="view_count" value="{{old('view_count', $learningtask->view_count)}}" class="form-control col-sm-3 @if ($errors && $errors->has('view_count')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'view_count'])
         </div>
     </div>
 
@@ -191,6 +204,59 @@
                 <input type="checkbox" name="base_settings[use_report_mail]" value="on" class="custom-control-input" id="use_report_mail" @if(old("base_settings.use_report_mail", $tool->getFunction('use_report_mail')) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_report_mail">メール送信（教員宛）</label>
             </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">提出期限</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                @php
+                    $name_function1 = "base_settings[".LearningtaskUseFunction::use_report_end."]";
+                    $old_function1 = "base_settings.".LearningtaskUseFunction::use_report_end;
+                    $id_function1 = LearningtaskUseFunction::use_report_end . $frame_id;
+                @endphp
+
+                {{-- チェック外した場合にも値を飛ばす対応 --}}
+                <input type="hidden" value="0" name="{{$name_function1}}">
+
+                <input type="checkbox"
+                    name="{{$name_function1}}"
+                    value="on"
+                    class="custom-control-input"
+                    id="{{$id_function1}}"
+                    @if(old($old_function1, $tool->getFunction(LearningtaskUseFunction::use_report_end)) == 'on') checked=checked @endif
+                >
+                <label class="custom-control-label" for="{{$id_function1}}">以下の提出終了日時で制御する</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label>提出終了日時</label>
+            @php
+                $name_function2 = "base_settings[".LearningtaskUseFunction::report_end_at."]";
+                $old_function2 = "base_settings.".LearningtaskUseFunction::report_end_at;
+                // idに.(ドット)を含むと、カレンダーピッカー動かなくなるため含めない
+                $id_function2 = LearningtaskUseFunction::report_end_at . $frame_id;
+            @endphp
+
+            <div class="input-group col-md-6 pl-0" id="{{$id_function2}}" data-target-input="nearest">
+                <input class="form-control datetimepicker-input @if ($errors && $errors->has($old_function2)) border-danger @endif"
+                    type="text"
+                    name="{{$name_function2}}"
+                    value="{{old($old_function2, $tool->getFunction(LearningtaskUseFunction::report_end_at))}}"
+                    data-target="#{{$id_function2}}"
+                >
+                <div class="input-group-append" data-target="#{{$id_function2}}" data-toggle="datetimepicker">
+                    <div class="input-group-text @if ($errors && $errors->has($old_function2)) border-danger @endif">
+                        <i class="fa fa-calendar"></i>
+                    </div>
+                </div>
+            </div>
+            @include('common.errors_inline', ['name' => $old_function2])
         </div>
     </div>
 

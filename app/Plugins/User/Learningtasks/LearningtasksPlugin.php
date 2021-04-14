@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use DB;
 // use Session;
@@ -1091,6 +1092,20 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function saveReport($request, $page_id, $frame_id, $post_id)
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'post_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('post_settings.use_report_end'))],
+        ]);
+        $validator->setAttributeNames([
+            'post_settings.use_report_end' => '以下の提出終了日時で制御する',
+            'post_settings.report_end_at' => '提出終了日時',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         // 対象の課題特定
         $post = LearningtasksPosts::find($post_id);
         if (empty($post)) {
@@ -1099,13 +1114,17 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 設定内容を保存（一旦削除して新たに保存）
         LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
-                                ->where('post_id', $post->id)
-                                ->where('use_function', 'post_report_setting')
-                                ->delete();
+                ->where('post_id', $post->id)
+                ->where('use_function', 'post_report_setting')
+                ->delete();
         LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
-                                ->where('post_id', $post->id)
-                                ->where('use_function', 'like', 'use_report%')
-                                ->delete();
+                ->where('post_id', $post->id)
+                ->where('use_function', 'like', 'use_report%')
+                ->delete();
+        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->where('post_id', $post->id)
+                ->where('use_function', \LearningtaskUseFunction::report_end_at)
+                ->delete();
 
         if ($request->filled('post_report_setting')) {
             LearningtasksUseSettings::create([
@@ -1122,16 +1141,25 @@ class LearningtasksPlugin extends UserPluginBase
                     if ($post_setting_value == "on" || $post_setting_value == "off") {
                         LearningtasksUseSettings::create([
                             'learningtasks_id' => $post->learningtasks_id,
-                            'post_id'          => $post->id,
-                            'use_function'     => $post_setting_key,
-                            'value'            => $post_setting_value,
+                            'post_id' => $post->id,
+                            'use_function' => $post_setting_key,
+                            'value' => $post_setting_value,
                         ]);
                     }
+                } elseif (LearningtasksUseSettings::isDatetimeUseFunction($post_setting_key) && $post_setting_value) {
+                    // 日付を使う機能 + 値あり
+                    LearningtasksUseSettings::create([
+                        'learningtasks_id' => $post->learningtasks_id,
+                        'post_id' => $post->id,
+                        'use_function' => $post_setting_key,
+                        'datetime_value' => $post_setting_value . ':00',
+                    ]);
                 }
             }
         }
 
-        return $this->editReport($request, $page_id, $frame_id, $post_id);
+        // delete: redirect_path指定で画面戻るため、下記不要
+        // return $this->editReport($request, $page_id, $frame_id, $post_id);
     }
 
     /**
@@ -1570,14 +1598,17 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'learningtasks_name'  => ['required'],
-            'view_count'          => ['required', 'numeric'],
+            'learningtasks_name' => ['required'],
+            'view_count' => ['required', 'numeric'],
             'sequence_conditions' => ['nullable', 'numeric'],
+            'base_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('base_settings.use_report_end'))],
         ]);
         $validator->setAttributeNames([
-            'learningtasks_name'  => '課題管理名',
-            'view_count'          => '表示件数',
+            'learningtasks_name' => '課題管理名',
+            'view_count' => '表示件数',
             'sequence_conditions' => '順序条件',
+            'base_settings.use_report_end' => '以下の提出終了日時で制御する',
+            'base_settings.report_end_at' => '提出終了日時',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -1651,6 +1682,14 @@ class LearningtasksPlugin extends UserPluginBase
                         'post_id' => 0,
                         'use_function' => $base_setting_key,
                         'value' => $base_setting_value,
+                    ]);
+                } elseif (LearningtasksUseSettings::isDatetimeUseFunction($base_setting_key) && $base_setting_value) {
+                    // 日付を使う機能 + 値あり
+                    LearningtasksUseSettings::create([
+                        'learningtasks_id' => $learningtask->id,
+                        'post_id' => 0,
+                        'use_function' => $base_setting_key,
+                        'datetime_value' => $base_setting_value . ':00',
                     ]);
                 }
             }
@@ -2115,8 +2154,8 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 項目のエラーチェック
         $validate_value = [
-            'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at,report_end_at'],
-            'end_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at,report_end_at'],
+            'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at'],
+            'end_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at'],
         ];
 
         $validate_attribute = [
@@ -2298,10 +2337,20 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題管理ツール
         $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
 
+        // レポートの課題提出
+        if ($task_status == 1) {
+            // レポート提出期限オーバーか
+            if ($tool->isOutOfDeadlineReportUpload()) {
+                session()->flash('plugin_errors', '提出期限を過ぎたのため、現在は提出できません。');
+                // redirect_path指定済みのため、returnのみで元画面へ遷移
+                return;
+            }
+        }
+
         // 登録時のチェック
         $validator_values = array();
         $validator_attributes = array();
-        $validator_messages = array();
+        // $validator_messages = array();
 
         // 試験の解答の場合、該当の試験時間内かチェック
         if ($task_status == 5) {
@@ -2353,7 +2402,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'check_method'         => 'checkUploadUsersStatus',
                 'page_id'              => $page_id,
                 'private'              => 1,
-             ]);
+            ]);
 
             // 課題ファイル保存
             $directory = $this->getDirectory($upload->id);
@@ -2376,17 +2425,15 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // ユーザーの進捗ステータス保存
-        LearningtasksUsersStatuses::create(
-            [
-             'post_id'        => $post_id,
-             'user_id'        => $student_user_id,
-             'task_status'    => $task_status,
-             'comment'        => $request->filled('comment') ? $request->comment : null,
-             'upload_id'      => empty($upload) ? null : $upload->id,
-             'examination_id' => $request->filled('examination_id') ? $request->examination_id : null,
-             'grade'          => $request->filled('grade') ? $request->grade : null,
-            ]
-        );
+        LearningtasksUsersStatuses::create([
+            'post_id'        => $post_id,
+            'user_id'        => $student_user_id,
+            'task_status'    => $task_status,
+            'comment'        => $request->filled('comment') ? $request->comment : null,
+            'upload_id'      => empty($upload) ? null : $upload->id,
+            'examination_id' => $request->filled('examination_id') ? $request->examination_id : null,
+            'grade'          => $request->filled('grade') ? $request->grade : null,
+        ]);
 
         // リダイレクトで詳細画面へ
         return;

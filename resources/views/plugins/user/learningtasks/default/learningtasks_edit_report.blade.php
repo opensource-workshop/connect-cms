@@ -4,13 +4,28 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 {{-- 編集画面側のフレームメニュー --}}
 @include('plugins.user.learningtasks.learningtasks_setting_edit_tab')
 
 @section("plugin_contents_$frame->id")
+
+@include('common.errors_form_line')
+
+<script>
+    $(function () {
+        /**
+         * カレンダーボタン押下
+         */
+        $('#report_end_at{{$frame_id}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            dayViewHeaderFormat: 'YYYY MMM',
+            sideBySide: true,
+        });
+    });
+</script>
 
 {{-- 試験設定フォーム --}}
 @if (empty($learningtasks_posts->id))
@@ -35,7 +50,7 @@
         <label class="col-md-3 text-md-right">レポート提出機能</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(empty($tool->getFunction('post_report_setting', true)))
+                @if(empty(old('post_report_setting', $tool->getFunction('post_report_setting', true))))
                     <input type="radio" value="" id="post_report_setting_null" name="post_report_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_report.show">
                 @else
                     <input type="radio" value="" id="post_report_setting_null" name="post_report_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_report.show">
@@ -43,7 +58,7 @@
                 <label class="custom-control-label" for="post_report_setting_null">課題管理設定に従う</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_report_setting', true) == 'off')
+                @if(old('post_report_setting', $tool->getFunction('post_report_setting', true)) == 'off')
                     <input type="radio" value="off" id="post_report_setting_off" name="post_report_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_report.show">
                 @else
                     <input type="radio" value="off" id="post_report_setting_off" name="post_report_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_report.show">
@@ -51,7 +66,7 @@
                 <label class="custom-control-label" for="post_report_setting_off">使用しない</label>
             </div><br />
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('post_report_setting', true) == 'on')
+                @if(old('post_report_setting', $tool->getFunction('post_report_setting', true)) == 'on')
                     <input type="radio" value="on" id="post_report_setting_on" name="post_report_setting" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_post_report:not(.show)" aria-expanded="true" aria-controls="collapse_post_report">
                 @else
                     <input type="radio" value="on" id="post_report_setting_on" name="post_report_setting" class="custom-control-input" data-toggle="collapse" data-target="#collapse_post_report:not(.show)" aria-expanded="true" aria-controls="collapse_post_report">
@@ -99,6 +114,59 @@
                     <input type="checkbox" name="post_settings[use_report_mail]" value="on" class="custom-control-input" id="use_report_mail" @if(old("post_settings.use_report_mail", $tool->getFunction('use_report_mail', true)) == 'on') checked=checked @endif>
                     <label class="custom-control-label" for="use_report_mail">メール送信（教員宛）</label>
                 </div>
+            </div>
+        </div>
+
+        <div class="form-group row mb-0">
+            <label class="{{$frame->getSettingLabelClass()}}">提出期限</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-checkbox mr-3">
+                    @php
+                        $name_function1 = "post_settings[".LearningtaskUseFunction::use_report_end."]";
+                        $old_function1 = "post_settings.".LearningtaskUseFunction::use_report_end;
+                        $id_function1 = LearningtaskUseFunction::use_report_end . $frame_id;
+                    @endphp
+
+                    {{-- チェック外した場合にも値を飛ばす対応 --}}
+                    <input type="hidden" value="0" name="{{$name_function1}}">
+
+                    <input type="checkbox"
+                        name="{{$name_function1}}"
+                        value="on"
+                        class="custom-control-input"
+                        id="{{$id_function1}}"
+                        @if(old($old_function1, $tool->getFunction(LearningtaskUseFunction::use_report_end, true)) == 'on') checked=checked @endif
+                    >
+                    <label class="custom-control-label" for="{{$id_function1}}">以下の提出終了日時で制御する</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}"></label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <label>提出終了日時</label>
+                @php
+                    $name_function2 = "post_settings[".LearningtaskUseFunction::report_end_at."]";
+                    $old_function2 = "post_settings.".LearningtaskUseFunction::report_end_at;
+                    // idに.(ドット)を含むと、カレンダーピッカー動かなくなるため含めない
+                    $id_function2 = LearningtaskUseFunction::report_end_at . $frame_id;
+                @endphp
+
+                <div class="input-group col-md-6 pl-0" id="{{$id_function2}}" data-target-input="nearest">
+                    <input class="form-control datetimepicker-input @if ($errors && $errors->has($old_function2)) border-danger @endif"
+                        type="text"
+                        name="{{$name_function2}}"
+                        value="{{old($old_function2, $tool->getFunction(LearningtaskUseFunction::report_end_at, true))}}"
+                        data-target="#{{$id_function2}}"
+                    >
+                    <div class="input-group-append" data-target="#{{$id_function2}}" data-toggle="datetimepicker">
+                        <div class="input-group-text @if ($errors && $errors->has($old_function2)) border-danger @endif">
+                            <i class="fa fa-calendar"></i>
+                        </div>
+                    </div>
+                </div>
+                @include('common.errors_inline', ['name' => $old_function2])
             </div>
         </div>
 

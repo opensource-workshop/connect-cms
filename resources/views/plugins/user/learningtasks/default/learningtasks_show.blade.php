@@ -10,6 +10,8 @@
 @section("plugin_contents_$frame->id")
 @if ($tool->canPostView())
 
+@include('common.errors_form_line')
+
 <style>
 .custom-file {
     overflow: hidden;
@@ -151,7 +153,7 @@
                     @if ($tool->checkFunction(LearningtaskUseFunction::use_report_file) || $tool->checkFunction(LearningtaskUseFunction::use_report_comment))
 
                         <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
-                        <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_status1" enctype="multipart/form-data">
+                        <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" name="form_status1" enctype="multipart/form-data">
                             {{ csrf_field() }}
                             <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 
@@ -173,6 +175,15 @@
                                     <label class="col-sm-3 text-sm-right">本文</label>
                                     <div class="col-sm-9">
                                         <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if ($tool->checkFunction(LearningtaskUseFunction::use_report_end))
+                                <div class="form-group row mb-1">
+                                    <label class="col-sm-3 text-sm-right">提出期限</label>
+                                    <div class="col-sm-9">
+                                        {{$tool->getFunctionBoth(LearningtaskUseFunction::report_end_at)->format('Y年n月j日 H時i分')}}
                                     </div>
                                 </div>
                             @endif
@@ -485,8 +496,8 @@
                                     <input type="file" class="custom-file-input" id="status5_file" name="upload_file">
                                     <label class="custom-file-label" for="status5_file" data-browse="参照">試験の回答ファイルを選んでください。</label>
                                 </div>
-                                 @if ($errors && $errors->has('upload_file')) <div class="text-danger">{{$errors->first('upload_file')}}</div> @endif
-                           </div>
+                                @if ($errors && $errors->has('upload_file')) <div class="text-danger">{{$errors->first('upload_file')}}</div> @endif
+                            </div>
                         </div>
                         @endif
 
