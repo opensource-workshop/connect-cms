@@ -17,18 +17,6 @@
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
-{{-- 一時保存ボタンのアクション --}}
-<script type="text/javascript">
-    function save_action() {
-        @if (empty($learningtasks_posts->id))
-            form_learningtasks_posts.action = "{{url('/')}}/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
-        @else
-            form_learningtasks_posts.action = "{{url('/')}}/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame->id}}";
-        @endif
-        form_learningtasks_posts.submit();
-    }
-</script>
-
 {{-- 投稿用フォーム --}}
 @if (empty($learningtasks_posts->id))
     <form action="{{url('/')}}/redirect/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
@@ -161,9 +149,6 @@
             @endif
                 <div class="text-center">
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-{{--
-                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
---}}
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($learningtasks_posts->id))
                         @if ($buckets->needApprovalUser(Auth::user()))
@@ -181,11 +166,11 @@
                 </div>
             </div>
             @if (!empty($learningtasks_posts->id))
-            <div class="col-3 col-xl-3 text-right">
+                <div class="col-3 col-xl-3 text-right">
                     <a data-toggle="collapse" href="#collapse{{$learningtasks_posts->id}}">
                         <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
                     </a>
-            </div>
+                </div>
             @endif
         </div>
     </div>
