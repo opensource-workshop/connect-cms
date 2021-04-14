@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -114,6 +114,22 @@
             @endif
             </tbody>
             </table>
+        </div>
+
+        <div class="card card-body bg-light p-2 mb-3">
+            <ul>
+                <li>
+                    課題管理プラグインで利用できる「定義名」は、
+                    @foreach (RoleName::getMembers() as $key => $name)
+                        @if ($loop->last)
+                            <code>{{$key}}</code>
+                        @else
+                            <code>{{$key}}</code>,
+                        @endif
+                    @endforeach
+                    です。
+                </li>
+            </ul>
         </div>
 
         <div class="form-group text-center">
