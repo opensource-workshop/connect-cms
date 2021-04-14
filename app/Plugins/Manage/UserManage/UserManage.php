@@ -763,10 +763,10 @@ class UserManage extends ManagePluginBase
     /**
      *  役割設定画面表示
      */
-    public function originalRole($request, $id, $errors = null)
+    public function originalRole($request, $id)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // 役割設定取得
         $configs = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
@@ -776,7 +776,6 @@ class UserManage extends ManagePluginBase
             "plugin_name" => "user",
             "id"          => $id,
             "configs"     => $configs,
-            "errors"      => $errors,
         ]);
     }
 
@@ -823,8 +822,8 @@ class UserManage extends ManagePluginBase
         $validator->setAttributeNames($setAttributeNames);
 
         if ($validator->fails()) {
-            return $this->originalRole($request, $id, $validator->errors());
-            // return redirect()->back()->withErrors($validator)->withInput();
+            // return $this->originalRole($request, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
@@ -875,7 +874,8 @@ class UserManage extends ManagePluginBase
             }
         }
 
-        return $this->originalRole($request, $id, null);
+        // return $this->originalRole($request, $id, null);
+        return redirect()->back();
     }
 
     /**
