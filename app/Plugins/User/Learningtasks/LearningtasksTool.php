@@ -240,7 +240,7 @@ class LearningtasksTool
                                       ->join('users_roles', function ($join) {
                                           $join->on('users_roles.users_id', '=', 'users.id')
                                                ->where('users_roles.target', '=', 'original_role')
-                                               ->where('users_roles.role_name', '=', 'student');
+                                               ->where('users_roles.role_name', '=', \RoleName::student);
                                       })
                                       ->orderBy('users.id')
                                       ->get();
@@ -250,7 +250,7 @@ class LearningtasksTool
                                       ->join('users_roles', function ($join) {
                                           $join->on('users_roles.users_id', '=', 'users.id')
                                                ->where('users_roles.target', '=', 'original_role')
-                                               ->where('users_roles.role_name', '=', 'teacher');
+                                               ->where('users_roles.role_name', '=', \RoleName::teacher);
                                       })
                                       ->orderBy('users.id')
                                       ->get();
@@ -259,14 +259,14 @@ class LearningtasksTool
                 $this->students = LearningtasksUsers::select('users.*')
                                                     ->join('users', 'users.id', '=', 'learningtasks_users.user_id')
                                                     ->where('learningtasks_users.post_id', $this->post->id)
-                                                    ->where('learningtasks_users.role_name', 'student')
+                                                    ->where('learningtasks_users.role_name', \RoleName::student)
                                                     ->orderBy('users.id', 'asc')
                                                     ->get();
 
                 $this->teachers = LearningtasksUsers::select('users.*')
                                                     ->join('users', 'users.id', '=', 'learningtasks_users.user_id')
                                                     ->where('learningtasks_users.post_id', $this->post->id)
-                                                    ->where('learningtasks_users.role_name', 'teacher')
+                                                    ->where('learningtasks_users.role_name', \RoleName::teacher)
                                                     ->orderBy('users.id', 'asc')
                                                     ->get();
             }
@@ -515,7 +515,7 @@ class LearningtasksTool
     }
 
     /**
-     *  教員か
+     * 教員か
      */
     public function isTeacher()
     {
@@ -523,14 +523,16 @@ class LearningtasksTool
             return false;
         }
         $user_roles = $this->user->user_roles;
-        if (array_key_exists('original_role', $user_roles) && array_key_exists('teacher', $user_roles['original_role']) && $user_roles['original_role']['teacher'] == 1) {
+        if (array_key_exists('original_role', $user_roles)
+                && array_key_exists(\RoleName::teacher, $user_roles['original_role'])
+                && $user_roles['original_role'][\RoleName::teacher] == 1) {
             return true;
         }
         return false;
     }
 
     /**
-     *  学生か
+     * 学生か
      */
     public function isStudent()
     {
@@ -538,7 +540,9 @@ class LearningtasksTool
             return false;
         }
         $user_roles = $this->user->user_roles;
-        if (array_key_exists('original_role', $user_roles) && array_key_exists('student', $user_roles['original_role']) && $user_roles['original_role']['student'] == 1) {
+        if (array_key_exists('original_role', $user_roles)
+                && array_key_exists(\RoleName::student, $user_roles['original_role'])
+                && $user_roles['original_role'][\RoleName::student] == 1) {
             return true;
         }
         return false;

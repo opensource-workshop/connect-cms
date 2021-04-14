@@ -331,13 +331,13 @@ class LearningtasksPlugin extends UserPluginBase
             ->leftJoin('learningtasks_users as student', function ($join) use ($user_id) {
                 $join->on('student.post_id', '=', 'learningtasks_posts.id')
                      ->where('student.user_id', '=', $user_id)
-                     ->where('student.role_name', '=', 'student')
+                     ->where('student.role_name', '=', \RoleName::student)
                      ->whereNull('student.deleted_at');
             })
             ->leftJoin('learningtasks_users as teacher', function ($join) use ($user_id) {
                 $join->on('teacher.post_id', '=', 'learningtasks_posts.id')
                      ->where('teacher.user_id', '=', $user_id)
-                     ->where('teacher.role_name', '=', 'teacher')
+                     ->where('teacher.role_name', '=', \RoleName::teacher)
                      ->whereNull('teacher.deleted_at');
             })
             ->where('learningtasks_posts.learningtasks_id', $learningtasks_frame->id)
@@ -372,7 +372,7 @@ class LearningtasksPlugin extends UserPluginBase
             // 「配置ページのメンバーシップ受講者から選ぶ」場合、自分の role が課題に設定されているか確認する。
             $student_flag = true;
             if ($learningtasks_post->student_join_flag == 3) {
-                if ($tool->isStudent() && $learningtasks_post->student_role_name == 'student') {
+                if ($tool->isStudent() && $learningtasks_post->student_role_name == \RoleName::student) {
                     // OK
                 } else {
                     // 閲覧対象外
@@ -381,7 +381,7 @@ class LearningtasksPlugin extends UserPluginBase
             }
             $teacher_flag = true;
             if ($learningtasks_post->teacher_join_flag == 3) {
-                if ($tool->isTeacher() && $learningtasks_post->teacher_role_name == 'teacher') {
+                if ($tool->isTeacher() && $learningtasks_post->teacher_role_name == \RoleName::teacher) {
                     // OK
                 } else {
                     // 閲覧対象外
@@ -2681,7 +2681,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 学生のみ取得
         $students = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
                               ->where('target', 'original_role')
-                              ->where('role_name', 'student')
+                              ->where('role_name', \RoleName::student)
                               ->where('role_value', 1)
                               ->get();
 
@@ -2691,7 +2691,7 @@ class LearningtasksPlugin extends UserPluginBase
                                 ->leftJoin('learningtasks_users', function ($join) use ($post) {
                                     $join->on('learningtasks_users.user_id', '=', 'users.id')
                                          ->where('learningtasks_users.post_id', '=', $post->id)
-                                         ->where('learningtasks_users.role_name', 'student')
+                                         ->where('learningtasks_users.role_name', \RoleName::student)
                                          ->whereNull('learningtasks_users.deleted_at');
                                 })
                                 ->whereIn('users.id', $students->pluck('users_id'))
@@ -2702,7 +2702,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 教員のみ取得
         $teachers = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
                               ->where('target', 'original_role')
-                              ->where('role_name', 'teacher')
+                              ->where('role_name', \RoleName::teacher)
                               ->where('role_value', 1)
                               ->get();
 
@@ -2712,7 +2712,7 @@ class LearningtasksPlugin extends UserPluginBase
                                 ->leftJoin('learningtasks_users', function ($join) use ($post) {
                                     $join->on('learningtasks_users.user_id', '=', 'users.id')
                                          ->where('learningtasks_users.post_id', '=', $post->id)
-                                         ->where('learningtasks_users.role_name', 'teacher')
+                                         ->where('learningtasks_users.role_name', \RoleName::teacher)
                                          ->whereNull('learningtasks_users.deleted_at');
                                 })
                                 ->whereIn('users.id', $teachers->pluck('users_id'))
@@ -2766,7 +2766,7 @@ class LearningtasksPlugin extends UserPluginBase
             foreach ($request->page_users as $page_user_id) {
                 $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
                                                          ->where('user_id', $page_user_id)
-                                                         ->where('role_name', 'student')
+                                                         ->where('role_name', \RoleName::student)
                                                          ->whereNull('deleted_at')
                                                          ->first();
                 // 参加データの追加・削除
@@ -2775,7 +2775,7 @@ class LearningtasksPlugin extends UserPluginBase
                     $learningtasks_users->delete();
                 } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
                     // 追加（参加データはなし、画面のチェックはあり）
-                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => 'student']);
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => \RoleName::student]);
                 }
             }
         }
@@ -2795,7 +2795,7 @@ class LearningtasksPlugin extends UserPluginBase
             foreach ($request->page_teacher_users as $page_user_id) {
                 $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
                                                          ->where('user_id', $page_user_id)
-                                                         ->where('role_name', 'teacher')
+                                                         ->where('role_name', \RoleName::teacher)
                                                          ->whereNull('deleted_at')
                                                          ->first();
                 // 参加データの追加・削除
@@ -2804,7 +2804,7 @@ class LearningtasksPlugin extends UserPluginBase
                     $learningtasks_users->delete();
                 } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
                     // 追加（参加データはなし、画面のチェックはあり）
-                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => 'teacher']);
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => \RoleName::teacher]);
                 }
             }
         }

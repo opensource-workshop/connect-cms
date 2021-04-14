@@ -262,6 +262,7 @@ $app_array = [
         'PluginName' => \App\Enums\PluginName::class,
         'LearningtaskUseFunction' => \App\Enums\LearningtaskUseFunction::class,
         'ContentOpenType' => \App\Enums\ContentOpenType::class,
+        'RoleName' => \App\Enums\RoleName::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
