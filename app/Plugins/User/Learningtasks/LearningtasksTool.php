@@ -351,15 +351,26 @@ class LearningtasksTool
     }
 
     /**
+     * post, baseの両方から順で、レポートの使用機能の値取得
+     */
+    public function getFunctionBothReport(string $function)
+    {
+        return $this->getFunctionBoth($function, \LearningtaskUseFunction::report);
+    }
+
+    /**
      * post, baseの両方から順で使用機能の取得
      */
-    public function getFunctionBoth($function)
+    private function getFunctionBoth(string $function, string $function_parts)
     {
-        // postから取得
-        $setting_value = $this->getFunction($function, true);
-        if ($setting_value) {
-            // 値があったら返却
-            return $setting_value;
+        // 使用機能の課題独自設定はONか
+        if ($this->isPostFunctionSettingOn($function_parts)) {
+            // postから取得
+            $setting_value = $this->getFunction($function, true);
+            if ($setting_value) {
+                // 値があったら返却
+                return $setting_value;
+            }
         }
 
         // baseから取得
@@ -373,42 +384,28 @@ class LearningtasksTool
     public function checkFunction($function)
     {
         $function_parts = explode('_', $function);
-        // 課題ごとの設定がある場合。
-        if (!empty($this->post_use_functions)) {
-            // 課題独自設定の有無
-            $category_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts[1] . '_setting')->first();
-            if (empty($category_setting)) {
-                $category_setting_value = null;
+
+        // 使用機能の課題独自設定はONか
+        if ($this->isPostFunctionSettingOn($function_parts[1])) {
+            // 機能判定
+            // bugfix: post側に設定ない事をも考慮する。 例）レポート提出 use_report のチェックが付いてない時
+            // $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
+            $post_setting = $this->post_use_functions->where('use_function', $function)->first();
+            if (empty($post_setting)) {
+                $post_setting_value = null;
             } else {
-                $category_setting_value = $category_setting->value;
+                $post_setting_value = $post_setting->value;
             }
 
-            if (empty($category_setting_value)) {
-                // 課題セットの方を参照するので、このまま続きへ
-            } elseif ($category_setting_value == 'off') {
+            if (empty($post_setting_value)) {
+                // 設定がない＝false
+                return false;
+            } elseif ($post_setting_value == 'off') {
                 // この機能を使わないため、false
                 return false;
-            } elseif ($category_setting_value == 'on') {
-                // 機能判定
-                // bugfix: post側に設定ない事をも考慮する。 例）レポート提出 use_report のチェックが付いてない時
-                // $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
-                $post_setting = $this->post_use_functions->where('use_function', $function)->first();
-                if (empty($post_setting)) {
-                    $post_setting_value = null;
-                } else {
-                    $post_setting_value = $post_setting->value;
-                }
-
-                if (empty($post_setting_value)) {
-                    // 設定がない＝false
-                    return false;
-                } elseif ($post_setting_value == 'off') {
-                    // この機能を使わないため、false
-                    return false;
-                } elseif ($post_setting_value == 'on') {
-                    // 機能を使う
-                    return true;
-                }
+            } elseif ($post_setting_value == 'on') {
+                // 機能を使う
+                return true;
             }
         }
 
@@ -430,6 +427,36 @@ class LearningtasksTool
             // 機能を使う
             return true;
         }
+        return false;
+    }
+
+    /**
+     * 使用機能の課題独自設定はONか
+     */
+    private function isPostFunctionSettingOn(string $function_parts)
+    {
+        // 課題ごとの設定がある場合。
+        if (!empty($this->post_use_functions)) {
+            // 課題独自設定の有無
+            $category_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts . '_setting')->first();
+            if (empty($category_setting)) {
+                $category_setting_value = null;
+            } else {
+                $category_setting_value = $category_setting->value;
+            }
+
+            if (empty($category_setting_value)) {
+                // 独自設定なしのため、false
+                return false;
+            } elseif ($category_setting_value == 'off') {
+                // 独自設定なしのため、false
+                return false;
+            } elseif ($category_setting_value == 'on') {
+                return true;
+            }
+        }
+
+        // 独自設定なしのため、false
         return false;
     }
 
@@ -814,7 +841,7 @@ class LearningtasksTool
         // 提出終了日時の制御ON
         if ($this->checkFunction(\LearningtaskUseFunction::use_report_end)) {
             // 今より提出期限[以上(gte)]なら、提出できない. use_report_end=on なら report_end_at は必須のため、値がある想定
-            if (Carbon::now()->gte($this->getFunctionBoth(\LearningtaskUseFunction::report_end_at))) {
+            if (Carbon::now()->gte($this->getFunctionBothReport(\LearningtaskUseFunction::report_end_at))) {
                 return true;
             }
         }
