@@ -83,35 +83,20 @@
                     </td>
                 </tr>
             @endforeach
-            @if ($create_flag)
+
                 <tr>
                     <td nowrap>
-                        <input type="text" value="" name="add_additional1" class="form-control">
+                        <input type="text" value="{{old('add_additional1')}}" name="add_additional1" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_name" class="form-control">
+                        <input type="text" value="{{old('add_name')}}" name="add_name" class="form-control">
                     </td>
                     <td nowrap>
-                        <input type="text" value="" name="add_value" class="form-control">
+                        <input type="text" value="{{old('add_value')}}" name="add_value" class="form-control">
                     </td>
                     <td nowrap>
                     </td>
                 </tr>
-            @else
-                <tr>
-                    <td nowrap>
-                        <input type="text" value="{{old('add_additional1', '')}}" name="add_additional1" class="form-control">
-                    </td>
-                    <td nowrap>
-                        <input type="text" value="{{old('add_name', '')}}" name="add_name" class="form-control">
-                    </td>
-                    <td nowrap>
-                        <input type="text" value="{{old('add_value', '')}}" name="add_value" class="form-control">
-                    </td>
-                    <td nowrap>
-                    </td>
-                </tr>
-            @endif
             </tbody>
             </table>
         </div>

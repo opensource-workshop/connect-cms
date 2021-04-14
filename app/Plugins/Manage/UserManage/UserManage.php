@@ -776,7 +776,6 @@ class UserManage extends ManagePluginBase
             "plugin_name" => "user",
             "id"          => $id,
             "configs"     => $configs,
-            "create_flag" => true,
             "errors"      => $errors,
         ]);
     }
