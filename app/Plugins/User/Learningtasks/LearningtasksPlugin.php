@@ -86,7 +86,7 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editMail', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade'];
+        $functions['get']  = ['editMail', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade', 'switchUserUrl'];
         $functions['post'] = ['saveMail', 'saveUsers', 'saveReport', 'saveExaminations', 'saveEvaluate', 'downloadGrade', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7', 'changeStatus8'];
         return $functions;
     }
@@ -748,6 +748,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'learningtasks_users_statuses.*',
                 'users.id as user_id',
                 'learningtasks_posts.post_title',
+                'learningtasks_posts.id as post_id',
                 'users.name as user_name'
             )
             ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
@@ -938,7 +939,11 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 教員のみ
         if (!$tool->isTeacher()) {
-            $this->index($request, $page_id, $frame_id);
+            // bugfix: returnしてなかったため、ここに入っても処理が継続されていた。
+            // $this->index($request, $page_id, $frame_id);
+
+            // リダイレクトで詳細画面へ
+            return;
         }
 
         // 受講生のID
@@ -954,6 +959,61 @@ class LearningtasksPlugin extends UserPluginBase
 
         // リダイレクトで詳細画面へ
         return;
+    }
+
+    /**
+     * 教員用、URLでユーザ切り替え
+     * URL例）http://localhost/redirect/plugin/learningtasks/switchUserUrl/3/16/5?student_id=2#frame-16
+     */
+    public function switchUserUrl($request, $page_id, $frame_id, $post_id)
+    {
+        // [debug]
+        // dd($post_id, $request->student_id);
+
+        // $page_id = (int) $page_id;  // 基本不要。この処理に到達前にページ存在チェックがコアで実行されるため。
+        $frame_id = (int) $frame_id;
+        $post_id = (int) $post_id;
+        $student_id = (int) $request->student_id;
+
+        if (empty($frame_id) || empty($post_id) || empty($student_id)) {
+            abort(403, 'URLが正しくありません。');
+        }
+
+        // 課題管理＆フレームデータ
+        $learningtask = $this->getLearningTask($frame_id);
+        if (empty($learningtask->id)) {
+            // idがなければ該当データなし
+            abort(403, '対象のフレーム又は課題管理がありません。');
+        }
+
+        // ユーザー関連情報のまとめ
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $this->getPost($post_id));
+        // if (empty($tool->post)) {
+        //     // postがなければ該当データなし
+        //     abort(403, '対象の課題がありません。');
+        // }
+
+        // redirect_path。詳細ページ
+        $redirect_path_array = [
+            'redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/show/" . $page_id . "/" . $frame_id . "/" . $post_id . "#frame-" . $frame_id
+        ];
+
+        // 教員のみ
+        if (!$tool->isTeacher()) {
+            // 教員でない, 未ログイン（課題管理は基本メンバーシップぺージに配置するため、ログインしないと基本ページに到達しないのでほぼない想定）
+            // リダイレクト
+            return collect($redirect_path_array);
+        }
+
+        // 受講生のID
+        session(['student_id' => $student_id]);
+
+        // 課題のIDもセッションに保持する。
+        // 課題のIDが変わったら、受講生を選びなおす。
+        session(['learningtask_post_id' => $post_id]);
+
+        // リダイレクト
+        return collect($redirect_path_array);
     }
 
     /**

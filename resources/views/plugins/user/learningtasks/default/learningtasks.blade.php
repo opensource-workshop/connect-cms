@@ -93,7 +93,11 @@
                             @foreach ($teacher_tasks as $teacher_task)
                                 <tr>
                                     <td>{{$teacher_task->post_title}}</td>
-                                    <td>{{$teacher_task->user_name}}</td>
+                                    <td>
+                                        <a href="{{url('/')}}/redirect/plugin/learningtasks/switchUserUrl/{{$page->id}}/{{$frame_id}}/{{$teacher_task->post_id}}?student_id={{$teacher_task->user_id}}#frame-{{$frame_id}}">
+                                            {{$teacher_task->user_name}}
+                                        </a>
+                                    </td>
                                     <td>
                                         @if ($teacher_task->task_status == 1)
                                             レポート
