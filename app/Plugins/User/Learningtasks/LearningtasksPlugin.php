@@ -404,35 +404,36 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 削除されていないデータでグルーピングして、最新のIDで全件
-        $learningtasks_posts = LearningtasksPosts::select(
-            'learningtasks_posts.*',
-            'categories.id as category_id',
-            'categories.color as category_color',
-            'categories.background_color as category_background_color',
-            'categories.category as category'
-        )
-                                 ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-        // 履歴の廃止
-        //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
-        //                             $query->select(DB::raw('MAX(id) As id'))
-        //                                   ->from('learningtasks_posts')
-        //                                   ->where('learningtasks_id', $learningtasks_frame->learningtasks_id)
-        //                                   ->where('deleted_at', null)
-        //                                   // 権限を見てWhere を付与する。
-        //                                   ->where(function ($query_auth) {
-        //                                       $query_auth = $this->appendAuthWhere($query_auth);
-        //                                   })
-        //                                   ->groupBy('categories.display_sequence')
-        //                                   ->groupBy('contents_id');
-        //                         });
-        // 表示している課題セット
-        ->where('learningtasks_id', $learningtasks_frame->id)
+        $learningtasks_posts = LearningtasksPosts::
+                select(
+                    'learningtasks_posts.*',
+                    'categories.id as category_id',
+                    'categories.color as category_color',
+                    'categories.background_color as category_background_color',
+                    'categories.category as category'
+                )
+                ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+                // 履歴の廃止
+                //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
+                //                             $query->select(DB::raw('MAX(id) As id'))
+                //                                   ->from('learningtasks_posts')
+                //                                   ->where('learningtasks_id', $learningtasks_frame->learningtasks_id)
+                //                                   ->where('deleted_at', null)
+                //                                   // 権限を見てWhere を付与する。
+                //                                   ->where(function ($query_auth) {
+                //                                       $query_auth = $this->appendAuthWhere($query_auth);
+                //                                   })
+                //                                   ->groupBy('categories.display_sequence')
+                //                                   ->groupBy('contents_id');
+                //                         });
+                // 表示している課題セット
+                ->where('learningtasks_id', $learningtasks_frame->id)
 
-        // ユーザなど加味した対象のPOST
-        ->whereIn('learningtasks_posts.id', $target_post_ids)
+                // ユーザなど加味した対象のPOST
+                ->whereIn('learningtasks_posts.id', $target_post_ids)
 
-        // 有効なレコードのみ
-        ->where('status', 0);
+                // 有効なレコードのみ
+                ->where('status', 0);
 
         // カテゴリソート条件追加
         $learningtasks_posts->orderBy('categories.display_sequence', 'asc');
@@ -452,7 +453,7 @@ class LearningtasksPlugin extends UserPluginBase
 
        // 取得
         $learningtasks_posts_recored = $learningtasks_posts->orderBy('posted_at', 'desc')
-                           ->paginate($count, ["*"], "frame_{$learningtasks_frame->id}_page");
+                ->paginate($count, ["*"], "frame_{$learningtasks_frame->id}_page");
 
         return $learningtasks_posts_recored;
     }
@@ -2444,9 +2445,9 @@ class LearningtasksPlugin extends UserPluginBase
      */
     private function replaceMailText($subject, $tool, $post)
     {
-        $mail_text = str_replace('{student_name}', $tool->getStudent(), $subject);
-        $mail_text = str_replace('{teacher_name}', $tool->getTeachersName('role_article_admin'), $mail_text);
-        $mail_text = str_replace('{post_title}', strip_tags($post->post_title), $mail_text);
+        $mail_text = str_replace('[[student_name]]', $tool->getStudent(), $subject);
+        $mail_text = str_replace('[[teacher_name]]', $tool->getTeachersName('role_article_admin'), $mail_text);
+        $mail_text = str_replace('[[post_title]]', strip_tags($post->post_title), $mail_text);
         return $mail_text;
     }
 
@@ -2466,13 +2467,13 @@ class LearningtasksPlugin extends UserPluginBase
             8 => $tool->getMailConfig('subject', $task_status, 0, '総合評価が登録されました。'),
         );
         $mail_bodys = array(
-            1 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」のレポートが提出されました。\n評価をお願いします。\n"),
-            2 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」のレポートの評価が登録されました。\n確認をお願いします。\n"),
-            3 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」にコメントが登録されました。\n確認をお願いします。\n"),
-            5 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」に試験の解答が提出されました。\n評価をお願いします。\n"),
-            6 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」の試験の評価が登録されました。\n確認をお願いします。\n"),
-            7 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」に試験のコメントが登録されました。\n確認をお願いします。\n"),
-            8 => $tool->getMailConfig('body', $task_status, 0, "「{post_title}」の総合評価が登録されました。\n確認をお願いします。\n"),
+            1 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」のレポートが提出されました。\n評価をお願いします。\n"),
+            2 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」のレポートの評価が登録されました。\n確認をお願いします。\n"),
+            3 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」にコメントが登録されました。\n確認をお願いします。\n"),
+            5 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」に試験の解答が提出されました。\n評価をお願いします。\n"),
+            6 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」の試験の評価が登録されました。\n確認をお願いします。\n"),
+            7 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」に試験のコメントが登録されました。\n確認をお願いします。\n"),
+            8 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」の総合評価が登録されました。\n確認をお願いします。\n"),
         );
         return array($mail_subjects, $mail_bodys);
     }
