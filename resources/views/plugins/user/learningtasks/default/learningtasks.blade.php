@@ -169,14 +169,14 @@
                                 @if ($tool->checkFunction(LearningtaskUseFunction::use_report, $post->id))
                                     <td>{{$tool->getReportStatus($post->id)}}</td>
                                 @else
-                                    <td></td>
+                                    <td>-</td>
                                 @endif
                                 @if ($tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id))
                                     <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
                                     <td>{{$tool->getExaminationStatus($post->id)}}</td>
                                 @else
-                                    <td></td>
-                                    <td></td>
+                                    <td>-</td>
+                                    <td>-</td>
                                 @endif
                             @endif
                         </tr>
