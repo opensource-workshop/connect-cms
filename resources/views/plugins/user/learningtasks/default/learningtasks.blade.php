@@ -123,13 +123,33 @@
             <table class="table table-bordered">
                 <thead class="bg-light">
                     <tr>
+                        @php
+                            // レポート・試験をヘッダーに表示するか
+                            $is_header_report = false;
+                            $is_header_examination = false;
+
+                            foreach($categories_and_post as $post) {
+                                $use_report = $tool->checkFunction(LearningtaskUseFunction::use_report, $post->id);
+                                if ($use_report) {
+                                    $is_header_report = true;
+                                }
+
+                                $use_examination = $tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id);
+                                if ($use_report) {
+                                    $is_header_examination = true;
+                                }
+                            }
+                        @endphp
+
                         <th scope="col" class="text-nowrap">科目名</th>
-                        @if (Auth::check() && $learningtask->useReport())
-                            <th scope="col" class="text-nowrap">レポート</th>
-                        @endif
-                        @if (Auth::check() && $learningtask->useExamination())
-                            <th scope="col" class="text-nowrap">試験日時</th>
-                            <th scope="col" class="text-nowrap">試験評価</th>
+                        @if (Auth::check())
+                            @if ($is_header_report)
+                                <th scope="col" class="text-nowrap">レポート</th>
+                            @endif
+                            @if ($is_header_examination)
+                                <th scope="col" class="text-nowrap">試験日時</th>
+                                <th scope="col" class="text-nowrap">試験評価</th>
+                            @endif
                         @endif
                     </tr>
                 </thead>
@@ -145,12 +165,19 @@
                                 {{-- タイトル --}}
                                 <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">{!!$post->getNobrPostTitle()!!}</a>
                             </th>
-                            @if (Auth::check() && $learningtask->useReport())
-                                <td>{{$tool->getReportStatus($post->id)}}</td>
-                            @endif
-                            @if (Auth::check() && $learningtask->useExamination())
-                                <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
-                                <td>{{$tool->getExaminationStatus($post->id)}}</td>
+                            @if (Auth::check())
+                                @if ($tool->checkFunction(LearningtaskUseFunction::use_report, $post->id))
+                                    <td>{{$tool->getReportStatus($post->id)}}</td>
+                                @else
+                                    <td></td>
+                                @endif
+                                @if ($tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id))
+                                    <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
+                                    <td>{{$tool->getExaminationStatus($post->id)}}</td>
+                                @else
+                                    <td></td>
+                                    <td></td>
+                                @endif
                             @endif
                         </tr>
                     @endforeach

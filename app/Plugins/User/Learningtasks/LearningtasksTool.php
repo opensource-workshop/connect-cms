@@ -160,8 +160,16 @@ class LearningtasksTool
         if (!empty($this->learningtask)) {
             $this->base_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', 0)->get();
         }
-        if (!empty($this->learningtask) && !empty($this->post)) {
-            $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', $this->post->id)->get();
+        // bugfix: 一覧画面でレポートの評価等、表示できてないバグ修正
+        // if (!empty($this->learningtask) && !empty($this->post)) {
+        if (!empty($this->learningtask)) {
+            if (empty($this->post)) {
+                // 一覧画面
+                $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->get();
+            } else {
+                // 詳細画面
+                $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', $this->post->id)->get();
+            }
         }
 
         // メール設定
@@ -311,6 +319,7 @@ class LearningtasksTool
         }
 
         $teacher_names = array();
+        // [bug] Invalid argument supplied for foreach(). 参加教員 未選択時
         foreach ($this->teachers as $teacher) {
             // ommit_role の指定に合致すれば対象外（システムの管理者などを除外するのが目的）
             if (!empty($omit_role_hierarchy)) {
@@ -363,14 +372,24 @@ class LearningtasksTool
      */
     private function getFunctionBoth(string $function, string $function_parts)
     {
-        // 使用機能の課題独自設定はONか
-        if ($this->isPostFunctionSettingOn($function_parts)) {
+        // 使用機能の課題独自設定 取得
+        $post_function_setting_value = $this->getPostFunctionSetting($function_parts[1], null);
+
+        if (empty($post_function_setting_value)) {
+            // 課題管理設定に従う = null
+            // ここではなにもせず、課題セットの設定へいく
+        } elseif ($post_function_setting_value == 'on') {
+            // この課題独自に設定する = on
+
             // postから取得
             $setting_value = $this->getFunction($function, true);
             if ($setting_value) {
                 // 値があったら返却
                 return $setting_value;
             }
+        } elseif ($post_function_setting_value == 'off') {
+            // 課題独自で使用しない = off
+            return null;
         }
 
         // baseから取得
@@ -381,16 +400,32 @@ class LearningtasksTool
     /**
      * 使用機能のチェック
      */
-    public function checkFunction($function)
+    public function checkFunction($function, int $post_id = null)
     {
         $function_parts = explode('_', $function);
 
-        // 使用機能の課題独自設定はONか
-        if ($this->isPostFunctionSettingOn($function_parts[1])) {
+        // bugfix: 一覧画面でレポートの評価等、表示できてないバグ修正
+        // 使用機能の課題独自設定 取得
+        $post_function_setting_value = $this->getPostFunctionSetting($function_parts[1], $post_id);
+
+        if (empty($post_function_setting_value)) {
+            // 課題管理設定に従う = null
+            // ここではなにもせず、課題セットの設定へいく
+        } elseif ($post_function_setting_value == 'on') {
+            // この課題独自に設定する = on
+
             // 機能判定
             // bugfix: post側に設定ない事をも考慮する。 例）レポート提出 use_report のチェックが付いてない時
             // $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
-            $post_setting = $this->post_use_functions->where('use_function', $function)->first();
+            // $post_setting = $this->post_use_functions->where('use_function', $function)->first();
+            if ($post_id) {
+                // 一覧画面でpost_id指定
+                $post_setting = $this->post_use_functions->where('use_function', $function)->where('post_id', $post_id)->first();
+            } else {
+                // 詳細画面
+                $post_setting = $this->post_use_functions->where('use_function', $function)->first();
+            }
+
             if (empty($post_setting)) {
                 $post_setting_value = null;
             } else {
@@ -407,6 +442,9 @@ class LearningtasksTool
                 // 機能を使う
                 return true;
             }
+        } elseif ($post_function_setting_value == 'off') {
+            // 課題独自で使用しない = off
+            return false;
         }
 
         // 課題セットの設定を確認
@@ -431,33 +469,29 @@ class LearningtasksTool
     }
 
     /**
-     * 使用機能の課題独自設定はONか
+     * 使用機能の課題独自設定 取得
      */
-    private function isPostFunctionSettingOn(string $function_parts)
+    private function getPostFunctionSetting(string $function_parts, int $post_id = null)
     {
+        $post_function_setting_value = null;
+
         // 課題ごとの設定がある場合。
         if (!empty($this->post_use_functions)) {
             // 課題独自設定の有無
-            $category_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts . '_setting')->first();
-            if (empty($category_setting)) {
-                $category_setting_value = null;
+            if ($post_id) {
+                // 一覧画面でpost_id指定
+                $post_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts . '_setting')->where('post_id', $post_id)->first();
             } else {
-                $category_setting_value = $category_setting->value;
+                // 詳細画面
+                $post_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts . '_setting')->first();
             }
 
-            if (empty($category_setting_value)) {
-                // 独自設定なしのため、false
-                return false;
-            } elseif ($category_setting_value == 'off') {
-                // 独自設定なしのため、false
-                return false;
-            } elseif ($category_setting_value == 'on') {
-                return true;
+            if ($post_setting) {
+                $post_function_setting_value = $post_setting->value;
             }
         }
 
-        // 独自設定なしのため、false
-        return false;
+        return $post_function_setting_value;
     }
 
     /**

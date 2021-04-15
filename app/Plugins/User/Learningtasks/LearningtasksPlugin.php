@@ -139,8 +139,8 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  POST取得関数（コアから呼び出す）
-     *  コアがPOSTチェックの際に呼び出す関数
+     * POST取得関数（コアから呼び出す）
+     * コアがPOSTチェックの際に呼び出す関数
      */
     public function getPost($id, $action = null)
     {
@@ -164,23 +164,30 @@ class LearningtasksPlugin extends UserPluginBase
         //$arg_post = LearningtasksPosts::where('id', $id)->first();
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = LearningtasksPosts::select(
-            'learningtasks_posts.*',
-            'learningtasks.bucket_id',
-            'categories.color as category_color',
-            'categories.background_color as category_background_color',
-            'categories.category as category'
-        )
-                                ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
-                                ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-                                ->where('learningtasks_posts.id', $id)
-                                // 履歴の廃止
-                                //->where('contents_id', $arg_post->contents_id)
-                                //->where(function ($query) {
-                                //      $query = $this->appendAuthWhere($query);
-                                //})
-                                ->orderBy('id', 'desc')
-                                ->first();
+        $this->post = LearningtasksPosts::
+                select(
+                    'learningtasks_posts.*',
+                    'learningtasks.bucket_id',
+                    'categories.color as category_color',
+                    'categories.background_color as category_background_color',
+                    'categories.category as category'
+                )
+                ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                // bugfix: 論理削除を考慮
+                // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+                ->leftJoin('categories', function ($join) {
+                    $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
+                            ->whereNull('categories.deleted_at');
+                })
+
+                ->where('learningtasks_posts.id', $id)
+                // 履歴の廃止
+                //->where('contents_id', $arg_post->contents_id)
+                //->where(function ($query) {
+                //      $query = $this->appendAuthWhere($query);
+                //})
+                ->orderBy('id', 'desc')
+                ->first();
         return $this->post;
     }
 
@@ -309,13 +316,14 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題セットから、全課題（POST）を抽出
         // use_need_auth でログインの条件を加味、student_join_flag で受講の有無を加味して、
         // 抜き出したID で再度、詳細項目のデータ取得（ページングなども行うため）
-        $learningtasks_posts = LearningtasksPosts::select(
-            'learningtasks_posts.*',
-            'parent_use_need_auth.value as parent_use_need_auth',
-            'post_use_need_auth.value as post_use_need_auth',
-            'student.role_name as student_role_name',
-            'teacher.role_name as teacher_role_name'
-        )
+        $learningtasks_posts = LearningtasksPosts::
+            select(
+                'learningtasks_posts.*',
+                'parent_use_need_auth.value as parent_use_need_auth',
+                'post_use_need_auth.value as post_use_need_auth',
+                'student.role_name as student_role_name',
+                'teacher.role_name as teacher_role_name'
+            )
             ->leftJoin('learningtasks_use_settings as parent_use_need_auth', function ($join) {
                 $join->on('parent_use_need_auth.learningtasks_id', '=', 'learningtasks_posts.learningtasks_id')
                      ->where('parent_use_need_auth.use_function', '=', 'use_need_auth')
@@ -412,7 +420,12 @@ class LearningtasksPlugin extends UserPluginBase
                     'categories.background_color as category_background_color',
                     'categories.category as category'
                 )
-                ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+                // bugfix: 論理削除を考慮
+                // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+                ->leftJoin('categories', function ($join) {
+                    $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
+                            ->whereNull('categories.deleted_at');
+                })
                 // 履歴の廃止
                 //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
                 //                             $query->select(DB::raw('MAX(id) As id'))
