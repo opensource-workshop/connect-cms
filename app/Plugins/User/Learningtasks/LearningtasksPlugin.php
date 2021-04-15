@@ -2501,18 +2501,26 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  差し込み文章変換
+     * 差し込み文章変換
      */
-    private function replaceMailText($subject, $tool, $post)
+    private function replaceMailText($subject, $tool, $post, $student_user_id)
     {
         $mail_text = str_replace('[[student_name]]', $tool->getStudent(), $subject);
         $mail_text = str_replace('[[teacher_name]]', $tool->getTeachersName('role_article_admin'), $mail_text);
         $mail_text = str_replace('[[post_title]]', strip_tags($post->post_title), $mail_text);
+
+        // 課題URL
+        $task_url = url('/').'/plugin/learningtasks/show/'.$this->page->id.'/'.$this->frame->id.'/'.$post->id.'#frame-'.$this->frame->id;
+        $mail_text = str_replace('[[task_url]]', $task_url, $mail_text);
+
+        // 評価する受講者を指定した課題URL
+        $teacher_task_url = url('/').'/redirect/plugin/learningtasks/switchUserUrl/'.$this->page->id.'/'.$this->frame->id.'/'.$post->id.'?student_id='.$student_user_id.'#frame-'.$this->frame->id;
+        $mail_text = str_replace('[[teacher_task_url]]', $teacher_task_url, $mail_text);
         return $mail_text;
     }
 
     /**
-     *  メール文面
+     * メール文面
      */
     private function getMailFormat($post, $task_status, $tool)
     {
@@ -2527,13 +2535,13 @@ class LearningtasksPlugin extends UserPluginBase
             8 => $tool->getMailConfig('subject', $task_status, 0, '総合評価が登録されました。'),
         );
         $mail_bodys = array(
-            1 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」のレポートが提出されました。\n評価をお願いします。\n"),
-            2 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」のレポートの評価が登録されました。\n確認をお願いします。\n"),
-            3 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」にコメントが登録されました。\n確認をお願いします。\n"),
-            5 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」に試験の解答が提出されました。\n評価をお願いします。\n"),
-            6 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」の試験の評価が登録されました。\n確認をお願いします。\n"),
-            7 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」に試験のコメントが登録されました。\n確認をお願いします。\n"),
-            8 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」の総合評価が登録されました。\n確認をお願いします。\n"),
+            1 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」のレポートが提出されました。\n評価をお願いします。\n[[teacher_task_url]]\n"),
+            2 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」のレポートの評価が登録されました。\n確認をお願いします。\n[[task_url]]\n"),
+            3 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」にコメントが登録されました。\n確認をお願いします。\n[[task_url]]\n"),
+            5 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」に試験の解答が提出されました。\n評価をお願いします。\n[[teacher_task_url]]\n"),
+            6 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」の試験の評価が登録されました。\n確認をお願いします。\n[[task_url]]\n"),
+            7 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」に試験のコメントが登録されました。\n確認をお願いします。\n[[task_url]]\n"),
+            8 => $tool->getMailConfig('body', $task_status, 0, "「[[post_title]]」の総合評価が登録されました。\n確認をお願いします。\n[[task_url]]\n"),
         );
         return array($mail_subjects, $mail_bodys);
     }
@@ -2560,9 +2568,9 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 件名、本文、フッターの変換
-        $mail_body = $this->replaceMailText($mail_bodys[$task_status], $tool, $post);
-        $mail_body = $mail_body . "\n" . $this->replaceMailText($mail_footer, $tool, $post);
-        $mail_subject = $this->replaceMailText($mail_subjects[$task_status], $tool, $post);
+        $mail_body = $this->replaceMailText($mail_bodys[$task_status], $tool, $post, $student_user_id);
+        $mail_body = $mail_body . "\n" . $this->replaceMailText($mail_footer, $tool, $post, $student_user_id);
+        $mail_subject = $this->replaceMailText($mail_subjects[$task_status], $tool, $post, $student_user_id);
 
         foreach ($send_users as $send_user) {
             // メールアドレスがなければ終了
