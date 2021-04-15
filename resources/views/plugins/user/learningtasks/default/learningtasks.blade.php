@@ -94,6 +94,7 @@
                                 <tr>
                                     <td>{{$teacher_task->post_title}}</td>
                                     <td>
+                                        {{-- 評価する受講者を指定した課題URL --}}
                                         <a href="{{url('/')}}/redirect/plugin/learningtasks/switchUserUrl/{{$page->id}}/{{$frame_id}}/{{$teacher_task->post_id}}?student_id={{$teacher_task->user_id}}#frame-{{$frame_id}}">
                                             {{$teacher_task->user_name}}
                                         </a>
