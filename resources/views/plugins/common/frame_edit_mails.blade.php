@@ -243,36 +243,36 @@
 </form>
 
 {{-- 初期状態で開くもの --}}
-@if ($bucket_mail->notice_on)
-<script>
-$('#collapse_notice').collapse({
-  toggle: true
-})
-</script>
+@if (old('notice_on', $bucket_mail->notice_on))
+    <script>
+    $('#collapse_notice').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
-@if ($bucket_mail->relate_on)
-<script>
-$('#collapse_relate').collapse({
-  toggle: true
-})
-</script>
+@if (old('relate_on', $bucket_mail->relate_on))
+    <script>
+    $('#collapse_relate').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
-@if ($bucket_mail->approval_on)
-<script>
-$('#collapse_approval').collapse({
-  toggle: true
-})
-</script>
+@if (old('approval_on', $bucket_mail->approval_on))
+    <script>
+    $('#collapse_approval').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
-@if ($bucket_mail->approved_on)
-<script>
-$('#collapse_approved').collapse({
-  toggle: true
-})
-</script>
+@if (old('approved_on', $bucket_mail->approved_on))
+    <script>
+    $('#collapse_approved').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
 {{-- 表示しない。 --}}
