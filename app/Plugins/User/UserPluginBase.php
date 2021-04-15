@@ -709,7 +709,7 @@ class UserPluginBase extends PluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on)],
-            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->relate_on)],
+            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on)],
             'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on)],
 
         ]);
