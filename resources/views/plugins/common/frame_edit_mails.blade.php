@@ -197,10 +197,10 @@
             <div class="collapse" id="collapse_approved">
                 <span class="badge badge-secondary mt-3">投稿者への通知</span>
                 <div class="pl-0 mb-3">
-	                <div class="custom-control custom-checkbox custom-control-inline">
-	                    <input type="checkbox" value="1" id="approved_author" name="approved_author" class="custom-control-input" @if(old('approved_author', $bucket_mail->approved_author) == 1) checked="checked" @endif>
-	                    <label class="custom-control-label" for="approved_author">投稿者へ通知する</label>
-	                </div>
+                    <div class="custom-control custom-checkbox custom-control-inline">
+                        <input type="checkbox" value="1" id="approved_author" name="approved_author" class="custom-control-input" @if(old('approved_author', $bucket_mail->approved_author) == 1) checked="checked" @endif>
+                        <label class="custom-control-label" for="approved_author">投稿者へ通知する</label>
+                    </div>
                 </div>
 
                 <span class="badge badge-secondary mb-1">送信先メールアドレス</span>
