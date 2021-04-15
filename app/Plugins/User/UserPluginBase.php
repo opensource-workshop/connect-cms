@@ -110,6 +110,9 @@ class UserPluginBase extends PluginBase
         // ページの保持
         $this->page = $page;
 
+        // bugfix: URLのフレームIDを手で書き換えられた場合、frameがnullになる事がありえるため対応
+        $frame = $frame ?? new Frame();
+
         // フレームの保持
         $this->frame = $frame;
 
