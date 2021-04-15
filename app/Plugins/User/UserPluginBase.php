@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
@@ -574,6 +576,8 @@ class UserPluginBase extends PluginBase
         if (empty($bucket)) {
             return $this->view_error("error_inframe", "存在しないBucket");
         }
+        // [debug]
+        // var_dump(old('notice_on'));
 
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
@@ -697,6 +701,42 @@ class UserPluginBase extends PluginBase
             return $this->view_error("error_inframe", "存在しないBucket");
         }
 
+        // redirect_path
+        $redirect_path_array = [
+            'redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id
+        ];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on)],
+            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->relate_on)],
+            'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on)],
+
+        ]);
+        $validator->setAttributeNames([
+            'notice_addresses' => '送信先メールアドレス',
+            'approval_addresses' => '送信先メールアドレス',
+            'approved_addresses' => '送信先メールアドレス',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            // [debug]
+            // セッション初期化などのLaravel 処理。
+            // $request->flash();
+
+            // 共通画面のため、redirect_pathが画面に書けないため、ここで設定
+            $request->merge($redirect_path_array);
+
+            // [debug]
+            // dd(old('notice_on'), $request->notice_on);
+            // $a = redirect()->back()->withErrors($validator)->withInput();
+            // dd(old('notice_on'), $request->notice_on);
+            // return $a;
+
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
 
@@ -737,7 +777,7 @@ class UserPluginBase extends PluginBase
         $bucket_mail->save();
 
         // 登録後はリダイレクトしてメール設定ページを開く。
-        return new Collection(['redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+        return new Collection($redirect_path_array);
     }
 
     /**
