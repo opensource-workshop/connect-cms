@@ -186,7 +186,7 @@
                                     @if ($tool->checkFunction(LearningtaskUseFunction::use_report_end))
                                         <div class="form-group row mb-1">
                                             <label class="col-sm-3 text-sm-right">提出期限</label>
-                                            <div class="col-sm-9">
+                                            <div class="col-sm-9 font-weight-bold">
                                                 {{$tool->getFunctionBothReport(LearningtaskUseFunction::report_end_at)->format('Y年n月j日 H時i分')}}
                                             </div>
                                         </div>
