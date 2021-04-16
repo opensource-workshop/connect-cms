@@ -824,6 +824,12 @@ class LearningtasksPlugin extends UserPluginBase
             return;
         }
 
+        // （教員用）詳細から戻った時に student_id がセッションに残って、一覧表示がそのstudent_idの内容に変わるので消す。
+        // if ($tool->isTeacher())で判定しようかと思ったが、LearningtasksToolのコンストラクタで、sessionのstudent_idがあると、
+        // その受講者の内容でとってきてしまって表示が変わったため、使えなかった。
+        session()->forget('student_id');
+        session()->forget('learningtask_post_id');
+
         // ユーザー関連情報のまとめ
         $tool = new LearningtasksTool($request, $page_id, $learningtask);
 
