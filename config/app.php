@@ -263,6 +263,7 @@ $app_array = [
         'LearningtaskUseFunction' => \App\Enums\LearningtaskUseFunction::class,
         'ContentOpenType' => \App\Enums\ContentOpenType::class,
         'RoleName' => \App\Enums\RoleName::class,
+        'LearningtaskUserJoinFlag' => \App\Enums\LearningtaskUserJoinFlag::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
