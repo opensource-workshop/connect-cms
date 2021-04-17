@@ -103,18 +103,29 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["editMail"]         = array('role_arrangement');
         $role_ckeck_table["saveMail"]         = array('role_arrangement');
 
-        // モデレータ（科目の編集から飛べる処理のため）
-        $role_ckeck_table["editUsers"]        = array('role_article');
-        $role_ckeck_table["editReport"]       = array('role_article');
-        $role_ckeck_table["editExaminations"] = array('role_article');
-        $role_ckeck_table["editEvaluate"]     = array('role_article');
-        $role_ckeck_table["listGrade"]        = array('role_article');
+        // コンテンツ管理者（科目の編集から飛べる処理）
+        // $role_ckeck_table["editUsers"]        = array('role_article');
+        // $role_ckeck_table["editReport"]       = array('role_article');
+        // $role_ckeck_table["editExaminations"] = array('role_article');
+        // $role_ckeck_table["editEvaluate"]     = array('role_article');
+        // $role_ckeck_table["listGrade"]        = array('role_article');
 
-        $role_ckeck_table["saveUsers"]        = array('role_article');
-        $role_ckeck_table["saveReport"]       = array('role_article');
-        $role_ckeck_table["saveExaminations"] = array('role_article');
-        $role_ckeck_table["saveEvaluate"]     = array('role_article');
-        $role_ckeck_table["downloadGrade"]    = array('role_article');
+        // $role_ckeck_table["saveUsers"]        = array('role_article');
+        // $role_ckeck_table["saveReport"]       = array('role_article');
+        // $role_ckeck_table["saveExaminations"] = array('role_article');
+        // $role_ckeck_table["saveEvaluate"]     = array('role_article');
+        // $role_ckeck_table["downloadGrade"]    = array('role_article');
+        $role_ckeck_table["editUsers"]        = array('role_article_admin');
+        $role_ckeck_table["editReport"]       = array('role_article_admin');
+        $role_ckeck_table["editExaminations"] = array('role_article_admin');
+        $role_ckeck_table["editEvaluate"]     = array('role_article_admin');
+        $role_ckeck_table["listGrade"]        = array('role_article_admin');
+
+        $role_ckeck_table["saveUsers"]        = array('role_article_admin');
+        $role_ckeck_table["saveReport"]       = array('role_article_admin');
+        $role_ckeck_table["saveExaminations"] = array('role_article_admin');
+        $role_ckeck_table["saveEvaluate"]     = array('role_article_admin');
+        $role_ckeck_table["downloadGrade"]    = array('role_article_admin');
 
         $role_ckeck_table["switchUser"]       = array('role_guest');
         $role_ckeck_table["changeStatus1"]    = array('role_guest');
@@ -359,8 +370,9 @@ class LearningtasksPlugin extends UserPluginBase
         $target_post_ids = array();
 
         foreach ($learningtasks_posts as $learningtasks_post) {
-            // モデレータ以上の権限の場合は、全部、対象
-            if ($this->isCan('role_article')) {
+            // 課題管理者の場合は、全部、対象
+            // if ($this->isCan('role_article')) {
+            if ($tool->isLearningtaskAdmin()) {
                 $target_post_ids[] = $learningtasks_post->id;
                 continue;
             }
@@ -2334,7 +2346,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  レポートの課題提出
+     * レポートの課題提出
      */
     public function changeStatus1($request, $page_id, $frame_id, $post_id)
     {
@@ -2342,7 +2354,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  レポートの課題評価
+     * レポートの課題評価
      */
     public function changeStatus2($request, $page_id, $frame_id, $post_id)
     {
@@ -2350,7 +2362,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  レポートのコメント
+     * レポートのコメント
      */
     public function changeStatus3($request, $page_id, $frame_id, $post_id)
     {
@@ -2358,7 +2370,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  試験申し込み
+     * 試験申し込み
      */
     public function changeStatus4($request, $page_id, $frame_id, $post_id)
     {
@@ -2366,7 +2378,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  試験の解答提出
+     * 試験の解答提出
      */
     public function changeStatus5($request, $page_id, $frame_id, $post_id)
     {
@@ -2374,7 +2386,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  試験の評価
+     * 試験の評価
      */
     public function changeStatus6($request, $page_id, $frame_id, $post_id)
     {
@@ -2382,7 +2394,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  試験のコメント
+     * 試験のコメント
      */
     public function changeStatus7($request, $page_id, $frame_id, $post_id)
     {
@@ -2390,7 +2402,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  総合評価のコメント
+     * 総合評価のコメント
      */
     public function changeStatus8($request, $page_id, $frame_id, $post_id)
     {
@@ -2398,7 +2410,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  進捗ステータス更新
+     * 進捗ステータス更新
      */
     private function changeStatus($request, $page_id, $frame_id, $post_id, $task_status)
     {

@@ -583,19 +583,36 @@ class LearningtasksTool
     }
 
     /**
-     *  モデレータ権限を保持しているか
+     * 課題管理者か
      */
-    public function isRoleArticle()
+    public function isLearningtaskAdmin()
     {
-        // コンテンツ管理者とモデレータはOK とする。
-        if ($this->user->can('role_article')) {
+        if (empty($this->user)) {
+            return false;
+        }
+
+        // コンテンツ管理者はOKとする。
+        if ($this->user->can('role_article_admin')) {
             return true;
         }
         return false;
     }
 
+    // delete: 使われてない
+    // /**
+    //  * モデレータ権限を保持しているか
+    //  */
+    // public function isRoleArticle()
+    // {
+    //     // コンテンツ管理者とモデレータはOK とする。
+    //     if ($this->user->can('role_article')) {
+    //         return true;
+    //     }
+    //     return false;
+    // }
+
     /**
-     *  課題の表示を行えるか？
+     * 課題の表示を行えるか？
      */
     public function canPostView()
     {
@@ -610,9 +627,10 @@ class LearningtasksTool
             return false;
         }
 
-        // コンテンツ管理者とモデレータはOK とする。
-        if ($this->user->can('role_article')) {
-            return true;
+        // 課題管理者はOK とする。
+        // if ($this->user->can('role_article')) {
+        if ($this->isLearningtaskAdmin()) {
+                return true;
         }
 
         // 教員、受講者として設定されているか。（メンバーシップとしての設定も含む）

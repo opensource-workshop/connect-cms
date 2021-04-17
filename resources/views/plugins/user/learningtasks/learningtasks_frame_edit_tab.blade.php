@@ -50,6 +50,7 @@
         <a href="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">課題管理選択</a>
     </li>
 @endif
+{{-- delete: 編集者やモデレータで科目を登録・編集は使われていないため一旦削除。もしモデレータによる登録・編集が必要になったら復活させる。
 @if ($action == 'editBucketsRoles' || $action == '')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">権限設定</span></span>
@@ -59,3 +60,4 @@
         <a href="{{url('/')}}/plugin/learningtasks/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">権限設定</a>
     </li>
 @endif
+--}}
