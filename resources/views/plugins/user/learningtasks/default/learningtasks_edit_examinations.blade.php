@@ -295,15 +295,15 @@
                             @endforelse
                         </tbody>
                     </table>
-                    <small class="text-muted">
-                        ※ 例えば「申込終了日時」を 4/19 00:00 と設定した場合、4/18 23:59まで申込可能になります。<br />
-                        ※ 「申込終了日時」を設定しない場合、「試験終了日時」まで申込可能になります。<br />
-                    </small>
                     @foreach($examinations as $examination)
                         @include('common.errors_inline', ['name' => 'edit_start_at.'.$examination->id])
                         @include('common.errors_inline', ['name' => 'edit_end_at.'.$examination->id])
                         @include('common.errors_inline', ['name' => 'edit_entry_end_at.'.$examination->id])
                     @endforeach
+                    <small class="text-muted">
+                        ※ 例えば「申込終了日時」を 4/19 00:00 と設定した場合、4/18 23:59まで申込可能になります。<br />
+                        ※ 「申込終了日時」を設定しない場合、「試験終了日時」まで申込可能になります。<br />
+                    </small>
                 </div>
             </div>
         </div>
