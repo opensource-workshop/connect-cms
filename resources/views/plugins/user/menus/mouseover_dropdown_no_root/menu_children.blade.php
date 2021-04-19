@@ -7,7 +7,7 @@
  * @category メニュープラグイン
 --}}
 
-@if ($children->display_flag == 1)
+@if ($children->isView(Auth::user(), false, true, $page_roles))
 
     @if ($children->id == $page_id)
     <a class="dropdown-item {{ 'depth-' . $children->depth }} active" href="{{ url("$children->permanent_link") }}" aria-current="page">
