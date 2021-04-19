@@ -54,7 +54,7 @@
         </div>
 
         {{-- 一覧エリア --}}
-        <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $codes->total() }} 件</span></div>
+        <div class="mt-3"><span class="badge badge-pill badge-light">{{ $codes->total() }} 件</span></div>
         <table class="table table-bordered table_border_radius table-hover cc-font-90">
             <tbody>
                 <tr class="bg-light d-none d-sm-table-row">
