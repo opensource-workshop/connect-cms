@@ -12,8 +12,6 @@
 
 @section("plugin_contents_$frame->id")
 
-@include('common.errors_form_line')
-
 <script>
     $(function () {
         /**
@@ -43,6 +41,10 @@
             <div class="card-body">
                 <h5 class="mb-0">{!!$learningtasks_posts->post_title!!}</h5>
             </div>
+        </div>
+
+        <div class="mb-2">
+            @include('common.errors_form_line')
         </div>
 
         <h5><span class="badge badge-secondary">使用項目の設定</span></h5>
