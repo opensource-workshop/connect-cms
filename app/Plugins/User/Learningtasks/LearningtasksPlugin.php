@@ -2,7 +2,7 @@
 
 namespace App\Plugins\User\Learningtasks;
 
-// use Carbon\Carbon;
+use Carbon\Carbon;
 // use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -1089,9 +1089,13 @@ class LearningtasksPlugin extends UserPluginBase
                 ->where('task_flag', 1)
                 ->get();
 
-        // 試験情報(申し込み可能な分 = 終了日時が現在より後のもの)
+        // 試験情報(申し込み可能な分 = 終了日時が現在より後のもの＋申込終了日時がないもの or 申込終了日時が現在より後のもの)
         $examinations = LearningtasksExaminations::where('post_id', $post->id)
-                ->where('end_at', '>', date('Y-m-d H:i:s'))
+                ->where('entry_end_at', '>', date('Y-m-d H:i:s'))
+                ->orWhere(function ($query) {
+                    $query->where('end_at', '>', date('Y-m-d H:i:s'))
+                            ->whereNull('entry_end_at');
+                })
                 ->orderBy('start_at', 'asc')
                 ->get();
 
@@ -2246,13 +2250,15 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 項目のエラーチェック
         $validate_value = [
-            'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at'],
-            'end_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at'],
+            'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at,entry_end_at', 'before_or_equal:end_at'],
+            'end_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at,entry_end_at'],
+            'entry_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'before_or_equal:start_at'],
         ];
 
         $validate_attribute = [
             'start_at' => '開始日時',
             'end_at' => '終了日時',
+            'entry_end_at' => '申込終了日時',
         ];
 
         // 課題ファイルがアップロードされた。
@@ -2283,7 +2289,15 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 試験登録
         if ($request->filled('start_at') && $request->filled('end_at')) {
-            LearningtasksExaminations::create(['post_id' => $post_id, 'start_at' => $request->start_at . ':00', 'end_at' => $request->end_at . ':00']);
+            // LearningtasksExaminations::create(['post_id' => $post_id, 'start_at' => $request->start_at . ':00', 'end_at' => $request->end_at . ':00']);
+            $learningtasks_examinations = new LearningtasksExaminations();
+            $learningtasks_examinations->post_id = $post_id;
+            $learningtasks_examinations->start_at = $request->start_at . ':00';
+            $learningtasks_examinations->end_at = $request->end_at . ':00';
+            if ($request->filled('entry_end_at')) {
+                $learningtasks_examinations->entry_end_at = $request->entry_end_at . ':00';
+            }
+            $learningtasks_examinations->save();
         }
 
         // 課題ファイルの削除
@@ -2443,6 +2457,21 @@ class LearningtasksPlugin extends UserPluginBase
         $validator_values = array();
         $validator_attributes = array();
         // $validator_messages = array();
+
+        // 試験申し込み
+        if ($task_status == 4) {
+            $learningtasksExaminations = LearningtasksExaminations::find($request->examination_id);
+
+            // 試験申込期限の設定ないなら、チェックしない
+            if ($learningtasksExaminations->report_end_at) {
+                // 今より試験申込期限[以上(gte)]なら、申込できない
+                if (Carbon::now()->gte($learningtasksExaminations->report_end_at)) {
+                    session()->flash('plugin_errors', '申込期限を過ぎたのため、該当の試験は申込できません。');
+                    // redirect_path指定済みのため、returnのみで元画面へ遷移
+                    return;
+                }
+            }
+        }
 
         // 試験の解答の場合、該当の試験時間内かチェック
         if ($task_status == 5) {

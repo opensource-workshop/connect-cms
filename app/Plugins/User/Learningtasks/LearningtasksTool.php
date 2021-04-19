@@ -198,7 +198,8 @@ class LearningtasksTool
                     select(
                         'learningtasks_users_statuses.*',
                         'learningtasks_examinations.start_at',
-                        'learningtasks_examinations.end_at'
+                        'learningtasks_examinations.end_at',
+                        'learningtasks_examinations.entry_end_at'
                     )
                     ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
                     ->where('learningtasks_users_statuses.user_id', '=', $this->student_id)

@@ -186,43 +186,83 @@
     <div class="form-group row">
         <label class="col-md-3 text-md-right">試験日時一覧</label>
         <div class="col-md-9">
-            <div class="card p-2">
-            @if ($examinations->count() == 0)
-                ※ 設定されている試験がありません。
-            @else
-            @foreach ($examinations as $examination)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" name="del_examinations[{{$examination->id}}]" value="1" class="custom-control-input" id="del_examinations[{{$examination->id}}]" @if(old("del_examination.$examination->id")) checked=checked @endif>
-                    <label class="custom-control-label" for="del_examinations[{{$examination->id}}]">
-                        {{$examination->start_at->format('Y-m-d H:i')}} ～ {{$examination->end_at->format('Y-m-d H:i')}}
-                    </label>
-                </div>
-            @endforeach
-            @endif
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th nowrap>削除</th>
+                            <th nowrap>試験開始</th>
+                            <th nowrap>試験終了</th>
+                            <th nowrap>申込終了</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($examinations as $examination)
+                            <tr>
+                                <td nowrap class="align-middle text-center">
+                                    <input type="hidden" value="{{$examination->id}}" name="examinations_id[{{$examination->id}}]">
+
+                                    <div class="custom-control custom-checkbox">
+                                        {{-- チェック外した場合にも値を飛ばす対応 --}}
+                                        <input type="hidden" value="0" name="del_examinations[{{$examination->id}}]">
+
+                                        <input type="checkbox" name="del_examinations[{{$examination->id}}]" value="1" class="custom-control-input" id="del_examinations[{{$examination->id}}]" @if(old("del_examination.$examination->id")) checked=checked @endif>
+                                        <label class="custom-control-label" for="del_examinations[{{$examination->id}}]"></label>
+                                    </div>
+                                </td>
+                                <td nowrap class="align-middle">{{$examination->start_at->format('Y-m-d H:i')}}</td>
+                                <td nowrap class="align-middle">{{$examination->end_at->format('Y-m-d H:i')}}</td>
+                                <td nowrap class="align-middle">@if ($examination->entry_end_at) {{$examination->entry_end_at->format('Y-m-d H:i')}} @endif</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td nowrap class="align-middle" colspan="4">※ 設定されている試験がありません。</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <small class="text-muted">
+                    ※ 削除する場合はチェックします。<br />
+                    ※ 例えば「申込終了日時」を 4/19 00:00 と設定した場合、4/18 23:59まで申込可能になります。<br />
+                    ※ 「申込終了日時」を設定しない場合、「試験終了日時」まで申込可能になります。<br />
+                </small>
             </div>
-            <small class="text-muted">削除する場合はチェックします。</small>
         </div>
     </div>
 
     <div class="form-group row">
         <label class="col-md-3 text-md-right">試験日時追加</label>
-        <div class="col-md-4">
-            <div class="input-group date" id="start_at" data-target-input="nearest">
-                <input type="text" name="start_at" value="{{old('start_at')}}" class="form-control datetimepicker-input" data-target="#start_at" placeholder="開始日時">
-                <div class="input-group-append" data-target="#start_at" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+        <div class="col-md">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="input-group date" id="start_at" data-target-input="nearest">
+                        <input type="text" name="start_at" value="{{old('start_at')}}" class="form-control datetimepicker-input" data-target="#start_at" placeholder="開始日時">
+                        <div class="input-group-append" data-target="#start_at" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        </div>
+                    </div>
+                    @if ($errors && $errors->has('start_at')) <div class="text-danger">{{$errors->first('start_at')}}</div> @endif
+                </div>
+                <div class="col-md-5">
+                    <div class="input-group date" id="end_at" data-target-input="nearest">
+                        <input type="text" name="end_at" value="{{old('end_at')}}" class="form-control datetimepicker-input" data-target="#end_at" placeholder="終了日時">
+                        <div class="input-group-append" data-target="#end_at" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        </div>
+                    </div>
+                    @if ($errors && $errors->has('end_at')) <div class="text-danger">{{$errors->first('end_at')}}</div> @endif
+                </div>
+                <div class="col-md-5"></div>
+                <div class="col-md-5">
+                    <div class="input-group date" id="entry_end_at" data-target-input="nearest">
+                        <input type="text" name="entry_end_at" value="{{old('entry_end_at')}}" class="form-control datetimepicker-input" data-target="#entry_end_at" placeholder="申込終了日時">
+                        <div class="input-group-append" data-target="#entry_end_at" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        </div>
+                    </div>
+                    @if ($errors && $errors->has('entry_end_at')) <div class="text-danger">{{$errors->first('entry_end_at')}}</div> @endif
                 </div>
             </div>
-            @if ($errors && $errors->has('start_at')) <div class="text-danger">{{$errors->first('start_at')}}</div> @endif
-        </div>
-        <div class="col-md-4">
-            <div class="input-group date" id="end_at" data-target-input="nearest">
-                <input type="text" name="end_at" value="{{old('end_at')}}" class="form-control datetimepicker-input" data-target="#end_at" placeholder="終了日時">
-                <div class="input-group-append" data-target="#end_at" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                </div>
-            </div>
-            @if ($errors && $errors->has('end_at')) <div class="text-danger">{{$errors->first('end_at')}}</div> @endif
         </div>
     </div>
     <script type="text/javascript">
@@ -234,6 +274,12 @@
                 format: 'YYYY-MM-DD HH:mm'
             });
             $('#end_at').datetimepicker({
+                locale: 'ja',
+                sideBySide: true,
+                dayViewHeaderFormat: 'YYYY年 M月',
+                format: 'YYYY-MM-DD HH:mm'
+            });
+            $('#entry_end_at').datetimepicker({
                 locale: 'ja',
                 sideBySide: true,
                 dayViewHeaderFormat: 'YYYY年 M月',

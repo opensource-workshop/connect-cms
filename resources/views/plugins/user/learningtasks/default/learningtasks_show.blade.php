@@ -47,6 +47,7 @@
         </div>
 
         <h5><span class="badge badge-secondary">受講者選択（教員用）</span></h5>
+
         <div class="form-group row">
             <label class="col-sm-3 text-sm-right">評価する受講者</label>
             <div class="col-sm-9">
@@ -364,12 +365,37 @@
                                         <label class="col-sm-3 text-sm-right">試験日</label>
                                         <div class="col-sm-9">
                                             @if (count($examinations) > 0)
-                                                @foreach ($examinations as $examination)
-                                                    <div class="custom-control custom-radio">
-                                                        <input type="radio" id="examination_{{$loop->index}}" name="examination_id" class="custom-control-input" value="{{$examination->id}}">
-                                                        <label class="custom-control-label" for="examination_{{$loop->index}}">{{$tool->getViewDate($examination)}}</label>
-                                                    </div>
-                                                @endforeach
+                                                <table class="table table-bordered table-sm cc-font-90 mb-0">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th></th>
+                                                            <th>試験日</th>
+                                                            <th>申込期限</th>
+                                                        </tr>
+
+                                                        @foreach ($examinations as $examination)
+                                                            <tr>
+                                                                <td class="align-middle text-center">
+                                                                    <div class="form-check">
+                                                                        <input type="radio" id="examination_{{$loop->index}}" name="examination_id" class="form-check-input position-static" value="{{$examination->id}}">
+                                                                    </div>
+                                                                </td>
+                                                                <td class="align-middle">
+                                                                    <label class="mb-0" for="examination_{{$loop->index}}">
+                                                                        {{$tool->getViewDate($examination)}}
+                                                                    </label>
+                                                                </td>
+                                                                <td class="align-middle">
+                                                                    @if ($examination->entry_end_at)
+                                                                        {{$examination->entry_end_at->format('Y年n月j日 H時i分')}}
+                                                                    @else
+                                                                        -
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
 
                                                 <button type="submit" class="btn btn-primary btn-sm mt-2" onclick="javascript:return confirm('試験日を登録します。\nよろしいですか？');">
                                                     <i class="fas fa-check"></i> <span class="hidden-xs">試験申し込み</span>

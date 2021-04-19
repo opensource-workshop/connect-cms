@@ -16,13 +16,22 @@ class LearningtasksExaminations extends Model
     // 保存時のユーザー関連データの保持
     use Userable;
 
-    // Carbonインスタンス（日付）に自動的に変換
-    protected $dates = ['start_at', 'end_at'];
+    // 日付型の場合、$dates にカラムを指定しておく。
+    protected $dates = [
+        'start_at',
+        'end_at',
+        'entry_end_at',
+    ];
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['post_id', 'start_at', 'end_at'];
+    protected $fillable = [
+        'post_id',
+        'start_at',
+        'end_at',
+        'entry_end_at',
+    ];
 
     /**
      * 試験日の画面表記を取得
