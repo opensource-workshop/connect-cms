@@ -86,8 +86,33 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editMail', 'editUsers', 'editReport', 'editExaminations', 'editEvaluate', 'listGrade', 'switchUserUrl'];
-        $functions['post'] = ['saveMail', 'saveUsers', 'saveReport', 'saveExaminations', 'saveEvaluate', 'downloadGrade', 'switchUser', 'changeStatus1', 'changeStatus2', 'changeStatus3', 'changeStatus4', 'changeStatus5', 'changeStatus6', 'changeStatus7', 'changeStatus8'];
+        $functions['get']  = [
+            'editMail',
+            'editUsers',
+            'editReport',
+            'editExaminations',
+            'editEvaluate',
+            'listGrade',
+            'switchUserUrl'
+        ];
+        $functions['post'] = [
+            'saveMail',
+            'saveUsers',
+            'saveReport',
+            'saveExaminations',
+            'deleteExaminations',
+            'saveEvaluate',
+            'downloadGrade',
+            'switchUser',
+            'changeStatus1',
+            'changeStatus2',
+            'changeStatus3',
+            'changeStatus4',
+            'changeStatus5',
+            'changeStatus6',
+            'changeStatus7',
+            'changeStatus8'
+        ];
         return $functions;
     }
 
@@ -124,6 +149,7 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["saveUsers"]        = array('role_article_admin');
         $role_ckeck_table["saveReport"]       = array('role_article_admin');
         $role_ckeck_table["saveExaminations"] = array('role_article_admin');
+        $role_ckeck_table["deleteExaminations"] = array('role_article_admin');
         $role_ckeck_table["saveEvaluate"]     = array('role_article_admin');
         $role_ckeck_table["downloadGrade"]    = array('role_article_admin');
 
@@ -2239,16 +2265,17 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function saveExaminations($request, $page_id, $frame_id, $post_id)
     {
-        // 削除対象の試験を削除する。
-        if ($request->del_examinations) {
-            foreach ($request->del_examinations as $examination_id => $examination_value) {
-                if ($examination_value) {
-                    LearningtasksExaminations::find($examination_id)->delete();
-                }
-            }
-        }
+        // delete: 削除機能は deleteExaminations()で処理するように変更したため下記は削除
+        // // 削除対象の試験を削除する。
+        // if ($request->del_examinations) {
+        //     foreach ($request->del_examinations as $examination_id => $examination_value) {
+        //         if ($examination_value) {
+        //             LearningtasksExaminations::find($examination_id)->delete();
+        //         }
+        //     }
+        // }
 
-        // 項目のエラーチェック
+        // 登録する試験
         $validate_value = [
             'start_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:end_at,entry_end_at', 'before_or_equal:end_at'],
             'end_at' => ['nullable', 'date_format:"Y-m-d H:i"', 'required_with:start_at,entry_end_at'],
@@ -2256,10 +2283,37 @@ class LearningtasksPlugin extends UserPluginBase
         ];
 
         $validate_attribute = [
-            'start_at' => '開始日時',
-            'end_at' => '終了日時',
-            'entry_end_at' => '申込終了日時',
+            'start_at' => '追加の開始日時',
+            'end_at' => '追加の終了日時',
+            'entry_end_at' => '追加の申込終了日時',
         ];
+
+        // 既存の試験
+        if ($request->filled('edit_examination_id')) {
+            foreach ($request->edit_examination_id as $examination_id) {
+                // 項目のエラーチェック
+                $validate_value['edit_start_at.'.$examination_id] = [
+                    'required',
+                    'date_format:"Y-m-d H:i"',
+                    'required_with:edit_end_at.'.$examination_id.',edit_entry_end_at.'.$examination_id,
+                    'before_or_equal:edit_end_at.'.$examination_id
+                ];
+                $validate_value['edit_end_at.'.$examination_id] = [
+                    'required',
+                    'date_format:"Y-m-d H:i"',
+                    'required_with:edit_start_at.'.$examination_id.',edit_entry_end_at.'.$examination_id
+                ];
+                $validate_value['edit_entry_end_at.'.$examination_id] = [
+                    'nullable',
+                    'date_format:"Y-m-d H:i"',
+                    'before_or_equal:edit_start_at.'.$examination_id
+                ];
+
+                $validate_attribute['edit_start_at.'.$examination_id] = '開始日時';
+                $validate_attribute['edit_end_at.'.$examination_id] = '終了日時';
+                $validate_attribute['edit_entry_end_at.'.$examination_id] = '申込終了日時';
+            }
+        }
 
         // 課題ファイルがアップロードされた。
         if ($request->hasFile('add_task_file')) {
@@ -2287,7 +2341,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 試験関係ファイルの保存
         $this->saveTaskFile($request, $page_id, $post_id, 1);
 
-        // 試験登録
+        // 登録する試験
         if ($request->filled('start_at') && $request->filled('end_at')) {
             // LearningtasksExaminations::create(['post_id' => $post_id, 'start_at' => $request->start_at . ':00', 'end_at' => $request->end_at . ':00']);
             $learningtasks_examinations = new LearningtasksExaminations();
@@ -2297,7 +2351,27 @@ class LearningtasksPlugin extends UserPluginBase
             if ($request->filled('entry_end_at')) {
                 $learningtasks_examinations->entry_end_at = $request->entry_end_at . ':00';
             }
+            // 保存
             $learningtasks_examinations->save();
+        }
+
+        // 既存の試験
+        if ($request->filled('edit_examination_id')) {
+            foreach ($request->edit_examination_id as $edit_examination_id) {
+                // モデルオブジェクト取得
+                $learningtasks_examinations = LearningtasksExaminations::where('id', $edit_examination_id)->first();
+
+                // データのセット
+                $learningtasks_examinations->post_id = $post_id;
+                $learningtasks_examinations->start_at = $request->input('edit_start_at.'.$edit_examination_id) . ':00';
+                $learningtasks_examinations->end_at = $request->input('edit_end_at.'.$edit_examination_id) . ':00';
+                if ($request->filled('edit_entry_end_at.'.$edit_examination_id)) {
+                    $learningtasks_examinations->entry_end_at = $request->input('edit_entry_end_at.'.$edit_examination_id) . ':00';
+                }
+
+                // 保存
+                $learningtasks_examinations->save();
+            }
         }
 
         // 課題ファイルの削除
@@ -2306,7 +2380,8 @@ class LearningtasksPlugin extends UserPluginBase
         // 対象の課題特定
         $post = LearningtasksPosts::find($post_id);
         if (empty($post)) {
-            return $this->editExaminations($request, $page_id, $frame_id, $post_id);
+            // return $this->editExaminations($request, $page_id, $frame_id, $post_id);
+            return;
         }
 
         // 設定内容を保存（一旦削除して新たに保存）
@@ -2356,7 +2431,16 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 編集画面を開く
-        return $this->editExaminations($request, $page_id, $frame_id, $post_id);
+        // return $this->editExaminations($request, $page_id, $frame_id, $post_id);
+    }
+
+    /**
+     * 試験削除処理
+     */
+    public function deleteExaminations($request, $page_id, $frame_id, $id)
+    {
+        // 削除対象の試験を削除する。
+        LearningtasksExaminations::find($id)->delete();
     }
 
     /**
