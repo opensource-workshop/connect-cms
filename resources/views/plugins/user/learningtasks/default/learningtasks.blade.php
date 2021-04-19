@@ -76,9 +76,9 @@
 @if (isset($posts))  {{-- 課題があるか --}}
 
     @if ($tool->isTeacher())
-        <h5><span class="badge badge-secondary">教員用　必要な処理一覧</span></h5>
-
         @if ($teacher_tasks)
+            <h5><span class="badge badge-secondary">教員用　必要な処理一覧</span></h5>
+
             <table class="table table-bordered">
                 <thead>
                     <tr class="bg-light">
