@@ -235,5 +235,13 @@
         </div>
     </div>
 </form>
+
+{{-- 初期状態で開くもの --}}
+@if(old('post_report_setting', $tool->getFunction('post_report_setting', true)) == 'on')
+    <script>
+    $('#collapse_post_report').collapse('show')
+    </script>
+@endif
+
 @endif
 @endsection
