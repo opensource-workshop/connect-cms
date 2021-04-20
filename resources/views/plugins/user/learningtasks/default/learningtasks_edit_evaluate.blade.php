@@ -90,7 +90,7 @@
         </button>
         <button type="button" class="btn btn-secondary mr-2" onclick="location.reload()">
             {{-- <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span> --}}
-            <i class="fas fa-redo-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span>
+            <i class="fas fa-undo-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span>
         </button>
         <input type="hidden" name="bucket_id" value="">
         @if (empty($learningtasks_posts->id))

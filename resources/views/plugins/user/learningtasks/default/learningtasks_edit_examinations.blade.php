@@ -405,7 +405,7 @@
             </button>
             <button type="button" class="btn btn-secondary mr-2" onclick="location.reload()">
                 {{-- <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span> --}}
-                <i class="fas fa-redo-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span>
+                <i class="fas fa-undo-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span>
             </button>
             <input type="hidden" name="bucket_id" value="">
             {{-- change: 課題管理の試験設定は、登録・更新時に確認ダイアログを表示しない（試験日時登録で何度も確定ボタン押すため）
