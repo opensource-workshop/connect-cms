@@ -38,7 +38,7 @@
     <h2>{!!$post->post_title!!}</h2>
 
     {{-- 受講者選択：教員機能 --}}
-    @if ($tool->isTeacher())
+    @if ($tool->isTeacher() || $tool->isLearningtaskAdmin())
         <h5><span class="badge badge-warning">評価中の受講者</span></h5>
         <div class="card mb-3 border-danger">
             <div class="card-body">
@@ -138,6 +138,11 @@
                                             @endif
                                         </tbody>
                                     </table>
+
+                                    @if ($loop->last)
+                                        {{-- 履歴削除ボタン：課題管理者機能 --}}
+                                        @include('plugins.user.learningtasks.default.learningtasks_show_deletetable_user_status', ['user_status_id' => $report_status->id])
+                                    @endif
 
                                 @if (!$loop->last)
                                 </div>
@@ -511,6 +516,11 @@
                                         </tbody>
                                     </table>
 
+                                    @if ($loop->last)
+                                        {{-- 履歴削除ボタン：課題管理者機能 --}}
+                                        @include('plugins.user.learningtasks.default.learningtasks_show_deletetable_user_status', ['user_status_id' => $examination_status->id])
+                                    @endif
+
                                 @if (!$loop->last)
                                 </div>
                                 @endif
@@ -732,6 +742,11 @@
                                 @endif
                             </tbody>
                         </table>
+
+                        @if ($loop->last)
+                            {{-- 履歴削除ボタン：課題管理者機能 --}}
+                            @include('plugins.user.learningtasks.default.learningtasks_show_deletetable_user_status', ['user_status_id' => $evaluate_status->id])
+                        @endif
                     @endforeach
 
                     @if ($tool->checkFunction('use_evaluate') && $tool->isTeacher() && $tool->canEvaluateView($post))

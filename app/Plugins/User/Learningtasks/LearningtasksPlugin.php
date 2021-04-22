@@ -93,7 +93,7 @@ class LearningtasksPlugin extends UserPluginBase
             'editExaminations',
             'editEvaluate',
             'listGrade',
-            'switchUserUrl'
+            'switchUserUrl',
         ];
         $functions['post'] = [
             'saveMail',
@@ -111,7 +111,8 @@ class LearningtasksPlugin extends UserPluginBase
             'changeStatus5',
             'changeStatus6',
             'changeStatus7',
-            'changeStatus8'
+            'changeStatus8',
+            'deleteStatus',
         ];
         return $functions;
     }
@@ -152,6 +153,7 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["deleteExaminations"] = array('role_article_admin');
         $role_ckeck_table["saveEvaluate"]     = array('role_article_admin');
         $role_ckeck_table["downloadGrade"]    = array('role_article_admin');
+        $role_ckeck_table["deleteStatus"]     = array('role_article_admin');
 
         $role_ckeck_table["switchUser"]       = array('role_guest');
         $role_ckeck_table["changeStatus1"]    = array('role_guest');
@@ -661,15 +663,15 @@ class LearningtasksPlugin extends UserPluginBase
     private function getTaskFile($post_ids, $task_flag = 0)
     {
         // 課題ファイルテーブル
-        $posts_files_db
-            = LearningtasksPostsFiles::select(
-                'learningtasks_posts_files.*',
-                'uploads.id as uploads_id', 'uploads.client_original_name', 'uploads.download_count'
-            )
-                 ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
-                 ->whereIn('learningtasks_posts_files.post_id', $post_ids)
-                 ->where('learningtasks_posts_files.task_flag', $task_flag)
-                 ->get();
+        $posts_files_db = LearningtasksPostsFiles::
+                select(
+                    'learningtasks_posts_files.*',
+                    'uploads.id as uploads_id', 'uploads.client_original_name', 'uploads.download_count'
+                )
+                ->leftJoin('uploads', 'uploads.id', '=', 'learningtasks_posts_files.upload_id')
+                ->whereIn('learningtasks_posts_files.post_id', $post_ids)
+                ->where('learningtasks_posts_files.task_flag', $task_flag)
+                ->get();
 
         // 課題ファイル詰めなおし（課題管理データの一覧にあてるための外配列）
         $learningtasks_posts_files = array();
@@ -984,7 +986,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     * 教員用、ユーザ切り替え
+     * 教員機能、ユーザ切り替え
      */
     public function switchUser($request, $page_id, $frame_id, $post_id)
     {
@@ -994,8 +996,10 @@ class LearningtasksPlugin extends UserPluginBase
         // ユーザー関連情報のまとめ
         $tool = new LearningtasksTool($request, $page_id, $learningtask, $this->getPost($post_id));
 
-        // 教員のみ
-        if (!$tool->isTeacher()) {
+        // 教員 or 課題管理者
+        if ($tool->isTeacher() || $tool->isLearningtaskAdmin()) {
+            // 処理を進める
+        } else {
             // bugfix: returnしてなかったため、ここに入っても処理が継続されていた。
             // $this->index($request, $page_id, $frame_id);
 
@@ -1019,7 +1023,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     * 教員用、URLでユーザ切り替え
+     * 教員機能、URLでユーザ切り替え
      * URL例）http://localhost/redirect/plugin/learningtasks/switchUserUrl/3/16/5?student_id=2#frame-16
      */
     public function switchUserUrl($request, $page_id, $frame_id, $post_id)
@@ -2729,6 +2733,15 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
         return;
+    }
+
+    /**
+     * 進捗ステータス削除
+     */
+    public function deleteStatus($request, $page_id, $frame_id, $id)
+    {
+        // 進捗ステータスを削除する。
+        LearningtasksUsersStatuses::find($id)->delete();
     }
 
     /**

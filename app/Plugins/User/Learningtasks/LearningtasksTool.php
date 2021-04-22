@@ -24,6 +24,7 @@ use Carbon\Carbon;
  * メソッド一覧(public のもの)
  * ・教員か                                               isTeacher()
  * ・学生か                                               isStudent()
+ * ・課題管理者か                                          isLearningtaskAdmin()
  * ・教員の一覧取得                                       getTeachers()
  * ・教員名の取得                                         getTeachersName()
  * ・ユーザIDの取得                                       getUserId()
@@ -71,6 +72,7 @@ use Carbon\Carbon;
  * ・指定されたステータスで指定した機能が使用できるか。   isUseFunction()
  * ・指定されたステータスでファイルアップロードが必要か。 isRequreUploadFile()
  * ・課題ごとの使用機能設定のCollapse CSS を返す          getSettingShowstr()
+ * ・履歴削除（評価の取り消し）は行えるか？                canDeletetableUserStatus($users_statuses_id)
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -135,6 +137,11 @@ class LearningtasksTool
     private $post_use_functions = null;
 
     /**
+     * 履歴削除（評価の取り消し）できるユーザステータスID (最後のUsersStatusesのid)
+     */
+    private $deletetable_users_statuses_id = null;
+
+    /**
      * 課題設定
      */
     private $configs = null;
@@ -178,7 +185,7 @@ class LearningtasksTool
         }
 
         // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
-        if ($this->isTeacher() && session('student_id')) {
+        if ($this->isTeacher() && session('student_id') || $this->isLearningtaskAdmin() && session('student_id')) {
             $this->student_id = session('student_id');
         } elseif ($this->isStudent()) {
             $this->student_id = $this->user->id;
@@ -217,6 +224,11 @@ class LearningtasksTool
                         ->orderBy('post_id', 'asc')
                         ->orderBy('id', 'asc')
                         ->get();
+
+                // 履歴削除（評価の取り消し）できるユーザステータスID (最後のUsersStatusesのid)
+                $this->deletetable_users_statuses_id = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                        ->where('post_id', $this->post->id)
+                        ->max('id');
             } else {
                 $this->evaluate_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
                         ->whereIn('task_status', [8])
@@ -1460,7 +1472,7 @@ class LearningtasksTool
     }
 
     /**
-     *  総合評価を行えるか？
+     * 総合評価を行えるか？
      */
     public function canEvaluate($post_id)
     {
@@ -1486,5 +1498,22 @@ class LearningtasksTool
         }
 
         return true;
+    }
+
+    /**
+     * 履歴削除は行えるか？
+     */
+    public function canDeletetableUserStatus($users_statuses_id)
+    {
+        // 課題管理者でない
+        if (!$this->isLearningtaskAdmin()) {
+            return false;
+        }
+
+        // 削除可能なユーザステータスID (最後のUsersStatusesのid)
+        if ($users_statuses_id == $this->deletetable_users_statuses_id) {
+            return true;
+        }
+        return false;
     }
 }
