@@ -413,9 +413,9 @@
     <br>
 
     @if (
-        $column->column_type == FormColumnType::text || 
-        $column->column_type == FormColumnType::textarea || 
-        $column->column_type == FormColumnType::mail || 
+        $column->column_type == FormColumnType::text ||
+        $column->column_type == FormColumnType::textarea ||
+        $column->column_type == FormColumnType::mail ||
         $column->column_type == FormColumnType::date
     )
         {{-- プレースホルダ設定 --}}
@@ -442,8 +442,9 @@
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        {{-- キャンセルボタン --}}
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'"><i class="fas fa-chevron-left"></i> 前へ</button>
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'">
+            <i class="fas fa-chevron-left"></i> 前へ
+        </button>
     </div>
 </form>
 @endsection
