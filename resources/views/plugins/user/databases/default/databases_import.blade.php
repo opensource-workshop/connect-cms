@@ -25,9 +25,7 @@ use App\Utilities\Zip\UnzipUtils;
 @endif
 
 <div class="alert alert-info" role="alert">
-    <ul class="pl-3">
-        <li>CSVファイルを使って、データベースへ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/user/database#frame-178" target="_blank">こちら</a>を参照してください。</li>
-    </ul>
+    <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、データベースへ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/user/database#frame-178" target="_blank">オンラインマニュアルのデータベースページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
 </div>
 
 {{-- ダウンロード用フォーム --}}
