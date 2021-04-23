@@ -110,22 +110,13 @@ use App\Utilities\Zip\UnzipUtils;
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">
-        <div class="row">
-            <div class="col-3"></div>
-            <div class="col-6">
-                <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="mr-2">
-                    <span class="btn btn-info"><i class="fas fa-list"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> DB選択へ</span></span>
-                </a>
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="mr-2">
+            <span class="btn btn-secondary"><i class="fas fa-angle-left"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> DB選択へ</span></span>
+        </a>
 
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-check"></i>
-                    <span class="{{$frame->getSettingButtonCaptionClass()}}" onclick="return confirm('インポートします。\nよろしいですか？')">
-                        インポート
-                    </span>
-                </button>
-            </div>
-
-        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-check"></i><span onclick="return confirm('インポートします。\nよろしいですか？')"> インポート</span>
+        </button>
     </div>
 </form>
 
