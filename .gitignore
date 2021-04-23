@@ -9,13 +9,14 @@
 /public/uploads/*
 /storage/*.key
 /vendor
-/.idea
-/.vagrant
+.env
+.env.backup
+.env.testing
+.phpunit.result.cache
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
-.env
 !.gitkeep
 /connect-cms.code-workspace
 .vscode/launch.json
@@ -23,6 +24,8 @@ composer.phar
 
 # Option Plugins (対象外部分はオプションプラグインのサンプル)
 github_copy.bat
+dev_2_option_private.ps1
+option_private_2_dev.ps1
 
 /app/ModelsOption/*
 !/app/ModelsOption/User\Optionsamples/*

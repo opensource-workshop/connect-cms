@@ -63,4 +63,28 @@ class Configs extends Model
         // auth_method_eventで取得したconfigsを返す
         return $auth_method_event;
     }
+
+    /**
+     * 設定の値取得
+     */
+    public static function getConfigsValue($configs, $key, $default = false)
+    {
+        $config = $configs->firstWhere('name', $key);
+        // firstWhere()で取得空の場合null が返ってくる。$config->value としても Null 合体演算子?? でundfind indexエラーでないので問題なし。nullなら default値 を返す。
+        $value = $config->value ?? $default;
+
+        return $value;
+    }
+
+    /**
+     * 設定の値取得. old対応あり
+     */
+    public static function getConfigsValueAndOld($configs, $key, $default = false)
+    {
+        $value = self::getConfigsValue($configs, $key, $default);
+
+        // oldの値があれば、その値を使う
+        $value = old($key, $value);
+        return $value;
+    }
 }

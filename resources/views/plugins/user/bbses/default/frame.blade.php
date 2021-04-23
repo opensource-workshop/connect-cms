@@ -77,6 +77,97 @@
         </div>
 
         <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">一覧での展開方法</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->list_format == 0)
+                        <input type="radio" value="0" id="list_format_0" name="list_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="0" id="list_format_0" name="list_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="list_format_0">すべて展開</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->list_format == 1)
+                        <input type="radio" value="1" id="list_format_1" name="list_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="list_format_1" name="list_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="list_format_1">根記事のみ展開</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->list_format == 2)
+                        <input type="radio" value="2" id="list_format_2" name="list_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="2" id="list_format_2" name="list_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="list_format_2">すべて閉じておく</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">スレッドの記事一覧の下線</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->list_underline == 0)
+                        <input type="radio" value="0" id="list_underline_0" name="list_underline" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="0" id="list_underline_0" name="list_underline" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="list_underline_0">表示しない</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->list_underline == 1)
+                        <input type="radio" value="1" id="list_underline_1" name="list_underline" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="list_underline_1" name="list_underline" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="list_underline_1">表示する</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">スレッド記事の枠のタイトル</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="thread_caption" value="{{old('thread_caption', $bbs_frame->thread_caption)}}" class="form-control">
+                @if ($errors && $errors->has('thread_caption')) <div class="text-danger">{{$errors->first('thread_caption')}}</div> @endif
+                <small class="text-muted">※ 根記事のみ展開の場合のもの。空の場合はタイトル枠が非表示になります。</small>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">詳細でのスレッド記事の展開方法</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->thread_format == 0)
+                        <input type="radio" value="0" id="thread_format_0" name="thread_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="0" id="thread_format_0" name="thread_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="thread_format_0">すべて展開</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->thread_format == 1)
+                        <input type="radio" value="1" id="thread_format_1" name="thread_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="thread_format_1" name="thread_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="thread_format_1">詳細表示している記事のみ展開</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if($bbs_frame->thread_format == 2)
+                        <input type="radio" value="2" id="thread_format_2" name="thread_format" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="2" id="thread_format_2" name="thread_format" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="thread_format_2">すべて閉じておく</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="view_count" value="{{old('view_count', $bbs_frame->view_count)}}" class="form-control">
@@ -84,6 +175,7 @@
                 <small class="text-muted">※ 未設定時は10件</small>
             </div>
         </div>
+
         {{-- Submitボタン --}}
         <div class="form-group text-center">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">

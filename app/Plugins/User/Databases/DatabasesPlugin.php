@@ -94,6 +94,14 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
+     * メール送信で使用するメソッド
+     */
+    public function useBucketMailMethods()
+    {
+        return ['notice', 'approval', 'approved'];
+    }
+
+    /**
      * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
@@ -221,7 +229,8 @@ class DatabasesPlugin extends UserPluginBase
                      'frames.*',
                      'databases.id as databases_id',
                      'databases_frames.id as databases_frames_id',
-                     'databases_name',
+                     'databases.databases_name',
+                     'databases.search_results_empty_message',
                      'use_search_flag',
                      'placeholder_search',
                      'use_select_flag',
@@ -494,7 +503,7 @@ class DatabasesPlugin extends UserPluginBase
                     }
                     if (empty($val)) {
                         // 0 を検索したい場合もあるので追加
-                        if($val !== "0" ){
+                        if ($val !== "0") {
                             continue;  // 指定が正しくなければ飛ばす
                         }
                     }
@@ -607,7 +616,7 @@ class DatabasesPlugin extends UserPluginBase
                             }
 
                             // テンプレートでsearch_term[XXXX]をセットすることで、ORの値を任意に増やすことができる（*や通年）等期間外のデータ
-                            if($add_const_word_search_flg){
+                            if ($add_const_word_search_flg) {
                                 $inputs_query->whereIn('databases_inputs.id', function ($query) use ($col_id, $search_vals) {
                                     $query->select('databases_inputs_id')
                                     ->from('databases_input_cols')
@@ -738,31 +747,28 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databases',
-            [
-                // 'request'  => $request,
-                // 'frame_id' => $frame_id,
-                // 'database' => $database,
-                // 'databases_columns' => $databases_columns,
-                // 'databases_columns_id_select' => $databases_columns_id_select,
-                'errors' => $errors,
-                'setting_error_messages' => $setting_error_messages,
+        return $this->view('databases', [
+            // 'request'  => $request,
+            // 'frame_id' => $frame_id,
+            // 'database' => $database,
+            // 'databases_columns' => $databases_columns,
+            // 'databases_columns_id_select' => $databases_columns_id_select,
+            'errors' => $errors,
+            'setting_error_messages' => $setting_error_messages,
 
-                // 'databases'        => $databases,
-                'database_frame'   => $database_frame,
-                'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
-                'columns'          => $columns,
-                'group_rows_cols_columns' => $group_rows_cols_columns,
-                'select_columns'   => $select_columns,
-                'sort_columns'     => $sort_columns,
-                'sort_count'       => $sort_count,
-                'inputs'           => $inputs,
-                'input_cols'       => $input_cols,
-                'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
-                'default_hide_list' => $default_hide_list,
-            ]
-        )->withInput($request->all);
+            // 'databases'        => $databases,
+            'database_frame'   => $database_frame,
+            'databases_frames' => empty($databases_frames) ? new DatabasesFrames() : $databases_frames,
+            'columns'          => $columns,
+            'group_rows_cols_columns' => $group_rows_cols_columns,
+            'select_columns'   => $select_columns,
+            'sort_columns'     => $sort_columns,
+            'sort_count'       => $sort_count,
+            'inputs'           => $inputs,
+            'input_cols'       => $input_cols,
+            'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
+            'default_hide_list' => $default_hide_list,
+        ])->withInput($request->all);
     }
 
     /**
@@ -851,6 +857,9 @@ class DatabasesPlugin extends UserPluginBase
     {
         // POST されたときは、新しい絞り込み条件が設定された。ということになるので、セッションの書き換え
         if ($request->isMethod('post')) {
+            // 検索ON
+            session(['is_search.'.$frame_id => 1]);
+
             // キーワード
             session(['search_keyword.'.$frame_id => $request->search_keyword]);
 
@@ -886,7 +895,8 @@ class DatabasesPlugin extends UserPluginBase
             // var_dump($sort_column_parts);
 
             // 検索条件を削除
-            if($request->has('clear')){
+            if ($request->has('clear')) {
+                session(['is_search.'.$frame_id => '']);
                 session(['search_keyword.'.$frame_id => '']);
                 session(['search_column.'.$frame_id => '']);
                 session(['search_options.'.$frame_id => '']);
@@ -1178,9 +1188,26 @@ class DatabasesPlugin extends UserPluginBase
 
         // --- 入力値変換
         // 入力値をトリム
-        $request->merge(StringUtils::trimInput($request->all()));
+        // bugfix: $request->all()を取得して全て$request->merge()すると、「Serialization of 'Illuminate\Http\UploadedFile' is not allowed」エラーが発生する時がある。
+        // Illuminate\Session\Store.phpでセッションのserialize()を行っており、oldセッションにUploadオブジェクトが混ざるとシリアライズできずにエラーになっていた。
+        // $request->all()で全てトリムする必要はなく、アップロードファイル以外の必要な入力値のみトリムするよう見直す。
+        //$request->merge(StringUtils::trimInput($request->all()));
 
         foreach ($databases_columns as $databases_column) {
+            // ファイルタイプ以外の入力値をトリム
+            if (! DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                if (isset($request->databases_columns_value[$databases_column->id])) {
+                    // 一度配列にして、trim後、また文字列に戻す。
+                    $tmp_columns_value = StringUtils::trimInput($request->databases_columns_value[$databases_column->id]);
+
+                    $tmp_array = $request->databases_columns_value;
+                    $tmp_array[$databases_column->id] = $tmp_columns_value;
+                    $request->merge([
+                        "databases_columns_value" => $tmp_array,
+                    ]);
+                }
+            }
+
             // 数値チェック
             if ($databases_column->rule_allowed_numeric) {
                 // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
@@ -1545,6 +1572,9 @@ class DatabasesPlugin extends UserPluginBase
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $delete_input = DatabasesInputs::firstOrNew(['id' => $id]);
+
         // 行データを削除
         DatabasesInputs::where('id', $id)->delete();
 
@@ -1558,7 +1588,7 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // メール送信 引数(削除した行ID, 詳細表示メソッド, 削除データを表すメッセージ)
-        $this->sendDeleteNotice($id, 'detail', $delete_comment);
+        $this->sendDeleteNotice($delete_input, 'detail', $delete_comment);
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
@@ -1749,6 +1779,7 @@ class DatabasesPlugin extends UserPluginBase
         // データベース設定
         $databases->databases_name      = $request->databases_name;
         $databases->posted_role_display_control_flag = (empty($request->posted_role_display_control_flag)) ? 0 : $request->posted_role_display_control_flag;
+        $databases->search_results_empty_message = $request->search_results_empty_message;
 
         $databases->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $databases->mail_send_address   = $request->mail_send_address;
@@ -2064,6 +2095,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.title_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
+                'databases_columns.caption_list_detail',
+                'databases_columns.caption_list_detail_color',
                 'databases_columns.classname',
                 'databases_columns.display_sequence',
                 'databases_columns.row_group',
@@ -2086,6 +2119,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.title_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
+                'databases_columns.caption_list_detail',
+                'databases_columns.caption_list_detail_color',
                 'databases_columns.classname',
                 'databases_columns.display_sequence',
                 'databases_columns.row_group',
@@ -2104,16 +2139,13 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 編集画面テンプレートを呼び出す。
-        return $this->view(
-            'databases_edit',
-            [
-                'databases_id'   => $databases_id,
-                'columns'    => $columns,
-                'title_flag' => $title_flag,
-                'message'    => $message,
-                'errors'     => $errors,
-            ]
-        );
+        return $this->view('databases_edit', [
+            'databases_id' => $databases_id,
+            'columns' => $columns,
+            'title_flag' => $title_flag,
+            'message' => $message,
+            'errors' => $errors,
+        ]);
     }
 
     /**
@@ -2312,6 +2344,8 @@ class DatabasesPlugin extends UserPluginBase
         // 項目の更新処理
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
+        $column->caption_list_detail = $request->caption_list_detail;
+        $column->caption_list_detail_color = $request->caption_list_detail_color;
         $column->frame_col = $request->frame_col;
         $column->classname = $request->classname;
         // 分刻み指定

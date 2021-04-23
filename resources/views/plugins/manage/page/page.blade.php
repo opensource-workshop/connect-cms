@@ -89,7 +89,7 @@
                 @foreach($pages as $page_item)
                 <tr>
                     <!-- Task Name -->
-                    <td class="table-text col-md-2 p-1" nowrap>
+                    <td class="table-text p-1" nowrap>
                         <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
 
                         {{-- 上移動 --}}
@@ -102,7 +102,7 @@
                             <i class="fas fa-arrow-down"></i>
                         </button>
                     </td>
-                    <td class="table-text col-md-2 p-1">
+                    <td class="table-text p-1">
                         {{-- 指定場所移動 --}}
                         <form name="form_select_page{{$page_item->id}}" id="form_select_page{{$page_item->id}}" class="form-horizontal">
                             <select name="select_page" class="manage-page-selectpage" onChange="submit_move_page({{$page_item->id}});">

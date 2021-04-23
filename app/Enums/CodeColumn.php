@@ -30,6 +30,11 @@ final class CodeColumn extends EnumsBase
     const additional3 = 'additional3';
     const additional4 = 'additional4';
     const additional5 = 'additional5';
+    const additional6 = 'additional6';
+    const additional7 = 'additional7';
+    const additional8 = 'additional8';
+    const additional9 = 'additional9';
+    const additional10 = 'additional10';
     const display_sequence = 'display_sequence';
 
     // key/valueの連想配列
@@ -54,6 +59,11 @@ final class CodeColumn extends EnumsBase
         self::additional3 => 'additional3',
         self::additional4 => 'additional4',
         self::additional5 => 'additional5',
+        self::additional6 => 'additional6',
+        self::additional7 => 'additional7',
+        self::additional8 => 'additional8',
+        self::additional9 => 'additional9',
+        self::additional10 => 'additional10',
         self::display_sequence => '表示順',
     ];
 

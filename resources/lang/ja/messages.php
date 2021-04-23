@@ -5,8 +5,7 @@
  | 多言語対応 画面キャプションの日本語ファイル
  |-----------------------------------------------------------------
  */
-return [
-
+$messages = [
     'to_this_month' => '今月へ',
     'to_today' => '今日へ',
     'month' => '月',
@@ -29,8 +28,26 @@ return [
     'enter_same_email' => '同じメールアドレスを入力',
     'not_match_confirmation_value' => 'が確認用の値と一致しません。',
     'entered_time_is_invalid' => '入力した時間の前後関係が不正です。',
+    'cannot_be_delete_refers_to_the_information' => '削除しようとしている情報を参照している箇所がある為、削除できません。',
+    'there_is_an_error' => 'エラーがあります。',
+    'there_is_an_error_refer_to_the_message_of_each_item' => 'エラーの詳細は各項目のメッセージを参照してください。',
     'both_required' => '両方の項目を入力してください。',
     'search_results' => '検索結果',
     'cases' => '件',
     'people' => '名',
+    'search_results_empty' => '検索結果が見つかりませんでした。',
+    'input_user_name' => '表示されるユーザ名を入力します。',
+    'input_login_id' => 'ログインするときのIDを入力します。',
+    'input_email' => 'メールアドレスを入力します。',
+    'input_password' => 'ログインするためのパスワードを入力します。',
+    'input_password_confirm' => 'パスワードと同じものを入力してください。',
 ];
+
+foreach ($messages as $key => $message) {
+    // connect.configにcc_lang_ja_messages_ + messagesのkeyの値があったら置き換える
+    if (config('connect.cc_lang_ja_messages_' . $key)) {
+        $messages[$key] = config('connect.cc_lang_ja_messages_' . $key);
+    }
+}
+
+return $messages;

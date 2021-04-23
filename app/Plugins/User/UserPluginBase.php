@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
@@ -22,6 +24,7 @@ use App\Jobs\ApprovalNoticeJob;
 use App\Jobs\ApprovedNoticeJob;
 use App\Jobs\DeleteNoticeJob;
 use App\Jobs\PostNoticeJob;
+use App\Jobs\RelateNoticeJob;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
@@ -106,6 +109,9 @@ class UserPluginBase extends PluginBase
     {
         // ページの保持
         $this->page = $page;
+
+        // bugfix: URLのフレームIDを手で書き換えられた場合、frameがnullになる事がありえるため対応
+        $frame = $frame ?? new Frame();
 
         // フレームの保持
         $this->frame = $frame;
@@ -573,14 +579,26 @@ class UserPluginBase extends PluginBase
         if (empty($bucket)) {
             return $this->view_error("error_inframe", "存在しないBucket");
         }
+        // [debug]
+        // var_dump(old('notice_on'));
 
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
+
+        // 使用するメール送信メソッドが指定されている場合は、そのメソッドの指定のみできるようにする。
+        if (method_exists($this, 'useBucketMailMethods')) {
+            // メール送信メソッドの取得
+            $use_bucket_mail_methods = $this->useBucketMailMethods();
+        } else {
+            // メール送信メソッドの初期値（全て：投稿通知、関連通知、承認待ち、承認済み）
+            $use_bucket_mail_methods = ['notice', 'relate', 'approval', 'approved'];
+        }
 
         return $this->commonView('frame_edit_mails', [
             'bucket'       => $bucket,
             'bucket_mail'  => $bucket_mail,
             'plugin_name'  => $this->frame->plugin_name,
+            'use_bucket_mail_methods' => $use_bucket_mail_methods,
         ]);
     }
 
@@ -686,6 +704,42 @@ class UserPluginBase extends PluginBase
             return $this->view_error("error_inframe", "存在しないBucket");
         }
 
+        // redirect_path
+        $redirect_path_array = [
+            'redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id
+        ];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on)],
+            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on)],
+            'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on)],
+
+        ]);
+        $validator->setAttributeNames([
+            'notice_addresses' => '送信先メールアドレス',
+            'approval_addresses' => '送信先メールアドレス',
+            'approved_addresses' => '送信先メールアドレス',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            // [debug]
+            // セッション初期化などのLaravel 処理。
+            // $request->flash();
+
+            // 共通画面のため、redirect_pathが画面に書けないため、ここで設定
+            $request->merge($redirect_path_array);
+
+            // [debug]
+            // dd(old('notice_on'), $request->notice_on);
+            // $a = redirect()->back()->withErrors($validator)->withInput();
+            // dd(old('notice_on'), $request->notice_on);
+            // return $a;
+
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
 
@@ -726,7 +780,7 @@ class UserPluginBase extends PluginBase
         $bucket_mail->save();
 
         // 登録後はリダイレクトしてメール設定ページを開く。
-        return new Collection(['redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+        return new Collection($redirect_path_array);
     }
 
     /**
@@ -787,13 +841,6 @@ class UserPluginBase extends PluginBase
             }
         }
 
-        // 関連記事通知がon の場合
-        // status が公開（=== 0）は「関連記事通知」（notice_relate）
-        // 送信先はJob クラスのhandle() メソッドで取得する。
-        if ($bucket_mail->relate_on === 1 && $post_row->status === 0) {
-            $notice_methods[] = "notice_relate";
-        }
-
         // 送信対象の命令がなかった場合は何もせずに戻る。
         if (empty($notice_methods)) {
             return;
@@ -806,10 +853,10 @@ class UserPluginBase extends PluginBase
             // 送信方法の確認
             if ($bucket_mail->timing == 0) {
                 // 即時送信
-                dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method));
+                dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row, $show_method));
             } else {
                 // スケジュール送信
-                ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method);
+                ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
             }
         }
 
@@ -818,10 +865,10 @@ class UserPluginBase extends PluginBase
             // 送信方法の確認
             if ($bucket_mail->timing == 0) {
                 // 即時送信
-                dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row->id, $post_row->created_id, $show_method));
+                dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method));
             } else {
                 // スケジュール送信
-                ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $post_row->created_id, $show_method);
+                ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
             }
         }
 
@@ -830,10 +877,10 @@ class UserPluginBase extends PluginBase
             // 送信方法の確認
             if ($bucket_mail->timing == 0) {
                 // 即時送信
-                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, "notice_create"));
+                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_create"));
             } else {
                 // スケジュール送信
-                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, "notice_create");
+                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
             }
         }
 
@@ -842,30 +889,51 @@ class UserPluginBase extends PluginBase
             // 送信方法の確認
             if ($bucket_mail->timing == 0) {
                 // 即時送信
-                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method, "notice_update"));
+                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_update"));
             } else {
                 // スケジュール送信
-                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method, "notice_update");
+                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
             }
         }
+    }
 
-        // 関連記事通知
-        if (in_array("notice_relate", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post_row->id, $show_method));
-            } else {
-                // スケジュール送信
-                RelateNoticeJob::dispatch($this->frame, $this->buckets, $post_row->id, $show_method);
-            }
+    /**
+     * 関連投稿通知の送信
+     */
+    public function sendRelateNotice($post, $mail_users, $show_method)
+    {
+        // buckets がない場合
+        if (empty($this->buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
+        }
+
+        // Buckets のメール設定取得
+        $bucket_mail = $this->getBucketMail($this->buckets);
+
+        // 関連記事通知がon の場合
+        // status が公開（=== 0）は「関連記事通知」（notice_relate）
+        // 送信先はJob クラスのhandle() メソッドで取得する。
+        if ($bucket_mail->relate_on === 1 && $post->status === 0) {
+            // 関連通知を送信する。
+        } else {
+            // 関連通知を送信しない。
+            return;
+        }
+
+        // 送信方法の確認
+        if ($bucket_mail->timing == 0) {
+            // 即時送信
+            dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
+        } else {
+            // スケジュール送信
+            RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
         }
     }
 
     /**
      * 削除通知の送信
      */
-    public function sendDeleteNotice($id, $show_method, $delete_comment)
+    public function sendDeleteNotice($post, $show_method, $delete_comment)
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -891,10 +959,10 @@ class UserPluginBase extends PluginBase
         // 送信方法の確認
         if ($bucket_mail->timing == 0) {
             // 即時送信
-            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $id, $show_method, $delete_comment));
+            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $show_method, $delete_comment));
         } else {
             // スケジュール送信
-            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $id, $show_method, $delete_comment);
+            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
         }
     }
 
@@ -985,8 +1053,8 @@ class UserPluginBase extends PluginBase
         }
         $log_path =  storage_path() .'/logs/' . $log_filename . '.log';
 
-        // ログレベル
-        $log_level =  config('app.log_level');
+        // ログレベル（Laravel6 でログのレベル指定が変わったため修正）
+        $log_level =  config('logging.channels.errorlog.level');
 
         // 以降のハンドラに処理を続行させるかどうかのフラグ、デフォルトは、true
         $bubble = true;

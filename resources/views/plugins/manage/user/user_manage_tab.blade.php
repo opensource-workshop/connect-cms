@@ -38,6 +38,14 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                @if ($function == "autoRegist")
+                    <span class="nav-link"><span class="active">自動ユーザ登録設定</span></span>
+                @else
+                    <a href="{{url('/manage/user/autoRegist')}}" class="nav-link">自動ユーザ登録設定</a></li>
+                @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "edit")
                     <span class="nav-link"><span class="active">ユーザ変更</span></span>
                 @endif

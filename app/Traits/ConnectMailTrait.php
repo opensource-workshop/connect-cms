@@ -64,7 +64,7 @@ trait ConnectMailTrait
             $log_record_flag = false;
 
             // value（検索キーワードなど）
-            $value = null;
+            // $value = null;
 
             // 記録範囲
             if ($configs->where('name', 'app_log_scope')->where('value', 'all')->isNotEmpty()) {
@@ -75,26 +75,28 @@ trait ConnectMailTrait
                 $log_record_flag = true;
             }
 
-            // ルート名の取得
-            $route_name = Route::current()->getName();
+            if ($log_record_flag) {
+                // ルート名の取得
+                $route_name = Route::current()->getName();
 
-            // ログレコード
-            $app_log = new AppLog();
-            $app_log->ip_address   = $this->request->ip();
-            $app_log->plugin_name  = $plugin_name;
-            $app_log->uri          = $this->request->getRequestUri();
-            $app_log->route_name   = $route_name;
-            $app_log->method       = $this->request->method();
-            $app_log->type         = 'SendMail';
-            //$app_log->return_code  = $return_code;
-            $app_log->value        = $mail_address;
+                // ログレコード
+                $app_log = new AppLog();
+                $app_log->ip_address   = $this->request->ip();
+                $app_log->plugin_name  = $plugin_name;
+                $app_log->uri          = $this->request->getRequestUri();
+                $app_log->route_name   = $route_name;
+                $app_log->method       = $this->request->method();
+                $app_log->type         = 'SendMail';
+                //$app_log->return_code  = $return_code;
+                $app_log->value        = $mail_address;
 
-            // ログイン後のみの項目
-            if (Auth::check()) {
-                $app_log->created_id = Auth::user()->id;
-                $app_log->userid     = Auth::user()->userid;
+                // ログイン後のみの項目
+                if (Auth::check()) {
+                    $app_log->created_id = Auth::user()->id;
+                    $app_log->userid     = Auth::user()->userid;
+                }
+                $app_log->save();
             }
-            $app_log->save();
         }
         return;
     }

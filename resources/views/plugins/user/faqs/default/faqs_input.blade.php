@@ -90,7 +90,7 @@
         <select class="form-control" name="categories_id" class="form-control">
             <option value=""></option>
             @foreach($faqs_categories as $category)
-            <option value="{{$category->id}}" @if(Input::old('category', $faqs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+            <option value="{{$category->id}}" @if(old('category', $faqs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
             @endforeach
         </select>
         @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif

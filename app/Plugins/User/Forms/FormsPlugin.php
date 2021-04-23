@@ -25,8 +25,9 @@ use App\Rules\CustomVali_Confirmed;
 use App\Rules\CustomVali_TimeFromTo;
 use App\Rules\CustomVali_BothRequired;
 use App\Rules\CustomVali_TokenExists;
+use App\Rules\CustomValiEmails;
 
-use App\Mail\ConnectMail;
+// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\String\StringUtils;
@@ -672,7 +673,23 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
 
         // 入力値をトリム
-        $request->merge(StringUtils::trimInput($request->all()));
+        // bugfix: 【データベース】（Laravel6テスト）ファイル型項目にファイルをアップするとシステムエラーと同じ対応 https://github.com/opensource-workshop/connect-cms/issues/732
+        // $request->merge(StringUtils::trimInput($request->all()));
+        foreach ($forms_columns as $forms_column) {
+            // ファイルタイプ以外の入力値をトリム
+            if (! FormsColumns::isFileColumnType($forms_column->column_type)) {
+                if (isset($request->forms_columns_value[$forms_column->id])) {
+                    // 一度配列にして、trim後、また文字列に戻す。
+                    $tmp_columns_value = StringUtils::trimInput($request->forms_columns_value[$forms_column->id]);
+
+                    $tmp_array = $request->forms_columns_value;
+                    $tmp_array[$forms_column->id] = $tmp_columns_value;
+                    $request->merge([
+                        "forms_columns_value" => $tmp_array,
+                    ]);
+                }
+            }
+        }
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
@@ -1413,10 +1430,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_values['entry_limit'] = ['nullable', 'numeric', 'min:0'];
         $validator_attributes['entry_limit'] = '登録制限数';
 
+        $validator_values['mail_send_address'] = ['nullable', new CustomValiEmails()];
+        $validator_attributes['mail_send_address'] = '送信するメールアドレス';
+
         // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
         if ($request->mail_send_flag) {
-            $validator_values['mail_send_address'] = ['required'];
-            $validator_attributes['mail_send_address'] = '送信するメールアドレス';
+            $validator_values['mail_send_address'] = ['required', new CustomValiEmails()];
         }
 
         $validator_attributes['data_save_flag'] = 'データを保存する';
@@ -1428,9 +1447,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_attributes['regist_to'] = '登録終了日時';
 
         $messages = [
-            'data_save_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
-            'user_mail_send_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
-            'temporary_regist_mail_format.regex' => '仮登録メールを送信する場合、:attributeに[[entry_url]]を含めてください。',
+            'data_save_flag.accepted' => '仮登録メールを送信する場合、:attribute にチェックを付けてください。',
+            'user_mail_send_flag.accepted' => '仮登録メールを送信する場合、:attribute にチェックを付けてください。',
+            'temporary_regist_mail_format.regex' => '仮登録メールを送信する場合、:attribute に[[entry_url]]を含めてください。',
         ];
 
         // 項目のエラーチェック

@@ -17,12 +17,21 @@ class LearningtasksExaminations extends Model
     use Userable;
 
     // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = ['start_at', 'end_at'];
+    protected $dates = [
+        'start_at',
+        'end_at',
+        'entry_end_at',
+    ];
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['post_id', 'start_at', 'end_at'];
+    protected $fillable = [
+        'post_id',
+        'start_at',
+        'end_at',
+        'entry_end_at',
+    ];
 
     /**
      * 試験日の画面表記を取得

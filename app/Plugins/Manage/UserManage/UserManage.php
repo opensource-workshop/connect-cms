@@ -5,21 +5,25 @@ namespace App\Plugins\Manage\UserManage;
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 // use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+// use Illuminate\Validation\Rule;
 use DB;
 
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\Core\UsersInputCols;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
 // use App\Models\Common\Page;
-use App\Models\Core\UsersInputCols;
 use App\User;
 
 use App\Plugins\Manage\ManagePluginBase;
 
 use App\Rules\CustomValiUserEmailUnique;
+use App\Rules\CustomValiEmails;
+
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * ユーザ管理クラス
@@ -50,14 +54,25 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["deleteOriginalRole"] = array('admin_user');
         $role_ckeck_table["groups"]             = array('admin_user');
         $role_ckeck_table["saveGroups"]         = array('admin_user');
+        $role_ckeck_table["autoRegist"]         = array('admin_user');
+        $role_ckeck_table["autoRegistUpdate"]   = array('admin_user');
+        $role_ckeck_table["downloadCsv"] = array('admin_user');
 
         return $role_ckeck_table;
     }
 
     /**
-     *  データ取得
+     * データgetで取得
      */
-    private function getUsers($request, $page, $users_columns)
+    private function getUsers($request, $users_columns)
+    {
+        return $this->getUsersPaginate($request, null, $users_columns, false);
+    }
+
+    /**
+     * データ取得(paginate or get)
+     */
+    private function getUsersPaginate($request, $page, $users_columns, $is_paginate = true)
     {
         /* 権限が指定されている場合は、権限を保持しているユーザID を抜き出しておき、後で whereIn する。
         ----------------------------------------------------------------------------------------------*/
@@ -76,6 +91,7 @@ class UserManage extends ManagePluginBase
             $request->session()->has('user_search_condition.admin_user')) {
             $in_users_query = UsersRoles::select('users_roles.users_id');
 
+            // 権限複数チェックするとOR検索
             // コンテンツ管理者
             if ($request->session()->get('user_search_condition.role_article_admin') == 1) {
                 $in_users_query->orWhere('role_name', 'role_article_admin');
@@ -194,13 +210,30 @@ class UserManage extends ManagePluginBase
             $users_query->where('users.name', 'like', '%' . $request->session()->get('user_search_condition.name') . '%');
         }
 
+        // グループ
+        if ($request->session()->has('user_search_condition.groups')) {
+            // グループ複数チェックするとOR検索
+            $groups = $request->session()->get('user_search_condition.groups');
+            $in_group_users_query = GroupUser::select('group_users.user_id');
+            foreach ($groups as $group) {
+                $in_group_users = $in_group_users_query->orWhere('group_id', $group);
+            }
+            $users_query->whereIn('users.id', $in_group_users->pluck('user_id'));
+        }
+
         // eメール
         if ($request->session()->has('user_search_condition.email')) {
             $users_query->where('users.email', 'like', '%' . $request->session()->get('user_search_condition.email') . '%');
         }
 
+        // 状態
+        if ($request->session()->has('user_search_condition.status')) {
+            $users_query->where('users.status', $request->session()->get('user_search_condition.status'));
+        }
+
         foreach ($users_columns as $users_column) {
             if ($request->session()->has('user_search_condition.users_columns_value.'. $users_column->id)) {
+                // [TODO] 追加項目でチェックボックスを複数チェック入れるとAND検索。OR検索に今後見直す。既にデータベースで対応しているようだ。
                 $search_keyword = $request->session()->get('user_search_condition.users_columns_value.'. $users_column->id);
 
                 // $users_query->whereIn('users_inputs.id', function ($query) use ($search_keyword, $users_columns_id, $hide_columns_ids) {
@@ -241,7 +274,13 @@ class UserManage extends ManagePluginBase
         // dd($sort_column_orders);
 
         // データ取得
-        $users = $users_query->paginate(10, null, 'page', $page);
+        if ($is_paginate) {
+            // ページャーで取得
+            $users = $users_query->paginate(10, null, 'page', $page);
+        } else {
+            // getで取得
+            $users = $users_query->get();
+        }
 
         // ユーザデータからID の配列生成
         $user_ids = array();
@@ -297,6 +336,28 @@ class UserManage extends ManagePluginBase
                 }
             }
         }
+
+        // グループ取得
+        $group_users = null;
+        if ($user_ids) {
+            // グループ取得
+            $group_users = Group::select('groups.*', 'group_users.user_id', 'group_users.group_role')
+                                ->leftJoin('group_users', function ($join) {
+                                    $join->on('groups.id', '=', 'group_users.group_id')
+                                        ->whereNull('group_users.deleted_at');
+                                })
+                                ->whereIn('group_users.user_id', $user_ids)
+                                ->orderBy('group_users.user_id', 'asc')
+                                ->orderBy('groups.name', 'asc')
+                                ->get();
+        }
+
+        if ($group_users) {
+            foreach ($users as &$user) {
+                $user->group_users = $group_users->where('user_id', $user->id);
+            }
+        }
+
 
         //$users = DB::table('users')
         //         ->orderBy('id', 'asc')
@@ -355,10 +416,14 @@ class UserManage extends ManagePluginBase
         $users_columns_id_select = UsersTool::getUsersColumnsSelects();
 
         // User データの取得
-        $users = $this->getUsers($request, $page, $users_columns);
+        $users = $this->getUsersPaginate($request, $page, $users_columns);
 
         // ユーザーの追加項目データ
         $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
+
+        // get()で取得すると、ソフトデリート（deleted_at）は取得されない
+        $groups_select = Group::get();
+        // dd($groups);
 
         return view('plugins.manage.user.list', [
             "function" => __FUNCTION__,
@@ -367,6 +432,7 @@ class UserManage extends ManagePluginBase
             "users_columns" => $users_columns,
             "users_columns_id_select" => $users_columns_id_select,
             "input_cols" => $input_cols,
+            "groups_select" => $groups_select,
         ]);
     }
 
@@ -379,6 +445,7 @@ class UserManage extends ManagePluginBase
         $user_search_condition = [
             "userid"             => $request->input('user_search_condition.userid'),
             "name"               => $request->input('user_search_condition.name'),
+            "groups"             => $request->input('user_search_condition.groups'),
             "email"              => $request->input('user_search_condition.email'),
 
             "role_article_admin" => $request->input('user_search_condition.role_article_admin'),
@@ -393,6 +460,8 @@ class UserManage extends ManagePluginBase
             "admin_user"         => $request->input('user_search_condition.admin_user'),
 
             "guest"              => $request->input('user_search_condition.guest'),
+
+            "status"             => $request->input('user_search_condition.status'),
 
             "sort"               => $request->input('user_search_condition.sort'),
         ];
@@ -583,7 +652,9 @@ class UserManage extends ManagePluginBase
 
         // パスワードの入力があれば、更新
         if (!empty($request->password)) {
-            $update_array['password'] = bcrypt($request->password);
+            // change to laravel6.
+            // $update_array['password'] = bcrypt($request->password);
+            $update_array['password'] = Hash::make($request->password);
         }
 
         // ユーザデータの更新
@@ -692,10 +763,10 @@ class UserManage extends ManagePluginBase
     /**
      *  役割設定画面表示
      */
-    public function originalRole($request, $id, $errors = null)
+    public function originalRole($request, $id)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // 役割設定取得
         $configs = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
@@ -705,8 +776,6 @@ class UserManage extends ManagePluginBase
             "plugin_name" => "user",
             "id"          => $id,
             "configs"     => $configs,
-            "create_flag" => true,
-            "errors"      => $errors,
         ]);
     }
 
@@ -715,23 +784,46 @@ class UserManage extends ManagePluginBase
      */
     public function saveOriginalRoles($request, $id)
     {
+        /* エラーチェック
+        ------------------------------------ */
+        $rules = [];
+
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_additional1) || !empty($request->add_name) || !empty($request->add_value)) {
             // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_additional1' => ['required', 'numeric'],
-                'add_name'        => ['required', 'alpha_num'],
-                'add_value'       => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_additional1' => '追加行の表示順',
-                'add_name'        => '追加行の定義名',
-                'add_value'       => '追加行の表示名',
-            ]);
+            $rules['add_additional1'] = ['required', 'numeric'];
+            $rules['add_name'] = ['required', 'alpha_num'];
+            $rules['add_value'] = ['required'];
 
-            if ($validator->fails()) {
-                return $this->originalRole($request, $id, $validator->errors());
+            $setAttributeNames['add_additional1'] = '追加行の表示順';
+            $setAttributeNames['add_name'] = '追加行の定義名';
+            $setAttributeNames['add_value'] = '追加行の表示名';
+        }
+
+        // 既存項目のidに値が入っていたら、行の他の項目も必須
+        if (!empty($request->configs_id)) {
+            foreach ($request->configs_id as $config_id) {
+                // 項目のエラーチェック
+                $rules['additional1.'.$config_id] = ['required', 'numeric'];
+                $rules['name.'.$config_id] = ['required', 'alpha_num'];
+                $rules['value.'.$config_id] = ['required'];
+
+                $setAttributeNames['additional1.'.$config_id] = '表示順';
+                $setAttributeNames['name.'.$config_id] = '定義名';
+                $setAttributeNames['value.'.$config_id] = '表示名';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            // return $this->originalRole($request, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
@@ -782,7 +874,8 @@ class UserManage extends ManagePluginBase
             }
         }
 
-        return $this->originalRole($request, $id, null);
+        // return $this->originalRole($request, $id, null);
+        return redirect()->back();
     }
 
     /**
@@ -851,5 +944,328 @@ class UserManage extends ManagePluginBase
 
         // 削除後は一覧画面へ
         return redirect('manage/user/groups/' . $id);
+    }
+
+    /**
+     * 自動ユーザ登録設定 画面表示
+     */
+    public function autoRegist($request, $id)
+    {
+        // Config データの取得
+        $configs = Configs::where('category', 'user_register')->get();
+
+        return view('plugins.manage.user.auto_regist', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "configs" => $configs,
+        ]);
+    }
+
+    /**
+     * 自動ユーザ登録設定 更新
+     */
+    public function autoRegistUpdate($request, $page_id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        $validator_values['user_register_mail_send_address'] = ['nullable', new CustomValiEmails()];
+        $validator_attributes['user_register_mail_send_address'] = '送信するメールアドレス';
+
+        // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
+        if ($request->user_register_mail_send_flag) {
+            $validator_values['user_register_mail_send_address'] = ['required', new CustomValiEmails()];
+        }
+
+        $validator_attributes['user_register_user_mail_send_flag'] = '登録者にメール送信する';
+        $validator_attributes['user_register_temporary_regist_mail_format'] = '仮登録メールフォーマット';
+
+        $messages = [
+            'user_register_user_mail_send_flag.accepted' => '仮登録メールを送信する場合、:attribute にチェックを付けてください。',
+            'user_register_temporary_regist_mail_format.regex' => '仮登録メールを送信する場合、:attribute に[[entry_url]]を含めてください。',
+        ];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $validator_values, $messages);
+        $validator->setAttributeNames($validator_attributes);
+
+        $validator->sometimes("user_register_user_mail_send_flag", 'accepted', function ($input) {
+            // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
+            return $input->user_register_temporary_regist_mail_flag;
+        });
+        $validator->sometimes("user_register_temporary_regist_mail_format", 'regex:/\[\[entry_url\]\]/', function ($input) {
+            // 仮登録メールがONなら、上記の 登録者にメール送信する ONであること
+            return $input->user_register_temporary_regist_mail_flag;
+        });
+
+        if ($validator->fails()) {
+            // Log::debug(var_export($validator->errors(), true));
+            // エラーと共に編集画面を呼び出す
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 自動ユーザ登録の使用
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_enable'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_enable
+            ]
+        );
+
+        // 以下のアドレスにメール送信する
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_send_flag'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_send_flag ?? 0
+            ]
+        );
+
+        // 送信するメールアドレス
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_send_address'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_send_address
+            ]
+        );
+
+        // 登録者にメール送信する
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_user_mail_send_flag'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_user_mail_send_flag ?? 0
+            ]
+        );
+
+        // 登録者に仮登録メールを送信する
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_temporary_regist_mail_flag'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_temporary_regist_mail_flag ?? 0
+            ]
+        );
+
+        // 仮登録メール件名
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_temporary_regist_mail_subject'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_temporary_regist_mail_subject
+            ]
+        );
+
+        // 仮登録メールフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_temporary_regist_mail_format'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_temporary_regist_mail_format
+            ]
+        );
+
+        // 仮登録後のメッセージ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_temporary_regist_after_message'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_temporary_regist_after_message
+            ]
+        );
+
+        // 本登録メール件名
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_subject'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_subject
+            ]
+        );
+
+        // 本登録メールフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_mail_format'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_mail_format
+            ]
+        );
+
+        // 本登録後のメッセージ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_after_message'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_after_message
+            ]
+        );
+
+        // *** ユーザ登録画面
+        // 自動ユーザ登録時に個人情報保護方針への同意を求めるか
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_requre_privacy'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_requre_privacy
+            ]
+        );
+
+        // 自動ユーザ登録時に求める個人情報保護方針の表示内容
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_privacy_description'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_privacy_description
+            ]
+        );
+
+        // 自動ユーザ登録時に求めるユーザ登録についての文言
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_description'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_description
+            ]
+        );
+
+        // ページ管理画面に戻る
+        return redirect("/manage/user/autoRegist");
+    }
+
+    /**
+     * データダウンロード
+     */
+    public function downloadCsv($request, $id = null, $sub_id = null, $data_output_flag = true)
+    {
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        // User データの取得
+        $users = $this->getUsers($request, $users_columns);
+
+        /*
+        ダウンロード前の配列イメージ。
+        0行目をUsersColumns から生成して、1行目以降は0行目の キーのみのコピーを作成し、データを入れ込んでいく。
+        1行目以降の行番号は users_id の値を使用
+
+        0 [
+            37 => 姓
+            40 => 名
+            45 => テキスト
+        ]
+        1 [
+            37 => 永原
+            40 => 篤
+            45 => テストです。
+        ]
+        2 [
+            37 => 田中
+            40 =>
+            45 =>
+        ]
+        */
+        // 返却用配列
+        $csv_array = array();
+
+        // データ行用の空配列
+        $copy_base = array();
+
+        // 見出し行-頭（固定項目）
+        $csv_array[0]['id'] = 'id';
+        $csv_array[0]['userid'] = 'ログインID';
+        $csv_array[0]['name'] = 'ユーザ名';
+        $csv_array[0]['group'] = 'グループ';
+        $csv_array[0]['email'] = 'eメールアドレス';
+        $csv_array[0]['password'] = 'パスワード';     // パスワード、中身は空で出力
+        $copy_base['id'] = '';
+        $copy_base['userid'] = '';
+        $copy_base['name'] = '';
+        $copy_base['group'] = '';
+        $copy_base['email'] = '';
+        $copy_base['password'] = '';
+        // 見出し行
+        foreach ($users_columns as $column) {
+            $csv_array[0][$column->id] = $column->column_name;
+            $copy_base[$column->id] = '';
+        }
+        // 見出し行-末尾（固定項目）
+        $csv_array[0]['view_user_roles'] = '権限';
+        $csv_array[0]['user_original_roles'] = '役割設定';
+        $csv_array[0]['status'] = '状態';
+        $copy_base['view_user_roles'] = '';
+        $copy_base['user_original_roles'] = '';
+        $copy_base['status'] = '';
+
+        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
+        if ($data_output_flag) {
+            // usersデータ
+            foreach ($users as $user) {
+                // ベースをセット
+                $csv_array[$user->id] = $copy_base;
+
+                // 初回で固定項目をセット
+                $csv_array[$user->id]['id'] = $user->id;
+                $csv_array[$user->id]['userid'] = $user->userid;     // ログインID
+                $csv_array[$user->id]['name'] = $user->name;
+
+                // グループ
+                $csv_array[$user->id]['group'] = $user->convertLoopValue('group_users', 'name', UsersTool::CHECKBOX_SEPARATOR);
+
+                $csv_array[$user->id]['email'] = $user->email;
+                $csv_array[$user->id]['password'] = '';              // パスワード、中身は空で出力
+
+                // 権限
+                $csv_array[$user->id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', UsersTool::CHECKBOX_SEPARATOR);
+
+                // 役割設定
+                $csv_array[$user->id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', UsersTool::CHECKBOX_SEPARATOR);
+
+                $csv_array[$user->id]['status'] = $user->status;
+            }
+
+            // 追加項目データの取得
+            $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
+
+            // 追加項目データ
+            foreach ($input_cols as $input_col) {
+                $csv_array[$input_col->users_id][$input_col->users_columns_id] = $input_col->value;
+            }
+        }
+
+        // レスポンス
+        $filename = 'users.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // Log::debug(var_export($request->character_code, true));
+
+        // 文字コード変換
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 }

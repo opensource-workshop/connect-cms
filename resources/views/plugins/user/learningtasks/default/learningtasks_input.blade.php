@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 {{-- 編集画面側のフレームメニュー --}}
@@ -12,20 +12,10 @@
 
 @section("plugin_contents_$frame->id")
 
+@include('common.errors_form_line')
+
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
-
-{{-- 一時保存ボタンのアクション --}}
-<script type="text/javascript">
-    function save_action() {
-        @if (empty($learningtasks_posts->id))
-            form_learningtasks_posts.action = "{{url('/')}}/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
-        @else
-            form_learningtasks_posts.action = "{{url('/')}}/plugin/learningtasks/temporarysave/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame->id}}";
-        @endif
-        form_learningtasks_posts.submit();
-    }
-</script>
 
 {{-- 投稿用フォーム --}}
 @if (empty($learningtasks_posts->id))
@@ -61,6 +51,7 @@
             <div class="custom-file">
                 <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
                 <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
+                @if ($errors && $errors->has('add_task_file')) <div class="text-danger">{{$errors->first('add_task_file')}}</div> @endif
             </div>
         </div>
     </div>
@@ -130,7 +121,7 @@
             <select class="form-control" name="categories_id" class="form-control">
                 <option value=""></option>
                 @foreach($learningtasks_categories as $category)
-                <option value="{{$category->id}}" @if(Input::old('category', $learningtasks_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+                <option value="{{$category->id}}" @if(old('category', $learningtasks_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
                 @endforeach
             </select>
             @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
@@ -157,10 +148,20 @@
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-{{--
-                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
---}}
+                    @if (empty($learningtasks_posts->id))
+                        {{-- bugfix: 登録の時は、一覧へボタン表示 --}}
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}'">
+                            <i class="fas fa-angle-left"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> 一覧へ</span>
+                        </button>
+                    @else
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}'">
+                            <i class="fas fa-angle-left"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> 詳細へ</span>
+                        </button>
+                    @endif
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.reload()">
+                        {{-- <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span> --}}
+                        <i class="fas fa-undo-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span>
+                    </button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($learningtasks_posts->id))
                         @if ($buckets->needApprovalUser(Auth::user()))
@@ -178,11 +179,11 @@
                 </div>
             </div>
             @if (!empty($learningtasks_posts->id))
-            <div class="col-3 col-xl-3 text-right">
+                <div class="col-3 col-xl-3 text-right">
                     <a data-toggle="collapse" href="#collapse{{$learningtasks_posts->id}}">
                         <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
                     </a>
-            </div>
+                </div>
             @endif
         </div>
     </div>

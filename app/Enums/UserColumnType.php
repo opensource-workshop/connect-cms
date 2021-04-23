@@ -16,6 +16,7 @@ final class UserColumnType extends EnumsBase
     const checkbox = 'checkbox';
     const select = 'select';
     const mail = 'mail';
+    const agree = 'agree';
 
     // key/valueの連想配列
     const enum = [
@@ -25,5 +26,6 @@ final class UserColumnType extends EnumsBase
         self::checkbox => '複数選択型',
         self::select => 'リストボックス型',
         self::mail => 'メールアドレス型',
+        self::agree => '同意型',
     ];
 }

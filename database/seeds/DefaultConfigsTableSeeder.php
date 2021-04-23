@@ -124,5 +124,23 @@ class DefaultConfigsTableSeeder extends Seeder
             ]);
         }
 
+        if (DB::table('configs')->where('name', 'base_login_redirect_previous_page')->count() == 0) {
+            // ログイン時に元いたページに遷移 設定
+            $configs = Configs::create([
+                'name' => 'base_login_redirect_previous_page',
+                'category' => 'general',
+                'value' => 0
+            ]);
+        }
+
+        if (DB::table('configs')->where('name', 'user_register_after_message')->count() == 0) {
+            // 本登録後のメッセージ
+            $configs = Configs::create([
+                'name' => 'user_register_after_message',
+                'category' => 'user_register',
+                'value' => 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。'
+            ]);
+        }
+
     }
 }

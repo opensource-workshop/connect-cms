@@ -67,10 +67,10 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}}">RSS</label>
+        <label class="{{$frame->getSettingLabelClass(true)}}">RSSの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($faq->rss == 1)
+                @if(old('rss', $faq->rss) == 1)
                     <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input">
@@ -78,7 +78,7 @@
                 <label class="custom-control-label" for="rss_off">表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($faq->rss == 0)
+                @if(old('rss', $faq->rss) == 0)
                     <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input">
@@ -100,7 +100,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">順序条件</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($faq->sequence_conditions == 0)
+                @if(old('sequence_conditions', $faq->sequence_conditions) == 0)
                     <input type="radio" value="0" id="sequence_conditions_0" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="sequence_conditions_0" name="sequence_conditions" class="custom-control-input">
@@ -108,7 +108,7 @@
                 <label class="custom-control-label" for="sequence_conditions_0">最新順</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($faq->sequence_conditions == 1)
+                @if(old('sequence_conditions', $faq->sequence_conditions) == 1)
                     <input type="radio" value="1" id="sequence_conditions_1" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="1" id="sequence_conditions_1" name="sequence_conditions" class="custom-control-input">
@@ -116,12 +116,40 @@
                 <label class="custom-control-label" for="sequence_conditions_1">投稿順</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($faq->sequence_conditions == 2)
+                @if(old('sequence_conditions', $faq->sequence_conditions) == 2)
                     <input type="radio" value="2" id="sequence_conditions_2" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="2" id="sequence_conditions_2" name="sequence_conditions" class="custom-control-input">
                 @endif
                 <label class="custom-control-label" for="sequence_conditions_2">指定順</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">公開日時の表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @php
+                    // 新規作成時は表示する
+                    if ($create_flag) {
+                        $faq->display_posted_at_flag = 1;
+                    }
+                @endphp
+                @if(old('display_posted_at_flag', $faq->display_posted_at_flag) == 1)
+                    <input type="radio" value="1" id="display_posted_at_flag_off" name="display_posted_at_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="display_posted_at_flag_off" name="display_posted_at_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="display_posted_at_flag_off">表示する</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if(old('display_posted_at_flag', $faq->display_posted_at_flag) == 0)
+                    <input type="radio" value="0" id="display_posted_at_flag_on" name="display_posted_at_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="display_posted_at_flag_on" name="display_posted_at_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="display_posted_at_flag_on">表示しない</label>
             </div>
         </div>
     </div>
@@ -134,7 +162,7 @@
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($faq) || $create_flag)
                         登録確定

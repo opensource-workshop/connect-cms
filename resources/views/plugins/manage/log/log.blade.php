@@ -159,6 +159,20 @@
             </div>
         </div>
 
+        <div class="row mt-2">
+            <div class="col text-left d-flex align-items-end">
+                {{-- (左側)件数 --}}
+                <span class="badge badge-pill badge-light">{{ $app_logs->total() }} 件</span>
+            </div>
+
+            <div class="col text-right">
+                {{-- (右側)ダウンロードボタン --}}
+                <a href="{{url('/')}}/manage/log/downloadCsv" target="_blank" onclick="return confirm('現在の絞り込み条件のログをダウンロードします。\nよろしいですか？')">
+                    <span class="btn btn-link"><i class="fas fa-file-download"></i> ダウンロード</span>
+                </a>
+            </div>
+        </div>
+
         <div class="form-group table-responsive">
             <table class="table table-hover cc-font-90">
             <thead>
@@ -196,16 +210,9 @@
             </table>
         </div>
 
-        {{-- ページング処理 --}}
-        <div class="row">
-            <div class="col-10 text-center">
-                {{ $app_logs->links() }}
-            </div>
-            <div class="col-2 text-right">
-                <a href="{{url('/')}}/manage/log/downloadCsv" target="_blank" onclick="return confirm('現在の絞り込み条件のログをダウンロードします。\nよろしいですか？')">
-                    <span class="btn btn-primary"><i class="fas fa-file-download"></i></span>
-                </a>
-            </div>
+        <div class="text-center">
+            {{-- ページング処理 --}}
+            {{ $app_logs->links() }}
         </div>
     </div>
 </div>

@@ -23,16 +23,12 @@
         form_code.action = url;
         form_code.submit();
     }
-    function submitActionConfirm(url, message = '削除します。\nよろしいですか？') {
-        if (confirm(message)) {
-            form_code.action = url;
-            form_code.submit();
-        }
-    }
 </script>
 
 </div>
 <div class="card-body">
+
+    @include('common.errors_form_line')
 
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
@@ -86,63 +82,28 @@
             </div>
         </div>
 
-        <div class="form-group form-row">
-            <label for="buckets_id" class="col-md-3 col-form-label text-md-right">buckets_id</label>
-            <div class="col-md-9">
-                <input type="text" name="buckets_id" id="buckets_id" value="{{old('buckets_id', $code->buckets_id)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->buckets_id_help_message}}</div>
+        @php
+        $colums = [
+            'buckets_id' => 'buckets_id_help_message',
+            'prefix' => 'prefix_help_message',
+            'type_name' => 'type_name_help_message',
+            'type_code1' => 'type_code1_help_message',
+            'type_code2' => 'type_code2_help_message',
+            'type_code3' => 'type_code3_help_message',
+            'type_code4' => 'type_code4_help_message',
+            'type_code5' => 'type_code5_help_message',
+        ];
+        @endphp
+        @foreach($colums as $colum_name => $colum_help_message_name)
+            <div class="form-group form-row">
+                <label for="{{$colum_name}}" class="col-md-3 col-form-label text-md-right">{{$colum_name}}</label>
+                <div class="col-md-9">
+                    <input type="text" name="{{$colum_name}}" id="{{$colum_name}}" value="{{old($colum_name, $code->$colum_name)}}" class="form-control">
+                    <div class="text-muted">{{$codes_help_message->$colum_help_message_name}}</div>
+                    @if ($errors && $errors->has($colum_name)) <div class="text-danger">{{$errors->first($colum_name)}}</div> @endif
+                </div>
             </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="prefix" class="col-md-3 col-form-label text-md-right">prefix</label>
-            <div class="col-md-9">
-                <input type="text" name="prefix" id="prefix" value="{{old('prefix', $code->prefix)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->prefix_help_message}}</div>
-            </div>
-        </div>
-
-        <div class="form-group form-row">
-            <label for="type_name" class="col-md-3 col-form-label text-md-right">type_name</label>
-            <div class="col-md-9">
-                <input type="text" name="type_name" id="type_name" value="{{old('type_name', $code->type_name)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->type_name_help_message}}</div>
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="type_code1" class="col-md-3 col-form-label text-md-right">type_code1</label>
-            <div class="col-md-9">
-                <input type="text" name="type_code1" id="type_code1" value="{{old('type_code1', $code->type_code1)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->type_code1_help_message}}</div>
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="type_code2" class="col-md-3 col-form-label text-md-right">type_code2</label>
-            <div class="col-md-9">
-                <input type="text" name="type_code2" id="type_code2" value="{{old('type_code2', $code->type_code2)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->type_code2_help_message}}</div>
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="type_code3" class="col-md-3 col-form-label text-md-right">type_code3</label>
-            <div class="col-md-9">
-                <input type="text" name="type_code3" id="type_code3" value="{{old('type_code3', $code->type_code3)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->type_code3_help_message}}</div>
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="type_code4" class="col-md-3 col-form-label text-md-right">type_code4</label>
-            <div class="col-md-9">
-                <input type="text" name="type_code4" id="type_code4" value="{{old('type_code4', $code->type_code4)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->type_code4_help_message}}</div>
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="type_code5" class="col-md-3 col-form-label text-md-right">type_code5</label>
-            <div class="col-md-9">
-                <input type="text" name="type_code5" id="type_code5" value="{{old('type_code5', $code->type_code5)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->type_code5_help_message}}</div>
-            </div>
-        </div>
+        @endforeach
 
         <div class="form-group form-row">
             <label for="code" class="col-md-3 col-form-label text-md-right">コード <label class="badge badge-danger">必須</label></label>
@@ -160,46 +121,33 @@
                 @if ($errors && $errors->has('value')) <div class="text-danger">{{$errors->first('value')}}</div> @endif
             </div>
         </div>
-        <div class="form-group form-row">
-            <label for="additional1" class="col-md-3 col-form-label text-md-right">additional1</label>
-            <div class="col-md-9">
-                <input type="text" name="additional1" id="additional1" value="{{old('additional1', $code->additional1)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->additional1_help_message}}</div>
-                @if ($errors && $errors->has('additional1')) <div class="text-danger">{{$errors->first('additional1')}}</div> @endif
+
+        {{-- additional1～10 --}}
+        @php
+        $colums = [
+            'additional1' => 'additional1_help_message',
+            'additional2' => 'additional2_help_message',
+            'additional3' => 'additional3_help_message',
+            'additional4' => 'additional4_help_message',
+            'additional5' => 'additional5_help_message',
+            'additional6' => 'additional6_help_message',
+            'additional7' => 'additional7_help_message',
+            'additional8' => 'additional8_help_message',
+            'additional9' => 'additional9_help_message',
+            'additional10' => 'additional10_help_message',
+        ];
+        @endphp
+        @foreach($colums as $colum_name => $colum_help_message_name)
+            <div class="form-group form-row">
+                <label for="{{$colum_name}}" class="col-md-3 col-form-label text-md-right">{{$colum_name}}</label>
+                <div class="col-md-9">
+                    <input type="text" name="{{$colum_name}}" id="{{$colum_name}}" value="{{old($colum_name, $code->$colum_name)}}" class="form-control">
+                    <div class="text-muted">{{$codes_help_message->$colum_help_message_name}}</div>
+                    @if ($errors && $errors->has($colum_name)) <div class="text-danger">{{$errors->first($colum_name)}}</div> @endif
+                </div>
             </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="additional2" class="col-md-3 col-form-label text-md-right">additional2</label>
-            <div class="col-md-9">
-                <input type="text" name="additional2" id="additional2" value="{{old('additional2', $code->additional2)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->additional2_help_message}}</div>
-                @if ($errors && $errors->has('additional2')) <div class="text-danger">{{$errors->first('additional2')}}</div> @endif
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="additional3" class="col-md-3 col-form-label text-md-right">additional3</label>
-            <div class="col-md-9">
-                <input type="text" name="additional3" id="additional3" value="{{old('additional3', $code->additional3)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->additional3_help_message}}</div>
-                @if ($errors && $errors->has('additional3')) <div class="text-danger">{{$errors->first('additional3')}}</div> @endif
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="additional4" class="col-md-3 col-form-label text-md-right">additional4</label>
-            <div class="col-md-9">
-                <input type="text" name="additional4" id="additional4" value="{{old('additional4', $code->additional4)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->additional4_help_message}}</div>
-                @if ($errors && $errors->has('additional4')) <div class="text-danger">{{$errors->first('additional4')}}</div> @endif
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="additional5" class="col-md-3 col-form-label text-md-right">additional5</label>
-            <div class="col-md-9">
-                <input type="text" name="additional5" id="additional5" value="{{old('additional5', $code->additional5)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->additional5_help_message}}</div>
-                @if ($errors && $errors->has('additional5')) <div class="text-danger">{{$errors->first('additional5')}}</div> @endif
-            </div>
-        </div>
+        @endforeach
+
         <div class="form-group form-row">
             <label for="display_sequence" class="col-md-3 col-form-label text-md-right">表示順</label>
             <div class="col-md-9">
@@ -209,28 +157,48 @@
         </div>
 
         <!-- Add or Update code Button -->
-        <div class="form-group form-row">
-            <div class="offset-sm-3 col-sm-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code?page={{$paginate_page}}&search_words={{$search_words}}'"><i class="fas fa-times"></i> キャンセル</button>
+        <div class="form-group text-center">
+            <div class="form-row">
+                <div class="offset-xl-3 col-9 col-xl-6">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code?page={{$paginate_page}}&search_words={{$search_words}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    @if ($code->id)
+                    <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/update/{{$code->id}}')">
+                        <i class="fas fa-check"></i> 更新
+                    </button>
+                    @else
+                    <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/store')">
+                        <i class="fas fa-check"></i> 登録
+                    </button>
+                    @endif
+                </div>
+
                 @if ($code->id)
-                <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/update/{{$code->id}}')">
-                    <i class="fas fa-check"></i> 更新
-                </button>
-                @else
-                <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/store')">
-                    <i class="fas fa-check"></i> 登録
-                </button>
+                    <div class="col-3 col-xl-3 text-right">
+                        <a data-toggle="collapse" href="#collapse{{$code->id}}">
+                            <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> 削除</span>
+                        </a>
+                    </div>
                 @endif
             </div>
-            @if ($code->id)
-            <div class="col-sm-3 pull-right text-right">
-                <button type="button" class="btn btn-danger form-horizontal" onclick="submitActionConfirm('{{url('/')}}/manage/code/destroy/{{$code->id}}')">
-                    <i class="fas fa-trash-alt"></i> 削除
-                </button>
-            </div>
-            @endif
         </div>
     </form>
+
+    <div id="collapse{{$code->id}}" class="collapse">
+        <div class="card border-danger">
+            <div class="card-body">
+                <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
+
+                <div class="text-center">
+                    {{-- 削除ボタン --}}
+                    <form action="{{url('/')}}/manage/code/destroy/{{$code->id}}" method="POST">
+                        {{csrf_field()}}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 </div>
 </div>

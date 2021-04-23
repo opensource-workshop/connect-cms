@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Providers\RouteServiceProvider;
 use App\Traits\ConnectCommonTrait;
 
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -38,8 +39,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/';
-    //protected $redirectTo = '/home';
+    protected $redirectTo = RouteServiceProvider::HOME;
 
     /**
      * Create a new controller instance.
@@ -48,6 +48,7 @@ class LoginController extends Controller
      */
     public function __construct()
     {
+        // exceptで指定されたメソッドは除外する
         $this->middleware('guest')->except('logout');
     }
 
@@ -95,7 +96,7 @@ class LoginController extends Controller
                 if (!empty($redirectNc2)) {
                     return $redirectNc2;
                 }
-        
+
                 // ここに来るということは、NetCommons2 からの移行パスワードでの認証もNG
                 throw $e;
             }
@@ -162,5 +163,30 @@ class LoginController extends Controller
             abort(403, "外部認証を使用しないため、表示できません。");
         }
         return $redirect;
+    }
+
+    /**
+     * Show the application's login form.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function showLoginForm()
+    {
+        // ログイン時に元いたページに遷移 設定
+        $base_login_redirect_previous_page = Configs::where('name', 'base_login_redirect_previous_page')->first();
+
+        if (!empty($base_login_redirect_previous_page) && $base_login_redirect_previous_page->value == '1') {
+            // ログイン時に元いたページに遷移
+            if (array_key_exists('HTTP_REFERER', $_SERVER)) {
+                $path = parse_url($_SERVER['HTTP_REFERER']); // URLを分解
+                if (array_key_exists('host', $path)) {
+                    if ($path['host'] == $_SERVER['HTTP_HOST']) { // ホスト部分が自ホストと同じ
+                        session(['url.intended' => $_SERVER['HTTP_REFERER']]);
+                    }
+                }
+            }
+        }
+
+        return view('auth.login');
     }
 }

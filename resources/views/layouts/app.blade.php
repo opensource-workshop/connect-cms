@@ -58,11 +58,7 @@
 @endif
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
-@if(isset($configs))
-    <title>@if(isset($page)){{$page->page_name}} | @endif{{$configs['base_site_name']}}</title>
-@else
-    <title>@if(isset($page)){{$page->page_name}} | @endif{{config('app.name', 'Connect-CMS')}}</title>
-@endif
+    <title>@if(isset($page)){{$page->page_name}} | @endif{{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}</title>
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
@@ -105,6 +101,8 @@
     <!-- Connect-CMS Page CSS -->
 @if (isset($page) && !empty($page->id))
     <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
+@else
+    <link href="{{url('/')}}/file/css/0.css" rel="stylesheet">
 @endif
 
     <!-- Context -->
@@ -136,11 +134,7 @@ if(isset($configs_array['body_optional_class'])){
 <nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
-        @if(isset($configs))
-            {{$configs['base_site_name']}}
-        @else
-            {{ config('app.name', 'Connect-CMS') }}
-        @endif
+        {{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}
     </a>
 
     <!-- SmartPhone Button -->
@@ -156,7 +150,7 @@ if(isset($configs_array['body_optional_class'])){
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
-                    @if (isset($configs) && 
+                    @if (isset($configs) &&
                             (!isset($configs['smartphone_menu_template']) ||
                                 (isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
                             )

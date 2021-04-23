@@ -12,8 +12,7 @@
     @foreach($pages as $page_obj)
 
         {{-- 非表示のページは対象外 --}}
-        @if ($page_obj->display_flag == 1)
-
+        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
                 {{-- 子供のページがある場合 --}}
                 @if (count($page_obj->children) > 0)
@@ -46,9 +45,9 @@
                     <li class="nav-item {{$page_obj->getClass()}}">
                         {{-- カレント --}}
                         @if ($ancestors->contains('id', $page_obj->id))
-                        <a class="nav-link active" href="{{ url("$page_obj->permanent_link") }}" aria-current="page">
+                        <a class="nav-link text-nowrap active" href="{{ url("$page_obj->permanent_link") }}" aria-current="page">
                         @else
-                        <a class="nav-link" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link text-nowrap" href="{{ url("$page_obj->permanent_link") }}">
                         @endif
                             {{$page_obj->page_name}}
                         </a>

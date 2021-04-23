@@ -15,7 +15,7 @@ use App\User;
 use App\Models\Core\UsersRoles;
 
 /**
-  Laravel標準のEloquentUserProviderを継承して、Connect-CMS用にカスタマイズしたログイン処理です。
+ * Laravel標準のEloquentUserProviderを継承して、Connect-CMS用にカスタマイズしたログイン処理です。
  */
 class ConnectEloquentUserProvider extends EloquentUserProvider
 {
@@ -71,6 +71,54 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
         $ret->user_roles['base']['role_guest'] = 1;
 
         return $ret;
+    }
+
+    /**
+     * Retrieve a user by their unique identifier and "remember me" token.
+     *
+     * bugfix: ログイン維持（Remember Me）の時、user roles を追加が実行されないバグ修正
+     *         retrieveById()は、セッションのユーザIDがあれば処理する関係で、ログイン維持の場合、一旦セッションが消えるため、実行されない
+     *         そのため、retrieveByToken()をオーバーライトして Userクラスへの追加処理（user roles を追加）を行う
+     *
+     * copy by Illuminate\Auth\EloquentUserProvider::retrieveByToken()
+     * @see \Illuminate\Auth\SessionGuard Authクラスの実クラス
+     * @see \Illuminate\Auth\EloquentUserProvider 親クラス
+     *
+     * 「呼び出し順」
+     * Illuminate\Support\Facades\Auth::user()
+     * ↓
+     * \Illuminate\Auth\SessionGuard::user()
+     *     $this->userFromRecaller($recaller);
+     * ↓
+     * \Illuminate\Auth\SessionGuard::userFromRecaller()
+     *     $this->provider->retrieveByToken()
+     * ↓
+     * 当メソッド呼ばれる
+     *
+     * @param  mixed  $identifier
+     * @param  string  $token
+     * @return \Illuminate\Contracts\Auth\Authenticatable|null
+     */
+    public function retrieveByToken($identifier, $token)
+    {
+        // 親メソッド呼び出し
+        $rememberToken = parent::retrieveByToken($identifier, $token);
+
+        // Log::notice('retrieveByToken');
+        if ($rememberToken) {
+            // 戻り値ありなら、ログイン維持（Remember Me）での認証時
+            // Log::notice('Remember Me Logged in 2');
+
+            // user roles を追加
+            $users_roles = new UsersRoles();
+            $rememberToken->user_roles = $users_roles->getUsersRoles($identifier);
+
+            // guest 権限は自動的に付与する。
+            $rememberToken->user_roles['base']['role_guest'] = 1;
+        }
+
+        // Log::notice('retrieveByToken-end');
+        return $rememberToken;
     }
 
     /**

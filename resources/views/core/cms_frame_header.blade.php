@@ -3,7 +3,7 @@
  *
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -44,6 +44,21 @@
         <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
     @endif
 
+    {{-- 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、限定公開）のみステータス表示を行う --}}
+    @if (Auth::check() && $frame->content_open_type != ContentOpenType::always_open)
+        <small>
+            <span class="badge badge-warning">
+                <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
+                    <i class="fas fa-cog"></i>
+                </a>
+                {{ ContentOpenType::getDescription($frame->content_open_type) }}
+                @if ($frame->content_open_type == ContentOpenType::limited_open)
+                    {{-- 期限付き公開の場合は日付も表示 --}}
+                    {{ '（' . Carbon::parse($frame->content_open_date_from)->format('Y/n/j H:i:s') . ' - ' . Carbon::parse($frame->content_open_date_to)->format('Y/n/j H:i:s') . '）' }}
+                @endif
+            </span>
+        </small>
+    @endif
     {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}
     @if (Auth::check() &&
         (Auth::user()->can('role_arrangement')) &&
@@ -65,13 +80,13 @@
             </span>
 
             {{-- 上移動。POSTのためのフォーム --}}
-            <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
+            <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
                 <a href="javascript:form_{{ $frame->frame_id }}_up.submit();"><i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a> 
             </form>
 
             {{-- 下移動。POSTのためのフォーム --}}
-            <form action="{{url('/')}}/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}" name="form_{{ $frame->frame_id }}_down" method="POST" class="form-inline d-inline">
+            <form action="{{url('/')}}/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_down" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
                 <a href="javascript:form_{{ $frame->frame_id }}_down.submit();"><i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a> 
             </form>

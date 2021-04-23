@@ -24,20 +24,20 @@
                     {{-- ラジオ表示 --}}
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" value="1" class="custom-control-input" id="use_auth_method_1" 
+                            <input
+                                type="radio" value="1" class="custom-control-input" id="use_auth_method_1"
                                 name="use_auth_method" @if(old('use_auth_method', $use_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_auth_method_1">
+                            <label class="custom-control-label" for="use_auth_method_1" id="label_use_auth_method_1">
                                 使用する
                             </label>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" value="0" class="custom-control-input" id="use_auth_method_0" 
+                            <input
+                                type="radio" value="0" class="custom-control-input" id="use_auth_method_0"
                                 name="use_auth_method" @if(!old('use_auth_method', $use_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_auth_method_0">
+                            <label class="custom-control-label" for="use_auth_method_0" id="label_use_auth_method_0">
                                 使用しない
                             </label>
                         </div>
@@ -61,8 +61,8 @@
                     <div class="row">
                         <div class="col">
                             <div class="custom-control custom-radio custom-control-inline">
-                                <input 
-                                    type="radio" value="{{ $key }}" class="custom-control-input" id="auth_method_event_{{ $key }}" 
+                                <input
+                                    type="radio" value="{{ $key }}" class="custom-control-input" id="auth_method_event_{{ $key }}"
                                     name="auth_method_event" {{ $checked }}
                                 >
                                 <label class="custom-control-label" for="{{ "auth_method_event_${key}" }}">
@@ -76,6 +76,7 @@
                     ※ NetCommons2認証は <a href="{{url('/')}}/manage/auth/netcommons2">NetCommons2認証</a> 画面で設定します。<br>
                     ※ Shibboleth認証を選択すると、画面上部のログインのリンク先がShibbolethログイン画面に変更されます。<br>
                     ※ Shibboleth認証はファイルで設定します。設定ファイル：<code>config/cc_shibboleth_config.php</code><br>
+                    ※ Shibboleth認証後、当サイトに該当ユーザがいない場合、自動作成されます。<br>
                 </small>
             </div>
 
@@ -86,8 +87,8 @@
                     {{-- ラジオ表示 --}}
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" value="1" class="custom-control-input" id="use_normal_login_along_with_auth_method_1" 
+                            <input
+                                type="radio" value="1" class="custom-control-input" id="use_normal_login_along_with_auth_method_1"
                                 name="use_normal_login_along_with_auth_method" @if(old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
                             <label class="custom-control-label" for="use_normal_login_along_with_auth_method_1">
                                 使用する
@@ -96,8 +97,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" value="0" class="custom-control-input" id="use_normal_login_along_with_auth_method_0" 
+                            <input
+                                type="radio" value="0" class="custom-control-input" id="use_normal_login_along_with_auth_method_0"
                                 name="use_normal_login_along_with_auth_method" @if(!old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
                             <label class="custom-control-label" for="use_normal_login_along_with_auth_method_0">
                                 使用しない

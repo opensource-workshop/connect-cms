@@ -27,7 +27,7 @@ class DateUtils
                 // 8桁の場合
                 if (checkdate(substr($value, 4, 2), substr($value, 6, 2), substr($value, 0, 4))) {
                     // 日付として正常
-                    $ret = Carbon::parse($value)->format('Y年n月d日');
+                    $ret = Carbon::parse($value)->format('Y年n月j日');
                 } elseif (checkdate(substr($value, 4, 2), 1, substr($value, 0, 4))) {
                     // 8桁だが、ddの部分を01とすれば正常な場合は年月まで表示（日付部が00の場合を想定）
                     $ret = Carbon::parse(substr($value, 0, 4) . substr($value, 4, 2) . '01')->format('Y年n月');
@@ -42,7 +42,7 @@ class DateUtils
                 } else {
                     $ret = $value;
                 }
-            } elseif (mb_strlen($value) == 4) {
+            } elseif (mb_strlen($value) == 4 && $value != '9999') {
                 // 4桁の場合
                 if (checkdate(1, 1, substr($value, 0, 4))) {
                     // 日付として正常
@@ -50,6 +50,8 @@ class DateUtils
                 } else {
                     $ret = $value;
                 }
+            } elseif ($value == '9999') {
+                $ret = '現在';
             } else {
                 $ret = $value;
             }

@@ -96,7 +96,9 @@ class ConnectController extends Controller
         $this->router = $router;
 
         // ルートパラメータを取得する
-        $allRouteParams = $router->getCurrentRoute()->parameters();
+        // bugfix: php artisan route:list で「Call to a member function parameters() on null」エラー対応
+        // $allRouteParams = $router->getCurrentRoute()->parameters();
+        $allRouteParams = is_null($router->getCurrentRoute()) ? null : $router->getCurrentRoute()->parameters();
 
         // ページID
         if (!empty($allRouteParams) && array_key_exists('page_id', $allRouteParams)) {
@@ -189,7 +191,9 @@ class ConnectController extends Controller
         }
 
         // 対象となる処理は、画面を持つルートの処理とする。
-        $route_name = $router->current()->getName();
+        // bugfix: php artisan route:list 実行時「Call to a member function getName() on null」エラー対応
+        // $route_name = $router->current()->getName();
+        $route_name = is_null($router->current()) ? null : $router->current()->getName();
         if ($route_name == 'get_plugin'    ||
             $route_name == 'post_plugin'   ||
             $route_name == 'post_redirect' ||

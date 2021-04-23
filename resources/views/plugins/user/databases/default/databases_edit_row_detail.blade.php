@@ -299,7 +299,7 @@
                             <label class="{{$frame->getSettingLabelClass()}}"></label>
                             <div class="{{$frame->getSettingInputClass(true)}}">
                                 <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="rule_allowed_alpha_numeric" id="rule_allowed_alpha_numeric" value="1" class="custom-control-input" 
+                                    <input type="checkbox" name="rule_allowed_alpha_numeric" id="rule_allowed_alpha_numeric" value="1" class="custom-control-input"
                                         @if(old('rule_allowed_alpha_numeric', $column->rule_allowed_alpha_numeric)) checked @endif>
                                     <label class="custom-control-label" for="rule_allowed_alpha_numeric">半角英数値のみ許容</label>
                                 </div>
@@ -392,6 +392,10 @@
         <div class="card mb-4">
             <h5 class="card-header">キャプションの設定</h5>
             <div class="card-body">
+                <div class="form-group row">
+                    <div class="col font-weight-bold">登録・編集で表示するキャプション</div>
+                </div>
+
                 {{-- キャプション内容 --}}
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass()}}">内容 </label>
@@ -407,6 +411,32 @@
                         <select class="form-control" name="caption_color">
                             @foreach (Bs4TextColor::getMembers() as $key=>$value)
                                 <option value="{{$key}}" class="{{ $key }}" @if($key == old('caption_color', $column->caption_color)) selected @endif>
+                                    {{ $value }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row pt-3">
+                    <div class="col font-weight-bold">一覧・詳細で表示するキャプション</div>
+                </div>
+
+                {{-- キャプション内容 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">内容 </label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <textarea name="caption_list_detail" class="form-control" rows="3">{{old('caption_list_detail', $column->caption_list_detail)}}</textarea>
+                    </div>
+                </div>
+
+                {{-- キャプション文字色 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">文字色 </label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <select class="form-control" name="caption_list_detail_color">
+                            @foreach (Bs4TextColor::getMembers() as $key=>$value)
+                                <option value="{{$key}}" class="{{ $key }}" @if($key == old('caption_list_detail_color', $column->caption_list_detail_color)) selected @endif>
                                     {{ $value }}
                                 </option>
                             @endforeach
