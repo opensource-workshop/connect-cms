@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 use Kalnoy\Nestedset\NodeTrait;
 
-use App\Userable;
+use App\UserableNohistory;
 
 /**
  * 掲示板・記事
@@ -23,8 +23,8 @@ class BbsPost extends Model
     // 論理削除
     use SoftDeletes;
 
-    // 保存時のユーザー関連データの保持
-    use Userable;
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
 
     // 更新する項目の定義
     protected $fillable = ['bbs_id', 'title', 'body', 'thread_root_id', 'thread_updated_at', 'status', '_lft', '_rgt', 'parent_id'];
