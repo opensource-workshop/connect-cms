@@ -1,5 +1,5 @@
 {{--
- * 課題管理記事登録画面テンプレート。
+ * 課題管理 試験設定画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -204,7 +204,18 @@
         <h5><span class="badge badge-secondary">日時設定</span></h5>
 
         <div class="form-group row">
-            <label class="col-12">試験日時一覧</label>
+            <div class="col-12 mb-2">
+                <div class="row">
+                    <label class="text-left col">
+                        試験日時一覧
+                    </label>
+                    <div class="text-right col">
+                        <a href="{{url('/')}}/plugin/learningtasks/importExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
+                            <span class="btn btn-success btn-sm"><i class="fas fa-file-upload"></i> インポート</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
             <div class="col-12">
                 <div class="">
                     <table class="table table-hover table-sm mb-0">

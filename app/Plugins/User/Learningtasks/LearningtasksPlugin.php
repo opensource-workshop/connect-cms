@@ -39,6 +39,7 @@ use App\User;
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 use App\Utilities\Csv\CsvUtils;
+use App\Utilities\String\StringUtils;
 
 /**
  * 課題管理プラグイン
@@ -94,6 +95,7 @@ class LearningtasksPlugin extends UserPluginBase
             'editEvaluate',
             'listGrade',
             'switchUserUrl',
+            'importExaminations',
         ];
         $functions['post'] = [
             'saveMail',
@@ -113,6 +115,9 @@ class LearningtasksPlugin extends UserPluginBase
             'changeStatus7',
             'changeStatus8',
             'deleteStatus',
+            'uploadCsvExaminations',
+            'downloadCsvFormatExaminations',
+            'downloadCsvExaminations',
         ];
         return $functions;
     }
@@ -151,6 +156,11 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["saveReport"]       = array('role_article_admin');
         $role_ckeck_table["saveExaminations"] = array('role_article_admin');
         $role_ckeck_table["deleteExaminations"] = array('role_article_admin');
+        $role_ckeck_table["importExaminations"] = array('role_article_admin');
+        $role_ckeck_table["uploadCsvExaminations"] = array('role_article_admin');
+        $role_ckeck_table["downloadCsvFormatExaminations"] = array('role_article_admin');
+        $role_ckeck_table["downloadCsvExaminations"] = array('role_article_admin');
+
         $role_ckeck_table["saveEvaluate"]     = array('role_article_admin');
         $role_ckeck_table["downloadGrade"]    = array('role_article_admin');
         $role_ckeck_table["deleteStatus"]     = array('role_article_admin');
@@ -2445,6 +2455,298 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 削除対象の試験を削除する。
         LearningtasksExaminations::find($id)->delete();
+    }
+
+    /**
+     * 試験日時インポート画面表示
+     */
+    public function importExaminations($request, $page_id, $frame_id, $learningtasks_posts_id = null)
+    {
+        // // 課題管理データ
+        // $learningtask = $this->getLearningTask($frame_id);
+        // if (empty($learningtask)) {
+        //     return;
+        // }
+
+        // 記事取得
+        $learningtasks_post = $this->getPost($learningtasks_posts_id);
+        if (empty($learningtasks_post)) {
+            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+        }
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('learningtasks_import_examinations', [
+            'learningtasks_posts' => $learningtasks_post,
+        ]);
+    }
+
+    /**
+     * 試験日時インポートインポート処理
+     */
+    public function uploadCsvExaminations($request, $page_id, $frame_id, $post_id)
+    {
+        // csv
+        $rules = [
+            'examinations_csv'  => [
+                'required',
+                'file',
+                'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
+                'mimetypes:text/plain',
+            ],
+        ];
+
+        // 画面エラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames([
+            'examinations_csv'  => 'CSVファイル',
+        ]);
+
+        if ($validator->fails()) {
+            // Log::debug(var_export($validator->errors(), true));
+            // エラーと共に編集画面を呼び出す
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // CSVファイル一時保存
+        $path = $request->file('examinations_csv')->store('tmp');
+        // Log::debug(var_export(storage_path('app/') . $path, true));
+        $csv_full_path = storage_path('app/') . $path;
+
+        // ファイル拡張子取得
+        $file_extension = $request->file('examinations_csv')->getClientOriginalExtension();
+        // 小文字に変換
+        $file_extension = strtolower($file_extension);
+        // Log::debug(var_export($file_extension, true));
+
+        // 文字コード
+        $character_code = $request->character_code;
+
+        // 文字コード自動検出
+        if ($character_code == \CsvCharacterCode::auto) {
+            // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
+            $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
+            if (!$character_code) {
+                // 一時ファイルの削除
+                Storage::delete($path);
+
+                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
+                            ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+
+                return redirect()->back()->withErrors(['examinations_csv' => $error_msgs])->withInput();
+            }
+        }
+
+        // 読み込み
+        $fp = fopen($csv_full_path, 'r');
+        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
+        if ($character_code == \CsvCharacterCode::sjis_win) {
+            // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
+            $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
+        }
+
+        // 一行目（ヘッダ）
+        $header_columns = fgetcsv($fp, 0, ',');
+        // CSVファイル：UTF-8のみ
+        if ($character_code == \CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
+        }
+        // dd($csv_full_path);
+        // \Log::debug('$header_columns:'. var_export($header_columns, true));
+
+        // カラムの取得
+        $examination_columns = \LearningtasksExaminationColumn::getImportColumn();
+
+        // ヘッダー項目のエラーチェック
+        $error_msgs = CsvUtils::checkCsvHeader($header_columns, $examination_columns);
+        if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
+
+            return redirect()->back()->withErrors(['learningtasks_examinations_id' => $error_msgs])->withInput();
+        }
+
+        $cvs_rules = [
+            0 => [
+                'nullable',
+                'numeric',
+                'exists:learningtasks_examinations,id,post_id,'.$post_id.',deleted_at,NULL'
+            ],  // id
+            // 日付のインポートは画面とは違い /(スラッシュ) 区切りで 月は一桁 (例) 2021/4/26 10:00形式で取り込む ※ Excel日付形式での取込
+            // 1 => ['required', 'date_format:"Y-m-d H:i"', 'required_with:2,3'],      // 試験開始日時
+            // 2 => ['required', 'date_format:"Y-m-d H:i"', 'required_with:1,3'],      // 試験終了日時
+            // 3 => ['nullable', 'date_format:"Y-m-d H:i"', 'before_or_equal:1'],      // 申込終了日時
+            1 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:2,3', 'before_or_equal:2'], // 試験開始日時
+            2 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:1,3'],          // 試験終了日時
+            3 => ['nullable', 'date_format:"Y/n/j H:i"', 'before_or_equal:1'],          // 申込終了日時
+        ];
+
+        // データ項目のエラーチェック
+        $error_msgs = CsvUtils::checkCvslines($fp, $examination_columns, $cvs_rules);
+        if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
+
+            return redirect()->back()->withErrors(['examinations_csv' => $error_msgs])->withInput();
+        }
+
+        // [debug]
+        // // 一時ファイルの削除
+        // fclose($fp);
+        // Storage::delete($path);
+        // dd('ここまで');
+
+        // ファイルポインタの位置を先頭に戻す
+        rewind($fp);
+
+        // ヘッダー
+        $header_columns = fgetcsv($fp, 0, ',');
+        // CSVファイル：UTF-8のみ
+        if ($character_code == \CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
+        }
+
+        // データ
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // --- 入力値変換
+            // Log::debug(var_export($csv_columns, true));
+
+            // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
+            $csv_columns = StringUtils::trimInput($csv_columns);
+
+            // 配列の頭から要素(id)を取り除いて取得
+            // CSVのデータ行の頭は、必ず固定項目のidの想定
+            $learningtasks_examinations_id = array_shift($csv_columns);
+            // 空文字をnullに変換
+            $learningtasks_examinations_id = StringUtils::convertEmptyStringsToNull($learningtasks_examinations_id);
+
+            foreach ($csv_columns as $col => &$csv_column) {
+                // 空文字をnullに変換
+                $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
+            }
+            // Log::debug('$csv_columns:'. var_export($csv_columns, true));
+
+            // [debug]
+            //// 一時ファイルの削除
+            // fclose($fp);
+            // Storage::delete($path);
+            // dd('ここまで' . $posted_at);
+
+            if (empty($learningtasks_examinations_id)) {
+                // 登録
+                $learningtasks_examinations = new LearningtasksExaminations();
+            } else {
+                // 更新
+                // learningtasks_examinations_idはバリデートでLearningtasksExaminations存在チェック済みなので、必ずデータある想定
+                $learningtasks_examinations = LearningtasksExaminations::where('id', $learningtasks_examinations_id)->first();
+            }
+
+            $learningtasks_examinations->post_id = $post_id;
+
+            // $learningtasks_examinations->start_at = $csv_columns[0] . ':00';
+            // $learningtasks_examinations->end_at = $csv_columns[1] . ':00';
+            // if ($csv_columns[2]) {
+            //     $learningtasks_examinations->entry_end_at = $csv_columns[2] . ':00';
+            // }
+            $learningtasks_examinations->start_at = new Carbon($csv_columns[0]);
+            $learningtasks_examinations->end_at = new Carbon($csv_columns[1]);
+            if ($csv_columns[2]) {
+                $learningtasks_examinations->entry_end_at = new Carbon($csv_columns[2]);
+            }
+
+            $learningtasks_examinations->save();
+        }
+
+        // 一時ファイルの削除
+        fclose($fp);
+        Storage::delete($path);
+
+        $request->flash_message = 'インポートしました。';
+
+        // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
+    }
+
+    /**
+     * CSVインポートのフォーマットダウンロード
+     */
+    public function downloadCsvFormatExaminations($request, $page_id, $frame_id, $post_id)
+    {
+        // データ出力しない（フォーマットのみ出力）
+        $data_output_flag = false;
+        return $this->downloadCsvExaminations($request, $page_id, $frame_id, $post_id, $data_output_flag);
+    }
+
+    /**
+     * データベースデータダウンロード
+     */
+    public function downloadCsvExaminations($request, $page_id, $frame_id, $post_id, $data_output_flag = true)
+    {
+        // カラムの取得
+        $columns = \LearningtasksExaminationColumn::getImportColumn();
+
+        // 返却用配列
+        $csv_array = array();
+
+        // 見出し行
+        foreach ($columns as $columnKey => $column) {
+            $csv_array[0][$columnKey] = $column;
+        }
+
+        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
+        if ($data_output_flag) {
+            // 試験設定データを取得
+            $examinations = LearningtasksExaminations::where('post_id', $post_id)
+                    ->orderBy('start_at', 'asc')
+                    ->get();
+
+            // 行数
+            $csv_line_no = 1;
+
+            // データ
+            foreach ($examinations as $examination) {
+                $csv_line = [];
+                foreach ($columns as $columnKey => $column) {
+                    $csv_line[$columnKey] = $examination->$columnKey;
+                }
+
+                $csv_array[$csv_line_no] = $csv_line;
+                $csv_line_no++;
+            }
+        }
+
+        // レスポンス版
+        $filename = 'examinations.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // Log::debug(var_export($request->character_code, true));
+
+        // 文字コード変換
+        if ($request->character_code == \CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 
     /**

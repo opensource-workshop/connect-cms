@@ -70,6 +70,12 @@
                             <a href="{{url('/')}}/plugin/learningtasks/listGrade/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">成績出力</a>
                         </li>
                     @endif
+
+                    @if ($action == 'importExaminations')
+                        <li role="presentation" class="nav-item">
+                            <span class="nav-link"><span class="active">試験日時CSVインポート</span></span>
+                        </li>
+                    @endif
                 </ul>
             </div>
         </nav>
