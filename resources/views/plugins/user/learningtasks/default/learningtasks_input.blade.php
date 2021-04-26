@@ -79,7 +79,7 @@
             <div class="input-group date" id="posted_at" data-target-input="nearest">
                 <input type="text" name="posted_at" value="{{old('posted_at', $learningtasks_posts->posted_at)}}" class="form-control datetimepicker-input col-md-4" data-target="#posted_at">
                 <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('posted_at')) <div class="text-danger">{{$errors->first('posted_at')}}</div> @endif
