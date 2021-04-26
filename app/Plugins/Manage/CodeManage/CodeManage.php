@@ -856,7 +856,7 @@ class CodeManage extends ManagePluginBase
             $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
             if (!$character_code) {
                 // 一時ファイルの削除
-                $this->rmImportTmpFile($path);
+                Storage::delete($path);
 
                 $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
                             ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
@@ -887,28 +887,44 @@ class CodeManage extends ManagePluginBase
         $code_columns = \CodeColumn::getImportColumn();
 
         // ヘッダー項目のエラーチェック
-        $error_msgs = $this->checkCsvHeader($header_columns, $code_columns);
+        $error_msgs = CsvUtils::checkCsvHeader($header_columns, $code_columns);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
-            $this->rmImportTmpFile($path);
+            Storage::delete($path);
 
             return redirect()->back()->withErrors(['codes_csv' => $error_msgs])->withInput();
         }
 
+        $rules = [
+            0 => ['nullable', 'numeric', 'exists:codes,id,deleted_at,NULL'],    // id
+            1 => ['nullable', 'exists:plugins,plugin_name'],                    // プラグイン(英語)
+            2 => ['nullable', 'exists:codes_help_messages,alias_key,deleted_at,NULL'],    // 注釈キー
+            3 => ['nullable', 'numeric'],    // buckets_id
+            4 => [],
+            5 => [],
+            6 => [],
+            7 => [],
+            8 => [],
+            9 => [],
+            10 => [],
+            11 => ['required'],     // コード
+            12 => ['required'],     // 値
+        ];
+
         // データ項目のエラーチェック
-        $error_msgs = $this->checkCvslines($fp, $code_columns);
+        $error_msgs = CsvUtils::checkCvslines($fp, $code_columns, $rules);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
-            $this->rmImportTmpFile($path);
+            Storage::delete($path);
 
             return redirect()->back()->withErrors(['codes_csv' => $error_msgs])->withInput();
         }
 
         // // 一時ファイルの削除
         // fclose($fp);
-        // $this->rmImportTmpFile($path);
+        // Storage::delete($path);
         // dd('ここまで');
 
         // ファイルポインタの位置を先頭に戻す
@@ -984,100 +1000,10 @@ class CodeManage extends ManagePluginBase
 
         // 一時ファイルの削除
         fclose($fp);
-        $this->rmImportTmpFile($path);
+        Storage::delete($path);
 
         // インポート画面に戻る
         return redirect("/manage/code/import")->with('flash_message', 'インポートしました。');
-    }
-
-    /**
-     * CSVヘッダーチェック
-     */
-    private function checkCsvHeader($header_columns, $header_column_format)
-    {
-        if (empty($header_columns)) {
-            return array("CSVファイルが空です。");
-        }
-
-        // 項目の不足チェック
-        $shortness = array_diff($header_column_format, $header_columns);
-        if (!empty($shortness)) {
-            // Log::debug(var_export($header_column_format, true));
-            // Log::debug(var_export($header_columns, true));
-            return array("1行目に " . implode(",", $shortness) . " が不足しています。");
-        }
-        // 項目の不要チェック
-        $excess = array_diff($header_columns, $header_column_format);
-        if (!empty($excess)) {
-            return array("1行目に " . implode(",", $excess) . " は不要です。");
-        }
-
-        return array();
-    }
-
-    /**
-     * インポート時の一時ファイル削除
-     */
-    private function rmImportTmpFile($path)
-    {
-        // 一時ファイルの削除
-        Storage::delete($path);
-    }
-
-    /**
-     * CSVデータ行チェック
-     */
-    private function checkCvslines($fp, $code_columns)
-    {
-        $rules = [
-            0 => ['nullable', 'numeric', 'exists:codes,id,deleted_at,NULL'],    // id
-            1 => ['nullable', 'exists:plugins,plugin_name'],                    // プラグイン(英語)
-            2 => ['nullable', 'exists:codes_help_messages,alias_key,deleted_at,NULL'],    // 注釈キー
-            3 => ['nullable', 'numeric'],    // buckets_id
-            4 => [],
-            5 => [],
-            6 => [],
-            7 => [],
-            8 => [],
-            9 => [],
-            10 => [],
-            11 => ['required'],     // コード
-            12 => ['required'],     // 値
-        ];
-
-        // ヘッダー行が1行目なので、2行目からデータ始まる
-        $line_count = 2;
-        $errors = [];
-
-        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
-            // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-            $csv_columns = StringUtils::trimInput($csv_columns);
-
-            // バリデーション
-            $validator = Validator::make($csv_columns, $rules);
-            // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
-            // Log::debug(var_export($rules, true));
-
-            $attribute_names = [];
-
-            $col = 0;
-            foreach ($code_columns as $code_column) {
-                // 行数＋項目名
-                $attribute_names[$col] = $line_count . '行目の' . $code_column;
-                $col++;
-            }
-
-            $validator->setAttributeNames($attribute_names);
-            // Log::debug(var_export($attribute_names, true));
-
-            if ($validator->fails()) {
-                $errors = array_merge($errors, $validator->errors()->all());
-            }
-
-            $line_count++;
-        }
-
-        return $errors;
     }
 
     /**
