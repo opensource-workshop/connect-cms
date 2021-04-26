@@ -74,10 +74,10 @@
     </div>
 
     <div class="form-group row">
-        <label class="col-md-2">投稿日時 <label class="badge badge-danger">必須</label></label>
+        <label class="col-md-2">投稿日時 <span class="badge badge-danger">必須</span></label>
         <div class="col-md-10">
             <div class="input-group date" id="posted_at" data-target-input="nearest">
-                <input type="text" name="posted_at" value="{{old('posted_at', $learningtasks_posts->posted_at)}}" class="form-control datetimepicker-input  col-md-3" data-target="#posted_at">
+                <input type="text" name="posted_at" value="{{old('posted_at', $learningtasks_posts->posted_at)}}" class="form-control datetimepicker-input col-md-4" data-target="#posted_at">
                 <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                 </div>
