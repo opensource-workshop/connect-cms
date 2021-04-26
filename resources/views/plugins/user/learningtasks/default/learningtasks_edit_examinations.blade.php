@@ -20,20 +20,6 @@
         </div>
     </div>
 @else
-    {{-- 削除ボタンのアクション --}}
-    <script type="text/javascript">
-        function form_delete(id) {
-            if (confirm('試験日時を削除します。\nよろしいですか？')) {
-                form_delete_examination.action = "{{url('/')}}/redirect/plugin/learningtasks/deleteExaminations/{{$page->id}}/{{$frame_id}}/" + id + "#frame-{{$frame->id}}";
-                form_delete_examination.submit();
-            }
-        }
-    </script>
-    <form action="" method="POST" name="form_delete_examination">
-        {{ csrf_field() }}
-        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
-    </form>
-
     {{-- ダウンロードのアクション --}}
     <script type="text/javascript">
         {{-- ダウンロードのsubmit JavaScript --}}
@@ -260,13 +246,13 @@
                                 <th nowrap>試験開始 <span class="badge badge-danger">必須</span></th>
                                 <th nowrap>試験終了 <span class="badge badge-danger">必須</span></th>
                                 <th nowrap>申込終了</th>
-                                <th nowrap class="text-center"><i class="fas fa-trash-alt"></i></th>
+                                <th nowrap><i class="fas fa-trash-alt" title="削除"></i></th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($examinations as $examination)
                                 <tr>
-                                    <td>
+                                    <td nowrap class="align-middle">
                                         <input type="hidden" value="{{$examination->id}}" name="edit_examination_id[{{$examination->id}}]">
 
                                         {{-- [TODO] スマホでのカレンダーピッカー表示、table表示に難あり --}}
@@ -331,8 +317,14 @@
                                             });
                                         </script>
                                     </td>
-                                    <td nowrap class="align-middle text-right">
-                                        <a href="javascript:form_delete('{{$examination->id}}');"><span class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></span></a>
+                                    <td nowrap class="align-middle">
+                                        <div class="custom-control custom-checkbox">
+                                            {{-- チェック外した場合にも値を飛ばす対応 --}}
+                                            <input type="hidden" value="0" name="del_examinations[{{$examination->id}}]">
+
+                                            <input type="checkbox" name="del_examinations[{{$examination->id}}]" value="1" class="custom-control-input" id="del_examinations[{{$examination->id}}]" @if(old("del_examination.$examination->id")) checked=checked @endif>
+                                            <label class="custom-control-label" for="del_examinations[{{$examination->id}}]"></label>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -348,6 +340,7 @@
                         @include('common.errors_inline', ['name' => 'edit_entry_end_at.'.$examination->id])
                     @endforeach
                     <small class="text-muted">
+                        ※ 削除する場合はチェックします。<br />
                         ※ 例えば「申込終了日時」を 4/19 00:00 と設定した場合、4/18 23:59まで申込可能になります。<br />
                         ※ 「申込終了日時」を設定しない場合、「試験終了日時」まで申込可能になります。<br />
                     </small>
