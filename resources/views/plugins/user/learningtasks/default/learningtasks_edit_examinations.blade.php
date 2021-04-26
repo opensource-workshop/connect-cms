@@ -34,6 +34,29 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
     </form>
 
+    {{-- ダウンロードのアクション --}}
+    <script type="text/javascript">
+        {{-- ダウンロードのsubmit JavaScript --}}
+        function submit_download_shift_jis() {
+            if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で試験日時をダウンロードします。\nよろしいですか？') ) {
+                return;
+            }
+            examination_download_csv.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+            examination_download_csv.submit();
+        }
+        function submit_download_utf_8() {
+            if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で試験日時をダウンロードします。\nよろしいですか？') ) {
+                return;
+            }
+            examination_download_csv.character_code.value = '{{CsvCharacterCode::utf_8}}';
+            examination_download_csv.submit();
+        }
+    </script>
+    <form action="{{url('/')}}/download/plugin/learningtasks/downloadCsvExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}" method="post" name="examination_download_csv">
+        {{ csrf_field() }}
+        <input type="hidden" name="character_code" value="">
+    </form>
+
     <form action="{{url('/')}}/redirect/plugin/learningtasks/saveExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">
         {{ csrf_field() }}
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
@@ -206,10 +229,23 @@
         <div class="form-group row">
             <div class="col-12 mb-2">
                 <div class="row">
-                    <label class="text-left col">
+                    <label class="text-left col-4">
                         試験日時一覧
                     </label>
                     <div class="text-right col">
+                        <div class="btn-group mr-2">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis();">
+                                <i class="fas fa-file-download"></i> ダウンロード
+                            </button>
+                            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">ドロップダウンボタン</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                                <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                            </div>
+                        </div>
+
                         <a href="{{url('/')}}/plugin/learningtasks/importExaminations/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}">
                             <span class="btn btn-success btn-sm"><i class="fas fa-file-upload"></i> インポート</span>
                         </a>
