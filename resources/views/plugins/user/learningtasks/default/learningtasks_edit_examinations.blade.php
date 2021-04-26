@@ -264,7 +264,7 @@
                                                 data-target="#edit_start_at{{$examination->id}}"
                                             >
                                             <div class="input-group-append" data-target="#edit_start_at{{$examination->id}}" data-toggle="datetimepicker">
-                                                <div class="input-group-text @if ($errors->has('edit_start_at.'.$examination->id)) border-danger @endif"><i class="fa fa-calendar"></i></div>
+                                                <div class="input-group-text @if ($errors->has('edit_start_at.'.$examination->id)) border-danger @endif"><i class="far fa-clock"></i></div>
                                             </div>
                                         </div>
                                     </td>
@@ -277,7 +277,7 @@
                                                 data-target="#edit_end_at{{$examination->id}}"
                                             >
                                             <div class="input-group-append" data-target="#edit_end_at{{$examination->id}}" data-toggle="datetimepicker">
-                                                <div class="input-group-text @if ($errors->has('edit_end_at.'.$examination->id)) border-danger @endif"><i class="fa fa-calendar"></i></div>
+                                                <div class="input-group-text @if ($errors->has('edit_end_at.'.$examination->id)) border-danger @endif"><i class="far fa-clock"></i></div>
                                             </div>
                                         </div>
                                     </td>
@@ -290,7 +290,7 @@
                                                 data-target="#edit_entry_end_at{{$examination->id}}"
                                             >
                                             <div class="input-group-append" data-target="#edit_entry_end_at{{$examination->id}}" data-toggle="datetimepicker">
-                                                <div class="input-group-text @if ($errors->has('edit_entry_end_at.'.$examination->id)) border-danger @endif"><i class="fa fa-calendar"></i></div>
+                                                <div class="input-group-text @if ($errors->has('edit_entry_end_at.'.$examination->id)) border-danger @endif"><i class="far fa-clock"></i></div>
                                             </div>
                                         </div>
 
@@ -356,7 +356,7 @@
                         <div class="input-group date" id="start_at" data-target-input="nearest">
                             <input type="text" name="start_at" value="{{old('start_at')}}" class="form-control datetimepicker-input @if ($errors->has('start_at')) border-danger @endif" data-target="#start_at" placeholder="開始日時">
                             <div class="input-group-append" data-target="#start_at" data-toggle="datetimepicker">
-                                <div class="input-group-text @if ($errors->has('start_at')) border-danger @endif"><i class="fa fa-calendar"></i></div>
+                                <div class="input-group-text @if ($errors->has('start_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
                         @include('common.errors_inline', ['name' => 'start_at'])
@@ -365,7 +365,7 @@
                         <div class="input-group date" id="end_at" data-target-input="nearest">
                             <input type="text" name="end_at" value="{{old('end_at')}}" class="form-control datetimepicker-input @if ($errors->has('end_at')) border-danger @endif" data-target="#end_at" placeholder="終了日時">
                             <div class="input-group-append" data-target="#end_at" data-toggle="datetimepicker">
-                                <div class="input-group-text @if ($errors->has('end_at')) border-danger @endif"><i class="fa fa-calendar"></i></div>
+                                <div class="input-group-text @if ($errors->has('end_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
                         @include('common.errors_inline', ['name' => 'end_at'])
@@ -374,7 +374,7 @@
                         <div class="input-group date" id="entry_end_at" data-target-input="nearest">
                             <input type="text" name="entry_end_at" value="{{old('entry_end_at')}}" class="form-control datetimepicker-input @if ($errors->has('entry_end_at')) border-danger @endif" data-target="#entry_end_at" placeholder="申込終了日時">
                             <div class="input-group-append" data-target="#entry_end_at" data-toggle="datetimepicker">
-                                <div class="input-group-text @if ($errors->has('entry_end_at')) border-danger @endif"><i class="fa fa-calendar"></i></div>
+                                <div class="input-group-text @if ($errors->has('entry_end_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
                         @include('common.errors_inline', ['name' => 'entry_end_at'])

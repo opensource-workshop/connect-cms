@@ -167,7 +167,7 @@
                         >
                         <div class="input-group-append" data-target="#{{$id_function2}}" data-toggle="datetimepicker">
                             <div class="input-group-text @if ($errors && $errors->has($old_function2)) border-danger @endif">
-                                <i class="fa fa-calendar"></i>
+                                <i class="far fa-clock"></i>
                             </div>
                         </div>
                     </div>
