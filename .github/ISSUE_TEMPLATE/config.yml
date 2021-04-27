@@ -5,7 +5,7 @@ contact_links:
     about: '質問や要望はConnect-CMS公式サイトのコミュニティ掲示板に記載してください。'
   - name: '提案（具体的に、こういう機能が欲しい）・提言'
     url: https://github.com/opensource-workshop/connect-cms-ideas/issues
-    about: 'Connect-CMSを提供する側として、この機能をこうして欲しいとか、こういう機能が欲しいなど'
+    about: 'Connect-CMSを提供する側として、この機能をこうして欲しいとか、こういう機能が欲しいなどは、Github のアイデアIssue に記載してください。'
   - name: 'セキュリティ脆弱性'
     url: https://connect-cms.jp/contact
     about: '優先的に対応したいため、問い合わせフォームかメールでご連絡ください。'
