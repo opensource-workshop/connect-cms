@@ -109,7 +109,7 @@
     $plugins = "plugins  : '" . $plugins . "',";
 
     // toolbar
-    $toolbar = 'bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
+    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $toolbar .= '| translate ';
     }
