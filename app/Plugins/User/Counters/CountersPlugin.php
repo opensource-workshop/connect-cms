@@ -15,6 +15,8 @@ use App\Models\User\Counters\CounterCount;
 
 use App\Plugins\User\UserPluginBase;
 use App\Enums\CounterDesignType;
+use App\Enums\CsvCharacterCode;
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * カウンター・プラグイン
@@ -452,5 +454,81 @@ class CountersPlugin extends UserPluginBase
         $counter_frame->save();
 
         return;
+    }
+
+    /**
+     * データベースデータダウンロード
+     */
+    public function downloadCsv($request, $page_id, $frame_id, $id)
+    {
+        // カラム
+        $columns = [
+            'counted_at' => 'カウント日',
+            'total_count' => '累計カウント',
+            'day_count' => '当日カウント',
+        ];
+
+        // 返却用配列
+        $csv_array = array();
+
+        // 見出し行
+        foreach ($columns as $columnKey => $column) {
+            $csv_array[0][$columnKey] = $column;
+        }
+
+        // カウントデータを取得
+        $counter_counts = CounterCount::where('id', $id)
+                ->orderBy('counted_at', 'asc')
+                ->get();
+
+        // 行数
+        $csv_line_no = 1;
+
+        // データ
+        foreach ($counter_counts as $counter_count) {
+            $csv_line = [];
+            foreach ($columns as $columnKey => $column) {
+                if ($columnKey == 'counted_at') {
+                    // 日付はフォーマットを整えて出力
+                    $csv_line[$columnKey] = $counter_count->$columnKey->format('Y/m/d');
+                } else {
+                    $csv_line[$columnKey] = $counter_count->$columnKey;
+                }
+            }
+
+            $csv_array[$csv_line_no] = $csv_line;
+            $csv_line_no++;
+        }
+
+        // レスポンス版
+        $filename = 'counter_counts.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // Log::debug(var_export($request->character_code, true));
+
+        // 文字コード変換
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 }
