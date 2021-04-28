@@ -155,8 +155,61 @@ class CountersPlugin extends UserPluginBase
                     $today_count = CounterCount::getCount($counter->id, $before_counted_at);
                 }
 
-                // 大文字小文字を区別せず ユーザーエージェントに bot が含まれていなかったらカウント
-                if (strpos($request->header('User-Agent'), 'bot') === false) {
+                // botチェック
+                $is_bot = false;
+                $ua = $request->header('User-Agent');
+                $bots = [
+                    'bot',
+                    'spider',
+                    'crawler',
+                    'Linguee',
+                    'proximic',
+                    'GrapeshotCrawler',
+                    'Mappy',
+                    'MegaIndex',
+                    'ltx71',
+                    'integralads',
+                    'Yandex',
+                    'Y!',               // Yahoo!JAPAN
+                    'Slurp',            // yahoo
+                    'ichiro',           // goo
+                    'goo_vsearch',      // goo
+                    'gooblogsearch',    // goo
+                    'netEstate',
+                    'Yeti',             // Naver
+                    'Daum',
+                    'Seekport',
+                    'Qwantify',
+                    'GoogleImageProxy', // google
+                    'QQBrowser',
+                    'ManicTime',
+                    'Hatena',
+                    'PocketImageCache',
+                    'Feedly',
+                    'Tiny Tiny RSS',
+                    'Barkrowler',
+                    'SISTRIX Crawler',
+                    'woorankreview',
+                    'MegaIndex',
+                    'Megalodon',
+                    'Steeler',
+                    'dataxu',
+                    'ias-sg',
+                    'go-resty',
+                    'python-requests',
+                    'meg',
+                    'Scrapy',
+                ];
+
+                foreach ($bots as $bot) {
+                    // 大文字小文字を区別せず ユーザーエージェントに bot が含まれているかチェック
+                    if (strpos($ua, $bot) !== false) {
+                        // bot
+                        $is_bot = true;
+                    }
+                }
+
+                if (! $is_bot) {
                     // セッションを利用
                     // セッション保持期間はデフォルト2時間（config/session.phpの'lifetime'参照）
                     $counter_histories = session('counter_histories', '');
