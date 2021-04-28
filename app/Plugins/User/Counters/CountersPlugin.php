@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -250,7 +251,26 @@ class CountersPlugin extends UserPluginBase
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
-        $plugin_buckets = Counter::orderBy('created_at', 'desc')->paginate(10);
+        // $plugin_buckets = Counter::orderBy('created_at', 'desc')->paginate(10);
+        $plugin_buckets = Counter::
+                select(
+                    'counters.id',
+                    'counters.bucket_id',
+                    'counters.created_at',
+                    'counters.name',
+                    DB::raw('max(counter_counts.total_count) as total_count')
+                    // DB::raw('max(counter_counts.counted_at) as counted_at')
+                )
+                ->leftJoin('counter_counts', 'counter_counts.counter_id', '=', 'counters.id')
+                ->groupBy(
+                    'counters.id',
+                    'counters.bucket_id',
+                    'counters.created_at',
+                    'counters.name'
+                )
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+
         if ($plugin_buckets->isEmpty()) {
             // バケツ空テンプレートを呼び出す。
             return $this->view('empty_bucket_setting');

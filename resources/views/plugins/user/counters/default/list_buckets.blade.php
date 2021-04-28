@@ -44,6 +44,7 @@
             <tr>
                 <th></th>
                 <th>カウンター名</th>
+                <th>累計</th>
                 <th>詳細</th>
                 <th>作成日</th>
             </tr>
@@ -56,6 +57,7 @@
                     <span class="{{$frame->getSettingCaptionClass()}}">{{$plugin_bucket->name}}</span>
                 </td>
                 <td>{{$plugin_bucket->name}}</td>
+                <td>{{$plugin_bucket->total_count}}</td>
                 <td nowrap>
                     <div class="btn-group">
                         <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin_bucket->id}});">
