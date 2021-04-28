@@ -47,10 +47,10 @@
         </div>
 
         <div class="text-center">
-            {{ $plugin_buckets->links() }}
+            {{ $plugin_buckets->fragment('frame-' . $frame_id)->links() }}
         </div>
 
-        <div class="form-group text-center">
+        <div class="form-group text-center mt-3">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示リンクリスト変更</button>
         </div>
