@@ -319,11 +319,9 @@ class CountersPlugin extends UserPluginBase
     {
         // フレームごとの表示設定の更新
         $counter_frame = CounterFrame::updateOrCreate(
+            ['frame_id' => $frame_id],
             [
                 'counter_id' => $counter_id,
-                'frame_id' => $frame_id
-            ],
-            [
                 'design_type' => $request->design_type,
                 'use_total_count'  => (int)$request->use_total_count,
                 'use_today_count' => (int)$request->use_today_count,

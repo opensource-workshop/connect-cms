@@ -56,7 +56,7 @@
                 <div class="row mt-3">
                     <div class="col-md">
                         <label>累計カウントの項目名</label><br>
-                        <input type="text" name="total_count_title" value="{{old('total_count_title', $counter_frame->total_count_title)}}" class="form-control">
+                        <input type="text" name="total_count_title" value="{{old('total_count_title', $counter_frame->total_count_title)}}" class="form-control" placeholder="（例）累計">
                         @include('common.errors_inline', ['name' => 'total_count_title'])
                     </div>
                 </div>
@@ -88,7 +88,7 @@
                 <div class="row mt-3">
                     <div class="col-md">
                         <label>本日のカウントの項目名</label><br>
-                        <input type="text" name="today_count_title" value="{{old('today_count_title', $counter_frame->today_count_title)}}" class="form-control">
+                        <input type="text" name="today_count_title" value="{{old('today_count_title', $counter_frame->today_count_title)}}" class="form-control" placeholder="（例）本日">
                         @include('common.errors_inline', ['name' => 'today_count_title'])
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                 <div class="row mt-3">
                     <div class="col-md">
                         <label>昨日のカウントの項目名</label><br>
-                        <input type="text" name="yestday_count_title" value="{{old('yestday_count_title', $counter_frame->yestday_count_title)}}" class="form-control">
+                        <input type="text" name="yestday_count_title" value="{{old('yestday_count_title', $counter_frame->yestday_count_title)}}" class="form-control" placeholder="（例）昨日">
                         @include('common.errors_inline', ['name' => 'yestday_count_title'])
                     </div>
                 </div>
