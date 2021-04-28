@@ -12,7 +12,7 @@
 
 {{-- バケツなし --}}
 <div class="alert alert-warning">
-    <i class="fas fa-exclamation-circle"></i> 選択画面から、使用するカウンターを選択するか、作成してください。
+    <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'カウンター']) }}
 </div>
 
 @endsection
