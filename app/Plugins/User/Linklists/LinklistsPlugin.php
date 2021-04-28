@@ -364,9 +364,14 @@ class LinklistsPlugin extends UserPluginBase
 
         // フレームごとの表示設定の更新
         $linklist_frame = LinklistFrame::updateOrCreate(
-            ['linklist_id' => $linklist_id, 'frame_id' => $frame_id],
-            ['view_count'  => $request->view_count,
-             'type'        => $request->type],
+            // bugfix: LinklistFrameは frame_id のみfirst()取得しているため、frame_idのみで登録・更新する
+            // ['linklist_id' => $linklist_id, 'frame_id' => $frame_id],
+            ['frame_id' => $frame_id],
+            [
+                'linklist_id' => $linklist_id,
+                'view_count'  => $request->view_count,
+                'type'        => $request->type
+            ],
         );
 
         return;
