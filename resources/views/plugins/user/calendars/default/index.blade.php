@@ -40,7 +40,7 @@
                     @endif
                 >
                 <div class="row">
-                    <div class="col-6 font-weight-bold text-secondary">
+                    <div class="col-6 font-weight-bold text-secondary text-nowrap">
                         @if ($date->format('Y-m-d') == date('Y-m-d'))
                             {{-- 今日 --}}
                             @if ($date->dayOfWeek == 0 || ($date->hasHoliday()))
