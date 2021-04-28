@@ -265,6 +265,7 @@ $app_array = [
         'RoleName' => \App\Enums\RoleName::class,
         'LearningtaskUserJoinFlag' => \App\Enums\LearningtaskUserJoinFlag::class,
         'LearningtasksExaminationColumn' => \App\Enums\LearningtasksExaminationColumn::class,
+        'CounterDesignType' => \App\Enums\CounterDesignType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
