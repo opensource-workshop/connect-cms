@@ -7,4 +7,4 @@
 @endphp
 
 {{$count_title}}
-@foreach ($count_chars as $count_char)<span class="badge badge-primary" style="margin-left: 1px">{{$count_char}}</span>@endforeach
+@foreach ($count_chars as $count_char)<span class="badge badge-primary text-monospace" style="margin-left: 1px">{{$count_char}}</span>@endforeach
