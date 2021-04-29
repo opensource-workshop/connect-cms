@@ -18,6 +18,9 @@ final class CounterDesignType extends EnumsBase
     const badge_danger = 'badge_danger';
     const badge_light = 'badge_light';
     const badge_dark = 'badge_dark';
+    const circle = 'circle';
+    const black_circle = 'black_circle';
+    const white_number = 'white_number';
 
     // key/valueの連想配列
     const enum = [
@@ -31,5 +34,8 @@ final class CounterDesignType extends EnumsBase
         self::badge_danger => 'badge_danger',
         self::badge_light => 'badge_light',
         self::badge_dark => 'badge_dark',
+        self::circle => '丸数字',
+        self::black_circle => '黒丸数字',
+        self::white_number => '白抜き数字',
     ];
 }
