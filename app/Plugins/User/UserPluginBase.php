@@ -174,7 +174,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  画面表示用にページやフレームなど呼び出し
+     * 画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
      * @return view
@@ -254,7 +254,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * frame 取得
+     * バケツID取得
      */
     protected function getBucketId()
     {
