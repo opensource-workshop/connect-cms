@@ -22,6 +22,19 @@
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/counters/editView/{{$page->id}}/{{$frame_id}}/{{$counter->bucket_id}}#frame-{{$frame_id}}">
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">現在の表示</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <div class="card mt-1 border-info">
+                <div class="card-body p-0">
+                    @include('plugins.user.counters.default.index', [
+                        'plugin_frame' => $counter_frame,
+                    ])
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示形式</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <select class="form-control" name="design_type" class="form-control">

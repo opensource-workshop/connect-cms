@@ -133,30 +133,8 @@ class CountersPlugin extends UserPluginBase
             $counter = Counter::where('bucket_id', $this->frame->bucket_id)->first();
 
             if ($counter) {
-                // 今日のカウント取得
-                $today_count = CounterCount::getCount($counter->id);
-
-                // 今日のカウントない
-                if (is_null($today_count)) {
-                    // 昨日以前の最新日データを取得
-                    $before_counted_at = CounterCount::where('counter_id', $counter->id)->max('counted_at');
-
-                    $before_count = CounterCount::where('counter_id', $counter->id)
-                            ->where('counted_at', $before_counted_at)
-                            ->first();
-                    $before_count = $before_count ?? new CounterCount();
-
-                    // 今日カウント作成
-                    $today_count = CounterCount::create([
-                        'counter_id' => $counter->id,
-                        'counted_at' => now()->format('Y-m-d'),
-                        'day_count' => 0,
-                        'total_count' => $before_count->total_count,
-                    ]);
-
-                    // 今日のカウント再取得
-                    $today_count = CounterCount::getCount($counter->id, $before_counted_at);
-                }
+                // 今日のカウント取得、なければ作成
+                $today_count = CounterCount::getCountOrCreate($counter->id);
 
                 // botチェック
                 $is_bot = false;
@@ -309,6 +287,7 @@ class CountersPlugin extends UserPluginBase
             // 表示中のバケツデータ
             'counter' => $counter,
             'counter_frame' => $this->getPluginFrame($frame_id),
+            'counter_count' => CounterCount::getCountOrCreate($counter->id),
         ]);
     }
 
