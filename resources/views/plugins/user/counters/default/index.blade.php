@@ -7,7 +7,7 @@
 
 @php
 // 表示設定がない時（※）は、数字（カンマなし）で表示。
-// ※ バケツ削除時に表示設定消える。その後バケツ選択すると、表示設定がないデータが出来る。
+// ※ 表示設定はある想定のため、基本ありえない。
 $design_type = $plugin_frame->design_type ?? CounterDesignType::numeric;
 @endphp
 
@@ -15,7 +15,8 @@ $design_type = $plugin_frame->design_type ?? CounterDesignType::numeric;
     <div>
         @include('plugins.user.counters.default.index_design_' . $design_type, [
             'count_title' => $plugin_frame->total_count_title,
-            'count' => $counter_count->total_count
+            'count' => $counter_count->total_count,
+            'count_after' => $plugin_frame->total_count_after,
         ])
     </div>
 @endif
@@ -24,7 +25,8 @@ $design_type = $plugin_frame->design_type ?? CounterDesignType::numeric;
     <div>
         @include('plugins.user.counters.default.index_design_' . $design_type, [
             'count_title' => $plugin_frame->today_count_title,
-            'count' => $counter_count->day_count
+            'count' => $counter_count->day_count,
+            'count_after' => $plugin_frame->today_count_after,
         ])
     </div>
 @endif
@@ -33,7 +35,8 @@ $design_type = $plugin_frame->design_type ?? CounterDesignType::numeric;
     <div>
         @include('plugins.user.counters.default.index_design_' . $design_type, [
             'count_title' => $plugin_frame->yestday_count_title,
-            'count' => $counter_count->yesterday_count
+            'count' => $counter_count->yesterday_count,
+            'count_after' => $plugin_frame->yestday_count_after,
         ])
     </div>
 @endif

@@ -26,5 +26,8 @@ class CounterFrame extends Model
         'total_count_title',
         'today_count_title',
         'yestday_count_title',
+        'total_count_after',
+        'today_count_after',
+        'yestday_count_after',
     ];
 }

@@ -10,4 +10,4 @@
 @endphp
 
 {{$count_title}}
-@foreach ($count_chars as $count_char){{str_replace($before, $after, $count_char)}}@endforeach
+@foreach ($count_chars as $count_char){{str_replace($before, $after, $count_char)}}@endforeach {{$count_after}}

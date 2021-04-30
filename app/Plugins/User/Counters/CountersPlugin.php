@@ -328,6 +328,9 @@ class CountersPlugin extends UserPluginBase
                 'total_count_title' => $request->total_count_title,
                 'today_count_title' => $request->today_count_title,
                 'yestday_count_title' => $request->yestday_count_title,
+                'total_count_after' => $request->total_count_after,
+                'today_count_after' => $request->today_count_after,
+                'yestday_count_after' => $request->yestday_count_after,
             ],
         );
 

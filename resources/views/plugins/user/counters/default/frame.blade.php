@@ -61,6 +61,14 @@
                     </div>
                 </div>
 
+                <div class="row mt-3">
+                    <div class="col-md">
+                        <label>累計カウントの単位</label><br>
+                        <input type="text" name="total_count_after" value="{{old('total_count_after', $counter_frame->total_count_after)}}" class="form-control" placeholder="（例）人">
+                        @include('common.errors_inline', ['name' => 'total_count_after'])
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -93,6 +101,14 @@
                     </div>
                 </div>
 
+                <div class="row mt-3">
+                    <div class="col-md">
+                        <label>本日のカウントの単位</label><br>
+                        <input type="text" name="today_count_after" value="{{old('today_count_after', $counter_frame->today_count_after)}}" class="form-control" placeholder="（例）人">
+                        @include('common.errors_inline', ['name' => 'today_count_after'])
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -122,6 +138,14 @@
                         <label>昨日のカウントの項目名</label><br>
                         <input type="text" name="yestday_count_title" value="{{old('yestday_count_title', $counter_frame->yestday_count_title)}}" class="form-control" placeholder="（例）昨日">
                         @include('common.errors_inline', ['name' => 'yestday_count_title'])
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md">
+                        <label>昨日のカウントの単位</label><br>
+                        <input type="text" name="yestday_count_after" value="{{old('yestday_count_after', $counter_frame->yestday_count_after)}}" class="form-control" placeholder="（例）人">
+                        @include('common.errors_inline', ['name' => 'yestday_count_after'])
                     </div>
                 </div>
 
