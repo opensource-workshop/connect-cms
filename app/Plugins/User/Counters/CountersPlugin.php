@@ -107,7 +107,7 @@ class CountersPlugin extends UserPluginBase
     // }
 
     // /**
-    //  *  検索用メソッド
+    //  * 検索用メソッド
     //  */
     // public static function getSearchArgs($search_keyword)
     // {
@@ -118,8 +118,8 @@ class CountersPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -321,7 +321,6 @@ class CountersPlugin extends UserPluginBase
         $counter_frame = CounterFrame::updateOrCreate(
             ['frame_id' => $frame_id],
             [
-                'counter_id' => $counter_id,
                 'design_type' => $request->design_type,
                 'use_total_count'  => (int)$request->use_total_count,
                 'use_today_count' => (int)$request->use_today_count,
@@ -362,7 +361,7 @@ class CountersPlugin extends UserPluginBase
     }
 
     /**
-     *  バケツ登録処理
+     * バケツ登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $bucket_id = null)
     {
@@ -396,11 +395,12 @@ class CountersPlugin extends UserPluginBase
         $counter->name = $request->name;
         $counter->save();
 
-        // プラグインフレームを作成 or 更新
-        $counter_frame = CounterFrame::updateOrCreate(
+        // プラグインフレームが無ければ作成
+        // bugfix: 新規作成時に表示設定が初期化されるバグ修正
+        // $counter_frame = CounterFrame::updateOrCreate(
+        $counter_frame = CounterFrame::firstOrCreate(
             ['frame_id' => $frame_id],
             [
-                'counter_id' => $counter->id,
                 'frame_id' => $frame_id,
                 // 項目名初期値
                 'design_type' => CounterDesignType::numeric,
@@ -425,7 +425,7 @@ class CountersPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $counter_id)
     {
@@ -441,9 +441,10 @@ class CountersPlugin extends UserPluginBase
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => null]);
 
+        // delete: バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら counter_frame を削除する
         // プラグインフレームデータの削除(deleted_id を記録するために1回読んでから削除)
-        $counter_frame = CounterFrame::where('frame_id', $frame_id)->first();
-        $counter_frame->delete();
+        // $counter_frame = CounterFrame::where('frame_id', $frame_id)->first();
+        // $counter_frame->delete();
 
         // バケツ削除
         Buckets::find($counter->bucket_id)->delete();
@@ -467,7 +468,6 @@ class CountersPlugin extends UserPluginBase
 
         // フレームごとの表示設定の更新
         $counter_frame = $this->getPluginFrame($frame_id);
-        $counter_frame->counter_id = $plugin_bucket->id;
         $counter_frame->frame_id = $frame_id;
         $counter_frame->save();
 
