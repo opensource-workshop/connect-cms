@@ -407,7 +407,7 @@ class CountersPlugin extends UserPluginBase
                 'total_count_title' => '累計',
                 'today_count_title' => '今日',
                 'yestday_count_title' => '昨日',
-            ],
+            ]
         );
 
         // 登録時
@@ -463,13 +463,15 @@ class CountersPlugin extends UserPluginBase
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
 
-        // Counters の特定
-        $plugin_bucket = $this->getPluginBucket($request->select_bucket);
+        // delete: バケツ切替時、表示設定のフレームIDは同じため、更新不要
+        // // Counters の特定
+        // $plugin_bucket = $this->getPluginBucket($request->select_bucket);
 
-        // フレームごとの表示設定の更新
-        $counter_frame = $this->getPluginFrame($frame_id);
-        $counter_frame->frame_id = $frame_id;
-        $counter_frame->save();
+        // // フレームごとの表示設定の更新
+        // $counter_frame = $this->getPluginFrame($frame_id);
+        // $counter_frame->counter_id = $plugin_bucket->id;
+        // $counter_frame->frame_id = $frame_id;
+        // $counter_frame->save();
 
         return;
     }
