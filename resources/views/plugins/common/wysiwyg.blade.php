@@ -83,6 +83,21 @@
         $advlist_number_lists_file = File::get($advlist_number_lists_default_path);
     }
 
+    // テーマ固有 簡易テンプレート
+    $templates_file = '';
+    $templates_path = public_path() . '/themes/' . $theme . '/wysiwyg/templates.txt';
+    $templates_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/templates.txt';
+    $templates_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/templates.txt';
+    if (File::exists($templates_path)) {
+        $templates_file = File::get($templates_path);
+    }
+    else if (File::exists($templates_group_default_path)) {
+        $templates_file = File::get($templates_group_default_path);
+    }
+    else if (File::exists($templates_default_path)) {
+        $templates_file = File::get($templates_default_path);
+    }
+
     // TinyMCE Body クラス
     $body_class = '';
     if ($frame->area_id == 0) {
@@ -102,7 +117,7 @@
     }
 
     // plugins
-    $plugins = 'file image imagetools media link autolink preview textcolor code table lists advlist';
+    $plugins = 'file image imagetools media link autolink preview textcolor code table lists advlist template ';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
@@ -110,6 +125,10 @@
 
     // toolbar
     $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
+    // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
+    if (! empty($templates_file)) {
+        $toolbar .= '| template ';
+    }
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $toolbar .= '| translate ';
     }
@@ -154,6 +173,9 @@
 
         {{-- テーマ固有 番号箇条書きリスト（OLタグ）の表示設定 --}}
         {!!$advlist_number_lists_file!!}
+
+        {{-- テーマ固有 簡易テンプレート設定 --}}
+        {!!$templates_file!!}
 
         menubar  : '',
         relative_urls : false,
