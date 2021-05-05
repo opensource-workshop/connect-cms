@@ -9,9 +9,13 @@
     // テーマ固有書式
     $style_formats_file = '';
     $style_formats_path = public_path() . '/themes/' . $theme . '/wysiwyg/style_formats.txt';
-    $style_formats_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/style_formats.txt';
+    $style_formats_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/style_formats.txt';
+    $style_formats_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/style_formats.txt';
     if (File::exists($style_formats_path)) {
         $style_formats_file = File::get($style_formats_path);
+    }
+    else if (File::exists($style_formats_group_default_path)) {
+        $style_formats_file = File::get($style_formats_group_default_path);
     }
     else if (File::exists($style_formats_default_path)) {
         $style_formats_file = File::get($style_formats_default_path);
@@ -20,9 +24,13 @@
     // テーマ固有スタイル
     $block_formats_file = '';
     $block_formats_path = public_path() . '/themes/' . $theme . '/wysiwyg/block_formats.txt';
-    $block_formats_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/block_formats.txt';
+    $block_formats_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/block_formats.txt';
+    $block_formats_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/block_formats.txt';
     if (File::exists($block_formats_path)) {
         $block_formats_file = File::get($block_formats_path);
+    }
+    else if (File::exists($block_formats_group_default_path)) {
+        $block_formats_file = File::get($block_formats_group_default_path);
     }
     else if (File::exists($block_formats_default_path)) {
         $block_formats_file = File::get($block_formats_default_path);
@@ -31,9 +39,13 @@
     // CSS
     $content_css_file = '';
     $content_css_path = public_path() . '/themes/' . $theme . '/wysiwyg/content_css.txt';
-    $content_css_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/content_css.txt';
+    $content_css_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/content_css.txt';
+    $content_css_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/content_css.txt';
     if (File::exists($content_css_path)) {
         $content_css_file = File::get($content_css_path);
+    }
+    else if (File::exists($content_css_group_default_path)) {
+        $content_css_file = File::get($content_css_group_default_path);
     }
     else if (File::exists($content_css_default_path)) {
         $content_css_file = File::get($content_css_default_path);
@@ -42,9 +54,13 @@
     // テーブル
     $table_class_list_file = '';
     $table_class_list_path = public_path() . '/themes/' . $theme . '/wysiwyg/table_class_list.txt';
-    $table_class_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/table_class_list.txt';
+    $table_class_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/table_class_list.txt';
+    $table_class_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/table_class_list.txt';
     if (File::exists($table_class_list_path)) {
         $table_class_list_file = File::get($table_class_list_path);
+    }
+    else if (File::exists($table_class_group_default_path)) {
+        $table_class_list_file = File::get($table_class_group_default_path);
     }
     else if (File::exists($table_class_default_path)) {
         $table_class_list_file = File::get($table_class_default_path);
@@ -53,9 +69,13 @@
     // テーブルセル
     $table_cell_class_list_file = '';
     $table_cell_class_list_path = public_path() . '/themes/' . $theme . '/wysiwyg/table_cell_class_list.txt';
-    $table_cell_class_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/table_cell_class_list.txt';
+    $table_cell_class_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/table_cell_class_list.txt';
+    $table_cell_class_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/table_cell_class_list.txt';
     if (File::exists($table_cell_class_list_path)) {
         $table_cell_class_list_file = File::get($table_cell_class_list_path);
+    }
+    else if (File::exists($table_cell_class_group_default_path)) {
+        $table_cell_class_list_file = File::get($table_cell_class_group_default_path);
     }
     else if (File::exists($table_cell_class_default_path)) {
         $table_cell_class_list_file = File::get($table_cell_class_default_path);
@@ -64,9 +84,13 @@
     // テーマ固有 箇条書きリスト（ULタグ）の表示設定
     $advlist_bullet_lists_file = '';
     $advlist_bullet_lists_path = public_path() . '/themes/' . $theme . '/wysiwyg/advlist_bullet_lists.txt';
-    $advlist_bullet_lists_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/advlist_bullet_lists.txt';
+    $advlist_bullet_lists_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/advlist_bullet_lists.txt';
+    $advlist_bullet_lists_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/advlist_bullet_lists.txt';
     if (File::exists($advlist_bullet_lists_path)) {
         $advlist_bullet_lists_file = File::get($advlist_bullet_lists_path);
+    }
+    else if (File::exists($advlist_bullet_lists_group_default_path)) {
+        $advlist_bullet_lists_file = File::get($advlist_bullet_lists_group_default_path);
     }
     else if (File::exists($advlist_bullet_lists_default_path)) {
         $advlist_bullet_lists_file = File::get($advlist_bullet_lists_default_path);
@@ -75,9 +99,13 @@
     // テーマ固有 番号箇条書きリスト（OLタグ）の表示設定
     $advlist_number_lists_file = '';
     $advlist_number_lists_path = public_path() . '/themes/' . $theme . '/wysiwyg/advlist_number_lists.txt';
-    $advlist_number_lists_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/advlist_number_lists.txt';
+    $advlist_number_lists_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/advlist_number_lists.txt';
+    $advlist_number_lists_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/advlist_number_lists.txt';
     if (File::exists($advlist_number_lists_path)) {
         $advlist_number_lists_file = File::get($advlist_number_lists_path);
+    }
+    else if (File::exists($advlist_number_lists_group_default_path)) {
+        $advlist_number_lists_file = File::get($advlist_number_lists_group_default_path);
     }
     else if (File::exists($advlist_number_lists_default_path)) {
         $advlist_number_lists_file = File::get($advlist_number_lists_default_path);
