@@ -50,8 +50,6 @@
     {{-- post先 --}}
     <form action="{{url('/')}}/manage/code/uploadCsv" method="POST" class="form-horizontal" enctype="multipart/form-data">
         {{ csrf_field() }}
-        {{-- post後、再表示するURL --}}
-        <input type="hidden" name="redirect_path" value="{{url('/')}}/manage/code/import">
 
         <div class="form-group row">
             <div class="col text-right">
