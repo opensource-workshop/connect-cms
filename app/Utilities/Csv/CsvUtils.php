@@ -81,8 +81,9 @@ class CsvUtils
         // 項目の不足チェック
         $shortness = array_diff($header_column_format, $header_columns);
         if (!empty($shortness)) {
-            // Log::debug(var_export($header_column_format, true));
-            // Log::debug(var_export($header_columns, true));
+            // \Log::debug(var_export($header_column_format, true));
+            // \Log::debug(var_export($header_columns, true));
+            // \Log::debug(var_export(setlocale(LC_ALL, "0"), true));
             return array("1行目に " . implode(",", $shortness) . " が不足しています。");
         }
         // 項目の不要チェック
