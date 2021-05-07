@@ -2494,7 +2494,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 画面エラーチェック
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
-            'examinations_csv'  => 'CSVファイル',
+            'examinations_csv' => 'CSVファイル',
         ]);
 
         if ($validator->fails()) {
@@ -2539,6 +2539,9 @@ class LearningtasksPlugin extends UserPluginBase
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
+
+        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
+        setlocale(LC_ALL, 'ja_JP.UTF-8');
 
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
