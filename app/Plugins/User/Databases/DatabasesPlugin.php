@@ -2902,6 +2902,9 @@ class DatabasesPlugin extends UserPluginBase
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
+        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
+        setlocale(LC_ALL, 'ja_JP.UTF-8');
+
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
