@@ -873,6 +873,16 @@ class CodeManage extends ManagePluginBase
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
+        // ・fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
+        //
+        // [詳細]
+        // ・xampp環境のロケールは、LC_CTYPE=Japanese_Japan.932 でした。
+        //   これだと、「ド」の次のカンマが認識できなくなり 1カラム 'コード,値' で誤認識される。また末尾改行の処理も誤動作おこしました。
+        //   \Log::debug(var_export(setlocale(LC_ALL, "0"), true));
+        //   [2021-05-07 17:26:12] local.DEBUG: 'LC_COLLATE=C;LC_CTYPE=Japanese_Japan.932;LC_MONETARY=C;LC_NUMERIC=C;LC_TIME=C'
+        // ・fgetcsv() https://www.php.net/manual/ja/function.fgetcsv.php
+        setlocale(LC_ALL, 'ja_JP.UTF-8');
+
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
@@ -880,8 +890,11 @@ class CodeManage extends ManagePluginBase
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
-        // dd($csv_full_path);
+        // [debug]
+        // fclose($fp);
+        // Storage::delete($path);
         // \Log::debug('$header_columns:'. var_export($header_columns, true));
+        // dd($csv_full_path);
 
         // カラムの取得
         $code_columns = \CodeColumn::getImportColumn();
