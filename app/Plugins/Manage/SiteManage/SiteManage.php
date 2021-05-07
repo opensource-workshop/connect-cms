@@ -15,6 +15,7 @@ use App\Models\Common\Categories;
 use App\Models\Common\Page;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Enums\BaseLoginRedirectPage;
 
 /**
  * サイト管理クラス
@@ -62,16 +63,16 @@ class SiteManage extends ManagePluginBase
      *
      * @return view
      */
-    public function index($request, $page_id = null, $errors = array())
+    public function index($request, $page_id = null)
     {
         // Config データの取得
         $configs = Configs::get();
 
-        // Config データの変換
-        $configs_array = array();
-        foreach ($configs as $config) {
-            $configs_array[$config->name] = $config->value;
-        }
+        // // Config データの変換
+        // $configs_array = array();
+        // foreach ($configs as $config) {
+        //     $configs_array[$config->name] = $config->value;
+        // }
 
         // 設定済みのテーマ
         $base_theme_obj = $configs->where('name', 'base_theme')->first();
@@ -83,26 +84,52 @@ class SiteManage extends ManagePluginBase
         // テーマの取得
         $themes = $this->getThemes();
 
+        // ページデータの取得(laravel-nestedset 使用)
+        $return_obj = 'flat';
+        $pages_select = Page::defaultOrderWithDepth($return_obj);
+
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.site.site', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "site",
-            "errors"             => $errors,
-            "configs"            => $configs_array,
+            // "configs"            => $configs_array,
+            "configs"            => $configs,
             "current_base_theme" => $current_base_theme,
             "themes"             => $themes,
+            "pages_select" => $pages_select,
         ]);
     }
 
     /**
-     *  更新
+     * 更新
      */
-    public function update($request, $page_id = null, $errors = array())
+    public function update($request, $page_id = null)
     {
         // httpメソッド確認
         if (!$request->isMethod('post')) {
             abort(403, '権限がありません。');
+        }
+
+        $validator_values = [];
+        $validator_attributes['base_login_redirect_select_page'] = 'ログイン後に移動する指定ページ';
+
+        $messages = [
+            'base_login_redirect_select_page.required' => 'ログイン後に移動するページを指定したページにする場合、:attribute を選択してください。',
+        ];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $validator_values, $messages);
+        $validator->setAttributeNames($validator_attributes);
+
+        $validator->sometimes("base_login_redirect_select_page", 'required', function ($input) {
+            // ログイン後に移動するページ が「指定したページ」なら、上記の ログイン後に移動する指定ページ 必須
+            return $input->base_login_redirect_previous_page == BaseLoginRedirectPage::specified_page;
+        });
+
+        if ($validator->fails()) {
+            // エラーと共に編集画面を呼び出す
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // サイト名
@@ -182,11 +209,22 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_login_password_reset]
         );
 
-        // ログイン時に元いたページに遷移 設定
+        // ログイン後に移動するページ 設定
         $configs = Configs::updateOrCreate(
-            ['name'     => 'base_login_redirect_previous_page'],
-            ['category' => 'general',
-             'value'    => $request->base_login_redirect_previous_page]
+            ['name' => 'base_login_redirect_previous_page'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_login_redirect_previous_page
+            ]
+        );
+
+        // ログイン後に移動する指定ページ 設定
+        $configs = Configs::updateOrCreate(
+            ['name' => 'base_login_redirect_select_page'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_login_redirect_select_page
+            ]
         );
 
         // マイページの使用

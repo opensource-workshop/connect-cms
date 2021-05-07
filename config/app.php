@@ -266,6 +266,7 @@ $app_array = [
         'LearningtaskUserJoinFlag' => \App\Enums\LearningtaskUserJoinFlag::class,
         'LearningtasksExaminationColumn' => \App\Enums\LearningtasksExaminationColumn::class,
         'CounterDesignType' => \App\Enums\CounterDesignType::class,
+        'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
