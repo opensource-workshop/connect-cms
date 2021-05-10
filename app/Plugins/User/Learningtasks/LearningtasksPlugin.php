@@ -1402,8 +1402,8 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 試験設定データを取得
         $examinations = LearningtasksExaminations::where('post_id', $learningtasks_post->id)
-                                                 ->orderBy('start_at', 'asc')
-                                                 ->get();
+                ->orderBy('start_at', 'asc')
+                ->get();
 
         // ツールクラス
         $tool = new LearningtasksTool($request, $page_id, $learningtask, $learningtasks_post);
@@ -2388,6 +2388,9 @@ class LearningtasksPlugin extends UserPluginBase
             $learningtasks_examinations->end_at = $request->input('edit_end_at.'.$edit_examination_id) . ':00';
             if ($request->filled('edit_entry_end_at.'.$edit_examination_id)) {
                 $learningtasks_examinations->entry_end_at = $request->input('edit_entry_end_at.'.$edit_examination_id) . ':00';
+            } else {
+                // bugfix: 申込終了日が消せないバグ修正
+                $learningtasks_examinations->entry_end_at = null;
             }
 
             // 保存
