@@ -432,7 +432,7 @@ class BbsesPlugin extends UserPluginBase
         // 値のセット
         $post->bbs_id            = $bbs_frame->bbs_id;
         $post->title             = $request->title;
-        $post->body              = $request->body;
+        $post->body              = $this->clean($request->body);
 
         // 新規投稿、もしくは返信の場合は投稿者をセット
         if (empty($post_id) || $request->filled('parent_id')) {
