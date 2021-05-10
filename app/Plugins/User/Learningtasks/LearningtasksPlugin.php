@@ -2658,6 +2658,9 @@ class LearningtasksPlugin extends UserPluginBase
             $learningtasks_examinations->end_at = new Carbon($csv_columns[1]);
             if ($csv_columns[2]) {
                 $learningtasks_examinations->entry_end_at = new Carbon($csv_columns[2]);
+            } else {
+                // bugfix: 申込終了日が消せないバグ修正
+                $learningtasks_examinations->entry_end_at = null;
             }
 
             $learningtasks_examinations->save();
