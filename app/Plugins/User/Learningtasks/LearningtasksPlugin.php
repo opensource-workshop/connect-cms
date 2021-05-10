@@ -40,6 +40,7 @@ use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
+use App\Enums\LearningtasksExaminationColumn;
 
 /**
  * 課題管理プラグイン
@@ -2554,7 +2555,7 @@ class LearningtasksPlugin extends UserPluginBase
         // \Log::debug('$header_columns:'. var_export($header_columns, true));
 
         // カラムの取得
-        $examination_columns = \LearningtasksExaminationColumn::getImportColumn();
+        $examination_columns = LearningtasksExaminationColumn::getImportColumn();
 
         // ヘッダー項目のエラーチェック
         $error_msgs = CsvUtils::checkCsvHeader($header_columns, $examination_columns);
@@ -2684,7 +2685,7 @@ class LearningtasksPlugin extends UserPluginBase
     public function downloadCsvExaminations($request, $page_id, $frame_id, $post_id, $data_output_flag = true)
     {
         // カラムの取得
-        $columns = \LearningtasksExaminationColumn::getImportColumn();
+        $columns = LearningtasksExaminationColumn::getImportColumn();
 
         // 返却用配列
         $csv_array = array();
@@ -2708,7 +2709,12 @@ class LearningtasksPlugin extends UserPluginBase
             foreach ($examinations as $examination) {
                 $csv_line = [];
                 foreach ($columns as $columnKey => $column) {
-                    $csv_line[$columnKey] = $examination->$columnKey;
+                    // 日付カラムか
+                    if (LearningtasksExaminations::isDateColumn($columnKey)) {
+                        $csv_line[$columnKey] = $examination->$columnKey ? $examination->$columnKey->format('Y/n/j H:i') : null;
+                    } else {
+                        $csv_line[$columnKey] = $examination->$columnKey;
+                    }
                 }
 
                 $csv_array[$csv_line_no] = $csv_line;

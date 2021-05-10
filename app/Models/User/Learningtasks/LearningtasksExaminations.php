@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Enums\DayOfWeek;
 use App\Userable;
+use App\Enums\LearningtasksExaminationColumn;
 
 class LearningtasksExaminations extends Model
 {
@@ -32,6 +33,20 @@ class LearningtasksExaminations extends Model
         'end_at',
         'entry_end_at',
     ];
+
+    /**
+     * 日付カラムか
+     */
+    public static function isDateColumn($column_type)
+    {
+        // 日付カラム
+        if ($column_type == LearningtasksExaminationColumn::start_at ||
+                $column_type == LearningtasksExaminationColumn::end_at ||
+                $column_type == LearningtasksExaminationColumn::entry_end_at) {
+            return true;
+        }
+        return false;
+    }
 
     /**
      * 試験日の画面表記を取得
