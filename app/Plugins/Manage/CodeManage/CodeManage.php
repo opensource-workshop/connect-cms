@@ -18,6 +18,8 @@ use Log;
 
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
+use App\Enums\CodeColumn;
+use App\Enums\CsvCharacterCode;
 
 /**
  * コード管理クラス
@@ -851,15 +853,15 @@ class CodeManage extends ManagePluginBase
         $character_code = $request->character_code;
 
         // 文字コード自動検出
-        if ($character_code == \CsvCharacterCode::auto) {
+        if ($character_code == CsvCharacterCode::auto) {
             // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
             $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
             if (!$character_code) {
                 // 一時ファイルの削除
                 Storage::delete($path);
 
-                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
-                            ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::sjis_win) .
+                            ", " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
 
                 return redirect()->back()->withErrors(['codes_csv' => $error_msgs])->withInput();
             }
@@ -868,7 +870,7 @@ class CodeManage extends ManagePluginBase
         // 読み込み
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == \CsvCharacterCode::sjis_win) {
+        if ($character_code == CsvCharacterCode::sjis_win) {
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
@@ -886,7 +888,7 @@ class CodeManage extends ManagePluginBase
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
-        if ($character_code == \CsvCharacterCode::utf_8) {
+        if ($character_code == CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
@@ -897,7 +899,7 @@ class CodeManage extends ManagePluginBase
         // dd($csv_full_path);
 
         // カラムの取得
-        $code_columns = \CodeColumn::getImportColumn();
+        $code_columns = CodeColumn::getImportColumn();
 
         // ヘッダー項目のエラーチェック
         $error_msgs = CsvUtils::checkCsvHeader($header_columns, $code_columns);
@@ -946,7 +948,7 @@ class CodeManage extends ManagePluginBase
         // ヘッダー
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
-        if ($character_code == \CsvCharacterCode::utf_8) {
+        if ($character_code == CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
@@ -1047,7 +1049,7 @@ class CodeManage extends ManagePluginBase
     public function downloadCsv($request, $page_id = null, $sub_id = null, $data_output_flag = true)
     {
         // カラムの取得
-        $columns = \CodeColumn::getImportColumn();
+        $columns = CodeColumn::getImportColumn();
 
         // 返却用配列
         $csv_array = array();
@@ -1107,12 +1109,12 @@ class CodeManage extends ManagePluginBase
         // Log::debug(var_export($request->character_code, true));
 
         // 文字コード変換
-        if ($request->character_code == \CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
             // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
             $csv_data = CsvUtils::addUtf8Bom($csv_data);
         } else {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
         }
 
         return response()->make($csv_data, 200, $headers);
