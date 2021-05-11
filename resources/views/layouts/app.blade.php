@@ -157,7 +157,7 @@ if(isset($configs_array['body_optional_class'])){
                         )
 
                         {{-- 非表示のページは対象外 --}}
-                        @if ($page_obj->isView())
+                        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
                             <li class="nav-item">
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
@@ -178,7 +178,7 @@ if(isset($configs_array['body_optional_class'])){
                     @elseif (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == 'opencurrenttree'))
 
                         {{-- 非表示のページは対象外 --}}
-                        @if ($page_obj->isView())
+                        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
                             {{-- カレント or 自分のルート筋 or 第1階層 or 子のページ or 同階層のページ なら表示する --}}
                             @if ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->depth == 0 || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page))

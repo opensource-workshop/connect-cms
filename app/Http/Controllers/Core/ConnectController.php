@@ -768,6 +768,9 @@ class ConnectController extends Controller
         // ハンバーガーメニューで使用するページの一覧
         $args["page_list"] = $this->getPageList();
 
+        // ページに対する権限
+        $args["page_roles"] = $this->getPageRoles();
+
         if ($this->http_status_code) {
             return response()->view($blade_path, $args, $this->http_status_code);
         }
