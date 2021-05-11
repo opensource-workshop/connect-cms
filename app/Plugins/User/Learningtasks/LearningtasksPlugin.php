@@ -876,11 +876,11 @@ class LearningtasksPlugin extends UserPluginBase
         // （教員用）詳細から戻った時に student_id がセッションに残って、一覧表示がそのstudent_idの内容に変わるので消す。
         // if ($tool->isTeacher())で判定しようかと思ったが、LearningtasksToolのコンストラクタで、sessionのstudent_idがあると、
         // その受講者の内容でとってきてしまって表示が変わったため、使えなかった。
-        session()->forget('student_id');
-        session()->forget('learningtask_post_id');
+        session()->forget('student_id'. $frame_id);
+        session()->forget('learningtask_post_id' . $frame_id);
 
         // ユーザー関連情報のまとめ
-        $tool = new LearningtasksTool($request, $page_id, $learningtask);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, null, $frame_id);
 
         // 課題管理データ一覧の取得
         $posts = $this->getPosts($learningtask, $tool);
@@ -1003,7 +1003,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtask = $this->getLearningTask($frame_id);
 
         // ユーザー関連情報のまとめ
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $this->getPost($post_id));
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $this->getPost($post_id), $frame_id);
 
         // 教員 or 課題管理者
         if ($tool->isTeacher() || $tool->isLearningtaskAdmin()) {
@@ -1018,14 +1018,14 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 受講生のID
         if (empty($request->student_id)) {
-            session()->forget('student_id');
+            session()->forget('student_id' . $frame_id);
         } else {
-            session(['student_id' => $request->student_id]);
+            session(['student_id' . $frame_id => $request->student_id]);
         }
 
         // 課題のIDもセッションに保持する。
         // 課題のIDが変わったら、受講生を選びなおす。
-        session(['learningtask_post_id' => $post_id]);
+        session(['learningtask_post_id' . $frame_id => $post_id]);
 
         // リダイレクトで詳細画面へ
         return;
@@ -1057,7 +1057,7 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // ユーザー関連情報のまとめ
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $this->getPost($post_id));
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $this->getPost($post_id), $frame_id);
         // if (empty($tool->post)) {
         //     // postがなければ該当データなし
         //     abort(403, '対象の課題がありません。');
@@ -1076,11 +1076,11 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 受講生のID
-        session(['student_id' => $student_id]);
+        session(['student_id' . $frame_id => $student_id]);
 
         // 課題のIDもセッションに保持する。
         // 課題のIDが変わったら、受講生を選びなおす。
-        session(['learningtask_post_id' => $post_id]);
+        session(['learningtask_post_id' . $frame_id => $post_id]);
 
         // リダイレクト
         return collect($redirect_path_array);
@@ -1092,9 +1092,9 @@ class LearningtasksPlugin extends UserPluginBase
     public function show($request, $page_id, $frame_id, $post_id)
     {
         // 課題のIDが変わったら、受講生を選びなおす。
-        if (session('learningtask_post_id') != $post_id) {
-            session()->forget('student_id');
-            session()->forget('learningtask_post_id');
+        if (session('learningtask_post_id' . $frame_id) != $post_id) {
+            session()->forget('student_id' . $frame_id);
+            session()->forget('learningtask_post_id' . $frame_id);
         }
 
         // 課題管理
@@ -1139,7 +1139,7 @@ class LearningtasksPlugin extends UserPluginBase
                 ->get();
 
         // ユーザー関連情報のまとめ
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post, $frame_id);
 
         // 詳細画面を呼び出す。
         return $this->view('learningtasks_show', [
@@ -1210,7 +1210,7 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // ツールクラス
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $learningtasks_posts);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $learningtasks_posts, $frame_id);
 
         // 編集画面
         return $this->view(
@@ -1312,7 +1312,7 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // ツールクラス
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $learningtasks_posts);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $learningtasks_posts, $frame_id);
 
         // 編集画面
         return $this->view(
@@ -1406,7 +1406,7 @@ class LearningtasksPlugin extends UserPluginBase
                 ->get();
 
         // ツールクラス
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $learningtasks_post);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $learningtasks_post, $frame_id);
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -1714,7 +1714,7 @@ class LearningtasksPlugin extends UserPluginBase
         //$base_settings = LearningtasksUseSettings::where('learningtasks_id', $learningtask->id)->where('post_id', 0)->get();
 
         // ユーザー関連情報のまとめ
-        $tool = new LearningtasksTool($request, $page_id, $learningtask);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, null, $frame_id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('learningtasks_edit_learningtasks', [
@@ -1975,7 +1975,7 @@ class LearningtasksPlugin extends UserPluginBase
         $post = $this->getPost($post_id);
 
         // 課題管理ツール
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post, $frame_id);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -2002,7 +2002,7 @@ class LearningtasksPlugin extends UserPluginBase
         $post = $this->getPost($post_id);
 
         // 課題管理ツール
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post, $frame_id);
 
         // 設定内容を保存（一旦削除して新たに保存）
         LearningtasksConfigs::where('learningtasks_id', $learningtask->id)
@@ -2842,7 +2842,7 @@ class LearningtasksPlugin extends UserPluginBase
         $post = $this->getPost($post_id);
 
         // 課題管理ツール
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post, $frame_id);
 
         // レポートの課題提出
         if ($task_status == 1) {
@@ -2938,7 +2938,7 @@ class LearningtasksPlugin extends UserPluginBase
         // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)、総合評価(8)の場合は、教員によるログイン操作のため、セッションから
         $student_user_id = $user->id;
         if ($task_status == 2 || $task_status == 3 || $task_status == 6 || $task_status == 7 || $task_status == 8) {
-            $student_user_id = session('student_id');
+            $student_user_id = session('student_id' . $frame_id);
         }
 
         // メール送信：機能設定でメール送信あり＆対象ユーザにメールアドレスの設定がある場合
@@ -3262,7 +3262,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtask = $this->getLearningTask($frame_id);
 
         // 課題管理ツール
-        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post);
+        $tool = new LearningtasksTool($request, $page_id, $learningtask, $post, $frame_id);
 
         // 画面を呼び出す。
         return $this->view(
@@ -3399,7 +3399,7 @@ class LearningtasksPlugin extends UserPluginBase
         // LearningtasksTool クラスの各種メソッドを利用する。
         foreach ($frames as $frame) {
             // 課題管理ツールを利用してチェックする。
-            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post);
+            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post, $frame_id);
 
             // 課題に対する権限はあるか。
             // この結果がNG でも、複数ページの場合に次のページをチェックするため、return false はしない。
@@ -3444,7 +3444,7 @@ class LearningtasksPlugin extends UserPluginBase
         // LearningtasksTool クラスの各種メソッドを利用する。
         foreach ($frames as $frame) {
             // 課題管理ツールを利用してチェックする。
-            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post);
+            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post, $frame_id);
 
             // 提出に対する権限はあるか。
             // この結果がNG でも、複数ページの場合に次のページをチェックするため、return false はしない。

@@ -149,7 +149,7 @@ class LearningtasksTool
     /**
      * コンストラクタ
      */
-    public function __construct($request, $page_id, $learningtask, $post = null)
+    public function __construct($request, $page_id, $learningtask, $post = null, $frame_id = null)
     {
         // 変数初期化
         $this->report_statuses = new Collection();
@@ -185,8 +185,8 @@ class LearningtasksTool
         }
 
         // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
-        if ($this->isTeacher() && session('student_id') || $this->isLearningtaskAdmin() && session('student_id')) {
-            $this->student_id = session('student_id');
+        if ($this->isTeacher() && session('student_id' . $frame_id) || $this->isLearningtaskAdmin() && session('student_id' . $frame_id)) {
+            $this->student_id = session('student_id' . $frame_id);
         } elseif ($this->isStudent()) {
             $this->student_id = $this->user->id;
         }
