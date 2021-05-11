@@ -135,7 +135,7 @@
                                 }
 
                                 $use_examination = $tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id);
-                                if ($use_report) {
+                                if ($use_examination) {
                                     $is_header_examination = true;
                                 }
                             }
@@ -156,27 +156,33 @@
                 <tbody>
                     @foreach($categories_and_post as $post)  {{-- 課題のループ --}}
                         <tr>
+                            {{-- 科目名 --}}
                             <th>
                                 @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
                                     <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
                                         <i class="far fa-edit"></i>
                                     </a>
                                 @endcan
-                                {{-- タイトル --}}
                                 <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">{!!$post->getNobrPostTitle()!!}</a>
                             </th>
                             @if (Auth::check())
-                                @if ($tool->checkFunction(LearningtaskUseFunction::use_report, $post->id))
-                                    <td>{{$tool->getReportStatus($post->id)}}</td>
-                                @else
-                                    <td>-</td>
+                                {{-- レポート --}}
+                                @if ($is_header_report)
+                                    @if ($tool->checkFunction(LearningtaskUseFunction::use_report, $post->id))
+                                        <td>{{$tool->getReportStatus($post->id)}}</td>
+                                    @else
+                                        <td>-</td>
+                                    @endif
                                 @endif
-                                @if ($tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id))
-                                    <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
-                                    <td>{{$tool->getExaminationStatus($post->id)}}</td>
-                                @else
-                                    <td>-</td>
-                                    <td>-</td>
+                                {{-- 試験日時・評価 --}}
+                                @if ($is_header_examination)
+                                    @if ($tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id))
+                                        <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
+                                        <td>{{$tool->getExaminationStatus($post->id)}}</td>
+                                    @else
+                                        <td>-</td>
+                                        <td>-</td>
+                                    @endif
                                 @endif
                             @endif
                         </tr>
