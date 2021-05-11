@@ -259,7 +259,7 @@ use App\Models\Core\UsersColumns;
         </div>
 
         <div class="row mt-2">
-            <div class="col text-left d-flex align-items-end">
+            <div class="col-3 text-left d-flex align-items-end">
                 {{-- (左側)件数 --}}
                 <span class="badge badge-pill badge-light">{{ $users->total() }} 件</span>
             </div>
