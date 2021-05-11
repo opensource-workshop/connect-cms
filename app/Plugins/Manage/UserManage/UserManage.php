@@ -260,9 +260,9 @@ class UserManage extends ManagePluginBase
         } elseif ($sort == 'created_at_desc') {
             $users_query->orderBy('users.created_at', 'desc');
         } elseif ($sort == 'updated_at_asc') {
-            $users_query->orderBy('users.updated', 'asc');
+            $users_query->orderBy('users.updated_at', 'asc');
         } elseif ($sort == 'updated_at_desc') {
-            $users_query->orderBy('users.updated', 'desc');
+            $users_query->orderBy('users.updated_at', 'desc');
         } elseif ($sort == 'userid_asc') {
             $users_query->orderBy('users.userid', 'asc');
         } elseif ($sort == 'userid_desc') {
