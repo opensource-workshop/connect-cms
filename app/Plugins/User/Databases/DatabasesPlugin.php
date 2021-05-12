@@ -1239,6 +1239,17 @@ class DatabasesPlugin extends UserPluginBase
                     "databases_columns_value" => $tmp_array,
                 ]);
             }
+            // wysiwyg型
+            if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
+                // XSS対応のJavaScript等の制限
+                $tmp_columns_value = $this->clean($request->databases_columns_value[$databases_column->id]);
+
+                $tmp_array = $request->databases_columns_value;
+                $tmp_array[$databases_column->id] = $tmp_columns_value;
+                $request->merge([
+                    "databases_columns_value" => $tmp_array,
+                ]);
+            }
         }
 
         $request->merge([
