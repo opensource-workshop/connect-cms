@@ -3444,7 +3444,7 @@ class LearningtasksPlugin extends UserPluginBase
         // LearningtasksTool クラスの各種メソッドを利用する。
         foreach ($frames as $frame) {
             // 課題管理ツールを利用してチェックする。
-            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post, $frame_id);
+            $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post, $frame->id);
 
             // 提出に対する権限はあるか。
             // この結果がNG でも、複数ページの場合に次のページをチェックするため、return false はしない。
