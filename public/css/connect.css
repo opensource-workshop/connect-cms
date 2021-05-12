@@ -118,6 +118,18 @@ body {
     margin: 0 0 3px 5px;
 }
 
+/* datepicker
+------------------------------------- */
+/* datepickerの土日 */
+.datepicker-days th.dow:first-child,
+.datepicker-days td:first-child {
+    color: #c42626;
+}
+.datepicker-days th.dow:last-child,
+.datepicker-days td:last-child {
+    color: #005dbf;
+}
+
 /*  プラグイン追加
 ------------------------------------- */
 #pluginAddModal {
