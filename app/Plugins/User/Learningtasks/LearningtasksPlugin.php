@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-use DB;
 // use Session;
 use App\Plugins\User\Learningtasks\LearningtasksTool;
 
@@ -40,7 +40,10 @@ use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
+use App\Enums\CsvCharacterCode;
 use App\Enums\LearningtasksExaminationColumn;
+use App\Enums\LearningtaskUseFunction;
+use App\Enums\RoleName;
 
 /**
  * 課題管理プラグイン
@@ -387,13 +390,13 @@ class LearningtasksPlugin extends UserPluginBase
             ->leftJoin('learningtasks_users as student', function ($join) use ($user_id) {
                 $join->on('student.post_id', '=', 'learningtasks_posts.id')
                      ->where('student.user_id', '=', $user_id)
-                     ->where('student.role_name', '=', \RoleName::student)
+                     ->where('student.role_name', '=', RoleName::student)
                      ->whereNull('student.deleted_at');
             })
             ->leftJoin('learningtasks_users as teacher', function ($join) use ($user_id) {
                 $join->on('teacher.post_id', '=', 'learningtasks_posts.id')
                      ->where('teacher.user_id', '=', $user_id)
-                     ->where('teacher.role_name', '=', \RoleName::teacher)
+                     ->where('teacher.role_name', '=', RoleName::teacher)
                      ->whereNull('teacher.deleted_at');
             })
             ->where('learningtasks_posts.learningtasks_id', $learningtasks_frame->id)
@@ -429,7 +432,7 @@ class LearningtasksPlugin extends UserPluginBase
             // 「配置ページのメンバーシップ受講者から選ぶ」場合、自分の role が課題に設定されているか確認する。
             $student_flag = true;
             if ($learningtasks_post->student_join_flag == 3) {
-                if ($tool->isStudent() && $learningtasks_post->student_role_name == \RoleName::student) {
+                if ($tool->isStudent() && $learningtasks_post->student_role_name == RoleName::student) {
                     // OK
                 } else {
                     // 閲覧対象外
@@ -438,7 +441,7 @@ class LearningtasksPlugin extends UserPluginBase
             }
             $teacher_flag = true;
             if ($learningtasks_post->teacher_join_flag == 3) {
-                if ($tool->isTeacher() && $learningtasks_post->teacher_role_name == \RoleName::teacher) {
+                if ($tool->isTeacher() && $learningtasks_post->teacher_role_name == RoleName::teacher) {
                     // OK
                 } else {
                     // 閲覧対象外
@@ -1258,7 +1261,7 @@ class LearningtasksPlugin extends UserPluginBase
                 ->delete();
         LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
                 ->where('post_id', $post->id)
-                ->where('use_function', \LearningtaskUseFunction::report_end_at)
+                ->where('use_function', LearningtaskUseFunction::report_end_at)
                 ->delete();
 
         if ($request->filled('post_report_setting')) {
@@ -1952,12 +1955,12 @@ class LearningtasksPlugin extends UserPluginBase
         // Log::debug(var_export($request->character_code, true));
 
         // 文字コード変換
-        if ($request->character_code == \CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
             // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
             $csv_data = CsvUtils::addUtf8Bom($csv_data);
         } else {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
         }
 
         return response()->make($csv_data, 200, $headers);
@@ -2522,15 +2525,15 @@ class LearningtasksPlugin extends UserPluginBase
         $character_code = $request->character_code;
 
         // 文字コード自動検出
-        if ($character_code == \CsvCharacterCode::auto) {
+        if ($character_code == CsvCharacterCode::auto) {
             // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
             $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
             if (!$character_code) {
                 // 一時ファイルの削除
                 Storage::delete($path);
 
-                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
-                            ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::sjis_win) .
+                            ", " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
 
                 return redirect()->back()->withErrors(['examinations_csv' => $error_msgs])->withInput();
             }
@@ -2539,7 +2542,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 読み込み
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == \CsvCharacterCode::sjis_win) {
+        if ($character_code == CsvCharacterCode::sjis_win) {
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
@@ -2550,7 +2553,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
-        if ($character_code == \CsvCharacterCode::utf_8) {
+        if ($character_code == CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
@@ -2607,7 +2610,7 @@ class LearningtasksPlugin extends UserPluginBase
         // ヘッダー
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
-        if ($character_code == \CsvCharacterCode::utf_8) {
+        if ($character_code == CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
@@ -2749,12 +2752,12 @@ class LearningtasksPlugin extends UserPluginBase
         // Log::debug(var_export($request->character_code, true));
 
         // 文字コード変換
-        if ($request->character_code == \CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
             // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
             $csv_data = CsvUtils::addUtf8Bom($csv_data);
         } else {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
         }
 
         return response()->make($csv_data, 200, $headers);
@@ -3220,7 +3223,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 学生のみ取得
         $students = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
                               ->where('target', 'original_role')
-                              ->where('role_name', \RoleName::student)
+                              ->where('role_name', RoleName::student)
                               ->where('role_value', 1)
                               ->get();
 
@@ -3230,7 +3233,7 @@ class LearningtasksPlugin extends UserPluginBase
                                 ->leftJoin('learningtasks_users', function ($join) use ($post) {
                                     $join->on('learningtasks_users.user_id', '=', 'users.id')
                                          ->where('learningtasks_users.post_id', '=', $post->id)
-                                         ->where('learningtasks_users.role_name', \RoleName::student)
+                                         ->where('learningtasks_users.role_name', RoleName::student)
                                          ->whereNull('learningtasks_users.deleted_at');
                                 })
                                 ->whereIn('users.id', $students->pluck('users_id'))
@@ -3241,7 +3244,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 教員のみ取得
         $teachers = UsersRoles::whereIn('users_id', $group_users->pluck('user_id'))
                               ->where('target', 'original_role')
-                              ->where('role_name', \RoleName::teacher)
+                              ->where('role_name', RoleName::teacher)
                               ->where('role_value', 1)
                               ->get();
 
@@ -3251,7 +3254,7 @@ class LearningtasksPlugin extends UserPluginBase
                                 ->leftJoin('learningtasks_users', function ($join) use ($post) {
                                     $join->on('learningtasks_users.user_id', '=', 'users.id')
                                          ->where('learningtasks_users.post_id', '=', $post->id)
-                                         ->where('learningtasks_users.role_name', \RoleName::teacher)
+                                         ->where('learningtasks_users.role_name', RoleName::teacher)
                                          ->whereNull('learningtasks_users.deleted_at');
                                 })
                                 ->whereIn('users.id', $teachers->pluck('users_id'))
@@ -3305,7 +3308,7 @@ class LearningtasksPlugin extends UserPluginBase
             foreach ($request->page_users as $page_user_id) {
                 $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
                                                          ->where('user_id', $page_user_id)
-                                                         ->where('role_name', \RoleName::student)
+                                                         ->where('role_name', RoleName::student)
                                                          ->whereNull('deleted_at')
                                                          ->first();
                 // 参加データの追加・削除
@@ -3314,7 +3317,7 @@ class LearningtasksPlugin extends UserPluginBase
                     $learningtasks_users->delete();
                 } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
                     // 追加（参加データはなし、画面のチェックはあり）
-                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => \RoleName::student]);
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => RoleName::student]);
                 }
             }
         }
@@ -3334,7 +3337,7 @@ class LearningtasksPlugin extends UserPluginBase
             foreach ($request->page_teacher_users as $page_user_id) {
                 $learningtasks_users = LearningtasksUsers::where('post_id', $post_id)
                                                          ->where('user_id', $page_user_id)
-                                                         ->where('role_name', \RoleName::teacher)
+                                                         ->where('role_name', RoleName::teacher)
                                                          ->whereNull('deleted_at')
                                                          ->first();
                 // 参加データの追加・削除
@@ -3343,7 +3346,7 @@ class LearningtasksPlugin extends UserPluginBase
                     $learningtasks_users->delete();
                 } elseif (empty($learningtasks_users) && in_array($page_user_id, $join_users)) {
                     // 追加（参加データはなし、画面のチェックはあり）
-                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => \RoleName::teacher]);
+                    LearningtasksUsers::create(['post_id' => $post_id, 'user_id' => $page_user_id, 'role_name' => RoleName::teacher]);
                 }
             }
         }
