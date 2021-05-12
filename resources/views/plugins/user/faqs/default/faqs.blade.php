@@ -126,14 +126,14 @@
                                     @if ($post->status == 1)
                                         <span class="badge badge-warning align-bottom">一時保存</span>
                                     @endif
-                                    <a href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
+                                    <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
+                                        <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
                                     </a>
                                 @endcan
 
                                 {{-- 詳細画面 --}}
-                                <a class="ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" title="{{$post->getNobrPostTitle()}}の詳細">
-                                    <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
+                                <a class="btn btn-success btn-sm ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" title="{{$post->getNobrPostTitle()}}の詳細">
+                                    詳細 <i class="fas fa-angle-right"></i>
                                 </a>
                             </div>
                         </div>
