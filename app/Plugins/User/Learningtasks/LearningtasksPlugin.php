@@ -1591,7 +1591,7 @@ class LearningtasksPlugin extends UserPluginBase
         $post->categories_id    = $request->categories_id;
         $post->important        = $request->important;
         $post->posted_at        = $request->posted_at . ':00';
-        $post->post_text        = $request->post_text;
+        $post->post_text        = $this->clean($request->post_text);   // wysiwygのXSS対応のJavaScript等の制限
         $post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
         $post->save();
 
