@@ -183,6 +183,8 @@
 <input type="file" class="d-none" id="cc-file-upload-file3-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file4-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file5-{{$frame_id}}">
+{{-- media plugin用 --}}
+<input type="file" class="d-none" id="cc-file-upload-source-{{$frame_id}}" accept=".mp4, .mp3">
 
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js"></script>
 {{--
@@ -227,6 +229,7 @@
         {!!$templates_file!!}
 
         menubar  : '',
+        contextmenu : '',
 
         // add: tinymce5対応
         toolbar_mode : 'wrap',
@@ -288,36 +291,82 @@
 
                 input.setAttribute('accept', 'image/*');
 
-                /*
-                Note: In modern browsers input[type="file"] is functional without
-                even adding it to the DOM, but that might not be the case in some older
-                or quirky browsers like IE, so you might want to add it to the DOM
-                just in case, and visually hide it. And do not forget do remove it
-                once you do not need it anymore.
-                */
+                // image plugin
+                if (meta.fieldname == 'src') {
+                    // 画像はimages_upload_handlerが動作するため、サンプル通りにblobCacheに追加する. (blobCacheに入れるとなんでアップロードできるか詳細わからなかった。)
+                    /*
+                    Note: In modern browsers input[type="file"] is functional without
+                    even adding it to the DOM, but that might not be the case in some older
+                    or quirky browsers like IE, so you might want to add it to the DOM
+                    just in case, and visually hide it. And do not forget do remove it
+                    once you do not need it anymore.
+                    */
+                    input.onchange = function () {
+                        var file = this.files[0];
 
-                input.onchange = function () {
-                    var file = this.files[0];
+                        var reader = new FileReader();
+                        reader.onload = function () {
+                            /*
+                            Note: Now we need to register the blob in TinyMCEs image blob
+                            registry. In the next release this part hopefully won't be
+                            necessary, as we are looking to handle it internally.
+                            */
+                            var id = 'blobid' + (new Date()).getTime();
+                            var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
+                            var base64 = reader.result.split(',')[1];
+                            var blobInfo = blobCache.create(id, file, base64);
+                            blobCache.add(blobInfo);
 
-                    var reader = new FileReader();
-                    reader.onload = function () {
-                        /*
-                        Note: Now we need to register the blob in TinyMCEs image blob
-                        registry. In the next release this part hopefully won't be
-                        necessary, as we are looking to handle it internally.
-                        */
-                        var id = 'blobid' + (new Date()).getTime();
-                        var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
-                        var base64 = reader.result.split(',')[1];
-                        var blobInfo = blobCache.create(id, file, base64);
-                        blobCache.add(blobInfo);
-
-                        /* call the callback and populate the Title field with the file name */
-                        callback(blobInfo.blobUri(), { title: file.name });
-                        // callback(file.name);
+                            /* call the callback and populate the Title field with the file name */
+                            callback(blobInfo.blobUri(), { title: file.name });
+                            // callback(file.name);
+                        };
+                        reader.readAsDataURL(file);
                     };
-                    reader.readAsDataURL(file);
-                };
+                }
+                // media plugin
+                else if (meta.fieldname == 'poster') {
+                    // console.log('media');
+
+                    // 動画のサムネイルはimages_upload_handlerが動作しないため、このタイミングでアップロードする
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        // callback(file.name);
+
+                        // ajax
+                        xhr = new XMLHttpRequest();
+                        xhr.withCredentials = false;
+
+                        xhr.open('POST', tinymce.activeEditor.getParam('document_base_url') + '/upload');
+
+                        xhr.onload = function() {
+                            var json;
+
+                            if (xhr.status < 200 || xhr.status >= 300) {
+                                failure('HTTP Error: ' + xhr.status);
+                                return;
+                            }
+
+                            json = JSON.parse(xhr.responseText);
+                            // console.log(json);
+
+                            if (!json || typeof json.location != 'string') {
+                                failure('Invalid JSON: ' + xhr.responseText);
+                                return;
+                            }
+
+                            callback(json.location);
+                        };
+
+                        formData = new FormData();
+                        formData.append('file', file, file.name );
+
+                        var tokens = document.getElementsByName("csrf-token");
+                        formData.append('_token', tokens[0].content);
+                        formData.append('page_id', {{$page_id}});
+                        xhr.send(formData);
+                    };
+                }
 
                 input.click();
             }
@@ -326,10 +375,85 @@
             --------------------------------------------- */
             if (meta.filetype == 'media') {
                 // callback('movie.mp4', {source2: 'alt.ogg', poster: 'image.jpg'});
+                // console.log(meta.fieldname);
+
+                var input = document.getElementById('cc-file-upload-source-{{$frame_id}}');
+                // var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
+
+                input.onchange = function () {
+                    var file = this.files[0];
+                    // callback(file.name);
+
+                    // ajax
+                    xhr = new XMLHttpRequest();
+                    xhr.withCredentials = false;
+
+                    xhr.open('POST', tinymce.activeEditor.getParam('document_base_url') + '/upload');
+
+                    xhr.onload = function() {
+                        var json;
+
+                        if (xhr.status < 200 || xhr.status >= 300) {
+                            failure('HTTP Error: ' + xhr.status);
+                            return;
+                        }
+
+                        json = JSON.parse(xhr.responseText);
+                        // console.log(json);
+
+                        if (!json || typeof json.location != 'string') {
+                            failure('Invalid JSON: ' + xhr.responseText);
+                            return;
+                        }
+
+                        // mp3か
+                        if (file.name.toUpperCase().match(/\.(mp3)$/i)) {
+                            // tinymce5のmedia pluginは、拡張子を見て audioタグを出力するため、苦肉の策として.mp3をつけて後で消す
+                            callback(json.location + '.mp3');
+                        } else {
+                            callback(json.location);
+                        }
+                    };
+
+                    formData = new FormData();
+                    formData.append('file', file, file.name );
+
+                    var tokens = document.getElementsByName("csrf-token");
+                    formData.append('_token', tokens[0].content);
+                    formData.append('page_id', {{$page_id}});
+                    xhr.send(formData);
+                };
+
+                input.click();
             }
         },
 
         media_live_embeds: true,
+        media_alt_source: false,
+
+        // 動画コールバック
+        video_template_callback: function(data) {
+            // videoタグ. ダウンロード禁止
+            var html = '<video width="' + data.width + '" height="' + data.height + '"' + (data.poster ? ' poster="' + data.poster + '"' : '') + ' controls="controls" controlsList="nodownload">\n'
+                    + '<source src="' + data.source + '"' + (data.sourcemime ? ' type="' + data.sourcemime + '"' : '') + ' />\n'
+                    + (data.altsource ? '<source src="' + data.altsource + '"' + (data.altsourcemime ? ' type="' + data.altsourcemime + '"' : '') + ' />\n' : '')
+                    + '</video>';
+            return html;
+        },
+
+        // 音声コールバック
+        audio_template_callback: function(data) {
+            // audioタグを吐かせるために追加した末尾.mp3を消す
+            var source = data.source;
+            source = source.replace(new RegExp(".mp3$"), "");
+
+            // audioタグ. ダウンロード禁止
+            var html = '<audio controls controlsList="nodownload">'
+                + '\n<source src="' + source + '"' + (data.sourcemime ? ' type="' + data.sourcemime + '"' : '') + ' />\n'
+                + (data.altsource ? '<source src="' + data.altsource + '"' + (data.altsourcemime ? ' type="' + data.altsourcemime + '"' : '') + ' />\n' : '')
+                + '</audio>';
+            return html;
+        },
 
         image_caption: true,
         image_title: true,
