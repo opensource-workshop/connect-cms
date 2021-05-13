@@ -27,7 +27,7 @@ body {
 /* WYSIWYG で設定できる記事の書式
 ------------------------------------- */
 /* 囲み(グレー) */
-.ccMainArea .cc-column {
+.cc-column {
     margin: 15px 0;
     padding: 25px;
     background-color: #f2f2f2;
@@ -41,11 +41,11 @@ body {
 }
 */
 /* 注意ポイント */
-.ccMainArea .cc-exclamation {
+.cc-exclamation {
     padding-left: 1.1rem;
     text-indent: -1.2rem;
 }
-.ccMainArea .cc-exclamation::before {
+.cc-exclamation::before {
     content: "";
     display: inline-block;
     width: 1rem;
@@ -56,11 +56,11 @@ body {
     margin: 0 5px 3px 0;
 }
 /* ※印ポイント */
-.ccMainArea .cc-note {
+.cc-note {
     padding-left: 0.8rem;
     text-indent: -0.8rem;
 }
-.ccMainArea .cc-note::before {
+.cc-note::before {
     content: "";
     display: inline-block;
     width: .8rem;
@@ -70,11 +70,11 @@ body {
     vertical-align: middle;
     margin: 0 3px 2px 0;
 }
-.ccMainArea .cc-note + .cc-note {
+.cc-note + .cc-note {
     margin-top: -10px;
 }
 /* アイコン(PDF) */
-.ccMainArea a.cc-icon-pdf:after {
+a.cc-icon-pdf:after {
     content: "";
     display: inline-block;
     width: 1.25rem;
@@ -85,7 +85,7 @@ body {
     margin: 0 0 3px 5px;
 }
 /* アイコン(Excel) */
-.ccMainArea a.cc-icon-excel:after {
+a.cc-icon-excel:after {
     content: "";
     display: inline-block;
     width: 1.25rem;
@@ -96,7 +96,7 @@ body {
     margin: 0 0 3px 5px;
 }
 /* アイコン(Word) */
-.ccMainArea a.cc-icon-word:after {
+a.cc-icon-word:after {
     content: "";
     display: inline-block;
     width: 1.25rem;
@@ -107,7 +107,7 @@ body {
     margin: 0 0 3px 5px;
 }
 /* アイコン(外部サイト) */
-.ccMainArea a.cc-icon-external:after {
+a.cc-icon-external:after {
     content: "";
     display: inline-block;
     width: 1rem;
