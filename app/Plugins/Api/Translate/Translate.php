@@ -62,7 +62,9 @@ class Translate extends ApiPluginBase
         curl_close($ch);
 
         // 値を戻す
-        $msg_json = json_encode($msg_array);
-        echo $msg_json;
+        // change: LaravelはArrayを返すだけで JSON形式になる
+        // $msg_json = json_encode($msg_array);
+        // echo $msg_json;
+        return $msg_array;
     }
 }
