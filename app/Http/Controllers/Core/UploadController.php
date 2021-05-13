@@ -308,8 +308,10 @@ EOD;
 
         // ファイルアップロードには、編集者権限が必要
         if (!$this->isCan('role_reporter')) {
-            echo json_encode(array('location' => 'error'));
-            return;
+            // change: LaravelはArrayを返すだけで JSON形式になる
+            // echo json_encode(array('location' => 'error'));
+            // return;
+            return array('location' => 'error');
         }
 
         // 画像アップロードの場合（TinyMCE標準プラグイン）
@@ -317,23 +319,26 @@ EOD;
             if ($request->file('file')->isValid()) {
                 // uploads テーブルに情報追加、ファイルのid を取得する
                 $upload = Uploads::create([
-                   'client_original_name' => $request->file('file')->getClientOriginalName(),
-                   'mimetype'             => $request->file('file')->getClientMimeType(),
-                   'extension'            => $request->file('file')->getClientOriginalExtension(),
-                   'size'                 => $request->file('file')->getClientSize(),
-                   'page_id'              => $request->page_id,
+                    'client_original_name' => $request->file('file')->getClientOriginalName(),
+                    'mimetype'             => $request->file('file')->getClientMimeType(),
+                    'extension'            => $request->file('file')->getClientOriginalExtension(),
+                    'size'                 => $request->file('file')->getSize(),
+                    'page_id'              => $request->page_id,
                 ]);
 
                 $directory = $this->getDirectory($upload->id);
                 $upload_path = $request->file('file')->storeAs($directory, $upload->id . '.' . $request->file('file')->getClientOriginalExtension());
-                echo json_encode(array('location' => url('/') . '/file/' . $upload->id));
+                // change: LaravelはArrayを返すだけで JSON形式になる
+                // echo json_encode(array('location' => url('/') . '/file/' . $upload->id));
+                return array('location' => url('/') . '/file/' . $upload->id);
+
                 /*
                 $id = DB::table('uploads')->insertGetId([
-                   'client_original_name' => $request->file('file')->getClientOriginalName(),
-                   'mimetype'             => $request->file('file')->getClientMimeType(),
-                   'extension'            => $request->file('file')->getClientOriginalExtension(),
-                   'size'                 => $request->file('file')->getClientSize(),
-                   'page_id'              => $request->page_id,
+                    'client_original_name' => $request->file('file')->getClientOriginalName(),
+                    'mimetype'             => $request->file('file')->getClientMimeType(),
+                    'extension'            => $request->file('file')->getClientOriginalExtension(),
+                    'size'                 => $request->file('file')->getClientSize(),
+                    'page_id'              => $request->page_id,
                 ]);
 
                 $directory = $this->getDirectory($id);
@@ -341,7 +346,9 @@ EOD;
                 echo json_encode(array('location' => url('/') . '/file/' . $id));
                 */
             }
-            return;
+            // change: LaravelはArrayを返すだけで JSON形式になる
+            // return;
+            return array('location' => 'error');
         }
 
 
@@ -371,11 +378,11 @@ EOD;
                 if ($request->file($input_name)->isValid()) {
                     // uploads テーブルに情報追加、ファイルのid を取得する
                     $upload = Uploads::create([
-                       'client_original_name' => $request->file($input_name)->getClientOriginalName(),
-                       'mimetype'             => $request->file($input_name)->getClientMimeType(),
-                       'extension'            => $request->file($input_name)->getClientOriginalExtension(),
-                       'size'                 => $request->file($input_name)->getClientSize(),
-                       'page_id'              => $request->page_id,
+                        'client_original_name' => $request->file($input_name)->getClientOriginalName(),
+                        'mimetype'             => $request->file($input_name)->getClientMimeType(),
+                        'extension'            => $request->file($input_name)->getClientOriginalExtension(),
+                        'size'                 => $request->file($input_name)->getSize(),
+                        'page_id'              => $request->page_id,
                     ]);
 
                     $directory = $this->getDirectory($upload->id);
@@ -398,8 +405,10 @@ EOD;
             }
         }
 
+        // change: LaravelはArrayを返すだけで JSON形式になる
         // アップロードファイルのパスをHTMLにして、さらにjsonに変換してechoでクライアント（WYSIWYGのAjax通信）へ返す。
-        $msg_json = json_encode($msg_array);
-        echo $msg_json;
+        // $msg_json = json_encode($msg_array);
+        // echo $msg_json;
+        return $msg_array;
     }
 }
