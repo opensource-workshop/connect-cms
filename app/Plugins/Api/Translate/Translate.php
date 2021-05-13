@@ -36,6 +36,7 @@ class Translate extends ApiPluginBase
         // 戻り値
         $msg_array = array();
 
+        // [TODO] translate-apiのサーバサイドプラグラムも公開できなら、このURLは.envに持っていいってもよさそう。by mutaguchi@opensource-workshop.jp
         $url = "https://translate-api.opensource-workshop.jp";
 
         // cURLセッションを初期化する
