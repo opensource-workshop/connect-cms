@@ -6,6 +6,7 @@ namespace App\Plugins\Manage\UserManage;
 use Illuminate\Support\Facades\Auth;
 // use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 // use Illuminate\Validation\Rule;
 use DB;
@@ -24,6 +25,9 @@ use App\Rules\CustomValiUserEmailUnique;
 use App\Rules\CustomValiEmails;
 
 use App\Utilities\Csv\CsvUtils;
+use App\Utilities\String\StringUtils;
+
+use App\Enums\CsvCharacterCode;
 
 /**
  * ユーザ管理クラス
@@ -57,6 +61,9 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["autoRegist"]         = array('admin_user');
         $role_ckeck_table["autoRegistUpdate"]   = array('admin_user');
         $role_ckeck_table["downloadCsv"] = array('admin_user');
+        $role_ckeck_table["downloadCsvFormat"] = array('admin_user');
+        $role_ckeck_table["import"] = array('admin_site');
+        $role_ckeck_table["uploadCsv"] = array('admin_user');
 
         return $role_ckeck_table;
     }
@@ -1138,6 +1145,16 @@ class UserManage extends ManagePluginBase
     }
 
     /**
+     * CSVインポートのフォーマットダウンロード
+     */
+    public function downloadCsvFormat($request, $id = null, $sub_id = null)
+    {
+        // データ出力しない（フォーマットのみ出力）
+        $data_output_flag = false;
+        return $this->downloadCsv($request, $id, $sub_id, $data_output_flag);
+    }
+
+    /**
      * データダウンロード
      */
     public function downloadCsv($request, $id = null, $sub_id = null, $data_output_flag = true)
@@ -1175,31 +1192,14 @@ class UserManage extends ManagePluginBase
         // データ行用の空配列
         $copy_base = array();
 
-        // 見出し行-頭（固定項目）
-        $csv_array[0]['id'] = 'id';
-        $csv_array[0]['userid'] = 'ログインID';
-        $csv_array[0]['name'] = 'ユーザ名';
-        $csv_array[0]['group'] = 'グループ';
-        $csv_array[0]['email'] = 'eメールアドレス';
-        $csv_array[0]['password'] = 'パスワード';     // パスワード、中身は空で出力
-        $copy_base['id'] = '';
-        $copy_base['userid'] = '';
-        $copy_base['name'] = '';
-        $copy_base['group'] = '';
-        $copy_base['email'] = '';
-        $copy_base['password'] = '';
+        // インポートカラムの取得
+        $import_column = $this->getImportColumn($users_columns);
+
         // 見出し行
-        foreach ($users_columns as $column) {
-            $csv_array[0][$column->id] = $column->column_name;
-            $copy_base[$column->id] = '';
+        foreach ($import_column as $key => $column_name) {
+            $csv_array[0][$key] = $column_name;
+            $copy_base[$key] = '';
         }
-        // 見出し行-末尾（固定項目）
-        $csv_array[0]['view_user_roles'] = '権限';
-        $csv_array[0]['user_original_roles'] = '役割設定';
-        $csv_array[0]['status'] = '状態';
-        $copy_base['view_user_roles'] = '';
-        $copy_base['user_original_roles'] = '';
-        $copy_base['status'] = '';
 
         // $data_output_flag = falseは、CSVフォーマットダウンロード処理
         if ($data_output_flag) {
@@ -1258,14 +1258,470 @@ class UserManage extends ManagePluginBase
         // Log::debug(var_export($request->character_code, true));
 
         // 文字コード変換
-        if ($request->character_code == \CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
             // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
             $csv_data = CsvUtils::addUtf8Bom($csv_data);
         } else {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
         }
 
         return response()->make($csv_data, 200, $headers);
     }
+
+    /**
+     * インポートカラムの取得
+     */
+    private function getImportColumn($users_columns)
+    {
+        // 見出し行-頭（固定項目）
+        $import_column['id'] = 'id';
+        $import_column['userid'] = 'ログインID';
+        $import_column['name'] = 'ユーザ名';
+        $import_column['group'] = 'グループ';
+        $import_column['email'] = 'eメールアドレス';
+        $import_column['password'] = 'パスワード';
+
+        // 見出し行
+        foreach ($users_columns as $column) {
+            $import_column[$column->id] = $column->column_name;
+        }
+
+        // 見出し行-末尾（固定項目）
+        $import_column['view_user_roles'] = '権限';
+        $import_column['user_original_roles'] = '役割設定';
+        $import_column['status'] = '状態';
+
+        return $import_column;
+    }
+
+    /**
+     * インポート画面表示
+     */
+    public function import($request, $page_id = null)
+    {
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.user.import', [
+            "function"      => __FUNCTION__,
+            "plugin_name"   => "user",
+        ]);
+    }
+
+    /**
+     * インポート
+     */
+    public function uploadCsv($request, $page_id = null)
+    {
+        // csv
+        $rules = [
+            'users_csv'  => [
+                'required',
+                'file',
+                'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
+                'mimetypes:text/plain',
+            ],
+        ];
+
+        // 画面エラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames([
+            'users_csv' => 'CSVファイル',
+        ]);
+
+        if ($validator->fails()) {
+            // Log::debug(var_export($validator->errors(), true));
+            // エラーと共に編集画面を呼び出す
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // CSVファイル一時保存
+        $path = $request->file('users_csv')->store('tmp');
+        // Log::debug(var_export(storage_path('app/') . $path, true));
+        $csv_full_path = storage_path('app/') . $path;
+
+        // ファイル拡張子取得
+        $file_extension = $request->file('users_csv')->getClientOriginalExtension();
+        // 小文字に変換
+        $file_extension = strtolower($file_extension);
+        // Log::debug(var_export($file_extension, true));
+
+        // 文字コード
+        $character_code = $request->character_code;
+
+        // 文字コード自動検出
+        if ($character_code == CsvCharacterCode::auto) {
+            // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
+            $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
+            if (!$character_code) {
+                // 一時ファイルの削除
+                Storage::delete($path);
+
+                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::sjis_win) .
+                            ", " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+
+                return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
+            }
+        }
+
+        // 読み込み
+        $fp = fopen($csv_full_path, 'r');
+        // CSVファイル：Shift-JIS -> UTF-8変換時のみ
+        if ($character_code == CsvCharacterCode::sjis_win) {
+            // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
+            $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
+        }
+
+        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
+        setlocale(LC_ALL, 'ja_JP.UTF-8');
+
+        // 一行目（ヘッダ）
+        $header_columns = fgetcsv($fp, 0, ',');
+        // CSVファイル：UTF-8のみ
+        if ($character_code == CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
+        }
+        // dd($csv_full_path);
+        // \Log::debug('$header_columns:'. var_export($header_columns, true));
+
+        // 任意カラムの取得
+        $users_columns = UsersTool::getUsersColumns();
+        // インポートカラムの取得
+        $import_column = $this->getImportColumn($users_columns);
+
+        // ヘッダー項目のエラーチェック
+        $error_msgs = CsvUtils::checkCsvHeader($header_columns, $import_column);
+        if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
+
+            return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
+        }
+
+        $csv_rules = [
+            0 => [
+                'nullable',
+                'numeric',
+                'exists:users,id'
+            ],  // id
+            // 1 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:2,3', 'before_or_equal:2'], // 試験開始日時
+            // 2 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:1,3'],          // 試験終了日時
+            // 3 => ['nullable', 'date_format:"Y/n/j H:i"', 'before_or_equal:1'],          // 申込終了日時
+        ];
+
+        // データ項目のエラーチェック
+        // $error_msgs = CsvUtils::checkCvslines($fp, $users_columns, $cvs_rules);
+        // $error_msgs = CsvUtils::checkCvslines($fp, $import_column, $csv_rules);
+        $error_msgs = $this->checkCvslines($fp, $import_column, $csv_rules);
+        if (!empty($error_msgs)) {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
+
+            return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
+        }
+
+        // [debug]
+        // fclose($fp);
+        // Storage::delete($path); // 一時ファイルの削除
+        // dd('ここまで');
+
+        // ファイルポインタの位置を先頭に戻す
+        rewind($fp);
+
+        // ヘッダー
+        $header_columns = fgetcsv($fp, 0, ',');
+        // CSVファイル：UTF-8のみ
+        if ($character_code == CsvCharacterCode::utf_8) {
+            // UTF-8のみBOMコードを取り除く
+            $header_columns = CsvUtils::removeUtf8Bom($header_columns);
+        }
+
+        // データ
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // --- 入力値変換
+            // Log::debug(var_export($csv_columns, true));
+
+            // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
+            $csv_columns = StringUtils::trimInput($csv_columns);
+
+            // 配列の頭から要素(id)を取り除いて取得
+            // CSVのデータ行の頭は、必ず固定項目のidの想定
+            $users_id = array_shift($csv_columns);
+            // 空文字をnullに変換
+            $users_id = StringUtils::convertEmptyStringsToNull($users_id);
+
+            foreach ($csv_columns as $col => &$csv_column) {
+                // 空文字をnullに変換
+                $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
+            }
+            // Log::debug('$csv_columns:'. var_export($csv_columns, true));
+
+            // [debug]
+            //// 一時ファイルの削除
+            // fclose($fp);
+            // Storage::delete($path);
+            // dd('ここまで' . $posted_at);
+
+            if (empty($users_id)) {
+                // 登録
+                $user = new User();
+            } else {
+                // 更新
+                // users_idはバリデートでUser存在チェック済みなので、必ずデータある想定
+                $user = User::where('id', $users_id)->first();
+            }
+
+            ////////////////////////////////////
+            //// [TODO] 以下作成中
+            ////////////////////////////////////
+
+            // // 見出し行-頭（固定項目）
+            // $import_column['id'] = 'id';
+            // $import_column['userid'] = 'ログインID';
+            // $import_column['name'] = 'ユーザ名';
+            // $import_column['group'] = 'グループ';
+            // $import_column['email'] = 'eメールアドレス';
+            // $import_column['password'] = 'パスワード';
+
+            // // 見出し行
+            // foreach ($users_columns as $column) {
+            //     $import_column[$column->id] = $column->column_name;
+            // }
+
+            // // 見出し行-末尾（固定項目）
+            // $import_column['view_user_roles'] = '権限';
+            // $import_column['user_original_roles'] = '役割設定';
+            // $import_column['status'] = '状態';
+
+            // $user->post_id = $post_id;
+
+            // $user->start_at = $csv_columns[0] . ':00';
+            // $user->end_at = $csv_columns[1] . ':00';
+            // if ($csv_columns[2]) {
+            //     $user->entry_end_at = $csv_columns[2] . ':00';
+            // }
+
+            // ログインID
+            $user->userid = $csv_columns[0];
+            // ユーザ名
+            $user->name = $csv_columns[1];
+
+            // [TODO]
+            // グループ
+            $user->group = $csv_columns[2];
+
+            // eメールアドレス
+            $user->email = $csv_columns[3];
+
+            // [TODO]
+            // パスワード（新規は必須でバリデーション追加？id空ならパスワード必須、更新はnullOK）
+            if (empty($users_id)) {
+                // 登録
+                $user->password = Hash::make($csv_columns[4]);
+            } else {
+                // 更新
+                if ($csv_columns[4]) {
+                    // 値ありのみパスワード処理する
+                    $user->password = Hash::make($csv_columns[4]);
+                }
+            }
+
+
+            $user->save();
+        }
+
+        // 一時ファイルの削除
+        fclose($fp);
+        Storage::delete($path);
+
+        $request->flash_message = 'インポートしました。';
+
+        // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
+    }
+
+    /**
+     * CSVデータ行チェック
+     */
+    // private function checkCvslines($fp, $databases_columns, $databases_id, $file_extension, $unzip_dir_full_path)
+    private function checkCvslines($fp, $databases_columns)
+    {
+        ////////////////////////////////////
+        //// [TODO] 以下作成中
+        ////////////////////////////////////
+
+        $rules = [];
+        // $rules = [
+        //     0 => [],
+        //     1 => ['required'],
+        // ];
+
+        // 行頭（固定項目）
+        // id
+        // bugfix: id存在チェクは id & databases_id でチェックしないと、コピーしたデータベースに上書き出来てしまうため、ここではなく別途チェックする。
+        // $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
+        // $rules[0] = ['nullable', 'numeric'];
+        $rules = [
+            0 => [
+                'nullable',
+                'numeric',
+                'exists:users,id'
+            ],  // id
+            // 1 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:2,3', 'before_or_equal:2'], // 試験開始日時
+            // 2 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:1,3'],          // 試験終了日時
+            // 3 => ['nullable', 'date_format:"Y/n/j H:i"', 'before_or_equal:1'],          // 申込終了日時
+        ];
+
+        // エラーチェック配列
+        $validator_array = array('column' => array(), 'message' => array());
+
+        foreach ($databases_columns as $col => $databases_column) {
+            // $validator_array['column']['databases_columns_value.' . $databases_column->id] = $validator_rule;
+            // $validator_array['message']['databases_columns_value.' . $databases_column->id] = $databases_column->column_name;
+
+            // バリデータールールを取得
+            $validator_array = $this->getValidatorRule($validator_array, $databases_column);
+
+            // バリデータールールあるか
+            // if (array_key_exists('databases_columns_value.' . $databases_column->id, $validator_array['column'])) {
+            if (isset($validator_array['column']['databases_columns_value.' . $databases_column->id])) {
+                // 行頭（固定項目）の id 分　col をずらすため、+1
+                $rules[$col + 1] = $validator_array['column']['databases_columns_value.' . $databases_column->id];
+
+                // if ($file_extension == 'csv') {
+                    // ファイルタイプ
+                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                        // csv単体のインポートでは、ファイルタイプはインポートできないため、バリデーションルールをチェックなしで上書き。
+                        // 登録時の値は別途 null に変換してる。
+                        $rules[$col + 1] = [];
+                    }
+                // } elseif ($file_extension == 'zip') {
+                //     // zipのファイルタイプのバリデーションは、Laravelのそのまま使えなかった。
+                //     // 【対応】
+                //     // csv用の画像、動画バリデーションを作成して上書きする
+                //     // 【原因】
+                //     // 画像 = image = mimes:jpeg,png,gif,bmp,svg
+                //     // 動画 = mimes:mp4
+                //     // のmimesチェックは、Symfony\Component\HttpFoundation\File\UploadedFileクラスの値をチェックするが、
+                //     // UploadedFile::isValid() 内で php標準の is_uploaded_file() でHTTP POST でアップロードされたファイルかどうかを調べていて、
+                //     // 無理くり添付ファイルをUploadedFileクラスで newして作った変数では、is_uploaded_file() で false になり「アップロード失敗しました」とバリデーションエラーに必ずなるため。
+
+                //     if ($databases_column->column_type == \DatabaseColumnType::file) {
+                //         // バリデーション元々なし（バリデーションがないため、ここには到達しない想定）
+                //         $rules[$col + 1] = [];
+                //     } elseif ($databases_column->column_type == \DatabaseColumnType::image) {
+                //         // csv用のバリデーションで上書き
+                //         $rules[$col + 1] = ['nullable', new CustomVali_CsvImage()];
+                //     } elseif ($databases_column->column_type == \DatabaseColumnType::video) {
+                //         // csv用のバリデーションで上書き
+                //         $rules[$col + 1] = ['nullable', new CustomVali_CsvExtensions(['mp4'])];
+                //     }
+                // }
+            } else {
+                // ルールなしは空配列入れないと、バリデーション項目がずれるのでセット
+                $rules[$col + 1] = [];
+            }
+        }
+        // 行末（固定項目）
+        // 公開日時
+        // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
+        // $rules[$col + 1] = ['required', 'date_format:Y-m-d H:i'];
+        // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
+        $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
+        // 表示順
+        $rules[$col + 3] = ['nullable', 'numeric'];
+
+        // ヘッダー行が1行目なので、2行目からデータ始まる
+        $line_count = 2;
+        $errors = [];
+
+        // $filesystem = new Filesystem();
+        // $unzip_uploads_full_paths2 = [];
+        // $unzip_uploads_full_paths2 = [
+        //     'uploads/MP4_test_movie.mp4' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/MP4_test_movie.mp4',
+        //     'uploads/file2.jpg' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/file2.jpg'
+        // ];
+
+        // if ($file_extension == 'zip') {
+        //     // パターンにマッチするパス名を探す。
+        //     $unzip_uploads_full_paths = glob($unzip_dir_full_path . "*/uploads/*");
+
+        //     foreach ($unzip_uploads_full_paths as $unzip_uploads_full_path) {
+        //         $unzip_uploads_full_paths2['uploads/' . $filesystem->basename($unzip_uploads_full_path)] = $unzip_uploads_full_path;
+        //     }
+        // }
+
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+            $csv_columns = StringUtils::trimInput($csv_columns);
+
+            // 配列の頭から要素(id)を取り除いて取得
+            // CSVのデータ行の頭は、必ず固定項目のidの想定
+            $databases_inputs_id = array_shift($csv_columns);
+
+            // if (!empty($databases_inputs_id)) {
+            //     // id & databases_idの存在チェック
+            //     if (! DatabasesInputs::where('id', $databases_inputs_id)->where('databases_id', $databases_id)->exists()) {
+            //         $errors[] = $line_count . '行目のidは対象データベースに存在しません。';
+            //     }
+            // }
+
+            foreach ($csv_columns as $col => &$csv_column) {
+                // 空文字をnullに変換
+                $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
+
+                // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
+                // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
+                if (isset($databases_columns[$col])) {
+                    // csv値あり
+                    if ($csv_column) {
+                        // 複数選択型
+                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
+                            // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
+                            $csv_column = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_column);
+                            // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+                            $csv_column = StringUtils::trimInput($csv_column);
+                            // Log::debug(var_export($csv_column, true));
+                        }
+                    }
+                }
+            }
+
+            // 頭のIDをarrayに戻す
+            array_unshift($csv_columns, $databases_inputs_id);
+
+            // バリデーション
+            $validator = Validator::make($csv_columns, $rules);
+            // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
+            // Log::debug(var_export($rules, true));
+
+            $attribute_names = [];
+            // 行頭（固定項目）
+            // id
+            $attribute_names[0] = $line_count . '行目のid';
+            foreach ($databases_columns as $col => $databases_column) {
+                // 行数＋項目名
+                // 頭-固定項目 の id 分　col をずらすため、+1
+                $attribute_names[$col + 1] = $line_count . '行目の' . $databases_column->column_name;
+            }
+            // 行末（固定項目）
+            // 行頭（固定項目）の id 分で+1, 行末に追加で+1 = col+2ずらす
+            $attribute_names[$col + 2] = $line_count . '行目の公開日時';
+            $attribute_names[$col + 3] = $line_count . '行目の表示順';
+
+            $validator->setAttributeNames($attribute_names);
+            // Log::debug(var_export($attribute_names, true));
+
+            if ($validator->fails()) {
+                $errors = array_merge($errors, $validator->errors()->all());
+                // continue;
+            }
+
+            $line_count++;
+        }
+
+        return $errors;
+    }
 }
+

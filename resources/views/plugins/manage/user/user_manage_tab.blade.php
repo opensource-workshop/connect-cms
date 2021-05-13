@@ -46,6 +46,14 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                    @if ($function == "import")
+                        <span class="nav-link"><span class="active">インポート</span></span>
+                    @else
+                        <a href="{{url('/manage/user/import')}}" class="nav-link">インポート</a></li>
+                    @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "edit")
                     <span class="nav-link"><span class="active">ユーザ変更</span></span>
                 @endif
