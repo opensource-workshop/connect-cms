@@ -154,7 +154,9 @@
     $plugins = "plugins  : '" . $plugins . "',";
 
     // toolbar
-    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
+    // change: tinymce5対応
+    // $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
+    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
     $mobile_toolbar = 'undo redo | image file media | preview | code | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages ';
     // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
     if (! empty($templates_file)) {
@@ -380,8 +382,12 @@
                 // callback('movie.mp4', {source2: 'alt.ogg', poster: 'image.jpg'});
                 // console.log(meta.fieldname);
 
-                var input = document.getElementById('cc-file-upload-source-{{$frame_id}}');
+                // var input = document.getElementById('cc-file-upload-source-{{$frame_id}}');
                 // var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
+
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', '.mp4, .mp3');
 
                 input.onchange = function () {
                     var file = this.files[0];
