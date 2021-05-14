@@ -188,6 +188,7 @@
 
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js"></script>
 {{--
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
 <script type="text/javascript" src="{{url('/')}}/js/tinymce4.old/tinymce.min.js"></script>
 --}}
 <script type="text/javascript">
@@ -198,7 +199,9 @@
             selector : 'textarea',
         @endif
 
-        language : 'ja',
+        // change: app.blade.phpと同様にlocaleを見て切替
+        // language : 'ja',
+        language : '{{ app()->getLocale() }}',
 
         // change: tinymce5対応
         // base_url : '{{url("/")}}',
