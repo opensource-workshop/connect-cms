@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -35,7 +35,7 @@
             <div class="form-group row">
                 <label for="page_name" class="col-md-3 col-form-label text-md-right">CSVファイル</label>
                 <div class="col-md-9 d-sm-flex align-items-center">
-                    <input type="file" name="page_csv" class="form-control-file" id="File">
+                    <input type="file" name="page_csv" class="form-control-file" id="File" accept=".csv">
                 </div>
             </div>
 
