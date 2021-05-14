@@ -70,7 +70,7 @@
         <label class="{{$frame->getSettingLabelClass()}} pt-0" for="examinations_csv">CSVファイル <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-file">
-                <input type="file" class="custom-file-input" id="examinations_csv" name="examinations_csv">
+                <input type="file" class="custom-file-input" id="examinations_csv" name="examinations_csv" accept=".csv">
                 <label class="custom-file-label" for="examinations_csv" data-browse="参照"></label>
             </div>
             @if ($errors && $errors->has('examinations_csv'))
