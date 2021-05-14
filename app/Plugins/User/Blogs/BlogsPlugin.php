@@ -810,7 +810,9 @@ WHERE status = 0
             $blogs_post->contents_id = $old_blogs_post->contents_id;
 
             // 登録ユーザ
-            $blogs_post->created_id  = $old_blogs_post->created_id;
+            $blogs_post->created_id   = $old_blogs_post->created_id;
+            $blogs_post->created_name = $old_blogs_post->created_name;
+            $blogs_post->created_at   = $old_blogs_post->created_at;
 
             // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
             if ($blogs_post->status != 2) {
