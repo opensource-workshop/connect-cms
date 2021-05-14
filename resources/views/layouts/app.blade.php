@@ -143,7 +143,10 @@ if(isset($configs_array['body_optional_class'])){
     </button>
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto d-md-none">
+        {{-- メニュー類を右側にするため、空ulタグでnavbar-nav mr-autoを定義 --}}
+        <ul class="navbar-nav mr-auto"></ul>
+
+        <ul class="navbar-nav d-md-none">
 
             @if(isset($page_list))
 

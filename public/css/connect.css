@@ -138,12 +138,14 @@ a.cc-icon-external:after {
 
 /*  Navbar
 ------------------------------------- */
+
+/* change: ヘッダーのサイト名リンクがほぼ画面幅いっぱいになるバグ修正
 .navbar-brand {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     width: calc(100% - 100px);
-}
+} */
 
 .nav-tabs .nav-link.active {
     background-color: #f0f0f0;
