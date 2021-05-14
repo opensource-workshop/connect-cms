@@ -1,9 +1,0 @@
-style_formats : [
-    {title : '囲み(グレー)', block : 'div', classes : 'cc-column'},
-    {title : '注意ポイント', block : 'p', classes : 'cc-exclamation'},
-    {title : '※印ポイント', block : 'p', classes : 'cc-note'},
-    {title : 'アイコン(PDF)', selector : 'a', classes : 'cc-icon-pdf'},
-    {title : 'アイコン(Excel)', selector : 'a', classes : 'cc-icon-excel'},
-    {title : 'アイコン(Word)', selector : 'a', classes : 'cc-icon-word'},
-    {title : 'アイコン(外部サイト)', selector : 'a', classes : 'cc-icon-external'},
-],
