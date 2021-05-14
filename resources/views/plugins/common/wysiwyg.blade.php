@@ -185,10 +185,9 @@
 <input type="file" class="d-none" id="cc-file-upload-file3-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file4-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file5-{{$frame_id}}">
-{{-- media plugin用 --}}
-<input type="file" class="d-none" id="cc-file-upload-source-{{$frame_id}}" accept=".mp4, .mp3">
 
-<script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js"></script>
+{{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
+<script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?tinymce5"></script>
 {{--
 <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
 <script type="text/javascript" src="{{url('/')}}/js/tinymce4.old/tinymce.min.js"></script>
@@ -384,7 +383,6 @@
 
                 // var input = document.getElementById('cc-file-upload-source-{{$frame_id}}');
                 // var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
-
                 var input = document.createElement('input');
                 input.setAttribute('type', 'file');
                 input.setAttribute('accept', '.mp4, .mp3');
