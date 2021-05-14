@@ -78,7 +78,7 @@ use App\Models\Core\Configs;
 
             {{-- ヘッダーの背景色 --}}
             <div class="form-group">
-                <label class="col-form-label">ヘッダーの背景色</label>
+                <label class="col-form-label">基本ヘッダーの背景色</label>
                 <input type="text" name="base_header_color" id="base_header_color" value="{{Configs::getConfigsValueAndOld($configs, "base_header_color")}}" class="form-control" v-model="v_base_header_color" placeholder="{{ $placeholder_message }}">
                 <small class="form-text text-muted">画面の基本のヘッダー背景色（各ページで上書き可能）</small>
                 @if (!$is_ie)
@@ -114,7 +114,7 @@ use App\Models\Core\Configs;
         </div>
         {{-- ヘッダーの表示指定 --}}
         <div class="form-group">
-            <label class="col-form-label">ヘッダーの表示</label>
+            <label class="col-form-label">基本ヘッダーの表示</label>
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
@@ -138,16 +138,16 @@ use App\Models\Core\Configs;
                 </div>
             </div>
             <small class="form-text text-muted">
-                未ログイン時にヘッダーを表示するかどうかを選択<br />
-                ヘッダーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
-                PC時のヘッダー表示例）<br />
+                未ログイン時に基本ヘッダーを表示するかどうかを選択<br />
+                基本ヘッダーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
+                PC時の基本ヘッダー表示例）<br />
                 <img class="img-fluid" src="{{url('/')}}/images/core/top_header/top_header.jpg" alt="画面最上部に表示されるヘッダー">
             </small>
         </div>
 
         {{-- ヘッダーの固定指定 --}}
         <div class="form-group">
-            <label class="col-form-label">ヘッダーの固定</label>
+            <label class="col-form-label">基本ヘッダーの固定</label>
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
@@ -170,7 +170,7 @@ use App\Models\Core\Configs;
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">ヘッダーを画面上部に固定するかどうかを選択</small>
+            <small class="form-text text-muted">基本ヘッダーを画面上部に固定するかどうかを選択</small>
         </div>
 
         {{-- ログインリンクの表示 --}}
