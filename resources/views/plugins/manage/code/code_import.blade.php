@@ -72,7 +72,7 @@
             <label for="buckets_id" class="col-md-3 col-form-label text-md-right">CSVファイル <span class="badge badge-danger">必須</span></label>
             <div class="col-md-9">
                 <div class="custom-file">
-                    <input type="file" class="custom-file-input" id="codes_csv" name="codes_csv">
+                    <input type="file" class="custom-file-input" id="codes_csv" name="codes_csv" accept=".csv">
                     <label class="custom-file-label" for="codes_csv" data-browse="参照"></label>
                 </div>
                 @if ($errors && $errors->has('codes_csv'))
