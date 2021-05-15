@@ -52,13 +52,13 @@
         <tbody>
         @foreach($plugin_buckets as $plugin_bucket)
             <tr @if ($plugin_bucket->bucket_id == $frame->bucket_id) class="cc-active-tr"@endif>
-                <td>
+                <td class="d-table-cell">
                     <input type="radio" value="{{$plugin_bucket->bucket_id}}" name="select_bucket"@if ($plugin_bucket->bucket_id == $frame->bucket_id) checked @endif>
-                    <span class="{{$frame->getSettingCaptionClass()}}">{{$plugin_bucket->name}}</span>
                 </td>
-                <td>{{$plugin_bucket->name}}</td>
-                <td>{{$plugin_bucket->total_count}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">カウンター名：</span>{{$plugin_bucket->name}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">累計：</span>{{$plugin_bucket->total_count}}</td>
                 <td nowrap>
+                    <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
                     <div class="btn-group">
                         <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin_bucket->id}});">
                             <i class="fas fa-file-download"></i> ダウンロード
@@ -72,7 +72,7 @@
                         </div>
                     </div>
                 </td>
-                <td>{{$plugin_bucket->created_at}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin_bucket->created_at}}</td>
             </tr>
         @endforeach
         </tbody>
