@@ -128,14 +128,33 @@ if(isset($configs_array['body_optional_class'])){
     $body_optional_class = $classes[array_rand($classes)];
 }
 
+// [TODO] $configs, $configs_array はどちらもconfigsの値をもっていて重複しているため、今後整理予定.
+//        本来configsはarray型にする必要ないが、開発初期はわからずarray型にしていた名残。
+// $configs
+// ・管理画面：基本NULL.
+//            サイト管理＞サイト基本設定では、viewにconfigs を渡しているため、collection型になる.
+// ・一般画面：array型で category = general or user_register のみ.
+//            app\Http\Controllers\Core\ConnectController::view() で 'category=general or user_registerのconfigセットしてる
+//
+// $configs_array
+// ・管理画面：NULL.
+// ・一般画面：array[name => model] で全てのconfigs.
+//            app\Http\Controllers\Core\DefaultController::invokePost() で全てのconfigsをnameをkeyにしてarrayに詰めなおしてる。
+
 // 基本ヘッダーnavの文字色クラス
+// change: 管理画面ではviewに共通的に変数をセットする仕組みがないため、管理画面・一般画面どちらも表示するためにここで再度Configsをgetして対応(苦肉の策)
 //$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
-if (isset($configs) && isset($configs['base_header_font_color_class'])) {
-    $base_header_font_color_class = $configs['base_header_font_color_class'];
-} else {
-    $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
-}
-//dd($configs);
+// if (isset($configs) && isset($configs['base_header_font_color_class'])) {
+//     $base_header_font_color_class = $configs['base_header_font_color_class'];
+// } else {
+//     $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
+// }
+$config_font_color_class = Configs::where('name', 'base_header_font_color_class')->get();
+$base_header_font_color_class = Configs::getConfigsValue($config_font_color_class, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+
+// \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+// \Log::debug(var_export($configs, true));
+// \Log::debug(var_export($configs_array['base_header_font_color_class'], true));
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
