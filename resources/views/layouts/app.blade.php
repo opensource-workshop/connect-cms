@@ -129,7 +129,13 @@ if(isset($configs_array['body_optional_class'])){
 }
 
 // 基本ヘッダーnavの文字色クラス
-$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+//$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+if (isset($configs) && isset($configs['base_header_font_color_class'])) {
+    $base_header_font_color_class = $configs['base_header_font_color_class'];
+} else {
+    $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
+}
+//dd($configs);
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
