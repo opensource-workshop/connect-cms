@@ -88,6 +88,26 @@ use App\Models\Core\Configs;
                 @endif
             </div>
 
+            {{-- 基本のヘッダー文字色 --}}
+            <div class="form-group">
+                <label class="col-form-label">基本ヘッダーの文字色</label>
+                <div class="row">
+                    @foreach (BaseHeaderFontColorClass::getMembers() as $value => $label_name )
+                        <div class="col-md-3">
+                            <div class="custom-control custom-radio custom-control-inline">
+                                @if(Configs::getConfigsValueAndOld($configs, "base_header_font_color_class", BaseHeaderFontColorClass::navbar_dark) == $value)
+                                    <input type="radio" value="{{$value}}" id="base_header_font_color_class_{{$value}}" name="base_header_font_color_class" class="custom-control-input" checked="checked">
+                                @else
+                                    <input type="radio" value="{{$value}}" id="base_header_font_color_class_{{$value}}" name="base_header_font_color_class" class="custom-control-input">
+                                @endif
+                                <label class="custom-control-label" for="base_header_font_color_class_{{$value}}">{{$label_name}}</label>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <small class="form-text text-muted">基本ヘッダーの各リンクを含めた文字色を選択</small>
+            </div>
+
             {{-- センターエリア任意クラス --}}
             <div class="form-group">
                 <label class="col-form-label">センターエリア任意クラス</label>

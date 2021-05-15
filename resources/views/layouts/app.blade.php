@@ -127,11 +127,14 @@ if(isset($configs_array['body_optional_class'])){
     $classes = explode(',', $configs_array['body_optional_class']->value);
     $body_optional_class = $classes[array_rand($classes)];
 }
+
+// 基本ヘッダーnavの文字色クラス
+$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
 @if (Auth::check() || (isset($configs) && isset($configs['base_header_hidden']) && ($configs['base_header_hidden'] != '1')))
-<nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif" aria-label="ヘッダー">
+<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
         {{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}
