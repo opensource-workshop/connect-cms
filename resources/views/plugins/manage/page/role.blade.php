@@ -130,10 +130,10 @@
             @endforeach
         </div><!-- /.accordion -->
         <div class="text-center row mt-3">
-            <div class="col-12">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/page/edit')}}/{{$page->id}}'">
-                    <i class="fas fa-times"></i> キャンセル
-                </button>
+            <div class="col">
+                <a href="{{url('/manage/page/edit')}}/{{$page->id}}" class="btn btn-secondary mr-2">
+                    <i class="fas fa-chevron-left"></i> ページ変更へ
+                </a>
             </div>
         </div>
     </div>
