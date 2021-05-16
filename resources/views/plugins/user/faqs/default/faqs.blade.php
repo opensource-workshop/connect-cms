@@ -45,9 +45,8 @@
 
                 <div class="d-flex flex-row">
                     <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}">
-                        <span class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></span>
                         {{-- タイトル --}}
-                        {{$post->getNobrPostTitle()}}
+                        <span class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></span>{{$post->getNobrPostTitle()}}
 
                         {{-- カテゴリ --}}
                         @if($post->category)
