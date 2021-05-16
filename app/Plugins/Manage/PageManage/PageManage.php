@@ -620,6 +620,7 @@ class PageManage extends ManagePluginBase
             "function"        => __FUNCTION__,
             "plugin_name"     => "page",
             "current_page"    => $current_page,
+            "page"            => $current_page,  // bugfix: サブメニュー表示するのにpage変数必要
             "pages"           => $pages,
             "migration_pages" => $migration_pages,
         ]);
