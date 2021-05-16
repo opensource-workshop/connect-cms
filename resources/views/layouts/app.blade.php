@@ -149,8 +149,13 @@ if(isset($configs_array['body_optional_class'])){
 // } else {
 //     $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
 // }
-$config_font_color_class = Configs::where('name', 'base_header_font_color_class')->get();
-$base_header_font_color_class = Configs::getConfigsValue($config_font_color_class, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+$config_basic_header = Configs::where('category', 'general')->get();
+$base_header_font_color_class = Configs::getConfigsValue($config_basic_header, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+
+// 基本ヘッダー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
+$base_header_optional_class = Configs::getConfigsValue($config_basic_header, 'base_header_optional_class', null);
+$base_header_classes = explode(',', $base_header_optional_class);
+$base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
 
 // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
 // \Log::debug(var_export($configs, true));
@@ -159,7 +164,7 @@ $base_header_font_color_class = Configs::getConfigsValue($config_font_color_clas
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
 @if (Auth::check() || (isset($configs) && isset($configs['base_header_hidden']) && ($configs['base_header_hidden'] != '1')))
-<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif" aria-label="ヘッダー">
+<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
         {{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}

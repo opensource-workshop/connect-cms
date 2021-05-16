@@ -108,6 +108,14 @@ use App\Models\Core\Configs;
                 <small class="form-text text-muted">基本ヘッダーの各リンクを含めた文字色を選択</small>
             </div>
 
+            {{-- 基本ヘッダー任意クラス --}}
+            <div class="form-group">
+                <label class="col-form-label">基本ヘッダー任意クラス</label>
+                <input type="text" name="base_header_optional_class" id="base_header_optional_class" value="{{Configs::getConfigsValueAndOld($configs, "base_header_optional_class")}}" class="form-control">
+                <small class="form-text text-muted">基本ヘッダーに任意のclass属性を設定します。カンマ区切りで複数設定した場合、いづれかのクラスをランダムで設定します。</small>
+                <small class="form-text text-muted">（用例）基本ヘッダーCSSのランダム適用等</small>
+            </div>
+
             {{-- センターエリア任意クラス --}}
             <div class="form-group">
                 <label class="col-form-label">センターエリア任意クラス</label>
