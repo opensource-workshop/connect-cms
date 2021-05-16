@@ -389,6 +389,15 @@ a.cc-cursor-text:hover {
 .accordion > .card .faq-list-title {
     margin-bottom: -1px;
 }
+/* card子要素（FAQ）が１つのみの場合、タイトル下線が見えないためmargin-bottomをなくす */
+.accordion > .card:only-of-type .faq-list-title {
+    margin-bottom: 0;
+}
+
+/* card子要素（FAQ）が１つのみの場合、本文下線がないためborderをひく */
+.accordion > .card:only-of-type .faq-list-body {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
 
 /* LearningTasks
 ------------------------------------- */

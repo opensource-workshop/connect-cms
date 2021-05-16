@@ -70,7 +70,7 @@
 
             {{-- 記事本文 --}}
             <div id="collapseFaq{{$post->id}}" class="collapse" aria-labelledby="headingFaq{{$post->id}}" data-parent="#accordionFaq{{$frame_id}}">
-                <div class="card-body">
+                <div class="card-body faq-list-body">
 
                     <div class="d-flex flex-row">
                         <div class="pr-2"><span class="h5"><span class="badge badge-secondary">A</span></span></div>
