@@ -701,9 +701,9 @@
 
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/databases/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'">
-                <i class="fas fa-chevron-left"></i> 前へ
-            </button>
+            <a href="{{url('/')}}/plugin/databases/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i> 項目設定へ
+            </a>
         </div>
     </form>
 @endsection
