@@ -76,7 +76,7 @@
                 <th nowrap>固定リンク</th>
                 <th nowrap class="pl-1"><i class="fas fa-key" title="閲覧パスワードあり"></i></th>
                 <th nowrap class="pl-1"><i class="fas fa-lock" title="メンバーシップページ・ログインユーザ全員参加"></i></th>
-                <th nowrap class="pl-1"><i class="fas fa-users" title="ページ権限設定"></i></th>
+                <th nowrap class="text-center"><i class="fas fa-users" title="ページ権限設定"></i></th>
                 <th nowrap><i class="fas fa-paint-roller" title="背景色"></i></th>
                 <th nowrap><img src="{{asset('/images/core/layout/header_icon.png')}}" title="ヘッダー色" class="cc-page-layout-icon" alt="ヘッダー色"></th>
                 <th nowrap><img src="{{asset('/images/core/layout/1111.png')}}" class="cc-page-layout-icon" title="レイアウト" alt="レイアウト"></th>
@@ -160,8 +160,8 @@
                             <i class="fas fa-lock-open" title="公開ページ"></i>
                         @endif
                     </td>
-                    <td class="table-text p-1">
-                        <div><a href="{{url('/manage/page/role')}}/{{$page_item->id}}"><i class="fas fa-users" title="役割設定"></i></a></div>
+                    <td class="table-text p-1 text-center">
+                        <div><a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="fas fa-users" title="ページ権限設定"></i></a></div>
                     </td>
                     <td class="table-text p-1 text-center">
                         @if($page_item->background_color)
