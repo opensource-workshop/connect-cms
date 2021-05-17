@@ -169,6 +169,15 @@ class SiteManage extends ManagePluginBase
             ]
         );
 
+        // 基本ヘッダー任意クラス
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_optional_class'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_header_optional_class
+            ]
+        );
+
         // bodyタグのclass属性
         $configs = Configs::updateOrCreate(
             ['name'     => 'body_optional_class'],
