@@ -156,8 +156,8 @@
     // toolbar
     // change: tinymce5対応
     // $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
-    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
-    $mobile_toolbar = 'undo redo | image file media | preview | code | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages ';
+    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code ';
+    $mobile_toolbar = 'undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview ';
     // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
     if (! empty($templates_file)) {
         $toolbar .= '| template ';
@@ -268,21 +268,70 @@
 
         // add: tinymce5対応
         file_picker_callback: function(callback, value, meta) {
+            // console.log(meta.filetype, meta.fieldname);
 
             /* Provide file and text for the link dialog
             --------------------------------------------- */
             if (meta.filetype == 'file') {
                 // callback('mypage.html', {text: 'My text'});
 
-                // see) public\js\tinymce5\plugins\file\plugin.min.js
-                var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
+                // file plugin. フィールド名の先頭がfileであれば. file1～5
+                if (meta.fieldname.startsWith('file')) {
+                    // see) public\js\tinymce5\plugins\file\plugin.min.js
+                    var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
 
-                input.onchange = function () {
-                    var file = this.files[0];
-                    callback(file.name);
-                };
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        callback(file.name);
+                    };
 
-                input.click();
+                    input.click();
+                }
+                // link plugin
+                else if (meta.fieldname == 'url') {
+                    var input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        // callback(file.name);
+
+                        // ajax
+                        xhr = new XMLHttpRequest();
+                        xhr.withCredentials = false;
+
+                        xhr.open('POST', tinymce.activeEditor.getParam('document_base_url') + '/upload');
+
+                        xhr.onload = function() {
+                            var json;
+
+                            if (xhr.status < 200 || xhr.status >= 300) {
+                                failure('HTTP Error: ' + xhr.status);
+                                return;
+                            }
+
+                            json = JSON.parse(xhr.responseText);
+                            // console.log(json);
+
+                            if (!json || typeof json.location != 'string') {
+                                failure('Invalid JSON: ' + xhr.responseText);
+                                return;
+                            }
+
+                            callback(json.location, {text: file.name});
+                        };
+
+                        formData = new FormData();
+                        formData.append('file', file, file.name );
+
+                        var tokens = document.getElementsByName("csrf-token");
+                        formData.append('_token', tokens[0].content);
+                        formData.append('page_id', {{$page_id}});
+                        xhr.send(formData);
+                    };
+
+                    input.click();
+                }
             }
 
             /* Provide image and alt text for the image dialog
