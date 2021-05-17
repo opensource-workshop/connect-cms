@@ -466,6 +466,7 @@
         image_title: true,
         image_class_list: [
             {title: 'Responsive', value: 'img-fluid'},
+            {title: '枠線＋Responsive', value: 'img-fluid img-thumbnail'},
             {title: 'None', value: 'none'},
         ],
         invalid_styles: {
