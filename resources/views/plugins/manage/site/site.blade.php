@@ -78,7 +78,7 @@ use App\Models\Core\Configs;
 
             {{-- ヘッダーの背景色 --}}
             <div class="form-group">
-                <label class="col-form-label">基本ヘッダーの背景色</label>
+                <label class="col-form-label">ヘッダーバーの背景色</label>
                 <input type="text" name="base_header_color" id="base_header_color" value="{{Configs::getConfigsValueAndOld($configs, "base_header_color")}}" class="form-control" v-model="v_base_header_color" placeholder="{{ $placeholder_message }}">
                 <small class="form-text text-muted">画面の基本のヘッダー背景色（各ページで上書き可能）</small>
                 @if (!$is_ie)
@@ -90,7 +90,7 @@ use App\Models\Core\Configs;
 
             {{-- 基本のヘッダー文字色 --}}
             <div class="form-group">
-                <label class="col-form-label">基本ヘッダーの文字色</label>
+                <label class="col-form-label">ヘッダーバーの文字色</label>
                 <div class="row">
                     @foreach (BaseHeaderFontColorClass::getMembers() as $value => $label_name )
                         <div class="col-md-3">
@@ -105,15 +105,15 @@ use App\Models\Core\Configs;
                         </div>
                     @endforeach
                 </div>
-                <small class="form-text text-muted">基本ヘッダーの各リンクを含めた文字色を選択</small>
+                <small class="form-text text-muted">ヘッダーバーの各リンクを含めた文字色を選択</small>
             </div>
 
-            {{-- 基本ヘッダー任意クラス --}}
+            {{-- ヘッダーバー任意クラス --}}
             <div class="form-group">
-                <label class="col-form-label">基本ヘッダー任意クラス</label>
+                <label class="col-form-label">ヘッダーバーの任意クラス</label>
                 <input type="text" name="base_header_optional_class" id="base_header_optional_class" value="{{Configs::getConfigsValueAndOld($configs, "base_header_optional_class")}}" class="form-control">
-                <small class="form-text text-muted">基本ヘッダーに任意のclass属性を設定します。カンマ区切りで複数設定した場合、いづれかのクラスをランダムで設定します。</small>
-                <small class="form-text text-muted">（用例）基本ヘッダーCSSのランダム適用等</small>
+                <small class="form-text text-muted">ヘッダーバーに任意のclass属性を設定します。カンマ区切りで複数設定した場合、いづれかのクラスをランダムで設定します。</small>
+                <small class="form-text text-muted">（用例）ヘッダーバーCSSのランダム適用等</small>
             </div>
 
             {{-- センターエリア任意クラス --}}
@@ -142,7 +142,7 @@ use App\Models\Core\Configs;
         </div>
         {{-- ヘッダーの表示指定 --}}
         <div class="form-group">
-            <label class="col-form-label">基本ヘッダーの表示</label>
+            <label class="col-form-label">ヘッダーバーの表示</label>
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
@@ -166,16 +166,16 @@ use App\Models\Core\Configs;
                 </div>
             </div>
             <small class="form-text text-muted">
-                未ログイン時に基本ヘッダーを表示するかどうかを選択<br />
-                基本ヘッダーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
-                PC時の基本ヘッダー表示例）<br />
+                未ログイン時にヘッダーバーを表示するかどうかを選択<br />
+                ヘッダーバーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
+                PC時のヘッダーバー表示例）<br />
                 <img class="img-fluid" src="{{url('/')}}/images/core/top_header/top_header.jpg" alt="画面最上部に表示されるヘッダー">
             </small>
         </div>
 
         {{-- ヘッダーの固定指定 --}}
         <div class="form-group">
-            <label class="col-form-label">基本ヘッダーの固定</label>
+            <label class="col-form-label">ヘッダーバーの固定</label>
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
@@ -198,7 +198,7 @@ use App\Models\Core\Configs;
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">基本ヘッダーを画面上部に固定するかどうかを選択</small>
+            <small class="form-text text-muted">ヘッダーバーを画面上部に固定するかどうかを選択</small>
         </div>
 
         {{-- ログインリンクの表示 --}}

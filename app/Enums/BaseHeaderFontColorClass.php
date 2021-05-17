@@ -5,7 +5,7 @@ namespace App\Enums;
 use App\Enums\EnumsBase;
 
 /**
- * 基本ヘッダーnavの文字色クラス
+ * ヘッダーバーnavの文字色クラス
  */
 final class BaseHeaderFontColorClass extends EnumsBase
 {

@@ -141,7 +141,7 @@ if(isset($configs_array['body_optional_class'])){
 // ・一般画面：array[name => model] で全てのconfigs.
 //            app\Http\Controllers\Core\DefaultController::invokePost() で全てのconfigsをnameをkeyにしてarrayに詰めなおしてる。
 
-// 基本ヘッダーnavの文字色クラス
+// ヘッダーバーnavの文字色クラス
 // change: 管理画面ではviewに共通的に変数をセットする仕組みがないため、管理画面・一般画面どちらも表示するためにここで再度Configsをgetして対応(苦肉の策)
 //$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 // if (isset($configs) && isset($configs['base_header_font_color_class'])) {
@@ -152,7 +152,7 @@ if(isset($configs_array['body_optional_class'])){
 $config_basic_header = Configs::where('category', 'general')->get();
 $base_header_font_color_class = Configs::getConfigsValue($config_basic_header, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 
-// 基本ヘッダー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
+// ヘッダーバー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
 $base_header_optional_class = Configs::getConfigsValue($config_basic_header, 'base_header_optional_class', null);
 $base_header_classes = explode(',', $base_header_optional_class);
 $base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
