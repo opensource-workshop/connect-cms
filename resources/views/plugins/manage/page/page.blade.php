@@ -160,8 +160,16 @@
                             <i class="fas fa-lock-open" title="公開ページ"></i>
                         @endif
                     </td>
-                    <td class="table-text p-1 text-center">
-                        <div><a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="fas fa-users" title="ページ権限設定"></i></a></div>
+                    <td class="table-text p-1 text-center" nowrap>
+                        @if ($page_item->page_roles->isEmpty())
+                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-success btn-sm">
+                                <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限なし</span>
+                            </a>
+                        @else
+                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限あり</span>
+                            </a>
+                        @endif
                     </td>
                     <td class="table-text p-1 text-center">
                         @if($page_item->background_color)

@@ -75,7 +75,7 @@ class Group extends Model
         foreach (config('cc_role.CC_ROLE_LIST') as $role_name => $cc_role_name) {
             // 管理権限は対象外
             if (stripos($role_name, 'admin_') === 0) {
-                cntinue;
+                continue;
             }
             // Role を保持しているか確認
             if ($this->hasRole($role_name)) {
