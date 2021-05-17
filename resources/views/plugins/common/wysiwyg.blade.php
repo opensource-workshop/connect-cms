@@ -187,7 +187,7 @@
 <input type="file" class="d-none" id="cc-file-upload-file5-{{$frame_id}}">
 
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
-<script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?tinymce5"></script>
+<script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
 {{--
 <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
 <script type="text/javascript" src="{{url('/')}}/js/tinymce4.old/tinymce.min.js"></script>
@@ -199,6 +199,8 @@
         @else
             selector : 'textarea',
         @endif
+
+        cache_suffix: '?v=5.8.0',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
