@@ -81,6 +81,18 @@ class PageManage extends ManagePluginBase
         $return_obj = 'flat';
         $pages = Page::defaultOrderWithDepth($return_obj);
 
+
+        // ページ権限を取得してGroup オブジェクトに保持する。
+        $page_roles = PageRole::join('groups', 'groups.id', '=', 'page_roles.group_id')
+                ->whereNull('groups.deleted_at')
+                ->where('page_roles.role_value', 1)
+                ->get();
+        // \Log::debug(var_export($page_roles, true));
+
+        foreach ($pages as &$page) {
+            $page->page_roles = $page_roles->where('page_id', $page->id);
+        }
+
         // 移動先用にコピー
         $pages_select = $pages;
 
@@ -620,6 +632,7 @@ class PageManage extends ManagePluginBase
             "function"        => __FUNCTION__,
             "plugin_name"     => "page",
             "current_page"    => $current_page,
+            "page"            => $current_page,  // bugfix: サブメニュー表示するのにpage変数必要
             "pages"           => $pages,
             "migration_pages" => $migration_pages,
         ]);
