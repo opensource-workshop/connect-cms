@@ -267,6 +267,8 @@ $app_array = [
         'LearningtasksExaminationColumn' => \App\Enums\LearningtasksExaminationColumn::class,
         'CounterDesignType' => \App\Enums\CounterDesignType::class,
         'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
+        'BlogFrameConfig' => \App\Enums\BlogFrameConfig::class,
+        'BlogDisplayCreatedName' => \App\Enums\BlogDisplayCreatedName::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

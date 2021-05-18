@@ -31,6 +31,7 @@ use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 
 use App\Plugins\PluginBase;
 
@@ -75,6 +76,11 @@ class UserPluginBase extends PluginBase
      *  Configs オブジェクト
      */
     public $configs = null;
+
+    /**
+     * FrameConfig オブジェクト
+     */
+    public $frame_configs = null;
 
     /**
      *  アクション
@@ -247,6 +253,9 @@ class UserPluginBase extends PluginBase
                 return $ret;
             }
         }
+
+
+        $this->setFrameConfigs();
 
         // 画面(コアの cms_frame)で指定されたクラスのアクションのメソッドを呼び出す。
         // 戻り値は各アクションでのメソッドでview 関数などで生成したHTML なので、そのままreturn して元の画面に戻す。
@@ -1167,6 +1176,29 @@ class UserPluginBase extends PluginBase
             return "";
         }
         return $this->frame->plugin_name;
+    }
+
+    /**
+     * フレーム設定を設定する。
+     *
+     * @param $request リクエスト
+     */
+    protected function setFrameConfigs($request = null)
+    {
+        if (is_null($request)) {
+            $request = $this->request;
+        }
+        $this->frame_configs = FrameConfig::getConfigs($request->get('frame_configs'), $this->frame->id);
+        \View::share('frame_configs', $this->frame_configs);
+    }
+
+    /**
+     * フレーム設定を再取得し、設定しなおす。
+     */
+    protected function refreshFrameConfigs()
+    {
+        $this->frame_configs = FrameConfig::getConfigs(FrameConfig::get(), $this->frame->id);
+        \View::share('frame_configs', $this->frame_configs);
     }
 
     /**

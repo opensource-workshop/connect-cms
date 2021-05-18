@@ -10,6 +10,7 @@ use DB;
 use Session;
 
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -569,6 +570,8 @@ WHERE status = 0
                 $blogs_post->tags = $blogs_posts_tags[$blogs_post->id];
             }
         }
+
+        $this->setFrameConfigs($request);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -1459,6 +1462,10 @@ EOD;
             $blog_frame_setting = new BlogsFrames();
         }
 
+        // // frame_configs
+        // $this->frame_configs = $request->get('frame_configs');
+        // $frame_configs = FrameConfig::getConfigs($this->frame_configs, $frame_id);
+
         // Blogフレーム設定画面を呼び出す。
         return $this->view(
             'blogs_setting_frame', [
@@ -1502,6 +1509,32 @@ EOD;
             ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value, 'important_view' => $request->important_view ]
         );
 
+        //　フレーム設定保存
+        $this->saveFrameConfigs($request, $frame_id);
+        $this->refreshFrameConfigs();
+
         return $this->settingBlogFrame($request, $page_id, $frame_id);
+    }
+
+    /**
+     * フレーム設定を保存する。
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     */
+    private function saveFrameConfigs($request, $frame_id)
+    {
+        $configs = \BlogFrameConfig::getMemberKeys();
+        foreach ($configs as $key => $value) {
+
+            if (empty($request->$value)) {
+                return;
+            }
+
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $value],
+                ['value' => $request->$value]
+            );
+        }
     }
 }
