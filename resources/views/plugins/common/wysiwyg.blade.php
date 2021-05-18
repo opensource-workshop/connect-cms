@@ -186,6 +186,10 @@
 <input type="file" class="d-none" id="cc-file-upload-file4-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file5-{{$frame_id}}">
 
+{{-- bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
+    see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
+<input type="file" class="d-none" id="cc-file-upload-file-{{$frame_id}}">
+
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
 {{--
@@ -289,8 +293,14 @@
                 }
                 // link plugin
                 else if (meta.fieldname == 'url') {
-                    var input = document.createElement('input');
-                    input.setAttribute('type', 'file');
+                    // bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
+                    // var input = document.createElement('input');
+                    // input.setAttribute('type', 'file');
+                    var input = document.getElementById('cc-file-upload-file-{{$frame_id}}');
+                    // 他でも使いまわすため、ここでクリア
+                    input.value = '';
+
+                    input.removeAttribute('accept');
 
                     input.onchange = function () {
                         var file = this.files[0];
@@ -340,8 +350,13 @@
                 // callback('myimage.jpg', {alt: 'My alt text'});
 
                 /* and here's our custom image picker*/
-                var input = document.createElement('input');
-                input.setAttribute('type', 'file');
+                // bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
+                // var input = document.createElement('input');
+                // input.setAttribute('type', 'file');
+                var input = document.getElementById('cc-file-upload-file-{{$frame_id}}');
+                // 他でも使いまわすため、ここでクリア
+                input.value = '';
+
                 // console.log(meta.fieldname);
 
                 // input.setAttribute('accept', 'image/*');
@@ -434,10 +449,13 @@
                 // callback('movie.mp4', {source2: 'alt.ogg', poster: 'image.jpg'});
                 // console.log(meta.fieldname);
 
-                // var input = document.getElementById('cc-file-upload-source-{{$frame_id}}');
-                // var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
-                var input = document.createElement('input');
-                input.setAttribute('type', 'file');
+                // bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
+                // var input = document.createElement('input');
+                // input.setAttribute('type', 'file');
+                var input = document.getElementById('cc-file-upload-file-{{$frame_id}}');
+                // 他でも使いまわすため、ここでクリア
+                input.value = '';
+
                 input.setAttribute('accept', '.mp4, .mp3');
 
                 input.onchange = function () {
