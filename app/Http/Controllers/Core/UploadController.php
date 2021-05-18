@@ -18,6 +18,8 @@ use App\Models\Core\Configs;
 
 use App\Traits\ConnectCommonTrait;
 
+// use Intervention\Image\Facades\Image;
+
 /**
  * アップロードファイルの送出処理
  *
@@ -308,8 +310,10 @@ EOD;
 
         // ファイルアップロードには、編集者権限が必要
         if (!$this->isCan('role_reporter')) {
-            echo json_encode(array('location' => 'error'));
-            return;
+            // change: LaravelはArrayを返すだけで JSON形式になる
+            // echo json_encode(array('location' => 'error'));
+            // return;
+            return array('location' => 'error');
         }
 
         // 画像アップロードの場合（TinyMCE標準プラグイン）
@@ -317,23 +321,26 @@ EOD;
             if ($request->file('file')->isValid()) {
                 // uploads テーブルに情報追加、ファイルのid を取得する
                 $upload = Uploads::create([
-                   'client_original_name' => $request->file('file')->getClientOriginalName(),
-                   'mimetype'             => $request->file('file')->getClientMimeType(),
-                   'extension'            => $request->file('file')->getClientOriginalExtension(),
-                   'size'                 => $request->file('file')->getClientSize(),
-                   'page_id'              => $request->page_id,
+                    'client_original_name' => $request->file('file')->getClientOriginalName(),
+                    'mimetype'             => $request->file('file')->getClientMimeType(),
+                    'extension'            => $request->file('file')->getClientOriginalExtension(),
+                    'size'                 => $request->file('file')->getSize(),
+                    'page_id'              => $request->page_id,
                 ]);
 
                 $directory = $this->getDirectory($upload->id);
                 $upload_path = $request->file('file')->storeAs($directory, $upload->id . '.' . $request->file('file')->getClientOriginalExtension());
-                echo json_encode(array('location' => url('/') . '/file/' . $upload->id));
+                // change: LaravelはArrayを返すだけで JSON形式になる
+                // echo json_encode(array('location' => url('/') . '/file/' . $upload->id));
+                return array('location' => url('/') . '/file/' . $upload->id);
+
                 /*
                 $id = DB::table('uploads')->insertGetId([
-                   'client_original_name' => $request->file('file')->getClientOriginalName(),
-                   'mimetype'             => $request->file('file')->getClientMimeType(),
-                   'extension'            => $request->file('file')->getClientOriginalExtension(),
-                   'size'                 => $request->file('file')->getClientSize(),
-                   'page_id'              => $request->page_id,
+                    'client_original_name' => $request->file('file')->getClientOriginalName(),
+                    'mimetype'             => $request->file('file')->getClientMimeType(),
+                    'extension'            => $request->file('file')->getClientOriginalExtension(),
+                    'size'                 => $request->file('file')->getClientSize(),
+                    'page_id'              => $request->page_id,
                 ]);
 
                 $directory = $this->getDirectory($id);
@@ -341,8 +348,73 @@ EOD;
                 echo json_encode(array('location' => url('/') . '/file/' . $id));
                 */
             }
-            return;
+            // change: LaravelはArrayを返すだけで JSON形式になる
+            // return;
+            return array('location' => 'error');
         }
+
+        // // 画像アップロードの場合（TinyMCE標準プラグイン）
+        // if ($request->hasFile('image')) {
+        //     if ($request->file('image')->isValid()) {
+
+        //         $image_file = $request->file('image');
+        //         $extension = strtolower($image_file->getClientOriginalExtension());
+        //         $is_resize = false;
+
+        //         // GDが有効
+        //         if (function_exists('gd_info')) {
+        //             // 対象画像 jpg|png. gitはアニメーションgitが変換するとアニメーションしなくなる＆主要な画像形式ではないので外しました。
+        //             // if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'gif' || $extension == 'png') {
+        //             if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'jpe' || $extension == 'png') {
+        //                 // 幅、高さが0より大きい
+        //                 if ((int)$request->width > 0 && (int)$request->height > 0) {
+        //                     // リサイズ
+        //                     $is_resize = true;
+        //                 }
+        //             }
+        //         }
+
+        //         if ($is_resize) {
+        //             // リサイズ
+
+        //             // 画像を横幅300px・縦幅アスペクト比維持の自動サイズへリサイズ
+        //             // $image = Image::make($file)
+        //             //     ->resize(300, null, function ($constraint) {
+        //             //         $constraint->aspectRatio();
+        //             //     });
+        //             // GDが無いと GD Library extension not available with this PHP installation. エラーになる
+        //             $image = Image::make($image_file)->resize($request->width, $request->height);
+
+        //             $upload = Uploads::create([
+        //                 'client_original_name' => $image_file->getClientOriginalName(),
+        //                 'mimetype'             => $image_file->getClientMimeType(),
+        //                 'extension'            => $image_file->getClientOriginalExtension(),
+        //                 'size'                 => $image->filesize(),
+        //                 'page_id'              => $request->page_id,
+        //             ]);
+
+        //             $directory = $this->getDirectory($upload->id);
+        //             $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $image_file->getClientOriginalExtension());
+        //         } else {
+        //             // そのまま画像
+
+        //             // uploads テーブルに情報追加、ファイルのid を取得する
+        //             $upload = Uploads::create([
+        //                 'client_original_name' => $image_file->getClientOriginalName(),
+        //                 'mimetype'             => $image_file->getClientMimeType(),
+        //                 'extension'            => $image_file->getClientOriginalExtension(),
+        //                 'size'                 => $image_file->getSize(),
+        //                 'page_id'              => $request->page_id,
+        //             ]);
+
+        //             $directory = $this->getDirectory($upload->id);
+        //             $upload_path = $image_file->storeAs($directory, $upload->id . '.' . $image_file->getClientOriginalExtension());
+        //         }
+
+        //         return array('location' => url('/') . '/file/' . $upload->id);
+        //     }
+        //     return array('location' => 'error');
+        // }
 
 
         // アップロードしたパスの配列
@@ -371,11 +443,11 @@ EOD;
                 if ($request->file($input_name)->isValid()) {
                     // uploads テーブルに情報追加、ファイルのid を取得する
                     $upload = Uploads::create([
-                       'client_original_name' => $request->file($input_name)->getClientOriginalName(),
-                       'mimetype'             => $request->file($input_name)->getClientMimeType(),
-                       'extension'            => $request->file($input_name)->getClientOriginalExtension(),
-                       'size'                 => $request->file($input_name)->getClientSize(),
-                       'page_id'              => $request->page_id,
+                        'client_original_name' => $request->file($input_name)->getClientOriginalName(),
+                        'mimetype'             => $request->file($input_name)->getClientMimeType(),
+                        'extension'            => $request->file($input_name)->getClientOriginalExtension(),
+                        'size'                 => $request->file($input_name)->getSize(),
+                        'page_id'              => $request->page_id,
                     ]);
 
                     $directory = $this->getDirectory($upload->id);
@@ -398,8 +470,10 @@ EOD;
             }
         }
 
+        // change: LaravelはArrayを返すだけで JSON形式になる
         // アップロードファイルのパスをHTMLにして、さらにjsonに変換してechoでクライアント（WYSIWYGのAjax通信）へ返す。
-        $msg_json = json_encode($msg_array);
-        echo $msg_json;
+        // $msg_json = json_encode($msg_array);
+        // echo $msg_json;
+        return $msg_array;
     }
 }
