@@ -344,7 +344,8 @@
                 input.setAttribute('type', 'file');
                 // console.log(meta.fieldname);
 
-                input.setAttribute('accept', 'image/*');
+                // input.setAttribute('accept', 'image/*');
+                input.setAttribute('accept', '.jpg, .jpeg, .jpe, .png, .gif');
 
                 // image plugin
                 if (meta.fieldname == 'src') {
@@ -373,7 +374,8 @@
                             blobCache.add(blobInfo);
 
                             /* call the callback and populate the Title field with the file name */
-                            callback(blobInfo.blobUri(), { title: file.name });
+                            // callback(blobInfo.blobUri(), { title: file.name });
+                            callback(blobInfo.blobUri(), { alt: file.name });
                             // callback(file.name);
                         };
                         reader.readAsDataURL(file);
@@ -513,8 +515,10 @@
             return html;
         },
 
-        image_caption: true,
-        image_title: true,
+        // delete: 不要なためコメントアウト
+        // image_caption: true,
+        // image_title: true,
+
         image_class_list: [
             {title: 'Responsive', value: 'img-fluid'},
             {title: '枠線＋Responsive', value: 'img-fluid img-thumbnail'},
@@ -598,10 +602,18 @@
             // else
             //     fileName = blobInfo.filename();
             fileName = blobInfo.filename();
+            // console.log(blobInfo);
+
+            // [TODO] とれない
+            // width = jQuery('.tox-textfield')[2].value;
+            // height = jQuery('.tox-textfield')[3].value;
 
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);
             formData.append('file', blobInfo.blob(), fileName);
+            // formData.append('image', blobInfo.blob(), fileName);
+            // formData.append('width', width);
+            // formData.append('height', height);
             formData.append('page_id', {{$page_id}});
 
             xhr.send(formData);
