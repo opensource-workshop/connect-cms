@@ -359,8 +359,10 @@
 
                 // console.log(meta.fieldname);
 
+                // change: laravelでアップできる拡張子と同じにする。see) \Illuminate\Validation\Concerns\ValidatesAttributes::validateImage()
                 // input.setAttribute('accept', 'image/*');
-                input.setAttribute('accept', '.jpg, .jpeg, .jpe, .png, .gif');
+                // input.setAttribute('accept', '.jpg, .jpeg, .jpe, .png, .gif');
+                input.setAttribute('accept', '.jpeg, .jpg, .png, .gif, .bmp, .svg, .webp');
 
                 // image plugin
                 if (meta.fieldname == 'src') {

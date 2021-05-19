@@ -2804,9 +2804,14 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_csv'  => [
                     'required',
                     'file',
-                    'mimes:csv,txt,zip', // mimesの都合上text/csvなのでtxtも許可が必要
-                    'mimetypes:text/plain,application/zip',
+                    'mimes:csv,txt,zip,html', // mimesの都合上text/csvなのでtxtも許可が必要. ウィジウィグのHTMLがcsvに含まれているとhtmlと判定されるため、ファイル拡張子チェックでhtmlを許可
+                    'mimetypes:text/plain,application/zip,text/html',
                 ],
+            ];
+            // csvを通すため、txt,htmlを追加しているため、メッセージをカスタマイズする。
+            $messages = [
+                'databases_csv.mimes' => ':attributeにはcsv, zipのうちいずれかの形式のファイルを指定してください。',
+                'databases_csv.mimetypes' => ':attributeにはtext/plain, application/zipのうちいずれかの形式のファイルを指定してください。',
             ];
         } else {
             // csv
@@ -2814,14 +2819,19 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_csv'  => [
                     'required',
                     'file',
-                    'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                    'mimetypes:text/plain',
+                    'mimes:csv,txt,html', // mimesの都合上text/csvなのでtxtも許可が必要. ウィジウィグのHTMLがcsvに含まれているとhtmlと判定されるため、ファイル拡張子チェックでhtmlを許可
+                    'mimetypes:text/plain,text/html',
                 ],
+            ];
+            // csvを通すため、txt,htmlを追加しているため、メッセージをカスタマイズする。
+            $messages = [
+                'databases_csv.mimes' => ':attributeにはcsv形式のファイルを指定してください。',
+                'databases_csv.mimetypes' => ':attributeにはtext/plain形式のファイルを指定してください。',
             ];
         }
 
         // 画面エラーチェック
-        $validator = Validator::make($request->all(), $rules);
+        $validator = Validator::make($request->all(), $rules, $messages);
         $validator->setAttributeNames([
             'databases_csv'  => 'CSVファイル',
         ]);
