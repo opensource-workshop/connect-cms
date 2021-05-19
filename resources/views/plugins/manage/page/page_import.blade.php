@@ -34,8 +34,12 @@
 
             <div class="form-group row">
                 <label for="page_name" class="col-md-3 col-form-label text-md-right">CSVファイル</label>
-                <div class="col-md-9 d-sm-flex align-items-center">
-                    <input type="file" name="page_csv" class="form-control-file" id="File" accept=".csv">
+                <div class="col-md-9">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="page_csv" name="page_csv" accept=".csv">
+                        <label class="custom-file-label" for="page_csv" data-browse="参照"></label>
+                    </div>
+                    <small class="text-muted">※ アップロードできる最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
                 </div>
             </div>
 
@@ -71,5 +75,11 @@
     </div>
 </div>
 
+{{-- custom-file-inputクラスでファイル選択時にファイル名表示 --}}
+<script>
+    $('.custom-file-input').on('change',function(){
+        $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+    })
+</script>
 
 @endsection
