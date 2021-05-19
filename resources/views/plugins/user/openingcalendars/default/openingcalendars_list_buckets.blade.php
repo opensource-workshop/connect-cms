@@ -31,7 +31,12 @@
             <tr @if ($openingcalendar_frame->openingcalendars_id == $openingcalendar->id) class="active"@endif>
                 <td class="d-table-cell"><input type="radio" value="{{$openingcalendar->bucket_id}}" name="select_bucket"@if ($openingcalendar_frame->bucket_id == $openingcalendar->bucket_id) checked @endif></td>
                 <td><span class="{{$frame->getSettingCaptionClass()}}">開館カレンダー名：</span>{{$openingcalendar->openingcalendar_name}}</td>
-                <td><span class="{{$frame->getSettingCaptionClass()}}">詳細：</span><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/openingcalendars/editBuckets/{{$page->id}}/{{$frame_id}}/{{$openingcalendar->id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 設定変更</button></td>
+                <td>
+                    <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
+                    <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/openingcalendars/editBuckets/{{$page->id}}/{{$frame_id}}/{{$openingcalendar->id}}#frame-{{$frame->id}}">
+                        <i class="far fa-edit"></i> 設定変更
+                    </a>
+                </td>
                 <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$openingcalendar->created_at}}</td>
             </tr>
         @endforeach
@@ -40,12 +45,12 @@
     </div>
 
     <div class="text-center">
-        {{ $openingcalendars->links() }}
+        {{ $openingcalendars->fragment('frame-' . $frame_id)->links() }}
     </div>
 
-    <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i>キャンセル</button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>変更</button>
+    <div class="form-group text-center mt-3">
+        <a class="btn btn-secondary mr-3" href="{{URL::to($page->permanent_link)}}"><i class="fas fa-times"></i> キャンセル</a>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>表示開館カレンダー変更</button>
     </div>
 </form>
 @endsection
