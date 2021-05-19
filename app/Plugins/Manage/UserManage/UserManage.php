@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-// use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rule;
 use DB;
 
 use App\Models\Core\Configs;
@@ -615,12 +615,14 @@ class UserManage extends ManagePluginBase
         $validator_array = [
             'column' => [
                 'name' => 'required|string|max:255',
+                'userid' => Rule::unique('users', 'userid')->ignore($id),      // ログインID
                 'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
                 'password' => 'nullable|string|min:6|confirmed',
                 'status' => 'required',
             ],
             'message' => [
                 'name' => 'ユーザ名',
+                'userid' => 'ログインID',
                 'email' => 'eメール',
                 'password' => 'パスワード',
                 'status' => '状態',
@@ -1399,12 +1401,42 @@ class UserManage extends ManagePluginBase
             return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
         }
 
+
+        // $validator_array = [
+        //     'column' => [
+        //         'name' => 'required|string|max:255',
+        //         'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
+        //         'password' => 'nullable|string|min:6|confirmed',
+        //         'status' => 'required',
+        //     ],
+        //     'message' => [
+        //         'name' => 'ユーザ名',
+        //         'email' => 'eメール',
+        //         'password' => 'パスワード',
+        //         'status' => '状態',
+        //     ]
+        // ];
+
+        // // ユーザーのカラム
+        // $users_columns = UsersTool::getUsersColumns();
+
+        // foreach ($users_columns as $users_column) {
+        //     // バリデータールールをセット
+        //     $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
+        // }
+
         $csv_rules = [
+            // id
             0 => [
                 'nullable',
                 'numeric',
                 'exists:users,id'
-            ],  // id
+            ],
+            // ログインID
+            // 1 => [
+            //     'required',
+            //     'exists:users,id'
+            // ],
             // 1 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:2,3', 'before_or_equal:2'], // 試験開始日時
             // 2 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:1,3'],          // 試験終了日時
             // 3 => ['nullable', 'date_format:"Y/n/j H:i"', 'before_or_equal:1'],          // 申込終了日時
