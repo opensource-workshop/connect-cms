@@ -615,7 +615,12 @@ class UserManage extends ManagePluginBase
         $validator_array = [
             'column' => [
                 'name' => 'required|string|max:255',
-                'userid' => Rule::unique('users', 'userid')->ignore($id),      // ログインID
+                // ログインID
+                'userid' => [
+                    'required',
+                    'max:255',
+                    Rule::unique('users', 'userid')->ignore($id),
+                ],
                 'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
                 'password' => 'nullable|string|min:6|confirmed',
                 'status' => 'required',

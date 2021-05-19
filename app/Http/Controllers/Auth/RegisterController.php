@@ -76,6 +76,7 @@ class RegisterController extends Controller
             // 項目名
             'message' => [
                 'name' => 'ユーザ名',
+                'userid' => 'ログインID',
                 'email' => 'eメール',
                 'password' => 'パスワード',
                 'status' => '状態',
