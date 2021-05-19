@@ -78,6 +78,7 @@
                     <div class="text-danger">{{$message}}</div>
                 @endforeach
             @endif
+            <small class="text-muted">※ アップロードできる最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
         </div>
     </div>
 
