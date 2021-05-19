@@ -33,7 +33,9 @@
                 <td><span class="{{$frame->getSettingCaptionClass()}}">OPAC名：</span>{{$opac->opac_name}}</td>
                 <td>
                     <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
-                    <button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 設定変更</button>
+                    <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}">
+                        <i class="far fa-edit"></i> 設定変更
+                    </a>
                 </td>
                 <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$opac->created_at}}</td>
             </tr>
@@ -43,11 +45,11 @@
     </div>
 
     <div class="text-center">
-        {{ $opacs->links() }}
+        {{ $opacs->fragment('frame-' . $frame_id)->links() }}
     </div>
 
-    <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+    <div class="form-group text-center mt-3">
+        <a class="btn btn-secondary mr-3" href="{{URL::to($page->permanent_link)}}"><i class="fas fa-times"></i> キャンセル</a>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示OPAC変更</button>
     </div>
 </form>
