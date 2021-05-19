@@ -80,12 +80,18 @@ use App\Utilities\Zip\UnzipUtils;
         <label class="{{$frame->getSettingLabelClass()}} pt-0">CSVファイル <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             @if (UnzipUtils::useZipArchive())
-                <input type="file" name="databases_csv" class="form-control-file" accept=".csv, .zip">
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="databases_csv{{$frame->id}}" name="databases_csv" accept=".csv, .zip">
+                    <label class="custom-file-label" for="databases_csv{{$frame->id}}" data-browse="参照"></label>
+                </div>
                 <small class="text-muted">
                     ※ CSVファイル・ZIPファイルに対応しています。
                 </small>
             @else
-                <input type="file" name="databases_csv" class="form-control-file" accept=".csv">
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="databases_csv{{$frame->id}}" name="databases_csv" accept=".csv">
+                    <label class="custom-file-label" for="databases_csv{{$frame->id}}" data-browse="参照"></label>
+                </div>
             @endif
             @if ($errors && $errors->has('databases_csv'))
                 @foreach ($errors->get('databases_csv') as $message)
@@ -121,5 +127,12 @@ use App\Utilities\Zip\UnzipUtils;
         </button>
     </div>
 </form>
+
+{{-- custom-file-inputクラスでファイル選択時にファイル名表示 --}}
+<script>
+    $('.custom-file-input').on('change',function(){
+        $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+    })
+</script>
 
 @endsection
