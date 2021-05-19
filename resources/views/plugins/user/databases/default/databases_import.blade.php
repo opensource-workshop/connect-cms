@@ -79,11 +79,13 @@ use App\Utilities\Zip\UnzipUtils;
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} pt-0">CSVファイル <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="file" name="databases_csv" class="form-control-file" accept=".csv">
             @if (UnzipUtils::useZipArchive())
+                <input type="file" name="databases_csv" class="form-control-file" accept=".csv, .zip">
                 <small class="text-muted">
                     ※ CSVファイル・ZIPファイルに対応しています。
                 </small>
+            @else
+                <input type="file" name="databases_csv" class="form-control-file" accept=".csv">
             @endif
             @if ($errors && $errors->has('databases_csv'))
                 @foreach ($errors->get('databases_csv') as $message)
