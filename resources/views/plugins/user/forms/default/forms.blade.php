@@ -79,11 +79,19 @@
 
                 {{-- 項目 ※まとめ設定行 --}}
                 @include('plugins.user.forms.default.forms_input_' . $group_row->column_type, ['form_obj' => $group_row, 'label_id' => 'column-'.$group_row->id.'-'.$frame_id])
-                <div class="small {{ $group_row->caption_color }}">{!! nl2br($group_row->caption) !!}</div>
+                @php
+                    $caption = nl2br($group_row->caption);
+                    $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                @endphp
+                <div class="small {{ $group_row->caption_color }}">{!! $caption !!}</div>
                     </div>
             @endforeach
                 </div>
-                <div class="small {{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
+                @php
+                    $caption = nl2br($form_column->caption);
+                    $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                @endphp
+                <div class="small {{ $form_column->caption_color }}">{!! $caption !!}</div>
             </div>
             @break
         {{-- 項目 ※まとめ未設定行 --}}
@@ -113,7 +121,11 @@
 
             <div class="col-sm">
                 @include('plugins.user.forms.default.forms_input_' . $form_column->column_type, ['form_obj' => $form_column, 'label_id' => 'column-'.$form_column->id.'-'.$frame_id])
-                <div class="small {{ $form_column->caption_color }}">{!! nl2br($form_column->caption) !!}</div>
+                @php
+                    $caption = nl2br($form_column->caption);
+                    $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                @endphp
+                <div class="small {{ $form_column->caption_color }}">{!! $caption !!}</div>
             </div>
         @endswitch
     </div>
