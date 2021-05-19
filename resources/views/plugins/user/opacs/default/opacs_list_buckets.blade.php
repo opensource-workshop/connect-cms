@@ -17,7 +17,7 @@
     {{ csrf_field() }}
 
     <div class="form-group">
-        <table class="table table-hover" style="margin-bottom: 0;">
+        <table class="table table-hover {{$frame->getSettingTableClass()}}">
         <thead>
             <tr>
                 <th></th>
@@ -29,10 +29,10 @@
         <tbody>
         @foreach($opacs as $opac)
             <tr @if ($opac_frame->opacs_id == $opac->id) class="active"@endif>
-                <td><input type="radio" value="{{$opac->bucket_id}}" name="select_bucket"@if ($opac_frame->bucket_id == $opac->bucket_id) checked @endif></td>
-                <td>{{$opac->opac_name}}</td>
-                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> OPAC設定変更</button></th>
-                <td>{{$opac->created_at}}</td>
+                <td class="d-table-cell"><input type="radio" value="{{$opac->bucket_id}}" name="select_bucket"@if ($opac_frame->bucket_id == $opac->bucket_id) checked @endif></td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">OPAC名：</span>{{$opac->opac_name}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">詳細：</span><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> OPAC設定変更</button></td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$opac->created_at}}</td>
             </tr>
         @endforeach
         </tbody>
