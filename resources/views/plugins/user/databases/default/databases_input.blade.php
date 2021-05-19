@@ -58,7 +58,11 @@ use App\Models\User\Databases\DatabasesColumns;
                 <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<span class="badge badge-danger">必須</span> @endif</label>
                 <div class="col-sm-9">
                     @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
-                    <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
+                    @php
+                        $caption = nl2br($database_column->caption);
+                        $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                    @endphp
+                    <div class="small {{ $database_column->caption_color }}">{!! $caption !!}</div>
                 </div>
             </div>
         @endforeach
