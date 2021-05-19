@@ -162,11 +162,11 @@
                     </td>
                     <td class="table-text p-1 text-center" nowrap>
                         @if ($page_item->page_roles->isEmpty())
-                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-success btn-sm">
+                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-outline-success btn-sm">
                                 <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限なし</span>
                             </a>
                         @else
-                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-primary btn-sm">
+                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-success btn-sm">
                                 <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限あり</span>
                             </a>
                         @endif
