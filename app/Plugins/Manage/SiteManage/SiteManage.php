@@ -160,6 +160,24 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_header_color]
         );
 
+        // 画面の基本のヘッダー文字色
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_font_color_class'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_header_font_color_class
+            ]
+        );
+
+        // ヘッダーバー任意クラス
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_optional_class'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_header_optional_class
+            ]
+        );
+
         // bodyタグのclass属性
         $configs = Configs::updateOrCreate(
             ['name'     => 'body_optional_class'],

@@ -36,7 +36,14 @@ trait Userable
 
             // created_idはデータ更新権限のチェックのため、最初に記事を書いたユーザのものを引き継ぐ必要があるので、自動登録はしない。
             // $model->created_id   = Auth::user()->id;
-            $model->created_name = Auth::user()->name;
+//            $model->created_name = Auth::user()->name;
+            
+            if( empty( $model->created_name ) === true ) {
+                $model->created_name = Auth::user()->name;
+            } else {
+                $model->updated_id   = Auth::user()->id;
+                $model->updated_name = Auth::user()->name;
+            }
         });
 
         /**

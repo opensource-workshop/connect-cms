@@ -78,7 +78,7 @@ use App\Models\Core\Configs;
 
             {{-- ヘッダーの背景色 --}}
             <div class="form-group">
-                <label class="col-form-label">ヘッダーの背景色</label>
+                <label class="col-form-label">ヘッダーバーの背景色</label>
                 <input type="text" name="base_header_color" id="base_header_color" value="{{Configs::getConfigsValueAndOld($configs, "base_header_color")}}" class="form-control" v-model="v_base_header_color" placeholder="{{ $placeholder_message }}">
                 <small class="form-text text-muted">画面の基本のヘッダー背景色（各ページで上書き可能）</small>
                 @if (!$is_ie)
@@ -86,6 +86,34 @@ use App\Models\Core\Configs;
                     <input type="color" v-model="v_base_header_color">
                     <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
                 @endif
+            </div>
+
+            {{-- 基本のヘッダー文字色 --}}
+            <div class="form-group">
+                <label class="col-form-label">ヘッダーバーの文字色</label>
+                <div class="row">
+                    @foreach (BaseHeaderFontColorClass::getMembers() as $value => $label_name )
+                        <div class="col-md-3">
+                            <div class="custom-control custom-radio custom-control-inline">
+                                @if(Configs::getConfigsValueAndOld($configs, "base_header_font_color_class", BaseHeaderFontColorClass::navbar_dark) == $value)
+                                    <input type="radio" value="{{$value}}" id="base_header_font_color_class_{{$value}}" name="base_header_font_color_class" class="custom-control-input" checked="checked">
+                                @else
+                                    <input type="radio" value="{{$value}}" id="base_header_font_color_class_{{$value}}" name="base_header_font_color_class" class="custom-control-input">
+                                @endif
+                                <label class="custom-control-label" for="base_header_font_color_class_{{$value}}">{{$label_name}}</label>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <small class="form-text text-muted">ヘッダーバーの各リンクを含めた文字色を選択</small>
+            </div>
+
+            {{-- ヘッダーバー任意クラス --}}
+            <div class="form-group">
+                <label class="col-form-label">ヘッダーバーの任意クラス</label>
+                <input type="text" name="base_header_optional_class" id="base_header_optional_class" value="{{Configs::getConfigsValueAndOld($configs, "base_header_optional_class")}}" class="form-control">
+                <small class="form-text text-muted">ヘッダーバーに任意のclass属性を設定します。カンマ区切りで複数設定した場合、いづれかのクラスをランダムで設定します。</small>
+                <small class="form-text text-muted">（用例）ヘッダーバーCSSのランダム適用等</small>
             </div>
 
             {{-- センターエリア任意クラス --}}
@@ -114,7 +142,7 @@ use App\Models\Core\Configs;
         </div>
         {{-- ヘッダーの表示指定 --}}
         <div class="form-group">
-            <label class="col-form-label">ヘッダーの表示</label>
+            <label class="col-form-label">ヘッダーバーの表示</label>
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
@@ -138,16 +166,16 @@ use App\Models\Core\Configs;
                 </div>
             </div>
             <small class="form-text text-muted">
-                未ログイン時にヘッダーを表示するかどうかを選択<br />
-                ヘッダーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
-                PC時のヘッダー表示例）<br />
+                未ログイン時にヘッダーバーを表示するかどうかを選択<br />
+                ヘッダーバーを「表示しない」場合、ログインリンクも画面から消えます。その時はログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力してログインを行ってください。<br />
+                PC時のヘッダーバー表示例）<br />
                 <img class="img-fluid" src="{{url('/')}}/images/core/top_header/top_header.jpg" alt="画面最上部に表示されるヘッダー">
             </small>
         </div>
 
         {{-- ヘッダーの固定指定 --}}
         <div class="form-group">
-            <label class="col-form-label">ヘッダーの固定</label>
+            <label class="col-form-label">ヘッダーバーの固定</label>
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
@@ -170,7 +198,11 @@ use App\Models\Core\Configs;
                     </div>
                 </div>
             </div>
-            <small class="form-text text-muted">ヘッダーを画面上部に固定するかどうかを選択</small>
+            <small class="form-text text-muted">
+                ※ ヘッダーバーを画面上部に固定するかどうかを選択<br />
+                ※ ヘッダーバーを「固定する」場合、メニューが多くなっていないかご確認ください。<br />
+                スマートフォンでヘッダーバーのメニューを表示する時、スマートフォン画面の高さ以上にメニューが増えると、ヘッダーバーが固定される関係でメニューがスクロールしないため、画面外のメニューが押せなくなります。<br />
+            </small>
         </div>
 
         {{-- ログインリンクの表示 --}}
