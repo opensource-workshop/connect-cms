@@ -1462,10 +1462,6 @@ EOD;
             $blog_frame_setting = new BlogsFrames();
         }
 
-        // // frame_configs
-        // $this->frame_configs = $request->get('frame_configs');
-        // $frame_configs = FrameConfig::getConfigs($this->frame_configs, $frame_id);
-
         // Blogフレーム設定画面を呼び出す。
         return $this->view(
             'blogs_setting_frame', [
