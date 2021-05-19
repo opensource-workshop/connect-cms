@@ -735,7 +735,9 @@ class UserManage extends ManagePluginBase
             }
         }
 
-        return $this->edit($request, $id);
+        // 変更画面に戻る
+        // return $this->edit($request, $id);
+        return redirect("/manage/user/edit/$id");
     }
 
     /**
