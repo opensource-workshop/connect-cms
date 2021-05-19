@@ -1408,51 +1408,10 @@ class UserManage extends ManagePluginBase
             return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
         }
 
-
-        // $validator_array = [
-        //     'column' => [
-        //         'name' => 'required|string|max:255',
-        //         'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
-        //         'password' => 'nullable|string|min:6|confirmed',
-        //         'status' => 'required',
-        //     ],
-        //     'message' => [
-        //         'name' => 'ユーザ名',
-        //         'email' => 'eメール',
-        //         'password' => 'パスワード',
-        //         'status' => '状態',
-        //     ]
-        // ];
-
-        // // ユーザーのカラム
-        // $users_columns = UsersTool::getUsersColumns();
-
-        // foreach ($users_columns as $users_column) {
-        //     // バリデータールールをセット
-        //     $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
-        // }
-
-        $csv_rules = [
-            // id
-            0 => [
-                'nullable',
-                'numeric',
-                'exists:users,id'
-            ],
-            // ログインID
-            // 1 => [
-            //     'required',
-            //     'exists:users,id'
-            // ],
-            // 1 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:2,3', 'before_or_equal:2'], // 試験開始日時
-            // 2 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:1,3'],          // 試験終了日時
-            // 3 => ['nullable', 'date_format:"Y/n/j H:i"', 'before_or_equal:1'],          // 申込終了日時
-        ];
-
         // データ項目のエラーチェック
         // $error_msgs = CsvUtils::checkCvslines($fp, $users_columns, $cvs_rules);
         // $error_msgs = CsvUtils::checkCvslines($fp, $import_column, $csv_rules);
-        $error_msgs = $this->checkCvslines($fp, $import_column, $csv_rules);
+        $error_msgs = $this->checkCvslines($fp, $import_column);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -1583,83 +1542,91 @@ class UserManage extends ManagePluginBase
     /**
      * CSVデータ行チェック
      */
-    // private function checkCvslines($fp, $databases_columns, $databases_id, $file_extension, $unzip_dir_full_path)
-    private function checkCvslines($fp, $databases_columns)
+    // private function checkCvslines($fp, $users_columns, $databases_id, $file_extension, $unzip_dir_full_path)
+    private function checkCvslines($fp, $users_columns)
     {
-        ////////////////////////////////////
-        //// [TODO] 以下作成中
-        ////////////////////////////////////
-
-        $rules = [];
-        // $rules = [
-        //     0 => [],
-        //     1 => ['required'],
+        // $validator_array = [
+        //     'column' => [
+        //         'name' => 'required|string|max:255',
+        //         // ログインID
+        //         'userid' => [
+        //             'required',
+        //             'max:255',
+        //             Rule::unique('users', 'userid')->ignore($id),
+        //         ],
+        //         'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
+        //         'password' => 'nullable|string|min:6|confirmed',
+        //         'status' => 'required',
+        //     ],
+        //     'message' => [
+        //         'name' => 'ユーザ名',
+        //         'userid' => 'ログインID',
+        //         'email' => 'eメール',
+        //         'password' => 'パスワード',
+        //         'status' => '状態',
+        //     ]
         // ];
 
+        // // ユーザーのカラム
+        // $users_columns = UsersTool::getUsersColumns();
+
+        // foreach ($users_columns as $users_column) {
+        //     // バリデータールールをセット
+        //     $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
+        // }
+
         // 行頭（固定項目）
-        // id
-        // bugfix: id存在チェクは id & databases_id でチェックしないと、コピーしたデータベースに上書き出来てしまうため、ここではなく別途チェックする。
-        // $rules[0] = ['nullable', 'numeric', 'exists:databases_inputs,id'];
-        // $rules[0] = ['nullable', 'numeric'];
         $rules = [
+            // id
             0 => [
                 'nullable',
                 'numeric',
                 'exists:users,id'
-            ],  // id
-            // 1 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:2,3', 'before_or_equal:2'], // 試験開始日時
-            // 2 => ['required', 'date_format:"Y/n/j H:i"', 'required_with:1,3'],          // 試験終了日時
-            // 3 => ['nullable', 'date_format:"Y/n/j H:i"', 'before_or_equal:1'],          // 申込終了日時
+            ],
+            // ログインID. 後でセット
+            1 => [],
+            // ユーザ名
+            2 => 'required|string|max:255',
+            // グループ
+            // [TODO] グループ名が存在している事。パイプ区切りで複数あり
+            3 => '',
+            // eメールアドレス. 後でセット
+            4 => [],
+            // パスワード. 後でセット
+            5 => [],
         ];
+
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        ////////////////////////////////////
+        //// [TODO] 以下作成中
+        ////////////////////////////////////
+
+        foreach ($users_columns as $users_column) {
+            // バリデータールールをセット
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
+        }
 
         // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
 
-        foreach ($databases_columns as $col => $databases_column) {
-            // $validator_array['column']['databases_columns_value.' . $databases_column->id] = $validator_rule;
-            // $validator_array['message']['databases_columns_value.' . $databases_column->id] = $databases_column->column_name;
+        foreach ($users_columns as $col => $users_column) {
+            // $validator_array['column']['users_columns_value.' . $users_column->id] = $validator_rule;
+            // $validator_array['message']['users_columns_value.' . $users_column->id] = $users_column->column_name;
 
             // バリデータールールを取得
-            $validator_array = $this->getValidatorRule($validator_array, $databases_column);
+            // $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column);
 
             // バリデータールールあるか
-            // if (array_key_exists('databases_columns_value.' . $databases_column->id, $validator_array['column'])) {
-            if (isset($validator_array['column']['databases_columns_value.' . $databases_column->id])) {
+            // if (array_key_exists('users_columns_value.' . $users_column->id, $validator_array['column'])) {
+            if (isset($validator_array['column']['users_columns_value.' . $users_column->id])) {
                 // 行頭（固定項目）の id 分　col をずらすため、+1
-                $rules[$col + 1] = $validator_array['column']['databases_columns_value.' . $databases_column->id];
-
-                // if ($file_extension == 'csv') {
-                    // ファイルタイプ
-                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
-                        // csv単体のインポートでは、ファイルタイプはインポートできないため、バリデーションルールをチェックなしで上書き。
-                        // 登録時の値は別途 null に変換してる。
-                        $rules[$col + 1] = [];
-                    }
-                // } elseif ($file_extension == 'zip') {
-                //     // zipのファイルタイプのバリデーションは、Laravelのそのまま使えなかった。
-                //     // 【対応】
-                //     // csv用の画像、動画バリデーションを作成して上書きする
-                //     // 【原因】
-                //     // 画像 = image = mimes:jpeg,png,gif,bmp,svg
-                //     // 動画 = mimes:mp4
-                //     // のmimesチェックは、Symfony\Component\HttpFoundation\File\UploadedFileクラスの値をチェックするが、
-                //     // UploadedFile::isValid() 内で php標準の is_uploaded_file() でHTTP POST でアップロードされたファイルかどうかを調べていて、
-                //     // 無理くり添付ファイルをUploadedFileクラスで newして作った変数では、is_uploaded_file() で false になり「アップロード失敗しました」とバリデーションエラーに必ずなるため。
-
-                //     if ($databases_column->column_type == \DatabaseColumnType::file) {
-                //         // バリデーション元々なし（バリデーションがないため、ここには到達しない想定）
-                //         $rules[$col + 1] = [];
-                //     } elseif ($databases_column->column_type == \DatabaseColumnType::image) {
-                //         // csv用のバリデーションで上書き
-                //         $rules[$col + 1] = ['nullable', new CustomVali_CsvImage()];
-                //     } elseif ($databases_column->column_type == \DatabaseColumnType::video) {
-                //         // csv用のバリデーションで上書き
-                //         $rules[$col + 1] = ['nullable', new CustomVali_CsvExtensions(['mp4'])];
-                //     }
-                // }
+                $rules[$col + 6] = $validator_array['column']['users_columns_value.' . $users_column->id];
             } else {
                 // ルールなしは空配列入れないと、バリデーション項目がずれるのでセット
-                $rules[$col + 1] = [];
+                $rules[$col + 6] = [];
             }
         }
         // 行末（固定項目）
@@ -1674,6 +1641,9 @@ class UserManage extends ManagePluginBase
         // ヘッダー行が1行目なので、2行目からデータ始まる
         $line_count = 2;
         $errors = [];
+
+
+
 
         // $filesystem = new Filesystem();
         // $unzip_uploads_full_paths2 = [];
@@ -1697,11 +1667,29 @@ class UserManage extends ManagePluginBase
 
             // 配列の頭から要素(id)を取り除いて取得
             // CSVのデータ行の頭は、必ず固定項目のidの想定
-            $databases_inputs_id = array_shift($csv_columns);
+            $users_id = array_shift($csv_columns);
 
-            // if (!empty($databases_inputs_id)) {
+            // ユニークチェックを含むバリデーション追加
+            // ログインID
+            $rules[1] = ['required', 'max:255', Rule::unique('users', 'userid')->ignore($users_id)];
+            // eメールアドレス
+            $rules[4] = ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($users_id)];
+            // パスワード
+            if ($users_id) {
+                // ユーザ変更時
+                $rules[5] = 'nullable|string|min:6';
+            } else {
+                // ユーザ登録時
+                $rules[5] = 'required|string|min:6';
+            }
+
+            // 任意項目のメールアドレスチェック
+
+
+
+            // if (!empty($users_id)) {
             //     // id & databases_idの存在チェック
-            //     if (! DatabasesInputs::where('id', $databases_inputs_id)->where('databases_id', $databases_id)->exists()) {
+            //     if (! DatabasesInputs::where('id', $users_id)->where('databases_id', $databases_id)->exists()) {
             //         $errors[] = $line_count . '行目のidは対象データベースに存在しません。';
             //     }
             // }
@@ -1710,13 +1698,13 @@ class UserManage extends ManagePluginBase
                 // 空文字をnullに変換
                 $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
 
-                // $csv_columnsは項目数分くる, $databases_columnsは項目数分ある。
+                // $csv_columnsは項目数分くる, $users_columnsは項目数分ある。
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
-                if (isset($databases_columns[$col])) {
+                if (isset($users_columns[$col])) {
                     // csv値あり
                     if ($csv_column) {
                         // 複数選択型
-                        if ($databases_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
+                        if ($users_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
                             // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
                             $csv_column = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_column);
                             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
@@ -1728,7 +1716,7 @@ class UserManage extends ManagePluginBase
             }
 
             // 頭のIDをarrayに戻す
-            array_unshift($csv_columns, $databases_inputs_id);
+            array_unshift($csv_columns, $users_id);
 
             // バリデーション
             $validator = Validator::make($csv_columns, $rules);
@@ -1739,10 +1727,10 @@ class UserManage extends ManagePluginBase
             // 行頭（固定項目）
             // id
             $attribute_names[0] = $line_count . '行目のid';
-            foreach ($databases_columns as $col => $databases_column) {
+            foreach ($users_columns as $col => $users_column) {
                 // 行数＋項目名
                 // 頭-固定項目 の id 分　col をずらすため、+1
-                $attribute_names[$col + 1] = $line_count . '行目の' . $databases_column->column_name;
+                $attribute_names[$col + 1] = $line_count . '行目の' . $users_column->column_name;
             }
             // 行末（固定項目）
             // 行頭（固定項目）の id 分で+1, 行末に追加で+1 = col+2ずらす
