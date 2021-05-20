@@ -651,7 +651,7 @@
         // Connect-CMS独自設定
         cc_config: {
             frame_id: '{{$frame_id}}',
-            upload_max_filesize_caption: '※ アップロードできる最大サイズ: {{ini_get('upload_max_filesize')}}',
+            upload_max_filesize_caption: '※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}',
         },
 
         setup: function(editor) {
@@ -674,6 +674,46 @@
                     document.getElementById('cc-image-upload-height-' + frame_id).value = jQuery('.tox-textfield')[3].value;
 
                 }
+            });
+
+            editor.on('OpenWindow', (event) => {
+                // console.log(event);
+                // console.log('OpenWindow', event.dialog);
+                // console.log('OpenWindow', event.dialog.getData());
+                // console.log(jQuery('.tox-dialog__title')[0].textContent);
+
+                var title = jQuery('.tox-dialog__title')[0].textContent;
+
+                // [TODO] image plugin, media pluginはタブ遷移でメッセージ消える. 対応方法わかれば今後対応
+                // media plugin, link plugin
+                if (title === 'メディアの挿入・編集' || title === 'リンクの挿入・編集') {
+                    // 新しいHTML要素を作成
+                    var div = document.createElement('div');
+                    div.setAttribute('style', 'font-size: 14px;');
+                    div.textContent = editor.settings.cc_config.upload_max_filesize_caption;
+
+                    // 指定した要素の後に挿入
+                    jQuery('.tox-form__controls-h-stack')[0].after(div);
+                }
+                // image plugin
+                if (title === '画像の挿入・編集') {
+                    // 新しいHTML要素を作成
+                    var div = document.createElement('div');
+                    div.setAttribute('style', 'font-size: 14px;');
+                    var div2 = div.cloneNode(false);
+                    var div3 = div.cloneNode(false);
+                    var div_width = div.cloneNode(false);
+
+                    div.textContent = editor.settings.cc_config.upload_max_filesize_caption;
+                    div2.textContent = '※ この画面からアップロードするとjpeg, pngのリサイズができます。（アップロード(タブ)からはリサイズしません。）';
+                    div3.textContent = '※ リサイズは登録時のみ動き、「幅」と「高さ」の数字でリサイズします。';
+
+                    // 指定した要素の中の末尾に挿入
+                    jQuery('.tox-form')[0].appendChild(div);
+                    div.after(div2);
+                    div2.after(div3);
+                }
+
             });
         }
     });
