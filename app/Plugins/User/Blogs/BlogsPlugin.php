@@ -1505,7 +1505,7 @@ EOD;
             ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value, 'important_view' => $request->important_view ]
         );
 
-        //　フレーム設定保存
+        // フレーム設定保存
         $this->saveFrameConfigs($request, $frame_id);
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
