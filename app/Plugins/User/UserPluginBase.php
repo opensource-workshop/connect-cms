@@ -79,6 +79,8 @@ class UserPluginBase extends PluginBase
 
     /**
      * FrameConfig オブジェクト
+     * FrameConfigのCollection
+     *
      */
     public $frame_configs = null;
 
