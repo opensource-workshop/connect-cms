@@ -20,4 +20,16 @@ final class UserStatus extends EnumsBase
         self::not_active => '利用不可',
         self::temporary => '仮登録'
     ];
+
+    /**
+     * 選択可能なユーザ状態のkey配列を返す
+     */
+    public static function getChooseableKeys()
+    {
+        $enum = self::enum;
+        // 仮登録は外す
+        unset($eum[self::temporary]);
+
+        return array_keys($enum);
+    }
 }

@@ -23,11 +23,15 @@ use App\Plugins\Manage\ManagePluginBase;
 
 use App\Rules\CustomValiUserEmailUnique;
 use App\Rules\CustomValiEmails;
+use App\Rules\CustomValiCsvExistsGroupName;
+use App\Rules\CustomValiCsvExistsRoleName;
 
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
 
 use App\Enums\CsvCharacterCode;
+use App\Enums\UserColumnType;
+use App\Enums\UserStatus;
 
 /**
  * ユーザ管理クラス
@@ -1305,6 +1309,31 @@ class UserManage extends ManagePluginBase
     }
 
     /**
+     * インポートカラムの列番号の取得
+     */
+    private function getImportColumnColNo($users_columns)
+    {
+        // 見出し行-頭（固定項目）
+        $import_column[0] = 'id';
+        $import_column[1] = 'userid';
+        $import_column[2] = 'name';
+        $import_column[3] = 'group';
+        $import_column[4] = 'email';
+        $import_column[5] = 'password';
+
+        // 見出し行
+        foreach ($users_columns as $no => $column) {
+            $import_column[$no + 6] = $column->id;
+        }
+
+        // 見出し行-末尾（固定項目）
+        $import_column[$no + 7] = 'view_user_roles';
+        $import_column[$no + 8] = 'user_original_roles';
+        $import_column[$no + 9] = 'status';
+        return $import_column;
+    }
+
+    /**
      * インポート画面表示
      */
     public function import($request, $page_id = null)
@@ -1410,8 +1439,7 @@ class UserManage extends ManagePluginBase
 
         // データ項目のエラーチェック
         // $error_msgs = CsvUtils::checkCvslines($fp, $users_columns, $cvs_rules);
-        // $error_msgs = CsvUtils::checkCvslines($fp, $import_column, $csv_rules);
-        $error_msgs = $this->checkCvslines($fp, $import_column);
+        $error_msgs = $this->checkCvslines($fp, $users_columns);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -1542,38 +1570,9 @@ class UserManage extends ManagePluginBase
     /**
      * CSVデータ行チェック
      */
-    // private function checkCvslines($fp, $users_columns, $databases_id, $file_extension, $unzip_dir_full_path)
     private function checkCvslines($fp, $users_columns)
     {
-        // $validator_array = [
-        //     'column' => [
-        //         'name' => 'required|string|max:255',
-        //         // ログインID
-        //         'userid' => [
-        //             'required',
-        //             'max:255',
-        //             Rule::unique('users', 'userid')->ignore($id),
-        //         ],
-        //         'email' => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id)],
-        //         'password' => 'nullable|string|min:6|confirmed',
-        //         'status' => 'required',
-        //     ],
-        //     'message' => [
-        //         'name' => 'ユーザ名',
-        //         'userid' => 'ログインID',
-        //         'email' => 'eメール',
-        //         'password' => 'パスワード',
-        //         'status' => '状態',
-        //     ]
-        // ];
-
-        // // ユーザーのカラム
-        // $users_columns = UsersTool::getUsersColumns();
-
-        // foreach ($users_columns as $users_column) {
-        //     // バリデータールールをセット
-        //     $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
-        // }
+        $import_column_col_no = $this->getImportColumnColNo($users_columns);
 
         // 行頭（固定項目）
         $rules = [
@@ -1587,26 +1586,13 @@ class UserManage extends ManagePluginBase
             1 => [],
             // ユーザ名
             2 => 'required|string|max:255',
-            // グループ
-            // [TODO] グループ名が存在している事。パイプ区切りで複数あり
-            3 => '',
+            // グループ. (グループ名の存在チェック。パイプ区切りで複数あり)
+            3 => new CustomValiCsvExistsGroupName(),
             // eメールアドレス. 後でセット
             4 => [],
             // パスワード. 後でセット
             5 => [],
         ];
-
-        // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns();
-
-        ////////////////////////////////////
-        //// [TODO] 以下作成中
-        ////////////////////////////////////
-
-        foreach ($users_columns as $users_column) {
-            // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
-        }
 
         // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
@@ -1616,11 +1602,9 @@ class UserManage extends ManagePluginBase
             // $validator_array['message']['users_columns_value.' . $users_column->id] = $users_column->column_name;
 
             // バリデータールールを取得
-            // $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id);
             $validator_array = UsersTool::getValidatorRule($validator_array, $users_column);
 
             // バリデータールールあるか
-            // if (array_key_exists('users_columns_value.' . $users_column->id, $validator_array['column'])) {
             if (isset($validator_array['column']['users_columns_value.' . $users_column->id])) {
                 // 行頭（固定項目）の id 分　col をずらすため、+1
                 $rules[$col + 6] = $validator_array['column']['users_columns_value.' . $users_column->id];
@@ -1630,36 +1614,27 @@ class UserManage extends ManagePluginBase
             }
         }
         // 行末（固定項目）
-        // 公開日時
-        // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
-        // $rules[$col + 1] = ['required', 'date_format:Y-m-d H:i'];
-        // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
-        $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
-        // 表示順
-        $rules[$col + 3] = ['nullable', 'numeric'];
+        // 行頭（固定項目）分で+6, 行末に追加で+1 = col+7ずらす
+        // 権限
+        $rules[$col + 7] = ['nullable', Rule::in([
+            'role_article_admin',
+            'role_arrangement',
+            'role_article',
+            'role_approval',
+            'role_reporter',
+            'admin_system',
+            'admin_site',
+            'admin_page',
+            'admin_user',
+        ])];
+        // 役割設定.  (役割名の存在チェック。パイプ区切りで複数あり)
+        $rules[$col + 8] = ['nullable', new CustomValiCsvExistsRoleName()];
+        // 状態
+        $rules[$col + 9] = ['required', Rule::in(UserStatus::getChooseableKeys())];
 
         // ヘッダー行が1行目なので、2行目からデータ始まる
         $line_count = 2;
         $errors = [];
-
-
-
-
-        // $filesystem = new Filesystem();
-        // $unzip_uploads_full_paths2 = [];
-        // $unzip_uploads_full_paths2 = [
-        //     'uploads/MP4_test_movie.mp4' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/MP4_test_movie.mp4',
-        //     'uploads/file2.jpg' => 'C:\\connect-cms\\htdocs\\storage\\app/tmp/database/5f5731f7d3ac92.19491258/database/uploads/file2.jpg'
-        // ];
-
-        // if ($file_extension == 'zip') {
-        //     // パターンにマッチするパス名を探す。
-        //     $unzip_uploads_full_paths = glob($unzip_dir_full_path . "*/uploads/*");
-
-        //     foreach ($unzip_uploads_full_paths as $unzip_uploads_full_path) {
-        //         $unzip_uploads_full_paths2['uploads/' . $filesystem->basename($unzip_uploads_full_path)] = $unzip_uploads_full_path;
-        //     }
-        // }
 
         while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
             // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
@@ -1683,28 +1658,33 @@ class UserManage extends ManagePluginBase
                 $rules[5] = 'required|string|min:6';
             }
 
-            // 任意項目のメールアドレスチェック
-
-
-
-            // if (!empty($users_id)) {
-            //     // id & databases_idの存在チェック
-            //     if (! DatabasesInputs::where('id', $users_id)->where('databases_id', $databases_id)->exists()) {
-            //         $errors[] = $line_count . '行目のidは対象データベースに存在しません。';
-            //     }
-            // }
-
             foreach ($csv_columns as $col => &$csv_column) {
                 // 空文字をnullに変換
                 $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
 
-                // $csv_columnsは項目数分くる, $users_columnsは項目数分ある。
-                // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
-                if (isset($users_columns[$col])) {
-                    // csv値あり
-                    if ($csv_column) {
+                // csv値あり
+                if ($csv_column) {
+                    $column_id = $import_column_col_no[$col];
+
+                    // intであれば任意項目
+                    if (is_int($column_id)) {
+                        // 任意項目. 必ずある想定
+                        $users_column = $users_columns->firstWhere('id', $column_id);
+
                         // 複数選択型
-                        if ($users_columns[$col]->column_type == \DatabaseColumnType::checkbox) {
+                        if ($users_column->column_type == UserColumnType::checkbox) {
+                            // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
+                            $csv_column = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_column);
+                            // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+                            $csv_column = StringUtils::trimInput($csv_column);
+                            // Log::debug(var_export($csv_column, true));
+                        }
+                    } else {
+                        // 固定項目
+                        // グループ, 権限, 役割
+                        if ($import_column_col_no[$col] == 'group'
+                            || $import_column_col_no[$col] == 'view_user_roles'
+                            || $import_column_col_no[$col] == 'user_original_roles') {
                             // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
                             $csv_column = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_column);
                             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
@@ -1720,22 +1700,29 @@ class UserManage extends ManagePluginBase
 
             // バリデーション
             $validator = Validator::make($csv_columns, $rules);
-            // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
-            // Log::debug(var_export($rules, true));
+            \Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
+            \Log::debug(var_export($rules, true));
 
             $attribute_names = [];
             // 行頭（固定項目）
             // id
             $attribute_names[0] = $line_count . '行目のid';
+            $attribute_names[1] = $line_count . '行目のログインID';
+            $attribute_names[2] = $line_count . '行目のユーザ名';
+            $attribute_names[3] = $line_count . '行目のグループ';
+            $attribute_names[4] = $line_count . '行目のeメールアドレス';
+            $attribute_names[5] = $line_count . '行目のパスワード';
+
             foreach ($users_columns as $col => $users_column) {
                 // 行数＋項目名
                 // 頭-固定項目 の id 分　col をずらすため、+1
-                $attribute_names[$col + 1] = $line_count . '行目の' . $users_column->column_name;
+                $attribute_names[$col + 6] = $line_count . '行目の' . $users_column->column_name;
             }
             // 行末（固定項目）
-            // 行頭（固定項目）の id 分で+1, 行末に追加で+1 = col+2ずらす
-            $attribute_names[$col + 2] = $line_count . '行目の公開日時';
-            $attribute_names[$col + 3] = $line_count . '行目の表示順';
+            // 行頭（固定項目）分で+6, 行末に追加で+1 = col+7ずらす
+            $attribute_names[$col + 7] = $line_count . '行目の権限';
+            $attribute_names[$col + 8] = $line_count . '行目の役割設定';
+            $attribute_names[$col + 9] = $line_count . '行目の状態';
 
             $validator->setAttributeNames($attribute_names);
             // Log::debug(var_export($attribute_names, true));
