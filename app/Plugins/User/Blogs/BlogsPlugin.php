@@ -571,8 +571,6 @@ WHERE status = 0
             }
         }
 
-        $this->setFrameConfigs($request);
-
         // 表示テンプレートを呼び出す。
         return $this->view(
             'blogs', [
