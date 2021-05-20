@@ -700,18 +700,21 @@
                     // 新しいHTML要素を作成
                     var div = document.createElement('div');
                     div.setAttribute('style', 'font-size: 14px;');
-                    var div2 = div.cloneNode(false);
-                    var div3 = div.cloneNode(false);
-                    var div_width = div.cloneNode(false);
-
                     div.textContent = editor.settings.cc_config.upload_max_filesize_caption;
-                    div2.textContent = '※ この画面からアップロードするとjpeg, pngのリサイズができます。（アップロード(タブ)からはリサイズしません。）';
-                    div3.textContent = '※ リサイズは登録時のみ動き、「幅」と「高さ」の数字でリサイズします。';
 
                     // 指定した要素の中の末尾に挿入
                     jQuery('.tox-form')[0].appendChild(div);
-                    div.after(div2);
-                    div2.after(div3);
+
+                    @if (function_exists('gd_info'))
+                        var div2 = div.cloneNode(false);
+                        var div3 = div.cloneNode(false);
+
+                        div2.textContent = '※ この画面からアップロードするとjpeg, pngのリサイズができます。（アップロード(タブ)からはリサイズしません。）';
+                        div3.textContent = '※ リサイズは登録時のみ動き、「幅」と「高さ」の数字でリサイズします。';
+
+                        div.after(div2);
+                        div2.after(div3);
+                    @endif
                 }
 
             });
