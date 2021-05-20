@@ -169,7 +169,7 @@ $app_array = [
          * Package Service Providers...
          */
         // 画像処理
-        // Intervention\Image\ImageServiceProvider::class,
+        Intervention\Image\ImageServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -278,7 +278,7 @@ $app_array = [
         'Plugins' => \App\Models\Core\Plugins::class,
 
         // 画像処理
-        // 'Image' => Intervention\Image\Facades\Image::class,
+        'Image' => Intervention\Image\Facades\Image::class,
     ],
 
 ];

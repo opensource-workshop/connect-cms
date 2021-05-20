@@ -190,6 +190,10 @@
     see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
 <input type="file" class="d-none" id="cc-file-upload-file-{{$frame_id}}">
 
+{{-- 画像の幅と高さ. 登録時のリサイズ用 --}}
+<input type="text" class="d-none" id="cc-image-upload-width-{{$frame_id}}">
+<input type="text" class="d-none" id="cc-image-upload-height-{{$frame_id}}">
+
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
 {{--
@@ -624,24 +628,53 @@
             fileName = blobInfo.filename();
             // console.log(blobInfo);
 
-            // [TODO] とれない
-            // width = jQuery('.tox-textfield')[2].value;
-            // height = jQuery('.tox-textfield')[3].value;
+            // リサイズ用
+            var frame_id = tinymce.activeEditor.settings.cc_config.frame_id;
+            var width = document.getElementById('cc-image-upload-width-' + frame_id).value;
+            var height = document.getElementById('cc-image-upload-height-' + frame_id).value;
 
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);
-            formData.append('file', blobInfo.blob(), fileName);
-            // formData.append('image', blobInfo.blob(), fileName);
-            // formData.append('width', width);
-            // formData.append('height', height);
+            // formData.append('file', blobInfo.blob(), fileName);
+            formData.append('image', blobInfo.blob(), fileName);
+            formData.append('width', width);
+            formData.append('height', height);
             formData.append('page_id', {{$page_id}});
 
             xhr.send(formData);
+
+            // クリア
+            document.getElementById('cc-image-upload-width-' + frame_id).value = '';
+            document.getElementById('cc-image-upload-height-' + frame_id).value = '';
         },
 
         // Connect-CMS独自設定
         cc_config: {
+            frame_id: '{{$frame_id}}',
             upload_max_filesize_caption: '※ アップロードできる最大サイズ: {{ini_get('upload_max_filesize')}}',
+        },
+
+        setup: function(editor) {
+            // see) events https://www.tiny.cloud/docs/advanced/events/
+            // see) editor https://www.tiny.cloud/docs/api/tinymce/tinymce.editor/
+
+            editor.on('ExecCommand', (event) => {
+                const command = event.command;
+                // console.log(event.command);
+                // console.log(editor.settings.cc_config.upload_max_filesize_caption);
+
+                // image plugin の保存ボタン押下後イベント
+                if (command === 'mceUpdateImage') {
+                    // console.log(jQuery('.tox-textfield')[2].value);
+                    // console.log(jQuery('.tox-textfield')[3].value);
+                    var frame_id = editor.settings.cc_config.frame_id;
+
+                    // リサイズ用の画像幅と高さをinput type=textに保持
+                    document.getElementById('cc-image-upload-width-' + frame_id).value = jQuery('.tox-textfield')[2].value;
+                    document.getElementById('cc-image-upload-height-' + frame_id).value = jQuery('.tox-textfield')[3].value;
+
+                }
+            });
         }
     });
 </script>
