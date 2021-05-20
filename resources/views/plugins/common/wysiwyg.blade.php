@@ -204,7 +204,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0',
+        cache_suffix: '?v=5.8.0.1',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -637,6 +637,11 @@
             formData.append('page_id', {{$page_id}});
 
             xhr.send(formData);
+        },
+
+        // Connect-CMS独自設定
+        cc_config: {
+            upload_max_filesize_caption: '※ アップロードできる最大サイズ: {{ini_get('upload_max_filesize')}}',
         }
     });
 </script>
