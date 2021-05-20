@@ -19,6 +19,7 @@ use DB;
 use File;
 use HTMLPurifier;
 use HTMLPurifier_Config;
+use Request;
 
 use App\Jobs\ApprovalNoticeJob;
 use App\Jobs\ApprovedNoticeJob;
@@ -137,6 +138,8 @@ class UserPluginBase extends PluginBase
 
         // Configs の保持
         $this->configs = Configs::get();
+
+        $this->setFrameConfigs();
     }
 
     /**
@@ -427,6 +430,9 @@ class UserPluginBase extends PluginBase
             $arg['theme_group'] = '';
             $arg['theme_group_default'] = '';
         }
+
+        // 表示しているフレームのフレーム設定
+        $arg['frame_configs'] = $this->frame_configs;
 
         return $arg;
     }
@@ -1181,26 +1187,24 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * フレーム設定を設定する。
-     *
-     * @param $request リクエスト
+     * フレーム設定をフレームIDで絞り込んで設定する。
      */
-    protected function setFrameConfigs($request = null)
+    protected function setFrameConfigs()
     {
-        if (is_null($request)) {
-            $request = $this->request;
+        // frame_idが設定されない場合があるので、なかったら設定しない。
+        if (empty($this->frame->id)) {
+            return;
         }
-        $this->frame_configs = FrameConfig::getConfigs($request->get('frame_configs'), $this->frame->id);
-        \View::share('frame_configs', $this->frame_configs);
+
+        $this->frame_configs = Request::get('frame_configs')->where('frame_id', $this->frame->id);
     }
 
     /**
-     * フレーム設定を再取得し、設定しなおす。
+     * フレーム設定を再取得し、フレームIDで絞り込んで設定しなおす。
      */
     protected function refreshFrameConfigs()
     {
-        $this->frame_configs = FrameConfig::getConfigs(FrameConfig::get(), $this->frame->id);
-        \View::share('frame_configs', $this->frame_configs);
+        $this->frame_configs = FrameConfig::where('frame_id', $this->frame->id)->get();
     }
 
     /**
