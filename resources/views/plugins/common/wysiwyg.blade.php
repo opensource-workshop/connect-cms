@@ -208,7 +208,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.1',
+        cache_suffix: '?v=5.8.0.2',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
