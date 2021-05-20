@@ -1507,6 +1507,7 @@ EOD;
 
         //　フレーム設定保存
         $this->saveFrameConfigs($request, $frame_id);
+        // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
 
         return $this->settingBlogFrame($request, $page_id, $frame_id);
