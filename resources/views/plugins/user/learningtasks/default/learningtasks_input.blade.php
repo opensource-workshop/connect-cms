@@ -52,7 +52,7 @@
                 <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
                 <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
                 @if ($errors && $errors->has('add_task_file')) <div class="text-danger">{{$errors->first('add_task_file')}}</div> @endif
-                <small class="text-muted">※ アップロードできる最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
+                <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
             </div>
         </div>
     </div>

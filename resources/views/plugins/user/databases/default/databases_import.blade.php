@@ -98,7 +98,7 @@ use App\Utilities\Zip\UnzipUtils;
             @if (UnzipUtils::useZipArchive())
                 <small class="text-muted">※ CSVファイル・ZIPファイルに対応しています。</small><br />
             @endif
-            <small class="text-muted">※ アップロードできる最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
+            <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
         </div>
     </div>
 
