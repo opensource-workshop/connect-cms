@@ -1664,7 +1664,8 @@ class UserManage extends ManagePluginBase
 
                 // csv値あり
                 if ($csv_column) {
-                    $column_id = $import_column_col_no[$col];
+                    // id取り出したので+1
+                    $column_id = $import_column_col_no[$col + 1];
 
                     // intであれば任意項目
                     if (is_int($column_id)) {
@@ -1682,14 +1683,17 @@ class UserManage extends ManagePluginBase
                     } else {
                         // 固定項目
                         // グループ, 権限, 役割
-                        if ($import_column_col_no[$col] == 'group'
-                            || $import_column_col_no[$col] == 'view_user_roles'
-                            || $import_column_col_no[$col] == 'user_original_roles') {
+                        if ($import_column_col_no[$col + 1] == 'group'
+                                || $import_column_col_no[$col + 1] == 'view_user_roles'
+                                || $import_column_col_no[$col + 1] == 'user_original_roles') {
+
                             // 複数選択のバリデーションの入力値は、配列が前提のため、配列に変換する。
                             $csv_column = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_column);
                             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
                             $csv_column = StringUtils::trimInput($csv_column);
-                            // Log::debug(var_export($csv_column, true));
+                            // \Log::debug(var_export($csv_column, true));
+                            // \Log::debug(var_export($col + 1, true));
+                            // \Log::debug(var_export($import_column_col_no[$col + 1], true));
                         }
                     }
                 }
@@ -1700,8 +1704,8 @@ class UserManage extends ManagePluginBase
 
             // バリデーション
             $validator = Validator::make($csv_columns, $rules);
-            \Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
-            \Log::debug(var_export($rules, true));
+            // \Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
+            // \Log::debug(var_export($rules, true));
 
             $attribute_names = [];
             // 行頭（固定項目）
