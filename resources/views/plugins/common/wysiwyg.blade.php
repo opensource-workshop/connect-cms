@@ -190,6 +190,10 @@
     see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
 <input type="file" class="d-none" id="cc-file-upload-file-{{$frame_id}}">
 
+{{-- 画像の幅と高さ. 登録時のリサイズ用 --}}
+<input type="text" class="d-none" id="cc-image-upload-width-{{$frame_id}}">
+<input type="text" class="d-none" id="cc-image-upload-height-{{$frame_id}}">
+
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
 {{--
@@ -204,7 +208,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0',
+        cache_suffix: '?v=5.8.0.2',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -624,19 +628,96 @@
             fileName = blobInfo.filename();
             // console.log(blobInfo);
 
-            // [TODO] とれない
-            // width = jQuery('.tox-textfield')[2].value;
-            // height = jQuery('.tox-textfield')[3].value;
+            // リサイズ用
+            var frame_id = tinymce.activeEditor.settings.cc_config.frame_id;
+            var width = document.getElementById('cc-image-upload-width-' + frame_id).value;
+            var height = document.getElementById('cc-image-upload-height-' + frame_id).value;
 
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);
-            formData.append('file', blobInfo.blob(), fileName);
-            // formData.append('image', blobInfo.blob(), fileName);
-            // formData.append('width', width);
-            // formData.append('height', height);
+            // formData.append('file', blobInfo.blob(), fileName);
+            formData.append('image', blobInfo.blob(), fileName);
+            formData.append('width', width);
+            formData.append('height', height);
             formData.append('page_id', {{$page_id}});
 
             xhr.send(formData);
+
+            // クリア
+            document.getElementById('cc-image-upload-width-' + frame_id).value = '';
+            document.getElementById('cc-image-upload-height-' + frame_id).value = '';
+        },
+
+        // Connect-CMS独自設定
+        cc_config: {
+            frame_id: '{{$frame_id}}',
+            upload_max_filesize_caption: '※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}',
+        },
+
+        setup: function(editor) {
+            // see) events https://www.tiny.cloud/docs/advanced/events/
+            // see) editor https://www.tiny.cloud/docs/api/tinymce/tinymce.editor/
+
+            editor.on('ExecCommand', (event) => {
+                const command = event.command;
+                // console.log(event.command);
+                // console.log(editor.settings.cc_config.upload_max_filesize_caption);
+
+                // image plugin の保存ボタン押下後イベント
+                if (command === 'mceUpdateImage') {
+                    // console.log(jQuery('.tox-textfield')[2].value);
+                    // console.log(jQuery('.tox-textfield')[3].value);
+                    var frame_id = editor.settings.cc_config.frame_id;
+
+                    // リサイズ用の画像幅と高さをinput type=textに保持
+                    document.getElementById('cc-image-upload-width-' + frame_id).value = jQuery('.tox-textfield')[2].value;
+                    document.getElementById('cc-image-upload-height-' + frame_id).value = jQuery('.tox-textfield')[3].value;
+
+                }
+            });
+
+            editor.on('OpenWindow', (event) => {
+                // console.log(event);
+                // console.log('OpenWindow', event.dialog);
+                // console.log('OpenWindow', event.dialog.getData());
+                // console.log(jQuery('.tox-dialog__title')[0].textContent);
+
+                var title = jQuery('.tox-dialog__title')[0].textContent;
+
+                // [TODO] image plugin, media pluginはタブ遷移でメッセージ消える. 対応方法わかれば今後対応
+                // media plugin, link plugin
+                if (title === 'メディアの挿入・編集' || title === 'リンクの挿入・編集') {
+                    // 新しいHTML要素を作成
+                    var div = document.createElement('div');
+                    div.setAttribute('style', 'font-size: 14px;');
+                    div.textContent = editor.settings.cc_config.upload_max_filesize_caption;
+
+                    // 指定した要素の後に挿入
+                    jQuery('.tox-form__controls-h-stack')[0].after(div);
+                }
+                // image plugin
+                if (title === '画像の挿入・編集') {
+                    // 新しいHTML要素を作成
+                    var div = document.createElement('div');
+                    div.setAttribute('style', 'font-size: 14px;');
+                    div.textContent = editor.settings.cc_config.upload_max_filesize_caption;
+
+                    // 指定した要素の中の末尾に挿入
+                    jQuery('.tox-form')[0].appendChild(div);
+
+                    @if (function_exists('gd_info'))
+                        var div2 = div.cloneNode(false);
+                        var div3 = div.cloneNode(false);
+
+                        div2.textContent = '※ この画面からアップロードするとjpeg, pngのリサイズができます。（アップロード(タブ)からはリサイズしません。）';
+                        div3.textContent = '※ リサイズは登録時のみ動き、「幅」と「高さ」の数字でリサイズします。';
+
+                        div.after(div2);
+                        div2.after(div3);
+                    @endif
+                }
+
+            });
         }
     });
 </script>

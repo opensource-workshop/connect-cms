@@ -84,9 +84,6 @@ use App\Utilities\Zip\UnzipUtils;
                     <input type="file" class="custom-file-input" id="databases_csv{{$frame->id}}" name="databases_csv" accept=".csv, .zip">
                     <label class="custom-file-label" for="databases_csv{{$frame->id}}" data-browse="参照"></label>
                 </div>
-                <small class="text-muted">
-                    ※ CSVファイル・ZIPファイルに対応しています。
-                </small>
             @else
                 <div class="custom-file">
                     <input type="file" class="custom-file-input" id="databases_csv{{$frame->id}}" name="databases_csv" accept=".csv">
@@ -98,6 +95,10 @@ use App\Utilities\Zip\UnzipUtils;
                     <div class="text-danger">{{$message}}</div>
                 @endforeach
             @endif
+            @if (UnzipUtils::useZipArchive())
+                <small class="text-muted">※ CSVファイル・ZIPファイルに対応しています。</small><br />
+            @endif
+            <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
         </div>
     </div>
 

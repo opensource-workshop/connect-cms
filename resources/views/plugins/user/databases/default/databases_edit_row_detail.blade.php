@@ -401,6 +401,16 @@
                     <label class="{{$frame->getSettingLabelClass()}}">内容 </label>
                     <div class="{{$frame->getSettingInputClass()}}">
                         <textarea name="caption" class="form-control" rows="3">{{old('caption', $column->caption)}}</textarea>
+
+                        <div class="card bg-light mt-1">
+                            <div class="card-body px-2 pt-0 pb-1">
+                                <span class="small">
+                                    ※ [[upload_max_filesize]] を記述すると該当部分にアップロードできる１ファイルの最大サイズが入ります。<br />
+                                    ※ （設定例：ファイル型、画像型等に設定）<br />
+                                    　 アップロードできる１ファイルの最大サイズ: [[upload_max_filesize]]<br />
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
