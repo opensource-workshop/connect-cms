@@ -7,8 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Support\Facades\Log;
 
+use App\UserableNohistory;
+
 class FrameConfig extends Model
 {
+    use UserableNohistory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
