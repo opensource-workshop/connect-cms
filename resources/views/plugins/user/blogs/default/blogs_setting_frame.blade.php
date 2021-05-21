@@ -101,6 +101,28 @@
 		        </div>
 		    </div>
 
+            <div class="form-group row">
+		        <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_created_name')}}</label>
+		        <div class="{{$frame->getSettingInputClass(true)}}">
+		            <div class="custom-control custom-radio custom-control-inline">
+		                @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::none)
+		                    <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input" checked="checked">
+		                @else
+		                    <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
+		                @endif
+		                <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_0">{{BlogDisplayCreatedName::getDescription('none')}}</label>
+		            </div>
+		            <div class="custom-control custom-radio custom-control-inline">
+		                @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+		                    <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input" checked="checked">
+		                @else
+		                   <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
+		                @endif
+		                <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_1">{{BlogDisplayCreatedName::getDescription('display')}}</label>
+		            </div>
+		        </div>
+            </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center mt-3">
                 <div class="row">
@@ -108,7 +130,7 @@
                         <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                             <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
                         </button>
-                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                             <span class="{{$frame->getSettingButtonCaptionClass()}}">
                                 設定変更
                             </span>
