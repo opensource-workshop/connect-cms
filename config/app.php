@@ -168,6 +168,8 @@ $app_array = [
         /*
          * Package Service Providers...
          */
+        // 画像処理
+        Intervention\Image\ImageServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -269,6 +271,7 @@ $app_array = [
         'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
         'BlogFrameConfig' => \App\Enums\BlogFrameConfig::class,
         'BlogDisplayCreatedName' => \App\Enums\BlogDisplayCreatedName::class,
+        'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
@@ -276,6 +279,10 @@ $app_array = [
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
         'FrameConfig' => \App\Models\Core\FrameConfig::class,
+
+        // 画像処理
+        'Image' => Intervention\Image\Facades\Image::class,
+
     ],
 
 ];

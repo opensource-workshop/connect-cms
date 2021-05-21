@@ -435,7 +435,7 @@ class CalendarsPlugin extends UserPluginBase
         $post->end_date    = $request->end_date;
         $post->end_time    = $request->end_time;
         $post->title       = $request->title;
-        $post->body        = $request->body;
+        $post->body        = $this->clean($request->body);   // wysiwygのXSS対応のJavaScript等の制限
 
         // 投稿者をセット
         if (Auth::check()) {

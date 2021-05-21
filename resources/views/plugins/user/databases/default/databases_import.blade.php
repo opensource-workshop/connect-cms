@@ -61,7 +61,7 @@ use App\Utilities\Zip\UnzipUtils;
                 <button type="button" class="btn btn-sm btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="sr-only">ドロップダウンボタン</span>
                 </button>
-                <div class="dropdown-menu">
+                <div class="dropdown-menu dropdown-menu-right">
                     <a class="dropdown-item" href="#" onclick="submit_download_csv_format_shift_jis(); return false;">CSVファイルのフォーマット（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
                     <a class="dropdown-item" href="#" onclick="submit_download_csv_format_utf_8(); return false;">CSVファイルのフォーマット（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
                 </div>
@@ -79,17 +79,26 @@ use App\Utilities\Zip\UnzipUtils;
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} pt-0">CSVファイル <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="file" name="databases_csv" class="form-control-file">
             @if (UnzipUtils::useZipArchive())
-                <small class="text-muted">
-                    ※ CSVファイル・ZIPファイルに対応しています。
-                </small>
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="databases_csv{{$frame->id}}" name="databases_csv" accept=".csv, .zip">
+                    <label class="custom-file-label" for="databases_csv{{$frame->id}}" data-browse="参照"></label>
+                </div>
+            @else
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="databases_csv{{$frame->id}}" name="databases_csv" accept=".csv">
+                    <label class="custom-file-label" for="databases_csv{{$frame->id}}" data-browse="参照"></label>
+                </div>
             @endif
             @if ($errors && $errors->has('databases_csv'))
                 @foreach ($errors->get('databases_csv') as $message)
                     <div class="text-danger">{{$message}}</div>
                 @endforeach
             @endif
+            @if (UnzipUtils::useZipArchive())
+                <small class="text-muted">※ CSVファイル・ZIPファイルに対応しています。</small><br />
+            @endif
+            <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
         </div>
     </div>
 
@@ -110,8 +119,8 @@ use App\Utilities\Zip\UnzipUtils;
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">
-        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="mr-2">
-            <span class="btn btn-secondary"><i class="fas fa-angle-left"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> DB選択へ</span></span>
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="btn btn-secondary mr-2">
+            <i class="fas fa-angle-left"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> DB選択へ</span>
         </a>
 
         <button type="submit" class="btn btn-primary">
@@ -119,5 +128,12 @@ use App\Utilities\Zip\UnzipUtils;
         </button>
     </div>
 </form>
+
+{{-- custom-file-inputクラスでファイル選択時にファイル名表示 --}}
+<script>
+    $('.custom-file-input').on('change',function(){
+        $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+    })
+</script>
 
 @endsection

@@ -479,7 +479,7 @@ class CountersPlugin extends UserPluginBase
         }
 
         // カウントデータを取得
-        $counter_counts = CounterCount::where('id', $id)
+        $counter_counts = CounterCount::where('counter_id', $id)
                 ->orderBy('counted_at', 'asc')
                 ->get();
 
@@ -502,8 +502,12 @@ class CountersPlugin extends UserPluginBase
             $csv_line_no++;
         }
 
+        // カウントデータを取得
+        $counter = Counter::firstOrNew(['id' => $id]);
+
         // レスポンス版
-        $filename = 'counter_counts.csv';
+        // $filename = 'counter_counts.csv';
+        $filename = $counter->name . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'content-Disposition' => 'attachment; filename="'.$filename.'"',

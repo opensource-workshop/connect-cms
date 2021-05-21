@@ -842,9 +842,21 @@
         <div class="row mt-3">
             <div class="col-12 text-right mb-1">
                 @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
-                    <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
-                    </a>
+                    <div class="btn-group">
+                        <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
+                            <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                        </a>
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">ドロップダウンボタン</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="{{url('/')}}/plugin/learningtasks/editUsers/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" class="dropdown-item">参加設定</a>
+                            <a href="{{url('/')}}/plugin/learningtasks/editReport/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" class="dropdown-item">レポート設定</a>
+                            <a href="{{url('/')}}/plugin/learningtasks/editExaminations/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" class="dropdown-item">試験設定</a>
+                            <a href="{{url('/')}}/plugin/learningtasks/editEvaluate/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" class="dropdown-item">総合評価設定</a>
+                            <a href="{{url('/')}}/plugin/learningtasks/listGrade/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" class="dropdown-item">成績出力</a>
+                        </div>
+                    </div>
                 @endcan
             </div>
         </div>

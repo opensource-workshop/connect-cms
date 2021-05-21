@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -76,7 +76,7 @@
                 <th nowrap>固定リンク</th>
                 <th nowrap class="pl-1"><i class="fas fa-key" title="閲覧パスワードあり"></i></th>
                 <th nowrap class="pl-1"><i class="fas fa-lock" title="メンバーシップページ・ログインユーザ全員参加"></i></th>
-                <th nowrap class="pl-1"><i class="fas fa-users" title="ページ権限設定"></i></th>
+                <th nowrap class="text-center"><i class="fas fa-users" title="ページ権限設定"></i></th>
                 <th nowrap><i class="fas fa-paint-roller" title="背景色"></i></th>
                 <th nowrap><img src="{{asset('/images/core/layout/header_icon.png')}}" title="ヘッダー色" class="cc-page-layout-icon" alt="ヘッダー色"></th>
                 <th nowrap><img src="{{asset('/images/core/layout/1111.png')}}" class="cc-page-layout-icon" title="レイアウト" alt="レイアウト"></th>
@@ -90,7 +90,16 @@
                 <tr>
                     <!-- Task Name -->
                     <td class="table-text p-1" nowrap>
-                        <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
+                        <div class="btn-group">
+                            <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
+                            <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">ドロップダウンボタン</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="{{url('/manage/page/role')}}/{{$page_item->id}}" >ページ権限設定</a>
+                                <a class="dropdown-item" href="{{url('/manage/page/migration_order')}}/{{$page_item->id}}" >外部ページインポート</a>
+                            </div>
+                        </div>
 
                         {{-- 上移動 --}}
                         <button type="button" class="btn p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$page_item->id}})">
@@ -151,8 +160,16 @@
                             <i class="fas fa-lock-open" title="公開ページ"></i>
                         @endif
                     </td>
-                    <td class="table-text p-1">
-                        <div><a href="{{url('/manage/page/role')}}/{{$page_item->id}}"><i class="fas fa-users" title="役割設定"></i></a></div>
+                    <td class="table-text p-1 text-center" nowrap>
+                        @if ($page_item->page_roles->isEmpty())
+                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限なし</span>
+                            </a>
+                        @else
+                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-success btn-sm">
+                                <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限あり</span>
+                            </a>
+                        @endif
                     </td>
                     <td class="table-text p-1 text-center">
                         @if($page_item->background_color)

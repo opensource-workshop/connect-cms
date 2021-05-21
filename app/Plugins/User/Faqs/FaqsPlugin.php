@@ -613,7 +613,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs_post->categories_id    = $request->categories_id;
         $faqs_post->important        = $request->important;
         $faqs_post->posted_at        = $request->posted_at . ':00';
-        $faqs_post->post_text        = $request->post_text;
+        $faqs_post->post_text        = $this->clean($request->post_text);   // wysiwygのXSS対応のJavaScript等の制限
         $faqs_post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
 
         // 承認の要否確認とステータス処理

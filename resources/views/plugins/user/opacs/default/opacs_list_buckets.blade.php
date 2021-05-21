@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -17,7 +17,7 @@
     {{ csrf_field() }}
 
     <div class="form-group">
-        <table class="table table-hover" style="margin-bottom: 0;">
+        <table class="table table-hover {{$frame->getSettingTableClass()}}">
         <thead>
             <tr>
                 <th></th>
@@ -29,10 +29,15 @@
         <tbody>
         @foreach($opacs as $opac)
             <tr @if ($opac_frame->opacs_id == $opac->id) class="active"@endif>
-                <td><input type="radio" value="{{$opac->bucket_id}}" name="select_bucket"@if ($opac_frame->bucket_id == $opac->bucket_id) checked @endif></td>
-                <td>{{$opac->opac_name}}</td>
-                <th><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> OPAC設定変更</button></th>
-                <td>{{$opac->created_at}}</td>
+                <td class="d-table-cell"><input type="radio" value="{{$opac->bucket_id}}" name="select_bucket"@if ($opac_frame->bucket_id == $opac->bucket_id) checked @endif></td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">OPAC名：</span>{{$opac->opac_name}}</td>
+                <td>
+                    <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
+                    <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}">
+                        <i class="far fa-edit"></i> 設定変更
+                    </a>
+                </td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$opac->created_at}}</td>
             </tr>
         @endforeach
         </tbody>
@@ -40,11 +45,11 @@
     </div>
 
     <div class="text-center">
-        {{ $opacs->links() }}
+        {{ $opacs->fragment('frame-' . $frame_id)->links() }}
     </div>
 
-    <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+    <div class="form-group text-center mt-3">
+        <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></a>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示OPAC変更</button>
     </div>
 </form>
