@@ -946,7 +946,12 @@ class UserManage extends ManagePluginBase
             foreach ($request->group_roles as $group_id => $group_role) {
                 // 権限の解除
                 if (empty($group_role)) {
-                    GroupUser::where('group_id', $group_id)->where('user_id', $id)->delete();
+                    // bugfix: 論理削除時にdeleted_id、deleted_nameが入ってないバグ修正
+                    // GroupUser::where('group_id', $group_id)->where('user_id', $id)->delete();
+                    $group_user = GroupUser::where('group_id', $group_id)->where('user_id', $id)->first();
+                    if ($group_user) {
+                        $group_user->delete();
+                    }
                 } else {
                     // 登録 or 更新
                     $group_user = GroupUser::updateOrCreate(
@@ -1553,45 +1558,33 @@ class UserManage extends ManagePluginBase
 
             $user->save();
 
-            // [TODO]
-            // グループ
-            // $groups = $csv_columns[2];
+            // グループ. nullでも空arrayになるようにarrayでキャスト
+            $csv_groups = (array)$csv_columns[2];
 
-            // foreach ($groups as $group) {
-            //     // 登録 or 更新
-            //     $group_user = GroupUser::updateOrCreate(
-            //         ['group_id'   => $group_id, 'user_id' => $user->id],
-            //         [
-            //             'group_id'   => $group_id,
-            //             'user_id'    => $user->id,
-            //             'group_role' => $group_role,
-            //             'deleted_id' => null,
-            //             'deleted_name' => null,
-            //             'deleted_at' => null
-            //         ]
-            //     );
-            // }
-
-            // // 画面項目のチェック
-            // if ($request->has('group_roles')) {
-            //     foreach ($request->group_roles as $group_id => $group_role) {
-            //         // 権限の解除
-            //         if (empty($group_role)) {
-            //             GroupUser::where('group_id', $group_id)->where('user_id', $id)->delete();
-            //         } else {
-            //             // 登録 or 更新
-            //             $group_user = GroupUser::updateOrCreate(
-            //                 ['group_id'   => $group_id, 'user_id' => $id],
-            //                 ['group_id'   => $group_id,
-            //                 'user_id'    => $id,
-            //                 'group_role' => $group_role,
-            //                 'deleted_id' => null,
-            //                 'deleted_name' => null,
-            //                 'deleted_at' => null]
-            //             );
-            //         }
-            //     }
-            // }
+            // 全グループ分ループ
+            foreach ($group as $group_row) {
+                // CSVにグループ名あり
+                if (in_array($group_row->name, $csv_groups)) {
+                    // グループ参加
+                    $group_user = GroupUser::updateOrCreate(
+                        ['group_id' => $group_row->id, 'user_id' => $user->id],
+                        [
+                            'group_id' => $group_row->id,
+                            'user_id' => $user->id,
+                            'group_role' => 'general',
+                            'deleted_id' => null,
+                            'deleted_name' => null,
+                            'deleted_at' => null
+                        ]
+                    );
+                } else {
+                    // グループ不参加
+                    $group_user = GroupUser::where('group_id', $group_row->id)->where('user_id', $user->id)->first();
+                    if ($group_user) {
+                        $group_user->delete();
+                    }
+                }
+            }
         }
 
         // 一時ファイルの削除
