@@ -1442,10 +1442,12 @@ class UserManage extends ManagePluginBase
             return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
         }
 
+        $group = Group::get();
+        $import_column_col_no = $this->getImportColumnColNo($users_columns);
+
         // データ項目のエラーチェック
         // $error_msgs = CsvUtils::checkCvslines($fp, $users_columns, $cvs_rules);
-        $group = Group::get();
-        $error_msgs = $this->checkCvslines($fp, $users_columns, $group);
+        $error_msgs = $this->checkCvslines($fp, $users_columns, $group, $import_column_col_no);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -1496,6 +1498,7 @@ class UserManage extends ManagePluginBase
             // Storage::delete($path);
             // dd('ここまで' . $posted_at);
 
+            // --- User
             if (empty($users_id)) {
                 // 登録
                 $user = new User();
@@ -1505,60 +1508,35 @@ class UserManage extends ManagePluginBase
                 $user = User::where('id', $users_id)->first();
             }
 
-            ////////////////////////////////////
-            //// [TODO] 以下作成中
-            ////////////////////////////////////
-
-            // // 見出し行-頭（固定項目）
-            // $import_column['id'] = 'id';
-            // $import_column['userid'] = 'ログインID';
-            // $import_column['name'] = 'ユーザ名';
-            // $import_column['group'] = 'グループ';
-            // $import_column['email'] = 'eメールアドレス';
-            // $import_column['password'] = 'パスワード';
-
-            // // 見出し行
-            // foreach ($users_columns as $column) {
-            //     $import_column[$column->id] = $column->column_name;
-            // }
-
-            // // 見出し行-末尾（固定項目）
-            // $import_column['view_user_roles'] = '権限';
-            // $import_column['user_original_roles'] = '役割設定';
-            // $import_column['status'] = '状態';
-
-            // $user->post_id = $post_id;
-
-            // $user->start_at = $csv_columns[0] . ':00';
-            // $user->end_at = $csv_columns[1] . ':00';
-            // if ($csv_columns[2]) {
-            //     $user->entry_end_at = $csv_columns[2] . ':00';
-            // }
-
             // ログインID
             $user->userid = $csv_columns[0];
             // ユーザ名
             $user->name = $csv_columns[1];
-
             // eメールアドレス
             $user->email = $csv_columns[3];
 
-            // [TODO]
+            // [TODO] 設定したパスワードでログインできるかチェック
             // パスワード（新規は必須でバリデーション追加？id空ならパスワード必須、更新はnullOK）
+            $password = $csv_columns[4];
             if (empty($users_id)) {
                 // 登録
-                $user->password = Hash::make($csv_columns[4]);
+                $user->password = Hash::make($password);
             } else {
                 // 更新
-                if ($csv_columns[4]) {
+                if ($password) {
                     // 値ありのみパスワード処理する
-                    $user->password = Hash::make($csv_columns[4]);
+                    $user->password = Hash::make($password);
                 }
             }
 
+            // 状態
+            $status_col_no = array_search('status', $import_column_col_no);
+            $user->status = $csv_columns[$status_col_no];
+
             $user->save();
 
-            // グループ. nullでも空arrayになるようにarrayでキャスト
+            // --- グループ
+            // nullでも空arrayになるようにarrayでキャスト
             $csv_groups = (array)$csv_columns[2];
 
             // 全グループ分ループ
@@ -1578,13 +1556,26 @@ class UserManage extends ManagePluginBase
                         ]
                     );
                 } else {
-                    // グループ不参加
+                    // グループ不参加. deletingイベント対応
                     $group_user = GroupUser::where('group_id', $group_row->id)->where('user_id', $user->id)->first();
                     if ($group_user) {
                         $group_user->delete();
                     }
                 }
             }
+
+            ////////////////////////////////////
+            //// [TODO] 以下作成中
+            ////////////////////////////////////
+
+            // // 見出し行
+            // foreach ($users_columns as $column) {
+            //     $import_column[$column->id] = $column->column_name;
+            // }
+
+            // // 見出し行-末尾（固定項目）
+            // $import_column['view_user_roles'] = '権限';
+            // $import_column['user_original_roles'] = '役割設定';
         }
 
         // 一時ファイルの削除
@@ -1597,10 +1588,8 @@ class UserManage extends ManagePluginBase
     /**
      * CSVデータ行チェック
      */
-    private function checkCvslines($fp, $users_columns, $group)
+    private function checkCvslines($fp, $users_columns, $group, $import_column_col_no)
     {
-        $import_column_col_no = $this->getImportColumnColNo($users_columns);
-
         // 行頭（固定項目）
         $rules = [
             // id
