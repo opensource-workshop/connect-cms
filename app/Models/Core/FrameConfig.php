@@ -29,7 +29,7 @@ class FrameConfig extends Model
      * @param string $name 名称
      * @return string 値
      */
-    public static function getConfigValue(Collection $frame_configs , string $name)
+    public static function getConfigValue(Collection $frame_configs, string $name)
     {
         $value = '';
         if (empty($frame_configs)) {
@@ -43,5 +43,4 @@ class FrameConfig extends Model
 
         return $value;
     }
-
 }
