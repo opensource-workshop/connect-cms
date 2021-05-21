@@ -20,29 +20,25 @@ class FrameConfig extends Model
     ];
 
     /**
+     * フレーム設定の値を抜き出す
      *
+     * @param Illuminate\Database\Eloquent\Collection $frame_configs フレーム設定
+     * @param string $name 名称
+     * @return string 値
      */
-    public function getConfigValues(Collection $frame_configs , int $frame_id, string $name)
+    public static function getConfigValue(Collection $frame_configs , string $name)
     {
-        $configs = [];
-        $frame_configs->where('frame_id', $frame_id)
-            ->where('name', $name)
-            ->each(function ($item, $key) use (&$configs){
-                $configs[] = $item->value;
-        });
+        $value = '';
+        if (empty($frame_configs)) {
+            return $value;
+        }
 
-        return $configs;
-    }
+        $config = $frame_configs->where('name', $name)->first();
+        if (!empty($config)) {
+            $value = $config->value;
+        }
 
-    public static function getConfigs(Collection $frame_configs , int $frame_id)
-    {
-        $configs = [];
-        $frame_configs->where('frame_id', $frame_id)
-            ->each(function ($item, $key) use (&$configs){
-                $configs[$item->name][] = $item->value;
-        });
-
-        return $configs;
+        return $value;
     }
 
 }
