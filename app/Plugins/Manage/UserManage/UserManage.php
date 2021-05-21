@@ -1439,7 +1439,8 @@ class UserManage extends ManagePluginBase
 
         // データ項目のエラーチェック
         // $error_msgs = CsvUtils::checkCvslines($fp, $users_columns, $cvs_rules);
-        $error_msgs = $this->checkCvslines($fp, $users_columns);
+        $group = Group::get();
+        $error_msgs = $this->checkCvslines($fp, $users_columns, $group);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -1534,10 +1535,6 @@ class UserManage extends ManagePluginBase
             // ユーザ名
             $user->name = $csv_columns[1];
 
-            // [TODO]
-            // グループ
-            // $user->group = $csv_columns[2];
-
             // eメールアドレス
             $user->email = $csv_columns[3];
 
@@ -1554,8 +1551,47 @@ class UserManage extends ManagePluginBase
                 }
             }
 
-
             $user->save();
+
+            // [TODO]
+            // グループ
+            // $groups = $csv_columns[2];
+
+            // foreach ($groups as $group) {
+            //     // 登録 or 更新
+            //     $group_user = GroupUser::updateOrCreate(
+            //         ['group_id'   => $group_id, 'user_id' => $user->id],
+            //         [
+            //             'group_id'   => $group_id,
+            //             'user_id'    => $user->id,
+            //             'group_role' => $group_role,
+            //             'deleted_id' => null,
+            //             'deleted_name' => null,
+            //             'deleted_at' => null
+            //         ]
+            //     );
+            // }
+
+            // // 画面項目のチェック
+            // if ($request->has('group_roles')) {
+            //     foreach ($request->group_roles as $group_id => $group_role) {
+            //         // 権限の解除
+            //         if (empty($group_role)) {
+            //             GroupUser::where('group_id', $group_id)->where('user_id', $id)->delete();
+            //         } else {
+            //             // 登録 or 更新
+            //             $group_user = GroupUser::updateOrCreate(
+            //                 ['group_id'   => $group_id, 'user_id' => $id],
+            //                 ['group_id'   => $group_id,
+            //                 'user_id'    => $id,
+            //                 'group_role' => $group_role,
+            //                 'deleted_id' => null,
+            //                 'deleted_name' => null,
+            //                 'deleted_at' => null]
+            //             );
+            //         }
+            //     }
+            // }
         }
 
         // 一時ファイルの削除
@@ -1568,7 +1604,7 @@ class UserManage extends ManagePluginBase
     /**
      * CSVデータ行チェック
      */
-    private function checkCvslines($fp, $users_columns)
+    private function checkCvslines($fp, $users_columns, $group)
     {
         $import_column_col_no = $this->getImportColumnColNo($users_columns);
 
@@ -1585,7 +1621,7 @@ class UserManage extends ManagePluginBase
             // ユーザ名
             2 => 'required|string|max:255',
             // グループ. (グループ名の存在チェック。パイプ区切りで複数あり)
-            3 => new CustomValiCsvExistsGroupName(),
+            3 => new CustomValiCsvExistsGroupName($group),
             // eメールアドレス. 後でセット
             4 => [],
             // パスワード. 後でセット
@@ -1626,7 +1662,8 @@ class UserManage extends ManagePluginBase
             'admin_user',
         ])];
         // 役割設定.  (役割名の存在チェック。パイプ区切りで複数あり)
-        $rules[$col + 8] = ['nullable', new CustomValiCsvExistsRoleName()];
+        $configs_original_role = Configs::where('category', 'original_role')->get();
+        $rules[$col + 8] = ['nullable', new CustomValiCsvExistsRoleName($configs_original_role)];
         // 状態
         $rules[$col + 9] = ['required', Rule::in(UserStatus::getChooseableKeys())];
 

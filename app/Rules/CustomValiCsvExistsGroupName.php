@@ -3,8 +3,7 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
-
-use App\Models\Common\Group;
+use Illuminate\Support\Collection;
 
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Utilities\String\StringUtils;
@@ -21,9 +20,9 @@ class CustomValiCsvExistsGroupName implements Rule
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(Collection $group)
     {
-        //
+        $this->group = $group;
     }
 
     /**
@@ -45,7 +44,7 @@ class CustomValiCsvExistsGroupName implements Rule
         // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
         $check_values = StringUtils::trimInput($check_values);
 
-        $this->group = Group::get();
+        // $this->group = Group::get();
 
         foreach ($check_values as $check_value) {
             $target_group = $this->group->where('name', $check_value);
@@ -65,6 +64,6 @@ class CustomValiCsvExistsGroupName implements Rule
      */
     public function message()
     {
-        return ':attributeには ' . implode(',', $this->group->implode('name', ', ')) . ' のうちいずれかを指定してください。';
+        return ':attributeには ' . $this->group->implode('name', ', ') . ' のうちいずれかを指定してください。';
     }
 }

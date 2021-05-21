@@ -3,8 +3,7 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
-
-use App\Models\Core\Configs;
+use Illuminate\Support\Collection;
 
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Utilities\String\StringUtils;
@@ -21,9 +20,10 @@ class CustomValiCsvExistsRoleName implements Rule
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(Collection $configs_original_role)
     {
-        //
+        // 役割設定取得
+        $this->configs = $configs_original_role;
     }
 
     /**
@@ -46,7 +46,7 @@ class CustomValiCsvExistsRoleName implements Rule
         $check_values = StringUtils::trimInput($check_values);
 
         // 役割設定取得
-        $this->configs = Configs::where('category', 'original_role')->get();
+        // $this->configs = Configs::where('category', 'original_role')->get();
 
         foreach ($check_values as $check_value) {
             $target_group = $this->configs->where('value', $check_value);
@@ -66,6 +66,6 @@ class CustomValiCsvExistsRoleName implements Rule
      */
     public function message()
     {
-        return ':attributeには ' . implode(',', $this->configs->implode('value', ', ')) . ' のうちいずれかを指定してください。';
+        return ':attributeには ' . $this->configs->implode('value', ', ') . ' のうちいずれかを指定してください。';
     }
 }
