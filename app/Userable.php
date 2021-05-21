@@ -26,7 +26,7 @@ trait Userable
     public static function bootUserable()
     {
         /**
-         *  オブジェクトcreate 時のイベントハンドラ
+         * オブジェクトcreate 時のイベントハンドラ
          */
         static::creating(function (Model $model) {
             // 未ログインなら処理しない。（未ログインで登録する処理、フォーム等に対応）
@@ -36,9 +36,8 @@ trait Userable
 
             // created_idはデータ更新権限のチェックのため、最初に記事を書いたユーザのものを引き継ぐ必要があるので、自動登録はしない。
             // $model->created_id   = Auth::user()->id;
-//            $model->created_name = Auth::user()->name;
-            
-            if( empty( $model->created_name ) === true ) {
+            // $model->created_name = Auth::user()->name;
+            if (empty($model->created_name) === true) {
                 $model->created_name = Auth::user()->name;
             } else {
                 $model->updated_id   = Auth::user()->id;
@@ -47,7 +46,7 @@ trait Userable
         });
 
         /**
-         *  オブジェクトupdate 時のイベントハンドラ
+         * オブジェクトupdate 時のイベントハンドラ
          */
         static::updating(function (Model $model) {
             // 未ログインなら処理しない
@@ -60,7 +59,9 @@ trait Userable
         });
 
         /**
-         *  オブジェクトdelete 時のイベントハンドラ
+         * オブジェクトdelete 時のイベントハンドラ
+         * ※ deletingイベントは、Model->delete() or Model->destroy() で動作します。
+         *    Collection->delete()では動作しないので注意してください。
          */
         static::deleting(function (Model $model) {
             // 未ログインなら処理しない
