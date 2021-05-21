@@ -1,0 +1,22 @@
+name: Close stale issues
+
+on:
+  schedule:
+  - cron: "00 16 * * *"
+
+jobs:
+  stale:
+
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+    - uses: actions/stale@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        stale-issue-message: 'このissueは1年間更新がないため１か月後にcloseします。closeしたくない場合は【自動close除外】ラベルを付けるか【close予定】ラベルを外してください。'
+        days-before-stale: 365
+        days-before-close: 30
+        exempt-issue-labels: "自動close除外"
+        stale-issue-label: "close予定"
