@@ -1536,7 +1536,7 @@ class UserManage extends ManagePluginBase
 
             // [TODO]
             // グループ
-            $user->group = $csv_columns[2];
+            // $user->group = $csv_columns[2];
 
             // eメールアドレス
             $user->email = $csv_columns[3];
@@ -1562,9 +1562,7 @@ class UserManage extends ManagePluginBase
         fclose($fp);
         Storage::delete($path);
 
-        $request->flash_message = 'インポートしました。';
-
-        // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
+        return redirect()->back()->with('flash_message', 'インポートしました。');
     }
 
     /**
