@@ -275,6 +275,7 @@ $app_array = [
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
+        'FrameConfig' => \App\Models\Core\FrameConfig::class,
     ],
 
 ];
