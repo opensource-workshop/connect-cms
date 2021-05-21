@@ -105,7 +105,8 @@
 		        <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_created_name')}}</label>
 		        <div class="{{$frame->getSettingInputClass(true)}}">
 		            <div class="custom-control custom-radio custom-control-inline">
-		                @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::none)
+		                @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === '' ||
+                            FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::none)
 		                    <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input" checked="checked">
 		                @else
 		                    <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
