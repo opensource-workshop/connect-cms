@@ -242,6 +242,11 @@
         {{-- テーマ固有 簡易テンプレート設定 --}}
         {!!$templates_file!!}
 
+        formats: {
+            // bugfix: bootstrap4のblockquoteはclassに'blockquote'付ける
+            blockquote: { block: 'blockquote', classes: 'blockquote' }
+        },
+
         menubar  : '',
         contextmenu : '',
 
