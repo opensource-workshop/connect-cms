@@ -35,9 +35,9 @@ use App\Models\Core\Configs;
             <small class="form-text text-muted">サイト名（各ページで上書き可能 ※予定）</small>
         </div>
 
-        {{-- テーマ --}}
+        {{-- 基本テーマ --}}
         <div class="form-group">
-            <label class="col-form-label">テーマ</label>
+            <label class="col-form-label">基本テーマ</label>
             <select name="base_theme" class="form-control">
                 <option value="">テーマなし</option>
                 @foreach($themes as $theme)
@@ -49,6 +49,25 @@ use App\Models\Core\Configs;
                         </optgroup>
                     @else
                         <option value="{{$theme['dir']}}"@if(old('base_theme', $current_base_theme) == $theme['dir']) selected @endif>{{$theme['name']}}</option>
+                    @endisset
+                @endforeach
+            </select>
+        </div>
+
+        {{-- 追加テーマ --}}
+        <div class="form-group">
+            <label class="col-form-label">追加テーマ</label>
+            <select name="additional_theme" class="form-control">
+                <option value="">テーマなし</option>
+                @foreach($themes as $theme)
+                    @isset($theme['themes'])
+                        <optgroup label="{{$theme['name']}}">
+                        @foreach($theme['themes'] as $sub_theme)
+                            <option value="{{$sub_theme['dir']}}"@if(old('additional_theme', $current_additional_theme) == $sub_theme['dir']) selected @endif>{{$sub_theme['name']}}</option>
+                        @endforeach
+                        </optgroup>
+                    @else
+                        <option value="{{$theme['dir']}}"@if(old('additional_theme', $current_additional_theme) == $theme['dir']) selected @endif>{{$theme['name']}}</option>
                     @endisset
                 @endforeach
             </select>

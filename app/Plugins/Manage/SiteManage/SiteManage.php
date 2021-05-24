@@ -74,12 +74,15 @@ class SiteManage extends ManagePluginBase
         //     $configs_array[$config->name] = $config->value;
         // }
 
-        // 設定済みのテーマ
+        // 設定済みの基本テーマ
         $base_theme_obj = $configs->where('name', 'base_theme')->first();
         $current_base_theme = '';
         if (!empty($base_theme_obj)) {
             $current_base_theme = $base_theme_obj->value;
         }
+
+        // 設定済みの追加テーマ
+        $current_additional_theme = $configs->where('name', 'additional_theme')->first() ? $configs->where('name', 'additional_theme')->first()->value : '';
 
         // テーマの取得
         $themes = $this->getThemes();
@@ -96,6 +99,7 @@ class SiteManage extends ManagePluginBase
             // "configs"            => $configs_array,
             "configs"            => $configs,
             "current_base_theme" => $current_base_theme,
+            "current_additional_theme" => $current_additional_theme,
             "themes"             => $themes,
             "pages_select" => $pages_select,
         ]);
@@ -139,11 +143,18 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_site_name]
         );
 
-        // 画面の基本のテーマ
+        // 基本テーマ
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_theme'],
             ['category' => 'general',
              'value'    => $request->base_theme]
+        );
+
+        // 追加テーマ
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'additional_theme'],
+            ['category' => 'general',
+             'value'    => $request->additional_theme]
         );
 
         // 画面の基本の背景色
