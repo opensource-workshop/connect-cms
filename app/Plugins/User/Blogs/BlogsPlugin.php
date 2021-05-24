@@ -1111,10 +1111,11 @@ WHERE status = 0
             BlogsPosts::destroy($blogs_posts_ids);
 
             $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id);
-            $categories_ids = $blogs_categories->pluck('categories_id');
+            $blogs_categories_categories_ids = $blogs_categories->pluck('categories_id');
             $blogs_categories_ids = $blogs_categories->pluck('id');
 
             // カテゴリ削除. カテゴリはブログ毎に別々に存在してるため、削除する
+            $categories_ids = Categories::whereIn('id', $blogs_categories_categories_ids)->where('target', 'blogs')->pluck('id');
             Categories::destroy($categories_ids);
 
             // ブログカテゴリ削除
