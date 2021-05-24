@@ -71,6 +71,7 @@ use App\Models\Core\Configs;
                     @endisset
                 @endforeach
             </select>
+            <small class="form-text text-muted">基本テーマとは別のテーマを追加で読み込みます。スタイルの読み込み順は追加テーマの方が後になる為、スタイル競合時は追加テーマのものが優先されます。</small>
         </div>
 
         <div id="app">
