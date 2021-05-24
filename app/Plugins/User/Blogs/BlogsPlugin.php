@@ -1387,11 +1387,16 @@ WHERE status = 0
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 削除(ブログプラグインのカテゴリ表示データ)
-        BlogsCategories::where('categories_id', $id)->delete();
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        //
+        // 削除(ブログプラグインのカテゴリ表示データ). 万が一idがnullでも500エラーにならないようにfirstOrNew()を利用。
+        // BlogsCategories::where('categories_id', $id)->delete();
+        $blogs_categories = BlogsCategories::firstOrNew(['categories_id' => $id]);
+        $blogs_categories->delete();
 
         // 削除(カテゴリ)
-        Categories::where('id', $id)->delete();
+        // Categories::where('id', $id)->delete();
+        Categories::destroy($id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
