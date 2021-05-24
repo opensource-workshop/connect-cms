@@ -1104,10 +1104,10 @@ WHERE status = 0
             $blogs_posts_ids = BlogsPosts::where('blogs_id', $blogs_id)->pluck('id');
             $blogs_posts_tags_ids = BlogsPostsTags::whereIn('blogs_posts_id', $blogs_posts_ids)->pluck('id');
 
-            // o タグ削除
+            // タグ削除
             BlogsPostsTags::destroy($blogs_posts_tags_ids);
 
-            // o 記事データを削除する。
+            // 記事データを削除する。
             BlogsPosts::destroy($blogs_posts_ids);
 
             $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id);
