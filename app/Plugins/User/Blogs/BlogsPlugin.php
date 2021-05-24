@@ -11,6 +11,7 @@ use Session;
 
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 // use App\Models\Common\Page;
@@ -1040,8 +1041,8 @@ WHERE status = 0
         if (empty($request->blogs_id)) {
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => $request->blog_name,
-                  'plugin_name' => 'blogs'
+                'bucket_name' => $request->blog_name,
+                'plugin_name' => 'blogs'
             ]);
 
             // ブログデータ新規オブジェクト
@@ -1096,8 +1097,29 @@ WHERE status = 0
     {
         // blogs_id がある場合、データを削除
         if ($blogs_id) {
+            // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+            // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
+            //
+            // BlogsPosts::where('blogs_id', $blogs_id)->delete();
+            $blogs_posts_ids = BlogsPosts::where('blogs_id', $blogs_id)->pluck('id');
+            $blogs_posts_tags_ids = BlogsPostsTags::whereIn('blogs_posts_id', $blogs_posts_ids)->pluck('id');
+
+            // タグ削除
+            BlogsPostsTags::destroy($blogs_posts_tags_ids);
+
             // 記事データを削除する。
-            BlogsPosts::where('blogs_id', $blogs_id)->delete();
+            BlogsPosts::destroy($blogs_posts_ids);
+
+            $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id);
+            $blogs_categories_categories_ids = $blogs_categories->pluck('categories_id');
+            $blogs_categories_ids = $blogs_categories->pluck('id');
+
+            // カテゴリ削除. カテゴリはブログ毎に別々に存在してるため、削除する
+            $categories_ids = Categories::whereIn('id', $blogs_categories_categories_ids)->where('target', 'blogs')->pluck('id');
+            Categories::destroy($categories_ids);
+
+            // ブログカテゴリ削除
+            BlogsCategories::destroy($blogs_categories_ids);
 
             // ブログ設定を削除する。
             Blogs::destroy($blogs_id);
@@ -1111,8 +1133,16 @@ WHERE status = 0
             // FrameのバケツIDの更新
             Frame::where('id', $frame_id)->update(['bucket_id' => null]);
 
+            // blogs_frames. バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら削除する
+
+            // 権限設定消す buckets_roles（消す。バケツに紐づき）
+            $buckets_roles_ids = BucketsRoles::where('buckets_id', $frame->bucket_id)->pluck('id');
+            // dd($buckets_roles_ids, $frame->bucket_id);
+            BucketsRoles::destroy($buckets_roles_ids);
+
             // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // Buckets::where('id', $frame->bucket_id)->delete();
+            Buckets::destroy($frame->bucket_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
@@ -1357,11 +1387,16 @@ WHERE status = 0
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 削除(ブログプラグインのカテゴリ表示データ)
-        BlogsCategories::where('categories_id', $id)->delete();
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        //
+        // 削除(ブログプラグインのカテゴリ表示データ). 万が一idがnullでも500エラーにならないようにfirstOrNew()を利用。
+        // BlogsCategories::where('categories_id', $id)->delete();
+        $blogs_categories = BlogsCategories::firstOrNew(['categories_id' => $id]);
+        $blogs_categories->delete();
 
         // 削除(カテゴリ)
-        Categories::where('id', $id)->delete();
+        // Categories::where('id', $id)->delete();
+        Categories::destroy($id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。

@@ -23,7 +23,7 @@ class CreateCodesHelpMessagesTable extends Migration
     {
         Schema::create('codes_help_messages', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('alias_key', 255)->comment('注釈キー');      // 必須
+            $table->string('alias_key', 191)->comment('注釈キー');      // 必須
             $table->string('name', 255)->comment('注釈名');             // 必須
 
             $table->string('codes_help_messages_alias_key_help_message', 255)->nullable();

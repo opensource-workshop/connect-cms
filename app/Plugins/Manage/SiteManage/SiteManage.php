@@ -391,8 +391,11 @@ class SiteManage extends ManagePluginBase
      */
     public function deleteCategories($request, $id)
     {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        //
         // カテゴリ削除
-        Categories::where('id', $id)->delete();
+        // Categories::where('id', $id)->delete();
+        Categories::destroy($id);
 
         // return $this->categories($request, $id, null, true);
         return redirect()->back();
