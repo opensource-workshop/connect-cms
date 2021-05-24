@@ -22,7 +22,7 @@ class AddCodesHelpMessagesAliasKeyToCodesTable extends Migration
     public function up()
     {
         Schema::table('codes', function (Blueprint $table) {
-            $table->string('codes_help_messages_alias_key', 255)->comment('注釈キー')->nullable()->after('id');
+            $table->string('codes_help_messages_alias_key', 191)->comment('注釈キー')->nullable()->after('id');
         });
     }
 
