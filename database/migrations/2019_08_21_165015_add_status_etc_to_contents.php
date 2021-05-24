@@ -16,8 +16,8 @@ class AddStatusEtcToContents extends Migration
         Schema::table('contents', function (Blueprint $table) {
             //
             $table->text('content2_text')->nullable()->after('content_text');
-            $table->string('view_more')->unique()->nullable()->after('content2_text');
-            $table->string('hide_more')->unique()->nullable()->after('view_more');
+            $table->string('view_more', 191)->unique()->nullable()->after('content2_text');
+            $table->string('hide_more', 191)->unique()->nullable()->after('view_more');
             $table->integer('status')->default('0')->after('hide_more');
         });
     }

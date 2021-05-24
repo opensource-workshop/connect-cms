@@ -105,12 +105,9 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
          * テーブルへのマイグレーション
          */
         $table_names = $schema_manager->listTableNames();
-        // 「sessions」テーブルのみ除外する
-        $table_names_omit_session = array_diff($table_names, array('sessions'));
-        $table_names_omit_session = array_values($table_names_omit_session);
 
         // 既存テーブルの文字コード、照合順序の変更
-        foreach($table_names_omit_session as $table_name){
+        foreach($table_names as $table_name){
             $convert_statement = "ALTER TABLE `$table_name` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci";
             DB::connection()->getpdo()->exec($convert_statement);
             Log::info("execute table convert statement:$convert_statement");
