@@ -259,9 +259,6 @@ class UserPluginBase extends PluginBase
             }
         }
 
-
-        $this->setFrameConfigs();
-
         // 画面(コアの cms_frame)で指定されたクラスのアクションのメソッドを呼び出す。
         // 戻り値は各アクションでのメソッドでview 関数などで生成したHTML なので、そのままreturn して元の画面に戻す。
         return $obj->$action($request, $page_id, $frame_id, $id);
