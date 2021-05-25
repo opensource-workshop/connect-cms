@@ -16,7 +16,7 @@ class CreateFrameConfigs extends Migration
         Schema::create('frame_configs', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('frame_id')->comment('フレームID');
-            $table->string('name', 255)->comment('名称');
+            $table->string('name', 191)->comment('名称');
             $table->string('value', 255)->comment('値');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
