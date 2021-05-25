@@ -1913,7 +1913,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $dist_column->save();
         
         // 項目（子）コピー
-        foreach($src_selects as $src_select){
+        foreach ($src_selects as $src_select) {
             $dist_select = $src_select->replicate();
             $dist_select->forms_columns_id = $dist_column->id;
             $dist_select->save();
