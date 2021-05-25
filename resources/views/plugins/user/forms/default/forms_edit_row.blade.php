@@ -61,6 +61,16 @@
             <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
         </button>
     </td>
+    {{-- コピーボタン --}}
+    <td class="text-center">
+        <button
+            type="button" 
+            class="btn btn-outline-primary text-nowrap"
+            onclick="javascript:submit_copy_column({{ $column->id }});"
+        >
+            <i class="far fa-copy"></i> <span class="d-sm-none">コピー</span>
+        </button>
+    </td>
     {{-- 更新ボタン --}}
     <td class="text-center">
         <button
