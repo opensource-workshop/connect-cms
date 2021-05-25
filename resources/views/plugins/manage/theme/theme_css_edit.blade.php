@@ -21,8 +21,10 @@
         <form action="{{url('/')}}/manage/theme/saveCss" method="POST">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
-            <textarea name="css" class="form-control" rows=20>{{$css}}</textarea>
-
+            <textarea name="css" class="form-control" rows=20 placeholder="（例）&#13;.navbar-dark .navbar-brand {&#13;    color: #ffff00; # デフォルトのヘッダーバー文字色を黄色にします。 &#13;}">{{$css}}</textarea>
+            <small class="text-muted">
+                <div>※ CSSを保存しても変更が反映されない時はブラウザのスーパーリロードを試行してください。</div>
+            </small>
             <div class="form-group mt-3">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/theme/'"><i class="fas fa-times"></i> キャンセル</button>
                 <button type="submit" class="btn btn-primary form-horizontal">

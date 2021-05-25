@@ -88,14 +88,24 @@
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
 
-    <!-- Themes CSS -->
+    <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '')
     <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
 @endif
 
-    <!-- Themes JS -->
+    <!-- Themes JS（基本） -->
 @if (isset($themes['js']) && $themes['js'] != '')
     <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js"></script>
+@endif
+
+    <!-- Themes CSS（追加） -->
+@if (isset($themes['additional_css']) && $themes['additional_css'] != '')
+    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css" rel="stylesheet">
+@endif
+
+    <!-- Themes JS（追加） -->
+@if (isset($themes['additional_js']) && $themes['additional_js'] != '')
+    <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js"></script>
 @endif
 
     <!-- Connect-CMS Page CSS -->
