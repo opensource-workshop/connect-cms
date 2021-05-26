@@ -1541,8 +1541,7 @@ class UserManage extends ManagePluginBase
             // 配列に変換する。
             $csv_groups = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$group_col_no]);
             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-            // nullでも空arrayになるようにarrayでキャスト
-            $csv_groups = (array)StringUtils::trimInput($csv_groups);
+            $csv_groups = StringUtils::trimInput($csv_groups);
 
             // 全グループ分ループ
             foreach ($group as $group_row) {
@@ -1587,11 +1586,10 @@ class UserManage extends ManagePluginBase
 
             // --- 権限(コンテンツ権限 & 管理権限)
             $view_user_roles_col_no = array_search('view_user_roles', $import_column_col_no);
-            // 配列に変換する。
+            // 配列に変換する。nullの場合[0 => ""]になる
             $csv_view_user_roles = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$view_user_roles_col_no]);
             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-            // nullでも空arrayになるようにarrayでキャスト
-            $csv_view_user_roles = (array)StringUtils::trimInput($csv_view_user_roles);
+            $csv_view_user_roles = StringUtils::trimInput($csv_view_user_roles);
 
             // ユーザ権限の更新（権限データの delete & insert）
             $users_roles_ids = UsersRoles::where('users_id', $user->id)->pluck('id');
@@ -1599,12 +1597,15 @@ class UserManage extends ManagePluginBase
             // dd($csv_view_user_roles);
 
             foreach ($csv_view_user_roles as $role_name) {
-                UsersRoles::create([
-                    'users_id'   => $user->id,
-                    'target'     => UsersRoles::getTargetByRole($role_name),
-                    'role_name'  => $role_name,
-                    'role_value' => 1
-                ]);
+                // bugfix: csv値がnullの場合、explodeすると[0 => ""]になったため対応
+                if ($role_name) {
+                    UsersRoles::create([
+                        'users_id'   => $user->id,
+                        'target'     => UsersRoles::getTargetByRole($role_name),
+                        'role_name'  => $role_name,
+                        'role_value' => 1
+                    ]);
+                }
             }
 
             // --- 役割設定
@@ -1612,19 +1613,21 @@ class UserManage extends ManagePluginBase
             // 配列に変換する。
             $csv_user_original_roles_names = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$user_original_roles_col_no]);
             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-            // nullでも空arrayになるようにarrayでキャスト
-            $csv_user_original_roles_names = (array)StringUtils::trimInput($csv_user_original_roles_names);
+            $csv_user_original_roles_names = StringUtils::trimInput($csv_user_original_roles_names);
             // dd($csv_user_original_roles_names);
 
             $user_original_roles = $configs_original_role->whereIn('value', $csv_user_original_roles_names);
 
             foreach ($user_original_roles as $user_original_role) {
-                UsersRoles::create([
-                    'users_id'   => $user->id,
-                    'target'     => 'original_role',
-                    'role_name'  => $user_original_role->name,
-                    'role_value' => 1
-                ]);
+                // bugfix: csv値がnullの場合、explodeすると[0 => ""]になったため対応
+                if ($user_original_role) {
+                    UsersRoles::create([
+                        'users_id'   => $user->id,
+                        'target'     => 'original_role',
+                        'role_name'  => $user_original_role->name,
+                        'role_value' => 1
+                    ]);
+                }
             }
         }
 
