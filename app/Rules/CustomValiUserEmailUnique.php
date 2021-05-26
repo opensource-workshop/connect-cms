@@ -84,6 +84,7 @@ class CustomValiUserEmailUnique implements Rule
         if (!empty($input_cols)) {
             // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
             // \Log::debug(var_export($input_cols, true));
+            // \Log::debug(var_export($this->user_id, true));
             // 値ありはメール重複
             return false;
         }
