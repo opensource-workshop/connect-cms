@@ -28,7 +28,8 @@ final class UserStatus extends EnumsBase
     {
         $enum = self::enum;
         // 仮登録は外す
-        unset($eum[self::temporary]);
+        unset($enum[self::temporary]);
+        // dd($enum);
 
         return array_keys($enum);
     }
