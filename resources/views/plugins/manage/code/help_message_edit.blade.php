@@ -23,12 +23,6 @@
         form_code.action = url;
         form_code.submit();
     }
-    function submitActionConfirm(url, message = '削除します。\nよろしいですか？') {
-        if (confirm(message)) {
-            form_code.action = url;
-            form_code.submit();
-        }
-    }
 </script>
 
 </div>
@@ -38,6 +32,8 @@
         コード登録画面の注釈を登録します。<br>
         登録した注釈は、コード登録画面の注釈名に表示され、選択すると各項目下部に注釈が表示されます。
     </div>
+
+    @include('common.errors_form_line')
 
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
@@ -90,6 +86,11 @@
             'additional3_help_message' => 'additional3注釈',
             'additional4_help_message' => 'additional4注釈',
             'additional5_help_message' => 'additional5注釈',
+            'additional6_help_message' => 'additional6注釈',
+            'additional7_help_message' => 'additional7注釈',
+            'additional8_help_message' => 'additional8注釈',
+            'additional9_help_message' => 'additional9注釈',
+            'additional10_help_message' => 'additional10注釈',
             'display_sequence_help_message' => '表示順注釈',
             'display_sequence' => '表示順',
         ];
@@ -112,28 +113,47 @@
         @endforeach
 
         <!-- Add or Update code Button -->
-        <div class="form-group form-row">
-            <div class="offset-sm-3 col-sm-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code/helpMessages?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
+        <div class="form-group text-center">
+            <div class="form-row">
+                <div class="offset-xl-3 col-9 col-xl-6">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code/helpMessages?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    @if ($codes_help_message->id)
+                    <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/helpMessageUpdate/{{$codes_help_message->id}}')">
+                        <i class="fas fa-check"></i> 更新
+                    </button>
+                    @else
+                    <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/helpMessageStore')">
+                        <i class="fas fa-check"></i> 登録
+                    </button>
+                    @endif
+                </div>
                 @if ($codes_help_message->id)
-                <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/helpMessageUpdate/{{$codes_help_message->id}}')">
-                    <i class="fas fa-check"></i> 更新
-                </button>
-                @else
-                <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/code/helpMessageStore')">
-                    <i class="fas fa-check"></i> 登録
-                </button>
+                    <div class="col-3 col-xl-3 text-right">
+                        <a data-toggle="collapse" href="#collapse{{$codes_help_message->id}}">
+                            <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> 削除</span>
+                        </a>
+                    </div>
                 @endif
             </div>
-            @if ($codes_help_message->id)
-            <div class="col-sm-3 pull-right text-right">
-                <button type="button" class="btn btn-danger form-horizontal" onclick="submitActionConfirm('{{url('/')}}/manage/code/helpMessageDestroy/{{$codes_help_message->id}}')">
-                    <i class="fas fa-trash-alt"></i> 削除
-                </button>
-            </div>
-            @endif
         </div>
     </form>
+
+    <div id="collapse{{$codes_help_message->id}}" class="collapse">
+        <div class="card border-danger">
+            <div class="card-body">
+                <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
+
+                <div class="text-center">
+                    {{-- 削除ボタン --}}
+                    <form action="{{url('/')}}/manage/code/helpMessageDestroy/{{$codes_help_message->id}}" method="POST">
+                        {{csrf_field()}}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 </div>
 </div>

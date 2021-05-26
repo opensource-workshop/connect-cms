@@ -50,8 +50,6 @@
     {{-- post先 --}}
     <form action="{{url('/')}}/manage/code/uploadCsv" method="POST" class="form-horizontal" enctype="multipart/form-data">
         {{ csrf_field() }}
-        {{-- post後、再表示するURL --}}
-        <input type="hidden" name="redirect_path" value="{{url('/')}}/manage/code/import">
 
         <div class="form-group row">
             <div class="col text-right">
@@ -62,7 +60,7 @@
                     <button type="button" class="btn btn-sm btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="sr-only">ドロップダウンボタン</span>
                     </button>
-                    <div class="dropdown-menu">
+                    <div class="dropdown-menu dropdown-menu-right">
                         <a class="dropdown-item" href="#" onclick="submit_download_csv_format_shift_jis(); return false;">CSVファイルのフォーマット（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
                         <a class="dropdown-item" href="#" onclick="submit_download_csv_format_utf_8(); return false;">CSVファイルのフォーマット（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
                     </div>
@@ -73,12 +71,16 @@
         <div class="form-group form-row">
             <label for="buckets_id" class="col-md-3 col-form-label text-md-right">CSVファイル <span class="badge badge-danger">必須</span></label>
             <div class="col-md-9">
-                <input type="file" name="codes_csv" class="form-control-file">
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="codes_csv" name="codes_csv" accept=".csv">
+                    <label class="custom-file-label" for="codes_csv" data-browse="参照"></label>
+                </div>
                 @if ($errors && $errors->has('codes_csv'))
                     @foreach ($errors->get('codes_csv') as $message)
                         <div class="text-danger">{{$message}}</div>
                     @endforeach
                 @endif
+                <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
             </div>
         </div>
 
@@ -113,4 +115,12 @@
     </form>
 
 </div>
+
+{{-- custom-file-inputクラスでファイル選択時にファイル名表示 --}}
+<script>
+    $('.custom-file-input').on('change',function(){
+        $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+    })
+</script>
+
 @endsection

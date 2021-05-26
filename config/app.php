@@ -168,6 +168,8 @@ $app_array = [
         /*
          * Package Service Providers...
          */
+        // 画像処理
+        Intervention\Image\ImageServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -258,12 +260,25 @@ $app_array = [
         'UserColumnType' => \App\Enums\UserColumnType::class,
         'NoticeJobType' => \App\Enums\NoticeJobType::class,
         'CountryCodeAlpha3' => \App\Enums\CountryCodeAlpha3::class,
+        'UserStatus' => \App\Enums\UserStatus::class,
+        'PluginName' => \App\Enums\PluginName::class,
+        'LearningtaskUseFunction' => \App\Enums\LearningtaskUseFunction::class,
+        'ContentOpenType' => \App\Enums\ContentOpenType::class,
+        'RoleName' => \App\Enums\RoleName::class,
+        'LearningtaskUserJoinFlag' => \App\Enums\LearningtaskUserJoinFlag::class,
+        'LearningtasksExaminationColumn' => \App\Enums\LearningtasksExaminationColumn::class,
+        'CounterDesignType' => \App\Enums\CounterDesignType::class,
+        'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
+        'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
+
+        // 画像処理
+        'Image' => Intervention\Image\Facades\Image::class,
     ],
 
 ];

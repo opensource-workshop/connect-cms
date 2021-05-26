@@ -147,6 +147,9 @@ return [
         'saveBucketsRoles'    => ['frames.edit'],
         'editBucketsMails'    => ['frames.edit'],
         'saveBucketsMails'    => ['frames.edit'],
+        'listCategories'      => ['frames.edit'],
+        'saveCategories'      => ['frames.edit'],
+        'deleteCategories'    => ['frames.edit'],
 
         'addColumn'           => ['buckets.addColumn'],
         'editColumn'          => ['buckets.editColumn'],
@@ -176,6 +179,7 @@ return [
         'approval'            => ['post'],
 
         // ゲストでも実行されるメソッド
+        'rss'                 => ['get'],
         'index'               => ['post'],
         'publicConfirm'       => ['post'],
         'publicStore'         => ['post'],
@@ -186,11 +190,14 @@ return [
         'editBuckets'         => ['get'],
         'editBucketsRoles'    => ['get'],
         'editBucketsMails'    => ['get'],
+        'listCategories'      => ['get'],
         'saveBuckets'         => ['post'],
         'destroyBuckets'      => ['post'],
         'changeBuckets'       => ['post'],
         'saveBucketsRoles'    => ['post'],
         'saveBucketsMails'    => ['post'],
+        'saveCategories'      => ['post'],
+        'deleteCategories'    => ['post'],
 
         'addColumn'           => ['post'],
         'editColumn'          => ['get'],

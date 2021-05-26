@@ -97,6 +97,7 @@
     $column->column_type == DatabaseColumnType::checkbox ||
     $column->column_type == DatabaseColumnType::select ||
     $column->caption ||
+    $column->caption_list_detail ||
     $column->title_flag
     )
     <tr>
@@ -117,7 +118,15 @@
                 {{-- キャプションが設定されている場合、キャプションを表示する --}}
                 <div class="small {{ $column->caption_color }}">
                     <i class="fas fa-pen"></i>
-                    {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}
+                    {!! mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') !!}
+                </div>
+            @endif
+
+            @if ($column->caption_list_detail)
+                {{-- 一覧・詳細キャプションが設定されている場合、キャプションを表示する --}}
+                <div class="small {{ $column->caption_list_detail_color }}">
+                    <i class="fas fa-th-list"></i>
+                    {!! mb_strimwidth($column->caption_list_detail, 0, 60, '...', 'UTF-8') !!}
                 </div>
             @endif
 

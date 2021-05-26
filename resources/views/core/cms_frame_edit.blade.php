@@ -91,6 +91,8 @@
 <div class="card-body frame-setting-body">
     <form action="{{url('/')}}/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST">
         {{ csrf_field() }}
+        @include('common.errors_form_line')
+        <h5><span class="badge badge-secondary">デザイン設定</span></h5>
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}">フレームタイトル</label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -185,6 +187,88 @@
             </div>
         </div>
 
+        <h5><span class="badge badge-secondary">公開設定</span></h5>
+
+        <div id="app_{{ $frame->id }}">
+            {{-- コンテンツ公開区分 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">公開設定</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    @foreach (ContentOpenType::enum as $key => $value)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input 
+                                type="radio" 
+                                value="{{ $key }}" 
+                                id="{{ "content_open_type_${key}" }}" 
+                                name="content_open_type" 
+                                class="custom-control-input" 
+                                {{ old('content_open_type', $frame->content_open_type) ? 'checked' : '' }}
+                                v-model="v_content_open_type"
+                            >
+                            <label class="custom-control-label" for="{{ "content_open_type_${key}" }}">
+                                {{ $value }}
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            {{-- 公開日時From --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">公開日時From</label>
+                <div class="col-md-9 input-group date" id="content_open_date_from" data-target-input="nearest">
+                    <input 
+                        type="text" 
+                        name="content_open_date_from" 
+                        value="{{old('content_open_date_from', $frame ? $frame->content_open_date_from : '')}}" 
+                        class="form-control datetimepicker-input {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
+                        data-target="#content_open_date_from"
+                        placeholder="YYYY-MM-DD hh:mm:ss"
+                        :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
+                    >
+                    <div class="input-group-append" data-target="#content_open_date_from" data-toggle="datetimepicker">
+                        <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                    </div>
+                </div>
+                <small class="offset-md-3 col-md-9 text-muted">
+                    ※右のボタンからカレンダー入力も可能です。
+                </small>
+                @if ($errors && $errors->has('content_open_date_from'))
+                    <label class="{{$frame->getSettingLabelClass(true)}}"></label>
+                    <div class="text-danger" style="padding-left:15px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {{$errors->first('content_open_date_from')}}
+                    </div>
+                @endif
+            </div>
+            {{-- 公開日時To --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass(true)}}">公開日時To</label>
+                <div class="col-md-9 input-group date" id="content_open_date_to" data-target-input="nearest">
+                    <input 
+                        type="text" 
+                        name="content_open_date_to" 
+                        value="{{old('content_open_date_to', $frame ? $frame->content_open_date_to : '')}}" 
+                        class="form-control datetimepicker-input {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
+                        data-target="#content_open_date_to"
+                        placeholder="YYYY-MM-DD hh:mm:ss"
+                        :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
+                    >
+                    <div class="input-group-append" data-target="#content_open_date_to" data-toggle="datetimepicker">
+                        <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                    </div>
+                </div>
+                <small class="offset-md-3 col-md-9 text-muted">
+                    ※右のボタンからカレンダー入力も可能です。
+                </small>
+                @if ($errors && $errors->has('content_open_date_to'))
+                    <label class="{{$frame->getSettingLabelClass(true)}}"></label>
+                    <div class="text-danger" style="padding-left:15px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {{$errors->first('content_open_date_to')}}
+                    </div>
+                @endif
+            </div>
+
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
         @if ($frame->area_id != 2)
         <div class="form-group row">
@@ -261,4 +345,31 @@
         </div>
     </form>
 </div>
+<script>
+    new Vue({
+      el: "#app_{{ $frame->id }}",
+      data: {
+        // コンテンツ公開区分
+        v_content_open_type: '{{ old('content_open_type', $frame->content_open_type) }}'
+      }
+    })
+    // 公開日時Fromのpicker
+    $(function () {
+        $('#content_open_date_from').datetimepicker({
+            locale: 'ja',
+            sideBySide: true,
+            dayViewHeaderFormat: 'YYYY年 M月',
+            format: 'YYYY-MM-DD HH:mm:ss'
+        });
+    });
+    // 公開日時Toのpicker
+    $(function () {
+        $('#content_open_date_to').datetimepicker({
+            locale: 'ja',
+            sideBySide: true,
+            dayViewHeaderFormat: 'YYYY年 M月',
+            format: 'YYYY-MM-DD HH:mm:ss'
+        });
+    });
+</script>
 {{-- </td></tr></table> --}}

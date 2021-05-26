@@ -26,11 +26,12 @@
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editMail/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">
 
     <div class="alert alert-warning mt-2">
-        <i class="fas fa-exclamation-circle"></i>
-        各設定で以下の埋め込みキーワードが使用できます。<br />
-        {post_title} = 課題タイトル<br />
-        {student_name} = 受講者ユーザー名<br />
-        {teacher_name} = 教員ユーザー名<br />
+        <i class="fas fa-exclamation-circle"></i> 各設定で以下の埋め込みキーワードが使用できます。<br />
+        [[post_title]] = 課題タイトル<br />
+        [[student_name]] = 受講者ユーザー名<br />
+        [[teacher_name]] = 教員ユーザー名<br />
+        [[task_url]] = 課題URL<br />
+        [[teacher_task_url]] = 評価する受講者を指定した課題URL<br />
     </div>
 
     <h5><span class="badge badge-secondary">メール件名</span></h5>
@@ -88,7 +89,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">レポートの課題提出</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="bodys[1]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「{post_title}」のレポートが提出されました。&#13;&#10;評価をお願いします。">{{old('bodys.1', $tool->getMailConfig('body', 1))}}</textarea>
+            <textarea name="bodys[1]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「[[post_title]]」のレポートが提出されました。&#13;&#10;評価をお願いします。&#13;&#10;[[teacher_task_url]]">{{old('bodys.1', $tool->getMailConfig('body', 1))}}</textarea>
             @if ($errors && $errors->has('bodys.1')) <div class="text-danger">{{$errors->first('body.1')}}</div> @endif
         </div>
     </div>
@@ -96,7 +97,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">レポートの評価登録</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="bodys[2]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「{post_title}」のレポートの評価が登録されました。&#13;&#10;確認をお願いします。">{{old('bodys.2', $tool->getMailConfig('body', 2))}}</textarea>
+            <textarea name="bodys[2]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「[[post_title]]」のレポートの評価が登録されました。&#13;&#10;確認をお願いします。&#13;&#10;[[task_url]]">{{old('bodys.2', $tool->getMailConfig('body', 2))}}</textarea>
             @if ($errors && $errors->has('bodys.2')) <div class="text-danger">{{$errors->first('body.2')}}</div> @endif
         </div>
     </div>
@@ -104,7 +105,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">レポートコメント登録</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="bodys[3]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「{post_title}」にコメントが登録されました。&#13;&#10;確認をお願いします。">{{old('bodys.3', $tool->getMailConfig('body', 3))}}</textarea>
+            <textarea name="bodys[3]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「[[post_title]]」にコメントが登録されました。&#13;&#10;確認をお願いします。&#13;&#10;[[task_url]]">{{old('bodys.3', $tool->getMailConfig('body', 3))}}</textarea>
             @if ($errors && $errors->has('bodys.3')) <div class="text-danger">{{$errors->first('body.3')}}</div> @endif
         </div>
     </div>
@@ -112,7 +113,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">試験の解答提出</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="bodys[5]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「{post_title}」に試験の解答が提出されました。&#13;&#10;評価をお願いします。">{{old('bodys.5', $tool->getMailConfig('body', 5))}}</textarea>
+            <textarea name="bodys[5]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「[[post_title]]」に試験の解答が提出されました。&#13;&#10;評価をお願いします。&#13;&#10;[[teacher_task_url]]">{{old('bodys.5', $tool->getMailConfig('body', 5))}}</textarea>
             @if ($errors && $errors->has('bodys.5')) <div class="text-danger">{{$errors->first('body.5')}}</div> @endif
         </div>
     </div>
@@ -120,7 +121,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">試験の評価登録</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="bodys[6]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「{post_title}」の試験の評価が登録されました。&#13;&#10;確認をお願いします。">{{old('bodys.6', $tool->getMailConfig('body', 6))}}</textarea>
+            <textarea name="bodys[6]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「[[post_title]]」の試験の評価が登録されました。&#13;&#10;確認をお願いします。&#13;&#10;[[task_url]]">{{old('bodys.6', $tool->getMailConfig('body', 6))}}</textarea>
             @if ($errors && $errors->has('bodys.6')) <div class="text-danger">{{$errors->first('body.6')}}</div> @endif
         </div>
     </div>
@@ -128,7 +129,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">試験のコメント登録</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="bodys[7]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「{post_title}」に試験のコメントが登録されました。&#13;&#10;確認をお願いします。">{{old('bodys.7', $tool->getMailConfig('body', 7))}}</textarea>
+            <textarea name="bodys[7]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「[[post_title]]」に試験のコメントが登録されました。&#13;&#10;確認をお願いします。&#13;&#10;[[task_url]]">{{old('bodys.7', $tool->getMailConfig('body', 7))}}</textarea>
             @if ($errors && $errors->has('bodys.7')) <div class="text-danger">{{$errors->first('body.7')}}</div> @endif
         </div>
     </div>
@@ -136,7 +137,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">総合評価の登録</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="bodys[8]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「{post_title}」の総合評価が登録されました。&#13;&#10;確認をお願いします。">{{old('bodys.8', $tool->getMailConfig('body', 8))}}</textarea>
+            <textarea name="bodys[8]" class="form-control" rows=5 placeholder="空の場合は以下の内容&#13;&#10;「[[post_title]]」の総合評価が登録されました。&#13;&#10;確認をお願いします。&#13;&#10;[[task_url]]">{{old('bodys.8', $tool->getMailConfig('body', 8))}}</textarea>
             @if ($errors && $errors->has('bodys.8')) <div class="text-danger">{{$errors->first('body.8')}}</div> @endif
         </div>
     </div>

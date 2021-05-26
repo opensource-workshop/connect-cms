@@ -4,6 +4,8 @@ use Illuminate\Database\Seeder;
 
 use App\Models\Core\Configs;
 
+use App\Enums\BaseHeaderFontColorClass;
+
 class DefaultConfigsTableSeeder extends Seeder
 {
     /**
@@ -130,6 +132,24 @@ class DefaultConfigsTableSeeder extends Seeder
                 'name' => 'base_login_redirect_previous_page',
                 'category' => 'general',
                 'value' => 0
+            ]);
+        }
+
+        if (DB::table('configs')->where('name', 'user_register_after_message')->count() == 0) {
+            // 本登録後のメッセージ
+            $configs = Configs::create([
+                'name' => 'user_register_after_message',
+                'category' => 'user_register',
+                'value' => 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。'
+            ]);
+        }
+
+        if (DB::table('configs')->where('name', 'base_header_font_color_class')->count() == 0) {
+            // 画面の基本のヘッダー文字色
+            $configs = Configs::create([
+                'name' => 'base_header_font_color_class',
+                'category' => 'general',
+                'value' => BaseHeaderFontColorClass::navbar_dark
             ]);
         }
 

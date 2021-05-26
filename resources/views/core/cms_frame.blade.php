@@ -3,7 +3,7 @@
  *
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -32,6 +32,23 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
 }
 
 @endphp
+
+{{-- 非ログイン、且つ、非表示条件（非公開、又は、限定公開）にマッチした場合はフレームを非表示にする --}}
+@if (
+        !Auth::check() &&
+        (
+            $frame->content_open_type == ContentOpenType::always_close ||
+            (
+                $frame->content_open_type == ContentOpenType::limited_open && 
+                !Carbon::now()->between($frame->content_open_date_from, $frame->content_open_date_to)
+            )
+        )
+    )
+    @php
+        $hidden_flag = ' d-none';
+    @endphp
+@endif
+
 @if($frame->frame_col==0)
 <div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$default_hidden}}{{$hidden_flag}}{{" $frame->plugin_name-$frame->template"}}" id="frame-{{ $frame->frame_id }}">
 @else

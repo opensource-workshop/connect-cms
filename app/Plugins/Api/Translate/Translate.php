@@ -36,6 +36,7 @@ class Translate extends ApiPluginBase
         // 戻り値
         $msg_array = array();
 
+        // [TODO] translate-apiのサーバサイドプラグラムも公開できなら、このURLは.envに持っていいってもよさそう。by mutaguchi@opensource-workshop.jp
         $url = "https://translate-api.opensource-workshop.jp";
 
         // cURLセッションを初期化する
@@ -62,7 +63,9 @@ class Translate extends ApiPluginBase
         curl_close($ch);
 
         // 値を戻す
-        $msg_json = json_encode($msg_array);
-        echo $msg_json;
+        // change: LaravelはArrayを返すだけで JSON形式になる
+        // $msg_json = json_encode($msg_array);
+        // echo $msg_json;
+        return $msg_array;
     }
 }

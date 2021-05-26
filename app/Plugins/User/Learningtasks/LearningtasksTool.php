@@ -16,12 +16,15 @@ use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 use App\Models\User\Learningtasks\LearningtasksUseSettings;
 use App\User;
 
+use Carbon\Carbon;
+
 /**
  * 課題管理のユーザ情報保持クラス
  *
  * メソッド一覧(public のもの)
  * ・教員か                                               isTeacher()
  * ・学生か                                               isStudent()
+ * ・課題管理者か                                          isLearningtaskAdmin()
  * ・教員の一覧取得                                       getTeachers()
  * ・教員名の取得                                         getTeachersName()
  * ・ユーザIDの取得                                       getUserId()
@@ -69,6 +72,7 @@ use App\User;
  * ・指定されたステータスで指定した機能が使用できるか。   isUseFunction()
  * ・指定されたステータスでファイルアップロードが必要か。 isRequreUploadFile()
  * ・課題ごとの使用機能設定のCollapse CSS を返す          getSettingShowstr()
+ * ・履歴削除（評価の取り消し）は行えるか？                canDeletetableUserStatus($users_statuses_id)
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -133,6 +137,11 @@ class LearningtasksTool
     private $post_use_functions = null;
 
     /**
+     * 履歴削除（評価の取り消し）できるユーザステータスID (最後のUsersStatusesのid)
+     */
+    private $deletetable_users_statuses_id = null;
+
+    /**
      * 課題設定
      */
     private $configs = null;
@@ -140,7 +149,7 @@ class LearningtasksTool
     /**
      * コンストラクタ
      */
-    public function __construct($request, $page_id, $learningtask, $post = null)
+    public function __construct($request, $page_id, $learningtask, $post = null, $frame_id = null)
     {
         // 変数初期化
         $this->report_statuses = new Collection();
@@ -158,8 +167,16 @@ class LearningtasksTool
         if (!empty($this->learningtask)) {
             $this->base_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', 0)->get();
         }
-        if (!empty($this->learningtask) && !empty($this->post)) {
-            $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', $this->post->id)->get();
+        // bugfix: 一覧画面でレポートの評価等、表示できてないバグ修正
+        // if (!empty($this->learningtask) && !empty($this->post)) {
+        if (!empty($this->learningtask)) {
+            if (empty($this->post)) {
+                // 一覧画面
+                $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->get();
+            } else {
+                // 詳細画面
+                $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->where('post_id', $this->post->id)->get();
+            }
         }
 
         // メール設定
@@ -168,8 +185,8 @@ class LearningtasksTool
         }
 
         // 参照するデータのユーザ（学生の場合は自分自身、教員の場合は、選択した学生）
-        if ($this->isTeacher() && session('student_id')) {
-            $this->student_id = session('student_id');
+        if ($this->isTeacher() && session('student_id' . $frame_id) || $this->isLearningtaskAdmin() && session('student_id' . $frame_id)) {
+            $this->student_id = session('student_id' . $frame_id);
         } elseif ($this->isStudent()) {
             $this->student_id = $this->user->id;
         }
@@ -177,42 +194,47 @@ class LearningtasksTool
         // ユーザーstatusテーブル
         if (!empty($this->student_id)) {
             // レポートの履歴
-            $this->report_statuses = LearningtasksUsersStatuses::where(
-                'user_id', '=', $this->student_id
-            )->whereIn('task_status', [1, 2, 3])
-             ->orderBy('post_id', 'asc')
-             ->orderBy('id', 'asc')
-             ->get();
+            $this->report_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                    ->whereIn('task_status', [1, 2, 3])
+                    ->orderBy('post_id', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
 
             // 試験の履歴
-            $this->examination_statuses = LearningtasksUsersStatuses::select(
-                'learningtasks_users_statuses.*',
-                'learningtasks_examinations.start_at',
-                'learningtasks_examinations.end_at'
-            )->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
-             ->where('learningtasks_users_statuses.user_id', '=', $this->student_id)
-             ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
-             ->orderBy('learningtasks_users_statuses.post_id', 'asc')
-             ->orderBy('learningtasks_users_statuses.id', 'asc')
-             ->get();
+            $this->examination_statuses = LearningtasksUsersStatuses::
+                    select(
+                        'learningtasks_users_statuses.*',
+                        'learningtasks_examinations.start_at',
+                        'learningtasks_examinations.end_at',
+                        'learningtasks_examinations.entry_end_at'
+                    )
+                    ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                    ->where('learningtasks_users_statuses.user_id', '=', $this->student_id)
+                    ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
+                    ->orderBy('learningtasks_users_statuses.post_id', 'asc')
+                    ->orderBy('learningtasks_users_statuses.id', 'asc')
+                    ->get();
 
             // 総合評価の履歴
             // POST のWHERE が抜けていたので、追加（2020-12-21）これがないと、他の科目の総合評価を引っ張ってきて、評価できない。
             if ($this->post) {
-                $this->evaluate_statuses = LearningtasksUsersStatuses::where(
-                    'user_id', '=', $this->student_id
-                )->whereIn('task_status', [8])
-                 ->where('post_id', $this->post->id)
-                 ->orderBy('post_id', 'asc')
-                 ->orderBy('id', 'asc')
-                 ->get();
+                $this->evaluate_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                        ->whereIn('task_status', [8])
+                        ->where('post_id', $this->post->id)
+                        ->orderBy('post_id', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->get();
+
+                // 履歴削除（評価の取り消し）できるユーザステータスID (最後のUsersStatusesのid)
+                $this->deletetable_users_statuses_id = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                        ->where('post_id', $this->post->id)
+                        ->max('id');
             } else {
-                $this->evaluate_statuses = LearningtasksUsersStatuses::where(
-                    'user_id', '=', $this->student_id
-                )->whereIn('task_status', [8])
-                 ->orderBy('post_id', 'asc')
-                 ->orderBy('id', 'asc')
-                 ->get();
+                $this->evaluate_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
+                        ->whereIn('task_status', [8])
+                        ->orderBy('post_id', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->get();
             }
         }
 
@@ -239,7 +261,7 @@ class LearningtasksTool
                                       ->join('users_roles', function ($join) {
                                           $join->on('users_roles.users_id', '=', 'users.id')
                                                ->where('users_roles.target', '=', 'original_role')
-                                               ->where('users_roles.role_name', '=', 'student');
+                                               ->where('users_roles.role_name', '=', \RoleName::student);
                                       })
                                       ->orderBy('users.id')
                                       ->get();
@@ -249,7 +271,7 @@ class LearningtasksTool
                                       ->join('users_roles', function ($join) {
                                           $join->on('users_roles.users_id', '=', 'users.id')
                                                ->where('users_roles.target', '=', 'original_role')
-                                               ->where('users_roles.role_name', '=', 'teacher');
+                                               ->where('users_roles.role_name', '=', \RoleName::teacher);
                                       })
                                       ->orderBy('users.id')
                                       ->get();
@@ -258,14 +280,14 @@ class LearningtasksTool
                 $this->students = LearningtasksUsers::select('users.*')
                                                     ->join('users', 'users.id', '=', 'learningtasks_users.user_id')
                                                     ->where('learningtasks_users.post_id', $this->post->id)
-                                                    ->where('learningtasks_users.role_name', 'student')
+                                                    ->where('learningtasks_users.role_name', \RoleName::student)
                                                     ->orderBy('users.id', 'asc')
                                                     ->get();
 
                 $this->teachers = LearningtasksUsers::select('users.*')
                                                     ->join('users', 'users.id', '=', 'learningtasks_users.user_id')
                                                     ->where('learningtasks_users.post_id', $this->post->id)
-                                                    ->where('learningtasks_users.role_name', 'teacher')
+                                                    ->where('learningtasks_users.role_name', \RoleName::teacher)
                                                     ->orderBy('users.id', 'asc')
                                                     ->get();
             }
@@ -310,6 +332,7 @@ class LearningtasksTool
         }
 
         $teacher_names = array();
+        // [bug] Invalid argument supplied for foreach(). 参加教員 未選択時
         foreach ($this->teachers as $teacher) {
             // ommit_role の指定に合致すれば対象外（システムの管理者などを除外するのが目的）
             if (!empty($omit_role_hierarchy)) {
@@ -326,7 +349,7 @@ class LearningtasksTool
     }
 
     /**
-     *  使用機能の取得
+     * 使用機能の取得
      */
     public function getFunction($function, $post_check = false)
     {
@@ -338,41 +361,103 @@ class LearningtasksTool
         }
         // 該当機能の設定がないと、空なので、チェックしてから値を取得
         if (!empty($setting_obj)) {
-            $setting_value = $setting_obj->value;
+            if (LearningtasksUseSettings::isDatetimeUseFunction($function)) {
+                // 日時を使う機能
+                $setting_value = $setting_obj->datetime_value;
+            } else {
+                // 通常
+                $setting_value = $setting_obj->value;
+            }
         }
         return $setting_value;
     }
 
     /**
-     *  使用機能のチェック
+     * post, baseの両方から順で、レポートの使用機能の値取得
      */
-    public function checkFunction($function)
+    public function getFunctionBothReport(string $function)
+    {
+        return $this->getFunctionBoth($function, \LearningtaskUseFunction::report);
+    }
+
+    /**
+     * post, baseの両方から順で使用機能の取得
+     */
+    private function getFunctionBoth(string $function, string $function_parts)
+    {
+        // 使用機能の課題独自設定 取得
+        $post_function_setting_value = $this->getPostFunctionSetting($function_parts[1], null);
+
+        if (empty($post_function_setting_value)) {
+            // 課題管理設定に従う = null
+            // ここではなにもせず、課題セットの設定へいく
+        } elseif ($post_function_setting_value == 'on') {
+            // この課題独自に設定する = on
+
+            // postから取得
+            $setting_value = $this->getFunction($function, true);
+            if ($setting_value) {
+                // 値があったら返却
+                return $setting_value;
+            }
+        } elseif ($post_function_setting_value == 'off') {
+            // 課題独自で使用しない = off
+            return null;
+        }
+
+        // baseから取得
+        $setting_value = $this->getFunction($function, false);
+        return $setting_value;
+    }
+
+    /**
+     * 使用機能のチェック
+     */
+    public function checkFunction($function, int $post_id = null)
     {
         $function_parts = explode('_', $function);
-        // 課題ごとの設定がある場合。
-        if (!empty($this->post_use_functions)) {
-            // 課題独自設定の有無
-            $category_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts[1] . '_setting')->first();
-            if (empty($category_setting)) {
-                $category_setting_value = null;
+
+        // bugfix: 一覧画面でレポートの評価等、表示できてないバグ修正
+        // 使用機能の課題独自設定 取得
+        $post_function_setting_value = $this->getPostFunctionSetting($function_parts[1], $post_id);
+
+        if (empty($post_function_setting_value)) {
+            // 課題管理設定に従う = null
+            // ここではなにもせず、課題セットの設定へいく
+        } elseif ($post_function_setting_value == 'on') {
+            // この課題独自に設定する = on
+
+            // 機能判定
+            // bugfix: post側に設定ない事をも考慮する。 例）レポート提出 use_report のチェックが付いてない時
+            // $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
+            // $post_setting = $this->post_use_functions->where('use_function', $function)->first();
+            if ($post_id) {
+                // 一覧画面でpost_id指定
+                $post_setting = $this->post_use_functions->where('use_function', $function)->where('post_id', $post_id)->first();
             } else {
-                $category_setting_value = $category_setting->value;
+                // 詳細画面
+                $post_setting = $this->post_use_functions->where('use_function', $function)->first();
             }
 
-            if (empty($category_setting_value)) {
-                // 課題セットの方を参照するので、このまま続きへ
-            } elseif ($category_setting_value == 'off') {
+            if (empty($post_setting)) {
+                $post_setting_value = null;
+            } else {
+                $post_setting_value = $post_setting->value;
+            }
+
+            if (empty($post_setting_value)) {
+                // 設定がない＝false
+                return false;
+            } elseif ($post_setting_value == 'off') {
                 // この機能を使わないため、false
                 return false;
-            } elseif ($category_setting_value == 'on') {
-                // 機能判定
-                $post_setting_value = $this->post_use_functions->where('use_function', $function)->value;
-                if ($post_setting_value == 'on') {
-                    return true;
-                } else {
-                    return false;
-                }
+            } elseif ($post_setting_value == 'on') {
+                // 機能を使う
+                return true;
             }
+        } elseif ($post_function_setting_value == 'off') {
+            // 課題独自で使用しない = off
+            return false;
         }
 
         // 課題セットの設定を確認
@@ -394,6 +479,32 @@ class LearningtasksTool
             return true;
         }
         return false;
+    }
+
+    /**
+     * 使用機能の課題独自設定 取得
+     */
+    private function getPostFunctionSetting(string $function_parts, int $post_id = null)
+    {
+        $post_function_setting_value = null;
+
+        // 課題ごとの設定がある場合。
+        if (!empty($this->post_use_functions)) {
+            // 課題独自設定の有無
+            if ($post_id) {
+                // 一覧画面でpost_id指定
+                $post_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts . '_setting')->where('post_id', $post_id)->first();
+            } else {
+                // 詳細画面
+                $post_setting = $this->post_use_functions->where('use_function', 'post_' . $function_parts . '_setting')->first();
+            }
+
+            if ($post_setting) {
+                $post_function_setting_value = $post_setting->value;
+            }
+        }
+
+        return $post_function_setting_value;
     }
 
     /**
@@ -451,7 +562,7 @@ class LearningtasksTool
     }
 
     /**
-     *  教員か
+     * 教員か
      */
     public function isTeacher()
     {
@@ -459,14 +570,16 @@ class LearningtasksTool
             return false;
         }
         $user_roles = $this->user->user_roles;
-        if (array_key_exists('original_role', $user_roles) && array_key_exists('teacher', $user_roles['original_role']) && $user_roles['original_role']['teacher'] == 1) {
+        if (array_key_exists('original_role', $user_roles)
+                && array_key_exists(\RoleName::teacher, $user_roles['original_role'])
+                && $user_roles['original_role'][\RoleName::teacher] == 1) {
             return true;
         }
         return false;
     }
 
     /**
-     *  学生か
+     * 学生か
      */
     public function isStudent()
     {
@@ -474,26 +587,45 @@ class LearningtasksTool
             return false;
         }
         $user_roles = $this->user->user_roles;
-        if (array_key_exists('original_role', $user_roles) && array_key_exists('student', $user_roles['original_role']) && $user_roles['original_role']['student'] == 1) {
+        if (array_key_exists('original_role', $user_roles)
+                && array_key_exists(\RoleName::student, $user_roles['original_role'])
+                && $user_roles['original_role'][\RoleName::student] == 1) {
             return true;
         }
         return false;
     }
 
     /**
-     *  モデレータ権限を保持しているか
+     * 課題管理者か
      */
-    public function isRoleArticle()
+    public function isLearningtaskAdmin()
     {
-        // コンテンツ管理者とモデレータはOK とする。
-        if ($this->user->can('role_article')) {
+        if (empty($this->user)) {
+            return false;
+        }
+
+        // コンテンツ管理者はOKとする。
+        if ($this->user->can('role_article_admin')) {
             return true;
         }
         return false;
     }
 
+    // delete: 使われてない
+    // /**
+    //  * モデレータ権限を保持しているか
+    //  */
+    // public function isRoleArticle()
+    // {
+    //     // コンテンツ管理者とモデレータはOK とする。
+    //     if ($this->user->can('role_article')) {
+    //         return true;
+    //     }
+    //     return false;
+    // }
+
     /**
-     *  課題の表示を行えるか？
+     * 課題の表示を行えるか？
      */
     public function canPostView()
     {
@@ -508,9 +640,10 @@ class LearningtasksTool
             return false;
         }
 
-        // コンテンツ管理者とモデレータはOK とする。
-        if ($this->user->can('role_article')) {
-            return true;
+        // 課題管理者はOK とする。
+        // if ($this->user->can('role_article')) {
+        if ($this->isLearningtaskAdmin()) {
+                return true;
         }
 
         // 教員、受講者として設定されているか。（メンバーシップとしての設定も含む）
@@ -724,7 +857,7 @@ class LearningtasksTool
     }
 
     /**
-     *  レポートの状況取得
+     * レポートの状況取得
      */
     private function canReportUploadImpl($post_id)
     {
@@ -734,6 +867,9 @@ class LearningtasksTool
 
         // 初めはOK。提出済みならNO、再提出があればOK。合格ならその時点でNO
         $can_report_upload = array(true, '未提出');
+
+        // レポート提出期限チェック
+        $can_report_upload = $this->checkReportUploadDeadline($can_report_upload);
 
         $report_statuses = $this->report_statuses->where('post_id', $post_id)->whereIn('task_status', [1, 2]);
         foreach ($report_statuses as $report_status) {
@@ -746,9 +882,39 @@ class LearningtasksTool
                 $can_report_upload = array(false, '提出済みのため、現在は提出できません。');
             } elseif ($report_status->task_status == 2 && $report_status->grade == 'D') {
                 $can_report_upload = array(true, '再提出が必要');
+
+                // レポート提出期限チェック
+                $can_report_upload = $this->checkReportUploadDeadline($can_report_upload);
             }
         }
         return $can_report_upload;
+    }
+
+    /**
+     * レポート提出期限チェック
+     */
+    private function checkReportUploadDeadline($can_report_upload)
+    {
+        // レポート提出期限オーバーか
+        if ($this->isOutOfDeadlineReportUpload()) {
+            $can_report_upload = array(false, '提出期限を過ぎたのため、現在は提出できません。');
+        }
+        return $can_report_upload;
+    }
+
+    /**
+     * レポート提出期限オーバーか
+     */
+    public function isOutOfDeadlineReportUpload()
+    {
+        // 提出終了日時の制御ON
+        if ($this->checkFunction(\LearningtaskUseFunction::use_report_end)) {
+            // 今より提出期限[以上(gte)]なら、提出できない. use_report_end=on なら report_end_at は必須のため、値がある想定
+            if (Carbon::now()->gte($this->getFunctionBothReport(\LearningtaskUseFunction::report_end_at))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1306,7 +1472,7 @@ class LearningtasksTool
     }
 
     /**
-     *  総合評価を行えるか？
+     * 総合評価を行えるか？
      */
     public function canEvaluate($post_id)
     {
@@ -1332,5 +1498,22 @@ class LearningtasksTool
         }
 
         return true;
+    }
+
+    /**
+     * 履歴削除は行えるか？
+     */
+    public function canDeletetableUserStatus($users_statuses_id)
+    {
+        // 課題管理者でない
+        if (!$this->isLearningtaskAdmin()) {
+            return false;
+        }
+
+        // 削除可能なユーザステータスID (最後のUsersStatusesのid)
+        if ($users_statuses_id == $this->deletetable_users_statuses_id) {
+            return true;
+        }
+        return false;
     }
 }

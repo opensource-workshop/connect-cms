@@ -14,6 +14,8 @@
 
 @section("plugin_setting_$frame->id")
 
+@include('common.errors_form_line')
+
 <div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i> メールの送信方法や送信内容を設定します。</div>
 
 <form action="{{url('/')}}/redirect/plugin/{{$frame->plugin_name}}/saveBucketsMails/{{$page->id}}/{{$frame_id}}/{{$bucket->id}}#frame-{{$frame_id}}" method="POST" class="">
@@ -69,8 +71,8 @@
 
                 <span class="badge badge-secondary mt-3 mb-1">送信先メールアドレス</span>
                 <div class="pl-0">
-                    <input type="text" name="notice_addresses" value="{{old('notice_addresses', $bucket_mail->notice_addresses)}}" class="form-control">
-                    @if ($errors && $errors->has('notice_addresses')) <div class="text-danger">{{$errors->first('notice_addresses')}}</div> @endif
+                    <input type="text" name="notice_addresses" value="{{old('notice_addresses', $bucket_mail->notice_addresses)}}" class="form-control @if ($errors && $errors->has('notice_addresses')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'notice_addresses'])
                     <small class="text-muted">
                         ※ 複数のメールアドレスを指定する場合は、カンマで区切ります。
                     </small>
@@ -78,8 +80,8 @@
 
                 <span class="badge badge-secondary mt-3 mb-1">投稿通知の件名</span>
                 <div class="pl-0">
-                    <input type="text" name="notice_subject" value="{{old('notice_subject', $bucket_mail->notice_subject)}}" class="form-control">
-                    @if ($errors && $errors->has('notice_subject')) <div class="text-danger">{{$errors->first('notice_subject')}}</div> @endif
+                    <input type="text" name="notice_subject" value="{{old('notice_subject', $bucket_mail->notice_subject)}}" class="form-control @if ($errors && $errors->has('notice_subject')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'notice_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">投稿通知の本文</span>
@@ -116,8 +118,8 @@
             <div class="collapse" id="collapse_relate">
                 <span class="badge badge-secondary mt-3 mb-1">関連記事通知の件名</span>
                 <div class="pl-0">
-                    <input type="text" name="relate_subject" value="{{old('relate_subject', $bucket_mail->relate_subject)}}" class="form-control">
-                    @if ($errors && $errors->has('relate_subject')) <div class="text-danger">{{$errors->first('relate_subject')}}</div> @endif
+                    <input type="text" name="relate_subject" value="{{old('relate_subject', $bucket_mail->relate_subject)}}" class="form-control @if ($errors && $errors->has('relate_subject')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'relate_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">関連記事通知の本文</span>
@@ -152,8 +154,8 @@
             <div class="collapse" id="collapse_approval">
                 <span class="badge badge-secondary mt-3 mb-1">送信先メールアドレス</span>
                 <div class="pl-0">
-                    <input type="text" name="approval_addresses" value="{{old('approval_addresses', $bucket_mail->approval_addresses)}}" class="form-control">
-                    @if ($errors && $errors->has('approval_addresses')) <div class="text-danger">{{$errors->first('approval_addresses')}}</div> @endif
+                    <input type="text" name="approval_addresses" value="{{old('approval_addresses', $bucket_mail->approval_addresses)}}" class="form-control @if ($errors && $errors->has('approval_addresses')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'approval_addresses'])
                     <small class="text-muted">
                         ※ 複数のメールアドレスを指定する場合は、カンマで区切ります。
                     </small>
@@ -161,8 +163,8 @@
 
                 <span class="badge badge-secondary mt-3 mb-1">承認通知の件名</span>
                 <div class="pl-0">
-                    <input type="text" name="approval_subject" value="{{old('approval_subject', $bucket_mail->approval_subject)}}" class="form-control">
-                    @if ($errors && $errors->has('approval_subject')) <div class="text-danger">{{$errors->first('approval_subject')}}</div> @endif
+                    <input type="text" name="approval_subject" value="{{old('approval_subject', $bucket_mail->approval_subject)}}" class="form-control @if ($errors && $errors->has('approval_subject')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'approval_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">承認通知の本文</span>
@@ -197,16 +199,16 @@
             <div class="collapse" id="collapse_approved">
                 <span class="badge badge-secondary mt-3">投稿者への通知</span>
                 <div class="pl-0 mb-3">
-	                <div class="custom-control custom-checkbox custom-control-inline">
-	                    <input type="checkbox" value="1" id="approved_author" name="approved_author" class="custom-control-input" @if(old('approved_author', $bucket_mail->approved_author) == 1) checked="checked" @endif>
-	                    <label class="custom-control-label" for="approved_author">投稿者へ通知する</label>
-	                </div>
+                    <div class="custom-control custom-checkbox custom-control-inline">
+                        <input type="checkbox" value="1" id="approved_author" name="approved_author" class="custom-control-input" @if(old('approved_author', $bucket_mail->approved_author) == 1) checked="checked" @endif>
+                        <label class="custom-control-label" for="approved_author">投稿者へ通知する</label>
+                    </div>
                 </div>
 
                 <span class="badge badge-secondary mb-1">送信先メールアドレス</span>
                 <div class="pl-0">
-                    <input type="text" name="approved_addresses" value="{{old('approved_addresses', $bucket_mail->approved_addresses)}}" class="form-control">
-                    @if ($errors && $errors->has('approved_addresses')) <div class="text-danger">{{$errors->first('approved_addresses')}}</div> @endif
+                    <input type="text" name="approved_addresses" value="{{old('approved_addresses', $bucket_mail->approved_addresses)}}" class="form-control @if ($errors && $errors->has('approved_addresses')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'approved_addresses'])
                     <small class="text-muted">
                         ※ 投稿者以外に送る場合。複数のメールアドレスを指定する場合は、カンマで区切ります。
                     </small>
@@ -214,8 +216,8 @@
 
                 <span class="badge badge-secondary mt-3 mb-1">承認済み通知の件名</span>
                 <div class="pl-0">
-                    <input type="text" name="approved_subject" value="{{old('approved_subject', $bucket_mail->approved_subject)}}" class="form-control">
-                    @if ($errors && $errors->has('approved_subject')) <div class="text-danger">{{$errors->first('approved_subject')}}</div> @endif
+                    <input type="text" name="approved_subject" value="{{old('approved_subject', $bucket_mail->approved_subject)}}" class="form-control @if ($errors && $errors->has('approved_subject')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'approved_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">承認済み通知の本文</span>
@@ -243,36 +245,36 @@
 </form>
 
 {{-- 初期状態で開くもの --}}
-@if ($bucket_mail->notice_on)
-<script>
-$('#collapse_notice').collapse({
-  toggle: true
-})
-</script>
+@if (old('notice_on', $bucket_mail->notice_on))
+    <script>
+    $('#collapse_notice').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
-@if ($bucket_mail->relate_on)
-<script>
-$('#collapse_relate').collapse({
-  toggle: true
-})
-</script>
+@if (old('relate_on', $bucket_mail->relate_on))
+    <script>
+    $('#collapse_relate').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
-@if ($bucket_mail->approval_on)
-<script>
-$('#collapse_approval').collapse({
-  toggle: true
-})
-</script>
+@if (old('approval_on', $bucket_mail->approval_on))
+    <script>
+    $('#collapse_approval').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
-@if ($bucket_mail->approved_on)
-<script>
-$('#collapse_approved').collapse({
-  toggle: true
-})
-</script>
+@if (old('approved_on', $bucket_mail->approved_on))
+    <script>
+    $('#collapse_approved').collapse({
+        toggle: true
+    })
+    </script>
 @endif
 
 {{-- 表示しない。 --}}

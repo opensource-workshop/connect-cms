@@ -15,6 +15,15 @@
             $value = '<a href="' . url('/') . '/file/' . $obj->value . '" target="_blank">' . $obj->client_original_name . '</a>';
         }
     }
+    // 複数選択型
+    elseif ($column->column_type == FormColumnType::checkbox) {
+        if (empty($obj)) {
+            $value = '';
+        }
+        else {
+            $value = str_replace('|', ', ', $obj->value);
+        }
+    }
     // その他の型
     else {
         $value = $obj ? $obj->value : "";

@@ -25,8 +25,9 @@ use App\Rules\CustomVali_Confirmed;
 use App\Rules\CustomVali_TimeFromTo;
 use App\Rules\CustomVali_BothRequired;
 use App\Rules\CustomVali_TokenExists;
+use App\Rules\CustomValiEmails;
 
-use App\Mail\ConnectMail;
+// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\String\StringUtils;
@@ -73,6 +74,7 @@ class FormsPlugin extends UserPluginBase
             'updateColumn',
             'updateColumnSequence',
             'updateColumnDetail',
+            'copyColumn',
             'addSelect',
             'updateSelect',
             'updateSelectSequence',
@@ -97,6 +99,7 @@ class FormsPlugin extends UserPluginBase
         $role_ckeck_table["updateColumn"]         = ['buckets.editColumn'];
         $role_ckeck_table["updateColumnSequence"] = ['buckets.editColumn'];
         $role_ckeck_table["updateColumnDetail"]   = ['buckets.editColumn'];
+        $role_ckeck_table["copyColumn"]           = ['buckets.editColumn'];
         $role_ckeck_table["addSelect"]            = ['buckets.addColumn'];
         $role_ckeck_table["updateSelect"]         = ['buckets.editColumn'];
         $role_ckeck_table["updateSelectSequence"] = ['buckets.editColumn'];
@@ -1429,10 +1432,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_values['entry_limit'] = ['nullable', 'numeric', 'min:0'];
         $validator_attributes['entry_limit'] = '登録制限数';
 
+        $validator_values['mail_send_address'] = ['nullable', new CustomValiEmails()];
+        $validator_attributes['mail_send_address'] = '送信するメールアドレス';
+
         // 「以下のアドレスにメール送信する」がONの場合、送信するメールアドレスは必須
         if ($request->mail_send_flag) {
-            $validator_values['mail_send_address'] = ['required'];
-            $validator_attributes['mail_send_address'] = '送信するメールアドレス';
+            $validator_values['mail_send_address'] = ['required', new CustomValiEmails()];
         }
 
         $validator_attributes['data_save_flag'] = 'データを保存する';
@@ -1444,9 +1449,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_attributes['regist_to'] = '登録終了日時';
 
         $messages = [
-            'data_save_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
-            'user_mail_send_flag.accepted' => '仮登録メールを送信する場合、:attributeにチェックを付けてください。',
-            'temporary_regist_mail_format.regex' => '仮登録メールを送信する場合、:attributeに[[entry_url]]を含めてください。',
+            'data_save_flag.accepted' => '仮登録メールを送信する場合、:attribute にチェックを付けてください。',
+            'user_mail_send_flag.accepted' => '仮登録メールを送信する場合、:attribute にチェックを付けてください。',
+            'temporary_regist_mail_format.regex' => '仮登録メールを送信する場合、:attribute に[[entry_url]]を含めてください。',
         ];
 
         // 項目のエラーチェック
@@ -1883,6 +1888,42 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, $errors);
+    }
+
+    /**
+     * 項目のコピー
+     */
+    public function copyColumn($request, $page_id, $frame_id)
+    {
+        // コピー対象の取得
+        $src_column = FormsColumns::query()->where('id', $request->column_id)->first();
+        $src_selects = FormsColumnsSelects::query()->where('forms_columns_id', $request->column_id)->get();
+
+        /**
+         * 項目のコピー処理
+         */
+        // 新規登録時の表示順を設定
+        $max_display_sequence = FormsColumns::query()->where('forms_id', $request->forms_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 項目（親）コピー
+        $dist_column = $src_column->replicate();
+        $dist_column->column_name = $dist_column->column_name . '_copy';
+        $dist_column->display_sequence = $max_display_sequence;
+        $dist_column->save();
+        
+        // 項目（子）コピー
+        foreach ($src_selects as $src_select) {
+            $dist_select = $src_select->replicate();
+            $dist_select->forms_columns_id = $dist_column->id;
+            $dist_select->save();
+        }
+
+        // メッセージ設定
+        $message = '項目【 '. $src_column->column_name .' 】をコピーしました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message);
     }
 
     /**

@@ -24,7 +24,7 @@
         </div>
     </div>
 @endif
-<input name="databases_columns_value[{{$database_obj->id}}]" class="" type="file">
+<input name="databases_columns_value[{{$database_obj->id}}]" class="" type="file" accept=".jpeg, .jpg, .png, .gif, .bmp, .svg, .webp">
 @if ($errors && $errors->has("databases_columns_value.$database_obj->id"))
     <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("databases_columns_value.$database_obj->id")}}</div>
 @endif

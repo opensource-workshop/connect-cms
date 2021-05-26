@@ -50,53 +50,54 @@ class ClassController extends ConnectController
         return $this->invokeManage($request, $plugin_name, $action, $id);
     }
 
-    /**
-     *  管理プラグインの呼び出し
-     *
-     * @param String $plugin_name
-     * @return プラグインからの戻り値(HTMLなど)
-     */
-    private function invokeManage_____($request, $plugin_name, $action = 'index', $id = null)
-    {
-        // ログインしているユーザー情報を取得
-        $user = Auth::user();
+    // delete: 使われてないprivateメソッド
+    // /**
+    //  *  管理プラグインの呼び出し
+    //  *
+    //  * @param String $plugin_name
+    //  * @return プラグインからの戻り値(HTMLなど)
+    //  */
+    // private function invokeManage_____($request, $plugin_name, $action = 'index', $id = null)
+    // {
+    //     // ログインしているユーザー情報を取得
+    //     $user = Auth::user();
 
-        // 権限エラー
-        if (empty($user)) {
-            abort(403, 'ログインが必要です。');
-        }
+    //     // 権限エラー
+    //     if (empty($user)) {
+    //         abort(403, 'ログインが必要です。');
+    //     }
 
-        // インスタンス生成
-        $plugin_instance = self::createManageInstance($plugin_name);
+    //     // インスタンス生成
+    //     $plugin_instance = self::createManageInstance($plugin_name);
 
-        // 権限定義メソッドの有無確認
-        if (!method_exists($plugin_instance, 'declareRole')) {
-            abort(403, '権限定義メソッド(declareRole)がありません。');
-        }
+    //     // 権限定義メソッドの有無確認
+    //     if (!method_exists($plugin_instance, 'declareRole')) {
+    //         abort(403, '権限定義メソッド(declareRole)がありません。');
+    //     }
 
-        // 権限チェック（管理系各プラグインの関数＆権限チェックデータ取得）
-        $role_check = false;
-        $role_ckeck_tables = $plugin_instance->declareRole();
-        if (array_key_exists($action, $role_ckeck_tables)) {
-            foreach ($role_ckeck_tables[$action] as $role) {
-                // プラグインで定義された権限が自分にあるかチェック
-                if ($this->isCan($role)) {
-                    $role_check = true;
-                }
-            }
-        } else {
-            abort(403, 'メソッドに権限が設定されていません。');
-        }
+    //     // 権限チェック（管理系各プラグインの関数＆権限チェックデータ取得）
+    //     $role_check = false;
+    //     $role_ckeck_tables = $plugin_instance->declareRole();
+    //     if (array_key_exists($action, $role_ckeck_tables)) {
+    //         foreach ($role_ckeck_tables[$action] as $role) {
+    //             // プラグインで定義された権限が自分にあるかチェック
+    //             if ($this->isCan($role)) {
+    //                 $role_check = true;
+    //             }
+    //         }
+    //     } else {
+    //         abort(403, 'メソッドに権限が設定されていません。');
+    //     }
 
-        if (!$role_check) {
-            abort(403, 'ユーザーにメソッドに対する権限がありません。');
-        }
+    //     if (!$role_check) {
+    //         abort(403, 'ユーザーにメソッドに対する権限がありません。');
+    //     }
 
-        // 指定されたアクションを呼ぶ。
-        // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
-        // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
-        return $plugin_instance->$action($request, $id);
-    }
+    //     // 指定されたアクションを呼ぶ。
+    //     // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
+    //     // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
+    //     return $plugin_instance->$action($request, $id);
+    // }
 
     /**
      *  コアプラグインのインスタンス生成

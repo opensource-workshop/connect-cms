@@ -28,8 +28,10 @@
 
     <footer>
         <div class="pt-2">
-            {{-- 投稿日時 --}}
-            {{$post->posted_at->format('Y年n月j日 H時i分')}}
+            @if ($faq_frame->display_posted_at_flag)
+                {{-- 投稿日時 --}}
+                {{$post->posted_at->format('Y年n月j日 H時i分')}}
+            @endif
 
             {{-- 重要記事 --}}
             @if($post->important == 1)<span class="badge badge-danger">重要</span>@endif

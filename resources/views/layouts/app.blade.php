@@ -58,11 +58,7 @@
 @endif
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
-@if(isset($configs))
-    <title>@if(isset($page)){{$page->page_name}} | @endif{{$configs['base_site_name']}}</title>
-@else
-    <title>@if(isset($page)){{$page->page_name}} | @endif{{config('app.name', 'Connect-CMS')}}</title>
-@endif
+    <title>@if(isset($page)){{$page->page_name}} | @endif{{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}</title>
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
@@ -92,19 +88,31 @@
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
 
-    <!-- Themes CSS -->
+    <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '')
     <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
 @endif
 
-    <!-- Themes JS -->
+    <!-- Themes JS（基本） -->
 @if (isset($themes['js']) && $themes['js'] != '')
     <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js"></script>
+@endif
+
+    <!-- Themes CSS（追加） -->
+@if (isset($themes['additional_css']) && $themes['additional_css'] != '')
+    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css" rel="stylesheet">
+@endif
+
+    <!-- Themes JS（追加） -->
+@if (isset($themes['additional_js']) && $themes['additional_js'] != '')
+    <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js"></script>
 @endif
 
     <!-- Connect-CMS Page CSS -->
 @if (isset($page) && !empty($page->id))
     <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
+@else
+    <link href="{{url('/')}}/file/css/0.css" rel="stylesheet">
 @endif
 
     <!-- Context -->
@@ -129,18 +137,47 @@ if(isset($configs_array['body_optional_class'])){
     $classes = explode(',', $configs_array['body_optional_class']->value);
     $body_optional_class = $classes[array_rand($classes)];
 }
+
+// [TODO] $configs, $configs_array はどちらもconfigsの値をもっていて重複しているため、今後整理予定.
+//        本来configsはarray型にする必要ないが、開発初期はわからずarray型にしていた名残。
+// $configs
+// ・管理画面：基本NULL.
+//            サイト管理＞サイト基本設定では、viewにconfigs を渡しているため、collection型になる.
+// ・一般画面：array型で category = general or user_register のみ.
+//            app\Http\Controllers\Core\ConnectController::view() で 'category=general or user_registerのconfigセットしてる
+//
+// $configs_array
+// ・管理画面：NULL.
+// ・一般画面：array[name => model] で全てのconfigs.
+//            app\Http\Controllers\Core\DefaultController::invokePost() で全てのconfigsをnameをkeyにしてarrayに詰めなおしてる。
+
+// ヘッダーバーnavの文字色クラス
+// change: 管理画面ではviewに共通的に変数をセットする仕組みがないため、管理画面・一般画面どちらも表示するためにここで再度Configsをgetして対応(苦肉の策)
+//$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+// if (isset($configs) && isset($configs['base_header_font_color_class'])) {
+//     $base_header_font_color_class = $configs['base_header_font_color_class'];
+// } else {
+//     $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
+// }
+$config_basic_header = Configs::where('category', 'general')->get();
+$base_header_font_color_class = Configs::getConfigsValue($config_basic_header, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+
+// ヘッダーバー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
+$base_header_optional_class = Configs::getConfigsValue($config_basic_header, 'base_header_optional_class', null);
+$base_header_classes = explode(',', $base_header_optional_class);
+$base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
+
+// \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+// \Log::debug(var_export($configs, true));
+// \Log::debug(var_export($configs_array['base_header_font_color_class'], true));
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 
 @if (Auth::check() || (isset($configs) && isset($configs['base_header_hidden']) && ($configs['base_header_hidden'] != '1')))
-<nav class="navbar navbar-expand-md navbar-dark bg-dark @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif" aria-label="ヘッダー">
+<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
-        @if(isset($configs))
-            {{$configs['base_site_name']}}
-        @else
-            {{ config('app.name', 'Connect-CMS') }}
-        @endif
+        {{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}
     </a>
 
     <!-- SmartPhone Button -->
@@ -149,21 +186,24 @@ if(isset($configs_array['body_optional_class'])){
     </button>
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto d-md-none">
+        {{-- メニュー類を右側にするため、空ulタグでnavbar-nav mr-autoを定義 --}}
+        <ul class="navbar-nav mr-auto"></ul>
+
+        <ul class="navbar-nav d-md-none">
 
             @if(isset($page_list))
 
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
-                    @if (isset($configs) && 
+                    @if (isset($configs) &&
                             (!isset($configs['smartphone_menu_template']) ||
                                 (isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
                             )
                         )
 
                         {{-- 非表示のページは対象外 --}}
-                        @if ($page_obj->isView())
+                        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
                             <li class="nav-item">
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
@@ -184,7 +224,7 @@ if(isset($configs_array['body_optional_class'])){
                     @elseif (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == 'opencurrenttree'))
 
                         {{-- 非表示のページは対象外 --}}
-                        @if ($page_obj->isView())
+                        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
                             {{-- カレント or 自分のルート筋 or 第1階層 or 子のページ or 同階層のページ なら表示する --}}
                             @if ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->depth == 0 || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page))

@@ -815,11 +815,18 @@ trait ConnectCommonTrait
         }
 
         // 利用不可ならfalse
-        if ($user->status == 0) {
-            return true;
+        if ($user->status == \UserStatus::not_active) {
+            $error_msg = \UserStatus::getDescription(\UserStatus::not_active) . "のため、ログインできません。";
+            return false;
         }
-        $error_msg = "利用不可のため、ログインできません。";
-        return false;
+
+        // 仮登録ならfalse
+        if ($user->status == \UserStatus::temporary) {
+            $error_msg = \UserStatus::getDescription(\UserStatus::temporary) . "のため、ログインできません。";
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -11,6 +11,7 @@ use Session;
 
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 // use App\Models\Common\Page;
@@ -50,8 +51,8 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'settingBlogFrame'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveBlogFrame'];
+        $functions['get']  = ['settingBlogFrame'];
+        $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
 
@@ -810,7 +811,9 @@ WHERE status = 0
             $blogs_post->contents_id = $old_blogs_post->contents_id;
 
             // 登録ユーザ
-            $blogs_post->created_id  = $old_blogs_post->created_id;
+            $blogs_post->created_id   = $old_blogs_post->created_id;
+            $blogs_post->created_name = $old_blogs_post->created_name;
+            $blogs_post->created_at   = $old_blogs_post->created_at;
 
             // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
             if ($blogs_post->status != 2) {
@@ -1038,8 +1041,8 @@ WHERE status = 0
         if (empty($request->blogs_id)) {
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => $request->blog_name,
-                  'plugin_name' => 'blogs'
+                'bucket_name' => $request->blog_name,
+                'plugin_name' => 'blogs'
             ]);
 
             // ブログデータ新規オブジェクト
@@ -1094,8 +1097,29 @@ WHERE status = 0
     {
         // blogs_id がある場合、データを削除
         if ($blogs_id) {
+            // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+            // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
+            //
+            // BlogsPosts::where('blogs_id', $blogs_id)->delete();
+            $blogs_posts_ids = BlogsPosts::where('blogs_id', $blogs_id)->pluck('id');
+            $blogs_posts_tags_ids = BlogsPostsTags::whereIn('blogs_posts_id', $blogs_posts_ids)->pluck('id');
+
+            // タグ削除
+            BlogsPostsTags::destroy($blogs_posts_tags_ids);
+
             // 記事データを削除する。
-            BlogsPosts::where('blogs_id', $blogs_id)->delete();
+            BlogsPosts::destroy($blogs_posts_ids);
+
+            $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id);
+            $blogs_categories_categories_ids = $blogs_categories->pluck('categories_id');
+            $blogs_categories_ids = $blogs_categories->pluck('id');
+
+            // カテゴリ削除. カテゴリはブログ毎に別々に存在してるため、削除する
+            $categories_ids = Categories::whereIn('id', $blogs_categories_categories_ids)->where('target', 'blogs')->pluck('id');
+            Categories::destroy($categories_ids);
+
+            // ブログカテゴリ削除
+            BlogsCategories::destroy($blogs_categories_ids);
 
             // ブログ設定を削除する。
             Blogs::destroy($blogs_id);
@@ -1109,8 +1133,16 @@ WHERE status = 0
             // FrameのバケツIDの更新
             Frame::where('id', $frame_id)->update(['bucket_id' => null]);
 
+            // blogs_frames. バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら削除する
+
+            // 権限設定消す buckets_roles（消す。バケツに紐づき）
+            $buckets_roles_ids = BucketsRoles::where('buckets_id', $frame->bucket_id)->pluck('id');
+            // dd($buckets_roles_ids, $frame->bucket_id);
+            BucketsRoles::destroy($buckets_roles_ids);
+
             // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // Buckets::where('id', $frame->bucket_id)->delete();
+            Buckets::destroy($frame->bucket_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
@@ -1131,36 +1163,32 @@ WHERE status = 0
     /**
      * カテゴリ表示関数
      */
-    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
+    public function listCategories($request, $page_id, $frame_id, $id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
-
-        // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
+        // $request->flash();
 
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
 
         // カテゴリ（全体）
         $general_categories = Categories::
-                                        select(
-                                            'categories.*',
-                                            'blogs_categories.id as blogs_categories_id',
-                                            'blogs_categories.categories_id',
-                                            'blogs_categories.view_flag',
-                                            'blogs_categories.display_sequence as blogs_categories_display_sequence'
-                                        )
-                                        ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
-                                            $join->on('blogs_categories.categories_id', '=', 'categories.id')
-                                                 ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
-                                        })
-                                        ->where('target', null)
-                                        ->orderBy('blogs_categories.display_sequence', 'asc')
-                                        ->orderBy('categories.display_sequence', 'asc')
-                                        ->get();
+                select(
+                    'categories.*',
+                    'blogs_categories.id as blogs_categories_id',
+                    'blogs_categories.categories_id',
+                    'blogs_categories.view_flag',
+                    'blogs_categories.display_sequence as general_display_sequence'
+                )
+                ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
+                    $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                            ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
+                            ->where('blogs_categories.deleted_at', null);
+                })
+                ->where('target', null)
+                ->orderBy('blogs_categories.display_sequence', 'asc')
+                ->orderBy('categories.display_sequence', 'asc')
+                ->get();
 
         foreach ($general_categories as $general_categorie) {
             // （初期登録時を想定）ブログカテゴリのカテゴリIDが空なので、カテゴリのIDを初期値にセット
@@ -1169,8 +1197,8 @@ WHERE status = 0
             }
 
             // （初期登録時を想定）ブログカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
-            if (is_null($general_categorie->blogs_categories_display_sequence)) {
-                $general_categorie->blogs_categories_display_sequence = $general_categorie->display_sequence;
+            if (is_null($general_categorie->general_display_sequence)) {
+                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
             }
         }
 
@@ -1178,28 +1206,30 @@ WHERE status = 0
         $plugin_categories = null;
         if ($blog_frame->blogs_id) {
             $plugin_categories = Categories::
-                                            select(
-                                                'categories.*',
-                                                'blogs_categories.id as blogs_categories_id',
-                                                'blogs_categories.categories_id',
-                                                'blogs_categories.view_flag',
-                                                'blogs_categories.display_sequence as blogs_categories_display_sequence'
-                                            )
-                                            ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
-                                            ->where('target', 'blogs')
-                                            ->where('plugin_id', $blog_frame->blogs_id)
-                                            ->orderBy('blogs_categories.display_sequence', 'asc')
-                                            ->orderBy('categories.display_sequence', 'asc')
-                                            ->get();
+                    select(
+                        'categories.*',
+                        'blogs_categories.id as blogs_categories_id',
+                        'blogs_categories.categories_id',
+                        'blogs_categories.view_flag',
+                        'blogs_categories.display_sequence as plugin_display_sequence'
+                    )
+                    ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
+                        $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                                ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
+                                ->where('blogs_categories.deleted_at', null);
+                    })
+                    ->where('target', 'blogs')
+                    ->where('plugin_id', $blog_frame->blogs_id)
+                    ->orderBy('blogs_categories.display_sequence', 'asc')
+                    ->orderBy('categories.display_sequence', 'asc')
+                    ->get();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view('blogs_list_categories', [
             'general_categories' => $general_categories,
-            'plugin_categories'  => $plugin_categories,
-            'blog_frame'         => $blog_frame,
-            'errors'             => $errors,
-            'create_flag'        => $create_flag,
+            'plugin_categories' => $plugin_categories,
+            'blog_frame' => $blog_frame,
         ])->withInput($request->all);
     }
 
@@ -1208,11 +1238,6 @@ WHERE status = 0
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（saveCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         /* エラーチェック
         ------------------------------------ */
 
@@ -1270,7 +1295,8 @@ WHERE status = 0
         $validator->setAttributeNames($setAttributeNames);
 
         if ($validator->fails()) {
-            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         /* カテゴリ追加
@@ -1282,20 +1308,20 @@ WHERE status = 0
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             $add_category = Categories::create([
-                                'classname'        => $request->add_classname,
-                                'category'         => $request->add_category,
-                                'color'            => $request->add_color,
-                                'background_color' => $request->add_background_color,
-                                'target'           => 'blogs',
-                                'plugin_id'        => $blog_frame->blogs_id,
-                                'display_sequence' => intval($request->add_display_sequence),
-                            ]);
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color,
+                'target'           => 'blogs',
+                'plugin_id'        => $blog_frame->blogs_id,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
             BlogsCategories::create([
-                                'blogs_id'         => $blog_frame->blogs_id,
-                                'categories_id'    => $add_category->id,
-                                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                                'display_sequence' => intval($request->add_display_sequence),
-                            ]);
+                'blogs_id'         => $blog_frame->blogs_id,
+                'categories_id'    => $add_category->id,
+                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
         }
 
         // 既存項目アリ
@@ -1352,7 +1378,8 @@ WHERE status = 0
             }
         }
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
@@ -1360,18 +1387,19 @@ WHERE status = 0
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
-        // 削除(ブログプラグインのカテゴリ表示データ)
-        BlogsCategories::where('categories_id', $id)->delete();
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        //
+        // 削除(ブログプラグインのカテゴリ表示データ). 万が一idがnullでも500エラーにならないようにfirstOrNew()を利用。
+        // BlogsCategories::where('categories_id', $id)->delete();
+        $blogs_categories = BlogsCategories::firstOrNew(['categories_id' => $id]);
+        $blogs_categories->delete();
 
         // 削除(カテゴリ)
-        Categories::where('id', $id)->delete();
+        // Categories::where('id', $id)->delete();
+        Categories::destroy($id);
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**

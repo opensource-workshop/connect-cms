@@ -7,15 +7,15 @@
 {{-- 管理画面メイン部分への挿入 --}}
 @section('content')
 
-<div class="container">
+<div class="container-fluid">
     <div class="row mt-3">
 
         {{-- 管理メニュー --}}
-        <aside class="col-lg-3 order-1">
+        <aside class="col-lg-2 order-1">
             @include('plugins.manage.menus')
         </aside>
 
-        <main class="col-lg-9 order-2" role="main">
+        <main class="col-lg-10 order-2" role="main">
 
 <?php
 //    PHPでクラスを呼ぶ際のサンプル

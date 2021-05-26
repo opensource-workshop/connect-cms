@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Request;
 
 use DB;
@@ -13,6 +15,8 @@ use App\Http\Controllers\Core\ConnectController;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Plugins;
+
+use App\Enums\ContentOpenType;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -122,6 +126,19 @@ class FrameController extends ConnectController
             abort(403, '権限がありません。');
         }
 
+        // バリデート
+        $validate_targets['content_open_type'] = ['required'];
+        $validate_names['content_open_type'] = '公開設定';
+        if($request->content_open_type == ContentOpenType::limited_open){
+            $validate_targets['content_open_date_from'] = ['required', 'date'];
+            $validate_targets['content_open_date_to'] = ['required', 'date', 'after:content_open_date_from'];
+            $validate_names['content_open_date_from'] = '公開日時From';
+            $validate_names['content_open_date_to'] = '公開日時To';
+        }
+        $validator = Validator::make($request->all(), $validate_targets);
+        $validator->setAttributeNames($validate_names);
+        $validator->validate();
+
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
@@ -138,6 +155,9 @@ class FrameController extends ConnectController
                       'classname'         => $request->classname,
                       'plug_name'         => $request->plug_name,
                       'none_hidden'       => ($request->none_hidden == '') ? 0 : $request->none_hidden,
+                      'content_open_type' => $request->content_open_type,
+                      'content_open_date_from' => $request->content_open_date_from,
+                      'content_open_date_to' => $request->content_open_date_to,
         ]);
 
         return redirect($page->permanent_link."#frame-".$frame_id);

@@ -386,6 +386,16 @@
                 <label class="{{$frame->getSettingLabelClass()}}">内容 </label>
                 <div class="{{$frame->getSettingInputClass()}}">
                     <textarea name="caption" class="form-control" rows="3">{{old('caption', $column->caption)}}</textarea>
+
+                    <div class="card bg-light mt-1">
+                        <div class="card-body px-2 pt-0 pb-1">
+                            <span class="small">
+                                ※ [[upload_max_filesize]] を記述すると該当部分にアップロードできる１ファイルの最大サイズが入ります。<br />
+                                ※ （設定例：ファイル型に設定）<br />
+                                　 アップロードできる１ファイルの最大サイズ: [[upload_max_filesize]]<br />
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -413,9 +423,9 @@
     <br>
 
     @if (
-        $column->column_type == FormColumnType::text || 
-        $column->column_type == FormColumnType::textarea || 
-        $column->column_type == FormColumnType::mail || 
+        $column->column_type == FormColumnType::text ||
+        $column->column_type == FormColumnType::textarea ||
+        $column->column_type == FormColumnType::mail ||
         $column->column_type == FormColumnType::date
     )
         {{-- プレースホルダ設定 --}}
@@ -442,8 +452,9 @@
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        {{-- キャンセルボタン --}}
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'"><i class="fas fa-chevron-left"></i> 前へ</button>
+        <a href="{{url('/')}}/plugin/forms/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}" class="btn btn-secondary">
+            <i class="fas fa-chevron-left"></i> 項目設定へ
+        </a>
     </div>
 </form>
 @endsection

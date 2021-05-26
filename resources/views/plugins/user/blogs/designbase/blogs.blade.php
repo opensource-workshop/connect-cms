@@ -59,7 +59,7 @@
             {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
         </nav>
     @endif
-
+    </dl>
 </div>
 @endif
 @endsection

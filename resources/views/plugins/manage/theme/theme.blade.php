@@ -108,6 +108,11 @@
                     <input type="text" name="theme_name" id="theme_name" value="" class="form-control">
                     @endif
                     @if ($errors && $errors->has('theme_name')) <div class="text-danger">{{$errors->first('theme_name')}}</div> @endif
+                    <small class="text-muted">
+                        <div>※ 独自テーマを作成できます。独自テーマではCSS、javascript、画像を独自に定義することができます。</div>
+                        <div>※ 作成した独自テーマは<a href="{{ url('/manage/site') }}" target="_blank">サイト管理</a>から設定することができます。</div>
+                        <div>※ テーマファイルはサーバ上の [ドキュメントルート]/public/themes/Users/[ディレクトリ名] に作成されます。</div>
+                    </small>
                 </div>
             </div>
             <div class="form-group row">

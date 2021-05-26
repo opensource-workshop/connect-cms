@@ -19,8 +19,7 @@
 
 @if (empty($linklist->id) && $action != 'createBuckets')
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i>
-        選択画面から、使用するリンクリストを選択するか、作成してください。
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
     </div>
 @else
     <div class="alert alert-info">
@@ -55,7 +54,7 @@
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                         <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                     </button>
-                    <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                    <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                         <span class="{{$frame->getSettingButtonCaptionClass()}}">
                         @if (empty($linklist->id))
                             登録確定

@@ -2,7 +2,10 @@
 
 namespace App\Utilities\Csv;
 
+use Illuminate\Support\Facades\Validator;
+
 use App\Utilities\Csv\SjisToUtf8EncodingFilter;
+use App\Utilities\String\StringUtils;
 
 class CsvUtils
 {
@@ -64,5 +67,71 @@ class CsvUtils
         stream_filter_append($fp, 'sjis_to_utf8_encoding_filter');
 
         return $fp;
+    }
+
+    /**
+     * CSVヘッダーチェック
+     */
+    public static function checkCsvHeader(array $header_columns, array $header_column_format)
+    {
+        if (empty($header_columns)) {
+            return array("CSVファイルが空です。");
+        }
+
+        // 項目の不足チェック
+        $shortness = array_diff($header_column_format, $header_columns);
+        if (!empty($shortness)) {
+            // \Log::debug(var_export($header_column_format, true));
+            // \Log::debug(var_export($header_columns, true));
+            // \Log::debug(var_export(setlocale(LC_ALL, "0"), true));
+            return array("1行目に " . implode(",", $shortness) . " が不足しています。");
+        }
+        // 項目の不要チェック
+        $excess = array_diff($header_columns, $header_column_format);
+        if (!empty($excess)) {
+            return array("1行目に " . implode(",", $excess) . " は不要です。");
+        }
+
+        return array();
+    }
+
+    /**
+     * CSVデータ行チェック
+     */
+    public static function checkCvslines($fp, array $header_column_format, array $cvs_rules)
+    {
+        // ヘッダー行が1行目なので、2行目からデータ始まる
+        $line_count = 2;
+        $errors = [];
+
+        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
+            // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
+            $csv_columns = StringUtils::trimInput($csv_columns);
+
+            // バリデーション
+            $validator = Validator::make($csv_columns, $cvs_rules);
+            // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
+            // Log::debug(var_export($rules, true));
+
+            $attribute_names = [];
+
+            $col = 0;
+            foreach ($header_column_format as $header_column) {
+                // 行数＋項目名
+                $attribute_names[$col] = $line_count . '行目の' . $header_column;
+                $col++;
+            }
+
+            $validator->setAttributeNames($attribute_names);
+            // Log::debug(var_export($attribute_names, true));
+
+            if ($validator->fails()) {
+                $errors = array_merge($errors, $validator->errors()->all());
+            }
+
+            $line_count++;
+        }
+
+        return $errors;
     }
 }

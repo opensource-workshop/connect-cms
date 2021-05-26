@@ -72,4 +72,9 @@ return [
 
     // Self register base role.(comma separator. Not set is guest)
     'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', ''),
+
+    // Custom message.
+    'cc_lang_ja_messages_search_results_empty' => env('cc_lang_ja_messages_search_results_empty'),
+    'cc_lang_ja_messages_enter_same_email' => env('cc_lang_ja_messages_enter_same_email'),
+    'cc_lang_ja_messages_input_user_name' => env('cc_lang_ja_messages_input_user_name'),
 ];

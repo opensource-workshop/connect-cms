@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 use App\Models\Core\Configs;
+use App\Enums\BaseLoginRedirectPage;
 
 class LoginController extends Controller
 {
@@ -48,6 +49,7 @@ class LoginController extends Controller
      */
     public function __construct()
     {
+        // exceptで指定されたメソッドは除外する
         $this->middleware('guest')->except('logout');
     }
 
@@ -171,10 +173,11 @@ class LoginController extends Controller
      */
     public function showLoginForm()
     {
-        // ログイン時に元いたページに遷移 設定
-        $base_login_redirect_previous_page = Configs::where('name', 'base_login_redirect_previous_page')->first();
+        // ログイン後に移動するページ 設定
+        $configs = Configs::where('category', 'general')->get();
+        $base_login_redirect_previous_page = Configs::getConfigsValue($configs, 'base_login_redirect_previous_page');
 
-        if (!empty($base_login_redirect_previous_page) && $base_login_redirect_previous_page->value == '1') {
+        if ($base_login_redirect_previous_page == BaseLoginRedirectPage::previous_page) {
             // ログイン時に元いたページに遷移
             if (array_key_exists('HTTP_REFERER', $_SERVER)) {
                 $path = parse_url($_SERVER['HTTP_REFERER']); // URLを分解
@@ -184,6 +187,10 @@ class LoginController extends Controller
                     }
                 }
             }
+        } elseif ($base_login_redirect_previous_page == BaseLoginRedirectPage::specified_page) {
+            // 指定したページに遷移
+            $base_login_redirect_select_page = Configs::getConfigsValue($configs, 'base_login_redirect_select_page', RouteServiceProvider::HOME);
+            session(['url.intended' => $base_login_redirect_select_page]);
         }
 
         return view('auth.login');

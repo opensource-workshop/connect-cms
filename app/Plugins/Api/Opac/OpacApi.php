@@ -280,7 +280,7 @@ class OpacApi extends ApiPluginBase
         $content .= 'タイトル：' . $opacs_books_lent->title . "\n";
         $content .= '返却日：'   . $opacs_books_lent->return_date . "\n";
 
-        OpacsPlugin::sendMail($opacs_books_lent, $subject, $content);
+        OpacsPlugin::sendMailOpac($opacs_books_lent, $subject, $content);
 
         // 結果
         $ret = array('code' => 200, 'message' => '返却処理が完了しました。');

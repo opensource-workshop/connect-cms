@@ -32,15 +32,12 @@
                     <button class="btn btn-primary" type="submit"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
                 </div>
                 <div class="ml-2">
-                    <a data-toggle="collapse" href="#collapse-search-help">
-                        <span class="btn btn-light"><i class="fas fa-question-circle"></i></span>
+                    <a href="https://connect-cms.jp/manual/manager/code#collapse-search-help" target="_brank">
+                        <span class="btn btn-link"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></span>
                     </a>
                 </div>
             </div>
         </form>
-
-        {{-- 検索条件の補足 --}}
-        @include('plugins.manage.code.search_help')
 
         {{-- ラベル検索エリア --}}
         <div class="mt-3">
@@ -57,7 +54,7 @@
         </div>
 
         {{-- 一覧エリア --}}
-        <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $codes->total() }} 件</span></div>
+        <div class="mt-3"><span class="badge badge-pill badge-light">{{ $codes->total() }} 件</span></div>
         <table class="table table-bordered table_border_radius table-hover cc-font-90">
             <tbody>
                 <tr class="bg-light d-none d-sm-table-row">
