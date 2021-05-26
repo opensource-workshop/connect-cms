@@ -21,13 +21,9 @@
         </div>
     @endif
 
-{{--
     <div class="alert alert-info" role="alert">
-        <ul class="pl-3">
-            CSVファイルを使って、コード管理へ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/user/database#frame-178" target="_blank">こちら</a>を参照してください。
-        </ul>
+        <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ユーザを一括登録できます。詳細は<a href="https://connect-cms.jp/manual/manager/user" target="_blank">オンラインマニュアルのユーザ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
     </div>
---}}
 
     {{-- ダウンロード用フォーム --}}
     <form action="{{url('/')}}/manage/user/downloadCsvFormat" method="post" name="database_download_csv_format">
