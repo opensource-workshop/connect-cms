@@ -3,34 +3,32 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Collection;
 
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Utilities\String\StringUtils;
 
 /**
- * CSV用 役割名の存在チェックバリデーション
+ * CSV用 パイプ区切りの文字は、該当の名前かチェックするバリデーション
  */
-class CustomValiCsvExistsRoleName implements Rule
+class CustomValiCsvExistsName implements Rule
 {
-    protected $configs = null;
+    protected $names = null;
 
     /**
      * Create a new rule instance.
      *
      * @return void
      */
-    public function __construct(Collection $configs_original_role)
+    public function __construct(array $names)
     {
-        // 役割設定取得
-        $this->configs = $configs_original_role;
+        $this->names = $names;
     }
 
     /**
      * Determine if the validation rule passes.
      *
      * @param  string  $attribute 項目名
-     * @param  mixed  $value 画像のフルパスセットする
+     * @param  mixed  $value パイプ区切りの文字
      * @return bool
      */
     public function passes($attribute, $value)
@@ -44,14 +42,12 @@ class CustomValiCsvExistsRoleName implements Rule
         $check_values = explode(UsersTool::CHECKBOX_SEPARATOR, $value);
         // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
         $check_values = StringUtils::trimInput($check_values);
-
-        // 役割設定取得
-        // $this->configs = Configs::where('category', 'original_role')->get();
+        // \Log::debug(var_export($value, true));
+        // \Log::debug(var_export($check_values, true));
 
         foreach ($check_values as $check_value) {
-            $target_group = $this->configs->where('value', $check_value);
-            if ($target_group->isEmpty()) {
-                // 役割名がないならエラー
+            if (! in_array($check_value, $this->names)) {
+                // 該当がないならエラー
                 return false;
             }
         }
@@ -66,6 +62,6 @@ class CustomValiCsvExistsRoleName implements Rule
      */
     public function message()
     {
-        return ':attributeには ' . $this->configs->implode('value', ', ') . ' のうちいずれかを指定してください。';
+        return ':attributeには ' . implode(', ', $this->names) . ' のうちいずれかを指定してください。';
     }
 }
