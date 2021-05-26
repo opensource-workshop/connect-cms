@@ -1807,4 +1807,3 @@ class UserManage extends ManagePluginBase
         return $errors;
     }
 }
-
