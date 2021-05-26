@@ -16,10 +16,10 @@ class UsersRoles extends Model
     /**
      * 権限
      */
-    var $user_roles = null;
+    private $user_roles = null;
 
     /**
-     *  ユーザー権限の取得
+     * ユーザー権限の取得
      *
      * @param int $users_id
      * @return roles array
@@ -51,7 +51,7 @@ class UsersRoles extends Model
     }
 
     /**
-     *  権限を保持しているかの判断
+     * 権限を保持しているかの判断
      */
     public function haveRole($target_role, $users_id)
     {
@@ -67,7 +67,7 @@ class UsersRoles extends Model
     }
 
     /**
-     *  管理系権限を保持しているかの判断
+     * 管理系権限を保持しているかの判断
      */
     public function haveAdmin($users_id)
     {
@@ -83,7 +83,7 @@ class UsersRoles extends Model
     }
 
     /**
-     *  権限を保持していないかの判断
+     * 権限を保持していないかの判断
      */
     public function notRole($target_role, $users_id)
     {
@@ -99,7 +99,7 @@ class UsersRoles extends Model
     }
 
     /**
-     *  指定された権限しか保有していないかの判断
+     * 指定された権限しか保有していないかの判断
      */
     public function isOnlyRole($target_role, $users_id)
     {
@@ -115,5 +115,29 @@ class UsersRoles extends Model
             }
         }
         return $target_check;
+    }
+
+    /**
+     * 指定された権限に該当するターゲットを取得
+     */
+    public static function getTargetByRole(string $target_role)
+    {
+        switch ($target_role) {
+            // コンテンツ権限
+            case 'role_article_admin':
+            case 'role_arrangement':
+            case 'role_article':
+            case 'role_approval':
+            case 'role_reporter':
+                return 'base';
+            // 管理権限
+            case 'admin_system':
+            case 'admin_site':
+            case 'admin_page':
+            case 'admin_user':
+                return 'manage';
+            default:
+                return null;
+        }
     }
 }
