@@ -47,7 +47,7 @@
 
     <div class="form-group text-center mt-3">
         <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}">
-            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
+            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
         </a>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示ブログ変更</button>
     </div>

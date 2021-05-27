@@ -130,7 +130,7 @@
                 <div class="row">
                     <div class="col-12">
                         <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}">
-                            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
+                            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                         </a>
                         <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                             <span class="{{$frame->getSettingButtonCaptionClass()}}">
