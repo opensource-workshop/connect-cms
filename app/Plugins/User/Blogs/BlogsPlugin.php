@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
@@ -15,7 +14,6 @@ use App\Models\Common\Buckets;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
-// use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsCategories;
 use App\Models\User\Blogs\BlogsFrames;
@@ -25,6 +23,7 @@ use App\Models\User\Blogs\BlogsPostsTags;
 use App\Plugins\User\UserPluginBase;
 
 use App\Enums\StatusType;
+use App\Enums\BlogFrameConfig;
 
 /**
  * ブログプラグイン
@@ -1574,7 +1573,7 @@ EOD;
      */
     private function saveFrameConfigs($request, $frame_id)
     {
-        $configs = \BlogFrameConfig::getMemberKeys();
+        $configs = BlogFrameConfig::getMemberKeys();
         foreach ($configs as $key => $value) {
 
             if (empty($request->$value)) {
