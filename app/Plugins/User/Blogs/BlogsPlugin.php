@@ -1109,28 +1109,34 @@ WHERE status = 0
             // ブログカテゴリ削除
             BlogsCategories::destroy($blogs_categories_ids);
 
-            // ブログ設定を削除する。
-            Blogs::destroy($blogs_id);
-
 // Frame に紐づくBlog を削除した場合のみ、Frame の更新。（Frame に紐づかないBlog の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
 
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();
 
-            // FrameのバケツIDの更新
-            Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したblogのbucket_idで消す
+            $blogs = Blogs::find($blogs_id);
+
+            // change: フレームのbucket_idと削除するblogのbucket_idが同じなら、FrameのバケツIDの更新する
+            if ($frame->bucket_id == $blogs->bucket_id) {
+                // FrameのバケツIDの更新
+                Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            }
 
             // blogs_frames. バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら削除する
 
             // 権限設定消す buckets_roles（消す。バケツに紐づき）
-            $buckets_roles_ids = BucketsRoles::where('buckets_id', $frame->bucket_id)->pluck('id');
+            $buckets_roles_ids = BucketsRoles::where('buckets_id', $blogs->bucket_id)->pluck('id');
             // dd($buckets_roles_ids, $frame->bucket_id);
             BucketsRoles::destroy($buckets_roles_ids);
 
             // backetsの削除
             // Buckets::where('id', $frame->bucket_id)->delete();
-            Buckets::destroy($frame->bucket_id);
+            Buckets::destroy($blogs->bucket_id);
+
+            // ブログ設定を削除する。
+            Blogs::destroy($blogs_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
