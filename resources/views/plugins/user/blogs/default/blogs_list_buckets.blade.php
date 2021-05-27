@@ -20,24 +20,24 @@
 
     <div class="form-group">
         <table class="table table-hover {{$frame->getSettingTableClass()}}">
-        <thead>
-            <tr>
-                <th></th>
-                <th>ブログ名</th>
-                <th>作成日</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach($blogs as $blog)
-            <tr @if ($blog_frame->bucket_id == $blog->bucket_id) class="cc-active-tr"@endif>
-                <td class="d-table-cell">
-                    <input type="radio" value="{{$blog->bucket_id}}" name="select_bucket"@if ($blog_frame->bucket_id == $blog->bucket_id) checked @endif>
-                </td>
-                <td><span class="{{$frame->getSettingCaptionClass()}}">ブログ名：</span>{{$blog->blog_name}}</td>
-                <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$blog->created_at}}</td>
-            </tr>
-        @endforeach
-        </tbody>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>ブログ名</th>
+                    <th>作成日</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($blogs as $blog)
+                    <tr @if ($blog_frame->bucket_id == $blog->bucket_id) class="cc-active-tr"@endif>
+                        <td class="d-table-cell">
+                            <input type="radio" value="{{$blog->bucket_id}}" name="select_bucket"@if ($blog_frame->bucket_id == $blog->bucket_id) checked @endif>
+                        </td>
+                        <td><span class="{{$frame->getSettingCaptionClass()}}">ブログ名：</span>{{$blog->blog_name}}</td>
+                        <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$blog->created_at}}</td>
+                    </tr>
+                @endforeach
+            </tbody>
         </table>
     </div>
 
