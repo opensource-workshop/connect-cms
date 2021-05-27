@@ -92,7 +92,7 @@
             </span>
 
             {{-- ページ内リンク --}}
-            <a href="#frame-{{ $frame->frame_id }}" title="ページ内リンク"><small><i class="fas fa-link bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
+            <a href="{{URL::to($page->permanent_link)}}#frame-{{ $frame->frame_id }}" title="ページ内リンク"><small><i class="fas fa-link bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
 
             {{-- 上移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
