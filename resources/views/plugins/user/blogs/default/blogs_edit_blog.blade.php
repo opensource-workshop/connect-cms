@@ -102,9 +102,9 @@
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
-                </button>
+                </a>
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($blog) || $create_flag)
