@@ -27,11 +27,12 @@ class FrameConfig extends Model
      *
      * @param Illuminate\Database\Eloquent\Collection $frame_configs フレーム設定
      * @param string $name 名称
+     * @param bool|string $default 初期値
      * @return string 値
      */
-    public static function getConfigValue(Collection $frame_configs, string $name)
+    public static function getConfigValue(Collection $frame_configs, string $name, $default = '')
     {
-        $value = '';
+        $value = $default;
         if (empty($frame_configs)) {
             return $value;
         }
@@ -41,6 +42,18 @@ class FrameConfig extends Model
             $value = $config->value;
         }
 
+        return $value;
+    }
+
+    /**
+     * フレーム設定の値取得. old対応あり
+     */
+    public static function getConfigValueAndOld(Collection $frame_configs, string $name, $default = '')
+    {
+        $value = self::getConfigValue($frame_configs, $name, $default);
+
+        // oldの値があれば、その値を使う
+        $value = old($name, $value);
         return $value;
     }
 }
