@@ -3,11 +3,11 @@
 namespace App\Plugins\User\Blogs;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-
-use DB;
-use Session;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
@@ -541,12 +541,6 @@ WHERE status = 0
             return;
         }
 
-        // Page データ
-        // $page = Page::where('id', $page_id)->first();
-
-        // 認証されているユーザの取得
-        // $user = Auth::user();
-
         // ブログデータ一覧の取得
         $blogs_posts = $this->getPosts($blog_frame);
 
@@ -582,12 +576,12 @@ WHERE status = 0
     }
 
     /**
-     *  新規記事画面
+     * 新規記事画面
      */
-    public function create($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
+    public function create($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // ブログ＆フレームデータ
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -603,15 +597,12 @@ WHERE status = 0
         $blogs_posts_tags = "";
 
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'blogs_input', [
+        return $this->view('blogs_input', [
             'blog_frame'       => $blog_frame,
             'blogs_posts'      => $blogs_posts,
             'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
-            'errors'           => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -711,10 +702,10 @@ WHERE status = 0
     /**
      * 記事編集画面
      */
-    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
+    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // Frame データ
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -737,15 +728,12 @@ WHERE status = 0
         $blogs_posts_tags = trim($blogs_posts_tags, ',');
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'blogs_input', [
+        return $this->view('blogs_input', [
             'blog_frame'       => $blog_frame,
             'blogs_posts'      => $blogs_post,
             'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
-            'errors'           => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -758,7 +746,8 @@ WHERE status = 0
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
+            // return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
+            return back()->withErrors($validator)->withInput();
         }
 
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
@@ -828,8 +817,9 @@ WHERE status = 0
         // タグの保存
         $this->saveTag($request, $blogs_post);
 
-        // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
+        // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+        // return $this->index($request, $page_id, $frame_id);
+        return new Collection(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**

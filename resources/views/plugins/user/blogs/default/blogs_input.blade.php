@@ -34,9 +34,11 @@ use App\Models\User\Blogs\BlogsPosts;
 
 {{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/blogs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" name="form_blogs_posts{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST" name="form_blogs_posts{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
