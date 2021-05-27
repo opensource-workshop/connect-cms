@@ -952,20 +952,20 @@ WHERE status = 0
     /**
      * ブログ新規作成画面
      */
-    public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null)
     {
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = true;
-        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
     }
 
     /**
      * ブログ設定変更画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // ブログ＆フレームデータ
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -982,19 +982,16 @@ WHERE status = 0
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs_edit_blog', [
+        return $this->view('blogs_edit_blog', [
             'blog_frame'  => $blog_frame,
             'blog'        => $blog,
             'create_flag' => $create_flag,
             'message'     => $message,
-            'errors'      => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
-     *  ブログ登録処理
+     * ブログ登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $blogs_id = null)
     {
@@ -1014,13 +1011,14 @@ WHERE status = 0
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($blogs_id)) {
-                $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            } else {
-                $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            }
+            // if (empty($blogs_id)) {
+            //     $create_flag = true;
+            //     return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
+            // } else {
+            //     $create_flag = false;
+            //     return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
+            // }
+            return back()->withErrors($validator)->withInput();
         }
 
         // 更新後のメッセージ
@@ -1074,9 +1072,10 @@ WHERE status = 0
         //Log::debug($blogs->bucket_id);
         //Log::debug($request->blog_name);
 
-        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
-        $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
+        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ.
+        // $create_flag = false;
+        // return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
+        return new Collection(['redirect_path' => url('/') . '/plugin/blogs/editBuckets/' . $page_id . '/' . $frame_id . '/' . $blogs->id . '#frame-' . $frame_id]);
     }
 
     /**

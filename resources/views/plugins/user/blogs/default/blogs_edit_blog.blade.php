@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -40,28 +40,30 @@
 
 @if (!$blog || (!$blog->id && !$create_flag))
 @else
-<form action="{{url('/')}}/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
+<form action="{{url('/')}}/redirect/plugin/blogs/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{ csrf_field() }}
     {{-- create_flag がtrue の場合、新規作成するためにblogs_id を空にする --}}
     @if ($create_flag)
         <input type="hidden" name="blogs_id" value="">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
     @else
         <input type="hidden" name="blogs_id" value="{{$blog->id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$blog->id}}#frame-{{$frame_id}}">
     @endif
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">ブログ名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control">
-            @if ($errors && $errors->has('blog_name')) <div class="text-danger">{{$errors->first('blog_name')}}</div> @endif
+            <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control @if ($errors->has('blog_name')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'blog_name'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
+            <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3 @if ($errors->has('view_count')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'view_count'])
         </div>
     </div>
 
@@ -69,7 +71,7 @@
         <label class="{{$frame->getSettingLabelClass(true)}}">RSSの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($blog->rss == 1)
+                @if (old('rss', $blog->rss) == 1)
                     <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input">
@@ -77,7 +79,7 @@
                 <label class="custom-control-label" for="rss_off">表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($blog->rss == 0)
+                @if (old('rss', $blog->rss) == 0)
                     <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input">
@@ -90,8 +92,8 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">RSS件数 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
+            <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3 @if ($errors->has('rss_count')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'rss_count'])
         </div>
     </div>
 
