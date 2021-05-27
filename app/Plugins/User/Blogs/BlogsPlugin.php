@@ -1045,9 +1045,6 @@ WHERE status = 0
             return back()->withErrors($validator)->withInput();
         }
 
-        // 更新後のメッセージ
-        $message = null;
-
         // 画面から渡ってくるblogs_id が空ならバケツとブログを新規登録
         if (empty($request->blogs_id)) {
             // バケツの登録
@@ -1070,13 +1067,14 @@ WHERE status = 0
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = 'ブログ設定を追加しました。';
+            $request->flash_message = 'ブログ設定を追加しました。';
+
         } else {
             // blogs_id があれば、ブログを更新
             // ブログデータ取得
             $blogs = Blogs::where('id', $request->blogs_id)->first();
 
-            $message = 'ブログ設定を変更しました。';
+            $request->flash_message = 'ブログ設定を変更しました。';
         }
 
         // ブログ設定
