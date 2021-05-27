@@ -13,6 +13,7 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
 <form action="{{url('/')}}/redirect/plugin/blogs/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
@@ -29,12 +30,11 @@
         <tbody>
         @foreach($blogs as $blog)
             <tr @if ($blog_frame->bucket_id == $blog->bucket_id) class="cc-active-tr"@endif>
-                <td>
+                <td class="d-table-cell">
                     <input type="radio" value="{{$blog->bucket_id}}" name="select_bucket"@if ($blog_frame->bucket_id == $blog->bucket_id) checked @endif>
-                    <span class="{{$frame->getSettingCaptionClass()}}">{{$blog->blog_name}}</span>
                 </td>
-                <td class="{{$frame->getNarrowDisplayNone()}}">{{$blog->blog_name}}</td>
-                <td>{{$blog->created_at}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">ブログ名：</span>{{$blog->blog_name}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$blog->created_at}}</td>
             </tr>
         @endforeach
         </tbody>
