@@ -15,7 +15,7 @@
 @else
     @php
         $class_border = "";
-        // 
+        //
         if ($frame->frame_design == 'none') {
             $class_border = " border-0";
         }
@@ -69,30 +69,45 @@
         @if ($frame->page_id == $page->id)
 --}}
         <div class="float-right">
+            @php
+                // [TODO] あれ？フレームごとにselectしていました。今後はどっか上流で plugin_name_full を持つ方向がよいかと。
+                $plugins_name = Plugins::where('plugin_name', $frame->plugin_name)->first();
+                if ($plugins_name) {
+                    $plugin_name_full = $plugins_name->plugin_name_full;
+                } else {
+                    $plugin_name_full = $frame->plugin_name;
+                }
+            @endphp
 
             {{-- プラグイン名 --}}
             <span class="badge badge-secondary">
-                @if (Plugins::query()->where('plugin_name', $frame->plugin_name)->first())
-                {{ Plugins::query()->where('plugin_name', $frame->plugin_name)->first()->plugin_name_full }}
+                {{--
+                @if (Plugins::where('plugin_name', $frame->plugin_name)->first())
+                    {{ Plugins::where('plugin_name', $frame->plugin_name)->first()->plugin_name_full }}
                 @else
-                {{$frame->plugin_name}}
+                    {{$frame->plugin_name}}
                 @endif
+                --}}
+                {{$plugin_name_full}}
             </span>
+
+            {{-- ページ内リンク --}}
+            <a href="#frame-{{ $frame->frame_id }}" title="ページ内リンク"><small><i class="fas fa-link bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
 
             {{-- 上移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();"><i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a> 
+                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();" title="上移動"><i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a>
             </form>
 
             {{-- 下移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_down" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();"><i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a> 
+                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();" title="下移動"><i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a>
             </form>
 
             {{-- 変更画面へのリンク --}}
-            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}"><small><i class="fas fa-cog bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
+            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" title="{{$plugin_name_full}}設定"><small><i class="fas fa-cog bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
 
 {{-- モーダル実装 --}}
             {{-- 変更画面へのリンク --}}
