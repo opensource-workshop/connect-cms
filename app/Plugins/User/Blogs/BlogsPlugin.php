@@ -943,12 +943,10 @@ WHERE status = 0
                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs_list_buckets', [
+        return $this->view('blogs_list_buckets', [
             'blog_frame' => $blog_frame,
             'blogs'      => $blogs,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -1147,8 +1145,8 @@ WHERE status = 0
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
 
-        // 表示ブログ選択画面を呼ぶ
-        return $this->listBuckets($request, $page_id, $frame_id, $id);
+        // 表示ブログ選択画面を呼ぶ. リダイレクトで遷移するため、ここでは何もしない
+        // return $this->listBuckets($request, $page_id, $frame_id, $id);
     }
 
     /**
