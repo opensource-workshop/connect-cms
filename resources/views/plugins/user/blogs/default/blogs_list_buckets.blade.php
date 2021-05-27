@@ -24,6 +24,7 @@
                 <tr>
                     <th></th>
                     <th>ブログ名</th>
+                    <th>件数</th>
                     <th>詳細</th>
                     <th>作成日</th>
                 </tr>
@@ -35,6 +36,9 @@
                             <input type="radio" value="{{$blog->bucket_id}}" name="select_bucket"@if ($blog_frame->bucket_id == $blog->bucket_id) checked @endif>
                         </td>
                         <td><span class="{{$frame->getSettingCaptionClass()}}">ブログ名：</span>{{$blog->blog_name}}</td>
+                        <td nowrap>
+                            <span class="{{$frame->getSettingCaptionClass()}}">件数：</span>{{$blog->entry_count}}
+                        </td>
                         <td>
                             <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
                             <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/blogs/editBuckets/{{$page->id}}/{{$frame_id}}/{{$blog->id}}#frame-{{$frame_id}}">

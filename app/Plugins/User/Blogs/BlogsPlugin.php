@@ -24,6 +24,8 @@ use App\Models\User\Blogs\BlogsPostsTags;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Enums\StatusType;
+
 /**
  * ブログプラグイン
  *
@@ -939,8 +941,31 @@ WHERE status = 0
                       ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        $blogs = Blogs::orderBy('created_at', 'desc')
-                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
+        // $blogs = Blogs::orderBy('created_at', 'desc')
+        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
+        $blogs = Blogs::
+                select(
+                    'blogs.id',
+                    'blogs.bucket_id',
+                    'blogs.created_at',
+                    'blogs.blog_name',
+                    DB::raw('count(blogs_posts.blogs_id) as entry_count')
+                )
+                ->leftJoin('blogs_posts', function ($leftJoin) {
+                    // 履歴あり & 論理削除対応
+                    $leftJoin->on('blogs.id', '=', 'blogs_posts.blogs_id')
+                            ->where('blogs_posts.status', StatusType::active)
+                            ->whereNull('blogs_posts.deleted_at');
+                })
+                ->groupBy(
+                    'blogs.id',
+                    'blogs.bucket_id',
+                    'blogs.created_at',
+                    'blogs.blog_name',
+                    'blogs_posts.blogs_id'
+                )
+                ->orderBy('blogs.created_at', 'desc')
+                ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view('blogs_list_buckets', [
