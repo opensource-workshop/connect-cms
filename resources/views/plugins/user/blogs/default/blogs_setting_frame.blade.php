@@ -57,7 +57,7 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">指定年</label>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <input type="text" name="scope_value" value="{{old('scope_value', $blog_frame_setting->scope_value)}}" class="form-control col-sm-3" v-model="v_scope_value">
+                    <input type="text" name="scope_value" value="{{old('scope_value', $blog_frame_setting->scope_value)}}" class="form-control col-sm-3 @if ($errors->has('scope_value')) border-danger @endif" v-model="v_scope_value">
                     @include('common.errors_inline', ['name' => 'scope_value'])
                     <small class="text-muted">※ 表示条件と指定年の組み合わせで投稿日時を参照し、ブログ一覧に表示します。</small><br>
                     <small class="text-muted">※ 表示範囲：@{{ showTargetYmd }}</small>
