@@ -10,6 +10,7 @@ use DB;
 use Session;
 
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 use App\Models\Common\Buckets;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
@@ -1539,6 +1540,33 @@ EOD;
             ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value, 'important_view' => $request->important_view ]
         );
 
+        // フレーム設定保存
+        $this->saveFrameConfigs($request, $frame_id);
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
         return $this->settingBlogFrame($request, $page_id, $frame_id);
+    }
+
+    /**
+     * フレーム設定を保存する。
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     */
+    private function saveFrameConfigs($request, $frame_id)
+    {
+        $configs = \BlogFrameConfig::getMemberKeys();
+        foreach ($configs as $key => $value) {
+
+            if (empty($request->$value)) {
+                return;
+            }
+
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $value],
+                ['value' => $request->$value]
+            );
+        }
     }
 }
