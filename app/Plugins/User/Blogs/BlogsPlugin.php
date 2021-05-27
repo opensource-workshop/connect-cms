@@ -1473,7 +1473,7 @@ EOD;
     public function settingBlogFrame($request, $page_id, $frame_id)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // Blog設定取得
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -1488,12 +1488,10 @@ EOD;
         }
 
         // Blogフレーム設定画面を呼び出す。
-        return $this->view(
-            'blogs_setting_frame', [
+        return $this->view('blogs_setting_frame', [
             'blog_frame'         => $blog_frame,
             'blog_frame_setting' => $blog_frame_setting,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -1516,8 +1514,9 @@ EOD;
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            Session::flash('flash_errors', $validator->errors());
-            return $this->settingBlogFrame($request, $page_id, $frame_id);
+            // Session::flash('flash_errors', $validator->errors());
+            // return $this->settingBlogFrame($request, $page_id, $frame_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         // プラグインのフレームやBlogのID が設定されていない場合は空振りさせる。
@@ -1535,7 +1534,8 @@ EOD;
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
 
-        return $this->settingBlogFrame($request, $page_id, $frame_id);
+        // redirect_pathで遷移するため、ここでは何もしない
+        // return $this->settingBlogFrame($request, $page_id, $frame_id);
     }
 
     /**

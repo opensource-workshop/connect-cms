@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Blogプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -21,12 +21,15 @@
     </div>
 @else
 
+    {{-- 共通エラーメッセージ 呼び出し --}}
+    @include('common.errors_form_line')
+
     <div class="alert alert-info">
         <i class="fas fa-exclamation-circle"></i>
         フレーム毎の表示条件が設定できます。
     </div>
 
-    <form action="{{url('/')}}/plugin/blogs/saveBlogFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
+    <form action="{{url('/')}}/redirect/plugin/blogs/saveBlogFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
         {{ csrf_field() }}
 
         <div id="app_{{ $frame->id }}">
@@ -55,73 +58,71 @@
                 <label class="{{$frame->getSettingLabelClass()}}">指定年</label>
                 <div class="{{$frame->getSettingInputClass()}}">
                     <input type="text" name="scope_value" value="{{old('scope_value', $blog_frame_setting->scope_value)}}" class="form-control col-sm-3" v-model="v_scope_value">
-                    @if (Session::has('flash_errors'))
-                        <div class="text-danger">{!!Session::get('flash_errors')->first('scope_value')!!}</div>
-                    @endif
+                    @include('common.errors_inline', ['name' => 'scope_value'])
                     <small class="text-muted">※ 表示条件と指定年の組み合わせで投稿日時を参照し、ブログ一覧に表示します。</small><br>
                     <small class="text-muted">※ 表示範囲：@{{ showTargetYmd }}</small>
                 </div>
             </div>
 
-		    <div class="form-group row">
-		        <label class="{{$frame->getSettingLabelClass()}}">重要記事の扱い</label><br />
-		        <div class="{{$frame->getSettingInputClass()}}">
-		            <div class="custom-control custom-radio custom-control-inline">
-		                @if($blog_frame_setting->important_view == "")
-		                    <input type="radio" value="" id="important_view_0" name="important_view" class="custom-control-input" checked="checked">
-		                @else
-		                    <input type="radio" value="" id="important_view_0" name="important_view" class="custom-control-input">
-		                @endif
-		                <label class="custom-control-label text-nowrap" for="important_view_0">区別しない</label>
-		            </div>
-		            <div class="custom-control custom-radio custom-control-inline">
-		                @if($blog_frame_setting->important_view == "top")
-		                    <input type="radio" value="top" id="important_view_1" name="important_view" class="custom-control-input" checked="checked">
-		                @else
-		                    <input type="radio" value="top" id="important_view_1" name="important_view" class="custom-control-input">
-		                @endif
-		                <label class="custom-control-label text-nowrap" for="important_view_1">上に表示する</label>
-		            </div>
-		            <div class="custom-control custom-radio custom-control-inline">
-		                @if($blog_frame_setting->important_view == "important_only")
-		                    <input type="radio" value="important_only" id="important_view_2" name="important_view" class="custom-control-input" checked="checked">
-		                @else
-		                    <input type="radio" value="important_only" id="important_view_2" name="important_view" class="custom-control-input">
-		                @endif
-		                <label class="custom-control-label text-nowrap" for="important_view_2">重要記事のみ表示する</label>
-		            </div>
-		            <div class="custom-control custom-radio custom-control-inline">
-		                @if($blog_frame_setting->important_view == "not_important")
-		                    <input type="radio" value="not_important" id="important_view_3" name="important_view" class="custom-control-input" checked="checked">
-		                @else
-		                    <input type="radio" value="not_important" id="important_view_3" name="important_view" class="custom-control-input">
-		                @endif
-		                <label class="custom-control-label text-nowrap" for="important_view_3">重要記事を表示しない</label>
-		            </div>
-		        </div>
-		    </div>
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">重要記事の扱い</label><br />
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($blog_frame_setting->important_view == "")
+                            <input type="radio" value="" id="important_view_0" name="important_view" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="" id="important_view_0" name="important_view" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="important_view_0">区別しない</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($blog_frame_setting->important_view == "top")
+                            <input type="radio" value="top" id="important_view_1" name="important_view" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="top" id="important_view_1" name="important_view" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="important_view_1">上に表示する</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($blog_frame_setting->important_view == "important_only")
+                            <input type="radio" value="important_only" id="important_view_2" name="important_view" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="important_only" id="important_view_2" name="important_view" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="important_view_2">重要記事のみ表示する</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if($blog_frame_setting->important_view == "not_important")
+                            <input type="radio" value="not_important" id="important_view_3" name="important_view" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="not_important" id="important_view_3" name="important_view" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="important_view_3">重要記事を表示しない</label>
+                    </div>
+                </div>
+            </div>
 
             <div class="form-group row">
-		        <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_created_name')}}</label>
-		        <div class="{{$frame->getSettingInputClass(true)}}">
-		            <div class="custom-control custom-radio custom-control-inline">
-		                @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === '' ||
+                <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_created_name')}}</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === '' ||
                             FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::none)
-		                    <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input" checked="checked">
-		                @else
-		                    <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
-		                @endif
-		                <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_0">{{BlogDisplayCreatedName::getDescription('none')}}</label>
-		            </div>
-		            <div class="custom-control custom-radio custom-control-inline">
-		                @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
-		                    <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input" checked="checked">
-		                @else
-		                   <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
-		                @endif
-		                <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_1">{{BlogDisplayCreatedName::getDescription('display')}}</label>
-		            </div>
-		        </div>
+                            <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_0">{{BlogDisplayCreatedName::getDescription('none')}}</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+                            <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_1">{{BlogDisplayCreatedName::getDescription('display')}}</label>
+                    </div>
+                </div>
             </div>
 
             {{-- Submitボタン --}}
