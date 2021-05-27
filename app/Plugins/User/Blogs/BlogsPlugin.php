@@ -1219,7 +1219,7 @@ WHERE status = 0
             'general_categories' => $general_categories,
             'plugin_categories' => $plugin_categories,
             'blog_frame' => $blog_frame,
-        ])->withInput($request->all);
+        ]);
     }
 
     /**
