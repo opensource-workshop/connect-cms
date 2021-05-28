@@ -12,15 +12,15 @@
 
 @if (isset($buckets) && isset($frame) && $frame->bucket_id)
     <div class="row">
-        <p class="text-left col-6">
+        <p class="text-left col-4">
             @if (isset($blog_frame->rss) && $blog_frame->rss == 1)
-            <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
+                <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
             @endif
         </p>
 
         {{-- 新規登録 --}}
         @can('posts.create',[[null, $frame->plugin_name, $buckets]])
-            <p class="text-right col-6">
+            <p class="text-right col">
                 {{-- 新規登録ボタン --}}
                 <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
