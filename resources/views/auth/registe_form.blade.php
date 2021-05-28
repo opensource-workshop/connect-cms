@@ -10,7 +10,15 @@ use App\Models\Core\UsersColumns;
     </div>
 @endif
 
-@if (isset($function) && $function == 'edit')
+@php
+    $is_function_edit = false;
+    if (isset($function) && $function == 'edit') {
+        // ユーザ変更
+        $is_function_edit = true;
+    }
+@endphp
+
+@if ($is_function_edit)
     <form class="form-horizontal" method="POST" action="{{url('/manage/user/update/')}}/{{$id}}">
 @else
     <form class="form-horizontal" method="POST" action="{{route('register')}}">
@@ -24,9 +32,9 @@ use App\Models\Core\UsersColumns;
                 @foreach (UserStatus::getMembers() as $enum_value => $enum_label)
                     <div class="custom-control custom-radio custom-control-inline">
                         @if (old('status', $user->status) == $enum_value)
-                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" checked="checked" {{$user->getStstusTemporaryDisabled($enum_value)}}>
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" checked="checked" {{$user->getStstusDisabled($enum_value, $is_function_edit)}}>
                         @else
-                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" {{$user->getStstusTemporaryDisabled($enum_value)}}>
+                            <input type="radio" value="{{$enum_value}}" id="status_{{$enum_value}}" name="status" class="custom-control-input" {{$user->getStstusDisabled($enum_value, $is_function_edit)}}>
                         @endif
                         <label class="custom-control-label" for="status_{{$enum_value}}">{{$enum_label}}</label>
                     </div>
@@ -96,14 +104,14 @@ use App\Models\Core\UsersColumns;
     @endif
 
     <div class="form-group row">
-        @if (isset($function) && $function == 'edit')
+        @if ($is_function_edit)
             <label for="password" class="col-md-4 col-form-label text-md-right">パスワード</label>
         @else
             <label for="password" class="col-md-4 col-form-label text-md-right">パスワード <label class="badge badge-danger">必須</label></label>
         @endif
 
         <div class="col-md-8">
-            @if (isset($function) && $function == 'edit')
+            @if ($is_function_edit)
                 <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" placeholder="{{ __('messages.input_password') }}">
             @else
                 <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" required placeholder="{{ __('messages.input_password') }}">
@@ -118,14 +126,14 @@ use App\Models\Core\UsersColumns;
     </div>
 
     <div class="form-group row">
-        @if (isset($function) && $function == 'edit')
+        @if ($is_function_edit)
             <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用パスワード</label>
         @else
             <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用パスワード <label class="badge badge-danger">必須</label></label>
         @endif
 
         <div class="col-md-8">
-            @if (isset($function) && $function == 'edit')
+            @if ($is_function_edit)
                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" placeholder="{{ __('messages.input_password_confirm') }}">
             @else
                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required placeholder="{{ __('messages.input_password_confirm') }}">
@@ -310,7 +318,7 @@ use App\Models\Core\UsersColumns;
                 <i class="fas fa-times"></i> キャンセル
             </button>
             @endif
-            @if (isset($function) && $function == 'edit')
+            @if ($is_function_edit)
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ変更</button>
             @else
                 {{-- ユーザ仮登録ON --}}
