@@ -24,9 +24,9 @@ jobs:
           url=${HTML_URL}/_compare/$(git rev-parse HEAD^)...$(git rev-parse HEAD)
           curl -X POST --data-urlencode \
             "payload={\"username\": \"GithubActiosBot\", \"text\": \"Wiki ${ACTION}: ${TITLE}ページ\n${HTML_URL}\n\ndiff\n${url}\"}" \
-            ${WIKI_WEBHOOK_URL}
+            ${WEBHOOK_URL}
         env:
           ACTION: ${{ github.event.pages[0].action }}
           TITLE: ${{ github.event.pages[0].title }}
           HTML_URL: ${{ github.event.pages[0].html_url }}
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          WEBHOOK_URL: ${{ secrets.WIKI_SLACK_WEBHOOK }}
