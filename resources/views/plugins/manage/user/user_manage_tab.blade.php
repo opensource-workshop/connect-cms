@@ -54,6 +54,14 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                    @if ($function == "bulkDelete")
+                        <span class="nav-link"><span class="active">一括削除</span></span>
+                    @else
+                        <a href="{{url('/manage/user/bulkDelete')}}" class="nav-link">一括削除</a></li>
+                    @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "edit")
                     <span class="nav-link"><span class="active">ユーザ変更</span></span>
                 @endif
