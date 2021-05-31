@@ -25,6 +25,7 @@
         <i class="fas fa-exclamation-circle"></i> 状態が「仮削除」のユーザを一括削除します。<br />
         <i class="fas fa-exclamation-circle"></i> 削除対象ユーザは、[ <a href="{{url('/manage/user')}}">ユーザ一覧</a> ] の絞り込み条件で状態「仮削除」で絞り込む事で確認できます。<br />
         <i class="fas fa-exclamation-circle"></i> ユーザを「仮削除」に一括更新したい場合は、[ <a href="{{url('/manage/user/import')}}">CSVインポート</a> ] で状態を <code>3</code> (仮削除) に更新してください。<br />
+        １人づつ変更するのであれば、ユーザ変更画面から状態を「仮削除」に変更できます。
     </div>
 
     <div class="form-group form-row">
