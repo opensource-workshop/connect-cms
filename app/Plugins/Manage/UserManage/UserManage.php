@@ -67,6 +67,8 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["downloadCsvFormat"] = array('admin_user');
         $role_ckeck_table["import"] = array('admin_site');
         $role_ckeck_table["uploadCsv"] = array('admin_user');
+        $role_ckeck_table["bulkDelete"] = array('admin_user');
+        $role_ckeck_table["bulkDestroy"] = array('admin_user');
 
         return $role_ckeck_table;
     }
@@ -746,7 +748,7 @@ class UserManage extends ManagePluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroy($request, $id = null)
     {
@@ -1808,5 +1810,38 @@ class UserManage extends ManagePluginBase
         }
 
         return $errors;
+    }
+
+    /**
+     * 一括削除画面表示
+     */
+    public function bulkDelete($request, $id = null)
+    {
+        $users = User::where('status', UserStatus::temporary_delete)->get();
+
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.user.bulk_delete', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "users" => $users,
+        ]);
+    }
+
+    /**
+     * （状態=仮削除のユーザを）一括削除処理
+     */
+    public function bulkDestroy($request, $id = null)
+    {
+        $user_ids = User::where('status', UserStatus::temporary_delete)->pluck('id');
+
+        // 権限データを削除する。
+        $users_roles_ids = UsersRoles::whereIn('users_id', $user_ids)->pluck('id');
+        UsersRoles::destroy($users_roles_ids);
+
+        // データを削除する。
+        User::destroy($user_ids);
+
+        // 削除後は一括削除画面を呼ぶ。
+        return redirect()->back()->with('flash_message', '一括削除しました。');
     }
 }
