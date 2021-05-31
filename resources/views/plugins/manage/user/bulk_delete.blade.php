@@ -40,7 +40,7 @@
         </a>
     </div>
 
-    <div id="collapse{{$id}}" class="collapse" style="margin-top: 8px;">
+    <div id="collapse{{$id}}" class="collapse">
         <div class="card border-danger">
             <div class="card-body">
                 <span class="text-danger">仮削除ユーザを一括削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
