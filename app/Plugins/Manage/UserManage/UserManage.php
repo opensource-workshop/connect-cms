@@ -768,11 +768,15 @@ class UserManage extends ManagePluginBase
 
         // id がある場合、データを削除
         if ($id) {
-            // データを削除する。
-            User::destroy($id);
-
             // 権限データを削除する。
             UsersRoles::where('users_id', $id)->delete();
+
+            // ユーザ任意追加項目データを削除する。
+            $users_input_cols_ids = UsersInputCols::where('users_id', $id)->pluck('id');
+            UsersInputCols::destroy($users_input_cols_ids);
+
+            // データを削除する。
+            User::destroy($id);
         }
         // 削除後はユーザ一覧を呼ぶ。
         return redirect('manage/user');
@@ -1837,6 +1841,10 @@ class UserManage extends ManagePluginBase
         // 権限データを削除する。
         $users_roles_ids = UsersRoles::whereIn('users_id', $user_ids)->pluck('id');
         UsersRoles::destroy($users_roles_ids);
+
+        // ユーザ任意追加項目データを削除する。
+        $users_input_cols_ids = UsersInputCols::whereIn('users_id', $user_ids)->pluck('id');
+        UsersInputCols::destroy($users_input_cols_ids);
 
         // データを削除する。
         User::destroy($user_ids);
