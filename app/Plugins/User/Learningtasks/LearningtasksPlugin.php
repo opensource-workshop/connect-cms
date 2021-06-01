@@ -1859,7 +1859,7 @@ class LearningtasksPlugin extends UserPluginBase
             $categories_ids = Categories::whereIn('id', $learningtasks_categories_categories_ids)->where('target', 'learningtasks')->pluck('id');
             Categories::destroy($categories_ids);
 
-            // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ
+            // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ https://github.com/opensource-workshop/connect-cms/issues/790
             // 課題管理カテゴリ削除
             LearningtasksCategories::destroy($learningtasks_categories_ids);
 
