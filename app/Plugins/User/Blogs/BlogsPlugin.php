@@ -1143,8 +1143,7 @@ WHERE status = 0
             // change: フレームのbucket_idと削除するblogのbucket_idが同じなら、FrameのバケツIDの更新する
             if ($frame->bucket_id == $blogs->bucket_id) {
                 // FrameのバケツIDの更新
-                // Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
-                $frame->update(['bucket_id' => null]);
+                Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
             }
 
             // blogs_frames. バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら削除する
