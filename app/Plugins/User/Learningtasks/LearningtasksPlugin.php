@@ -1851,6 +1851,18 @@ class LearningtasksPlugin extends UserPluginBase
             $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
             LearningtasksPosts::destroy($learningtasks_posts_ids);
 
+            $learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $learningtask_id);
+            $learningtasks_categories_categories_ids = $learningtasks_categories->pluck('categories_id');
+            $learningtasks_categories_ids = $learningtasks_categories->pluck('id');
+
+            // カテゴリ削除. カテゴリは課題管理毎に別々に存在してるため、削除する
+            $categories_ids = Categories::whereIn('id', $learningtasks_categories_categories_ids)->where('target', 'learningtasks')->pluck('id');
+            Categories::destroy($categories_ids);
+
+            // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ
+            // 課題管理カテゴリ削除
+            LearningtasksCategories::destroy($learningtasks_categories_ids);
+
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
 
