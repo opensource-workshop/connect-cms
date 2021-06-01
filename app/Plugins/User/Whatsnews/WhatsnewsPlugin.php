@@ -54,7 +54,9 @@ class WhatsnewsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
+        $functions['get']  = [
+            'indexJson'
+        ];
         $functions['post'] = [];
         return $functions;
     }
@@ -296,7 +298,61 @@ class WhatsnewsPlugin extends UserPluginBase
         return $whatsnews_sql;
     }
 
+    /**
+     *  新着一覧をJSON形式で返す
+     */
+    public function indexJson($request, $page_id, $frame_id)
+    {
+        // フレームから新着の設定取得
+        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
+        // 新着情報がまだできていない場合
+        if (!$whatsnews_frame || empty($whatsnews_frame->whatsnews_id)) {
+            return "error";
+        }
 
+        $target_plugins = explode(',', $whatsnews_frame->target_plugins);
+
+        // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
+        $union_sqls = array();
+        $link_pattern = array();
+        $link_base = array();
+        /**
+         * ターゲットプラグインをループして下記を取得 ※一部の情報はここでは未使用
+         *  - unionする各プラグインの抽出SQL
+         *  - リンクのURL ※未使用
+         *  - ベースのURL ※未使用
+         */
+        foreach ($target_plugins as $target_plugin) {
+            // クラスファイルの存在チェック。
+            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
+
+            // ファイルの存在確認
+            if (!file_exists($file_path)) {
+                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+            }
+
+            // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
+            $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
+
+            list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
+        }
+
+        // クエリ取得
+        $whatsnews_query = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls);
+
+        // limit/offset条件を付加
+        if($request->limit){
+            $whatsnews_query->limit($request->limit);
+        }
+        if($request->offset){
+            $whatsnews_query->offset($request->offset);
+        }
+        // データ抽出
+        $whatsnewses = $whatsnews_query->get();
+
+        // 整形して返却
+        return json_encode(json_decode($whatsnewses), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
 
     /* 画面アクション関数 */
 
