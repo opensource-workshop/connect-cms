@@ -61,8 +61,13 @@
                     <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) checked @endif>
                 </td>
                 <td><span class="{{$frame->getSettingCaptionClass()}}">課題管理名：</span>{{$learningtask->learningtasks_name}}</td>
-                <td nowrap>
+                <td>
                     <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
+
+                    <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">
+                        <i class="far fa-edit"></i> 設定変更
+                    </a>
+
                     <div class="btn-group mr-1">
                         <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$learningtask->id}});">
                             <i class="fas fa-file-download"></i> ダウンロード

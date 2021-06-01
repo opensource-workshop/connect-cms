@@ -1725,7 +1725,6 @@ class LearningtasksPlugin extends UserPluginBase
             //'base_settings' => $base_settings,
             'tool'          => $tool,
             'create_flag'   => $create_flag,
-            //'errors'        => $errors,
         ]);
     }
 
@@ -1845,10 +1844,12 @@ class LearningtasksPlugin extends UserPluginBase
         // learningtasks_id がある場合、データを削除
         if ($learningtask_id) {
             // 記事データを削除する。
-            LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
-
-            // 課題管理設定を削除する。
-            Learningtasks::destroy($learningtask_id);
+            // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+            // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
+            //
+            // LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
+            $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
+            LearningtasksPosts::destroy($learningtasks_posts_ids);
 
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
@@ -1856,11 +1857,21 @@ class LearningtasksPlugin extends UserPluginBase
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();
 
-            // FrameのバケツIDの更新
-            Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したLearningtasksのbucket_idで消す
+            $learningtasks = Learningtasks::find($learningtask_id);
+
+            // change: フレームのbucket_idと削除するLearningtasksのbucket_idが同じなら、FrameのバケツIDの更新する
+            if ($frame->bucket_id == $learningtasks->bucket_id) {
+                // FrameのバケツIDの更新
+                $frame->update(['bucket_id' => null]);
+            }
 
             // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // Buckets::where('id', $frame->bucket_id)->delete();
+            Buckets::where('id', $learningtasks->bucket_id)->delete();
+
+            // 課題管理設定を削除する。
+            Learningtasks::destroy($learningtask_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
