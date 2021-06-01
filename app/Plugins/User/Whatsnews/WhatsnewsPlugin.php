@@ -40,6 +40,11 @@ class WhatsnewsPlugin extends UserPluginBase
     public $whatsnews_results = null;
 
     /**
+     *  新着の総件数
+     */
+    public $whatsnews_total_count = 0;
+
+    /**
      *  新着のフレーム情報
      */
     public $whatsnews_frame = null;
@@ -226,6 +231,9 @@ class WhatsnewsPlugin extends UserPluginBase
             $whatsnews = $whatsnews->where('important', null);
         }
 
+        // 新着の「もっと見る」処理判定用に総件数を保持
+        $this->whatsnews_total_count = $whatsnews->count();
+
         // 件数制限
         if ($method == 'rss') {
             // 「RSS件数」で制限
@@ -375,6 +383,7 @@ class WhatsnewsPlugin extends UserPluginBase
             'whatsnews', [
             'whatsnews'       => $whatsnews,
             'whatsnews_frame' => $whatsnews_frame,
+            'whatsnews_total_count' => $this->whatsnews_total_count,
             'link_pattern'    => $link_pattern,
             'link_base'       => $link_base,
             ]
