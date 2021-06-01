@@ -32,16 +32,16 @@
 </script>
     {{-- 時間 --}}
     <div class="input-group date" id="{{ $form_obj->id }}" data-target-input="nearest">
-        <input 
-            type="text" 
-            name="forms_columns_value[{{ $form_obj->id }}]" 
+        <input
+            type="text"
+            name="forms_columns_value[{{ $form_obj->id }}]"
             value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_obj->id, $request->forms_columns_value[$form_obj->id])}}@endif"
-            class="form-control datetimepicker-input" 
+            class="form-control datetimepicker-input"
             data-target="#{{ $form_obj->id }}"
             id="{{$label_id}}"
         >
         <div class="input-group-append" data-target="#{{ $form_obj->id }}" data-toggle="datetimepicker">
-            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+            <div class="input-group-text"><i class="far fa-clock"></i></div>
         </div>
     </div>
 @if ($errors && $errors->has("forms_columns_value.$form_obj->id"))

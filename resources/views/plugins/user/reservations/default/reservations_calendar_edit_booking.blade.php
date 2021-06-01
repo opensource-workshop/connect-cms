@@ -111,7 +111,7 @@
                     --}}
                     <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime">
                     <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
                 {{-- 予約終了時間 --}}
@@ -123,9 +123,8 @@
                     --}}
                     <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime">
                     <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
-                    
                 </div>
             </div>
             <div class="row">
@@ -147,10 +146,10 @@
             @foreach ($columns as $column)
                 <div class="form-group row">
                     {{-- 項目名称 --}}
-                    <label class="col-sm-2 control-label">{{$column->column_name}} 
+                    <label class="col-sm-2 control-label">{{$column->column_name}}
                         @if ($column->required)
                             {{-- 必須マーク --}}
-                            <label class="badge badge-danger">必須</label> 
+                            <label class="badge badge-danger">必須</label>
                         @endif
                     </label>
                     {{-- 項目本体 --}}
@@ -168,7 +167,7 @@
 
                             {{-- ラジオボタン項目 --}}
                             @case(ReservationColumnType::radio)
-                                
+
                                 {{-- 項目に紐づく選択肢データを抽出 --}}
                                 @php
                                     $filtered_selects = $selects->filter(function($select) use($column) {
@@ -188,7 +187,7 @@
                                 @break
 
                             @default
-                                
+
                         @endswitch
                     </div>
                 </div>
