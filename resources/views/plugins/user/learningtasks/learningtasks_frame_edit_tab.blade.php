@@ -43,11 +43,11 @@
 @endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
-        <span class="nav-link"><span class="active">課題管理選択</span></span>
+        <span class="nav-link"><span class="active">表示課題管理選択</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">課題管理選択</a>
+        <a href="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示課題管理選択</a>
     </li>
 @endif
 {{-- delete: 編集者やモデレータで科目を登録・編集は使われていないため一旦削除。もしモデレータによる登録・編集が必要になったら復活させる。
