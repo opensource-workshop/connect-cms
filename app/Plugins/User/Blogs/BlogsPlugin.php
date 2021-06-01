@@ -1140,12 +1140,9 @@ WHERE status = 0
             // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したblogのbucket_idで消す
             $blogs = Blogs::find($blogs_id);
 
-            // change: フレームのbucket_idと削除するblogのbucket_idが同じなら、FrameのバケツIDの更新する
-            if ($frame->bucket_id == $blogs->bucket_id) {
-                // FrameのバケツIDの更新
-                // Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
-                $frame->update(['bucket_id' => null]);
-            }
+            // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$blogs->bucket_idで消えるため問題なし）
+            // Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            Frame::where('bucket_id', $blogs->bucket_id)->update(['bucket_id' => null]);
 
             // blogs_frames. バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら削除する
 
