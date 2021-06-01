@@ -201,123 +201,7 @@ class WhatsnewsPlugin extends UserPluginBase
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }
 
-        // blog
-/*
-        $blogs = DB::table('blogs_posts')
-                 ->select('frames.page_id              as page_id',
-                          'frames.id                   as frame_id',
-                          'blogs_posts.id              as post_id',
-                          'blogs_posts.post_title      as post_title',
-                          'blogs_posts.posted_at       as posted_at',
-                          'categories.classname        as classname',
-                          'categories.category         as category',
-                          DB::raw("'blogs' as plugin_name")
-                         )
-                 ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
-                 ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
-                 ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
-                 ->where('status', 0)
-                 ->whereNull('deleted_at');
-*/
-        // union
-/*
-        $whatsnews = DB::table('whatsnews_dual')
-                 ->select('page_id',
-                          'frame_id',
-                          'post_id',
-                          'post_title',
-                          'posted_at',
-                          'categories.classname        as classname',
-                          'categories.category         as category',
-                          DB::raw("null as plugin_name")
-                         )
-                 ->leftJoin('categories', 'categories.id', '=', 'whatsnews_dual.categories_id')
-                 ->unionAll($blogs)
-                 ->orderBy('posted_at', 'desc')
-                 ->limit(5)
-                 ->get(5);
-*/
-        // ベースの新着DUAL（ダミーテーブル）
-        $whatsnews_sql = DB::table('whatsnews_dual')
-                 ->select(
-                     'page_id',
-                     'frame_id',
-                     'post_id',
-                     'post_title',
-                     DB::raw("null as important"),
-                     'posted_at',
-                     DB::raw("null as posted_name"),
-                     'categories.classname        as classname',
-                     'categories.category         as category',
-                     DB::raw("null as plugin_name")
-                 )
-                 ->leftJoin('categories', 'categories.id', '=', 'whatsnews_dual.categories_id');
-
-        // 何日前の指定がある場合は、各プラグインのSQL で日付で絞る
-        $where_date = null;
-        if ($whatsnews_frame->view_pattern == 1) {
-            $where_date = date("Y-m-d", strtotime("-" . $whatsnews_frame->days ." day"));
-        }
-
-        // 各プラグインのSQL に追加条件を加えてUNION
-        foreach ($union_sqls as $union_sql) {
-            if ($where_date) {
-                $union_sql->where('posted_at', '>=', $where_date);
-            }
-
-            // move: (importantカラムはプラグインによって存在しないため、結果取得後、コレクションクラスにより絞り込む)
-            // // カラムあるか
-            // if (Schema::hasColumn($post_db_table_names[$target_plugin], 'important')) {
-            //     // 重要なもののみ
-            //     if ($whatsnews_frame->important == 'important_only') {
-            //         $union_sql->where('important', 1);
-            //     }
-            //     // 重要なものを除外
-            //     if ($whatsnews_frame->important == 'not_important') {
-            //         $union_sql->whereNull('important');
-            //     }
-            // }
-
-            // フレームの選択が行われる場合
-            if ($whatsnews_frame->frame_select == 1) {
-                $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
-            }
-
-            $whatsnews_sql->unionAll($union_sql);
-        }
-
-/*
-        foreach($union_sqls as $union_sql) {
-            if ($where_date) {
-                $whatsnews_sql->unionAll($union_sql->where('posted_at', '>=', $where_date));
-            }
-            else {
-                $whatsnews_sql->unionAll($union_sql);
-            }
-        }
-*/
-        // UNION 後をソート
-        if ($whatsnews_frame->important == 'top') {
-            $whatsnews_sql->orderBy('important', 'desc');
-        }
-        $whatsnews_sql->orderBy('posted_at', 'desc');
-
-        // move: importantカラムの制御を取得後に移動したため、例えばSQLで3件で件数制限すると、まず3件で取得し、その後で重要な記事が含まれて無いと0件表示になる
-        //       そのため、取得後に移動する。
-        // // 件数制限
-        // if ($method == 'rss') {
-        //     // 「RSS件数」で制限
-        //     // $whatsnews_sql->limit($whatsnews_frame->rss_count);
-        // } elseif ($whatsnews_frame->view_pattern == 0) {
-        //     // 「表示件数」で制限
-        //     // $whatsnews_sql->limit($whatsnews_frame->count);
-        // } else {
-        //     // 「表示日数」で制限
-        //     $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
-        // }
-
-        // 取得
-        $whatsnews = $whatsnews_sql->get();
+        $whatsnews = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)->get();
         // Log::debug(DB::getQueryLog());
         // Log::debug($whatsnews);
 
@@ -360,6 +244,58 @@ class WhatsnewsPlugin extends UserPluginBase
 
         return $this->whatsnews_results;
     }
+
+    private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
+    {
+
+        // ベースの新着DUAL（ダミーテーブル）
+        $whatsnews_sql = DB::table('whatsnews_dual')
+            ->select(
+                'page_id',
+                'frame_id',
+                'post_id',
+                'post_title',
+                DB::raw("null as important"),
+                'posted_at',
+                DB::raw("null as posted_name"),
+                'categories.classname        as classname',
+                'categories.category         as category',
+                DB::raw("null as plugin_name")
+            )
+            ->leftJoin('categories', 'categories.id', '=', 'whatsnews_dual.categories_id');
+
+        // 新着の取得方式が「日数で表示する」の場合用の条件日付を生成
+        $where_date = null;
+        if ($whatsnews_frame->view_pattern == 1) {
+            $where_date = date("Y-m-d", strtotime("-" . $whatsnews_frame->days ." day"));
+        }
+
+        // 各プラグインのSQLにwhere条件を付加してUNION
+        foreach ($union_sqls as $union_sql) {
+            // （where条件）日付
+            if ($where_date) {
+                $union_sql->where('posted_at', '>=', $where_date);
+            }
+
+            // （where条件）フレーム選択
+            if ($whatsnews_frame->frame_select == 1) {
+                $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
+            }
+
+            // UNION
+            $whatsnews_sql->unionAll($union_sql);
+        }
+
+        if ($whatsnews_frame->important == 'top') {
+            // （orderBy条件）重要記事の扱い
+            $whatsnews_sql->orderBy('important', 'desc');
+        }
+        // （orderBy条件）デフォルトは登録日時の降順
+        $whatsnews_sql->orderBy('posted_at', 'desc');
+
+        return $whatsnews_sql;
+    }
+
 
 
     /* 画面アクション関数 */
