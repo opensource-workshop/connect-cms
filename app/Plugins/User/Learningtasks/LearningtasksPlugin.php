@@ -1872,11 +1872,9 @@ class LearningtasksPlugin extends UserPluginBase
             // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したLearningtasksのbucket_idで消す
             $learningtasks = Learningtasks::find($learningtask_id);
 
-            // change: フレームのbucket_idと削除するLearningtasksのbucket_idが同じなら、FrameのバケツIDの更新する
-            if ($frame->bucket_id == $learningtasks->bucket_id) {
-                // FrameのバケツIDの更新
-                $frame->update(['bucket_id' => null]);
-            }
+            // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$learningtasks->bucket_idで消えるため問題なし）
+            // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            Frame::where('bucket_id', $learningtasks->bucket_id)->update(['bucket_id' => null]);
 
             // backetsの削除
             // Buckets::where('id', $frame->bucket_id)->delete();
