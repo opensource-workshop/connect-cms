@@ -302,7 +302,7 @@ class DatabasesPlugin extends UserPluginBase
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      */
-    public function index($request, $page_id, $frame_id, $errors = null)
+    public function index($request, $page_id, $frame_id)
     {
         // delete: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
         //   (b)で登録処理が動いても, 同ページの(a)データベースのindex()が動き、この $request->flash() でセッション消すのが原因。
@@ -759,12 +759,10 @@ class DatabasesPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('databases', [
-            // 'request'  => $request,
-            // 'frame_id' => $frame_id,
             // 'database' => $database,
             // 'databases_columns' => $databases_columns,
             // 'databases_columns_id_select' => $databases_columns_id_select,
-            'errors' => $errors,
+            // 'errors' => $errors,
             'setting_error_messages' => $setting_error_messages,
 
             // 'databases'        => $databases,
