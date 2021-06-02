@@ -15,6 +15,7 @@
     @endif
 </p>
 
+<div id="app_{{ $frame->id }}">
 <div>
     <dl>
     @foreach($whatsnews as $whatsnew)
@@ -46,6 +47,25 @@
         </dd>
         @endif
     @endforeach
+    {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング ※templateタグはタグとして出力されないタグです。 --}}
+    <template v-for="whatsnews in whatsnewses">
+        {{-- 登録日時、カテゴリ --}}
+        <dt v-if="view_posted_at == 1">
+            @{{ moment(whatsnews.posted_at).format('YYYY/MM/DD') }}
+            <span v-if="whatsnews.category != null && whatsnews.category != ''" :class="'badge cc_category_' + whatsnews.classname">@{{ whatsnews.category }}</span>
+        </dt>
+        {{-- タイトル＋リンク --}}
+        <dd v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'">
+            <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id">
+                <template v-if="whatsnews.post_title == null || whatsnews.post_title == ''">（無題）</template>
+                <template v-else>@{{ whatsnews.post_title }}</template>
+            </a>
+        </dd>
+        {{-- 投稿者 --}}
+        <dd v-if="view_posted_name == 1">
+            @{{ whatsnews.posted_name }}
+        </dd>
+    </template>
     </dl>
     {{-- ページング処理 --}}
     {{-- @if ($whatsnews_frame->page_method == 1)
@@ -53,6 +73,53 @@
             {{ $whatsnews->links() }}
         </div>
     @endif --}}
+        {{-- もっと見るボタン ※取得件数が総件数以下で表示 --}}
+        <div v-if="whatsnews_total_count >= offset" class="text-center">
+            <button class="btn btn-outline-dark rounded-pill" v-on:click="searchWhatsnewses">
+                もっと見る
+            </button>
+        </div>
+        {{-- debug用 --}}
+        {{-- limit<input type="text" name="limit" value="" v-model="limit"> --}}
+        {{-- offset<input type="text" name="offset" value="" v-model="offset"> --}}
 </div>
+
+<script>
+    const app_{{ $frame->id }} = new Vue({
+        el: "#app_{{ $frame->id }}",
+        data: {
+            url: '{{ url('/') }}',
+            link_pattern: @json($link_pattern),
+            link_base: @json($link_base),
+            whatsnewses: [],
+            whatsnews_total_count: {{ $whatsnews_total_count }}, // 総件数
+            view_posted_at: {{ $whatsnews_frame->view_posted_at }},
+            view_posted_name: {{ $whatsnews_frame->view_posted_name }},
+            limit: 5, // 何件ずつ取得するか ※リリース版は5にする
+            offset: {{ $whatsnews->count() }} // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
+        },
+        methods: {
+            searchWhatsnewses: function () {
+                // 非同期通信で追加の一覧を取得
+                axios.get("{{url('/')}}/json/whatsnews/indexJson/{{$page->id}}/{{$frame_id}}/?limit=" + this.limit + "&offset=" + this.offset)
+                    .then((res)=>{
+                        // foreach内ではthisでvueインスタンスのwhatsnewsesが参照できない為、tmp_arrに一時的に代入
+                        tmp_arr = this.whatsnewses;
+                        res.data.forEach(function(obj) {
+                            // 取得した差分をループしてtmp_arrに格納
+                            tmp_arr.push(obj);
+                        });
+                        // vueインスタンスのwhatsnewsesに代入
+                        this.whatsnewses = tmp_arr;
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                    });
+                // offset値をカウントアップ
+                this.offset += this.limit;
+            }
+        },
+    });
+</script>
 @endif
 @endsection
