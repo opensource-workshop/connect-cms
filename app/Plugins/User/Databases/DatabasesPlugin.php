@@ -304,8 +304,10 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
+        // delete: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
+        //   (b)で登録処理が動いても, 同ページの(a)データベースのindex()が動き、この $request->flash() でセッション消すのが原因。
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
         $frame_page = "frame_{$frame_id}_page";
@@ -777,7 +779,9 @@ class DatabasesPlugin extends UserPluginBase
             'input_cols'       => $input_cols,
             'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
             'default_hide_list' => $default_hide_list,
-        ])->withInput($request->all);
+        // change: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
+        // ])->withInput($request->all);
+        ]);
     }
 
     /**
