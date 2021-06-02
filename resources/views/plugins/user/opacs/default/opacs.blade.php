@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Opac・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -26,7 +26,7 @@
         <div class="row">
             <div class="col-sm-8">
                 <div class="input-group date">
-                    <input type="text" name="keyword" value="{{Session::get('search_keyword')}}" class="form-control" placeholder="キーワード検索">
+                    <input type="text" name="keyword" value="{{Session::get('search_keyword.'.$frame_id)}}" class="form-control" placeholder="キーワード検索">
                     <span class="input-group-btn">
                         <button type="submit" class="btn btn-primary"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
                     </span>
