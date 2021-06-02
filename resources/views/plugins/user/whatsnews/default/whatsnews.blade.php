@@ -1,7 +1,7 @@
 {{--
  * 新着情報表示画面
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
@@ -18,7 +18,7 @@
 <div>
     <dl>
     @foreach($whatsnews as $whatsnew)
-        {{-- view_posted_at: 登録日時の表示 --}}
+        {{-- 登録日時、カテゴリ --}}
         @if ($whatsnews_frame->view_posted_at)
         <dt>
             {{(new Carbon($whatsnew->posted_at))->format('Y/m/d')}}
@@ -27,6 +27,7 @@
             @endif
         </dt>
         @endif
+        {{-- タイトル＋リンク --}}
         <dd>
             @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
             <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}#frame-{{$whatsnew->frame_id}}">
@@ -38,6 +39,7 @@
             </a>
             @endif
         </dd>
+        {{-- 投稿者 --}}
         @if ($whatsnews_frame->view_posted_name)
         <dd>
             {{$whatsnew->posted_name}}
