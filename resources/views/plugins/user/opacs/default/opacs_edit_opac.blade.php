@@ -262,9 +262,9 @@
     </div>
 </form>
 
-<div id="collapse{{$opac_frame->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="panel panel-danger">
-        <div class="panel-body">
+<div id="collapse{{$opac_frame->id}}" class="collapse">
+    <div class="card border-danger">
+        <div class="card-body">
             <span class="text-danger">OPACを削除します。<br>このOPACに登録した書誌情報も削除され、元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
