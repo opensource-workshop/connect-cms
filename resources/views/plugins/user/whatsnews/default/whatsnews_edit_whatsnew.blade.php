@@ -64,9 +64,11 @@
         </div>
     </div>
 
+    <h5><span class="badge badge-secondary">新着の取得方式・表示件数</span></h5>
+
     {{-- 新着の取得方式 --}}
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">新着の取得方式</label>
+        <label class="{{$frame->getSettingLabelClass()}}">取得方式</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if($whatsnew->view_pattern == 0)
@@ -105,6 +107,8 @@
         </div>
     </div>
 
+    <h5><span class="badge badge-secondary">RSS</span></h5>
+
     {{-- RSS --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">RSS</label>
@@ -135,6 +139,8 @@
             @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
         </div>
     </div>
+
+    <h5><span class="badge badge-secondary">その他情報の表示</span></h5>
 
     {{-- 登録者の表示 --}}
     <div class="form-group row">
@@ -180,6 +186,8 @@
         </div>
     </div>
 
+    <h5><span class="badge badge-secondary">重要記事の扱い</span></h5>
+
     {{-- 重要記事の扱い --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} @if(!$frame->isExpandNarrow()) pt-sm-0 @endif">重要記事の扱い</label><br />
@@ -218,6 +226,8 @@
             </div>
         </div>
     </div>
+
+    <h5><span class="badge badge-secondary">表示対象プラグイン・フレーム</span></h5>
 
     {{-- 対象プラグイン --}}
     <div class="form-group row">
