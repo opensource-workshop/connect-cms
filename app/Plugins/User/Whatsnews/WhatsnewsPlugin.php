@@ -474,6 +474,12 @@ class WhatsnewsPlugin extends UserPluginBase
             'count'             => ['nullable', 'numeric'],
             'days'              => ['nullable', 'numeric'],
             'rss_count'         => ['nullable', 'numeric'],
+            'read_more_use_flag' => ['required', 'numeric'],
+            'read_more_name' => ['required'],
+            'read_more_fetch_count' => ['required', 'numeric'],
+            'read_more_btn_color_type' => ['required'],
+            'read_more_btn_type' => ['required'],
+            'read_more_btn_transparent_flag' => ['required', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'whatsnew_name'     => '新着情報設定名称',
@@ -481,6 +487,12 @@ class WhatsnewsPlugin extends UserPluginBase
             'count'             => '表示件数',
             'days'              => '表示日数',
             'rss_count'         => '対象RSS件数',
+            'read_more_use_flag' => 'もっと見るボタンの表示',
+            'read_more_name' => 'ボタン名',
+            'read_more_fetch_count' => 'ボタン押下時の取得件数／回',
+            'read_more_btn_color_type' => 'もっと見るボタン色',
+            'read_more_btn_type' => 'もっと見るボタンの形',
+            'read_more_btn_transparent_flag' => 'ボタン透過の使用',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -545,6 +557,12 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->view_posted_name  = $request->view_posted_name;
         $whatsnews->view_posted_at    = $request->view_posted_at;
         $whatsnews->important         = $request->important;
+        $whatsnews->read_more_use_flag = $request->read_more_use_flag;
+        $whatsnews->read_more_name = $request->read_more_name;
+        $whatsnews->read_more_fetch_count = $request->read_more_fetch_count;
+        $whatsnews->read_more_btn_color_type = $request->read_more_btn_color_type;
+        $whatsnews->read_more_btn_type = $request->read_more_btn_type;
+        $whatsnews->read_more_btn_transparent_flag = $request->read_more_btn_transparent_flag;
         $whatsnews->target_plugins    = implode(',', $request->target_plugin);
         $whatsnews->frame_select      = intval($request->frame_select);
 //Log::debug($request->target_frame_ids);

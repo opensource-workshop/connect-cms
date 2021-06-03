@@ -227,6 +227,98 @@
         </div>
     </div>
 
+    <h5><span class="badge badge-secondary">もっと見る機能</span></h5>
+
+    {{-- もっと見るボタンの表示 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">ボタンの表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            @foreach (ShowType::enum as $key => $value)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input 
+                        type="radio" 
+                        value="{{ $key }}" 
+                        id="{{ "read_more_use_flag_${key}" }}"
+                        name="read_more_use_flag" 
+                        class="custom-control-input" 
+                        {{ $whatsnew->read_more_use_flag == $key ? 'checked' : '' }}
+                    >
+                    <label class="custom-control-label" for="{{ "read_more_use_flag_${key}" }}">
+                        {{ $value }}
+                    </label>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    
+    {{-- もっと見る取得件数／回 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ボタン押下時の<br>取得件数／回</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="read_more_fetch_count" value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}" class="form-control col-sm-3">
+            @if ($errors && $errors->has('read_more_fetch_count')) <div class="text-danger">{{$errors->first('read_more_fetch_count')}}</div> @endif
+        </div>
+    </div>
+
+    {{-- もっと見るボタン名 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ボタン名</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="read_more_name" value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}" class="form-control">
+            @if ($errors && $errors->has('read_more_name')) <div class="text-danger">{{$errors->first('read_more_name')}}</div> @endif
+        </div>
+    </div>
+
+    {{-- もっと見るボタン色 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ボタン色</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <select class="form-control" name="read_more_btn_color_type">
+                @foreach (Bs4Color::getMembers() as $key=>$value)
+                    <option value="{{$key}}" class="{{ 'text-' . $key }}" @if($key == old('read_more_btn_color_type', $whatsnew->read_more_btn_color_type)) selected @endif>
+                        {{ $value }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    {{-- もっと見るボタンの形 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">ボタンの形</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <select class="form-control" name="read_more_btn_type">
+                @foreach (RadiusType::getMembers() as $key=>$value)
+                    <option value="{{$key}}" @if($key == old('read_more_btn_type', $whatsnew->read_more_btn_type)) selected @endif>
+                        {{ $value }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    {{-- もっと見るボタン透過設定 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">ボタン透過の使用</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            @foreach (UseType::enum as $key => $value)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input 
+                        type="radio" 
+                        value="{{ $key }}" 
+                        id="{{ "read_more_btn_transparent_flag_${key}" }}"
+                        name="read_more_btn_transparent_flag" 
+                        class="custom-control-input" 
+                        {{ $whatsnew->read_more_btn_transparent_flag == $key ? 'checked' : '' }}
+                    >
+                    <label class="custom-control-label" for="{{ "read_more_btn_transparent_flag_${key}" }}">
+                        {{ $value }}
+                    </label>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    
     <h5><span class="badge badge-secondary">表示対象プラグイン・フレーム</span></h5>
 
     {{-- 対象プラグイン --}}
