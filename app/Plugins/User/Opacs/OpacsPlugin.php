@@ -163,11 +163,11 @@ class OpacsPlugin extends UserPluginBase
 
     /* 画面アクション関数 */
 
-   /**
-    * lent_flag        = 9:貸出終了(貸し出し可能)、1:貸し出し中、2:貸し出しリクエスト受付中
-    * scheduled_return = 返却予定日(日付)
-    * lent_at          = 貸し出し日時(日時)
-    */
+    /**
+     * lent_flag        = 9:貸出終了(貸し出し可能)、1:貸し出し中、2:貸し出しリクエスト受付中
+     * scheduled_return = 返却予定日(日付)
+     * lent_at          = 貸し出し日時(日時)
+     */
 
     /**
      *  書誌データ取得関数
@@ -269,7 +269,9 @@ class OpacsPlugin extends UserPluginBase
     {
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
-        if (empty($opac_frame)) {
+        // bugfix: フレームはあっても、既に削除したOpac（$opac_frame->bucket_id = null）は表示しない
+        // if (empty($opac_frame)) {
+        if (empty($opac_frame) || empty($opac_frame->bucket_id)) {
             return;
         }
 
@@ -355,7 +357,9 @@ class OpacsPlugin extends UserPluginBase
     {
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
-        if (empty($opac_frame)) {
+        // bugfix: フレームはあっても、既に削除したOpac（$opac_frame->bucket_id = null）は表示しない
+        // if (empty($opac_frame)) {
+        if (empty($opac_frame) || empty($opac_frame->bucket_id)) {
             return;
         }
 
