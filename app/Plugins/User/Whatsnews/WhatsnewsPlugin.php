@@ -118,6 +118,12 @@ class WhatsnewsPlugin extends UserPluginBase
                      'whatsnews.view_posted_name',
                      'whatsnews.view_posted_at',
                      'whatsnews.important',
+                     'whatsnews.read_more_use_flag',
+                     'whatsnews.read_more_name',
+                     'whatsnews.read_more_fetch_count',
+                     'whatsnews.read_more_btn_color_type',
+                     'whatsnews.read_more_btn_type',
+                     'whatsnews.read_more_btn_transparent_flag',
                      'whatsnews.target_plugins',
                      'whatsnews.frame_select',
                      'whatsnews.target_frame_ids'
