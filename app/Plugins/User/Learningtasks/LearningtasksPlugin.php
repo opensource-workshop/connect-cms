@@ -1761,8 +1761,19 @@ class LearningtasksPlugin extends UserPluginBase
                 'plugin_name' => 'learningtasks'
             ]);
 
-            // 課題管理データ新規オブジェクト
-            $learningtask = new Learningtasks();
+            if (empty($request->copy_learningtask_id)) {
+                // 登録
+
+                // 課題管理データ新規オブジェクト
+                $learningtask = new Learningtasks();
+            } else {
+                // コピー
+
+                // コピー元IDで、課題管理データ取得
+                $copy_learningtask = Learningtasks::find($request->copy_learningtask_id);
+                // ID消して複製
+                $learningtask = $copy_learningtask->replicate();
+            }
             $learningtask->bucket_id = $bucket_id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
@@ -1832,57 +1843,104 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
 
+        // 登録
+        if (empty($request->learningtask_id)) {
+            // コピーIDあり
+            if ($request->copy_learningtask_id) {
+                ////
+                //// [TODO] コピー内容記述
+                ////
+
+                // // 【DBカラムコピー】
+                // $copy_databases_columns = DatabasesColumns::where('databases_id', $request->copy_databases_id)->get();
+                // foreach ($copy_databases_columns as $copy_databases_column) {
+                //     // ID消して複製
+                //     $databases_column = $copy_databases_column->replicate();
+                //     $databases_column->databases_id = $databases->id;
+                //     $databases_column->save();
+
+                //     // 【DBカラムの権限表示指定コピー】
+                //     $copy_databases_columns_roles = DatabasesColumnsRole::where('databases_id', $request->copy_databases_id)
+                //                                                         ->where('databases_columns_id', $copy_databases_column->id)
+                //                                                         ->get();
+                //     foreach ($copy_databases_columns_roles as $copy_databases_columns_role) {
+                //         // ID消して複製
+                //         $databases_columns_role = $copy_databases_columns_role->replicate();
+                //         $databases_columns_role->databases_id = $databases->id;
+                //         $databases_columns_role->databases_columns_id = $databases_column->id;
+                //         $databases_columns_role->save();
+                //     }
+
+                //     // 選択肢カラム
+                //     if ($copy_databases_column->column_type == DatabaseColumnType::radio ||
+                //             $copy_databases_column->column_type == DatabaseColumnType::checkbox ||
+                //             $copy_databases_column->column_type == DatabaseColumnType::select) {
+                //         // 【DBカラム選択肢コピー】
+                //         $copy_databases_columns_selects = DatabasesColumnsSelects::where('databases_columns_id', $copy_databases_column->id)->get();
+                //         foreach ($copy_databases_columns_selects as $copy_databases_columns_select) {
+                //             // ID消して複製
+                //             $databases_columns_select = $copy_databases_columns_select->replicate();
+                //             $databases_columns_select->databases_columns_id = $databases_column->id;
+                //             $databases_columns_select->save();
+                //         }
+                //     }
+                // }
+            }
+        }
+
         // 登録後はリダイレクトして編集ページを開く。
         return collect(['redirect_path' => url('/') . "/plugin/learningtasks/editBuckets/" . $page_id . "/" . $frame_id . "/" . $learningtask->id . "#frame-" . $frame_id]);
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $learningtask_id)
     {
-        // learningtasks_id がある場合、データを削除
-        if ($learningtask_id) {
-            // 記事データを削除する。
-            // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-            // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
-            //
-            // LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
-            $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
-            LearningtasksPosts::destroy($learningtasks_posts_ids);
+        // change: backetsは $frame->bucket_id で消さない。選択したLearningtasksのbucket_idで消す
+        $learningtasks = Learningtasks::find($learningtask_id);
+        if (empty($learningtasks)) {
+            return;
+        }
 
-            $learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $learningtask_id);
-            $learningtasks_categories_categories_ids = $learningtasks_categories->pluck('categories_id');
-            $learningtasks_categories_ids = $learningtasks_categories->pluck('id');
+        // 記事データを削除する。
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
+        //
+        // LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
+        $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
+        LearningtasksPosts::destroy($learningtasks_posts_ids);
 
-            // カテゴリ削除. カテゴリは課題管理毎に別々に存在してるため、削除する
-            $categories_ids = Categories::whereIn('id', $learningtasks_categories_categories_ids)->where('target', 'learningtasks')->pluck('id');
-            Categories::destroy($categories_ids);
+        $learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $learningtask_id);
+        $learningtasks_categories_categories_ids = $learningtasks_categories->pluck('categories_id');
+        $learningtasks_categories_ids = $learningtasks_categories->pluck('id');
 
-            // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ https://github.com/opensource-workshop/connect-cms/issues/790
-            // 課題管理カテゴリ削除
-            LearningtasksCategories::destroy($learningtasks_categories_ids);
+        // カテゴリ削除. カテゴリは課題管理毎に別々に存在してるため、削除する
+        $categories_ids = Categories::whereIn('id', $learningtasks_categories_categories_ids)->where('target', 'learningtasks')->pluck('id');
+        Categories::destroy($categories_ids);
+
+        // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ https://github.com/opensource-workshop/connect-cms/issues/790
+        // 課題管理カテゴリ削除
+        LearningtasksCategories::destroy($learningtasks_categories_ids);
 
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
 
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
+        // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+        // $frame = Frame::where('id', $frame_id)->first();
 
-            // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したLearningtasksのbucket_idで消す
-            $learningtasks = Learningtasks::find($learningtask_id);
+        // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$learningtasks->bucket_idで消えるため問題なし）
+        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+        Frame::where('bucket_id', $learningtasks->bucket_id)->update(['bucket_id' => null]);
 
-            // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$learningtasks->bucket_idで消えるため問題なし）
-            // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
-            Frame::where('bucket_id', $learningtasks->bucket_id)->update(['bucket_id' => null]);
+        // backetsの削除
+        // Buckets::where('id', $frame->bucket_id)->delete();
+        Buckets::where('id', $learningtasks->bucket_id)->delete();
 
-            // backetsの削除
-            // Buckets::where('id', $frame->bucket_id)->delete();
-            Buckets::where('id', $learningtasks->bucket_id)->delete();
+        // 課題管理設定を削除する。
+        // Learningtasks::destroy($learningtask_id);
+        $learningtasks->delete();
 
-            // 課題管理設定を削除する。
-            Learningtasks::destroy($learningtask_id);
-        }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 

@@ -62,9 +62,11 @@
     @if ($create_flag)
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="">
+        <input type="hidden" name="copy_learningtask_id" value="{{old('copy_learningtask_id', $learningtask->id)}}">
     @else
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
+        <input type="hidden" name="copy_learningtask_id" value="">
     @endif
 
     <h5><span class="badge badge-secondary">基本設定</span></h5>

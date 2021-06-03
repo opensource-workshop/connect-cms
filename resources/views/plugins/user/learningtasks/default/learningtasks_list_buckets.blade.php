@@ -64,9 +64,17 @@
                 <td>
                     <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
 
-                    <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">
-                        <i class="far fa-edit"></i> 設定変更
-                    </a>
+                    <div class="btn-group mr-1">
+                        <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">
+                            <i class="far fa-edit"></i> 設定変更
+                        </a>
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">ドロップダウンボタン</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">コピーしてDB作成へ</a>
+                        </div>
+                    </div>
 
                     <div class="btn-group mr-1">
                         <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$learningtask->id}});">
