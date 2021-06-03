@@ -111,12 +111,14 @@
         @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
     </div>
 
+    {{-- delete: oldテンプレートで使ってないが、learningtasks_posts_tagsテーブル削除に伴いコメントアウト
     <div class="form-group">
         <label class="control-label">タグ</label>
         <input type="text" name="tags" value="{{old('tags', $learningtasks_posts_tags)}}" class="form-control">
         @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif
         <small class="form-text text-muted">カンマ区切りで複数指定可能</small>
     </div>
+    --}}
 
     <div class="form-group">
         <div class="row">

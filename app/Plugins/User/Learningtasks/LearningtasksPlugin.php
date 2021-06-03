@@ -29,7 +29,6 @@ use App\Models\User\Learningtasks\LearningtasksCategories;
 use App\Models\User\Learningtasks\LearningtasksConfigs;
 use App\Models\User\Learningtasks\LearningtasksExaminations;
 use App\Models\User\Learningtasks\LearningtasksPosts;
-use App\Models\User\Learningtasks\LearningtasksPostsTags;
 use App\Models\User\Learningtasks\LearningtasksPostsFiles;
 use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
@@ -983,7 +982,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
 
         // タグ
-        $learningtasks_posts_tags = "";
+        // $learningtasks_posts_tags = "";
 
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -991,7 +990,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtask'             => $learningtask,
             'learningtasks_posts'      => $learningtasks_posts,
             'learningtasks_categories' => $learningtasks_categories,
-            'learningtasks_posts_tags' => $learningtasks_posts_tags,
+            // 'learningtasks_posts_tags' => $learningtasks_posts_tags,
             //'errors'           => $errors,
             ]
         )->withInput($request->all);
@@ -1178,12 +1177,12 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
 
         // タグ取得
-        $learningtasks_posts_tags_array = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
-        $learningtasks_posts_tags = "";
-        foreach ($learningtasks_posts_tags_array as $learningtasks_posts_tags_item) {
-            $learningtasks_posts_tags .= ',' . $learningtasks_posts_tags_item->tags;
-        }
-        $learningtasks_posts_tags = trim($learningtasks_posts_tags, ',');
+        // $learningtasks_posts_tags_array = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
+        // $learningtasks_posts_tags = "";
+        // foreach ($learningtasks_posts_tags_array as $learningtasks_posts_tags_item) {
+        //     $learningtasks_posts_tags .= ',' . $learningtasks_posts_tags_item->tags;
+        // }
+        // $learningtasks_posts_tags = trim($learningtasks_posts_tags, ',');
 
         // 課題管理データを取得
         $learningtasks_posts_files = $this->getTaskFile([$learningtasks_post->id]);
@@ -1193,7 +1192,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtask' => $learningtask,
             'learningtasks_posts' => $learningtasks_post,
             'learningtasks_categories' => $learningtasks_categories,
-            'learningtasks_posts_tags' => $learningtasks_posts_tags,
+            // 'learningtasks_posts_tags' => $learningtasks_posts_tags,
             'learningtasks_posts_files' => (array_key_exists($learningtasks_post->id, $learningtasks_posts_files)) ? $learningtasks_posts_files[$learningtasks_post->id] : null,
         ]);
     }
@@ -1922,6 +1921,23 @@ class LearningtasksPlugin extends UserPluginBase
         // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ https://github.com/opensource-workshop/connect-cms/issues/790
         // 課題管理カテゴリ削除
         LearningtasksCategories::destroy($learningtasks_categories_ids);
+
+        ////
+        //// [TODO] 削除漏れ
+        ////
+        // ・LearningtasksUseSettings
+        // ・添付ファイル：
+        //   ・learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
+        //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1
+        //   ・uploads (データベースの削除が参考になる)
+        // ・learningtasks_examinations 試験日
+        // ・learningtasks_users 課題受講者かな？
+        // ・learningtasks_users_statuses 評価
+        //
+        // learningtasks_configs ?
+
+        // 【テーブル自体削除する】
+        // learningtasks_posts_tags (LearningtasksPostsTags). 使ってないテーブル。課題にタグ登録画面ない
 
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
