@@ -208,9 +208,9 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
                             <li class="nav-item">
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                             @if (isset($page_obj) && $page_obj->id == $page->id)
-                                <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
+                                <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                             @else
-                                <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
+                                <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
                             @endif
 
                             {{-- 各ページの深さをもとにインデントの表現 --}}
@@ -232,9 +232,9 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
                                 <li class="nav-item">
                                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                                 @if (isset($page_obj) && $page_obj->id == $page->id)
-                                    <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
+                                    <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                                 @else
-                                    <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
+                                    <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
                                 @endif
 
                                 {{-- 各ページの深さをもとにインデントの表現 --}}
