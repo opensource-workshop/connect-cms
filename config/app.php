@@ -246,6 +246,7 @@ $app_array = [
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
         'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
         'Bs4Color' => \App\Enums\Bs4Color::class,
+        'RadiusType' => \App\Enums\RadiusType::class,
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
         'ConnectLocale' => \App\Enums\ConnectLocale::class,
         'GroupType' => \App\Enums\GroupType::class,
