@@ -1925,19 +1925,16 @@ class LearningtasksPlugin extends UserPluginBase
         ////
         //// [TODO] 削除漏れ
         ////
-        // ・LearningtasksUseSettings
+        // ・learningtasks_use_settings (LearningtasksUseSettings). 課題の各設定
+        //
         // ・添付ファイル：
         //   ・learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
         //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1
         //   ・uploads (データベースの削除が参考になる)
         // ・learningtasks_examinations 試験日
-        // ・learningtasks_users 課題受講者かな？
-        // ・learningtasks_users_statuses 評価
-        //
-        // learningtasks_configs ?
-
-        // 【テーブル自体削除する】
-        // learningtasks_posts_tags (LearningtasksPostsTags). 使ってないテーブル。課題にタグ登録画面ない
+        // ・learningtasks_users 参加設定（受講者・教員）
+        // ・learningtasks_users_statuses 成績
+        // ・learningtasks_configs (LearningtasksConfigs). メール設定
 
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
