@@ -1134,11 +1134,10 @@ WHERE status = 0
 // Frame に紐づくBlog を削除した場合のみ、Frame の更新。（Frame に紐づかないBlog の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
 
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
-
             // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したblogのbucket_idで消す
             $blogs = Blogs::find($blogs_id);
+            // // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            // $frame = Frame::where('id', $frame_id)->first();
 
             // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$blogs->bucket_idで消えるため問題なし）
             // Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
