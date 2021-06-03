@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Userable;
 
+/**
+ * 課題管理メール設定
+ */
 class LearningtasksConfigs extends Model
 {
     // 論理削除
