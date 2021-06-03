@@ -50,8 +50,8 @@
                         </button>
                     </p>
                 @else
-                    <div class="panel panel-default">
-                        <div class="panel-body bg-danger">
+                    <div class="card border">
+                        <div class="card-body bg-danger">
                             <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するOPACを選択するか、作成してください。</p>
                         </div>
                     </div>
@@ -219,8 +219,8 @@
             <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="fas fa-plus"></i> 新規登録</button>
         </p>
     @else
-        <div class="panel panel-default">
-            <div class="panel-body bg-danger">
+        <div class="card border">
+            <div class="card-body bg-danger">
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するOPACを選択するか、作成してください。</p>
             </div>
         </div>
