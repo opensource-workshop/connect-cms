@@ -87,16 +87,18 @@
 <script>
     const app_{{ $frame->id }} = new Vue({
         el: "#app_{{ $frame->id }}",
-        data: {
-            url: '{{ url('/') }}',
-            link_pattern: @json($link_pattern),
-            link_base: @json($link_base),
-            whatsnewses: [],
-            whatsnews_total_count: {{ $whatsnews_total_count }}, // 総件数
-            view_posted_at: {{ $whatsnews_frame->view_posted_at }},
-            view_posted_name: {{ $whatsnews_frame->view_posted_name }},
-            limit: 5, // 何件ずつ取得するか ※リリース版は5にする
-            offset: {{ $whatsnews->count() }} // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
+        data: function() {
+            return {
+                url: '{{ url('/') }}',
+                link_pattern: @json($link_pattern),
+                link_base: @json($link_base),
+                whatsnewses: [],
+                whatsnews_total_count: {{ $whatsnews_total_count }}, // 総件数
+                view_posted_at: {{ $whatsnews_frame->view_posted_at }},
+                view_posted_name: {{ $whatsnews_frame->view_posted_name }},
+                limit: 5, // 何件ずつ取得するか ※リリース版は5にする
+                offset: {{ $whatsnews->count() }} // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
+            }
         },
         methods: {
             searchWhatsnewses: function () {
