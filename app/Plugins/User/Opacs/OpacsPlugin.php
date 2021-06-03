@@ -607,7 +607,7 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $opacs_id)
     {
@@ -616,24 +616,28 @@ class OpacsPlugin extends UserPluginBase
             // 書誌データを削除する。
             OpacsBooks::where('opacs_id', $opacs_id)->delete();
 
-            // OPAC設定を削除する。
-            Opacs::destroy($opacs_id);
-
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
+            // change: backets は $frame->bucket_id で消さない。選択したOpacsのbucket_idで消す
+            $opacs = Opacs::find($opacs_id);
+            // // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            // $frame = Frame::where('id', $frame_id)->first();
 
             // FrameのバケツIDの更新
-            Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            Frame::where('bucket_id', $opacs->bucket_id)->update(['bucket_id' => null]);
 
             // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // Buckets::where('id', $frame->bucket_id)->delete();
+            Buckets::destroy($opacs->bucket_id);
+
+            // OPAC設定を削除する。
+            Opacs::destroy($opacs_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
