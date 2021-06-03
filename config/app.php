@@ -251,6 +251,7 @@ $app_array = [
         'WhatsnewsTargetPlugin' => \App\Enums\WhatsnewsTargetPlugin::class,
         'CsvCharacterCode' => \App\Enums\CsvCharacterCode::class,
         'ShowType' => \App\Enums\ShowType::class,
+        'UseType' => \App\Enums\UseType::class,
         'PermissionType' => \App\Enums\PermissionType::class,
         'StatusType' => \App\Enums\StatusType::class,
         'DisplayNumberType' => \App\Enums\DisplayNumberType::class,
