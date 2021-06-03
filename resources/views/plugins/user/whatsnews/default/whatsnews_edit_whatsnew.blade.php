@@ -3,6 +3,7 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
@@ -54,6 +55,7 @@
         <input type="hidden" name="whatsnews_id" value="{{$whatsnew->id}}">
     @endif
 
+    {{-- バケツ名 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">新着情報名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -62,6 +64,7 @@
         </div>
     </div>
 
+    {{-- 新着の取得方式 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">新着の取得方式</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
@@ -84,6 +87,7 @@
         </div>
     </div>
 
+    {{-- 表示件数 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -92,6 +96,7 @@
         </div>
     </div>
 
+    {{-- 表示日数 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示日数</label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -100,28 +105,29 @@
         </div>
     </div>
 
+    {{-- RSS --}}
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">RSS</label>
+        <label class="{{$frame->getSettingLabelClass(true)}}">RSS</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->rss == 1)
-                    <input type="radio" value="1" id="rss_1" name="rss" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="rss_1" name="rss" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="rss_1">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->rss == 0)
-                    <input type="radio" value="0" id="rss_0" name="rss" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="rss_0" name="rss" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="rss_0">表示しない</label>
-            </div>
+            @foreach (ShowType::enum as $key => $value)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input 
+                        type="radio" 
+                        value="{{ $key }}" 
+                        id="{{ "rss_${key}" }}"
+                        name="rss" 
+                        class="custom-control-input" 
+                        {{ $whatsnew->rss == $key ? 'checked' : '' }}
+                    >
+                    <label class="custom-control-label" for="{{ "rss_${key}" }}">
+                        {{ $value }}
+                    </label>
+                </div>
+            @endforeach
         </div>
     </div>
 
+    {{-- RSS件数 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">RSS件数</label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -130,77 +136,51 @@
         </div>
     </div>
 
-    {{-- <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ページ送りの表示</label>
+    {{-- 登録者の表示 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">登録者の表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                <input
-                    type="radio" value="1" id="page_method_1" name="page_method"
-                    class="custom-control-input" {{ $whatsnew->page_method == 1 ? 'checked' : '' }}
-                >
-                <label class="custom-control-label" for="page_method_1">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                <input type="radio" value="0" id="page_method_0" name="page_method"
-                    class="custom-control-input" {{ $whatsnew->page_method == 0 ? 'checked' : '' }}
-                >
-                <label class="custom-control-label" for="page_method_0">表示しない</label>
-            </div>
+            @foreach (ShowType::enum as $key => $value)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input 
+                        type="radio" 
+                        value="{{ $key }}" 
+                        id="{{ "view_posted_name_${key}" }}"
+                        name="view_posted_name" 
+                        class="custom-control-input" 
+                        {{ $whatsnew->view_posted_name == $key ? 'checked' : '' }}
+                    >
+                    <label class="custom-control-label" for="{{ "view_posted_name_${key}" }}">
+                        {{ $value }}
+                    </label>
+                </div>
+            @endforeach
         </div>
     </div>
 
+    {{-- 登録日時の表示 --}}
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ページ送り件数</label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="page_count" value="{{old('page_count', $whatsnew->page_count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('page_count')) <div class="text-danger">{{$errors->first('page_count')}}</div> @endif
-        </div>
-    </div> --}}
-
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">登録者の表示</label><br />
+        <label class="{{$frame->getSettingLabelClass(true)}}">登録日時の表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->view_posted_name == 1)
-                    <input type="radio" value="1" id="view_posted_name_1" name="view_posted_name" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="view_posted_name_1" name="view_posted_name" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="view_posted_name_1">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->view_posted_name == 0)
-                    <input type="radio" value="0" id="view_posted_name_0" name="view_posted_name" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="view_posted_name_0" name="view_posted_name" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="view_posted_name_0">表示しない</label>
-            </div>
+            @foreach (ShowType::enum as $key => $value)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input 
+                        type="radio" 
+                        value="{{ $key }}" 
+                        id="{{ "view_posted_at_${key}" }}"
+                        name="view_posted_at" 
+                        class="custom-control-input" 
+                        {{ $whatsnew->view_posted_at == $key ? 'checked' : '' }}
+                    >
+                    <label class="custom-control-label" for="{{ "view_posted_at_${key}" }}">
+                        {{ $value }}
+                    </label>
+                </div>
+            @endforeach
         </div>
     </div>
 
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">登録日時の表示</label><br />
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->view_posted_at == 1)
-                    <input type="radio" value="1" id="view_posted_at_1" name="view_posted_at" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="view_posted_at_1" name="view_posted_at" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="view_posted_at_1">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->view_posted_at == 0)
-                    <input type="radio" value="0" id="view_posted_at_0" name="view_posted_at" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="0" id="view_posted_at_0" name="view_posted_at" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="view_posted_at_0">表示しない</label>
-            </div>
-        </div>
-    </div>
-
+    {{-- 重要記事の扱い --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} @if(!$frame->isExpandNarrow()) pt-sm-0 @endif">重要記事の扱い</label><br />
         <div class="{{$frame->getSettingInputClass()}}">
@@ -239,6 +219,7 @@
         </div>
     </div>
 
+    {{-- 対象プラグイン --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} pt-0">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
@@ -252,6 +233,7 @@
         </div>
     </div>
 
+    {{-- フレームの選択 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
@@ -282,6 +264,7 @@
         </div>
     </div>
 
+    {{-- 対象ページ - フレーム --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
         <div class="{{$frame->getSettingInputClass(false, true)}}">
