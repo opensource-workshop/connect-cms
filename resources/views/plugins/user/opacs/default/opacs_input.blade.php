@@ -378,7 +378,7 @@
             <div class="col-sm-3 pull-right text-right">
                 @if (!empty($opacs_books->id))
                     <a data-toggle="collapse" href="#collapse{{$opacs_books->id}}">
-                        <span class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-xs">削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                     </a>
                 @endif
             </div>
@@ -386,16 +386,16 @@
     </div>
 </form>
 
-<div id="collapse{{$opacs_books->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="panel panel-danger">
-        <div class="panel-body">
+<div id="collapse{{$opacs_books->id}}" class="collapse">
+    <div class="card border-danger">
+        <div class="card-body">
             <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
                 <form action="{{url('/')}}/plugin/opacs/destroy/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
         </div>

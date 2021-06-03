@@ -417,11 +417,17 @@ class CountersPlugin extends UserPluginBase
             return;
         }
 
-        // カウントデータ削除(一気にDelete なので、deleted_id は入らない)
-        CounterCount::where('counter_id', $counter->id)->delete();
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
+        //
+        // カウントデータ削除
+        // CounterCount::where('counter_id', $counter->id)->delete();
+        $counter_count_ids = CounterCount::where('counter_id', $counter->id)->pluck('id');
+        CounterCount::destroy($counter_count_ids);
 
         // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+        Frame::where('bucket_id', $counter->bucket_id)->update(['bucket_id' => null]);
 
         // delete: バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら counter_frame を削除する
         // プラグインフレームデータの削除(deleted_id を記録するために1回読んでから削除)
@@ -429,7 +435,8 @@ class CountersPlugin extends UserPluginBase
         // $counter_frame->delete();
 
         // バケツ削除
-        Buckets::find($counter->bucket_id)->delete();
+        // Buckets::find($counter->bucket_id)->delete();
+        Buckets::destroy($counter->bucket_id);
 
         // プラグインデータ削除
         $counter->delete();

@@ -136,7 +136,7 @@
     </div>
 </form>
 
-<div id="collapse{{$blog_frame->id}}" class="collapse" style="margin-top: 8px;">
+<div id="collapse{{$blog_frame->id}}" class="collapse">
     <div class="card border-danger">
         <div class="card-body">
             <span class="text-danger">ブログを削除します。<br>このブログに記載した記事も削除され、元に戻すことはできないため、よく確認して実行してください。</span>

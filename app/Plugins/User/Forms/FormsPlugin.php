@@ -1629,13 +1629,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // backetsの削除
             Buckets::where('id', $forms->bucket_id)->delete();
 
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
-            // bugfix: フレームのbucket_idと削除するフォームのbucket_idが同じなら、FrameのバケツIDの更新する
-            if ($frame->bucket_id == $forms->bucket_id) {
-                // FrameのバケツIDの更新
-                Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
-            }
+            // change: このバケツを表示している全ページのフレームのバケツIDを消す
+            // // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            // $frame = Frame::where('id', $frame_id)->first();
+            // // bugfix: フレームのbucket_idと削除するフォームのbucket_idが同じなら、FrameのバケツIDの更新する
+            // if ($frame->bucket_id == $forms->bucket_id) {
+            //     // FrameのバケツIDの更新
+            //     Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            // }
+            // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す
+            Frame::where('bucket_id', $forms->bucket_id)->update(['bucket_id' => null]);
 
             // フォーム設定を削除する。
             Forms::destroy($forms_id);
@@ -1911,7 +1914,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $dist_column->column_name = $dist_column->column_name . '_copy';
         $dist_column->display_sequence = $max_display_sequence;
         $dist_column->save();
-        
+
         // 項目（子）コピー
         foreach ($src_selects as $src_select) {
             $dist_select = $src_select->replicate();
