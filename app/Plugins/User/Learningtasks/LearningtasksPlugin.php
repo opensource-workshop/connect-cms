@@ -2121,7 +2121,7 @@ class LearningtasksPlugin extends UserPluginBase
                         $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
                                 ->where('learningtasks_categories.learningtasks_id', $learningtask->id)
                                 ->where('learningtasks_categories.deleted_at', null);
-                })
+                    })
                     ->where('target', 'learningtasks')
                     ->where('plugin_id', $learningtask->id)
                     ->orderBy('learningtasks_categories.display_sequence', 'asc')
