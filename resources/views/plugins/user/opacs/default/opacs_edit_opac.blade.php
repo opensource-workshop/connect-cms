@@ -269,7 +269,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac_frame->opacs_id}}#frame-{{$frame->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
