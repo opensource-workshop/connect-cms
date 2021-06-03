@@ -1958,13 +1958,16 @@ class DatabasesPlugin extends UserPluginBase
             // backetsの削除
             Buckets::where('id', $databases->bucket_id)->delete();
 
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
-            // bugfix: フレームのbucket_idと削除するDBのbucket_idが同じなら、FrameのバケツIDの更新する
-            if ($frame->bucket_id == $databases->bucket_id) {
-                // FrameのバケツIDの更新
-                Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
-            }
+            // change: このバケツを表示している全ページのフレームのバケツIDを消す
+            // // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            // $frame = Frame::where('id', $frame_id)->first();
+            // // bugfix: フレームのbucket_idと削除するDBのbucket_idが同じなら、FrameのバケツIDの更新する
+            // if ($frame->bucket_id == $databases->bucket_id) {
+            //     // FrameのバケツIDの更新
+            //     Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            // }
+            // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す
+            Frame::where('bucket_id', $databases->bucket_id)->update(['bucket_id' => null]);
 
             // データベース設定を削除する。
             Databases::destroy($databases_id);
