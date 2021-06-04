@@ -713,7 +713,7 @@ class LearningtasksTool
     }
 
     /**
-     *  指定されたステータスを機能名に変換
+     * 指定されたステータスを機能名に変換
      */
     public function changeStatus2FunctionName($task_status, $detail_function = null)
     {
