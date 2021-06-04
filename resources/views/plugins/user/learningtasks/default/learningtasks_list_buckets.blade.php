@@ -72,7 +72,7 @@
                             <span class="sr-only">ドロップダウンボタン</span>
                         </button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">コピーしてDB作成へ</a>
+                            <a class="dropdown-item" href="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">コピーして課題管理作成へ</a>
                         </div>
                     </div>
 

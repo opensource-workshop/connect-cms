@@ -1914,44 +1914,84 @@ class LearningtasksPlugin extends UserPluginBase
         if (empty($request->learningtask_id)) {
             // コピーIDあり
             if ($request->copy_learningtask_id) {
-                ////
-                //// [TODO] コピー内容記述
-                ////
+                // [コピーする]
+                // ・(LearningtasksPosts). 各課題コピー
+                // ・learningtasks_use_settings (LearningtasksUseSettings). 課題の各設定コピー
+                // ・learningtasks_configs (LearningtasksConfigs). メール設定
+                // ・個別カテゴリコピー
+                // ・LearningtasksCategories 課題カテゴリの表示する/しない・表示順データコピー
+                //   ※ LearningtasksCategoriesの共通カテゴリの表示する/しない、表示順はコピーしない。もし必要になったら実装する。
+                //
+                // [コピーしない]
+                // ・ファイル
+                //   ・learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
+                //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1
+                //   ・learningtasks_users_statuses.upload_id (成績) レポート提出ファイル等
+                //   ・uploads (ファイル)
+                // ・learningtasks_examinations 試験日
+                // ・learningtasks_users 参加設定（受講者・教員）
+                // ・learningtasks_users_statuses 成績
 
-                // // 【DBカラムコピー】
-                // $copy_databases_columns = DatabasesColumns::where('databases_id', $request->copy_databases_id)->get();
-                // foreach ($copy_databases_columns as $copy_databases_column) {
-                //     // ID消して複製
-                //     $databases_column = $copy_databases_column->replicate();
-                //     $databases_column->databases_id = $databases->id;
-                //     $databases_column->save();
+                // 課題データ取得
+                $copy_learningtasks_posts = LearningtasksPosts::where('learningtasks_id', $request->copy_learningtask_id)->get();
+                foreach ($copy_learningtasks_posts as $copy_learningtasks_post) {
+                    // コピー元のpost_id
+                    $origin_post_id = $copy_learningtasks_post->id;
 
-                //     // 【DBカラムの権限表示指定コピー】
-                //     $copy_databases_columns_roles = DatabasesColumnsRole::where('databases_id', $request->copy_databases_id)
-                //                                                         ->where('databases_columns_id', $copy_databases_column->id)
-                //                                                         ->get();
-                //     foreach ($copy_databases_columns_roles as $copy_databases_columns_role) {
-                //         // ID消して複製
-                //         $databases_columns_role = $copy_databases_columns_role->replicate();
-                //         $databases_columns_role->databases_id = $databases->id;
-                //         $databases_columns_role->databases_columns_id = $databases_column->id;
-                //         $databases_columns_role->save();
-                //     }
+                    // 課題データ. ID消して複製
+                    $learningtasks_post = $copy_learningtasks_post->replicate();
+                    $learningtasks_post->learningtasks_id = $learningtask->id;
+                    $learningtasks_post->save();
 
-                //     // 選択肢カラム
-                //     if ($copy_databases_column->column_type == DatabaseColumnType::radio ||
-                //             $copy_databases_column->column_type == DatabaseColumnType::checkbox ||
-                //             $copy_databases_column->column_type == DatabaseColumnType::select) {
-                //         // 【DBカラム選択肢コピー】
-                //         $copy_databases_columns_selects = DatabasesColumnsSelects::where('databases_columns_id', $copy_databases_column->id)->get();
-                //         foreach ($copy_databases_columns_selects as $copy_databases_columns_select) {
-                //             // ID消して複製
-                //             $databases_columns_select = $copy_databases_columns_select->replicate();
-                //             $databases_columns_select->databases_columns_id = $databases_column->id;
-                //             $databases_columns_select->save();
-                //         }
-                //     }
-                // }
+                    // learningtasks_use_settings (LearningtasksUseSettings). 課題の各設定コピー
+                    $copy_user_learningtasks_use_settings = LearningtasksUseSettings::where('learningtasks_id', $request->copy_learningtask_id)
+                            ->where('post_id', $origin_post_id)
+                            ->get();
+                    foreach ($copy_user_learningtasks_use_settings as $copy_user_learningtasks_use_setting) {
+                        // ID消して複製
+                        $user_learningtasks_use_setting = $copy_user_learningtasks_use_setting->replicate();
+                        $user_learningtasks_use_setting->learningtasks_id = $learningtask->id;
+                        $user_learningtasks_use_setting->post_id = $learningtasks_post->id;
+                        $user_learningtasks_use_setting->save();
+                    }
+                }
+
+                // learningtasks_configs (LearningtasksConfigs). メール設定コピー
+                $copy_learningtasks_configs = LearningtasksConfigs::where('learningtasks_id', $request->copy_learningtask_id)
+                        ->where('post_id', 0)
+                        ->get();
+                foreach ($copy_learningtasks_configs as $copy_learningtasks_config) {
+                    // ID消して複製
+                    $learningtasks_config = $copy_learningtasks_config->replicate();
+                    $learningtasks_config->learningtasks_id = $learningtask->id;
+                    $learningtasks_config->save();
+                }
+
+                // カテゴリコピー. （カテゴリは課題管理毎に別々に存在してるため）
+                // where('plugin_id', $learningtask->id)
+                $copy_categories = Categories::where('plugin_id', $request->copy_learningtask_id)->where('target', 'learningtasks')->get();
+                foreach ($copy_categories as $copy_category) {
+                    // コピー元のpost_id
+                    $origin_categories_id = $copy_category->id;
+
+                    // カテゴリ. ID消して複製
+                    $category = $copy_category->replicate();
+                    $category->plugin_id = $learningtask->id;
+                    $category->save();
+
+                    // 課題カテゴリデータ取得
+                    $copy_learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $request->copy_learningtask_id)
+                            ->where('categories_id', $origin_categories_id)
+                            ->get();
+                    foreach ($copy_learningtasks_categories as $copy_learningtasks_categorie) {
+                        // ID消して複製
+                        $learningtasks_categorie = $copy_learningtasks_categorie->replicate();
+                        $learningtasks_categorie->learningtasks_id = $learningtask->id;
+                        $learningtasks_categorie->categories_id = $category->id;
+                        $learningtasks_categorie->save();
+                    }
+                }
+
             }
         }
 

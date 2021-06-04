@@ -41,13 +41,18 @@
         </div>
     @else
         <div class="alert alert-info">
-            <i class="fas fa-exclamation-circle"></i>
             @if (empty($learningtask) || $create_flag)
-                {{-- 登録：初期表示 --}}
-                新しい課題管理設定を登録します。
+                @if (old('copy_learningtask_id', $learningtask->id))
+                    {{-- 登録：コピーして課題管理作成へ --}}
+                    <i class="fas fa-exclamation-circle"></i> 新しい課題管理設定をコピーして登録します。<br />
+                    <i class="fas fa-exclamation-circle"></i> 受講者、成績、試験日、ファイル（課題ファイル、試験の問題ファイル、レポート提出ファイル等）はコピーしません。<br />
+                @else
+                    {{-- 登録：初期表示 --}}
+                    <i class="fas fa-exclamation-circle"></i> 新しい課題管理設定を登録します。<br />
+                @endif
             @else
                 {{-- 変更：初期表示 --}}
-                課題管理設定を変更します。
+                <i class="fas fa-exclamation-circle"></i> 課題管理設定を変更します。
             @endif
         </div>
     @endif
