@@ -826,37 +826,47 @@ class LearningtasksPlugin extends UserPluginBase
             $users_statuses = $users_statuses_tmp->groupBy('user_id');
 
             foreach ($users_statuses as $users_status) {
-                // レポートの評価が必要か。(レポートの提出と評価の最後を見る)
-                $last_report_task = $users_status->whereIn('task_status', [1, 2])->last();
-                // 最後が 1 なら、レポートの評価が必要
-                if (!empty($last_report_task) && $last_report_task->task_status == 1) {
-                    $teacher_tasks[] = $last_report_task;
+                // レポート
+                if ($tool->checkFunction('use_report', $post->id)) {
+                    // レポートの評価が必要か。(レポートの提出と評価の最後を見る)
+                    $last_report_task = $users_status->whereIn('task_status', [1, 2])->last();
+                    // 最後が 1 なら、レポートの評価が必要
+                    if (!empty($last_report_task) && $last_report_task->task_status == 1) {
+                        $teacher_tasks[] = $last_report_task;
+                    }
                 }
 
-                // 試験の評価が必要か。(試験の提出と評価の最後を見る)
-                $last_examination_task = $users_status->whereIn('task_status', [5, 6])->last();
-                // 最後が 5 なら、試験の評価が必要
-                if (!empty($last_examination_task) && $last_examination_task->task_status == 5) {
-                    $teacher_tasks[] = $last_examination_task;
+                // 試験
+                if ($tool->checkFunction('use_examination', $post->id)) {
+                    // 試験の評価が必要か。(試験の提出と評価の最後を見る)
+                    $last_examination_task = $users_status->whereIn('task_status', [5, 6])->last();
+                    // 最後が 5 なら、試験の評価が必要
+                    if (!empty($last_examination_task) && $last_examination_task->task_status == 5) {
+                        $teacher_tasks[] = $last_examination_task;
+                    }
                 }
 
-                // 総合評価が必要か。(レポートが合格、試験が合格、総合評価なしの場合)
-                $last_evaluate_task = $users_status->whereIn('task_status', [8])->last();
+                // 総合評価
+                if ($tool->checkFunction('use_evaluate', $post->id)) {
+                    // 総合評価が必要か。(レポートが合格、試験が合格、総合評価なしの場合)
+                    $last_evaluate_task = $users_status->whereIn('task_status', [8])->last();
 
-                // 上で取得したレポートのステータスが合格＆上で取得した試験のステータスが合格＆総合評価がまだない場合
-                if (!empty($last_report_task) && $last_report_task->task_status == 2 &&
-                    ($last_report_task->grade == 'A' || $last_report_task->grade == 'B' || $last_report_task->grade == 'C') &&
-                    !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
-                    ($last_examination_task->grade == 'A' || $last_examination_task->grade == 'B' || $last_examination_task->grade == 'C') &&
-                    (empty($last_evaluate_task))) {
-                    //(empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
+                    // 上で取得したレポートのステータスが合格＆上で取得した試験のステータスが合格＆総合評価がまだない場合
+                    if (!empty($last_report_task) && $last_report_task->task_status == 2 &&
+                        ($last_report_task->grade == 'A' || $last_report_task->grade == 'B' || $last_report_task->grade == 'C') &&
+                        !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
+                        ($last_examination_task->grade == 'A' || $last_examination_task->grade == 'B' || $last_examination_task->grade == 'C') &&
+                        (empty($last_evaluate_task))) {
+                        //(empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
 
-                    // 総合評価の条件に合致。ただし、この条件では、総合評価のデータはまだない。
-                    // データがないと画面表示に際に判定できないため、試験結果をオブジェクトコピーし、ステータスを 8 にしておく。
-                    $last_evaluate_task = clone $last_examination_task;
-                    $last_evaluate_task->task_status = 8;
-                    $teacher_tasks[] = $last_evaluate_task;
+                        // 総合評価の条件に合致。ただし、この条件では、総合評価のデータはまだない。
+                        // データがないと画面表示に際に判定できないため、試験結果をオブジェクトコピーし、ステータスを 8 にしておく。
+                        $last_evaluate_task = clone $last_examination_task;
+                        $last_evaluate_task->task_status = 8;
+                        $teacher_tasks[] = $last_evaluate_task;
+                    }
                 }
+
             }
         }
         return $teacher_tasks;
