@@ -65,8 +65,18 @@
     <div class="collapse {{$tool->getSettingShowstr("post_evaluate_setting")}} collapse_post_evaluate_setting" id="collapse_post_evaluate_setting">
         <h5><span class="badge badge-secondary">課題独自の項目設定</span></h5>
 
+        <div class="form-group row mb-0">
+            <label class="col-md-3 text-md-right">総合評価機能</label>
+            <div class="col-md-9 d-md-flex">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" name="post_settings[use_evaluate]" value="on" class="custom-control-input" id="use_evaluate" @if(old("post_settings.use_evaluate", $tool->getFunction('use_evaluate', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_evaluate">評価</label>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group row">
-            <label class="col-md-3 text-md-right">評価</label>
+            <label class="col-md-3 text-md-right">総合評価コメント</label>
             <div class="col-md-9 d-md-flex">
                 <div class="custom-control custom-checkbox mr-3">
                     <input type="checkbox" name="post_settings[use_evaluate_file]" value="on" class="custom-control-input" id="use_evaluate_file" @if(old("post_settings.use_evaluate_file", $tool->getFunction('use_evaluate_file', true)) == 'on') checked=checked @endif>
