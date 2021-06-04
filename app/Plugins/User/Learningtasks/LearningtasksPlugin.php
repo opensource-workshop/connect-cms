@@ -1663,21 +1663,6 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         ////
-        //// 課題データ削除
-        ////
-        // learningtasks_examinations 試験日データ削除
-        $learningtasks_examinations_ids = LearningtasksExaminations::where('post_id', $post_id)->pluck('id');
-        LearningtasksExaminations::destroy($learningtasks_examinations_ids);
-
-        // learningtasks_users_statuses 成績 削除
-        $learningtasks_users_statuses_ids = LearningtasksUsersStatuses::where('post_id', $post_id)->pluck('id');
-        LearningtasksUsersStatuses::destroy($learningtasks_users_statuses_ids);
-
-        // learningtasks_users 参加設定（受講者・教員）削除
-        $learningtasks_users_ids = LearningtasksUsers::where('post_id', $post_id)->pluck('id');
-        LearningtasksUsers::destroy($learningtasks_users_ids);
-
-        ////
         //// 添付ファイル及びデータ削除
         ////
         //   learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
@@ -1685,9 +1670,18 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_posts_files = LearningtasksPostsFiles::where('post_id', $post_id);
         $learningtasks_posts_files_upload_ids = $learningtasks_posts_files->pluck('upload_id');
 
+        // learningtasks_users_statuses 成績 取得
+        $learningtasks_users_statuses = LearningtasksUsersStatuses::where('post_id', $post_id);
+        $learningtasks_users_statuses_upload_ids = $learningtasks_users_statuses->pluck('upload_id');
+
+        // dd($learningtasks_posts_files_upload_ids, $learningtasks_users_statuses_upload_ids);
+        // Collectionマージ
+        $del_upload_ids = $learningtasks_posts_files_upload_ids->merge($learningtasks_users_statuses_upload_ids);
+        // dd($del_upload_ids);
+
         // uploads 削除
         // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
-        $delete_uploads = Uploads::whereIn('id', $learningtasks_posts_files_upload_ids)->get();
+        $delete_uploads = Uploads::whereIn('id', $del_upload_ids)->get();
         foreach ($delete_uploads as $delete_upload) {
             // ファイルの削除
             $directory = $this->getDirectory($delete_upload->id);
@@ -1697,10 +1691,24 @@ class LearningtasksPlugin extends UserPluginBase
             $delete_upload->delete();
         }
 
+        ////
+        //// 課題データ削除
+        ////
+        // learningtasks_examinations 試験日データ削除
+        $learningtasks_examinations_ids = LearningtasksExaminations::where('post_id', $post_id)->pluck('id');
+        LearningtasksExaminations::destroy($learningtasks_examinations_ids);
+
+        // learningtasks_users_statuses 成績 削除
+        $learningtasks_users_statuses_ids = $learningtasks_users_statuses->pluck('id');
+        LearningtasksUsersStatuses::destroy($learningtasks_users_statuses_ids);
+
+        // learningtasks_users 参加設定（受講者・教員）削除
+        $learningtasks_users_ids = LearningtasksUsers::where('post_id', $post_id)->pluck('id');
+        LearningtasksUsers::destroy($learningtasks_users_ids);
+
         // 課題の添付ファイルのテーブルデータ 削除
         $learningtasks_posts_files_ids = $learningtasks_posts_files->pluck('id');
         LearningtasksPostsFiles::destroy($learningtasks_posts_files_ids);
-
 
         // 課題データを削除する。
         $learningtasks_posts->delete();
@@ -1958,25 +1966,10 @@ class LearningtasksPlugin extends UserPluginBase
             return;
         }
 
-        ////
-        //// 課題データ削除
-        ////
         // 課題データ取得
         // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
         // LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
         $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
-
-        // learningtasks_examinations 試験日データ削除
-        $learningtasks_examinations_ids = LearningtasksExaminations::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
-        LearningtasksExaminations::destroy($learningtasks_examinations_ids);
-
-        // learningtasks_users_statuses 成績 削除
-        $learningtasks_users_statuses_ids = LearningtasksUsersStatuses::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
-        LearningtasksUsersStatuses::destroy($learningtasks_users_statuses_ids);
-
-        // learningtasks_users 参加設定（受講者・教員）削除
-        $learningtasks_users_ids = LearningtasksUsers::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
-        LearningtasksUsers::destroy($learningtasks_users_ids);
 
         ////
         //// 添付ファイル及びデータ削除
@@ -1986,9 +1979,17 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_posts_files = LearningtasksPostsFiles::whereIn('post_id', $learningtasks_posts_ids);
         $learningtasks_posts_files_upload_ids = $learningtasks_posts_files->pluck('upload_id');
 
+        // learningtasks_users_statuses 成績 取得
+        $learningtasks_users_statuses = LearningtasksUsersStatuses::whereIn('post_id', $learningtasks_posts_ids);
+        $learningtasks_users_statuses_upload_ids = $learningtasks_users_statuses->pluck('upload_id');
+
+        // Collectionマージ
+        $del_upload_ids = $learningtasks_posts_files_upload_ids->merge($learningtasks_users_statuses_upload_ids);
+        // dd($del_upload_ids);
+
         // uploads 削除
         // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
-        $delete_uploads = Uploads::whereIn('id', $learningtasks_posts_files_upload_ids)->get();
+        $delete_uploads = Uploads::whereIn('id', $del_upload_ids)->get();
         foreach ($delete_uploads as $delete_upload) {
             // ファイルの削除
             $directory = $this->getDirectory($delete_upload->id);
@@ -2002,10 +2003,23 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_posts_files_ids = $learningtasks_posts_files->pluck('id');
         LearningtasksPostsFiles::destroy($learningtasks_posts_files_ids);
 
+        ////
+        //// 課題データ削除
+        ////
+        // learningtasks_examinations 試験日データ削除
+        $learningtasks_examinations_ids = LearningtasksExaminations::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
+        LearningtasksExaminations::destroy($learningtasks_examinations_ids);
+
+        // learningtasks_users_statuses 成績 削除
+        $learningtasks_users_statuses_ids = $learningtasks_users_statuses->pluck('id');
+        LearningtasksUsersStatuses::destroy($learningtasks_users_statuses_ids);
+
+        // learningtasks_users 参加設定（受講者・教員）削除
+        $learningtasks_users_ids = LearningtasksUsers::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
+        LearningtasksUsers::destroy($learningtasks_users_ids);
 
         // 課題データを削除する。
         LearningtasksPosts::destroy($learningtasks_posts_ids);
-
 
         ////
         //// カテゴリ削除
