@@ -222,7 +222,12 @@ class LearningtasksPlugin extends UserPluginBase
                     'categories.background_color as category_background_color',
                     'categories.category as category'
                 )
-                ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                // bugfix: 論理削除を考慮
+                // ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                ->join('learningtasks', function ($join) {
+                    $join->on('learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                            ->whereNull('learningtasks.deleted_at');
+                })
                 // bugfix: 論理削除を考慮
                 // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
                 ->leftJoin('categories', function ($join) {
@@ -270,7 +275,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  カテゴリデータの取得
+     * カテゴリデータの取得
      */
     private function getLearningtasksCategories($learningtask_id)
     {
@@ -278,7 +283,8 @@ class LearningtasksPlugin extends UserPluginBase
                           ->join('learningtasks_categories', function ($join) use ($learningtask_id) {
                               $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
                                    ->where('learningtasks_categories.learningtasks_id', '=', $learningtask_id)
-                                   ->where('learningtasks_categories.view_flag', 1);
+                                   ->where('learningtasks_categories.view_flag', 1)
+                                   ->whereNull('learningtasks_categories.deleted_at');
                           })
                           ->whereNull('plugin_id')
                           ->orWhere('plugin_id', $learningtask_id)
@@ -796,7 +802,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  教員のタスク一覧
+     * 教員のタスク一覧
      */
     private function getTeacherTasks($tool, $posts)
     {
@@ -817,7 +823,12 @@ class LearningtasksPlugin extends UserPluginBase
                         'users.name as user_name'
                     )
                     ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-                    ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                    // bugfix: 論理削除を考慮
+                    // ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                    ->join('learningtasks_posts', function ($join) {
+                        $join->on('learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                                ->whereNull('learningtasks_posts.deleted_at');
+                    })
                     ->where('post_id', $post->id)
                     ->orderBy('id', 'asc')
                     ->get();
@@ -1495,15 +1506,22 @@ class LearningtasksPlugin extends UserPluginBase
     public function downloadGradeImpl($request, $page_id, $frame_id, $post_id)
     {
         // 成績
-        $users_statuses = LearningtasksUsersStatuses::select(
-            'learningtasks_users_statuses.*',
-            'learningtasks_posts.post_title',
-            'users.name'
-        )->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
-         ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-         ->where('learningtasks_users_statuses.post_id', $post_id)
-         ->orderBy('learningtasks_users_statuses.id', 'asc')
-         ->get();
+        $users_statuses = LearningtasksUsersStatuses::
+                select(
+                    'learningtasks_users_statuses.*',
+                    'learningtasks_posts.post_title',
+                    'users.name'
+                )
+                // bugfix: 論理削除を考慮
+                // ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                ->join('learningtasks_posts', function ($join) {
+                    $join->on('learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                            ->whereNull('learningtasks_posts.deleted_at');
+                })
+                ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+                ->where('learningtasks_users_statuses.post_id', $post_id)
+                ->orderBy('learningtasks_users_statuses.id', 'asc')
+                ->get();
 
         // 成績ステータス毎に、最終のものを抜き出す。（task_status で上書きすることで最後が残る）
         $statuses_ojb = array();
@@ -1725,8 +1743,13 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // Frame データ
         $learningtasks_frame = Frame::select('frames.*', 'learningtasks.id as learningtasks_id', 'learningtasks.view_count')
-                      ->leftJoin('learningtasks', 'learningtasks.bucket_id', '=', 'frames.bucket_id')
-                      ->where('frames.id', $frame_id)->first();
+                // bugfix: 論理削除を考慮
+                // ->leftJoin('learningtasks', 'learningtasks.bucket_id', '=', 'frames.bucket_id')
+                ->leftJoin('learningtasks', function ($join) {
+                    $join->on('learningtasks.bucket_id', '=', 'frames.bucket_id')
+                            ->whereNull('learningtasks.deleted_at');
+                })
+                ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $learningtasks = Learningtasks::orderBy('created_at', 'desc')
@@ -2153,8 +2176,17 @@ class LearningtasksPlugin extends UserPluginBase
                     'learningtasks_users_statuses.created_at'
                 )
                 ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-                ->leftJoin('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
-                ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                // bugfix: 論理削除を考慮
+                // ->leftJoin('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                // ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                ->leftJoin('learningtasks_posts', function ($join) {
+                    $join->on('learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                            ->whereNull('learningtasks_posts.deleted_at');
+                })
+                ->leftJoin('learningtasks_examinations', function ($join) {
+                    $join->on('learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                            ->whereNull('learningtasks_examinations.deleted_at');
+                })
                 ->where('learningtasks_users_statuses.task_status', 4)
                 ->where('learningtasks_posts.learningtasks_id', $id)
                 ->orderBy('learningtasks_examinations.start_at', 'asc')

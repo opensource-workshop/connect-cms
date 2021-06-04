@@ -3,15 +3,14 @@
 namespace App\Models\User\Learningtasks;
 
 use Illuminate\Database\Eloquent\Model;
-// use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\UserableNohistory;
 
 class Learningtasks extends Model
 {
-    // [TODO] delated_atカラムはあるが、下記は指定されてなかった。joinなどで使ってるので、delated_at is null の修正が必要。
     // 論理削除
-    // use SoftDeletes;
+    use SoftDeletes;
 
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;

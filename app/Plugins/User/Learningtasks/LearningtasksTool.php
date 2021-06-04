@@ -208,7 +208,12 @@ class LearningtasksTool
                         'learningtasks_examinations.end_at',
                         'learningtasks_examinations.entry_end_at'
                     )
-                    ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                    // bugfix: 論理削除を考慮
+                    // ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                    ->leftJoin('learningtasks_examinations', function ($join) {
+                        $join->on('learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                                ->whereNull('learningtasks_examinations.deleted_at');
+                    })
                     ->where('learningtasks_users_statuses.user_id', '=', $this->student_id)
                     ->whereIn('learningtasks_users_statuses.task_status', [4, 5, 6, 7])
                     ->orderBy('learningtasks_users_statuses.post_id', 'asc')
