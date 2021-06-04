@@ -19,8 +19,8 @@ class LearningtasksPosts extends Model
     protected $dates = ['posted_at'];
 
     /**
-     *  リスト表示用タイトル
-     *  改行を取り除いたもの。
+     * リスト表示用タイトル
+     * 改行を取り除いたもの。
      */
     public function getNobrPostTitle()
     {
