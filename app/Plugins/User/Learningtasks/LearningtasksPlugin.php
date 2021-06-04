@@ -1883,7 +1883,11 @@ class LearningtasksPlugin extends UserPluginBase
         //Log::debug($request->learningtasks_name);
 
         // 設定内容を保存（一旦削除して新たに保存）
-        LearningtasksUseSettings::where('learningtasks_id', $learningtask->id)->where('post_id', 0)->delete();
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')で id のCollectionを取得して destroy()で消す。
+        // LearningtasksUseSettings::where('learningtasks_id', $learningtask->id)->where('post_id', 0)->delete();
+        $learningtasks_use_settings_ids = LearningtasksUseSettings::where('learningtasks_id', $learningtask->id)->where('post_id', 0)->pluck('id');
+        LearningtasksUseSettings::destroy($learningtasks_use_settings_ids);
+
         if ($request->filled('base_settings')) {
             $base_settings = $request->base_settings;
             foreach ($base_settings as $base_setting_key => $base_setting_value) {
