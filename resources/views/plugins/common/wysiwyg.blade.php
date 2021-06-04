@@ -147,7 +147,7 @@
     // plugins
     // change: tinymce5対応. textcolorは coreに含まれたため除外
     // $plugins = 'file image imagetools media link autolink preview textcolor code table lists advlist template ';
-    $plugins = 'file image imagetools media link autolink preview code table lists advlist template ';
+    $plugins = 'file image imagetools media link autolink preview code table lists advlist template hr ';
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
@@ -156,8 +156,8 @@
     // toolbar
     // change: tinymce5対応
     // $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
-    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code ';
-    $mobile_toolbar = 'undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview ';
+    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code ';
+    $mobile_toolbar = 'undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview ';
     // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
     if (! empty($templates_file)) {
         $toolbar .= '| template ';
@@ -241,6 +241,11 @@
 
         {{-- テーマ固有 簡易テンプレート設定 --}}
         {!!$templates_file!!}
+
+        formats: {
+            // bugfix: bootstrap4のblockquoteはclassに'blockquote'付ける
+            blockquote: { block: 'blockquote', classes: 'blockquote' }
+        },
 
         menubar  : '',
         contextmenu : '',

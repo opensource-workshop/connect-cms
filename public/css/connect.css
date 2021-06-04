@@ -216,6 +216,12 @@ h1.card-header {
     color: #ff0000;
 }
 
+/* 背景色
+------------------------------------- */
+.cc-bg-red {
+    background-color: #f6a5ab !important;
+}
+
 /* カーソル
 ------------------------------------- */
 .cc-cursor-text {

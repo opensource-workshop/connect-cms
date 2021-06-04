@@ -10,9 +10,9 @@
 @if ($children->isView(Auth::user(), false, true, $page_roles))
 
     @if ($children->id == $page_id)
-    <a class="dropdown-item {{ 'depth-' . $children->depth }} active" href="{{ url("$children->permanent_link") }}" aria-current="page">
+    <a class="dropdown-item {{ 'depth-' . $children->depth }} active" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} aria-current="page">
     @else
-    <a class="dropdown-item {{ 'depth-' . $children->depth }}" href="{{ url("$children->permanent_link") }}">
+    <a class="dropdown-item {{ 'depth-' . $children->depth }}" href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!}>
     @endif
 
         {{-- 各ページの深さをもとにインデントの表現 --}}

@@ -15,7 +15,7 @@ class AddUserIdToUsers extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             //
-            $table->string('userid')->unique()->after('email');
+            $table->string('userid', 191)->unique()->after('email');
         });
     }
 

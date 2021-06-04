@@ -75,7 +75,7 @@ use App\Models\User\Databases\DatabasesColumns;
                 <div class="input-group date" id="posted_at{{$frame_id}}" data-target-input="nearest">
                     <input type="text" name="posted_at" value="{{old('posted_at', $inputs->posted_at)}}" class="form-control datetimepicker-input" data-target="#posted_at{{$frame_id}}">
                     <div class="input-group-append" data-target="#posted_at{{$frame_id}}" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
                 @if ($errors && $errors->has('posted_at')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('posted_at')}}</div> @endif

@@ -97,7 +97,7 @@
             <div class="input-group date" id="start_date" data-target-input="nearest">
                 <input type="text" name="start_date" value="{{old('start_date', $post->start_date)}}" class="form-control datetimepicker-input" data-target="#start_date"/>
                 <div class="input-group-append" data-target="#start_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
                 </div>
             </div>
             <script type="text/javascript">
@@ -146,7 +146,7 @@
             <div class="input-group date" id="end_date" data-target-input="nearest">
                 <input type="text" name="end_date" value="{{old('end_date', $post->end_date)}}" class="form-control datetimepicker-input" data-target="#end_date" />
                 <div class="input-group-append" data-target="#end_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
                 </div>
             </div>
             <script type="text/javascript">

@@ -245,6 +245,8 @@ $app_array = [
         'DatabaseRoleName' => \App\Enums\DatabaseRoleName::class,
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
         'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
+        'Bs4Color' => \App\Enums\Bs4Color::class,
+        'RadiusType' => \App\Enums\RadiusType::class,
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
         'ConnectLocale' => \App\Enums\ConnectLocale::class,
         'GroupType' => \App\Enums\GroupType::class,
@@ -270,6 +272,8 @@ $app_array = [
         'LearningtasksExaminationColumn' => \App\Enums\LearningtasksExaminationColumn::class,
         'CounterDesignType' => \App\Enums\CounterDesignType::class,
         'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
+        'BlogFrameConfig' => \App\Enums\BlogFrameConfig::class,
+        'BlogDisplayCreatedName' => \App\Enums\BlogDisplayCreatedName::class,
         'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
 
         // utils
@@ -277,9 +281,11 @@ $app_array = [
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
+        'FrameConfig' => \App\Models\Core\FrameConfig::class,
 
         // 画像処理
         'Image' => Intervention\Image\Facades\Image::class,
+
     ],
 
 ];

@@ -18,7 +18,7 @@ class CreateUsersTable extends Migration
             $table->increments('id');
             $table->string('name');
             //$table->string('email')->unique();
-            $table->string('email')->unique()->nullable();
+            $table->string('email', 191)->unique()->nullable();
             //$table->timestamp('email_verified_at')->nullable();  // change laravel6. create migration 2021_01_27_154006_change_users_table_in_laravel6.
             $table->string('password');
             $table->rememberToken();

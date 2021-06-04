@@ -33,11 +33,13 @@
                     </a>
                     <div class="dropdown-menu">
 
-                        {{-- 自分へのリンク（ドロップダウンでリンクができなくなるため） --}}
-{{--
+                        {{-- 自分へのリンクなし --}}
+                        {{--
                         <a class="dropdown-item" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>{{$page_obj->page_name}}</a>
+                        --}}
+                        <span class="dropdown-item">{{$page_obj->page_name}}</span>
                         <div class="dropdown-divider"></div>
---}}
+
                         {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
                         @foreach($page_obj->children as $children)
                             @include('plugins.user.menus.mouseover_dropdown_no_rootlink.menu_children',['children' => $children])

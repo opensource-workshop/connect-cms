@@ -88,14 +88,24 @@
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
 
-    <!-- Themes CSS -->
+    <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '')
     <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
 @endif
 
-    <!-- Themes JS -->
+    <!-- Themes JS（基本） -->
 @if (isset($themes['js']) && $themes['js'] != '')
     <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js"></script>
+@endif
+
+    <!-- Themes CSS（追加） -->
+@if (isset($themes['additional_css']) && $themes['additional_css'] != '')
+    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css" rel="stylesheet">
+@endif
+
+    <!-- Themes JS（追加） -->
+@if (isset($themes['additional_js']) && $themes['additional_js'] != '')
+    <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js"></script>
 @endif
 
     <!-- Connect-CMS Page CSS -->
@@ -118,6 +128,23 @@
     <!-- Favicon -->
     @if (isset($configs_array) && isset($configs_array['favicon']))
         <link href="{{url('/')}}/uploads/favicon/favicon.ico" rel="SHORTCUT ICON" />
+    @endif
+
+    <!-- Polyfill -->
+    {{-- ※IEが公式に消えたら（2022年6月16日）消したい。 --}}
+    @php
+        $is_exist_whatsnews = false;
+        if(isset($plugin_instances)){
+            foreach($plugin_instances as $plugin_instance){
+                if($plugin_instance instanceof \App\Plugins\User\Whatsnews\WhatsnewsPlugin){
+                    $is_exist_whatsnews = true;
+                }
+            }
+        }
+    @endphp
+    @if ($is_exist_whatsnews)
+        {{-- IEで発生する「Promiseは定義されていません。」エラー回避＠新着プラグインの非同期処理 --}}
+        <script>window.Promise || document.write('<script src="//www.promisejs.org/polyfills/promise-7.0.4.min.js"><\/script>');</script>
     @endif
 </head>
 @php
@@ -198,9 +225,9 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
                             <li class="nav-item">
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                             @if (isset($page_obj) && $page_obj->id == $page->id)
-                                <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
+                                <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                             @else
-                                <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
+                                <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
                             @endif
 
                             {{-- 各ページの深さをもとにインデントの表現 --}}
@@ -222,9 +249,9 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
                                 <li class="nav-item">
                                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                                 @if (isset($page_obj) && $page_obj->id == $page->id)
-                                    <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link active">
+                                    <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                                 @else
-                                    <a href="{{ url("$page_obj->permanent_link") }}" class="nav-link">
+                                    <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
                                 @endif
 
                                 {{-- 各ページの深さをもとにインデントの表現 --}}

@@ -42,9 +42,11 @@
             <div class="form-group table-responsive">
                 <table class="table table-hover table-sm mb-0">
                     <thead>
+                        {{--
                         <tr>
                             <th nowrap colspan="8"><h5 class="mb-0"><span class="badge badge-secondary">共通カテゴリ</span></h5></th>
                         </tr>
+                        --}}
                         <tr>
                             <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>クラス名</th>
@@ -119,6 +121,8 @@
 
             <div class="card card-body bg-light p-2 mb-3">
                 <ul>
+                    <li>対象が「ALL」のカテゴリは「共通カテゴリ」です。</li>
+                    <li>対象が各プラグインのカテゴリは「個別カテゴリ」です。</li>
                     <li>カテゴリ設定後は、各プラグインのカテゴリ設定で表示設定が必要です。</li>
                     <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
                     <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>

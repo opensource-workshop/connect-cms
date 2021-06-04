@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コードスタディプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -23,9 +23,9 @@
 
 {{-- 結果があれば表示 --}}
 @if (isset($run_check_msgs) && $run_check_msgs)
-<div class="panel panel-danger">
-    <div class="panel-heading">制限エラー</div>
-    <div class="panel-body">
+<div class="card border-danger">
+    <div class="card-heading">制限エラー</div>
+    <div class="card-body">
         @foreach ($run_check_msgs as $run_check_msg)
             {!!$run_check_msg!!}<br />
         @endforeach

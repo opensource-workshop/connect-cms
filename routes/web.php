@@ -78,6 +78,9 @@ Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\
 // 一般プラグインの更新系アクション（画面がある場合）
 Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost')->name('post_plugin');
 
+// 一般プラグインのJSONレスポンスアクション
+Route::get('/json/{plugin_name}/{action}/{page_id?}/{frame_id?}', 'Core\DefaultController@invokeGetJson')->name('get_json');
+
 // 一般プラグインの更新系アクション（リダイレクトする場合）
 Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect')->name('post_redirect');
 Route::get('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect')->name('get_redirect');

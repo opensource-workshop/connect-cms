@@ -45,9 +45,9 @@
                     <li class="nav-item {{$page_obj->getClass()}}">
                         {{-- カレント --}}
                         @if ($ancestors->contains('id', $page_obj->id))
-                        <a class="nav-link text-nowrap active" href="{{ url("$page_obj->permanent_link") }}" aria-current="page">
+                        <a class="nav-link text-nowrap active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
                         @else
-                        <a class="nav-link text-nowrap" href="{{ url("$page_obj->permanent_link") }}">
+                        <a class="nav-link text-nowrap" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                         @endif
                             {{$page_obj->page_name}}
                         </a>

@@ -153,7 +153,7 @@
                 <div class="input-group" id="display_from{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="display_from" value="{{old('display_from', $form->display_from)}}" data-target="#display_from{{$frame_id}}">
                     <div class="input-group-append" data-target="#display_from{{$frame_id}}" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
 
@@ -171,7 +171,7 @@
                 <div class="input-group" id="display_to{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="display_to" value="{{old('display_to', $form->display_to)}}" data-target="#display_to{{$frame_id}}">
                     <div class="input-group-append" data-target="#display_to{{$frame_id}}" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
 
@@ -212,7 +212,7 @@
                 <div class="input-group" id="regist_from{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="regist_from" value="{{old('regist_from', $form->regist_from)}}" data-target="#regist_from{{$frame_id}}">
                     <div class="input-group-append" data-target="#regist_from{{$frame_id}}" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
 
@@ -230,7 +230,7 @@
                 <div class="input-group" id="regist_to{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="regist_to" value="{{old('regist_to', $form->regist_to)}}" data-target="#regist_to{{$frame_id}}">
                     <div class="input-group-append" data-target="#regist_to{{$frame_id}}" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
 
@@ -425,7 +425,7 @@
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($form) || $create_flag)
                         登録確定
