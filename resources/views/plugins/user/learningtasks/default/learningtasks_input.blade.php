@@ -49,7 +49,7 @@
         <label class="col-md-2" for="add_task_file">課題ファイル</label>
         <div class="col-md-10">
             <div class="custom-file">
-                <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
+                <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file" accept=".pdf, .doc, .docx">
                 <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
                 @if ($errors && $errors->has('add_task_file')) <div class="text-danger">{{$errors->first('add_task_file')}}</div> @endif
                 <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
