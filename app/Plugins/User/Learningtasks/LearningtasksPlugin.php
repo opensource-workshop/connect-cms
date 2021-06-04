@@ -1808,8 +1808,13 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 課題管理設定
         $learningtask->learningtasks_name  = $request->learningtasks_name;
-        $learningtask->use_report          = $request->use_report;
-        $learningtask->use_examination     = $request->use_examination;
+
+        // delete: learningtasks.use_report, learningtasks.use_examination は使われれていないため、
+        //         useReport(), useExamination(), strUseReport()を削除
+        //         use_report, use_examination 設定は、learningtasks_use_settings.use_function = 'use_report' or 'use_examination' に移行済み。
+        // $learningtask->use_report          = $request->use_report;
+        // $learningtask->use_examination     = $request->use_examination;
+
         //$learningtask->use_evaluate        = $request->use_evaluate;
         //$learningtask->need_auth           = $request->need_auth;
         $learningtask->view_count          = $request->view_count;
