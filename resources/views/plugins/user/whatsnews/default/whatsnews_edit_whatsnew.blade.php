@@ -332,7 +332,8 @@
         </div>
     </div>
     
-    <div class="form-group row border">
+    {{-- もっと見るボタンプレビュー --}}
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">ボタンプレビュー</label>
         <div class="text-center {{$frame->getSettingInputClass(true)}}">
             <p :class="[readMoreBtnClass]">
@@ -482,7 +483,7 @@
         data: function() {
             return {
                 read_more_use_flag : {{ $whatsnew->read_more_use_flag ? $whatsnew->read_more_use_flag : "0" }},
-                read_more_name : '{{ $whatsnew->read_more_name ? $whatsnew->read_more_name : '' }}',
+                read_more_name : '{{ $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る' }}',
                 read_more_btn_color_type : '{{ $whatsnew->read_more_btn_color_type ? $whatsnew->read_more_btn_color_type : Bs4Color::primary }}',
                 read_more_btn_type : '{{ $whatsnew->read_more_btn_type ? $whatsnew->read_more_btn_type : RadiusType::rounded }}',
                 read_more_btn_transparent_flag : {{ $whatsnew->read_more_btn_transparent_flag ? $whatsnew->read_more_btn_transparent_flag : "0" }}
