@@ -1133,8 +1133,9 @@ class LearningtasksPlugin extends UserPluginBase
         // 試験情報(申し込み可能な分 = 終了日時が現在より後のもの＋申込終了日時がないもの or 申込終了日時が現在より後のもの)
         $examinations = LearningtasksExaminations::where('post_id', $post->id)
                 ->where('entry_end_at', '>', date('Y-m-d H:i:s'))
-                ->orWhere(function ($query) {
-                    $query->where('end_at', '>', date('Y-m-d H:i:s'))
+                ->orWhere(function ($query) use ($post) {
+                    $query->where('post_id', $post->id)
+                            ->where('end_at', '>', date('Y-m-d H:i:s'))
                             ->whereNull('entry_end_at');
                 })
                 ->orderBy('start_at', 'asc')
