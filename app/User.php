@@ -8,6 +8,8 @@ use Illuminate\Notifications\Notifiable;
 
 use App\Notifications\PasswordResetNotification;
 
+use App\Enums\UserStatus;
+
 class User extends Authenticatable
 {
     use Notifiable;
@@ -61,13 +63,16 @@ class User extends Authenticatable
      */
     public function getStstusBackgroundClass()
     {
-        if ($this->status == \UserStatus::not_active) {
+        if ($this->status == UserStatus::not_active) {
             // 利用停止中
             return "bg-warning";
             // return "bg-secondary text-white";
-        } elseif ($this->status == \UserStatus::temporary) {
+        } elseif ($this->status == UserStatus::temporary) {
             // 仮登録
             return "bg-warning";
+        } elseif ($this->status == UserStatus::temporary_delete) {
+            // 仮削除
+            return "cc-bg-red";
         }
         return "";
     }
@@ -133,17 +138,37 @@ class User extends Authenticatable
     public function getStstusTemporaryDisabled($enum_value)
     {
         // 選択肢が仮登録の場合のみ、disabled の判定をする。
-        if ($enum_value != \UserStatus::temporary) {
+        if ($enum_value != UserStatus::temporary) {
             return "";
         }
 
         // 仮登録は、ユーザが自分で登録する際のメールアドレス確認用という位置づけ。
         // そのため、新規登録時や利用可能、利用不可状態からの仮登録への変更はできないようにする。
         // 判定としては、現在、仮登録の場合のみ、仮登録は選択可能だが、違う場合は、仮登録へ変更させない。
-        if ($this->status == \UserStatus::temporary) {
+        if ($this->status == UserStatus::temporary) {
             return "";
         }
         return "disabled";
+    }
+
+    /**
+     * 仮登録/仮削除のinput disable 属性の要否を判断して返す。
+     */
+    public function getStstusDisabled($enum_value, $is_function_edit)
+    {
+        // 仮登録の非表示判定
+        $disabled = $this->getStstusTemporaryDisabled($enum_value);
+        if ($disabled) {
+            // 非表示ならここで返す
+            return $disabled;
+        }
+
+        // 登録の時は 仮削除 を選択させない
+        if (!$is_function_edit && $enum_value == UserStatus::temporary_delete) {
+            return "disabled";
+        }
+
+        return "";
     }
 
     /**

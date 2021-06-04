@@ -30,7 +30,7 @@
                     <div class="input-group date" id="holiday_date" data-target-input="nearest">
                         <input type="text" name="holiday_date" value="{{old('holiday_date', $post->holiday_date)}}" class="form-control datetimepicker-input" data-target="#holiday_date"/>
                         <div class="input-group-append" data-target="#holiday_date" data-toggle="datetimepicker">
-                            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                            <div class="input-group-text"><i class="far fa-clock"></i></div>
                         </div>
                     </div>
                     @if ($errors && $errors->has('holiday_date')) <div class="text-danger">{{$errors->first('holiday_date')}}</div> @endif

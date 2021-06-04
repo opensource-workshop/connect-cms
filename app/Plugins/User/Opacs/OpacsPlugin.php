@@ -2,20 +2,19 @@
 
 namespace App\Plugins\User\Opacs;
 
-use SimpleXMLElement;
+// use SimpleXMLElement;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 
-use DB;
-
 use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
+// use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Opacs\Opacs;
@@ -95,7 +94,7 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  書誌データ取得
+     * 書誌データ取得
      */
     private function getBook($request, $opacs_books)
     {
@@ -361,10 +360,10 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // Page データ
-        $page = Page::where('id', $page_id)->first();
+        // $page = Page::where('id', $page_id)->first();
 
         // 検索キーワード
-        $keyword = $request->session()->get('search_keyword');
+        $keyword = $request->session()->get('search_keyword.'.$frame_id);
 
         // データ取得（1ページの表示件数指定）
         if (empty($opac_frame->opacs_id)) {
@@ -1393,7 +1392,7 @@ class OpacsPlugin extends UserPluginBase
         $request->flash();
 
         // キーワードをセッションに保存しておく。
-        $request->session()->put('search_keyword', $request->keyword);
+        $request->session()->put('search_keyword.'.$frame_id, $request->keyword);
 
         // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
         return $this->index($request, $page_id, $frame_id);
@@ -1408,7 +1407,7 @@ class OpacsPlugin extends UserPluginBase
         $request->flash();
 
         // キーワードをセッションに保存しておく。
-        $request->session()->forget('search_keyword');
+        $request->session()->forget('search_keyword.'.$frame_id);
 
         // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
         return $this->index($request, $page_id, $frame_id);

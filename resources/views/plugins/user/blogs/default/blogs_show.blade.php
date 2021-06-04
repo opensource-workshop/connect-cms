@@ -19,6 +19,11 @@
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
+        {{-- 投稿者名 --}}
+        @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+            <b>[{{$post->created_name}}]</b>
+        @endif
+
         {{-- タイトル --}}
         <h2>{{$post->post_title}}</h2>
     </header>
@@ -30,6 +35,11 @@
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
+        {{-- 投稿者名 --}}
+        @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+            <b>[{{$post->created_name}}]</b>
+        @endif
+
         {{-- タイトル --}}
         <h2>{{$post->post_title}}</h2>
     </header>
@@ -40,6 +50,12 @@
     <header>
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+
+        {{-- 投稿者名 --}}
+        @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+            <b>[{{$post->created_name}}]</b>
+        @endif
 
         {{-- タイトル --}}
         <h2>{{$post->post_title}}</h2>
@@ -54,6 +70,11 @@
 
         {{-- 投稿日時 --}}
         <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+        {{-- 投稿者名 --}}
+        @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+            <b>[{{$post->created_name}}]</b>
+        @endif
     </header>
 @endif
 

@@ -229,7 +229,7 @@
             <div class="input-group date" id="accept_date" data-target-input="nearest">
                 <input type="text" name="accept_date" value="{{old('accept_date', $opacs_books->accept_date)}}" class="form-control datetimepicker-input" data-target="#accept_date"/>
                 <div class="input-group-append" data-target="#accept_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('accept_date')) <div class="text-danger">{{$errors->first('accept_date')}}</div> @endif
@@ -259,7 +259,7 @@
             <div class="input-group date" id="storage_life" data-target-input="nearest">
                 <input type="text" name="storage_life" value="{{old('storage_life', $opacs_books->storage_life)}}" class="form-control datetimepicker-input" data-target="#storage_life"/>
                 <div class="input-group-append" data-target="#storage_life" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('storage_life')) <div class="text-danger">{{$errors->first('storage_life')}}</div> @endif
@@ -293,7 +293,7 @@
             <div class="input-group date" id="remove_date" data-target-input="nearest">
                 <input type="text" name="remove_date" value="{{old('remove_date', $opacs_books->remove_date)}}" class="form-control datetimepicker-input" data-target="#remove_date"/>
                 <div class="input-group-append" data-target="#remove_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('remove_date')) <div class="text-danger">{{$errors->first('remove_date')}}</div> @endif
@@ -337,7 +337,7 @@
             <div class="input-group date" id="last_lending_date" data-target-input="nearest">
                 <input type="text" name="last_lending_date" value="{{old('last_lending_date', $opacs_books->last_lending_date)}}" class="form-control datetimepicker-input" data-target="#last_lending_date"/>
                 <div class="input-group-append" data-target="#last_lending_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('last_lending_date')) <div class="text-danger">{{$errors->first('last_lending_date')}}</div> @endif

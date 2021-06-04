@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -87,7 +87,8 @@
         <div class="{{$frame->getSettingInputClass(true)}} row">
             <div class="mb-0 col-12">
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('lent_setting', $opac->lent_setting) == '0')
+                    @if (old('lent_setting', $opac->lent_setting) == null ||
+                        old('lent_setting', $opac->lent_setting) == '0')
                         <input type="radio" value="0" id="lent_setting0" name="lent_setting" class="custom-control-input" checked="checked">
                     @else
                         <input type="radio" value="0" id="lent_setting0" name="lent_setting" class="custom-control-input">
@@ -165,7 +166,8 @@
         <div class="{{$frame->getSettingInputClass(true)}} row">
             <div class="mb-0 col-12">
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('lent_limit', $opac->lent_limit) == '0')
+                    @if (old('lent_limit', $opac->lent_limit) == null ||
+                        old('lent_limit', $opac->lent_limit) == '0')
                         <input type="radio" value="0" id="lent_limit0" name="lent_limit" class="custom-control-input" checked="checked">
                     @else
                         <input type="radio" value="0" id="lent_limit0" name="lent_limit" class="custom-control-input">
@@ -236,7 +238,7 @@
                 <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($opac) || $create_flag)
                         登録確定

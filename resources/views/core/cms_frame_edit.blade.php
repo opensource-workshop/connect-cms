@@ -196,12 +196,12 @@
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     @foreach (ContentOpenType::enum as $key => $value)
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" 
-                                value="{{ $key }}" 
-                                id="{{ "content_open_type_${key}" }}" 
-                                name="content_open_type" 
-                                class="custom-control-input" 
+                            <input
+                                type="radio"
+                                value="{{ $key }}"
+                                id="{{ "content_open_type_${key}" }}"
+                                name="content_open_type"
+                                class="custom-control-input"
                                 {{ old('content_open_type', $frame->content_open_type) ? 'checked' : '' }}
                                 v-model="v_content_open_type"
                             >
@@ -216,17 +216,17 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">公開日時From</label>
                 <div class="col-md-9 input-group date" id="content_open_date_from" data-target-input="nearest">
-                    <input 
-                        type="text" 
-                        name="content_open_date_from" 
-                        value="{{old('content_open_date_from', $frame ? $frame->content_open_date_from : '')}}" 
+                    <input
+                        type="text"
+                        name="content_open_date_from"
+                        value="{{old('content_open_date_from', $frame ? $frame->content_open_date_from : '')}}"
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_from"
                         placeholder="YYYY-MM-DD hh:mm:ss"
                         :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_from" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
                 <small class="offset-md-3 col-md-9 text-muted">
@@ -244,17 +244,17 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">公開日時To</label>
                 <div class="col-md-9 input-group date" id="content_open_date_to" data-target-input="nearest">
-                    <input 
-                        type="text" 
-                        name="content_open_date_to" 
-                        value="{{old('content_open_date_to', $frame ? $frame->content_open_date_to : '')}}" 
+                    <input
+                        type="text"
+                        name="content_open_date_to"
+                        value="{{old('content_open_date_to', $frame ? $frame->content_open_date_to : '')}}"
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_to"
                         placeholder="YYYY-MM-DD hh:mm:ss"
                         :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_to" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
                 <small class="offset-md-3 col-md-9 text-muted">

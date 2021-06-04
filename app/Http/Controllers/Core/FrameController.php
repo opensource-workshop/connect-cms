@@ -14,6 +14,7 @@ use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Core\FrameConfig;
 use App\Models\Core\Plugins;
 
 use App\Enums\ContentOpenType;
@@ -101,10 +102,11 @@ class FrameController extends ConnectController
         // Page データ
         $page = Page::where('id', $page_id)->first();
 
-        // 現在はフレームの削除のみ。
+        // 現在はフレーム、フレーム設定の削除のみ。
         // バケツとプラグイン・データはプラグイン側で対応する。
         // 関数を呼び出しても良いかも。
         Frame::destroy($frame_id);
+        FrameConfig::where('frame_id', $frame_id)->delete();
 
         return redirect($page->permanent_link);
     }

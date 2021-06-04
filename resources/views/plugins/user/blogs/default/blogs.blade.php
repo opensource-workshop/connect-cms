@@ -12,15 +12,15 @@
 
 @if (isset($buckets) && isset($frame) && $frame->bucket_id)
     <div class="row">
-        <p class="text-left col-6">
+        <p class="text-left col-4">
             @if (isset($blog_frame->rss) && $blog_frame->rss == 1)
-            <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
+                <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
             @endif
         </p>
 
         {{-- 新規登録 --}}
         @can('posts.create',[[null, $frame->plugin_name, $buckets]])
-            <p class="text-right col-6">
+            <p class="text-right col">
                 {{-- 新規登録ボタン --}}
                 <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
@@ -62,6 +62,11 @@
                 {{-- 投稿日時 --}}
                 <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
 
+                {{-- 投稿者名 --}}
+                @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+                    <b>[{{$post->created_name}}]</b>
+                @endif
+
                 {{-- タイトル --}}
                 <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
             </header>
@@ -74,6 +79,12 @@
 
                 {{-- タイトル --}}
                 <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+
+                {{-- 投稿者名 --}}
+                @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+                    [{{$post->created_name}}]
+                @endif
+
             </header>
 
         @elseif (isset($is_template_sidetitleindex))
@@ -88,6 +99,12 @@
 
                 {{-- タイトル --}}
                 <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
+
+                {{-- 投稿者名 --}}
+                @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+                    [{{$post->created_name}}]
+                @endif
+
             </header>
 
         @else
@@ -98,6 +115,12 @@
 
                 {{-- 投稿日時 --}}
                 <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+
+                {{-- 投稿者名 --}}
+                @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+                    <b>[{{$post->created_name}}]</b>
+                @endif
+
             </header>
         @endif
 
