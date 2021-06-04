@@ -432,7 +432,7 @@
             <label class="col-md-3 text-md-right" for="add_task_file">試験問題など</label>
             <div class="col-md-9">
                 <div class="custom-file">
-                    <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file">
+                    <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file" accept=".pdf, .doc, .docx">
                     <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
                     @include('common.errors_inline', ['name' => 'add_task_file'])
                 </div>

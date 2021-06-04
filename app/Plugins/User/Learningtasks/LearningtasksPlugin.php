@@ -29,7 +29,6 @@ use App\Models\User\Learningtasks\LearningtasksCategories;
 use App\Models\User\Learningtasks\LearningtasksConfigs;
 use App\Models\User\Learningtasks\LearningtasksExaminations;
 use App\Models\User\Learningtasks\LearningtasksPosts;
-use App\Models\User\Learningtasks\LearningtasksPostsTags;
 use App\Models\User\Learningtasks\LearningtasksPostsFiles;
 use App\Models\User\Learningtasks\LearningtasksUsers;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
@@ -223,7 +222,12 @@ class LearningtasksPlugin extends UserPluginBase
                     'categories.background_color as category_background_color',
                     'categories.category as category'
                 )
-                ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                // bugfix: 論理削除を考慮
+                // ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                ->join('learningtasks', function ($join) {
+                    $join->on('learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                            ->whereNull('learningtasks.deleted_at');
+                })
                 // bugfix: 論理削除を考慮
                 // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
                 ->leftJoin('categories', function ($join) {
@@ -271,7 +275,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  カテゴリデータの取得
+     * カテゴリデータの取得
      */
     private function getLearningtasksCategories($learningtask_id)
     {
@@ -279,7 +283,8 @@ class LearningtasksPlugin extends UserPluginBase
                           ->join('learningtasks_categories', function ($join) use ($learningtask_id) {
                               $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
                                    ->where('learningtasks_categories.learningtasks_id', '=', $learningtask_id)
-                                   ->where('learningtasks_categories.view_flag', 1);
+                                   ->where('learningtasks_categories.view_flag', 1)
+                                   ->whereNull('learningtasks_categories.deleted_at');
                           })
                           ->whereNull('plugin_id')
                           ->orWhere('plugin_id', $learningtask_id)
@@ -797,7 +802,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  教員のタスク一覧
+     * 教員のタスク一覧
      */
     private function getTeacherTasks($tool, $posts)
     {
@@ -809,54 +814,70 @@ class LearningtasksPlugin extends UserPluginBase
         // posts はログインしている教員が見るべき課題に絞られているため、使用する。
         $teacher_tasks = array();
         foreach ($posts as $post) {
-            $users_statuses_tmp = LearningtasksUsersStatuses::select(
-                'learningtasks_users_statuses.*',
-                'users.id as user_id',
-                'learningtasks_posts.post_title',
-                'learningtasks_posts.id as post_id',
-                'users.name as user_name'
-            )
-            ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-            ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
-            ->where('post_id', $post->id)
-            ->orderBy('id', 'asc')
-            ->get();
+            $users_statuses_tmp = LearningtasksUsersStatuses::
+                    select(
+                        'learningtasks_users_statuses.*',
+                        'users.id as user_id',
+                        'learningtasks_posts.post_title',
+                        'learningtasks_posts.id as post_id',
+                        'users.name as user_name'
+                    )
+                    ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+                    // bugfix: 論理削除を考慮
+                    // ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                    ->join('learningtasks_posts', function ($join) {
+                        $join->on('learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                                ->whereNull('learningtasks_posts.deleted_at');
+                    })
+                    ->where('post_id', $post->id)
+                    ->orderBy('id', 'asc')
+                    ->get();
 
             // Collection の機能でユーザ毎に分割する。
             $users_statuses = $users_statuses_tmp->groupBy('user_id');
 
             foreach ($users_statuses as $users_status) {
-                // レポートの評価が必要か。(レポートの提出と評価の最後を見る)
-                $last_report_task = $users_status->whereIn('task_status', [1, 2])->last();
-                // 最後が 1 なら、レポートの評価が必要
-                if (!empty($last_report_task) && $last_report_task->task_status == 1) {
-                    $teacher_tasks[] = $last_report_task;
+                // レポート
+                if ($tool->checkFunction('use_report', $post->id)) {
+                    // レポートの評価が必要か。(レポートの提出と評価の最後を見る)
+                    $last_report_task = $users_status->whereIn('task_status', [1, 2])->last();
+                    // 最後が 1 なら、レポートの評価が必要
+                    if (!empty($last_report_task) && $last_report_task->task_status == 1) {
+                        $teacher_tasks[] = $last_report_task;
+                    }
                 }
 
-                // 試験の評価が必要か。(試験の提出と評価の最後を見る)
-                $last_examination_task = $users_status->whereIn('task_status', [5, 6])->last();
-                // 最後が 5 なら、試験の評価が必要
-                if (!empty($last_examination_task) && $last_examination_task->task_status == 5) {
-                    $teacher_tasks[] = $last_examination_task;
+                // 試験
+                if ($tool->checkFunction('use_examination', $post->id)) {
+                    // 試験の評価が必要か。(試験の提出と評価の最後を見る)
+                    $last_examination_task = $users_status->whereIn('task_status', [5, 6])->last();
+                    // 最後が 5 なら、試験の評価が必要
+                    if (!empty($last_examination_task) && $last_examination_task->task_status == 5) {
+                        $teacher_tasks[] = $last_examination_task;
+                    }
                 }
 
-                // 総合評価が必要か。(レポートが合格、試験が合格、総合評価なしの場合)
-                $last_evaluate_task = $users_status->whereIn('task_status', [8])->last();
+                // 総合評価
+                if ($tool->checkFunction('use_evaluate', $post->id)) {
+                    // 総合評価が必要か。(レポートが合格、試験が合格、総合評価なしの場合)
+                    $last_evaluate_task = $users_status->whereIn('task_status', [8])->last();
 
-                // 上で取得したレポートのステータスが合格＆上で取得した試験のステータスが合格＆総合評価がまだない場合
-                if (!empty($last_report_task) && $last_report_task->task_status == 2 &&
-                    (($last_report_task->grade == 'A') || ($last_report_task->grade == 'B') || ($last_report_task->grade == 'C')) &&
-                    !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
-                    (($last_examination_task->grade == 'A') || ($last_examination_task->grade == 'B') || ($last_examination_task->grade == 'C')) &&
-                    (empty($last_evaluate_task))) {
-                    //(empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
+                    // 上で取得したレポートのステータスが合格＆上で取得した試験のステータスが合格＆総合評価がまだない場合
+                    if (!empty($last_report_task) && $last_report_task->task_status == 2 &&
+                        ($last_report_task->grade == 'A' || $last_report_task->grade == 'B' || $last_report_task->grade == 'C') &&
+                        !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
+                        ($last_examination_task->grade == 'A' || $last_examination_task->grade == 'B' || $last_examination_task->grade == 'C') &&
+                        (empty($last_evaluate_task))) {
+                        //(empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
 
-                    // 総合評価の条件に合致。ただし、この条件では、総合評価のデータはまだない。
-                    // データがないと画面表示に際に判定できないため、試験結果をオブジェクトコピーし、ステータスを 8 にしておく。
-                    $last_evaluate_task = clone $last_examination_task;
-                    $last_evaluate_task->task_status = 8;
-                    $teacher_tasks[] = $last_evaluate_task;
+                        // 総合評価の条件に合致。ただし、この条件では、総合評価のデータはまだない。
+                        // データがないと画面表示に際に判定できないため、試験結果をオブジェクトコピーし、ステータスを 8 にしておく。
+                        $last_evaluate_task = clone $last_examination_task;
+                        $last_evaluate_task->task_status = 8;
+                        $teacher_tasks[] = $last_evaluate_task;
+                    }
                 }
+
             }
         }
         return $teacher_tasks;
@@ -983,7 +1004,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
 
         // タグ
-        $learningtasks_posts_tags = "";
+        // $learningtasks_posts_tags = "";
 
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -991,7 +1012,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtask'             => $learningtask,
             'learningtasks_posts'      => $learningtasks_posts,
             'learningtasks_categories' => $learningtasks_categories,
-            'learningtasks_posts_tags' => $learningtasks_posts_tags,
+            // 'learningtasks_posts_tags' => $learningtasks_posts_tags,
             //'errors'           => $errors,
             ]
         )->withInput($request->all);
@@ -1134,8 +1155,9 @@ class LearningtasksPlugin extends UserPluginBase
         // 試験情報(申し込み可能な分 = 終了日時が現在より後のもの＋申込終了日時がないもの or 申込終了日時が現在より後のもの)
         $examinations = LearningtasksExaminations::where('post_id', $post->id)
                 ->where('entry_end_at', '>', date('Y-m-d H:i:s'))
-                ->orWhere(function ($query) {
-                    $query->where('end_at', '>', date('Y-m-d H:i:s'))
+                ->orWhere(function ($query) use ($post) {
+                    $query->where('post_id', $post->id)
+                            ->where('end_at', '>', date('Y-m-d H:i:s'))
                             ->whereNull('entry_end_at');
                 })
                 ->orderBy('start_at', 'asc')
@@ -1178,12 +1200,12 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
 
         // タグ取得
-        $learningtasks_posts_tags_array = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
-        $learningtasks_posts_tags = "";
-        foreach ($learningtasks_posts_tags_array as $learningtasks_posts_tags_item) {
-            $learningtasks_posts_tags .= ',' . $learningtasks_posts_tags_item->tags;
-        }
-        $learningtasks_posts_tags = trim($learningtasks_posts_tags, ',');
+        // $learningtasks_posts_tags_array = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
+        // $learningtasks_posts_tags = "";
+        // foreach ($learningtasks_posts_tags_array as $learningtasks_posts_tags_item) {
+        //     $learningtasks_posts_tags .= ',' . $learningtasks_posts_tags_item->tags;
+        // }
+        // $learningtasks_posts_tags = trim($learningtasks_posts_tags, ',');
 
         // 課題管理データを取得
         $learningtasks_posts_files = $this->getTaskFile([$learningtasks_post->id]);
@@ -1193,7 +1215,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtask' => $learningtask,
             'learningtasks_posts' => $learningtasks_post,
             'learningtasks_categories' => $learningtasks_categories,
-            'learningtasks_posts_tags' => $learningtasks_posts_tags,
+            // 'learningtasks_posts_tags' => $learningtasks_posts_tags,
             'learningtasks_posts_files' => (array_key_exists($learningtasks_post->id, $learningtasks_posts_files)) ? $learningtasks_posts_files[$learningtasks_post->id] : null,
         ]);
     }
@@ -1484,15 +1506,22 @@ class LearningtasksPlugin extends UserPluginBase
     public function downloadGradeImpl($request, $page_id, $frame_id, $post_id)
     {
         // 成績
-        $users_statuses = LearningtasksUsersStatuses::select(
-            'learningtasks_users_statuses.*',
-            'learningtasks_posts.post_title',
-            'users.name'
-        )->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
-         ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-         ->where('learningtasks_users_statuses.post_id', $post_id)
-         ->orderBy('learningtasks_users_statuses.id', 'asc')
-         ->get();
+        $users_statuses = LearningtasksUsersStatuses::
+                select(
+                    'learningtasks_users_statuses.*',
+                    'learningtasks_posts.post_title',
+                    'users.name'
+                )
+                // bugfix: 論理削除を考慮
+                // ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                ->join('learningtasks_posts', function ($join) {
+                    $join->on('learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                            ->whereNull('learningtasks_posts.deleted_at');
+                })
+                ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+                ->where('learningtasks_users_statuses.post_id', $post_id)
+                ->orderBy('learningtasks_users_statuses.id', 'asc')
+                ->get();
 
         // 成績ステータス毎に、最終のものを抜き出す。（task_status で上書きすることで最後が残る）
         $statuses_ojb = array();
@@ -1640,21 +1669,68 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function delete($request, $page_id, $frame_id, $post_id)
     {
-        // id が渡された場合、データを削除
-        if ($post_id) {
-            // 同じcontents_id のデータを削除するため、一旦、対象データを取得
-            //$post = LearningtasksPosts::where('id', $learningtasks_posts_id)->first();
-
-            // 削除ユーザ、削除日を設定する。（複数レコード更新のため、自動的には入らない）
-            //LearningtasksPosts::where('id', $post->post_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
-
-            // データを削除する。
-            LearningtasksPosts::find($post_id)->delete();
+        // 課題データ取得
+        $learningtasks_posts = LearningtasksPosts::find($post_id);
+        if (empty($learningtasks_posts)) {
+            // 表示用の初期処理を呼ぶ。
+            return $this->index($request, $page_id, $frame_id);
         }
+
+        ////
+        //// 添付ファイル及びデータ削除
+        ////
+        //   learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
+        //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1 取得
+        $learningtasks_posts_files = LearningtasksPostsFiles::where('post_id', $post_id);
+        $learningtasks_posts_files_upload_ids = $learningtasks_posts_files->pluck('upload_id');
+
+        // learningtasks_users_statuses 成績 取得
+        $learningtasks_users_statuses = LearningtasksUsersStatuses::where('post_id', $post_id);
+        $learningtasks_users_statuses_upload_ids = $learningtasks_users_statuses->pluck('upload_id');
+
+        // dd($learningtasks_posts_files_upload_ids, $learningtasks_users_statuses_upload_ids);
+        // Collectionマージ
+        $del_upload_ids = $learningtasks_posts_files_upload_ids->merge($learningtasks_users_statuses_upload_ids);
+        // dd($del_upload_ids);
+
+        // uploads 削除
+        // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
+        $delete_uploads = Uploads::whereIn('id', $del_upload_ids)->get();
+        foreach ($delete_uploads as $delete_upload) {
+            // ファイルの削除
+            $directory = $this->getDirectory($delete_upload->id);
+            Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+            // uploadの削除
+            $delete_upload->delete();
+        }
+
+        ////
+        //// 課題データ削除
+        ////
+        // learningtasks_examinations 試験日データ削除
+        $learningtasks_examinations_ids = LearningtasksExaminations::where('post_id', $post_id)->pluck('id');
+        LearningtasksExaminations::destroy($learningtasks_examinations_ids);
+
+        // learningtasks_users_statuses 成績 削除
+        $learningtasks_users_statuses_ids = $learningtasks_users_statuses->pluck('id');
+        LearningtasksUsersStatuses::destroy($learningtasks_users_statuses_ids);
+
+        // learningtasks_users 参加設定（受講者・教員）削除
+        $learningtasks_users_ids = LearningtasksUsers::where('post_id', $post_id)->pluck('id');
+        LearningtasksUsers::destroy($learningtasks_users_ids);
+
+        // 課題の添付ファイルのテーブルデータ 削除
+        $learningtasks_posts_files_ids = $learningtasks_posts_files->pluck('id');
+        LearningtasksPostsFiles::destroy($learningtasks_posts_files_ids);
+
+        // 課題データを削除する。
+        $learningtasks_posts->delete();
+
 
         // 削除後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
@@ -1667,8 +1743,13 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // Frame データ
         $learningtasks_frame = Frame::select('frames.*', 'learningtasks.id as learningtasks_id', 'learningtasks.view_count')
-                      ->leftJoin('learningtasks', 'learningtasks.bucket_id', '=', 'frames.bucket_id')
-                      ->where('frames.id', $frame_id)->first();
+                // bugfix: 論理削除を考慮
+                // ->leftJoin('learningtasks', 'learningtasks.bucket_id', '=', 'frames.bucket_id')
+                ->leftJoin('learningtasks', function ($join) {
+                    $join->on('learningtasks.bucket_id', '=', 'frames.bucket_id')
+                            ->whereNull('learningtasks.deleted_at');
+                })
+                ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $learningtasks = Learningtasks::orderBy('created_at', 'desc')
@@ -1761,8 +1842,19 @@ class LearningtasksPlugin extends UserPluginBase
                 'plugin_name' => 'learningtasks'
             ]);
 
-            // 課題管理データ新規オブジェクト
-            $learningtask = new Learningtasks();
+            if (empty($request->copy_learningtask_id)) {
+                // 登録
+
+                // 課題管理データ新規オブジェクト
+                $learningtask = new Learningtasks();
+            } else {
+                // コピー
+
+                // コピー元IDで、課題管理データ取得
+                $copy_learningtask = Learningtasks::find($request->copy_learningtask_id);
+                // ID消して複製
+                $learningtask = $copy_learningtask->replicate();
+            }
             $learningtask->bucket_id = $bucket_id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
@@ -1786,8 +1878,13 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 課題管理設定
         $learningtask->learningtasks_name  = $request->learningtasks_name;
-        $learningtask->use_report          = $request->use_report;
-        $learningtask->use_examination     = $request->use_examination;
+
+        // delete: learningtasks.use_report, learningtasks.use_examination は使われれていないため、
+        //         useReport(), useExamination(), strUseReport()を削除
+        //         use_report, use_examination 設定は、learningtasks_use_settings.use_function = 'use_report' or 'use_examination' に移行済み。
+        // $learningtask->use_report          = $request->use_report;
+        // $learningtask->use_examination     = $request->use_examination;
+
         //$learningtask->use_evaluate        = $request->use_evaluate;
         //$learningtask->need_auth           = $request->need_auth;
         $learningtask->view_count          = $request->view_count;
@@ -1809,7 +1906,11 @@ class LearningtasksPlugin extends UserPluginBase
         //Log::debug($request->learningtasks_name);
 
         // 設定内容を保存（一旦削除して新たに保存）
-        LearningtasksUseSettings::where('learningtasks_id', $learningtask->id)->where('post_id', 0)->delete();
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')で id のCollectionを取得して destroy()で消す。
+        // LearningtasksUseSettings::where('learningtasks_id', $learningtask->id)->where('post_id', 0)->delete();
+        $learningtasks_use_settings_ids = LearningtasksUseSettings::where('learningtasks_id', $learningtask->id)->where('post_id', 0)->pluck('id');
+        LearningtasksUseSettings::destroy($learningtasks_use_settings_ids);
+
         if ($request->filled('base_settings')) {
             $base_settings = $request->base_settings;
             foreach ($base_settings as $base_setting_key => $base_setting_value) {
@@ -1832,57 +1933,206 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
 
+        // 登録
+        if (empty($request->learningtask_id)) {
+            // コピーIDあり
+            if ($request->copy_learningtask_id) {
+                // [コピーする]
+                // ・(LearningtasksPosts). 各課題コピー
+                // ・learningtasks_use_settings (LearningtasksUseSettings). 課題の各設定コピー
+                // ・learningtasks_configs (LearningtasksConfigs). メール設定
+                // ・個別カテゴリコピー
+                // ・LearningtasksCategories 課題カテゴリの表示する/しない・表示順データコピー
+                //   ※ LearningtasksCategoriesの共通カテゴリの表示する/しない、表示順はコピーしない。もし必要になったら実装する。
+                //
+                // [コピーしない]
+                // ・ファイル
+                //   ・learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
+                //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1
+                //   ・learningtasks_users_statuses.upload_id (成績) レポート提出ファイル等
+                //   ・uploads (ファイル)
+                // ・learningtasks_examinations 試験日
+                // ・learningtasks_users 参加設定（受講者・教員）
+                // ・learningtasks_users_statuses 成績
+
+                // 課題データ取得
+                $copy_learningtasks_posts = LearningtasksPosts::where('learningtasks_id', $request->copy_learningtask_id)->get();
+                foreach ($copy_learningtasks_posts as $copy_learningtasks_post) {
+                    // コピー元のpost_id
+                    $origin_post_id = $copy_learningtasks_post->id;
+
+                    // 課題データ. ID消して複製
+                    $learningtasks_post = $copy_learningtasks_post->replicate();
+                    $learningtasks_post->learningtasks_id = $learningtask->id;
+                    $learningtasks_post->save();
+
+                    // learningtasks_use_settings (LearningtasksUseSettings). 課題の各設定コピー
+                    $copy_user_learningtasks_use_settings = LearningtasksUseSettings::where('learningtasks_id', $request->copy_learningtask_id)
+                            ->where('post_id', $origin_post_id)
+                            ->get();
+                    foreach ($copy_user_learningtasks_use_settings as $copy_user_learningtasks_use_setting) {
+                        // ID消して複製
+                        $user_learningtasks_use_setting = $copy_user_learningtasks_use_setting->replicate();
+                        $user_learningtasks_use_setting->learningtasks_id = $learningtask->id;
+                        $user_learningtasks_use_setting->post_id = $learningtasks_post->id;
+                        $user_learningtasks_use_setting->save();
+                    }
+                }
+
+                // learningtasks_configs (LearningtasksConfigs). メール設定コピー
+                $copy_learningtasks_configs = LearningtasksConfigs::where('learningtasks_id', $request->copy_learningtask_id)
+                        ->where('post_id', 0)
+                        ->get();
+                foreach ($copy_learningtasks_configs as $copy_learningtasks_config) {
+                    // ID消して複製
+                    $learningtasks_config = $copy_learningtasks_config->replicate();
+                    $learningtasks_config->learningtasks_id = $learningtask->id;
+                    $learningtasks_config->save();
+                }
+
+                // カテゴリコピー. （カテゴリは課題管理毎に別々に存在してるため）
+                // where('plugin_id', $learningtask->id)
+                $copy_categories = Categories::where('plugin_id', $request->copy_learningtask_id)->where('target', 'learningtasks')->get();
+                foreach ($copy_categories as $copy_category) {
+                    // コピー元のpost_id
+                    $origin_categories_id = $copy_category->id;
+
+                    // カテゴリ. ID消して複製
+                    $category = $copy_category->replicate();
+                    $category->plugin_id = $learningtask->id;
+                    $category->save();
+
+                    // 課題カテゴリデータ取得
+                    $copy_learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $request->copy_learningtask_id)
+                            ->where('categories_id', $origin_categories_id)
+                            ->get();
+                    foreach ($copy_learningtasks_categories as $copy_learningtasks_categorie) {
+                        // ID消して複製
+                        $learningtasks_categorie = $copy_learningtasks_categorie->replicate();
+                        $learningtasks_categorie->learningtasks_id = $learningtask->id;
+                        $learningtasks_categorie->categories_id = $category->id;
+                        $learningtasks_categorie->save();
+                    }
+                }
+
+            }
+        }
+
         // 登録後はリダイレクトして編集ページを開く。
         return collect(['redirect_path' => url('/') . "/plugin/learningtasks/editBuckets/" . $page_id . "/" . $frame_id . "/" . $learningtask->id . "#frame-" . $frame_id]);
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $learningtask_id)
     {
-        // learningtasks_id がある場合、データを削除
-        if ($learningtask_id) {
-            // 記事データを削除する。
-            // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-            // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
-            //
-            // LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
-            $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
-            LearningtasksPosts::destroy($learningtasks_posts_ids);
+        // change: backetsは $frame->bucket_id で消さない。選択したLearningtasksのbucket_idで消す
+        $learningtasks = Learningtasks::find($learningtask_id);
+        if (empty($learningtasks)) {
+            return;
+        }
 
-            $learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $learningtask_id);
-            $learningtasks_categories_categories_ids = $learningtasks_categories->pluck('categories_id');
-            $learningtasks_categories_ids = $learningtasks_categories->pluck('id');
+        // 課題データ取得
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
+        $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
 
-            // カテゴリ削除. カテゴリは課題管理毎に別々に存在してるため、削除する
-            $categories_ids = Categories::whereIn('id', $learningtasks_categories_categories_ids)->where('target', 'learningtasks')->pluck('id');
-            Categories::destroy($categories_ids);
+        ////
+        //// 添付ファイル及びデータ削除
+        ////
+        //   learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
+        //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1 取得
+        $learningtasks_posts_files = LearningtasksPostsFiles::whereIn('post_id', $learningtasks_posts_ids);
+        $learningtasks_posts_files_upload_ids = $learningtasks_posts_files->pluck('upload_id');
 
-            // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ https://github.com/opensource-workshop/connect-cms/issues/790
-            // 課題管理カテゴリ削除
-            LearningtasksCategories::destroy($learningtasks_categories_ids);
+        // learningtasks_users_statuses 成績 取得
+        $learningtasks_users_statuses = LearningtasksUsersStatuses::whereIn('post_id', $learningtasks_posts_ids);
+        $learningtasks_users_statuses_upload_ids = $learningtasks_users_statuses->pluck('upload_id');
+
+        // Collectionマージ
+        $del_upload_ids = $learningtasks_posts_files_upload_ids->merge($learningtasks_users_statuses_upload_ids);
+        // dd($del_upload_ids);
+
+        // uploads 削除
+        // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
+        $delete_uploads = Uploads::whereIn('id', $del_upload_ids)->get();
+        foreach ($delete_uploads as $delete_upload) {
+            // ファイルの削除
+            $directory = $this->getDirectory($delete_upload->id);
+            Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+            // uploadの削除
+            $delete_upload->delete();
+        }
+
+        // 課題の添付ファイルのテーブルデータ 削除
+        $learningtasks_posts_files_ids = $learningtasks_posts_files->pluck('id');
+        LearningtasksPostsFiles::destroy($learningtasks_posts_files_ids);
+
+        ////
+        //// 課題データ削除
+        ////
+        // learningtasks_examinations 試験日データ削除
+        $learningtasks_examinations_ids = LearningtasksExaminations::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
+        LearningtasksExaminations::destroy($learningtasks_examinations_ids);
+
+        // learningtasks_users_statuses 成績 削除
+        $learningtasks_users_statuses_ids = $learningtasks_users_statuses->pluck('id');
+        LearningtasksUsersStatuses::destroy($learningtasks_users_statuses_ids);
+
+        // learningtasks_users 参加設定（受講者・教員）削除
+        $learningtasks_users_ids = LearningtasksUsers::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
+        LearningtasksUsers::destroy($learningtasks_users_ids);
+
+        // 課題データを削除する。
+        LearningtasksPosts::destroy($learningtasks_posts_ids);
+
+        ////
+        //// カテゴリ削除
+        ////
+        // カテゴリデータ取得
+        $learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $learningtask_id);
+        $learningtasks_categories_categories_ids = $learningtasks_categories->pluck('categories_id');
+        $learningtasks_categories_ids = $learningtasks_categories->pluck('id');
+
+        // カテゴリ削除. カテゴリは課題管理毎に別々に存在してるため、削除する
+        $categories_ids = Categories::whereIn('id', $learningtasks_categories_categories_ids)->where('target', 'learningtasks')->pluck('id');
+        Categories::destroy($categories_ids);
+
+        // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ https://github.com/opensource-workshop/connect-cms/issues/790
+        // 課題管理カテゴリ削除
+        LearningtasksCategories::destroy($learningtasks_categories_ids);
+
+        ////
+        //// 課題管理の設定削除
+        ////
+        // learningtasks_configs (LearningtasksConfigs). メール設定
+        $learningtasks_configs_ids = LearningtasksConfigs::where('learningtasks_id', $learningtask_id)->pluck('id');
+        LearningtasksConfigs::destroy($learningtasks_configs_ids);
+
+        // 課題管理の設定、課題毎の各設定を削除
+        $learningtasks_use_settings_ids = LearningtasksUseSettings::where('learningtasks_id', $learningtask_id)->pluck('id');
+        LearningtasksUseSettings::destroy($learningtasks_use_settings_ids);
 
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
 
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
+        // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+        // $frame = Frame::where('id', $frame_id)->first();
 
-            // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したLearningtasksのbucket_idで消す
-            $learningtasks = Learningtasks::find($learningtask_id);
+        // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$learningtasks->bucket_idで消えるため問題なし）
+        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+        Frame::where('bucket_id', $learningtasks->bucket_id)->update(['bucket_id' => null]);
 
-            // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$learningtasks->bucket_idで消えるため問題なし）
-            // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
-            Frame::where('bucket_id', $learningtasks->bucket_id)->update(['bucket_id' => null]);
+        // backetsの削除
+        // Buckets::where('id', $frame->bucket_id)->delete();
+        Buckets::where('id', $learningtasks->bucket_id)->delete();
 
-            // backetsの削除
-            // Buckets::where('id', $frame->bucket_id)->delete();
-            Buckets::where('id', $learningtasks->bucket_id)->delete();
+        // 課題管理設定を削除する。
+        // Learningtasks::destroy($learningtask_id);
+        $learningtasks->delete();
 
-            // 課題管理設定を削除する。
-            Learningtasks::destroy($learningtask_id);
-        }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
@@ -1926,8 +2176,17 @@ class LearningtasksPlugin extends UserPluginBase
                     'learningtasks_users_statuses.created_at'
                 )
                 ->leftJoin('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-                ->leftJoin('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
-                ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                // bugfix: 論理削除を考慮
+                // ->leftJoin('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                // ->leftJoin('learningtasks_examinations', 'learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                ->leftJoin('learningtasks_posts', function ($join) {
+                    $join->on('learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                            ->whereNull('learningtasks_posts.deleted_at');
+                })
+                ->leftJoin('learningtasks_examinations', function ($join) {
+                    $join->on('learningtasks_examinations.id', '=', 'learningtasks_users_statuses.examination_id')
+                            ->whereNull('learningtasks_examinations.deleted_at');
+                })
                 ->where('learningtasks_users_statuses.task_status', 4)
                 ->where('learningtasks_posts.learningtasks_id', $id)
                 ->orderBy('learningtasks_examinations.start_at', 'asc')
@@ -2962,7 +3221,10 @@ class LearningtasksPlugin extends UserPluginBase
         // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)、総合評価(8)の場合は、教員によるログイン操作のため、セッションから
         $student_user_id = $user->id;
         if ($task_status == 2 || $task_status == 3 || $task_status == 6 || $task_status == 7 || $task_status == 8) {
-            $student_user_id = session('student_id' . $frame_id);
+            // bugfix: 管理者等で、教員＆受講生とありえない設定をして、評価する受講生を１度も切替ず評価した場合、student_user_id が nullでSQLエラーになるため修正
+            // $student_user_id = session('student_id' . $frame_id);
+            $student_user_id = $tool->getStudentId();
+            // dd($student_user_id, $user->id, session('student_id' . $frame_id));
         }
 
         // メール送信：機能設定でメール送信あり＆対象ユーザにメールアドレスの設定がある場合

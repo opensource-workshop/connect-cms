@@ -41,13 +41,18 @@
         </div>
     @else
         <div class="alert alert-info">
-            <i class="fas fa-exclamation-circle"></i>
             @if (empty($learningtask) || $create_flag)
-                {{-- 登録：初期表示 --}}
-                新しい課題管理設定を登録します。
+                @if (old('copy_learningtask_id', $learningtask->id))
+                    {{-- 登録：コピーして課題管理作成へ --}}
+                    <i class="fas fa-exclamation-circle"></i> 新しい課題管理設定をコピーして登録します。<br />
+                    <i class="fas fa-exclamation-circle"></i> 受講者、成績、試験日、ファイル（課題ファイル、試験の問題ファイル、レポート提出ファイル等）はコピーしません。<br />
+                @else
+                    {{-- 登録：初期表示 --}}
+                    <i class="fas fa-exclamation-circle"></i> 新しい課題管理設定を登録します。<br />
+                @endif
             @else
                 {{-- 変更：初期表示 --}}
-                課題管理設定を変更します。
+                <i class="fas fa-exclamation-circle"></i> 課題管理設定を変更します。
             @endif
         </div>
     @endif
@@ -62,9 +67,11 @@
     @if ($create_flag)
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="">
+        <input type="hidden" name="copy_learningtask_id" value="{{old('copy_learningtask_id', $learningtask->id)}}">
     @else
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
+        <input type="hidden" name="copy_learningtask_id" value="">
     @endif
 
     <h5><span class="badge badge-secondary">基本設定</span></h5>
@@ -151,7 +158,8 @@
         <label class="{{$frame->getSettingLabelClass()}}">ログインの要否</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'off')
+                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == '' ||
+                    old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'off')
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input">
