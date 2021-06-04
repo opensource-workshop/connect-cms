@@ -1902,14 +1902,57 @@ class LearningtasksPlugin extends UserPluginBase
             return;
         }
 
-        // 記事データを削除する。
-        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
-        //
+        ////
+        //// 課題データ削除
+        ////
+        // 課題データ取得
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
         // LearningtasksPosts::where('learningtasks_id', $learningtask_id)->delete();
         $learningtasks_posts_ids = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->pluck('id');
+
+        // learningtasks_examinations 試験日データ削除
+        $learningtasks_examinations_ids = LearningtasksExaminations::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
+        LearningtasksExaminations::destroy($learningtasks_examinations_ids);
+
+        // learningtasks_users_statuses 成績 削除
+        $learningtasks_users_statuses_ids = LearningtasksUsersStatuses::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
+        LearningtasksUsersStatuses::destroy($learningtasks_users_statuses_ids);
+
+        // learningtasks_users 参加設定（受講者・教員）削除
+        $learningtasks_users_ids = LearningtasksUsers::whereIn('post_id', $learningtasks_posts_ids)->pluck('id');
+        LearningtasksUsers::destroy($learningtasks_users_ids);
+
+        // 課題データを削除する。
         LearningtasksPosts::destroy($learningtasks_posts_ids);
 
+        ////
+        //// 添付ファイル及びデータ削除
+        ////
+        //   learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
+        //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1 取得
+        $learningtasks_posts_files = LearningtasksPostsFiles::whereIn('post_id', $learningtasks_posts_ids);
+        $learningtasks_posts_files_upload_ids = $learningtasks_posts_files->pluck('upload_id');
+
+        // uploads 削除
+        // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
+        $delete_uploads = Uploads::whereIn('id', $learningtasks_posts_files_upload_ids)->get();
+        foreach ($delete_uploads as $delete_upload) {
+            // ファイルの削除
+            $directory = $this->getDirectory($delete_upload->id);
+            Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+
+            // uploadの削除
+            $delete_upload->delete();
+        }
+
+        // 課題の添付ファイルのテーブルデータ 削除
+        $learningtasks_posts_files_ids = $learningtasks_posts_files->pluck('id');
+        LearningtasksPostsFiles::destroy($learningtasks_posts_files_ids);
+
+        ////
+        //// カテゴリ削除
+        ////
+        // カテゴリデータ取得
         $learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $learningtask_id);
         $learningtasks_categories_categories_ids = $learningtasks_categories->pluck('categories_id');
         $learningtasks_categories_ids = $learningtasks_categories->pluck('id');
@@ -1923,18 +1966,15 @@ class LearningtasksPlugin extends UserPluginBase
         LearningtasksCategories::destroy($learningtasks_categories_ids);
 
         ////
-        //// [TODO] 削除漏れ
+        //// 課題管理の設定削除
         ////
-        // ・learningtasks_use_settings (LearningtasksUseSettings). 課題の各設定
-        //
-        // ・添付ファイル：
-        //   ・learningtasks_posts_files 課題の添付ファイル（学習指導書など）task_flag=0
-        //                               試験の添付ファイル（試験問題、解答用ファイルなど）task_flag=1
-        //   ・uploads (データベースの削除が参考になる)
-        // ・learningtasks_examinations 試験日
-        // ・learningtasks_users 参加設定（受講者・教員）
-        // ・learningtasks_users_statuses 成績
-        // ・learningtasks_configs (LearningtasksConfigs). メール設定
+        // learningtasks_configs (LearningtasksConfigs). メール設定
+        $learningtasks_configs_ids = LearningtasksConfigs::where('learningtasks_id', $learningtask_id)->pluck('id');
+        LearningtasksConfigs::destroy($learningtasks_configs_ids);
+
+        // 課題管理の設定、課題毎の各設定を削除
+        $learningtasks_use_settings_ids = LearningtasksUseSettings::where('learningtasks_id', $learningtask_id)->pluck('id');
+        LearningtasksUseSettings::destroy($learningtasks_use_settings_ids);
 
 // Frame に紐づくLearningTask を削除した場合のみ、Frame の更新。（Frame に紐づかないLearningTask の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
