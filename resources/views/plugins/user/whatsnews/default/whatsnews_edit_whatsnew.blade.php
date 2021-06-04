@@ -242,6 +242,7 @@
                         name="read_more_use_flag" 
                         class="custom-control-input" 
                         {{ $whatsnew->read_more_use_flag == $key ? 'checked' : '' }}
+                        v-model="read_more_use_flag"
                     >
                     <label class="custom-control-label" for="{{ "read_more_use_flag_${key}" }}">
                         {{ $value }}
@@ -255,7 +256,12 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">ボタン押下時の<br>取得件数／回</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="read_more_fetch_count" value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}" class="form-control col-sm-3">
+            <input 
+                type="text" 
+                name="read_more_fetch_count" 
+                value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}" 
+                class="form-control col-sm-3"
+            >
             @if ($errors && $errors->has('read_more_fetch_count')) <div class="text-danger">{{$errors->first('read_more_fetch_count')}}</div> @endif
         </div>
     </div>
@@ -264,7 +270,13 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">ボタン名</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="read_more_name" value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}" class="form-control">
+            <input 
+                type="text" 
+                name="read_more_name" 
+                value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}" 
+                class="form-control"
+                v-model="read_more_name"
+            >
             @if ($errors && $errors->has('read_more_name')) <div class="text-danger">{{$errors->first('read_more_name')}}</div> @endif
         </div>
     </div>
@@ -273,7 +285,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">ボタン色</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <select class="form-control" name="read_more_btn_color_type">
+            <select class="form-control" name="read_more_btn_color_type" v-model="read_more_btn_color_type">
                 @foreach (Bs4Color::getMembers() as $key=>$value)
                     <option value="{{$key}}" class="{{ 'text-' . $key }}" @if($key == old('read_more_btn_color_type', $whatsnew->read_more_btn_color_type)) selected @endif>
                         {{ $value }}
@@ -287,7 +299,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">ボタンの形</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <select class="form-control" name="read_more_btn_type">
+            <select class="form-control" name="read_more_btn_type" v-model="read_more_btn_type">
                 @foreach (RadiusType::getMembers() as $key=>$value)
                     <option value="{{$key}}" @if($key == old('read_more_btn_type', $whatsnew->read_more_btn_type)) selected @endif>
                         {{ $value }}
@@ -310,6 +322,7 @@
                         name="read_more_btn_transparent_flag" 
                         class="custom-control-input" 
                         {{ $whatsnew->read_more_btn_transparent_flag == $key ? 'checked' : '' }}
+                        v-model="read_more_btn_transparent_flag"
                     >
                     <label class="custom-control-label" for="{{ "read_more_btn_transparent_flag_${key}" }}">
                         {{ $value }}
@@ -319,6 +332,15 @@
         </div>
     </div>
     
+    <div class="form-group row border">
+        <label class="{{$frame->getSettingLabelClass(true)}}">ボタンプレビュー</label>
+        <div class="text-center {{$frame->getSettingInputClass(true)}}">
+            <p :class="[readMoreBtnClass]">
+                @{{ read_more_name }}
+            </p>
+        </div>
+    </div>
+
     <h5><span class="badge badge-secondary">表示対象プラグイン・フレーム</span></h5>
 
     {{-- 対象プラグイン --}}
@@ -457,6 +479,15 @@
 <script>
     new Vue({
         el: "#app_{{ $frame->id }}",
+        data: function() {
+            return {
+                read_more_use_flag : {{ $whatsnew->read_more_use_flag ? $whatsnew->read_more_use_flag : "0" }},
+                read_more_name : '{{ $whatsnew->read_more_name ? $whatsnew->read_more_name : '' }}',
+                read_more_btn_color_type : '{{ $whatsnew->read_more_btn_color_type ? $whatsnew->read_more_btn_color_type : Bs4Color::primary }}',
+                read_more_btn_type : '{{ $whatsnew->read_more_btn_type ? $whatsnew->read_more_btn_type : RadiusType::rounded }}',
+                read_more_btn_transparent_flag : {{ $whatsnew->read_more_btn_transparent_flag ? $whatsnew->read_more_btn_transparent_flag : "0" }}
+            }
+        },
         methods: {
             // 対象フレームのチェックボックスdisabled制御
             setDisabledTargetFrame:function(frame_select_value){
@@ -465,6 +496,14 @@
                     // disabledでチェックボックスの選択状態がクリアされてしまうが、再選択時に意識的に選択してもらう
                     elms[i].disabled = frame_select_value == '0' ? true : false;
                 }
+            }
+        },
+        computed: {
+            readMoreBtnClass : function() {
+                let btn_class = 'btn-';
+                btn_class += this.read_more_btn_transparent_flag == 1 ? 'outline-' : '';
+                btn_class += this.read_more_btn_color_type;
+                return ['btn', btn_class, this.read_more_btn_type]
             }
         },
         // 初期表示にvueメソッドをcallする
