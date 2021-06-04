@@ -355,10 +355,10 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews_query = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls);
 
         // limit/offset条件を付加
-        if($request->limit){
+        if ($request->limit) {
             $whatsnews_query->limit($request->limit);
         }
-        if($request->offset){
+        if ($request->offset) {
             $whatsnews_query->offset($request->offset);
         }
         // データ抽出
