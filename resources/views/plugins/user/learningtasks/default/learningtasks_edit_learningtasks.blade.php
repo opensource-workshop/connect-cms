@@ -153,7 +153,8 @@
         <label class="{{$frame->getSettingLabelClass()}}">ログインの要否</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'off')
+                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == '' ||
+                    old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'off')
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input">
