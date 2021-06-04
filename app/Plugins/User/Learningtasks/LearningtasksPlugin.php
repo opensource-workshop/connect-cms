@@ -808,18 +808,19 @@ class LearningtasksPlugin extends UserPluginBase
         // posts はログインしている教員が見るべき課題に絞られているため、使用する。
         $teacher_tasks = array();
         foreach ($posts as $post) {
-            $users_statuses_tmp = LearningtasksUsersStatuses::select(
-                'learningtasks_users_statuses.*',
-                'users.id as user_id',
-                'learningtasks_posts.post_title',
-                'learningtasks_posts.id as post_id',
-                'users.name as user_name'
-            )
-            ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
-            ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
-            ->where('post_id', $post->id)
-            ->orderBy('id', 'asc')
-            ->get();
+            $users_statuses_tmp = LearningtasksUsersStatuses::
+                    select(
+                        'learningtasks_users_statuses.*',
+                        'users.id as user_id',
+                        'learningtasks_posts.post_title',
+                        'learningtasks_posts.id as post_id',
+                        'users.name as user_name'
+                    )
+                    ->join('users', 'users.id', '=', 'learningtasks_users_statuses.user_id')
+                    ->join('learningtasks_posts', 'learningtasks_posts.id', '=', 'learningtasks_users_statuses.post_id')
+                    ->where('post_id', $post->id)
+                    ->orderBy('id', 'asc')
+                    ->get();
 
             // Collection の機能でユーザ毎に分割する。
             $users_statuses = $users_statuses_tmp->groupBy('user_id');
@@ -844,9 +845,9 @@ class LearningtasksPlugin extends UserPluginBase
 
                 // 上で取得したレポートのステータスが合格＆上で取得した試験のステータスが合格＆総合評価がまだない場合
                 if (!empty($last_report_task) && $last_report_task->task_status == 2 &&
-                    (($last_report_task->grade == 'A') || ($last_report_task->grade == 'B') || ($last_report_task->grade == 'C')) &&
+                    ($last_report_task->grade == 'A' || $last_report_task->grade == 'B' || $last_report_task->grade == 'C') &&
                     !empty($last_examination_task) && $last_examination_task->task_status == 6 &&
-                    (($last_examination_task->grade == 'A') || ($last_examination_task->grade == 'B') || ($last_examination_task->grade == 'C')) &&
+                    ($last_examination_task->grade == 'A' || $last_examination_task->grade == 'B' || $last_examination_task->grade == 'C') &&
                     (empty($last_evaluate_task))) {
                     //(empty($last_evaluate_task) || $last_evaluate_task->isEmpty())) {
 
