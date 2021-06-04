@@ -110,11 +110,12 @@
                 },
                 methods: {
                     searchWhatsnewses: function () {
+                        let self = this;
                         // 非同期通信で追加の一覧を取得
                         axios.get("{{url('/')}}/json/whatsnews/indexJson/{{$page->id}}/{{$frame_id}}/?limit=" + this.limit + "&offset=" + this.offset)
-                            .then((res)=>{
+                            .then(function(res){
                                 // foreach内ではthisでvueインスタンスのwhatsnewsesが参照できない為、tmp_arrに一時的に代入
-                                tmp_arr = this.whatsnewses;
+                                tmp_arr = self.whatsnewses;
                                 res.data.forEach(function(obj) {
                                     // 取得した差分をループしてtmp_arrに格納
                                     tmp_arr.push(obj);

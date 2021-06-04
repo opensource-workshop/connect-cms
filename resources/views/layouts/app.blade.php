@@ -129,6 +129,23 @@
     @if (isset($configs_array) && isset($configs_array['favicon']))
         <link href="{{url('/')}}/uploads/favicon/favicon.ico" rel="SHORTCUT ICON" />
     @endif
+
+    <!-- Polyfill -->
+    {{-- ※IEが公式に消えたら（2022年6月16日）消したい。 --}}
+    @php
+        $is_exist_whatsnews = false;
+        if(isset($plugin_instances)){
+            foreach($plugin_instances as $plugin_instance){
+                if($plugin_instance instanceof \App\Plugins\User\Whatsnews\WhatsnewsPlugin){
+                    $is_exist_whatsnews = true;
+                }
+            }
+        }
+    @endphp
+    @if ($is_exist_whatsnews)
+        {{-- IEで発生する「Promiseは定義されていません。」エラー回避＠新着プラグインの非同期処理 --}}
+        <script>window.Promise || document.write('<script src="//www.promisejs.org/polyfills/promise-7.0.4.min.js"><\/script>');</script>
+    @endif
 </head>
 @php
 // body任意クラスを抽出（カンマ設定時はランダムで１つ設定）
