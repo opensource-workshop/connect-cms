@@ -16,7 +16,6 @@
 </p>
 
 <div id="{{ $whatsnews_frame->read_more_use_flag == UseType::use ? 'app_' . $frame->id : '' }}">
-<div>
     <dl>
     @foreach($whatsnews as $whatsnew)
         {{-- 登録日時、カテゴリ --}}
