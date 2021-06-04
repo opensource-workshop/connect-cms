@@ -3073,7 +3073,10 @@ class LearningtasksPlugin extends UserPluginBase
         // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)、総合評価(8)の場合は、教員によるログイン操作のため、セッションから
         $student_user_id = $user->id;
         if ($task_status == 2 || $task_status == 3 || $task_status == 6 || $task_status == 7 || $task_status == 8) {
-            $student_user_id = session('student_id' . $frame_id);
+            // bugfix: 管理者等で、教員＆受講生とありえない設定をして、評価する受講生を１度も切替ず評価した場合、student_user_id が nullでSQLエラーになるため修正
+            // $student_user_id = session('student_id' . $frame_id);
+            $student_user_id = $tool->getStudentId();
+            // dd($student_user_id, $user->id, session('student_id' . $frame_id));
         }
 
         // メール送信：機能設定でメール送信あり＆対象ユーザにメールアドレスの設定がある場合
