@@ -160,7 +160,7 @@
                     id="teacher_join_flag_2"
                     name="teacher_join_flag"
                     class="custom-control-input"
-                    @if($learningtasks_posts->student_join_flag == LearningtaskUserJoinFlag::all) checked="checked" @endif
+                    @if($learningtasks_posts->teacher_join_flag == LearningtaskUserJoinFlag::all) checked="checked" @endif
                     data-toggle="collapse"
                     data-target="#collapse_membership_teacher_user.show"
                 >
@@ -173,7 +173,7 @@
                     id="teacher_join_flag_3"
                     name="teacher_join_flag"
                     class="custom-control-input"
-                    @if($learningtasks_posts->student_join_flag == LearningtaskUserJoinFlag::select) checked="checked" @endif
+                    @if($learningtasks_posts->teacher_join_flag == LearningtaskUserJoinFlag::select) checked="checked" @endif
                     data-toggle="collapse"
                     data-target="#collapse_membership_teacher_user:not(.show)"
                     aria-expanded="true"
