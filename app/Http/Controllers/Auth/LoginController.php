@@ -71,12 +71,13 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // 利用可能かチェック
-        if (!$this->checkUserStstus($request, $error_msg)) {
-            throw ValidationException::withMessages([
-                $this->username() => [$error_msg],
-            ]);
-        }
+// 外部認証を行う場合、先に利用可能かチェックをするとまだユーザー登録されていない場合エラーになる為、チェック処理は後にもっていく
+//        // 利用可能かチェック
+//        if (!$this->checkUserStstus($request, $error_msg)) {
+//            throw ValidationException::withMessages([
+//                $this->username() => [$error_msg],
+//            ]);
+//        }
 
         // 外部認証を使用
         $use_auth_method = Configs::where('name', 'use_auth_method')->first();
@@ -86,6 +87,13 @@ class LoginController extends Controller
             //
             // 以下はもともとのAuthenticatesUsers@login 処理
             //return $this->laravelLogin($request);
+
+            // 利用可能かチェック
+            if (!$this->checkUserStatus($request, $error_msg)) {
+                throw ValidationException::withMessages([
+                    $this->username() => [$error_msg],
+                ]);
+            }
 
             try {
                 return $this->laravelLogin($request);
@@ -113,6 +121,13 @@ class LoginController extends Controller
             $redirect = $this->authMethod($request);
             if (!empty($redirect)) {
                 return $redirect;
+            }
+
+            // 利用可能かチェック
+            if (!$this->checkUserStatus($request, $error_msg)) {
+                throw ValidationException::withMessages([
+                    $this->username() => [$error_msg],
+                ]);
             }
 
             // 外部認証と併せて、通常ログインも使用
