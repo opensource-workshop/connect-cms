@@ -914,7 +914,7 @@ trait ConnectCommonTrait
                     }
                     else {
                         // ユーザ登録が既にある場合、そのユーザが利用可能になっているかどうかをチェックし、利用不可になっている場合は処理を戻す
-                        if ($user->status == 0) {
+                        if( $user->status != UserStatus::active ) {
                             return;
                         }
                     }
