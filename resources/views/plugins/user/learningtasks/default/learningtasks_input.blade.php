@@ -97,6 +97,7 @@
         });
     </script>
 
+    {{-- delete: 「重要記事」は新着情報にのせる時のオプション項目。課題管理は新着情報に対応していないため、不要な項目のためコメントアウト
     <div class="form-group row">
         <label class="col-md-2">重要記事</label>
         <div class="col-md-10">
@@ -107,6 +108,7 @@
             </div>
         </div>
     </div>
+    --}}
 
     <div class="form-group row">
         <label class="col-md-2">表示SEQ</label>
