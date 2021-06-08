@@ -4,13 +4,20 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
- --}}
+--}}
 <li role="presentation" class="nav-item">
     <a href="{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editFacilities' ? 'active' : '' }}">施設設定</a>
 </li>
 <li role="presentation" class="nav-item">
-    <a href="{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editColumns' || $action == 'editColumnDetail' ? 'active' : '' }}">項目設定</a>
+    <a href="{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editColumns' ? 'active' : '' }}">項目設定</a>
 </li>
+
+@if ($action == 'editColumnDetail')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">項目詳細設定</span></span>
+    </li>
+@endif
+
 <li role="presentation" class="nav-item">
     <a href="{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editBuckets' ? 'active' : '' }}">設定変更</a>
 </li>

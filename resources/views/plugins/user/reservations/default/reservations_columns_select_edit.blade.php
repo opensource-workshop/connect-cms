@@ -4,16 +4,16 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
- --}}
- @extends('core.cms_frame_base_setting')
+--}}
+@extends('core.cms_frame_base_setting')
 
- @section("core.cms_frame_edit_tab_$frame->id")
-      {{-- プラグイン側のフレームメニュー --}}
-     @include('plugins.user.reservations.reservations_frame_edit_tab')
- @endsection
- 
- @section("plugin_setting_$frame->id")
-   <script type="text/javascript">
+@section("core.cms_frame_edit_tab_$frame->id")
+    {{-- プラグイン側のフレームメニュー --}}
+    @include('plugins.user.reservations.reservations_frame_edit_tab')
+@endsection
+
+@section("plugin_setting_$frame->id")
+<script type="text/javascript">
     /**
      * 選択肢追加ボタン押下
      */
@@ -63,12 +63,12 @@
     <div class="alert alert-info mt-2">
         <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '予約項目【' . $column->column_name . ' 】の選択肢を追加・変更します。' }}
     </div>
-    
+
 
     <div class="table-responsive">
 
         {{-- 選択項目の一覧 --}}
-        <table class="table table-hover">
+        <table class="table table-hover table-sm">
             <thead class="thead-light">
                 <tr>
                     @if (count($selects) > 0)
@@ -89,7 +89,7 @@
                             <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
                                 <i class="fas fa-arrow-up"></i>
                             </button>
-                    
+
                             {{-- 下移動 --}}
                             <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
                                 <i class="fas fa-arrow-down"></i>
@@ -105,14 +105,14 @@
                         <td class="align-middle text-center">
                             <input name="hide_flag_{{ $select->id }}" id="hide_flag_{{ $select->id }}" value="1" type="checkbox" @if (isset($select->hide_flag)) checked="checked" @endif>
                         </td>
-    
+
                         {{-- 更新ボタン --}}
                         <td class="align-middle text-center">
-                            <button 
-                                class="btn btn-primary cc-font-90 text-nowrap" 
+                            <button
+                                class="btn btn-primary cc-font-90 text-nowrap"
                                 onclick="javascript:submit_update_select({{ $select->id }});"
                             >
-                                <i class="fas fa-save"></i> <span class="d-sm-none">更新</span>
+                                <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
                             </button>
                         </td>
                     </tr>
@@ -123,7 +123,7 @@
 
                 {{-- 新規登録用の行 --}}
                 <tr>
-                    <td><br /></td>
+                    <td></td>
                     <td>
                         {{-- 選択肢名 --}}
                         <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
@@ -132,6 +132,7 @@
                         {{-- ＋ボタン --}}
                         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
                     </td>
+                    <td></td>
                 </tr>
             </tbody>
         </table>
@@ -149,8 +150,9 @@
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        {{-- キャンセルボタン --}}
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}'"><i class="fas fa-times"></i> キャンセル</button>
+        <a href="{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}" class="btn btn-secondary">
+            <i class="fas fa-chevron-left"></i> 項目設定へ
+        </a>
     </div>
 </form>
 @endsection
