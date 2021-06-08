@@ -38,7 +38,7 @@
         <input type="checkbox" name="required_{{ $column->id }}" value="1" data-toggle="tooltip" title="必須項目として指定します。" @if (old("required_{$column->id}", $column->required) == Required::on) checked="checked" @endif>
     </td>
     {{-- 詳細設定 --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         {{-- 詳細ボタン --}}
         <button
             type="button"
@@ -62,9 +62,9 @@
         </button>
     </td>
     {{-- コピーボタン --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         <button
-            type="button" 
+            type="button"
             class="btn btn-outline-primary text-nowrap"
             onclick="javascript:submit_copy_column({{ $column->id }});"
         >
@@ -72,7 +72,7 @@
         </button>
     </td>
     {{-- 更新ボタン --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         <button
             class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
@@ -81,7 +81,7 @@
         </button>
     </td>
     {{-- 削除ボタン --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
     </td>
 </tr>
@@ -91,7 +91,7 @@
     $column->column_type == FormColumnType::checkbox ||
     $column->column_type == FormColumnType::select ||
     $column->column_type == FormColumnType::group ||
-    $column->caption || 
+    $column->caption ||
     $column->place_holder
     )
     <tr>

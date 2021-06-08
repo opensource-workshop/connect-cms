@@ -99,7 +99,7 @@
             <div class="table-responsive">
 
                 {{-- 選択項目の一覧 --}}
-                <table class="table table-hover">
+                <table class="table table-hover table-sm">
                     <thead class="thead-light">
                         <tr>
                             @if (count($selects) > 0)
