@@ -313,6 +313,12 @@ class LearningtasksTool
         if (empty($mail_config)) {
             return $default;
         }
+
+        // bugfix: メール設定を空で登録した場合、valueがnullになるため対応
+        if (empty($mail_config->value)) {
+            return $default;
+        }
+
         return $mail_config->value;
     }
 
