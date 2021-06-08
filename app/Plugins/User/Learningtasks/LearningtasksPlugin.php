@@ -3229,7 +3229,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // メール送信：機能設定でメール送信あり＆対象ユーザにメールアドレスの設定がある場合
         if ($task_status == 1 || $task_status == 2 || $task_status == 3 || $task_status == 5 || $task_status == 6 || $task_status == 7 || $task_status == 8) {
-            $this->sendMailLocal($post, $task_status, $tool, $user, $student_user_id);
+            $this->sendMailLocal($post, $task_status, $tool, $student_user_id);
         }
 
         // ユーザーの進捗ステータス保存
@@ -3269,7 +3269,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      * メール文面
      */
-    private function getMailFormat($post, $task_status, $tool)
+    private function getMailFormat($task_status, $tool)
     {
         // 初期値
         $mail_subjects = array(
@@ -3296,13 +3296,50 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  メール送信
      */
-    private function sendMailLocal($post, $task_status, $tool, $login_user, $student_user_id)
+    private function sendMailLocal($post, $task_status, $tool, $student_user_id)
     {
+        if ($task_status == 1) {
+            // レポートの提出(1). メール送信（教員宛）off ならメール送信しない
+            if (! $tool->checkFunction(LearningtaskUseFunction::use_report_mail)) {
+                return;
+            }
+        } elseif ($task_status == 2) {
+            // レポートの評価(2). メール送信（受講者宛）off ならメール送信しない
+            if (! $tool->checkFunction(LearningtaskUseFunction::use_report_evaluate_mail)) {
+                return;
+            }
+        } elseif ($task_status == 3) {
+            // レポートのコメント(3). メール送信（受講者宛）off ならメール送信しない
+            if (! $tool->checkFunction(LearningtaskUseFunction::use_report_reference_mail)) {
+                return;
+            }
+        } elseif ($task_status == 5) {
+            // 試験の提出(5). メール送信（教員宛）off ならメール送信しない
+            if (! $tool->checkFunction(LearningtaskUseFunction::use_examination_mail)) {
+                return;
+            }
+        } elseif ($task_status == 6) {
+            // 試験の評価(6). メール送信（受講者宛）off ならメール送信しない
+            if (! $tool->checkFunction(LearningtaskUseFunction::use_examination_evaluate_mail)) {
+                return;
+            }
+        } elseif ($task_status == 7) {
+            // 試験のコメント(7). メール送信（受講者宛）off ならメール送信しない
+            if (! $tool->checkFunction(LearningtaskUseFunction::use_examination_reference_mail)) {
+                return;
+            }
+        } elseif ($task_status == 8) {
+            // 総合評価(8). メール送信（受講者宛）off ならメール送信しない
+            if (! $tool->checkFunction(LearningtaskUseFunction::use_evaluate_mail)) {
+                return;
+            }
+        }
+
         // 送信するユーザオブジェクト
         $send_user = null;
 
         // メールの定型文取得
-        list($mail_subjects, $mail_bodys) = $this->getMailFormat($post, $task_status, $tool);
+        list($mail_subjects, $mail_bodys) = $this->getMailFormat($task_status, $tool);
         $mail_footer = $tool->getMailConfig('footer', 0);
 
         // 教員へメールを送信。レポートの提出(1)、試験の提出(5)
