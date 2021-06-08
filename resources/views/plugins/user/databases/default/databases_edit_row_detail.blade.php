@@ -140,7 +140,7 @@
                     @endif
 
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover table-sm">
                             <thead class="thead-light">
                                 {{-- 選択項目の一覧 --}}
                                 <tr>

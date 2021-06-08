@@ -115,7 +115,7 @@
 
                     <div class="table-responsive">
                         {{-- 項目の一覧 --}}
-                        <table class="table table-hover">
+                        <table class="table table-hover table-sm">
                             <thead class="thead-light">
                                 <tr>
                                     <th class="text-center text-nowrap">表示順</th>

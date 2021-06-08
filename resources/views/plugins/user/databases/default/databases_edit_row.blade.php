@@ -54,7 +54,7 @@
     </td>
 
     {{-- 詳細設定 --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         {{-- 詳細ボタン --}}
         <button
             type="button"
@@ -75,7 +75,7 @@
     </td>
 
     {{-- 更新ボタン --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         <button
             class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
@@ -85,7 +85,7 @@
     </td>
 
     {{-- 削除ボタン --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});">
             <i class="fas fa-trash-alt"></i>
         </button>
