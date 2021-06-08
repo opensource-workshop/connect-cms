@@ -3,7 +3,7 @@
 namespace App\Plugins\User\Forms;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
+// use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -32,6 +32,9 @@ use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\String\StringUtils;
 use App\Utilities\Token\TokenUtils;
+
+use App\Enums\CsvCharacterCode;
+use App\Enums\FormStatusType;
 
 /**
  * フォーム・プラグイン
@@ -438,7 +441,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
     {
         // カウントは本登録でする
         $forms_inputs_count = FormsInputs::where('forms_id', $form_id)
-                                            ->where('status', \FormStatusType::active)
+                                            ->where('status', FormStatusType::active)
                                             ->count();
 
         // 登録制限数 が 空か 0 なら登録制限しない
@@ -793,12 +796,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             // トークンをハッシュ化（DB保存用）
             $record_token = TokenUtils::makeHashToken($user_token);
 
-            $forms_inputs->status = \FormStatusType::temporary;
+            $forms_inputs->status = FormStatusType::temporary;
             $forms_inputs->add_token = $record_token;
             $forms_inputs->add_token_created_at = new \Carbon();
         } else {
             // 本登録
-            $forms_inputs->status = \FormStatusType::active;
+            $forms_inputs->status = FormStatusType::active;
         }
 
         $forms_inputs->save();
@@ -1142,7 +1145,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // forms_inputs 更新
         // 本登録
-        $forms_inputs->status = \FormStatusType::active;
+        $forms_inputs->status = FormStatusType::active;
         $forms_inputs->save();
 
         // フォームのカラムデータ
@@ -1303,7 +1306,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         )
                         ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
                             $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
-                                        ->where('forms_inputs.status', \FormStatusType::active);
+                                        ->where('forms_inputs.status', FormStatusType::active);
                         })
                         ->groupBy(
                             $plugin_name . '.id',
@@ -1326,7 +1329,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             ->whereIn('forms.id', $plugins->pluck('id'))
             ->leftJoin('forms_inputs', function ($leftJoin) {
                 $leftJoin->on('forms.id', '=', 'forms_inputs.forms_id')
-                            ->where('forms_inputs.status', \FormStatusType::temporary);
+                            ->where('forms_inputs.status', FormStatusType::temporary);
             })
             ->groupBy(
                 'forms.id',
@@ -1385,12 +1388,12 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 仮登録件数
         $tmp_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', \FormStatusType::temporary)
+                                    ->where('forms_inputs.status', FormStatusType::temporary)
                                     ->count();
 
         // 本登録数
         $active_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', \FormStatusType::active)
+                                    ->where('forms_inputs.status', FormStatusType::active)
                                     ->count();
 
         $form->tmp_entry_count = $tmp_entry_count;
@@ -2234,18 +2237,20 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         //                                 'forms_inputs.status as inputs_status'
         //                             )
         //                             ->leftjoin('forms_inputs', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
-        //                             ->whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id)->where('status', '!=', \FormStatusType::delete))
+        //                             ->whereIn('forms_inputs_id', FormsInputs::select('id')->where('forms_id', $id)->where('status', '!=', FormStatusType::delete))
         //                             ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
         //                             ->get();
         $input_cols = FormsInputs::
                 select(
+                    'forms_inputs.id as inputs_id',
                     'forms_inputs.status as inputs_status',
+                    'forms_inputs.created_at as inputs_created_at',
                     'forms_input_cols.*'
                 )
                 ->leftjoin('forms_input_cols', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
                 ->where('forms_inputs.forms_id', $id)
                 // 削除データは出力しない
-                ->where('forms_inputs.status', '!=', \FormStatusType::delete)
+                ->where('forms_inputs.status', '!=', FormStatusType::delete)
                 ->orderBy('forms_inputs.id', 'asc')
                 ->orderBy('forms_input_cols.forms_columns_id', 'asc')
                 ->get();
@@ -2297,17 +2302,21 @@ ORDER BY forms_inputs_id, forms_columns_id
             $csv_array[0][$column->id] = $column->column_name;
             $copy_base[$column->id] = '';
         }
+        // 見出し行-行末（固定項目）
+        $csv_array[0]['created_at'] = '登録日時';
+        $copy_base['created_at'] = '';
 
         // データ
         foreach ($input_cols as $input_col) {
-            if (!array_key_exists($input_col->forms_inputs_id, $csv_array)) {
+            if (!array_key_exists($input_col->inputs_id, $csv_array)) {
                 // 初回のみベースをセット
-                $csv_array[$input_col->forms_inputs_id] = $copy_base;
+                $csv_array[$input_col->inputs_id] = $copy_base;
 
                 // 初回で固定項目をセット
-                $csv_array[$input_col->forms_inputs_id]['status'] = $input_col->inputs_status;
+                $csv_array[$input_col->inputs_id]['status'] = $input_col->inputs_status;
+                $csv_array[$input_col->inputs_id]['created_at'] = $input_col->inputs_created_at;
             }
-            $csv_array[$input_col->forms_inputs_id][$input_col->forms_columns_id] = $input_col->value;
+            $csv_array[$input_col->inputs_id][$input_col->forms_columns_id] = $input_col->value;
         }
 
         // レスポンス版
@@ -2330,12 +2339,12 @@ ORDER BY forms_inputs_id, forms_columns_id
 
         // 文字コード変換
         // $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
-        if ($request->character_code == \CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
             //「UTF-8」の「BOM」であるコード「0xEF」「0xBB」「0xBF」をカンマ区切りにされた文字列の先頭に連結
             $csv_data = pack('C*', 0xEF, 0xBB, 0xBF) . $csv_data;
         } else {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
         }
 
         return response()->make($csv_data, 200, $headers);
