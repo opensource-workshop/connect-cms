@@ -1107,6 +1107,11 @@ class DatabasesPlugin extends UserPluginBase
             $validator_rule[] = 'nullable';
             $validator_rule[] = new CustomVali_DatesYm();
         }
+        // 時間チェック
+        if ($databases_column->column_type == DatabaseColumnType::time) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'date_format:H:i';
+        }
         // 画像チェック
         if ($databases_column->column_type == DatabaseColumnType::image) {
             $validator_rule[] = 'nullable';
