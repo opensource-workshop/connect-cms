@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category セキュリティ管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -13,13 +13,13 @@
 
 <div class="card">
 <div class="card-header p-0">
-
-{{-- 機能選択タブ --}}
-@include('plugins.manage.security.security_manage_tab')
-
+    {{-- 機能選択タブ --}}
+    @include('plugins.manage.security.security_manage_tab')
 </div>
 
 <div class="card-body">
+
+    @include('common.errors_form_line')
 
     <div class="alert alert-info" role="alert">
         XSS対応のJavaScript等の制限を行います。

@@ -34,29 +34,31 @@ use App\Models\User\Blogs\BlogsPosts;
 
 {{-- 投稿用フォーム --}}
 @if (empty($blogs_posts->id))
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/blogs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" name="form_blogs_posts{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_blogs_posts{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/blogs/save/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST" name="form_blogs_posts{{$frame_id}}">
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
 
     <div class="form-group">
-        <label class="control-label">タイトル <label class="badge badge-danger">必須</label></label>
+        <label class="control-label">タイトル <span class="badge badge-danger">必須</span></label>
         <input type="text" name="post_title" value="{{old('post_title', $blogs_posts->post_title)}}" class="form-control">
-        @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
+        @include('common.errors_inline', ['name' => 'post_title'])
     </div>
 
     <div class="form-group">
-        <label class="control-label">投稿日時 <label class="badge badge-danger">必須</label></label>
+        <label class="control-label">投稿日時 <span class="badge badge-danger">必須</span></label>
 
         <div class="input-group date" id="posted_at" data-target-input="nearest">
-            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datetimepicker-input  col-md-3" data-target="#posted_at">
+            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datetimepicker-input col-md-3" data-target="#posted_at">
             <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
-                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                <div class="input-group-text"><i class="far fa-clock"></i></div>
             </div>
         </div>
-        @if ($errors && $errors->has('posted_at')) <div class="text-danger">{{$errors->first('posted_at')}}</div> @endif
+        @include('common.errors_inline', ['name' => 'posted_at'])
     </div>
     <script type="text/javascript">
         $(function () {
@@ -79,9 +81,9 @@ use App\Models\User\Blogs\BlogsPosts;
     </div>
 
     <div class="form-group">
-        <label class="control-label">本文 <label class="badge badge-danger">必須</label></label>
+        <label class="control-label">本文 <span class="badge badge-danger">必須</span></label>
         <textarea name="post_text">{!!old('post_text', $blogs_posts->post_text)!!}</textarea>
-        @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
+        @include('common.errors_inline', ['name' => 'post_text'])
     </div>
 
 
@@ -110,7 +112,7 @@ use App\Models\User\Blogs\BlogsPosts;
     <div class="form-group">
         <label class="control-label">続き本文</label>
         <textarea name="post_text2">{!!old('post_text2', $blogs_posts->post_text2)!!}</textarea>
-        @if ($errors && $errors->has('post_text2')) <div class="text-danger">{{$errors->first('post_text2')}}</div> @endif
+        @include('common.errors_inline', ['name' => 'post_text2'])
     </div>
 
     <div class="form-group">
@@ -121,14 +123,14 @@ use App\Models\User\Blogs\BlogsPosts;
             <option value="{{$category->id}}" @if(old('categories_id', $blogs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
             @endforeach
         </select>
-        @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
+        @include('common.errors_inline', ['name' => 'category'])
     </div>
 
     <div class="form-group">
         <label class="control-label">タグ</label>
         <input type="text" name="tags" value="{{old('tags', $blogs_posts_tags)}}" class="form-control">
         <small class="form-text text-muted">カンマ区切りで複数指定可能</small>
-        @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif
+        @include('common.errors_inline', ['name' => 'tags'])
     </div>
 
     <div class="form-group">
@@ -140,7 +142,7 @@ use App\Models\User\Blogs\BlogsPosts;
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></a>
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
@@ -159,11 +161,11 @@ use App\Models\User\Blogs\BlogsPosts;
                 </div>
             </div>
             @if (!empty($blogs_posts->id))
-            <div class="col-3 col-xl-3 text-right">
+                <div class="col-3 col-xl-3 text-right">
                     <a data-toggle="collapse" href="#collapse{{$blogs_posts->id}}">
                         <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
                     </a>
-            </div>
+                </div>
             @endif
         </div>
     </div>

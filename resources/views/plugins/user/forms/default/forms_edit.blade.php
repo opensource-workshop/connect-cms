@@ -53,6 +53,15 @@
     }
 
     /**
+     * 項目のコピーボタン押下
+     */
+    function submit_copy_column(column_id) {
+        form_columns.action = "{{url('/')}}/plugin/forms/copyColumn/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        form_columns.column_id.value = column_id;
+        form_columns.submit();
+    }
+
+    /**
      * 項目の表示順操作ボタン押下
      */
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
@@ -115,29 +124,30 @@
                 <div class="table-responsive">
 
                     {{-- 項目の一覧 --}}
-                    <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th class="text-center" nowrap>表示順</th>
-                            <th class="text-center" style="min-width: 165px;" nowrap>項目名</th>
-                            <th class="text-center" style="min-width: 165px;" nowrap>型</th>
-                            <th class="text-center" nowrap>必須</th>
-                            <th class="text-center" nowrap>詳細 <a href="https://connect-cms.jp/manual/user/form#frame-125" target="_brank"><span class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
-                            <th class="text-center" nowrap>更新</th>
-                            <th class="text-center" nowrap>削除</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{-- 更新用の行 --}}
-                        @foreach($columns as $column)
-                            @include('plugins.user.forms.default.forms_edit_row')
-                        @endforeach
-                        {{-- 新規登録用の行 --}}
-                        <tr>
-                            <th colspan="7">【項目の追加行】</th>
-                        </tr>
-                        @include('plugins.user.forms.default.forms_edit_row_add')
-                    </tbody>
+                    <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-center" nowrap>表示順</th>
+                                <th class="text-center" style="min-width: 165px;" nowrap>項目名</th>
+                                <th class="text-center" style="min-width: 165px;" nowrap>型</th>
+                                <th class="text-center" nowrap>必須</th>
+                                <th class="text-center" nowrap>詳細 <a href="https://connect-cms.jp/manual/user/form#frame-125" target="_brank"><span class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
+                                <th class="text-center" nowrap>コピー</th>
+                                <th class="text-center" nowrap>更新</th>
+                                <th class="text-center" nowrap>削除</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- 更新用の行 --}}
+                            @foreach($columns as $column)
+                                @include('plugins.user.forms.default.forms_edit_row')
+                            @endforeach
+                            {{-- 新規登録用の行 --}}
+                            <tr>
+                                <th colspan="8">【項目の追加行】</th>
+                            </tr>
+                            @include('plugins.user.forms.default.forms_edit_row_add')
+                        </tbody>
                     </table>
                 </div>
                 {{-- ボタンエリア --}}

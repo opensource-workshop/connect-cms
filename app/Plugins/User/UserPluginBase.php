@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
@@ -17,6 +19,7 @@ use DB;
 use File;
 use HTMLPurifier;
 use HTMLPurifier_Config;
+use Request;
 
 use App\Jobs\ApprovalNoticeJob;
 use App\Jobs\ApprovedNoticeJob;
@@ -29,6 +32,7 @@ use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 
 use App\Plugins\PluginBase;
 
@@ -75,6 +79,13 @@ class UserPluginBase extends PluginBase
     public $configs = null;
 
     /**
+     * FrameConfig オブジェクト
+     * FrameConfigのCollection
+     *
+     */
+    public $frame_configs = null;
+
+    /**
      *  アクション
      */
     public $action = null;
@@ -108,6 +119,9 @@ class UserPluginBase extends PluginBase
         // ページの保持
         $this->page = $page;
 
+        // bugfix: URLのフレームIDを手で書き換えられた場合、frameがnullになる事がありえるため対応
+        $frame = $frame ?? new Frame();
+
         // フレームの保持
         $this->frame = $frame;
 
@@ -124,6 +138,8 @@ class UserPluginBase extends PluginBase
 
         // Configs の保持
         $this->configs = Configs::get();
+
+        $this->setFrameConfigs();
     }
 
     /**
@@ -169,7 +185,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  画面表示用にページやフレームなど呼び出し
+     * 画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
      * @return view
@@ -249,7 +265,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * frame 取得
+     * バケツID取得
      */
     protected function getBucketId()
     {
@@ -411,6 +427,9 @@ class UserPluginBase extends PluginBase
             $arg['theme_group'] = '';
             $arg['theme_group_default'] = '';
         }
+
+        // 表示しているフレームのフレーム設定
+        $arg['frame_configs'] = $this->frame_configs;
 
         return $arg;
     }
@@ -574,6 +593,8 @@ class UserPluginBase extends PluginBase
         if (empty($bucket)) {
             return $this->view_error("error_inframe", "存在しないBucket");
         }
+        // [debug]
+        // var_dump(old('notice_on'));
 
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
@@ -697,6 +718,42 @@ class UserPluginBase extends PluginBase
             return $this->view_error("error_inframe", "存在しないBucket");
         }
 
+        // redirect_path
+        $redirect_path_array = [
+            'redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id
+        ];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on)],
+            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on)],
+            'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on)],
+
+        ]);
+        $validator->setAttributeNames([
+            'notice_addresses' => '送信先メールアドレス',
+            'approval_addresses' => '送信先メールアドレス',
+            'approved_addresses' => '送信先メールアドレス',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            // [debug]
+            // セッション初期化などのLaravel 処理。
+            // $request->flash();
+
+            // 共通画面のため、redirect_pathが画面に書けないため、ここで設定
+            $request->merge($redirect_path_array);
+
+            // [debug]
+            // dd(old('notice_on'), $request->notice_on);
+            // $a = redirect()->back()->withErrors($validator)->withInput();
+            // dd(old('notice_on'), $request->notice_on);
+            // return $a;
+
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
 
@@ -737,7 +794,7 @@ class UserPluginBase extends PluginBase
         $bucket_mail->save();
 
         // 登録後はリダイレクトしてメール設定ページを開く。
-        return new Collection(['redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/editBucketsMails/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+        return new Collection($redirect_path_array);
     }
 
     /**
@@ -1124,6 +1181,27 @@ class UserPluginBase extends PluginBase
             return "";
         }
         return $this->frame->plugin_name;
+    }
+
+    /**
+     * フレーム設定をフレームIDで絞り込んで設定する。
+     */
+    protected function setFrameConfigs()
+    {
+        // frame_idが設定されない場合があるので、なかったら設定しない。
+        if (empty($this->frame->id)) {
+            return;
+        }
+
+        $this->frame_configs = Request::get('frame_configs')->where('frame_id', $this->frame->id);
+    }
+
+    /**
+     * フレーム設定を再取得し、フレームIDで絞り込んで設定しなおす。
+     */
+    protected function refreshFrameConfigs()
+    {
+        $this->frame_configs = FrameConfig::where('frame_id', $this->frame->id)->get();
     }
 
     /**

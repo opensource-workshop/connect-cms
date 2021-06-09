@@ -18,6 +18,8 @@ use Log;
 
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
+use App\Enums\CodeColumn;
+use App\Enums\CsvCharacterCode;
 
 /**
  * コード管理クラス
@@ -851,15 +853,15 @@ class CodeManage extends ManagePluginBase
         $character_code = $request->character_code;
 
         // 文字コード自動検出
-        if ($character_code == \CsvCharacterCode::auto) {
+        if ($character_code == CsvCharacterCode::auto) {
             // 文字コードの自動検出(文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る)
             $character_code = CsvUtils::getCharacterCodeAuto($csv_full_path);
             if (!$character_code) {
                 // 一時ファイルの削除
-                $this->rmImportTmpFile($path);
+                Storage::delete($path);
 
-                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::sjis_win) .
-                            ", " . \CsvCharacterCode::getSelectMembersDescription(\CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
+                $error_msgs = "文字コードを自動検出できませんでした。CSVファイルの文字コードを " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::sjis_win) .
+                            ", " . CsvCharacterCode::getSelectMembersDescription(CsvCharacterCode::utf_8) . " のいずれかに変更してください。";
 
                 return redirect()->back()->withErrors(['codes_csv' => $error_msgs])->withInput();
             }
@@ -868,47 +870,76 @@ class CodeManage extends ManagePluginBase
         // 読み込み
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == \CsvCharacterCode::sjis_win) {
+        if ($character_code == CsvCharacterCode::sjis_win) {
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
+        // ・fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
+        //
+        // [詳細]
+        // ・xampp環境のロケールは、LC_CTYPE=Japanese_Japan.932 でした。
+        //   これだと、「ド」の次のカンマが認識できなくなり 1カラム 'コード,値' で誤認識される。また末尾改行の処理も誤動作おこしました。
+        //   \Log::debug(var_export(setlocale(LC_ALL, "0"), true));
+        //   [2021-05-07 17:26:12] local.DEBUG: 'LC_COLLATE=C;LC_CTYPE=Japanese_Japan.932;LC_MONETARY=C;LC_NUMERIC=C;LC_TIME=C'
+        // ・fgetcsv() https://www.php.net/manual/ja/function.fgetcsv.php
+        setlocale(LC_ALL, 'ja_JP.UTF-8');
+
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
-        if ($character_code == \CsvCharacterCode::utf_8) {
+        if ($character_code == CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
-        // dd($csv_full_path);
+        // [debug]
+        // fclose($fp);
+        // Storage::delete($path);
         // \Log::debug('$header_columns:'. var_export($header_columns, true));
+        // dd($csv_full_path);
 
         // カラムの取得
-        $code_columns = \CodeColumn::getImportColumn();
+        $code_columns = CodeColumn::getImportColumn();
 
         // ヘッダー項目のエラーチェック
-        $error_msgs = $this->checkCsvHeader($header_columns, $code_columns);
+        $error_msgs = CsvUtils::checkCsvHeader($header_columns, $code_columns);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
-            $this->rmImportTmpFile($path);
+            Storage::delete($path);
 
             return redirect()->back()->withErrors(['codes_csv' => $error_msgs])->withInput();
         }
 
+        $rules = [
+            0 => ['nullable', 'numeric', 'exists:codes,id,deleted_at,NULL'],    // id
+            1 => ['nullable', 'exists:plugins,plugin_name'],                    // プラグイン(英語)
+            2 => ['nullable', 'exists:codes_help_messages,alias_key,deleted_at,NULL'],    // 注釈キー
+            3 => ['nullable', 'numeric'],    // buckets_id
+            4 => [],
+            5 => [],
+            6 => [],
+            7 => [],
+            8 => [],
+            9 => [],
+            10 => [],
+            11 => ['required'],     // コード
+            12 => ['required'],     // 値
+        ];
+
         // データ項目のエラーチェック
-        $error_msgs = $this->checkCvslines($fp, $code_columns);
+        $error_msgs = CsvUtils::checkCvslines($fp, $code_columns, $rules);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
-            $this->rmImportTmpFile($path);
+            Storage::delete($path);
 
             return redirect()->back()->withErrors(['codes_csv' => $error_msgs])->withInput();
         }
 
         // // 一時ファイルの削除
         // fclose($fp);
-        // $this->rmImportTmpFile($path);
+        // Storage::delete($path);
         // dd('ここまで');
 
         // ファイルポインタの位置を先頭に戻す
@@ -917,7 +948,7 @@ class CodeManage extends ManagePluginBase
         // ヘッダー
         $header_columns = fgetcsv($fp, 0, ',');
         // CSVファイル：UTF-8のみ
-        if ($character_code == \CsvCharacterCode::utf_8) {
+        if ($character_code == CsvCharacterCode::utf_8) {
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
@@ -984,100 +1015,10 @@ class CodeManage extends ManagePluginBase
 
         // 一時ファイルの削除
         fclose($fp);
-        $this->rmImportTmpFile($path);
+        Storage::delete($path);
 
         // インポート画面に戻る
         return redirect("/manage/code/import")->with('flash_message', 'インポートしました。');
-    }
-
-    /**
-     * CSVヘッダーチェック
-     */
-    private function checkCsvHeader($header_columns, $header_column_format)
-    {
-        if (empty($header_columns)) {
-            return array("CSVファイルが空です。");
-        }
-
-        // 項目の不足チェック
-        $shortness = array_diff($header_column_format, $header_columns);
-        if (!empty($shortness)) {
-            // Log::debug(var_export($header_column_format, true));
-            // Log::debug(var_export($header_columns, true));
-            return array("1行目に " . implode(",", $shortness) . " が不足しています。");
-        }
-        // 項目の不要チェック
-        $excess = array_diff($header_columns, $header_column_format);
-        if (!empty($excess)) {
-            return array("1行目に " . implode(",", $excess) . " は不要です。");
-        }
-
-        return array();
-    }
-
-    /**
-     * インポート時の一時ファイル削除
-     */
-    private function rmImportTmpFile($path)
-    {
-        // 一時ファイルの削除
-        Storage::delete($path);
-    }
-
-    /**
-     * CSVデータ行チェック
-     */
-    private function checkCvslines($fp, $code_columns)
-    {
-        $rules = [
-            0 => ['nullable', 'numeric', 'exists:codes,id,deleted_at,NULL'],    // id
-            1 => ['nullable', 'exists:plugins,plugin_name'],                    // プラグイン(英語)
-            2 => ['nullable', 'exists:codes_help_messages,alias_key,deleted_at,NULL'],    // 注釈キー
-            3 => ['nullable', 'numeric'],    // buckets_id
-            4 => [],
-            5 => [],
-            6 => [],
-            7 => [],
-            8 => [],
-            9 => [],
-            10 => [],
-            11 => ['required'],     // コード
-            12 => ['required'],     // 値
-        ];
-
-        // ヘッダー行が1行目なので、2行目からデータ始まる
-        $line_count = 2;
-        $errors = [];
-
-        while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
-            // 入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
-            $csv_columns = StringUtils::trimInput($csv_columns);
-
-            // バリデーション
-            $validator = Validator::make($csv_columns, $rules);
-            // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
-            // Log::debug(var_export($rules, true));
-
-            $attribute_names = [];
-
-            $col = 0;
-            foreach ($code_columns as $code_column) {
-                // 行数＋項目名
-                $attribute_names[$col] = $line_count . '行目の' . $code_column;
-                $col++;
-            }
-
-            $validator->setAttributeNames($attribute_names);
-            // Log::debug(var_export($attribute_names, true));
-
-            if ($validator->fails()) {
-                $errors = array_merge($errors, $validator->errors()->all());
-            }
-
-            $line_count++;
-        }
-
-        return $errors;
     }
 
     /**
@@ -1108,7 +1049,7 @@ class CodeManage extends ManagePluginBase
     public function downloadCsv($request, $page_id = null, $sub_id = null, $data_output_flag = true)
     {
         // カラムの取得
-        $columns = \CodeColumn::getImportColumn();
+        $columns = CodeColumn::getImportColumn();
 
         // 返却用配列
         $csv_array = array();
@@ -1168,12 +1109,12 @@ class CodeManage extends ManagePluginBase
         // Log::debug(var_export($request->character_code, true));
 
         // 文字コード変換
-        if ($request->character_code == \CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::utf_8);
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
             // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
             $csv_data = CsvUtils::addUtf8Bom($csv_data);
         } else {
-            $csv_data = mb_convert_encoding($csv_data, \CsvCharacterCode::sjis_win);
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
         }
 
         return response()->make($csv_data, 200, $headers);

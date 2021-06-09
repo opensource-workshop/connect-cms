@@ -58,7 +58,11 @@ use App\Models\User\Databases\DatabasesColumns;
                 <label class="col-sm-3 control-label">{{$database_column->column_name}} @if ($database_column->required)<span class="badge badge-danger">必須</span> @endif</label>
                 <div class="col-sm-9">
                     @include('plugins.user.databases.default.databases_input_' . $database_column->column_type,['database_obj' => $database_column])
-                    <div class="small {{ $database_column->caption_color }}">{!! nl2br($database_column->caption) !!}</div>
+                    @php
+                        $caption = nl2br($database_column->caption);
+                        $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                    @endphp
+                    <div class="small {{ $database_column->caption_color }}">{!! $caption !!}</div>
                 </div>
             </div>
         @endforeach
@@ -71,7 +75,7 @@ use App\Models\User\Databases\DatabasesColumns;
                 <div class="input-group date" id="posted_at{{$frame_id}}" data-target-input="nearest">
                     <input type="text" name="posted_at" value="{{old('posted_at', $inputs->posted_at)}}" class="form-control datetimepicker-input" data-target="#posted_at{{$frame_id}}">
                     <div class="input-group-append" data-target="#posted_at{{$frame_id}}" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
                 @if ($errors && $errors->has('posted_at')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('posted_at')}}</div> @endif

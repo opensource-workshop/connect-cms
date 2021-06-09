@@ -39,7 +39,7 @@
             data-target="#{{ $database_obj->id }}"
         >
         <div class="input-group-append" data-target="#{{ $database_obj->id }}" data-toggle="datetimepicker">
-            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+            <div class="input-group-text"><i class="far fa-clock"></i></div>
         </div>
     </div>
 @if ($errors && $errors->has("databases_columns_value.$database_obj->id"))

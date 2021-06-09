@@ -23,6 +23,8 @@ use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
 
+use App\Enums\UserStatus;
+
 use Yasumi\Yasumi;
 
 trait ConnectCommonTrait
@@ -814,15 +816,12 @@ trait ConnectCommonTrait
             return false;
         }
 
-        // 利用不可ならfalse
-        if ($user->status == \UserStatus::not_active) {
-            $error_msg = \UserStatus::getDescription(\UserStatus::not_active) . "のため、ログインできません。";
-            return false;
-        }
+        // 利用不可・仮登録・仮削除ならfalse
+        if ($user->status == UserStatus::not_active ||
+                $user->status == UserStatus::temporary ||
+                $user->status == UserStatus::temporary_delete) {
 
-        // 仮登録ならfalse
-        if ($user->status == \UserStatus::temporary) {
-            $error_msg = \UserStatus::getDescription(\UserStatus::temporary) . "のため、ログインできません。";
+            $error_msg = UserStatus::getDescription($user->status) . "のため、ログインできません。";
             return false;
         }
 

@@ -58,7 +58,7 @@
                     <div class="input-group date" id="return_scheduled" data-target-input="nearest">
                         <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datetimepicker-input" data-target="#return_scheduled"/>
                         <div class="input-group-append" data-target="#return_scheduled" data-toggle="datetimepicker">
-                            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                            <div class="input-group-text"><i class="far fa-clock"></i></div>
                         </div>
                     </div>
                     <small class="text-muted">モデレータの場合は貸出期限を入力してください。</small>
@@ -99,7 +99,7 @@
             <div class="form-group text-center mt-3 mb-0">
                 <div class="row">
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                             貸し出し
                         </button>
                     </div>
@@ -145,7 +145,7 @@
             <div class="form-group text-center mt-3 mb-0">
                 <div class="row">
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                             返却
                         </button>
                     </div>

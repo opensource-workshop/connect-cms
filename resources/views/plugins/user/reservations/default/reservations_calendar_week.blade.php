@@ -118,7 +118,7 @@
                                                 <input type="hidden" name="target_date" value="{{ $cell['date']->format('Ymd') }}">
                                                 {{-- ＋ボタンクリックでformサブミット --}}
                                                 <a href="javascript:form_edit_booking_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
-                                                    <span class="btn btn-success btn-sm"><i class="fas fa-plus"></i></span>
+                                                    <i class="fas fa-plus"></i>
                                                 </a>
                                             </form>
                                         @endauth
@@ -126,17 +126,17 @@
                                 </div>
                                 @if (isset($cell['bookings']))
                                     @foreach ($cell['bookings'] as $booking)
-                                        <a href="#bookingDetailModal" role="button" data-toggle="modal" 
+                                        <a href="#bookingDetailModal" role="button" data-toggle="modal"
                                             {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
-                                            data-booking_id="{{ $booking['booking_header']->id }}" 
-                                            data-facility_name="{{ $facility_name }}" 
-                                            data-reservation_date_display="{{ 
-                                                (App::getLocale() == ConnectLocale::en ? 
+                                            data-booking_id="{{ $booking['booking_header']->id }}"
+                                            data-facility_name="{{ $facility_name }}"
+                                            data-reservation_date_display="{{
+                                                (App::getLocale() == ConnectLocale::en ?
                                                     $booking['booking_header']->start_datetime->format('j M Y') :
                                                     $booking['booking_header']->start_datetime->format('Y年n月j日')
-                                                ) . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')' 
-                                            }}" 
-                                            data-reservation_time="{{ substr($booking['booking_header']->start_datetime, 11, 5) . ' ~ ' . substr($booking['booking_header']->end_datetime, 11, 5) }}" 
+                                                ) . ' (' . DayOfWeek::getDescription($booking['booking_header']->start_datetime->dayOfWeek) . ')'
+                                            }}"
+                                            data-reservation_time="{{ substr($booking['booking_header']->start_datetime, 11, 5) . ' ~ ' . substr($booking['booking_header']->end_datetime, 11, 5) }}"
                                             {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
                                             @foreach ($booking['booking_details'] as $bookingDetail)
                                                 @switch($bookingDetail->column_type)
@@ -159,7 +159,7 @@
                                                             data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
                                                             @break
                                                     @default
-                                                        
+
                                                 @endswitch
                                             @endforeach
                                         >

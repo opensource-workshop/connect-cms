@@ -118,7 +118,7 @@
             確認して変更
         @endif
     </button>
-    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'">キャンセル</button>
+    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">キャンセル</button>
 </div>
 
 </form>

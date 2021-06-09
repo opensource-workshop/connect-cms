@@ -34,6 +34,9 @@
     {{-- 余白 --}}
     <td>
     </td>
+    {{-- 余白 --}}
+    <td>
+    </td>
     {{-- ＋ボタン --}}
     <td class="text-center">
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>

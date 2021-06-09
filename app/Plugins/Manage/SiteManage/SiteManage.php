@@ -15,6 +15,7 @@ use App\Models\Common\Categories;
 use App\Models\Common\Page;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Enums\BaseLoginRedirectPage;
 
 /**
  * サイト管理クラス
@@ -62,47 +63,77 @@ class SiteManage extends ManagePluginBase
      *
      * @return view
      */
-    public function index($request, $page_id = null, $errors = array())
+    public function index($request, $page_id = null)
     {
         // Config データの取得
         $configs = Configs::get();
 
-        // Config データの変換
-        $configs_array = array();
-        foreach ($configs as $config) {
-            $configs_array[$config->name] = $config->value;
-        }
+        // // Config データの変換
+        // $configs_array = array();
+        // foreach ($configs as $config) {
+        //     $configs_array[$config->name] = $config->value;
+        // }
 
-        // 設定済みのテーマ
+        // 設定済みの基本テーマ
         $base_theme_obj = $configs->where('name', 'base_theme')->first();
         $current_base_theme = '';
         if (!empty($base_theme_obj)) {
             $current_base_theme = $base_theme_obj->value;
         }
 
+        // 設定済みの追加テーマ
+        $current_additional_theme = $configs->where('name', 'additional_theme')->first() ? $configs->where('name', 'additional_theme')->first()->value : '';
+
         // テーマの取得
         $themes = $this->getThemes();
+
+        // ページデータの取得(laravel-nestedset 使用)
+        $return_obj = 'flat';
+        $pages_select = Page::defaultOrderWithDepth($return_obj);
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.site.site', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "site",
-            "errors"             => $errors,
-            "configs"            => $configs_array,
+            // "configs"            => $configs_array,
+            "configs"            => $configs,
             "current_base_theme" => $current_base_theme,
+            "current_additional_theme" => $current_additional_theme,
             "themes"             => $themes,
+            "pages_select" => $pages_select,
         ]);
     }
 
     /**
-     *  更新
+     * 更新
      */
-    public function update($request, $page_id = null, $errors = array())
+    public function update($request, $page_id = null)
     {
         // httpメソッド確認
         if (!$request->isMethod('post')) {
             abort(403, '権限がありません。');
+        }
+
+        $validator_values = [];
+        $validator_attributes['base_login_redirect_select_page'] = 'ログイン後に移動する指定ページ';
+
+        $messages = [
+            'base_login_redirect_select_page.required' => 'ログイン後に移動するページを指定したページにする場合、:attribute を選択してください。',
+        ];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $validator_values, $messages);
+        $validator->setAttributeNames($validator_attributes);
+
+        $validator->sometimes("base_login_redirect_select_page", 'required', function ($input) {
+            // ログイン後に移動するページ が「指定したページ」なら、上記の ログイン後に移動する指定ページ 必須
+            return $input->base_login_redirect_previous_page == BaseLoginRedirectPage::specified_page;
+        });
+
+        if ($validator->fails()) {
+            // エラーと共に編集画面を呼び出す
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // サイト名
@@ -112,11 +143,18 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_site_name]
         );
 
-        // 画面の基本のテーマ
+        // 基本テーマ
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_theme'],
             ['category' => 'general',
              'value'    => $request->base_theme]
+        );
+
+        // 追加テーマ
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'additional_theme'],
+            ['category' => 'general',
+             'value'    => $request->additional_theme]
         );
 
         // 画面の基本の背景色
@@ -131,6 +169,24 @@ class SiteManage extends ManagePluginBase
             ['name'     => 'base_header_color'],
             ['category' => 'general',
              'value'    => $request->base_header_color]
+        );
+
+        // 画面の基本のヘッダー文字色
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_font_color_class'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_header_font_color_class
+            ]
+        );
+
+        // ヘッダーバー任意クラス
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_header_optional_class'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_header_optional_class
+            ]
         );
 
         // bodyタグのclass属性
@@ -182,11 +238,22 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_login_password_reset]
         );
 
-        // ログイン時に元いたページに遷移 設定
+        // ログイン後に移動するページ 設定
         $configs = Configs::updateOrCreate(
-            ['name'     => 'base_login_redirect_previous_page'],
-            ['category' => 'general',
-             'value'    => $request->base_login_redirect_previous_page]
+            ['name' => 'base_login_redirect_previous_page'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_login_redirect_previous_page
+            ]
+        );
+
+        // ログイン後に移動する指定ページ 設定
+        $configs = Configs::updateOrCreate(
+            ['name' => 'base_login_redirect_select_page'],
+            [
+                'category' => 'general',
+                'value'    => $request->base_login_redirect_select_page
+            ]
         );
 
         // マイページの使用
@@ -227,24 +294,22 @@ class SiteManage extends ManagePluginBase
     /**
      *  カテゴリ表示画面
      */
-    public function categories($request, $id, $errors = null, $create_flag = false)
+    public function categories($request, $id)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // カテゴリデータの取得
         $categories = Categories::orderBy('target', 'asc')
-                                ->orderBy('plugin_id', 'asc')
-                                ->orderBy('display_sequence', 'asc')
-                                ->get();
+                ->orderBy('plugin_id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->get();
 
         return view('plugins.manage.site.categories', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
             "categories"  => $categories,
-            "create_flag" => $create_flag,
-            "errors"      => $errors,
         ]);
     }
 
@@ -253,63 +318,61 @@ class SiteManage extends ManagePluginBase
      */
     public function saveCategories($request, $id)
     {
+        /* エラーチェック
+        ------------------------------------ */
+        $rules = [];
+
+        // エラーチェックの項目名
+        $setAttributeNames = [];
+
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color) || !empty($request->add_background_color)) {
             // 項目のエラーチェック
-            $validator = Validator::make($request->all(), [
-                'add_display_sequence' => ['required'],
-                //'add_classname'        => ['required'],
-                'add_category'         => ['required'],
-                'add_color'            => ['required'],
-                'add_background_color' => ['required'],
-            ]);
-            $validator->setAttributeNames([
-                'add_display_sequence' => '追加行の表示順',
-                //'add_classname'        => '追加行のクラス名',
-                'add_category'         => '追加行のカテゴリ',
-                'add_color'            => '追加行の文字色',
-                'add_background_color' => '追加行の背景色',
-            ]);
+            $rules['add_display_sequence'] = ['required'];
+            $rules['add_category'] = ['required'];
+            $rules['add_color'] = ['required'];
+            $rules['add_background_color'] = ['required'];
 
-            if ($validator->fails()) {
-                return $this->categories($request, $id, $validator->errors());
-            }
+            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
+            $setAttributeNames['add_category'] = '追加行のカテゴリ';
+            $setAttributeNames['add_color'] = '追加行の文字色';
+            $setAttributeNames['add_background_color'] = '追加行の背景色';
         }
 
         // 既存項目のidに値が入っていたら、行の他の項目も必須
         if (!empty($request->categories_id)) {
             foreach ($request->categories_id as $category_id) {
                 // 項目のエラーチェック
-                $validator = Validator::make($request->all(), [
-                    'display_sequence.'.$category_id => ['required'],
-                    // 'classname.'.$category_id        => ['required'],
-                    'category.'.$category_id         => ['required'],
-                    'color.'.$category_id            => ['required'],
-                    'background_color.'.$category_id => ['required'],
-                ]);
-                $validator->setAttributeNames([
-                    'display_sequence.'.$category_id => '表示順',
-                    // 'classname.'.$category_id        => 'クラス名',
-                    'category.'.$category_id         => 'カテゴリ',
-                    'color.'.$category_id            => '文字色',
-                    'background_color.'.$category_id => '背景色',
-                ]);
+                $rules['display_sequence.'.$category_id] = ['required'];
+                $rules['category.'.$category_id] = ['required'];
+                $rules['color.'.$category_id] = ['required'];
+                $rules['background_color.'.$category_id] = ['required'];
 
-                if ($validator->fails()) {
-                    return $this->categories($request, $id, $validator->errors());
-                }
+                $setAttributeNames['display_sequence.'.$category_id] = '表示順';
+                $setAttributeNames['category.'.$category_id] = 'カテゴリ';
+                $setAttributeNames['color.'.$category_id] = '文字色';
+                $setAttributeNames['background_color.'.$category_id] = '背景色';
             }
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames($setAttributeNames);
+
+        if ($validator->fails()) {
+            // return $this->categories($request, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             Categories::create([
-                            'display_sequence' => intval($request->add_display_sequence),
-                            'classname'        => $request->add_classname,
-                            'category'         => $request->add_category,
-                            'color'            => $request->add_color,
-                            'background_color' => $request->add_background_color
-                        ]);
+                'display_sequence' => intval($request->add_display_sequence),
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color
+            ]);
         }
 
         // 既存項目アリ
@@ -330,7 +393,8 @@ class SiteManage extends ManagePluginBase
             }
         }
 
-        return $this->categories($request, $id, null, true);
+        // return $this->categories($request, $id, null, true);
+        return redirect()->back();
     }
 
     /**
@@ -338,10 +402,14 @@ class SiteManage extends ManagePluginBase
      */
     public function deleteCategories($request, $id)
     {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        //
         // カテゴリ削除
-        Categories::where('id', $id)->delete();
+        // Categories::where('id', $id)->delete();
+        Categories::destroy($id);
 
-        return $this->categories($request, $id, null, true);
+        // return $this->categories($request, $id, null, true);
+        return redirect()->back();
     }
 
     /**
@@ -382,9 +450,11 @@ class SiteManage extends ManagePluginBase
 
         // サイト名
         $configs = Configs::updateOrCreate(
-            ['name'     => 'language_multi_on'],
-            ['category' => 'general',
-             'value'    => $request->language_multi_on]
+            ['name' => 'language_multi_on'],
+            [
+                'category' => 'general',
+                'value' => $request->language_multi_on
+            ]
         );
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
@@ -426,11 +496,11 @@ class SiteManage extends ManagePluginBase
         // 追加項目アリ
         if (!empty($request->add_language)) {
             $new_configs = Configs::create([
-                         'name'        => 'language',
-                         'category'    => 'language',
-                         'value'       => $request->add_language,
-                         'additional1' => $request->add_url,
-                     ]);
+                'name'        => 'language',
+                'category'    => 'language',
+                'value'       => $request->add_language,
+                'additional1' => $request->add_url,
+            ]);
 
             // name をユニークにするために更新(languageのname は特に使用していない)
             $new_configs->name = $new_configs->name . '_' . $new_configs->id;

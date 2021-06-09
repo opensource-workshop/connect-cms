@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 {{-- 編集画面側のフレームメニュー --}}
@@ -31,6 +31,7 @@
     </div>
 
     <h5><span class="badge badge-secondary">閲覧条件</span></h5>
+
     <div class="form-group row">
         <label class="col-md-3 text-md-right">ログインの要否</label>
         <div class="col-md-9">
@@ -62,6 +63,7 @@
     </div>
 
     <h5><span class="badge badge-secondary">受講者</span></h5>
+
     <div class="form-group row">
         <label class="col-md-3 text-md-right">参加方式</label>
         <div class="col-md-9">
@@ -86,24 +88,36 @@
             </div><br />
 --}}
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->student_join_flag == 2)
-                    <input type="radio" value="2" id="student_join_flag_2" name="student_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_user.show">
-                @else
-                    <input type="radio" value="2" id="student_join_flag_2" name="student_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_user.show">
-                @endif
+                <input type="radio"
+                    value="{{LearningtaskUserJoinFlag::all}}"
+                    id="student_join_flag_2"
+                    name="student_join_flag"
+                    class="custom-control-input"
+                    @if($learningtasks_posts->student_join_flag == LearningtaskUserJoinFlag::all) checked="checked" @endif
+                    data-toggle="collapse"
+                    data-target="#collapse_membership_user.show"
+                >
                 <label class="custom-control-label" for="student_join_flag_2">配置ページのメンバーシップ受講者全員</label>
-            </div><br />
+            </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->student_join_flag == 3)
-                    <input type="radio" value="3" id="student_join_flag_3" name="student_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_user">
-                @else
-                    <input type="radio" value="3" id="student_join_flag_3" name="student_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_user">
-                @endif
+                <input
+                    type="radio"
+                    value="{{LearningtaskUserJoinFlag::select}}"
+                    id="student_join_flag_3"
+                    name="student_join_flag"
+                    class="custom-control-input"
+                    @if($learningtasks_posts->student_join_flag == LearningtaskUserJoinFlag::select) checked="checked" @endif
+                    data-toggle="collapse"
+                    data-target="#collapse_membership_user:not(.show)"
+                    aria-expanded="true"
+                    aria-controls="collapse_membership_user"
+                >
                 <label class="custom-control-label" for="student_join_flag_3">配置ページのメンバーシップ受講者から選ぶ</label>
             </div>
         </div>
     </div>
-    @if ($learningtasks_posts->student_join_flag == 3)
+
+    @if ($learningtasks_posts->student_join_flag == LearningtaskUserJoinFlag::select)
     <div class="collapse collapse_membership_user show" id="collapse_membership_user">
     @else
     <div class="collapse collapse_membership_user" id="collapse_membership_user">
@@ -135,29 +149,42 @@
     </div>
 
     <h5><span class="badge badge-secondary">教員</span></h5>
+
     <div class="form-group row">
         <label class="col-md-3 text-md-right">参加方式</label>
         <div class="col-md-9">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->teacher_join_flag == 2)
-                    <input type="radio" value="2" id="teacher_join_flag_2" name="teacher_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_teacher_user.show">
-                @else
-                    <input type="radio" value="2" id="teacher_join_flag_2" name="teacher_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_teacher_user.show">
-                @endif
+                <input
+                    type="radio"
+                    value="{{LearningtaskUserJoinFlag::all}}"
+                    id="teacher_join_flag_2"
+                    name="teacher_join_flag"
+                    class="custom-control-input"
+                    @if($learningtasks_posts->teacher_join_flag == LearningtaskUserJoinFlag::all) checked="checked" @endif
+                    data-toggle="collapse"
+                    data-target="#collapse_membership_teacher_user.show"
+                >
                 <label class="custom-control-label" for="teacher_join_flag_2">配置ページのメンバーシップ教員全員</label>
-            </div><br />
+            </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtasks_posts->teacher_join_flag == 3)
-                    <input type="radio" value="3" id="teacher_join_flag_3" name="teacher_join_flag" class="custom-control-input" checked="checked" data-toggle="collapse" data-target="#collapse_membership_teacher_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_teacher_user">
-                @else
-                    <input type="radio" value="3" id="teacher_join_flag_3" name="teacher_join_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_membership_teacher_user:not(.show)" aria-expanded="true" aria-controls="collapse_membership_teacher_user">
-                @endif
+                <input
+                    type="radio"
+                    value="{{LearningtaskUserJoinFlag::select}}"
+                    id="teacher_join_flag_3"
+                    name="teacher_join_flag"
+                    class="custom-control-input"
+                    @if($learningtasks_posts->teacher_join_flag == LearningtaskUserJoinFlag::select) checked="checked" @endif
+                    data-toggle="collapse"
+                    data-target="#collapse_membership_teacher_user:not(.show)"
+                    aria-expanded="true"
+                    aria-controls="collapse_membership_teacher_user"
+                >
                 <label class="custom-control-label" for="teacher_join_flag_3">配置ページのメンバーシップ教員から選ぶ</label>
             </div>
         </div>
     </div>
 
-    @if ($learningtasks_posts->teacher_join_flag == 3)
+    @if ($learningtasks_posts->teacher_join_flag == LearningtaskUserJoinFlag::select)
     <div class="collapse collapse_membership_teacher_user show" id="collapse_membership_teacher_user">
     @else
     <div class="collapse collapse_membership_teacher_user" id="collapse_membership_teacher_user">
@@ -188,16 +215,16 @@
         </div>
     </div>
 
-    <div class="form-group">
-        <div class="row">
-            <div class="col-12">
-                <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span> キャンセル</span></button>
-                    <input type="hidden" name="bucket_id" value="">
-                    <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('更新します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>
-                </div>
-            </div>
-        </div>
+    <div class="text-center">
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}'">
+            <i class="fas fa-angle-left"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> 詳細へ</span>
+        </button>
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.reload()">
+            {{-- <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span> --}}
+            <i class="fas fa-undo-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span>
+        </button>
+        <input type="hidden" name="bucket_id" value="">
+        <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('更新します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>
     </div>
 </form>
 @endif

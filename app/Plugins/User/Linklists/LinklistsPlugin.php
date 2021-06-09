@@ -270,19 +270,21 @@ class LinklistsPlugin extends UserPluginBase
         // POSTデータのモデル取得
         $post = LinklistPost::firstOrNew(['id' => $post_id]);
 
-        // フレームから linklist_id 取得
-        $linklist_frame = $this->getPluginFrame($frame_id);
+        // バケツから linklist_id 取得
+        // bugfix: linklist_idはフレームではなく、表示しているバケツから取得する
+        // $linklist_frame = $this->getPluginFrame($frame_id);
+        $linklist = $this->getPluginBucket($this->getBucketId());
 
         // 表示順が空なら、自分を省いた最後の番号+1 をセット
         if ($request->filled('display_sequence')) {
             $display_sequence = intval($request->display_sequence);
         } else {
-            $max_display_sequence = LinklistPost::where('linklist_id', $linklist_frame->linklist_id)->where('id', '<>', $post_id)->max('display_sequence');
+            $max_display_sequence = LinklistPost::where('linklist_id', $linklist->id)->where('id', '<>', $post_id)->max('display_sequence');
             $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
         }
 
         // 値のセット
-        $post->linklist_id       = $linklist_frame->linklist_id;
+        $post->linklist_id       = $linklist->id;
         $post->title             = $request->title;
         $post->url               = $request->url;
         $post->target_blank_flag = $request->target_blank_flag;
@@ -364,9 +366,13 @@ class LinklistsPlugin extends UserPluginBase
 
         // フレームごとの表示設定の更新
         $linklist_frame = LinklistFrame::updateOrCreate(
-            ['linklist_id' => $linklist_id, 'frame_id' => $frame_id],
-            ['view_count'  => $request->view_count,
-             'type'        => $request->type],
+            // bugfix: LinklistFrameは frame_id のみfirst()取得しているため、frame_idのみで登録・更新する
+            // ['linklist_id' => $linklist_id, 'frame_id' => $frame_id],
+            ['frame_id' => $frame_id],
+            [
+                'view_count'  => $request->view_count,
+                'type'        => $request->type
+            ],
         );
 
         return;
@@ -424,11 +430,8 @@ class LinklistsPlugin extends UserPluginBase
         $linklist->name = $request->name;
         $linklist->save();
 
-        // プラグインフレームを作成 or 更新
-        $linklist_frame = LinklistFrame::updateOrCreate(
-            ['frame_id' => $frame_id],
-            ['linklist_id' => $linklist->id, 'frame_id' => $frame_id],
-        );
+        // プラグインフレームが存在しなければ作成
+        $linklist_frame = LinklistFrame::firstOrCreate(['frame_id' => $frame_id]);
 
         // 登録後はリダイレクトして編集ページを開く。
         return new Collection(['redirect_path' => url('/') . "/plugin/linklists/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
@@ -445,18 +448,26 @@ class LinklistsPlugin extends UserPluginBase
             return;
         }
 
-        // POSTデータ削除(一気にDelete なので、deleted_id は入らない)
-        LinklistPost::where('linklist_id', $linklist->id)->delete();
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
+        //
+        // POSTデータ削除
+        // LinklistPost::where('linklist_id', $linklist->id)->delete();
+        $linklist_post_ids = LinklistPost::where('linklist_id', $linklist->id)->pluck('id');
+        LinklistPost::destroy($linklist_post_ids);
 
         // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+        Frame::where('bucket_id', $linklist->bucket_id)->update(['bucket_id' => null]);
 
+        // delete: バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら linklist_frame を削除する
         // プラグインフレームデータの削除(deleted_id を記録するために1回読んでから削除)
-        $linklist_frame = LinklistFrame::where('frame_id', $frame_id)->first();
-        $linklist_frame->delete();
+        // $linklist_frame = LinklistFrame::where('frame_id', $frame_id)->first();
+        // $linklist_frame->delete();
 
         // バケツ削除
-        Buckets::find($linklist->bucket_id)->delete();
+        // Buckets::find($linklist->bucket_id)->delete();
+        Buckets::destroy($linklist->bucket_id);
 
         // プラグインデータ削除
         $linklist->delete();
@@ -464,22 +475,23 @@ class LinklistsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
 
-        // Linklists の特定
-        $plugin_bucket = $this->getPluginBucket($request->select_bucket);
+        // delete: バケツ切替時、表示設定のフレームIDは同じため、更新不要
+        // // Linklists の特定
+        // $plugin_bucket = $this->getPluginBucket($request->select_bucket);
 
-        // フレームごとの表示設定の更新
-        $linklist_frame = $this->getPluginFrame($frame_id);
-        $linklist_frame->linklist_id = $plugin_bucket->id;
-        $linklist_frame->frame_id = $frame_id;
-        $linklist_frame->save();
+        // // フレームごとの表示設定の更新
+        // $linklist_frame = $this->getPluginFrame($frame_id);
+        // $linklist_frame->linklist_id = $plugin_bucket->id;
+        // $linklist_frame->frame_id = $frame_id;
+        // $linklist_frame->save();
 
         return;
     }

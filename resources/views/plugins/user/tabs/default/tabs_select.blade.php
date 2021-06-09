@@ -29,9 +29,9 @@
             <td class="text-center">
                 <div class="custom-control custom-radio">
                     {{-- 初期選択 --}}
-                    <input 
-                        type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}" 
-                        name="default_frame_id" class="custom-control-input" 
+                    <input
+                        type="radio" value="{{$frame_record->id}}" id="default_frame_id{{$frame_record->id}}"
+                        name="default_frame_id" class="custom-control-input"
                         @if (
                             // タブ情報があれば、該当行をチェック
                             (isset($tabs) && $tabs->default_frame_id == $frame_record->id) ||
@@ -45,9 +45,9 @@
             <td>
                 <div class="custom-control custom-checkbox">
                     {{-- 対象フレーム --}}
-                    <input 
-                        type="checkbox" class="custom-control-input" 
-                        id="frame_select{{$frame_record->id}}" name="frame_select[]" value="{{$frame_record->id}}" 
+                    <input
+                        type="checkbox" class="custom-control-input"
+                        id="frame_select{{$frame_record->id}}" name="frame_select[]" value="{{$frame_record->id}}"
                         @if ($tabs && $tabs->onFrame($frame_record->id)) checked @endif
                     >
                     <label class="custom-control-label" for="frame_select{{$frame_record->id}}">
@@ -70,7 +70,7 @@
         <div class="row">
             <div class="col-12">
                 {{-- キャンセルボタン --}}
-                <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">
                     <i class="fas fa-times"></i> キャンセル
                 </button>
                 {{-- 同ページに参照できる別フレームがあれば更新ボタンを表示 --}}

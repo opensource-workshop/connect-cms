@@ -162,8 +162,8 @@ $(function(){
         @endif
 {{--
         <div class="container">
-            <div class="panel panel-default">
-                <div class="panel-body">
+            <div class="card">
+                <div class="card-body">
                     <p class="text-center" style="margin: 0;">
                         Powered by Connect-CMS
                     </p>

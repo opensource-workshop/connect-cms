@@ -6,13 +6,18 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベースプラグイン
 --}}
-@if ($action == 'editColumn' || $action == 'editColumnDetail'  || $action == '')
+@if ($action == 'editColumn' || $action == '')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">項目設定</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editColumn/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">項目設定</a>
+    </li>
+@endif
+@if ($action == 'editColumnDetail')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">項目詳細設定</span></span>
     </li>
 @endif
 @if ($action == 'editView')

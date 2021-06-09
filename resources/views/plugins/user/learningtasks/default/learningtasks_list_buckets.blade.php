@@ -40,8 +40,9 @@
     }
 </script>
 
-<form action="{{url('/')}}/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+<form action="{{url('/')}}/redirect/plugin/learningtasks/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
     {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     <div class="form-group">
         <table class="table table-hover {{$frame->getSettingTableClass()}}">
@@ -55,13 +56,26 @@
         </thead>
         <tbody>
         @foreach($learningtasks as $learningtask)
-            <tr @if ($frame->bucket_id == $learningtask->bucket_id) class="cc-active-tr"@endif>
-                <td>
-                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($frame->bucket_id == $learningtask->bucket_id) checked @endif>
-                    <span class="{{$frame->getSettingCaptionClass()}}">{{$learningtask->learningtasks_name}}</span>
+            <tr @if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) class="cc-active-tr"@endif>
+                <td class="d-table-cell">
+                    <input type="radio" value="{{$learningtask->bucket_id}}" name="select_bucket"@if ($learningtasks_frame->bucket_id == $learningtask->bucket_id) checked @endif>
                 </td>
-                <td class="{{$frame->getNarrowDisplayNone()}}">{{$learningtask->learningtasks_name}}</td>
-                <td nowrap>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">課題管理名：</span>{{$learningtask->learningtasks_name}}</td>
+                <td>
+                    <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
+
+                    <div class="btn-group mr-1">
+                        <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">
+                            <i class="far fa-edit"></i> 設定変更
+                        </a>
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">ドロップダウンボタン</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">コピーして課題管理作成へ</a>
+                        </div>
+                    </div>
+
                     <div class="btn-group mr-1">
                         <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$learningtask->id}});">
                             <i class="fas fa-file-download"></i> ダウンロード
@@ -75,7 +89,7 @@
                         </div>
                     </div>
                 </td>
-                <td>{{$learningtask->created_at}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$learningtask->created_at}}</td>
             </tr>
         @endforeach
         </tbody>
@@ -83,11 +97,11 @@
     </div>
 
     <div class="text-center">
-        {{ $learningtasks->links() }}
+        {{ $learningtasks->fragment('frame-' . $frame_id)->links() }}
     </div>
 
-    <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
+    <div class="form-group text-center mt-3">
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示課題管理変更</button>
     </div>
 </form>

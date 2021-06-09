@@ -3,17 +3,17 @@
 namespace App\Plugins\User\Blogs;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-
-use DB;
-use Session;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
-// use App\Models\Common\Page;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsCategories;
 use App\Models\User\Blogs\BlogsFrames;
@@ -21,6 +21,9 @@ use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Blogs\BlogsPostsTags;
 
 use App\Plugins\User\UserPluginBase;
+
+use App\Enums\StatusType;
+use App\Enums\BlogFrameConfig;
 
 /**
  * ブログプラグイン
@@ -50,8 +53,8 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listCategories', 'rss', 'editBucketsRoles', 'settingBlogFrame'];
-        $functions['post'] = ['saveCategories', 'deleteCategories', 'saveBucketsRoles', 'saveBlogFrame'];
+        $functions['get']  = ['settingBlogFrame'];
+        $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
 
@@ -539,12 +542,6 @@ WHERE status = 0
             return;
         }
 
-        // Page データ
-        // $page = Page::where('id', $page_id)->first();
-
-        // 認証されているユーザの取得
-        // $user = Auth::user();
-
         // ブログデータ一覧の取得
         $blogs_posts = $this->getPosts($blog_frame);
 
@@ -580,12 +577,12 @@ WHERE status = 0
     }
 
     /**
-     *  新規記事画面
+     * 新規記事画面
      */
-    public function create($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
+    public function create($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // ブログ＆フレームデータ
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -601,15 +598,12 @@ WHERE status = 0
         $blogs_posts_tags = "";
 
         // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'blogs_input', [
+        return $this->view('blogs_input', [
             'blog_frame'       => $blog_frame,
             'blogs_posts'      => $blogs_posts,
             'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
-            'errors'           => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -709,10 +703,10 @@ WHERE status = 0
     /**
      * 記事編集画面
      */
-    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $errors = null)
+    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // Frame データ
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -735,15 +729,12 @@ WHERE status = 0
         $blogs_posts_tags = trim($blogs_posts_tags, ',');
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'blogs_input', [
+        return $this->view('blogs_input', [
             'blog_frame'       => $blog_frame,
             'blogs_posts'      => $blogs_post,
             'blogs_categories' => $blogs_categories,
             'blogs_posts_tags' => $blogs_posts_tags,
-            'errors'           => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -756,7 +747,8 @@ WHERE status = 0
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
+            // return ( $this->create($request, $page_id, $frame_id, $blogs_posts_id, $validator->errors()) );
+            return back()->withErrors($validator)->withInput();
         }
 
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
@@ -810,7 +802,9 @@ WHERE status = 0
             $blogs_post->contents_id = $old_blogs_post->contents_id;
 
             // 登録ユーザ
-            $blogs_post->created_id  = $old_blogs_post->created_id;
+            $blogs_post->created_id   = $old_blogs_post->created_id;
+            $blogs_post->created_name = $old_blogs_post->created_name;
+            $blogs_post->created_at   = $old_blogs_post->created_at;
 
             // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
             if ($blogs_post->status != 2) {
@@ -824,8 +818,9 @@ WHERE status = 0
         // タグの保存
         $this->saveTag($request, $blogs_post);
 
-        // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
+        // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+        // return $this->index($request, $page_id, $frame_id);
+        return new Collection(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**
@@ -945,35 +940,56 @@ WHERE status = 0
                       ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        $blogs = Blogs::orderBy('created_at', 'desc')
-                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
+        // $blogs = Blogs::orderBy('created_at', 'desc')
+        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
+        $blogs = Blogs::
+                select(
+                    'blogs.id',
+                    'blogs.bucket_id',
+                    'blogs.created_at',
+                    'blogs.blog_name',
+                    DB::raw('count(blogs_posts.blogs_id) as entry_count')
+                )
+                ->leftJoin('blogs_posts', function ($leftJoin) {
+                    // 履歴あり & 論理削除対応
+                    $leftJoin->on('blogs.id', '=', 'blogs_posts.blogs_id')
+                            ->where('blogs_posts.status', StatusType::active)
+                            ->whereNull('blogs_posts.deleted_at');
+                })
+                ->groupBy(
+                    'blogs.id',
+                    'blogs.bucket_id',
+                    'blogs.created_at',
+                    'blogs.blog_name',
+                    'blogs_posts.blogs_id'
+                )
+                ->orderBy('blogs.created_at', 'desc')
+                ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs_list_buckets', [
+        return $this->view('blogs_list_buckets', [
             'blog_frame' => $blog_frame,
             'blogs'      => $blogs,
-            ]
-        );
+        ]);
     }
 
     /**
      * ブログ新規作成画面
      */
-    public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null)
     {
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
         $create_flag = true;
-        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
     }
 
     /**
      * ブログ設定変更画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // ブログ＆フレームデータ
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -990,19 +1006,16 @@ WHERE status = 0
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs_edit_blog', [
+        return $this->view('blogs_edit_blog', [
             'blog_frame'  => $blog_frame,
             'blog'        => $blog,
             'create_flag' => $create_flag,
             'message'     => $message,
-            'errors'      => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
-     *  ブログ登録処理
+     * ブログ登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $blogs_id = null)
     {
@@ -1022,24 +1035,22 @@ WHERE status = 0
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($blogs_id)) {
-                $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            } else {
-                $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            }
+            // if (empty($blogs_id)) {
+            //     $create_flag = true;
+            //     return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
+            // } else {
+            //     $create_flag = false;
+            //     return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
+            // }
+            return back()->withErrors($validator)->withInput();
         }
-
-        // 更新後のメッセージ
-        $message = null;
 
         // 画面から渡ってくるblogs_id が空ならバケツとブログを新規登録
         if (empty($request->blogs_id)) {
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => $request->blog_name,
-                  'plugin_name' => 'blogs'
+                'bucket_name' => $request->blog_name,
+                'plugin_name' => 'blogs'
             ]);
 
             // ブログデータ新規オブジェクト
@@ -1056,13 +1067,14 @@ WHERE status = 0
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = 'ブログ設定を追加しました。';
+            $request->flash_message = 'ブログ設定を追加しました。';
+
         } else {
             // blogs_id があれば、ブログを更新
             // ブログデータ取得
             $blogs = Blogs::where('id', $request->blogs_id)->first();
 
-            $message = 'ブログ設定を変更しました。';
+            $request->flash_message = 'ブログ設定を変更しました。';
         }
 
         // ブログ設定
@@ -1082,9 +1094,10 @@ WHERE status = 0
         //Log::debug($blogs->bucket_id);
         //Log::debug($request->blog_name);
 
-        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ
-        $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
+        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ.
+        // $create_flag = false;
+        // return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
+        return new Collection(['redirect_path' => url('/') . '/plugin/blogs/editBuckets/' . $page_id . '/' . $frame_id . '/' . $blogs->id . '#frame-' . $frame_id]);
     }
 
     /**
@@ -1094,23 +1107,55 @@ WHERE status = 0
     {
         // blogs_id がある場合、データを削除
         if ($blogs_id) {
-            // 記事データを削除する。
-            BlogsPosts::where('blogs_id', $blogs_id)->delete();
+            // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+            // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
+            //
+            // BlogsPosts::where('blogs_id', $blogs_id)->delete();
+            $blogs_posts_ids = BlogsPosts::where('blogs_id', $blogs_id)->pluck('id');
+            $blogs_posts_tags_ids = BlogsPostsTags::whereIn('blogs_posts_id', $blogs_posts_ids)->pluck('id');
 
-            // ブログ設定を削除する。
-            Blogs::destroy($blogs_id);
+            // タグ削除
+            BlogsPostsTags::destroy($blogs_posts_tags_ids);
+
+            // 記事データを削除する。
+            BlogsPosts::destroy($blogs_posts_ids);
+
+            $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id);
+            $blogs_categories_categories_ids = $blogs_categories->pluck('categories_id');
+            $blogs_categories_ids = $blogs_categories->pluck('id');
+
+            // カテゴリ削除. カテゴリはブログ毎に別々に存在してるため、削除する
+            $categories_ids = Categories::whereIn('id', $blogs_categories_categories_ids)->where('target', 'blogs')->pluck('id');
+            Categories::destroy($categories_ids);
+
+            // ブログカテゴリ削除
+            BlogsCategories::destroy($blogs_categories_ids);
 
 // Frame に紐づくBlog を削除した場合のみ、Frame の更新。（Frame に紐づかないBlog の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
 
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
+            // change: backets, buckets_rolesは $frame->bucket_id で消さない。選択したblogのbucket_idで消す
+            $blogs = Blogs::find($blogs_id);
+            // // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            // $frame = Frame::where('id', $frame_id)->first();
 
-            // FrameのバケツIDの更新
-            Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            // FrameのバケツIDの更新. このバケツを表示している全ページのフレームのバケツIDを消す（もし、このフレームでこのバケツを表示していたとしても、$blogs->bucket_idで消えるため問題なし）
+            // Frame::where('bucket_id', $frame->bucket_id)->update(['bucket_id' => null]);
+            Frame::where('bucket_id', $blogs->bucket_id)->update(['bucket_id' => null]);
+
+            // blogs_frames. バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら削除する
+
+            // 権限設定消す buckets_roles（消す。バケツに紐づき）
+            $buckets_roles_ids = BucketsRoles::where('buckets_id', $blogs->bucket_id)->pluck('id');
+            // dd($buckets_roles_ids, $frame->bucket_id);
+            BucketsRoles::destroy($buckets_roles_ids);
 
             // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // Buckets::where('id', $frame->bucket_id)->delete();
+            Buckets::destroy($blogs->bucket_id);
+
+            // ブログ設定を削除する。
+            Blogs::destroy($blogs_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
@@ -1124,43 +1169,39 @@ WHERE status = 0
         Frame::where('id', $frame_id)
                ->update(['bucket_id' => $request->select_bucket]);
 
-        // 表示ブログ選択画面を呼ぶ
-        return $this->listBuckets($request, $page_id, $frame_id, $id);
+        // 表示ブログ選択画面を呼ぶ. リダイレクトで遷移するため、ここでは何もしない
+        // return $this->listBuckets($request, $page_id, $frame_id, $id);
     }
 
     /**
      * カテゴリ表示関数
      */
-    public function listCategories($request, $page_id, $frame_id, $id = null, $errors = null, $create_flag = false)
+    public function listCategories($request, $page_id, $frame_id, $id = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
-
-        // 権限チェック（listCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
+        // $request->flash();
 
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
 
         // カテゴリ（全体）
         $general_categories = Categories::
-                                        select(
-                                            'categories.*',
-                                            'blogs_categories.id as blogs_categories_id',
-                                            'blogs_categories.categories_id',
-                                            'blogs_categories.view_flag',
-                                            'blogs_categories.display_sequence as blogs_categories_display_sequence'
-                                        )
-                                        ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
-                                            $join->on('blogs_categories.categories_id', '=', 'categories.id')
-                                                 ->where('blogs_categories.blogs_id', '=', $blog_frame->blogs_id);
-                                        })
-                                        ->where('target', null)
-                                        ->orderBy('blogs_categories.display_sequence', 'asc')
-                                        ->orderBy('categories.display_sequence', 'asc')
-                                        ->get();
+                select(
+                    'categories.*',
+                    'blogs_categories.id as blogs_categories_id',
+                    'blogs_categories.categories_id',
+                    'blogs_categories.view_flag',
+                    'blogs_categories.display_sequence as general_display_sequence'
+                )
+                ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
+                    $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                            ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
+                            ->where('blogs_categories.deleted_at', null);
+                })
+                ->where('target', null)
+                ->orderBy('blogs_categories.display_sequence', 'asc')
+                ->orderBy('categories.display_sequence', 'asc')
+                ->get();
 
         foreach ($general_categories as $general_categorie) {
             // （初期登録時を想定）ブログカテゴリのカテゴリIDが空なので、カテゴリのIDを初期値にセット
@@ -1169,8 +1210,8 @@ WHERE status = 0
             }
 
             // （初期登録時を想定）ブログカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
-            if (is_null($general_categorie->blogs_categories_display_sequence)) {
-                $general_categorie->blogs_categories_display_sequence = $general_categorie->display_sequence;
+            if (is_null($general_categorie->general_display_sequence)) {
+                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
             }
         }
 
@@ -1178,29 +1219,31 @@ WHERE status = 0
         $plugin_categories = null;
         if ($blog_frame->blogs_id) {
             $plugin_categories = Categories::
-                                            select(
-                                                'categories.*',
-                                                'blogs_categories.id as blogs_categories_id',
-                                                'blogs_categories.categories_id',
-                                                'blogs_categories.view_flag',
-                                                'blogs_categories.display_sequence as blogs_categories_display_sequence'
-                                            )
-                                            ->leftJoin('blogs_categories', 'blogs_categories.categories_id', '=', 'categories.id')
-                                            ->where('target', 'blogs')
-                                            ->where('plugin_id', $blog_frame->blogs_id)
-                                            ->orderBy('blogs_categories.display_sequence', 'asc')
-                                            ->orderBy('categories.display_sequence', 'asc')
-                                            ->get();
+                    select(
+                        'categories.*',
+                        'blogs_categories.id as blogs_categories_id',
+                        'blogs_categories.categories_id',
+                        'blogs_categories.view_flag',
+                        'blogs_categories.display_sequence as plugin_display_sequence'
+                    )
+                    ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
+                        $join->on('blogs_categories.categories_id', '=', 'categories.id')
+                                ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
+                                ->where('blogs_categories.deleted_at', null);
+                    })
+                    ->where('target', 'blogs')
+                    ->where('plugin_id', $blog_frame->blogs_id)
+                    ->orderBy('blogs_categories.display_sequence', 'asc')
+                    ->orderBy('categories.display_sequence', 'asc')
+                    ->get();
         }
 
         // 表示テンプレートを呼び出す。
         return $this->view('blogs_list_categories', [
             'general_categories' => $general_categories,
-            'plugin_categories'  => $plugin_categories,
-            'blog_frame'         => $blog_frame,
-            'errors'             => $errors,
-            'create_flag'        => $create_flag,
-        ])->withInput($request->all);
+            'plugin_categories' => $plugin_categories,
+            'blog_frame' => $blog_frame,
+        ]);
     }
 
     /**
@@ -1208,11 +1251,6 @@ WHERE status = 0
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（saveCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         /* エラーチェック
         ------------------------------------ */
 
@@ -1270,7 +1308,8 @@ WHERE status = 0
         $validator->setAttributeNames($setAttributeNames);
 
         if ($validator->fails()) {
-            return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         /* カテゴリ追加
@@ -1282,20 +1321,20 @@ WHERE status = 0
         // 追加項目アリ
         if (!empty($request->add_display_sequence)) {
             $add_category = Categories::create([
-                                'classname'        => $request->add_classname,
-                                'category'         => $request->add_category,
-                                'color'            => $request->add_color,
-                                'background_color' => $request->add_background_color,
-                                'target'           => 'blogs',
-                                'plugin_id'        => $blog_frame->blogs_id,
-                                'display_sequence' => intval($request->add_display_sequence),
-                            ]);
+                'classname'        => $request->add_classname,
+                'category'         => $request->add_category,
+                'color'            => $request->add_color,
+                'background_color' => $request->add_background_color,
+                'target'           => 'blogs',
+                'plugin_id'        => $blog_frame->blogs_id,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
             BlogsCategories::create([
-                                'blogs_id'         => $blog_frame->blogs_id,
-                                'categories_id'    => $add_category->id,
-                                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                                'display_sequence' => intval($request->add_display_sequence),
-                            ]);
+                'blogs_id'         => $blog_frame->blogs_id,
+                'categories_id'    => $add_category->id,
+                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
+                'display_sequence' => intval($request->add_display_sequence),
+            ]);
         }
 
         // 既存項目アリ
@@ -1352,7 +1391,8 @@ WHERE status = 0
             }
         }
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
@@ -1360,18 +1400,19 @@ WHERE status = 0
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
-        // 削除(ブログプラグインのカテゴリ表示データ)
-        BlogsCategories::where('categories_id', $id)->delete();
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        //
+        // 削除(ブログプラグインのカテゴリ表示データ). 万が一idがnullでも500エラーにならないようにfirstOrNew()を利用。
+        // BlogsCategories::where('categories_id', $id)->delete();
+        $blogs_categories = BlogsCategories::firstOrNew(['categories_id' => $id]);
+        $blogs_categories->delete();
 
         // 削除(カテゴリ)
-        Categories::where('id', $id)->delete();
+        // Categories::where('id', $id)->delete();
+        Categories::destroy($id);
 
-        return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
@@ -1454,7 +1495,7 @@ EOD;
     public function settingBlogFrame($request, $page_id, $frame_id)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // Blog設定取得
         $blog_frame = $this->getBlogFrame($frame_id);
@@ -1469,12 +1510,10 @@ EOD;
         }
 
         // Blogフレーム設定画面を呼び出す。
-        return $this->view(
-            'blogs_setting_frame', [
+        return $this->view('blogs_setting_frame', [
             'blog_frame'         => $blog_frame,
             'blog_frame_setting' => $blog_frame_setting,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -1497,8 +1536,9 @@ EOD;
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            Session::flash('flash_errors', $validator->errors());
-            return $this->settingBlogFrame($request, $page_id, $frame_id);
+            // Session::flash('flash_errors', $validator->errors());
+            // return $this->settingBlogFrame($request, $page_id, $frame_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         // プラグインのフレームやBlogのID が設定されていない場合は空振りさせる。
@@ -1511,6 +1551,34 @@ EOD;
             ['blogs_id' => $blog_frame->blogs_id, 'frames_id' => $frame_id, 'scope' => $request->scope, 'scope_value' => $request->scope_value, 'important_view' => $request->important_view ]
         );
 
-        return $this->settingBlogFrame($request, $page_id, $frame_id);
+        // フレーム設定保存
+        $this->saveFrameConfigs($request, $frame_id);
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
+        // redirect_pathで遷移するため、ここでは何もしない
+        // return $this->settingBlogFrame($request, $page_id, $frame_id);
+    }
+
+    /**
+     * フレーム設定を保存する。
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     */
+    private function saveFrameConfigs($request, $frame_id)
+    {
+        $configs = BlogFrameConfig::getMemberKeys();
+        foreach ($configs as $key => $value) {
+
+            if (empty($request->$value)) {
+                return;
+            }
+
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $value],
+                ['value' => $request->$value]
+            );
+        }
     }
 }

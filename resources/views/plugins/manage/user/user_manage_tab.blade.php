@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
- --}}
+--}}
 <div class="frame-setting-menu">
     <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
         <span class="d-md-none">処理選択 - ユーザ管理</span>
@@ -43,6 +43,22 @@
                 @else
                     <a href="{{url('/manage/user/autoRegist')}}" class="nav-link">自動ユーザ登録設定</a></li>
                 @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
+                    @if ($function == "import")
+                        <span class="nav-link"><span class="active">CSVインポート</span></span>
+                    @else
+                        <a href="{{url('/manage/user/import')}}" class="nav-link">CSVインポート</a></li>
+                    @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
+                    @if ($function == "bulkDelete")
+                        <span class="nav-link"><span class="active">一括削除</span></span>
+                    @else
+                        <a href="{{url('/manage/user/bulkDelete')}}" class="nav-link">一括削除</a></li>
+                    @endif
                 </li>
 
                 <li role="presentation" class="nav-item">

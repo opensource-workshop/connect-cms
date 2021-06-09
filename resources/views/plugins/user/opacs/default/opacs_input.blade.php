@@ -229,7 +229,7 @@
             <div class="input-group date" id="accept_date" data-target-input="nearest">
                 <input type="text" name="accept_date" value="{{old('accept_date', $opacs_books->accept_date)}}" class="form-control datetimepicker-input" data-target="#accept_date"/>
                 <div class="input-group-append" data-target="#accept_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('accept_date')) <div class="text-danger">{{$errors->first('accept_date')}}</div> @endif
@@ -259,7 +259,7 @@
             <div class="input-group date" id="storage_life" data-target-input="nearest">
                 <input type="text" name="storage_life" value="{{old('storage_life', $opacs_books->storage_life)}}" class="form-control datetimepicker-input" data-target="#storage_life"/>
                 <div class="input-group-append" data-target="#storage_life" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('storage_life')) <div class="text-danger">{{$errors->first('storage_life')}}</div> @endif
@@ -293,7 +293,7 @@
             <div class="input-group date" id="remove_date" data-target-input="nearest">
                 <input type="text" name="remove_date" value="{{old('remove_date', $opacs_books->remove_date)}}" class="form-control datetimepicker-input" data-target="#remove_date"/>
                 <div class="input-group-append" data-target="#remove_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('remove_date')) <div class="text-danger">{{$errors->first('remove_date')}}</div> @endif
@@ -337,7 +337,7 @@
             <div class="input-group date" id="last_lending_date" data-target-input="nearest">
                 <input type="text" name="last_lending_date" value="{{old('last_lending_date', $opacs_books->last_lending_date)}}" class="form-control datetimepicker-input" data-target="#last_lending_date"/>
                 <div class="input-group-append" data-target="#last_lending_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('last_lending_date')) <div class="text-danger">{{$errors->first('last_lending_date')}}</div> @endif
@@ -367,7 +367,7 @@
             <div class="col-sm-6">
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
-                    <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i> キャンセル</button>
                     @if (empty($opacs_books->id))
                         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                     @else
@@ -378,7 +378,7 @@
             <div class="col-sm-3 pull-right text-right">
                 @if (!empty($opacs_books->id))
                     <a data-toggle="collapse" href="#collapse{{$opacs_books->id}}">
-                        <span class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-xs">削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                     </a>
                 @endif
             </div>
@@ -386,16 +386,16 @@
     </div>
 </form>
 
-<div id="collapse{{$opacs_books->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="panel panel-danger">
-        <div class="panel-body">
+<div id="collapse{{$opacs_books->id}}" class="collapse">
+    <div class="card border-danger">
+        <div class="card-body">
             <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
                 <form action="{{url('/')}}/plugin/opacs/destroy/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
         </div>

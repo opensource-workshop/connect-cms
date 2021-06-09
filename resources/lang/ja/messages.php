@@ -41,6 +41,8 @@ $messages = [
     'input_email' => 'メールアドレスを入力します。',
     'input_password' => 'ログインするためのパスワードを入力します。',
     'input_password_confirm' => 'パスワードと同じものを入力してください。',
+    'empty_bucket' => 'フレームの設定画面から、使用する:plugin_nameを選択するか、作成してください。',
+    'empty_bucket_setting' => '選択画面から、使用する:plugin_nameを選択するか、作成してください。',
 ];
 
 foreach ($messages as $key => $message) {

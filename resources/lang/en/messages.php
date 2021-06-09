@@ -42,4 +42,6 @@ return [
     'input_email' => 'Enter your email address.',
     'input_password' => 'Enter the password to login.',
     'input_password_confirm' => 'Enter the same password.',
+    'empty_bucket' => 'From the frame setting screen, select or create the :plugin_name to use.',
+    'empty_bucket_setting' => 'From the selection screen, select or create the :plugin_name to use.',
 ];

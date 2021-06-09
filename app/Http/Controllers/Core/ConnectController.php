@@ -649,7 +649,8 @@ class ConnectController extends Controller
     }
 
     /**
-     *  指定されたテーマにCSS、JS があるか確認
+     *  ・指定された基本テーマにCSS、JS があるか確認
+     *  ・追加テーマにCSS、JS があれば設定
      */
     private function checkAsset($theme, $theme_setting_array)
     {
@@ -663,6 +664,20 @@ class ConnectController extends Controller
             $theme_setting_array['js'] = $theme;
         }
 
+        // 追加テーマが設定されていれば設定する
+        $configs = Configs::where('name', 'additional_theme')->first();
+        if($configs){
+            // CSS 存在チェック
+            if (File::exists(public_path().'/themes/'.$configs->value.'/themes.css')) {
+                $theme_setting_array['additional_css'] = $configs->value;
+            }
+
+            // JS 存在チェック
+            if (File::exists(public_path().'/themes/'.$configs->value.'/themes.js')) {
+                $theme_setting_array['additional_js'] = $configs->value;
+            }
+        }
+
         return $theme_setting_array;
     }
 
@@ -674,7 +689,12 @@ class ConnectController extends Controller
     protected function getThemes($request = null)
     {
         // 戻り値
-        $return_array = array('css' => '', 'js' => '');
+        $return_array = array(
+            'css' => '', 
+            'js' => '',
+            'css_additional' => '', 
+            'js_additional' => ''
+        );
 
         // セッションにテーマの選択がある場合（テーマ・チェンジャーで選択時の動き）
         if ($request && $request->session()->get('session_theme')) {
@@ -767,6 +787,9 @@ class ConnectController extends Controller
 
         // ハンバーガーメニューで使用するページの一覧
         $args["page_list"] = $this->getPageList();
+
+        // ページに対する権限
+        $args["page_roles"] = $this->getPageRoles();
 
         if ($this->http_status_code) {
             return response()->view($blade_path, $args, $this->http_status_code);

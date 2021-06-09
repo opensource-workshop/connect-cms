@@ -10,22 +10,22 @@
 {{--
     <h4><span class="badge badge-primary">貸し出し</span></h4>
 
-    @if ($opacs_books->lend_flag == '9:禁帯出') 
+    @if ($opacs_books->lend_flag == '9:禁帯出')
         <div class="alert alert-warning" style="margin-top: 10px;">
             <i class="fas fa-exclamation-circle"></i>
             この書籍は「禁帯出」のため、貸し出しはできません。
         </div>
-    @elseif ($opacs_books->lent_flag == 1) 
+    @elseif ($opacs_books->lent_flag == 1)
         <div class="alert alert-warning" style="margin-top: 10px;">
             <i class="fas fa-exclamation-circle"></i>
             この書籍は現在、貸し出し中のため、貸し出しはできません。
         </div>
-    @elseif ($opacs_books->lent_flag == 2) 
+    @elseif ($opacs_books->lent_flag == 2)
         <div class="alert alert-warning" style="margin-top: 10px;">
             <i class="fas fa-exclamation-circle"></i>
             この書籍は現在、貸し出しリクエスト中のため、貸し出しはできません。
         </div>
-    @elseif (!$lent_limit_check) 
+    @elseif (!$lent_limit_check)
         <div class="alert alert-danger" style="margin-top: 10px;">
             <i class="fas fa-exclamation-circle"></i>
             {{$lent_error_message}}
@@ -51,7 +51,7 @@
                         <div class="input-group date" id="return_scheduled" data-target-input="nearest">
                             <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datetimepicker-input" data-target="#return_scheduled"/>
                             <div class="input-group-append" data-target="#return_scheduled" data-toggle="datetimepicker">
-                                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                <div class="input-group-text"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
                         @if ($errors && $errors->has('return_scheduled')) <div class="text-danger">{{$errors->first('return_scheduled')}}</div> @endif
@@ -78,22 +78,22 @@
 
     <div class="form-group">
 
-        @if ($opacs_books->lend_flag == '9:禁帯出') 
+        @if ($opacs_books->lend_flag == '9:禁帯出')
             <div class="alert alert-warning" style="margin-top: 10px;">
                 <i class="fas fa-exclamation-circle"></i>
                 この書籍は「禁帯出」のため、貸し出しはできません。
             </div>
-        @elseif ($opacs_books->lent_flag == 1) 
+        @elseif ($opacs_books->lent_flag == 1)
             <div class="alert alert-warning" style="margin-top: 10px;">
                 <i class="fas fa-exclamation-circle"></i>
                 この書籍は現在、貸し出し中のため、郵送貸し出しリクエストはできません。
             </div>
-        @elseif ($opacs_books->lent_flag == 2) 
+        @elseif ($opacs_books->lent_flag == 2)
             <div class="alert alert-warning" style="margin-top: 10px;">
                 <i class="fas fa-exclamation-circle"></i>
                 この書籍は現在、貸し出しリクエスト中のため、郵送貸し出しリクエストはできません。
             </div>
-        @elseif (!$lent_limit_check) 
+        @elseif (!$lent_limit_check)
             <div class="alert alert-danger" style="margin-top: 10px;">
                 <i class="fas fa-exclamation-circle"></i>
                 {{$lent_error_message}}
@@ -120,7 +120,7 @@
                         <div class="input-group date" id="req_return_scheduled" data-target-input="nearest">
                             <input type="text" name="req_return_scheduled" value="{{old('req_return_scheduled')}}" class="form-control datetimepicker-input" data-target="#req_return_scheduled"/>
                             <div class="input-group-append" data-target="#req_return_scheduled" data-toggle="datetimepicker">
-                                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                <div class="input-group-text"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
                         @if ($errors && $errors->has('req_return_scheduled')) <div class="text-danger">{{$errors->first('req_return_scheduled')}}</div> @endif
@@ -161,7 +161,7 @@
 
 {{--
     @if (($opacs_books->lent_flag == 1 || $opacs_books->lent_flag == 2) &&
-         (Auth::user()->can('role_article') || $opacs_books->student_no == Auth::user()->userid)) 
+         (Auth::user()->can('role_article') || $opacs_books->student_no == Auth::user()->userid))
         <form action="{{url('/')}}/plugin/opacs/returnLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_returnLent" name="form_returnLent" method="POST">
             {{ csrf_field() }}
             <h4><span class="badge badge-primary">返却</span></h4>
@@ -184,7 +184,7 @@
                         <div class="input-group date" id="return_date" data-target-input="nearest">
                             <input type="text" name="return_date" value="{{old('return_date')}}" class="form-control datetimepicker-input" data-target="#return_date"/>
                             <div class="input-group-append" data-target="#return_date" data-toggle="datetimepicker">
-                                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                <div class="input-group-text"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
                         @if ($errors && $errors->has('return_date')) <div class="text-danger">{{$errors->first('return_date')}}</div> @endif

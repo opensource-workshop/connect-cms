@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -13,54 +13,81 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-@if (empty($learningtask) || !$learningtask->id)
-    <div class="alert alert-warning" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する課題管理を選択するか、作成してください。
+
+@include('common.errors_form_line')
+
+<script>
+    $(function () {
+        /**
+         * カレンダーボタン押下
+         */
+        $('#report_end_at{{$frame_id}}').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            dayViewHeaderFormat: 'YYYY MMM',
+            sideBySide: true,
+        });
+    });
+</script>
+
+@if (!$learningtask->id && !$create_flag)
+    {{-- idなし & 変更 = DB未選択&変更:初期表示 --}}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-circle"></i> 設定画面から、使用する課題管理を選択するか、作成してください。
     </div>
 @else
-    <div class="alert alert-info" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-
-        @if ($message)
-            {{$message}}
-        @else
+    @if (session('flash_message'))
+        <div class="alert alert-success">
+            <i class="fas fa-exclamation-circle"></i> {{ session('flash_message') }}
+        </div>
+    @else
+        <div class="alert alert-info">
             @if (empty($learningtask) || $create_flag)
-                新しい課題管理設定を登録します。
+                @if (old('copy_learningtask_id', $learningtask->id))
+                    {{-- 登録：コピーして課題管理作成へ --}}
+                    <i class="fas fa-exclamation-circle"></i> 新しい課題管理設定をコピーして登録します。<br />
+                    <i class="fas fa-exclamation-circle"></i> 受講者、成績、試験日、ファイル（課題ファイル、試験の問題ファイル、レポート提出ファイル等）はコピーしません。<br />
+                @else
+                    {{-- 登録：初期表示 --}}
+                    <i class="fas fa-exclamation-circle"></i> 新しい課題管理設定を登録します。<br />
+                @endif
             @else
-                課題管理設定を変更します。
+                {{-- 変更：初期表示 --}}
+                <i class="fas fa-exclamation-circle"></i> 課題管理設定を変更します。
             @endif
-        @endif
-    </div>
+        </div>
+    @endif
 @endif
 
 @if (empty($learningtask) || (!$learningtask->id && !$create_flag))
 @else
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     {{-- create_flag がtrue の場合、新規作成するためにlearningtask_id を空にする --}}
     @if ($create_flag)
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="">
+        <input type="hidden" name="copy_learningtask_id" value="{{old('copy_learningtask_id', $learningtask->id)}}">
     @else
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <input type="hidden" name="learningtask_id" value="{{$learningtask->id}}">
+        <input type="hidden" name="copy_learningtask_id" value="">
     @endif
 
     <h5><span class="badge badge-secondary">基本設定</span></h5>
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">課題管理名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="learningtasks_name" value="{{old('learningtasks_name', $learningtask->learningtasks_name)}}" class="form-control">
-            @if ($errors && $errors->has('learningtasks_name')) <div class="text-danger">{{$errors->first('learningtasks_name')}}</div> @endif
+            <input type="text" name="learningtasks_name" value="{{old('learningtasks_name', $learningtask->learningtasks_name)}}" class="form-control @if ($errors && $errors->has('learningtasks_name')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'learningtasks_name'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="view_count" value="{{old('view_count', $learningtask->view_count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
+            <input type="text" name="view_count" value="{{old('view_count', $learningtask->view_count)}}" class="form-control col-sm-3 @if ($errors && $errors->has('view_count')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'view_count'])
         </div>
     </div>
 
@@ -100,7 +127,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">順序条件</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->sequence_conditions == 0)
+                @if(old("sequence_conditions", $learningtask->sequence_conditions) == 0)
                     <input type="radio" value="0" id="sequence_conditions_0" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="sequence_conditions_0" name="sequence_conditions" class="custom-control-input">
@@ -108,7 +135,7 @@
                 <label class="custom-control-label" for="sequence_conditions_0">最新順</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->sequence_conditions == 1)
+                @if(old("sequence_conditions", $learningtask->sequence_conditions) == 1)
                     <input type="radio" value="1" id="sequence_conditions_1" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="1" id="sequence_conditions_1" name="sequence_conditions" class="custom-control-input">
@@ -116,7 +143,7 @@
                 <label class="custom-control-label" for="sequence_conditions_1">投稿順</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($learningtask->sequence_conditions == 2)
+                @if(old("sequence_conditions", $learningtask->sequence_conditions) == 2)
                     <input type="radio" value="2" id="sequence_conditions_2" name="sequence_conditions" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="2" id="sequence_conditions_2" name="sequence_conditions" class="custom-control-input">
@@ -131,7 +158,8 @@
         <label class="{{$frame->getSettingLabelClass()}}">ログインの要否</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('use_need_auth') == 'off')
+                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == '' ||
+                    old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'off')
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="off" id="use_need_auth_0" name="base_settings[use_need_auth]" class="custom-control-input">
@@ -139,7 +167,7 @@
                 <label class="custom-control-label" for="use_need_auth_0">非ログインでも閲覧可能</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($tool->getFunction('use_need_auth') == 'on')
+                @if(old("base_settings.use_need_auth", $tool->getFunction('use_need_auth')) == 'on')
                     <input type="radio" value="on" id="use_need_auth_1" name="base_settings[use_need_auth]" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="on" id="use_need_auth_1" name="base_settings[use_need_auth]" class="custom-control-input">
@@ -184,6 +212,59 @@
                 <input type="checkbox" name="base_settings[use_report_mail]" value="on" class="custom-control-input" id="use_report_mail" @if(old("base_settings.use_report_mail", $tool->getFunction('use_report_mail')) == 'on') checked=checked @endif>
                 <label class="custom-control-label" for="use_report_mail">メール送信（教員宛）</label>
             </div>
+        </div>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="{{$frame->getSettingLabelClass()}}">提出期限</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox mr-3">
+                @php
+                    $name_function1 = "base_settings[".LearningtaskUseFunction::use_report_end."]";
+                    $old_function1 = "base_settings.".LearningtaskUseFunction::use_report_end;
+                    $id_function1 = LearningtaskUseFunction::use_report_end . $frame_id;
+                @endphp
+
+                {{-- チェック外した場合にも値を飛ばす対応 --}}
+                <input type="hidden" value="0" name="{{$name_function1}}">
+
+                <input type="checkbox"
+                    name="{{$name_function1}}"
+                    value="on"
+                    class="custom-control-input"
+                    id="{{$id_function1}}"
+                    @if(old($old_function1, $tool->getFunction(LearningtaskUseFunction::use_report_end)) == 'on') checked=checked @endif
+                >
+                <label class="custom-control-label" for="{{$id_function1}}">以下の提出終了日時で制御する</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label>提出終了日時</label>
+            @php
+                $name_function2 = "base_settings[".LearningtaskUseFunction::report_end_at."]";
+                $old_function2 = "base_settings.".LearningtaskUseFunction::report_end_at;
+                // idに.(ドット)を含むと、カレンダーピッカー動かなくなるため含めない
+                $id_function2 = LearningtaskUseFunction::report_end_at . $frame_id;
+            @endphp
+
+            <div class="input-group col-md-6 pl-0" id="{{$id_function2}}" data-target-input="nearest">
+                <input class="form-control datetimepicker-input @if ($errors && $errors->has($old_function2)) border-danger @endif"
+                    type="text"
+                    name="{{$name_function2}}"
+                    value="{{old($old_function2, $tool->getFunction(LearningtaskUseFunction::report_end_at))}}"
+                    data-target="#{{$id_function2}}"
+                >
+                <div class="input-group-append" data-target="#{{$id_function2}}" data-toggle="datetimepicker">
+                    <div class="input-group-text @if ($errors && $errors->has($old_function2)) border-danger @endif">
+                        <i class="far fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+            @include('common.errors_inline', ['name' => $old_function2])
         </div>
     </div>
 
@@ -352,10 +433,10 @@
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($learningtask) || $create_flag)
                         登録確定

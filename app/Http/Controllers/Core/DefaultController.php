@@ -397,6 +397,24 @@ class DefaultController extends ConnectController
     }
 
     /**
+     *  JSON-APIリクエスト（GET用）
+     *     - フレームに紐づくプラグインをインスタンス化して該当プラグインのinvoke()を呼び出します。
+     *     - Connect-CMSのview関連の処理を通さない為、returnにcollection渡してJSON返し等、Laravel的な処理が可能です。
+     */
+    public function invokeGetJson(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
+    {
+        // アプリのロケールを変更
+        $this->setAppLocale();
+
+        // プラグインのインスタンス生成
+        $frame = Frame::find($frame_id);
+        $class_name = $this->getClassname($frame->plugin_name);
+        $plugin_instance = new $class_name($this->page, $frame, $this->pages);
+
+        return $plugin_instance->invoke($plugin_instance, $request, $action, $page_id, $frame_id);
+    }
+
+    /**
      *  データがない場合にフレームも非表示にする。
      */
     private function setHiddenFrame($frames, $plugin_instances)

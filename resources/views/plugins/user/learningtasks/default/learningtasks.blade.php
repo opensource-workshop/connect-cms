@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -74,78 +74,126 @@
 
 {{-- 課題管理表示 --}}
 @if (isset($posts))  {{-- 課題があるか --}}
-    @foreach($categories_and_posts as $category_id => $categories_and_post)  {{-- カテゴリのループ --}}
-    <div class="accordion @if (!$loop->first) mt-3 @endif" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
-        <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
 
-@if ($tool->isTeacher())
-<h5><span class="badge badge-secondary">教員用　必要な処理一覧</span></h5>
-    @if ($teacher_tasks)
-    <table class="table table-bordered">
-        <thead>
-        <tr class="bg-light">
-            <th>科目名</th>
-            <th>受講者</th>
-            <th>必要な評価</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach ($teacher_tasks as $teacher_task)
-        <tr>
-            <td>{{$teacher_task->post_title}}</td>
-            <td>{{$teacher_task->user_name}}</td>
-            <td>
-                @if ($teacher_task->task_status == 1)
-                    レポート
-                @elseif ($teacher_task->task_status == 5)
-                    試験
-                @elseif ($teacher_task->task_status == 8)
-                    {{-- 8 は本来、総合評価済の場合に付くが、ここでは判定用に getTeacherTasks() でセットしたもので判定する --}}
-                    総合
-                @endif
-            </td>
-        </tr>
-        @endforeach
-        </tbody>
-    </table>
+    @if ($tool->isTeacher())
+        @if ($teacher_tasks)
+            <h5><span class="badge badge-secondary">教員用　必要な処理一覧</span></h5>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr class="bg-light">
+                        <th>科目名</th>
+                        <th>受講者</th>
+                        <th>必要な評価</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($teacher_tasks as $teacher_task)
+                        <tr>
+                            <td>{{$teacher_task->post_title}}</td>
+                            <td>
+                                {{-- 評価する受講者を指定した課題URL --}}
+                                <a href="{{url('/')}}/redirect/plugin/learningtasks/switchUserUrl/{{$page->id}}/{{$frame_id}}/{{$teacher_task->post_id}}?student_id={{$teacher_task->user_id}}#frame-{{$frame_id}}">
+                                    {{$teacher_task->user_name}}
+                                </a>
+                            </td>
+                            <td>
+                                @if ($teacher_task->task_status == 1)
+                                    レポート
+                                @elseif ($teacher_task->task_status == 5)
+                                    試験
+                                @elseif ($teacher_task->task_status == 8)
+                                    {{-- 8 は本来、総合評価済の場合に付くが、ここでは判定用に getTeacherTasks() でセットしたもので判定する --}}
+                                    総合
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
     @endif
-@endif
 
-<h5><span class="badge badge-secondary">課題一覧</span></h5>
-<table class="table table-bordered">
-    <thead class="bg-light">
-    <tr>
-        <th scope="col" class="text-nowrap">科目名</th>
-        @if (Auth::check() && $learningtask->useReport())
-            <th scope="col" class="text-nowrap">レポート</th>
-        @endif
-        @if (Auth::check() && $learningtask->useExamination())
-            <th scope="col" class="text-nowrap">試験日時</th>
-            <th scope="col" class="text-nowrap">試験評価</th>
-        @endif
-    </tr>
-    </thead>
-    <tbody>
-        @foreach($categories_and_post as $post)  {{-- 課題のループ --}}
+    @foreach($categories_and_posts as $category_id => $categories_and_post)  {{-- カテゴリのループ --}}
+        <div class="accordion @if (!$loop->first) mt-3 @endif" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
+            <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
 
-            <tr>
-                <th><a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{!!$post->getNobrPostTitle()!!}</a></th>{{-- タイトル --}}
-                 @if (Auth::check() && $learningtask->useReport())
-                    <td>{{$tool->getReportStatus($post->id)}}</td>
-                @endif
-                @if (Auth::check() && $learningtask->useExamination())
-                    <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
-                    <td>{{$tool->getExaminationStatus($post->id)}}</td>
-                @endif
-            </tr>
-        @endforeach
-    </tbody>
-</table>
-    </div>
+            <h5><span class="badge badge-secondary">課題一覧</span></h5>
+
+            <table class="table table-bordered">
+                <thead class="bg-light">
+                    <tr>
+                        @php
+                            // レポート・試験をヘッダーに表示するか
+                            $is_header_report = false;
+                            $is_header_examination = false;
+
+                            foreach($categories_and_post as $post) {
+                                $use_report = $tool->checkFunction(LearningtaskUseFunction::use_report, $post->id);
+                                if ($use_report) {
+                                    $is_header_report = true;
+                                }
+
+                                $use_examination = $tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id);
+                                if ($use_examination) {
+                                    $is_header_examination = true;
+                                }
+                            }
+                        @endphp
+
+                        <th scope="col" class="text-nowrap">科目名</th>
+                        @if (Auth::check())
+                            @if ($is_header_report)
+                                <th scope="col" class="text-nowrap">レポート</th>
+                            @endif
+                            @if ($is_header_examination)
+                                <th scope="col" class="text-nowrap">試験日時</th>
+                                <th scope="col" class="text-nowrap">試験評価</th>
+                            @endif
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($categories_and_post as $post)  {{-- 課題のループ --}}
+                        <tr>
+                            {{-- 科目名 --}}
+                            <th>
+                                @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
+                                    <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                                        <i class="far fa-edit"></i>
+                                    </a>
+                                @endcan
+                                <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">{!!$post->getNobrPostTitle()!!}</a>
+                            </th>
+                            @if (Auth::check())
+                                {{-- レポート --}}
+                                @if ($is_header_report)
+                                    @if ($tool->checkFunction(LearningtaskUseFunction::use_report, $post->id))
+                                        <td>{{$tool->getReportStatus($post->id)}}</td>
+                                    @else
+                                        <td>-</td>
+                                    @endif
+                                @endif
+                                {{-- 試験日時・評価 --}}
+                                @if ($is_header_examination)
+                                    @if ($tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id))
+                                        <td>{{$tool->getApplyingExaminationDate($post->id)}}</td>
+                                        <td>{{$tool->getExaminationStatus($post->id)}}</td>
+                                    @else
+                                        <td>-</td>
+                                        <td>-</td>
+                                    @endif
+                                @endif
+                            @endif
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     @endforeach
     {{-- ページング処理 --}}
     <div class="text-center">
-        {{ $posts->links() }}
+        {{ $posts->fragment('frame-' . $frame_id)->links() }}
     </div>
 @endif
 

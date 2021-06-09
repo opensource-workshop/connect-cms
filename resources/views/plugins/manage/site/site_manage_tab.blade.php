@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
- --}}
+--}}
 <div class="frame-setting-menu">
     <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
         <span class="d-md-none">処理選択 - サイト管理</span>
@@ -46,8 +46,8 @@
                 </li>
 
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      その他設定
+                    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                        その他設定
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
 

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 
 use Closure;
 
@@ -55,6 +56,10 @@ class ConnectInit
             $configs_base_site_name = config('app.name', 'Connect-CMS');
         }
         \View::share('configs_base_site_name', $configs_base_site_name);
+
+        // フレーム設定の共有
+        $frame_configs = FrameConfig::get();
+        $request->attributes->add(['frame_configs' => $frame_configs]);
 
         return $next($request);
     }

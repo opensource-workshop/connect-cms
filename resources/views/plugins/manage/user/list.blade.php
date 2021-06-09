@@ -84,10 +84,9 @@ use App\Models\Core\UsersColumns;
                                 <div class="col-md-9">
                                     @php
                                         $values = Session::get('user_search_condition.groups');
-                                        //dd($value);
                                     @endphp
                                     <div class="container-fluid row">
-                                        @foreach($groups_select as $group_select)
+                                        @forelse($groups_select as $group_select)
                                             @php
                                                 // チェック用変数
                                                 $column_checkbox_checked = "";
@@ -102,9 +101,11 @@ use App\Models\Core\UsersColumns;
                                                 <input name="user_search_condition[groups][]" value="{{$group_select->id}}" type="checkbox" class="custom-control-input" id="user_search_condition[groups]_{{$loop->iteration}}"{{$column_checkbox_checked}}>
                                                 <label class="custom-control-label" for="user_search_condition[groups]_{{$loop->iteration}}"> {{$group_select->name}}</label>
                                             </div>
-
-                                        @endforeach
+                                        @empty
+                                            グループなし
+                                        @endforelse
                                     </div>
+                                    <small class="form-text text-muted">※ 複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -161,6 +162,7 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter"@if(Session::get('user_search_condition.role_reporter') == "1") checked @endif>
                                         <label class="custom-control-label" for="role_reporter">編集者</label><h6><span class="badge badge-info ml-1">編</span></h6>
                                     </div>
+                                    <small class="form-text text-muted">※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -184,6 +186,7 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[admin_user]" value="1" type="checkbox" class="custom-control-input" id="admin_user"@if(Session::get('user_search_condition.admin_user') == "1") checked @endif>
                                         <label class="custom-control-label" for="admin_user">ユーザ管理者</label><h6><span class="badge badge-warning ml-1">ユ</span></h6>
                                     </div>
+                                    <small class="form-text text-muted">※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
                                 </div>
                             </div>
 
@@ -195,6 +198,10 @@ use App\Models\Core\UsersColumns;
                                         <input name="user_search_condition[guest]" value="1" type="checkbox" class="custom-control-input" id="guest"@if(Session::get('user_search_condition.guest') == "1") checked @endif>
                                         <label class="custom-control-label" for="guest">ゲスト</label>
                                     </div>
+                                    <small class="form-text text-muted">
+                                        ※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）<br />
+                                        ※ 「ゲスト」とは、「コンテンツ権限」「管理権限」のいずれの権限もない状態です。<br />
+                                    </small>
                                 </div>
                             </div>
 
@@ -238,34 +245,12 @@ use App\Models\Core\UsersColumns;
 
                             {{-- ボタンエリア --}}
                             <div class="form-group text-center">
-                                <div class="row">
-                                    <div class="col-3"></div>
-                                    <div class="col-6">
-                                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user/clearSearch')}}'">
-                                            <i class="fas fa-times"></i> クリア
-                                        </button>
-                                        <button type="submit" class="btn btn-primary form-horizontal">
-                                            <i class="fas fa-check"></i> 絞り込み
-                                        </button>
-                                    </div>
-                                    <div class="col-3 text-right">
-                                        <div class="btn-group dropup">
-                                            <button type="button" class="btn btn-primary" onclick="submit_download_shift_jis();">
-                                                <i class="fas fa-file-download"></i><span class="d-none d-md-inline"> ダウンロード</span>
-                                            </button>
-                                            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <span class="sr-only">ドロップダウンボタン</span>
-                                            </button>
-                                            <div class="dropdown-menu">
-                                                <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
-                                                <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
-                                                <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
-                                                    <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user/clearSearch')}}'">
+                                    <i class="fas fa-times"></i> クリア
+                                </button>
+                                <button type="submit" class="btn btn-primary form-horizontal">
+                                    <i class="fas fa-check"></i> 絞り込み
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -273,8 +258,33 @@ use App\Models\Core\UsersColumns;
             </div>
         </div>
 
+        <div class="row mt-2">
+            <div class="col-3 text-left d-flex align-items-end">
+                {{-- (左側)件数 --}}
+                <span class="badge badge-pill badge-light">{{ $users->total() }} 件</span>
+            </div>
+
+            <div class="col text-right">
+                {{-- (右側)ダウンロードボタン --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
+                        <i class="fas fa-file-download"></i> ダウンロード
+                    </button>
+                    <button type="button" class="btn btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="sr-only">ドロップダウンボタン</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                        <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                        <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
+                            <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group table-responsive">
-            <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $users->total() }} 件</span></div>
             <table class="table table-hover cc-font-90">
             <thead>
                 <tr>
