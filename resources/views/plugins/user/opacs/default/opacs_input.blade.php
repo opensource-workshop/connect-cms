@@ -367,7 +367,7 @@
             <div class="col-sm-6">
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
-                    <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i> キャンセル</button>
                     @if (empty($opacs_books->id))
                         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                     @else

@@ -115,12 +115,12 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             @foreach (ShowType::enum as $key => $value)
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input 
-                        type="radio" 
-                        value="{{ $key }}" 
+                    <input
+                        type="radio"
+                        value="{{ $key }}"
                         id="{{ "rss_${key}" }}"
-                        name="rss" 
-                        class="custom-control-input" 
+                        name="rss"
+                        class="custom-control-input"
                         {{ $whatsnew->rss == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label" for="{{ "rss_${key}" }}">
@@ -148,12 +148,12 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             @foreach (ShowType::enum as $key => $value)
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input 
-                        type="radio" 
-                        value="{{ $key }}" 
+                    <input
+                        type="radio"
+                        value="{{ $key }}"
                         id="{{ "view_posted_name_${key}" }}"
-                        name="view_posted_name" 
-                        class="custom-control-input" 
+                        name="view_posted_name"
+                        class="custom-control-input"
                         {{ $whatsnew->view_posted_name == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label" for="{{ "view_posted_name_${key}" }}">
@@ -170,12 +170,12 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             @foreach (ShowType::enum as $key => $value)
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input 
-                        type="radio" 
-                        value="{{ $key }}" 
+                    <input
+                        type="radio"
+                        value="{{ $key }}"
                         id="{{ "view_posted_at_${key}" }}"
-                        name="view_posted_at" 
-                        class="custom-control-input" 
+                        name="view_posted_at"
+                        class="custom-control-input"
                         {{ $whatsnew->view_posted_at == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label" for="{{ "view_posted_at_${key}" }}">
@@ -235,12 +235,12 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             @foreach (ShowType::enum as $key => $value)
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input 
-                        type="radio" 
-                        value="{{ $key }}" 
+                    <input
+                        type="radio"
+                        value="{{ $key }}"
                         id="{{ "read_more_use_flag_${key}" }}"
-                        name="read_more_use_flag" 
-                        class="custom-control-input" 
+                        name="read_more_use_flag"
+                        class="custom-control-input"
                         {{ $whatsnew->read_more_use_flag == $key ? 'checked' : '' }}
                         v-model="read_more_use_flag"
                     >
@@ -251,15 +251,15 @@
             @endforeach
         </div>
     </div>
-    
+
     {{-- もっと見る取得件数／回 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">ボタン押下時の<br>取得件数／回</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input 
-                type="text" 
-                name="read_more_fetch_count" 
-                value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}" 
+            <input
+                type="text"
+                name="read_more_fetch_count"
+                value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}"
                 class="form-control col-sm-3"
             >
             @if ($errors && $errors->has('read_more_fetch_count')) <div class="text-danger">{{$errors->first('read_more_fetch_count')}}</div> @endif
@@ -270,10 +270,10 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">ボタン名</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input 
-                type="text" 
-                name="read_more_name" 
-                value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}" 
+            <input
+                type="text"
+                name="read_more_name"
+                value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}"
                 class="form-control"
                 v-model="read_more_name"
             >
@@ -315,12 +315,12 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             @foreach (UseType::enum as $key => $value)
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input 
-                        type="radio" 
-                        value="{{ $key }}" 
+                    <input
+                        type="radio"
+                        value="{{ $key }}"
                         id="{{ "read_more_btn_transparent_flag_${key}" }}"
-                        name="read_more_btn_transparent_flag" 
-                        class="custom-control-input" 
+                        name="read_more_btn_transparent_flag"
+                        class="custom-control-input"
                         {{ $whatsnew->read_more_btn_transparent_flag == $key ? 'checked' : '' }}
                         v-model="read_more_btn_transparent_flag"
                     >
@@ -331,7 +331,7 @@
             @endforeach
         </div>
     </div>
-    
+
     {{-- もっと見るボタンプレビュー --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">ボタンプレビュー</label>
@@ -431,7 +431,7 @@
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
                 </button>
                 <button type="submit" class="btn btn-primary form-horizontal mr-2"><i class="fas fa-check"></i>

@@ -123,7 +123,7 @@
                 <div class="text-center">
                     <button type="submit" class="btn btn-success mr-3"><i class="far fa-save"></i> 保存のみ</button>
                     <button type="button" class="btn btn-primary mr-3" onclick="javascript:submit_codestudies_run();"><i class="fas fa-check"></i> 保存と実行</button>
-                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>
             </div>
             <div class="col-sm-2">

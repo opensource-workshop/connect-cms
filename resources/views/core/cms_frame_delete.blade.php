@@ -89,7 +89,7 @@
                     </span>
                     <div class="container-fluid">
                         <div class="text-center mt-3">
-                            <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                            <button type="button" class="btn btn-secondary form-horizontal mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">
                                 <i class="fas fa-times"></i> <span class="{{$frame->getSettingButtonCaptionClass()}}">キャンセル</span>
                             </button>
                             <button type="submit" class="btn btn-danger form-horizontal" onclick="javascript:return confirm('フレームを削除します。\nよろしいですか？')">

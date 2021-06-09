@@ -52,10 +52,10 @@
             <div class="row">
                 <div class="col-3"></div>
                 <div class="col-6">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">
                         <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                     </button>
-                    <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                    <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                         <span class="{{$frame->getSettingButtonCaptionClass()}}">
                         @if (empty($bbs->id))
                             登録確定
