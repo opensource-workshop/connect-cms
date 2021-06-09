@@ -86,7 +86,7 @@ class SlideshowsPlugin extends UserPluginBase
     }
 
     /**
-     *  フレームに紐づく紐づくスライドショーID とフレームデータの取得
+     *  フレームに紐づくスライドショーID とフレームデータの取得
      */
     private function getSlideshowFrame($frame_id)
     {
