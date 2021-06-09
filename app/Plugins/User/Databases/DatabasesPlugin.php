@@ -1630,37 +1630,34 @@ class DatabasesPlugin extends UserPluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = DB::table('frames')
-                            ->select('frames.*')
-                            ->where('frames.id', $frame_id)->first();
+        $plugin_frame = Frame::select('frames.*')
+                ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        $plugins = DB::table($plugin_name)
-                        ->select(
-                            $plugin_name . '.id',
-                            $plugin_name . '.bucket_id',
-                            $plugin_name . '.created_at',
-                            $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                            DB::raw('count(databases_inputs.databases_id) as entry_count')
-                        )
-                        ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
-                        ->groupBy(
-                            $plugin_name . '.id',
-                            $plugin_name . '.bucket_id',
-                            $plugin_name . '.created_at',
-                            $plugin_name . '.' . $plugin_name . '_name',
-                            'databases_inputs.databases_id'
-                        )
-                        ->orderBy($plugin_name . '.created_at', 'desc')
-                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
+        $plugins = Databases::
+                select(
+                    $plugin_name . '.id',
+                    $plugin_name . '.bucket_id',
+                    $plugin_name . '.created_at',
+                    $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                    DB::raw('count(databases_inputs.databases_id) as entry_count')
+                )
+                ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
+                ->groupBy(
+                    $plugin_name . '.id',
+                    $plugin_name . '.bucket_id',
+                    $plugin_name . '.created_at',
+                    $plugin_name . '.' . $plugin_name . '_name',
+                    'databases_inputs.databases_id'
+                )
+                ->orderBy($plugin_name . '.created_at', 'desc')
+                ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databases_list_buckets', [
+        return $this->view('databases_list_buckets', [
             'plugin_frame' => $plugin_frame,
-            'plugins'      => $plugins,
-            ]
-        );
+            'plugins' => $plugins,
+        ]);
     }
 
     /**

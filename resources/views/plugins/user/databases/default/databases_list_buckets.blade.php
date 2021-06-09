@@ -60,15 +60,15 @@
         }
     </script>
 
-    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+    <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
         {{ csrf_field() }}
         <div class="form-group">
             <table class="table table-hover table-responsive">
             <thead>
                 <tr>
                     <th></th>
-                    <th>{{$frame->plugin_name_full}}名</th>
-                    <th>件数</th>
+                    <th nowrap>{{$frame->plugin_name_full}}名</th>
+                    <th nowrap>件数</th>
                     <th>詳細</th>
                     <th>作成日</th>
                 </tr>
@@ -76,9 +76,9 @@
             <tbody>
             @foreach($plugins as $plugin)
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
-                    <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
-                    <td nowrap>{{$plugin->plugin_bucket_name}}</td>
-                    <td nowrap class="text-right">{{$plugin->entry_count}}</td>
+                    <td><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
+                    <td>{{$plugin->plugin_bucket_name}}</td>
+                    <td>{{$plugin->entry_count}}</td>
                     <td nowrap>
                         <div class="btn-group mr-1">
                             <button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
@@ -109,11 +109,12 @@
                             <i class="fas fa-file-upload"></i> インポート
                         </button>
                     </td>
-                    <td nowrap>{{$plugin->created_at}}</td>
+                    <td nowrap>{{$plugin->created_at->format('Y/m/d H:i')}}</td>
                 </tr>
             @endforeach
             </tbody>
             </table>
+            <small class="text-muted">※ 横スクロールできます。</small>
         </div>
 
         <div class="text-center">
