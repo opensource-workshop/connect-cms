@@ -158,6 +158,11 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function editBuckets($request, $page_id, $frame_id, $slideshows_id = null, $is_create = false, $message = null, $errors = null)
     {
+        // 権限チェック
+        if ($this->can('role_article_admin')) {
+            return $this->view_error(403);
+        }
+
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
