@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use DB;
 
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\Core\UsersInputCols;
+use App\Models\Core\UsersLoginHistories;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
 // use App\Models\Common\Page;
@@ -31,6 +32,8 @@ use App\Utilities\String\StringUtils;
 use App\Enums\CsvCharacterCode;
 use App\Enums\UserColumnType;
 use App\Enums\UserStatus;
+
+use Carbon\Carbon;
 
 /**
  * ユーザ管理クラス
@@ -193,18 +196,24 @@ class UserManage extends ManagePluginBase
             }
         }
 
+        // 最終ログイン日 のサブクエリ
+        $sub_query_users_login_histories = UsersLoginHistories::select('users_id', DB::raw('MAX(logged_in_at) AS max_logged_in_at'))
+                ->groupBy('users_id');
+
         // ユーザデータ取得
         // $users_query = User::select('users.*');
         // ユーザー追加項目のソートなし
         if (empty($sort_column_id)) {
-            $users_query = User::select('users.*');
+            $users_query = User::select('users.*', 'users_login_histories.max_logged_in_at')
+                ->leftjoin(DB::raw("({$sub_query_users_login_histories->toSql()}) AS users_login_histories"), 'users_login_histories.users_id', '=', 'users.id');
         } else {
             // ユーザー追加項目のソートあり
-            $users_query = User::select('users.*', 'users_input_cols.value')
+            $users_query = User::select('users.*', 'users_input_cols.value', 'users_login_histories.max_logged_in_at')
                 ->leftjoin('users_input_cols', function ($join) use ($sort_column_id) {
                     $join->on('users_input_cols.users_id', '=', 'users.id')
                         ->where('users_input_cols.users_columns_id', '=', $sort_column_id);
-                });
+                })
+                ->leftjoin(DB::raw("({$sub_query_users_login_histories->toSql()}) AS users_login_histories"), 'users_login_histories.users_id', '=', 'users.id');
         }
 
         // 権限
@@ -282,6 +291,10 @@ class UserManage extends ManagePluginBase
         } elseif (array_key_exists($sort, $sort_column_orders)) {
             // ユーザー追加項目のソートあり
             $users_query->orderBy('users_input_cols.value', $sort_column_orders[$sort]);
+        } elseif ($sort == 'logged_in_at_asc') {
+            $users_query->orderBy('users_login_histories.max_logged_in_at', 'asc');
+        } elseif ($sort == 'logged_in_at_desc') {
+            $users_query->orderBy('users_login_histories.max_logged_in_at', 'desc');
         }
         // dd($sort_column_orders);
 

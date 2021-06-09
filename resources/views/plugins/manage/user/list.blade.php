@@ -239,6 +239,8 @@ use App\Models\Core\UsersColumns;
                                             <option value="{{$users_column->id}}_asc" @if(Session::get('user_search_condition.sort') == $users_column->id . '_asc') selected @endif>{{  $users_column->column_name  }}(昇順)</option>
                                             <option value="{{$users_column->id}}_desc" @if(Session::get('user_search_condition.sort') == $users_column->id . '_desc') selected @endif>{{  $users_column->column_name  }}(降順)</option>
                                         @endforeach
+                                        <option value="logged_in_at_asc"@if(Session::get('user_search_condition.sort') == "logged_in_at_asc") selected @endif>最終ログイン日 昇順</option>
+                                        <option value="logged_in_at_desc"@if(Session::get('user_search_condition.sort') == "logged_in_at_desc") selected @endif>最終ログイン日 降順</option>
                                     </select>
                                 </div>
                             </div>
@@ -300,6 +302,7 @@ use App\Models\Core\UsersColumns;
                     <th nowrap>状態</th>
                     <th nowrap>作成日</th>
                     <th nowrap>更新日</th>
+                    <th nowrap>最終アクセス日</th>
                 </tr>
             </thead>
             <tbody>
@@ -340,6 +343,7 @@ use App\Models\Core\UsersColumns;
                     <td nowrap>{{UserStatus::getDescription($user->status)}}</td>
                     <td>{{$user->created_at->format('Y/m/d')}}</td>
                     <td>{{$user->updated_at->format('Y/m/d')}}</td>
+                    <td>{{$user->max_logged_in_at ? (new Carbon($user->max_logged_in_at))->format('Y/m/d') : ''}}</td>
                 </tr>
             @endforeach
             </tbody>
