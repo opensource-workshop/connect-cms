@@ -61,17 +61,28 @@
                     @endif
                 </li>
 
-                <li role="presentation" class="nav-item">
-                @if ($function == "edit")
-                    <span class="nav-link"><span class="active">ユーザ変更</span></span>
-                @endif
-                </li>
+                @if (($function == "edit" || $function == "groups" ) && $user->id)
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                            ページ変更
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
 
-                <li role="presentation" class="nav-item">
-                @if ($function == "groups")
-                    <span class="nav-link"><span class="active">グループ参加</span></span>
+                            @if ($function == "edit")
+                                <a href="{{url('/manage/user/edit')}}/{{$user->id}}" class="dropdown-item active bg-light">ページ変更</a>
+                            @else
+                                <a href="{{url('/manage/user/edit')}}/{{$user->id}}" class="dropdown-item">ページ変更</a>
+                            @endif
+
+                            @if ($function == "groups")
+                                <a href="{{url('/manage/user/groups')}}/{{$user->id}}" class="dropdown-item active bg-light">グループ参加</a>
+                            @else
+                                <a href="{{url('/manage/user/groups')}}/{{$user->id}}" class="dropdown-item">グループ参加</a>
+                            @endif
+                        </div>
+                    </li>
                 @endif
-                </li>
+
             </ul>
         </div>
     </nav>
