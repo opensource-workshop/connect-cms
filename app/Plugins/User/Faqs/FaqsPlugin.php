@@ -21,6 +21,8 @@ use App\Models\User\Faqs\FaqsPostsTags;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Utilities\String\StringUtils;
+
 /**
  * FAQプラグイン
  *
@@ -577,10 +579,15 @@ class FaqsPlugin extends UserPluginBase
     }
 
     /**
-     *  FAQ記事登録処理
+     * FAQ記事登録処理
      */
     public function save($request, $page_id, $frame_id, $faqs_posts_id = null)
     {
+        $request->merge([
+            // 表示順:  全角→半角変換
+            "display_sequence" => StringUtils::convertNumericAndMinusZenkakuToHankaku($request->display_sequence),
+        ]);
+
         // 項目のエラーチェック
         $validator = $this->makeValidator($request);
 
@@ -607,6 +614,9 @@ class FaqsPlugin extends UserPluginBase
         // 新規オブジェクト生成
         $faqs_post = new FaqsPosts();
 
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        $display_sequence = $this->getSaveDisplaySequence($request->display_sequence, $request->faqs_id, $faqs_posts_id);
+
         // FAQ記事設定
         $faqs_post->faqs_id          = $request->faqs_id;
         $faqs_post->post_title       = $request->post_title;
@@ -614,7 +624,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs_post->important        = $request->important;
         $faqs_post->posted_at        = $request->posted_at . ':00';
         $faqs_post->post_text        = $this->clean($request->post_text);   // wysiwygのXSS対応のJavaScript等の制限
-        $faqs_post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
+        $faqs_post->display_sequence = $display_sequence;
 
         // 承認の要否確認とステータス処理
         if ($this->isApproval($frame_id)) {
@@ -653,6 +663,21 @@ class FaqsPlugin extends UserPluginBase
 
         // 登録後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * 登録する表示順を取得
+     */
+    private function getSaveDisplaySequence($display_sequence, $faqs_id, $id)
+    {
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        if (!is_null($display_sequence)) {
+            $display_sequence = intval($display_sequence);
+        } else {
+            $max_display_sequence = FaqsPosts::where('faqs_id', $faqs_id)->where('id', '<>', $id)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+        }
+        return $display_sequence;
     }
 
     /**
