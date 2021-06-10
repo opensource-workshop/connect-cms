@@ -33,5 +33,4 @@ class LoginHistoryMypage extends MypagePluginBase
             "users_login_histories" => $users_login_histories,
         ]);
     }
-
 }
