@@ -13,4 +13,9 @@
     @else
         <a href="{{url('/')}}/mypage/profile" class="list-group-item">プロフィール</a>
     @endif
+    @if (isset($plugin_name) && $plugin_name == 'loginhistory')
+        <a href="{{url('/')}}/mypage/loginHistory" class="list-group-item active">ログイン履歴</a>
+    @else
+        <a href="{{url('/')}}/mypage/loginHistory" class="list-group-item">ログイン履歴</a>
+    @endif
 </div>
