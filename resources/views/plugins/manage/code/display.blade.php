@@ -15,7 +15,7 @@
     <div class="card-body">
 
         <div class="alert alert-info" role="alert">
-            コード一覧に表示する項目を設定します。
+            <i class="fas fa-exclamation-circle"></i> コード一覧に表示する項目を設定します。
         </div>
 
         <form action="" method="POST" class="form-horizontal">

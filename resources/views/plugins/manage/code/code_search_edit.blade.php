@@ -29,8 +29,8 @@
 <div class="card-body">
 
     <div class="alert alert-info" role="alert">
-        コード一覧の検索条件を記録しておけます。<br>
-        記録した検索条件は、コード一覧に検索ボタンとして表示され、押すとその条件で検索します。
+        <i class="fas fa-exclamation-circle"></i> コード一覧の検索条件を記録しておけます。<br>
+        　 記録した検索条件は、コード一覧に検索ボタンとして表示され、押すとその条件で検索します。
     </div>
 
     @include('common.errors_form_line')

@@ -29,8 +29,8 @@
 <div class="card-body">
 
     <div class="alert alert-info" role="alert">
-        コード登録画面の注釈を登録します。<br>
-        登録した注釈は、コード登録画面の注釈名に表示され、選択すると各項目下部に注釈が表示されます。
+        <i class="fas fa-exclamation-circle"></i> コード登録画面の注釈を登録します。<br>
+        　 登録した注釈は、コード登録画面の注釈名に表示され、選択すると各項目下部に注釈が表示されます。
     </div>
 
     @include('common.errors_form_line')
