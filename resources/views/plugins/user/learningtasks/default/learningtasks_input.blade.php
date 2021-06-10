@@ -17,6 +17,9 @@
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg')
 
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message')
+
 {{-- 投稿用フォーム --}}
 @if (empty($learningtasks_posts->id))
     <form action="{{url('/')}}/redirect/plugin/learningtasks/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="" name="form_learningtasks_posts" enctype="multipart/form-data">

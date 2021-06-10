@@ -1632,6 +1632,15 @@ class LearningtasksPlugin extends UserPluginBase
         $post->display_sequence = $display_sequence;
         $post->save();
 
+        if (empty($post_id)) {
+            // 登録
+            $request->flash_message = '課題を追加しました。<br />' .
+                '　 [ <a href="' . url('/') . '/plugin/learningtasks/editUsers/' . $page_id . '/' . $frame_id . '/' . $post->id . '/#frame-' . $frame_id . '">参加設定</a> ]から参加する受講生と教員を設定してください。';
+        } else {
+            // 更新
+            $request->flash_message = '課題を変更しました。';
+        }
+
         //if (empty($learningtasks_posts_id)) {
         //    // 新規
         //    // 登録ユーザ
