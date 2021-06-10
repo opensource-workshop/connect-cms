@@ -302,7 +302,7 @@ use App\Models\Core\UsersColumns;
                     <th nowrap>状態</th>
                     <th nowrap>作成日</th>
                     <th nowrap>更新日</th>
-                    <th nowrap>最終アクセス日</th>
+                    <th nowrap>最終ログイン日</th>
                 </tr>
             </thead>
             <tbody>
@@ -343,7 +343,10 @@ use App\Models\Core\UsersColumns;
                     <td nowrap>{{UserStatus::getDescription($user->status)}}</td>
                     <td>{{$user->created_at->format('Y/m/d')}}</td>
                     <td>{{$user->updated_at->format('Y/m/d')}}</td>
-                    <td>{{$user->max_logged_in_at ? (new Carbon($user->max_logged_in_at))->format('Y/m/d') : ''}}</td>
+                    <td nowrap>
+                        <a href="{{url('/')}}/manage/user/loginHistory/{{$user->id}}" title="ログイン履歴"><i class="far fa-edit"></i></a>
+                        {{$user->max_logged_in_at ? (new Carbon($user->max_logged_in_at))->format('Y/m/d') : ''}}
+                    </td>
                 </tr>
             @endforeach
             </tbody>

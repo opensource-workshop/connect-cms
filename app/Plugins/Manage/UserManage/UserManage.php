@@ -33,8 +33,6 @@ use App\Enums\CsvCharacterCode;
 use App\Enums\UserColumnType;
 use App\Enums\UserStatus;
 
-use Carbon\Carbon;
-
 /**
  * ユーザ管理クラス
  *
@@ -72,6 +70,7 @@ class UserManage extends ManagePluginBase
         $role_ckeck_table["uploadCsv"] = array('admin_user');
         $role_ckeck_table["bulkDelete"] = array('admin_user');
         $role_ckeck_table["bulkDestroy"] = array('admin_user');
+        $role_ckeck_table["loginHistory"] = array('admin_user');
 
         return $role_ckeck_table;
     }
@@ -1864,5 +1863,27 @@ class UserManage extends ManagePluginBase
 
         // 削除後は一括削除画面を呼ぶ。
         return redirect()->back()->with('flash_message', '一括削除しました。');
+    }
+
+    /**
+     * ログイン履歴画面
+     */
+    public function loginHistory($request, $id = null)
+    {
+        // ユーザデータ取得
+        $user = User::where('id', $id)->first();
+
+        // ログイン履歴取得
+        $users_login_histories = UsersLoginHistories::where('users_id', $id)
+                ->orderBy('logged_in_at', 'desc')
+                ->paginate(10, ["*"]);
+
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.user.login_history', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "user" => $user,
+            "users_login_histories" => $users_login_histories,
+        ]);
     }
 }
