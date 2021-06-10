@@ -37,6 +37,7 @@
             @endforeach
             </tbody>
             </table>
+            <small class="text-muted">※ スマートフォンの場合、表は横スクロールできます。</small>
         </div>
 
         {{-- ページング処理 --}}
