@@ -351,6 +351,7 @@ use App\Models\Core\UsersColumns;
             @endforeach
             </tbody>
             </table>
+            <small class="text-muted">※ 横スクロールできます。</small>
         </div>
 
         {{-- ページング処理 --}}
