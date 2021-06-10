@@ -15,11 +15,8 @@
     </div>
     <div class="card-body">
 
-    @if (session('flash_message'))
-        <div class="alert alert-success">
-            {{ session('flash_message') }}
-        </div>
-    @endif
+    {{-- 登録後メッセージ表示 --}}
+    @include('plugins.common.flash_message')
 
 {{--
     <div class="alert alert-info" role="alert">

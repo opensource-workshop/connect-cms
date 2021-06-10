@@ -17,12 +17,8 @@
 {{-- 共通エラーメッセージ 呼び出し --}}
 @include('common.errors_form_line')
 
-{{-- 一時的なメッセージ 呼び出し --}}
-@if (session('flash_message'))
-    <div class="alert alert-success">
-        {{ session('flash_message') }}
-    </div>
-@endif
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message')
 
 @if (!$blog || !$blog->id)
     <div class="alert alert-warning" style="margin-top: 10px;">

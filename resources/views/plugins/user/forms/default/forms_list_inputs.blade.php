@@ -10,11 +10,8 @@
 
 @section("plugin_setting_$frame->id")
 
-@if (session('flash_message'))
-    <div class="alert alert-success">
-        {{ session('flash_message') }}
-    </div>
-@endif
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message')
 
 {{-- ダウンロード用フォーム --}}
 <form action="" method="post" name="form_download" class="d-inline">

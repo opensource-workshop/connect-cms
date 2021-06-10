@@ -15,11 +15,8 @@
     </div>
 </div>
 
-@if (session('flash_message'))
-    <div class="alert alert-success">
-        {{ session('flash_message') }}
-    </div>
-@endif
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message')
 
 <div class="alert alert-info" role="alert">
     <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、試験日時を一括登録できます。詳細は<a href="https://connect-cms.jp/manual/user/learningtasks#learningtasks_examinations_csv_import" target="_blank">オンラインマニュアルの課題管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。

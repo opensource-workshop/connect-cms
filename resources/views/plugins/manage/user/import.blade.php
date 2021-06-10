@@ -15,11 +15,8 @@
     </div>
     <div class="card-body">
 
-    @if (session('flash_message'))
-        <div class="alert alert-success">
-            {{ session('flash_message') }}
-        </div>
-    @endif
+    {{-- 登録後メッセージ表示 --}}
+    @include('plugins.common.flash_message')
 
     <div class="alert alert-info" role="alert">
         <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ユーザを一括登録できます。詳細は<a href="https://connect-cms.jp/manual/manager/user" target="_blank">オンラインマニュアルのユーザ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
