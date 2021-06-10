@@ -18,11 +18,8 @@ use App\Utilities\Zip\UnzipUtils;
 
 @section("plugin_setting_$frame->id")
 
-@if (session('flash_message'))
-    <div class="alert alert-success">
-        {{ session('flash_message') }}
-    </div>
-@endif
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message')
 
 <div class="alert alert-info" role="alert">
     <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、データベースへ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/user/database#frame-178" target="_blank">オンラインマニュアルのデータベースページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
