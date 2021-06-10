@@ -344,8 +344,8 @@ use App\Models\Core\UsersColumns;
                     <td>{{$user->created_at->format('Y/m/d H:i')}}</td>
                     <td>{{$user->updated_at->format('Y/m/d H:i')}}</td>
                     <td>
-                        <a href="{{url('/')}}/manage/user/loginHistory/{{$user->id}}" title="ログイン履歴"><i class="far fa-edit"></i></a>
                         {{$user->max_logged_in_at ? (new Carbon($user->max_logged_in_at))->format('Y/m/d H:i') : ''}}
+                        <a href="{{url('/')}}/manage/user/loginHistory/{{$user->id}}" title="ログイン履歴">履歴</a>
                     </td>
                 </tr>
             @endforeach
