@@ -18,13 +18,9 @@
     {{-- 登録後メッセージ表示 --}}
     @include('plugins.common.flash_message')
 
-{{--
     <div class="alert alert-info" role="alert">
-        <ul class="pl-3">
-            CSVファイルを使って、コード管理へ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/user/database#frame-178" target="_blank">こちら</a>を参照してください。
-        </ul>
+        <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、コード管理へ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/manager/code#frame-273" target="_blank">オンラインマニュアルのコード管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
     </div>
---}}
 
     {{-- ダウンロード用フォーム --}}
     <form action="{{url('/')}}/manage/code/downloadCsvFormat" method="post" name="database_download_csv_format">
