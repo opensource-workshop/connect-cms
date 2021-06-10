@@ -1578,6 +1578,11 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
 
+        $request->merge([
+            // 表示順:  全角→半角変換
+            "display_sequence" => StringUtils::convertNumericAndMinusZenkakuToHankaku($request->display_sequence),
+        ]);
+
         // エラーチェック
         $validator = Validator::make($request->all(), $validate_value);
         $validator->setAttributeNames($validate_attribute);
@@ -1614,6 +1619,9 @@ class LearningtasksPlugin extends UserPluginBase
             $post = LearningtasksPosts::firstOrNew(['id' => $post_id]);
         }
 
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        $display_sequence = $this->getSaveDisplaySequence($request->display_sequence, $request->learningtask_id, $post_id);
+
         // 課題管理記事設定
         $post->learningtasks_id = $request->learningtask_id;
         $post->post_title       = $request->post_title;
@@ -1621,7 +1629,7 @@ class LearningtasksPlugin extends UserPluginBase
         $post->important        = $request->important;
         $post->posted_at        = $request->posted_at . ':00';
         $post->post_text        = $this->clean($request->post_text);   // wysiwygのXSS対応のJavaScript等の制限
-        $post->display_sequence = intval(empty($request->display_sequence) ? 0 : $request->display_sequence);
+        $post->display_sequence = $display_sequence;
         $post->save();
 
         //if (empty($learningtasks_posts_id)) {
@@ -1666,6 +1674,21 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 登録後は表示用の初期処理を呼ぶ。
         //return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * 登録する表示順を取得
+     */
+    private function getSaveDisplaySequence($display_sequence, $learningtask_id, $id)
+    {
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        if (!is_null($display_sequence)) {
+            $display_sequence = intval($display_sequence);
+        } else {
+            $max_display_sequence = LearningtasksPosts::where('learningtasks_id', $learningtask_id)->where('id', '<>', $id)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+        }
+        return $display_sequence;
     }
 
     /**
