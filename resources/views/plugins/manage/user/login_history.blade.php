@@ -29,7 +29,7 @@
             @foreach($users_login_histories as $users_login_history)
                 <tr>
                     <td nowrap>{{$users_login_history->userid}}</td>
-                    <td nowrap>{{$users_login_history->logged_in_at}}</td>
+                    <td nowrap>{{$users_login_history->logged_in_at->format('Y/m/d H:i')}}</td>
                     <td>{{$users_login_history->ip_address}}</td>
                     <td>{{$users_login_history->user_agent}}</td>
                 </tr>
