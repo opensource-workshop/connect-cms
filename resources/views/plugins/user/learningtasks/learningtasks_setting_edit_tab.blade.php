@@ -16,11 +16,11 @@
                 <ul class="navbar-nav">
                     @if ($action == 'edit')
                         <li role="presentation" class="nav-item">
-                            <span class="nav-link"><span class="active">課題設定</span></span>
+                            <span class="nav-link"><span class="active">課題変更</span></span>
                         </li>
                     @else
                         <li role="presentation" class="nav-item">
-                            <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">課題設定</a>
+                            <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$learningtasks_posts->id}}#frame-{{$frame_id}}" class="nav-link">課題変更</a>
                         </li>
                     @endif
                     @if ($action == 'editUsers')
