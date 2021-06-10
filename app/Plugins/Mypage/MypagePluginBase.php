@@ -13,9 +13,8 @@ use App\Plugins\PluginBase;
  */
 class MypagePluginBase extends PluginBase
 {
-
     /**
-     *  設定されているConfig の取得
+     * 設定されているConfig の取得
      */
     protected function getConfigs($name = null, $category = null)
     {
