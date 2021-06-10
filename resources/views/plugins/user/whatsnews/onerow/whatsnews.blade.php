@@ -55,30 +55,32 @@
         @endif
     </div>
 @endforeach
-    {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング ※templateタグはタグとして出力されないタグです。 --}}
-    <div v-for="whatsnews in whatsnewses" class="mb-2 row">
-        {{-- 登録日時 --}}
-        <div v-if="view_posted_at == 1" class="p-0 col-md-2 col-lg text-nowrap" style="display: contents;">
-            <span class="mr-2">@{{ moment(whatsnews.posted_at).format('YYYY/MM/DD')}}</span>
-        </div>
-        {{-- カテゴリ --}}
-        <div v-if="whatsnews.category != null && whatsnews.category != ''" class="p-0 col-md-2 col-lg" style="display: contents;">
-            <div>
-                <span :class="'mr-2 badge cc_category_' + whatsnews.classname">@{{ whatsnews.category }}</span>
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+        {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング --}}
+        <div v-for="whatsnews in whatsnewses" class="mb-2 row">
+            {{-- 登録日時 --}}
+            <div v-if="view_posted_at == 1" class="p-0 col-md-2 col-lg text-nowrap" style="display: contents;">
+                <span class="mr-2">@{{ moment(whatsnews.posted_at).format('YYYY/MM/DD')}}</span>
+            </div>
+            {{-- カテゴリ --}}
+            <div v-if="whatsnews.category != null && whatsnews.category != ''" class="p-0 col-md-2 col-lg" style="display: contents;">
+                <div>
+                    <span :class="'mr-2 badge cc_category_' + whatsnews.classname">@{{ whatsnews.category }}</span>
+                </div>
+            </div>
+            {{-- タイトル＋リンク --}}
+            <div v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" class="p-0 col-12 col-sm-12 col-md col-lg mr-2 text-truncate">
+                <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id">
+                    <template v-if="whatsnews.post_title == null || whatsnews.post_title == ''">（無題）</template>
+                    <template v-else>@{{ whatsnews.post_title }}</template>
+                </a>
+            </div>
+            {{-- 投稿者 --}}
+            <div v-if="view_posted_name == 1" class="p-0 col-12 col-sm-12 col-md-3 col-lg-2 text-right text-nowrap">
+                @{{ whatsnews.posted_name }}
             </div>
         </div>
-        {{-- タイトル＋リンク --}}
-        <div v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" class="p-0 col-12 col-sm-12 col-md col-lg mr-2 text-truncate">
-            <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id">
-                <template v-if="whatsnews.post_title == null || whatsnews.post_title == ''">（無題）</template>
-                <template v-else>@{{ whatsnews.post_title }}</template>
-            </a>
-        </div>
-        {{-- 投稿者 --}}
-        <div v-if="view_posted_name == 1" class="p-0 col-12 col-sm-12 col-md-3 col-lg-2 text-right text-nowrap">
-            @{{ whatsnews.posted_name }}
-        </div>
-    </div>
+    @endif
     
     {{-- ページング処理 --}}
     {{-- @if ($whatsnews_frame->page_method == 1)
