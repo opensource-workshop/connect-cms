@@ -80,9 +80,10 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">表示SEQ</label>
+        <label class="control-label">表示順</label>
         <input type="text" name="display_sequence" value="{{old('display_sequence', $faqs_posts->display_sequence)}}" class="form-control">
         @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
+        <small class="text-muted">※ FAQ設定の「順序条件」で「指定順」を指定した場合のみ、表示順にFAQが表示されます。</small>
     </div>
 
     <div class="form-group">

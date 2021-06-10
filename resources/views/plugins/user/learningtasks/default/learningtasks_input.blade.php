@@ -111,11 +111,11 @@
     --}}
 
     <div class="form-group row">
-        <label class="col-md-2">表示SEQ</label>
+        <label class="col-md-2">表示順</label>
         <div class="col-md-10">
             <input type="text" name="display_sequence" value="{{old('display_sequence', $learningtasks_posts->display_sequence)}}" class="form-control">
             @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
-            <small class="text-muted">※ 課題管理設定の「順序条件」で「指定順」を指定した場合のみ、表示SEQ順に課題が表示されます。</small>
+            <small class="text-muted">※ 課題管理設定の「順序条件」で「指定順」を指定した場合のみ、表示順に課題が表示されます。</small>
         </div>
     </div>
 

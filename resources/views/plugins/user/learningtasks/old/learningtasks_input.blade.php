@@ -95,7 +95,7 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">表示SEQ</label>
+        <label class="control-label">表示順</label>
         <input type="text" name="display_sequence" value="{{old('display_sequence', $learningtasks_posts->display_sequence)}}" class="form-control">
         @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
     </div>
