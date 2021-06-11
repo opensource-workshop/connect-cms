@@ -74,6 +74,12 @@
                         @else
                             <a href="{{url('/manage/site/favicon')}}" class="dropdown-item">ファビコン</a>
                         @endif
+
+                        @if ($function == "wysiwyg")
+                            <a href="{{url('/manage/site/wysiwyg')}}" class="dropdown-item active bg-light">WYSIWYG設定</a>
+                        @else
+                            <a href="{{url('/manage/site/wysiwyg')}}" class="dropdown-item">WYSIWYG設定</a>
+                        @endif
                     </div>
                 </li>
             </ul>

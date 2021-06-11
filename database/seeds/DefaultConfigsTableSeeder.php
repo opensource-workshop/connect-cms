@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Core\Configs;
 
@@ -150,6 +151,15 @@ class DefaultConfigsTableSeeder extends Seeder
                 'name' => 'base_header_font_color_class',
                 'category' => 'general',
                 'value' => BaseHeaderFontColorClass::navbar_dark
+            ]);
+        }
+
+        if (DB::table('configs')->where('name', 'fontsizeselect')->count() == 0) {
+            // wysiwygで文字サイズの使用
+            $configs = Configs::create([
+                'name' => 'fontsizeselect',
+                'category' => 'wysiwyg',
+                'value' => 0
             ]);
         }
 

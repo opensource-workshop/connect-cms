@@ -153,11 +153,17 @@
     }
     $plugins = "plugins  : '" . $plugins . "',";
 
+    // 文字サイズの選択
+    $toolbar_fontsizeselect = '';
+    if (Configs::getConfigsValue($cc_configs, 'fontsizeselect')) {
+        $toolbar_fontsizeselect = '| fontsizeselect';
+    }
+
     // toolbar
     // change: tinymce5対応
     // $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
-    $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code ';
-    $mobile_toolbar = 'undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview ';
+    $toolbar = "undo redo | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code ";
+    $mobile_toolbar = "undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview ";
     // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
     if (! empty($templates_file)) {
         $toolbar .= '| template ';
@@ -218,6 +224,10 @@
         // base_url : '{{url("/")}}',
         document_base_url : '{{url("/")}}',
 
+        @if(isset($readonly) && $readonly)
+            readonly : 1,
+        @endif
+
         {{-- plugins --}}
         {!!$plugins!!}
 
@@ -226,6 +236,9 @@
 
         {{-- formatselect = スタイル, styleselect = 書式 --}}
         {!!$toolbar!!}
+
+        // fontsize_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt',
+        fontsize_formats: '0.65rem 0.85rem 1rem 1.15rem 1.3rem 1.5rem 2rem 3rem',
 
         {{-- テーマ固有書式 --}}
         {!!$style_formats_file!!}
@@ -260,7 +273,7 @@
         },
 
         relative_urls : false,
-        height: 300,
+        height: {{ isset($height) ? $height : 300 }},
         branding: false,
         //forced_root_block : false,
         valid_children : "+body[style|input],+a[div|p],",

@@ -52,6 +52,8 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["favicon"]          = array('admin_site');
         $role_ckeck_table["saveFavicon"]      = array('admin_site');
         $role_ckeck_table["deleteFavicon"]    = array('admin_site');
+        $role_ckeck_table["wysiwyg"] = array('admin_site');
+        $role_ckeck_table["saveWysiwyg"] = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -805,5 +807,39 @@ class SiteManage extends ManagePluginBase
 
         // ファビコン管理画面に戻る
         return redirect("/manage/site/favicon");
+    }
+
+    /**
+     * WYSIWYG設定画面
+     */
+    public function wysiwyg($request, $id = null)
+    {
+        // Config データの取得
+        $configs = Configs::get();
+
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.site.wysiwyg', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "wysiwyg",
+            "configs" => $configs,
+        ]);
+    }
+
+    /**
+     * WYSIWYG設定 更新
+     */
+    public function saveWysiwyg($request, $id = null)
+    {
+        // wysiwygで文字サイズの使用
+        $configs = Configs::updateOrCreate(
+            ['name' => 'fontsizeselect'],
+            [
+                'category' => 'wysiwyg',
+                'value'    => $request->fontsizeselect
+            ]
+        );
+
+        // WYSIWYG設定画面に戻る
+        return redirect("/manage/site/wysiwyg")->with('flash_message', '更新しました。');
     }
 }
