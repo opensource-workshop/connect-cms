@@ -40,7 +40,7 @@
             <div class="form-group row">
                 <label for="theme_name" class="col-md-3 text-md-right">ファビコン・ファイル</label>
                 <div class="col-md-9">
-                    <input type="file" name="favicon" id="favicon" value="{{old('favicon')}}">
+                    <input type="file" name="favicon" id="favicon" value="{{old('favicon')}}" accept=".ico">
                     @if ($errors && $errors->has('favicon_error')) <div class="text-danger">{{$errors->first('favicon_error')}}</div> @endif
                 </div>
             </div>
