@@ -27,7 +27,7 @@
         <form action="{{url('/')}}/manage/site/saveFavicon" method="POST" enctype="multipart/form-data">
             {{csrf_field()}}
             <div class="form-group row">
-                <label for="theme_name" class="col-md-3 text-md-right">現在のファイル</label>
+                <label class="col-md-3 text-md-right">現在のファイル</label>
                 <div class="col-md-9">
                     @if ($favicon)
                         <a href="{{url('/')}}/uploads/favicon/favicon.ico" target="_blank">favicon.ico</a>
@@ -38,9 +38,12 @@
             </div>
 
             <div class="form-group row">
-                <label for="theme_name" class="col-md-3 text-md-right">ファビコン・ファイル</label>
+                <label class="col-md-3 col-form-label text-md-right">ファビコン・ファイル</label>
                 <div class="col-md-9">
-                    <input type="file" name="favicon" id="favicon" value="{{old('favicon')}}" accept=".ico">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="favicon" name="favicon" accept=".ico">
+                        <label class="custom-file-label" for="favicon" data-browse="参照">アイコンファイル(.ico)</label>
+                    </div>
                     @if ($errors && $errors->has('favicon_error')) <div class="text-danger">{{$errors->first('favicon_error')}}</div> @endif
                 </div>
             </div>
@@ -86,5 +89,12 @@
         </div>
     </div>
 @endif
+
+{{-- custom-file-inputクラスでファイル選択時にファイル名表示 --}}
+<script>
+    $('.custom-file-input').on('change',function(){
+        $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+    })
+</script>
 
 @endsection
