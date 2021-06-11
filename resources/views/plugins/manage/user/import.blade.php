@@ -15,6 +15,9 @@
     </div>
     <div class="card-body">
 
+    {{-- 共通エラーメッセージ 呼び出し --}}
+    @include('common.errors_form_line')
+
     {{-- 登録後メッセージ表示 --}}
     @include('plugins.common.flash_message')
 
@@ -65,12 +68,12 @@
             <label class="col-md-3 col-form-label text-md-right">CSVファイル <span class="badge badge-danger">必須</span></label>
             <div class="col-md-9">
                 <div class="custom-file">
-                    <input type="file" class="custom-file-input" id="users_csv" name="users_csv">
-                    <label class="custom-file-label" for="users_csv" data-browse="参照"></label>
+                    <input type="file" class="custom-file-input @if ($errors->has('users_csv')) border-danger @endif" id="users_csv" name="users_csv">
+                    <label class="custom-file-label @if ($errors->has('users_csv')) border-danger @endif" for="users_csv" data-browse="参照"></label>
                 </div>
                 @if ($errors && $errors->has('users_csv'))
                     @foreach ($errors->get('users_csv') as $message)
-                        <div class="text-danger">{{$message}}</div>
+                        <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$message}}</div>
                     @endforeach
                 @endif
             </div>
@@ -79,7 +82,7 @@
         <div class="form-group form-row">
             <label class="col-md-3 col-form-label text-md-right">文字コード</label>
             <div class="col-md-9">
-                <select name="character_code" class="form-control">
+                <select name="character_code" class="form-control @if ($errors->has('character_code')) border-danger @endif">
                     @foreach (CsvCharacterCode::getSelectMembers() as $character_code => $character_code_display)
                         <option value="{{$character_code}}"@if(old('character_code') == $character_code) selected @endif>{{$character_code_display}}</option>
                     @endforeach
@@ -87,7 +90,7 @@
                 <small class="text-muted">
                     ※ UTF-8はBOM付・BOMなしどちらにも対応しています。
                 </small>
-                @if ($errors && $errors->has('character_code')) <div class="text-danger">{{$errors->first('character_code')}}</div> @endif
+                @include('common.errors_inline', ['name' => 'character_code'])
             </div>
         </div>
 
