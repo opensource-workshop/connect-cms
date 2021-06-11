@@ -20,6 +20,15 @@
         Opac の設定を行ってからOpac フレームの設定を行います。
     </div>
 @else
+
+<!-- フラッシュメッセージ -->
+@if (session('change_buckets_opacs'))
+    <div class="alert alert-info" style="margin-top: 10px;">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ session('change_buckets_opacs') }}
+    </div>
+@endif
+
     <form action="{{url('/')}}/redirect/plugin/opacs/saveOpacFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="opacs_id" value="{{$opac_frame->opacs_id}}">

@@ -82,6 +82,16 @@
         </div>
     </div>
 
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="request_mail_send_flag" value="1" class="custom-control-input" id="request_mail_send_flag" @if(old('request_mail_send_flag', $opac->request_mail_send_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="request_mail_send_flag">貸出時郵送リクエストしたユーザーにメールを送る</label>
+            </div>
+        </div>
+    </div>
+
     <div class="form-group row mb-0 mb-sm-2">
         <label class="{{$frame->getSettingLabelClass()}} @if(!$frame->isExpandNarrow()) pt-sm-0 @endif">貸出設定</label>
         <div class="{{$frame->getSettingInputClass(true)}} row">
@@ -269,7 +279,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac_frame->opacs_id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

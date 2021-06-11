@@ -7,6 +7,7 @@
  --}}
 @extends('core.cms_frame_base')
 
+{{-- メッセージ画面 --}}
 @section("plugin_contents_$frame->id")
 @if ($errors && $errors->any())
     <div class="alert alert-danger">
@@ -25,6 +26,8 @@
         {{$message}}
     </div>
 @endif
+
+{{-- 書籍情報画面 --}}
 
 <table class="table table-bordered cc_responsive_table">
 <thead>
@@ -76,15 +79,23 @@
 <tr>
     <th>状況</th>
     <td>
+{{--
     @if ($opacs_books->lent_flag == 1)
         <span style="color: red;"><i class="fas fa-user"></i></span> 
         貸し出し中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
         </span>
     @elseif ($opacs_books->lent_flag == 2)
         <span style="color: red;"><i class="fas fa-user"></i></span> 
-        貸し出しリクエスト中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp）
+        貸し出しリクエスト中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_books->return_scheduled)); @endphp)
         </span>
     @endif
+--}}
+        @if (isset($opacs_book_lents))
+            <span style="color: red;"><i class="fas fa-user"></i></span> 貸し出し中（返却予定日：@php echo date('Y年n月j日', strtotime($opacs_book_lents->return_scheduled)); @endphp）</span><br/>
+        @endif
+        @if (isset($opacs_book_lents_count) && $opacs_book_lents_count > 0)
+            <span style="color: red;"><i class="fas fa-user"></i></span> 貸し出しリクエスト中（{{$opacs_book_lents_count}}件）</span>
+        @endif
     </td>
 </tr>
 </table>
@@ -95,7 +106,9 @@
 @endif
 
 {{-- 一覧へ戻る --}}
+{{-- 貸出部分へ移設
 <p class="text-center" style="margin-top: 16px;">
     <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
 </p>
+--}}
 @endsection
