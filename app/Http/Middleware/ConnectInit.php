@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use Illuminate\Support\Facades\View;
+
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
@@ -22,7 +24,7 @@ class ConnectInit
 
         // セッションのデバックモードは、null(env参照)、0(セッション内 OFF)、1(セッション内 On)
         // 初期値は環境変数
-        $now_debug_mode = Config('app.debug');
+        // $now_debug_mode = Config('app.debug');
 
         // セッションのデバックモードの取得
         $debug_mode_session = session('app_debug');
@@ -49,13 +51,14 @@ class ConnectInit
 
         // *** 全ビュー間のデータ共有
         // サイト名
-        if (isset($configs)) {
-            $base_site_name = $configs->firstWhere('name', 'base_site_name');
-            $configs_base_site_name = $base_site_name->value ?? config('app.name', 'Connect-CMS');
-        } else {
-            $configs_base_site_name = config('app.name', 'Connect-CMS');
-        }
-        \View::share('configs_base_site_name', $configs_base_site_name);
+        // if (isset($configs)) {
+        //     $base_site_name = $configs->firstWhere('name', 'base_site_name');
+        //     $configs_base_site_name = $base_site_name->value ?? config('app.name', 'Connect-CMS');
+        // } else {
+        //     $configs_base_site_name = config('app.name', 'Connect-CMS');
+        // }
+        // View::share('configs_base_site_name', $configs_base_site_name);
+        View::share('cc_configs', $configs);
 
         // フレーム設定の共有
         $frame_configs = FrameConfig::get();

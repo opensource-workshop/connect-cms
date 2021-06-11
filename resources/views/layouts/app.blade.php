@@ -58,7 +58,7 @@
 @endif
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
-    <title>@if(isset($page)){{$page->page_name}} | @endif{{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}</title>
+    <title>@if(isset($page)){{$page->page_name}} | @endif{{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}</title>
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
@@ -194,7 +194,7 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
 <nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
-        {{ $configs_base_site_name ?? config('app.name', 'Connect-CMS') }}
+        {{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}
     </a>
 
     <!-- SmartPhone Button -->
