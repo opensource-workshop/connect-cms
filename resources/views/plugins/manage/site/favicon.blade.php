@@ -18,6 +18,9 @@
     </div>
     <div class="card-body">
 
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('common.errors_form_line')
+
         @if (session('save_favicon'))
             <div class="alert alert-info" role="alert">
                 {!!session('save_favicon')!!}
@@ -41,10 +44,10 @@
                 <label class="col-md-3 col-form-label text-md-right">ファビコン・ファイル</label>
                 <div class="col-md-9">
                     <div class="custom-file">
-                        <input type="file" class="custom-file-input" id="favicon" name="favicon" accept=".ico">
-                        <label class="custom-file-label" for="favicon" data-browse="参照">アイコンファイル(.ico)</label>
+                        <input type="file" class="custom-file-input @if ($errors && $errors->has('favicon_error')) border-danger @endif" id="favicon" name="favicon" accept=".ico">
+                        <label class="custom-file-label @if ($errors && $errors->has('favicon_error')) border-danger @endif" for="favicon" data-browse="参照">アイコンファイル(.ico)</label>
                     </div>
-                    @if ($errors && $errors->has('favicon_error')) <div class="text-danger">{{$errors->first('favicon_error')}}</div> @endif
+                    @include('common.errors_inline', ['name' => 'favicon_error'])
                 </div>
             </div>
 
