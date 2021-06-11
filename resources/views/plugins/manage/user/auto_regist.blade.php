@@ -1,9 +1,6 @@
 {{--
  * 自動ユーザ登録設定画面のテンプレート
 --}}
-@php
-use App\Models\Core\Configs;
-@endphp
 
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')

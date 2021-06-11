@@ -282,6 +282,7 @@ $app_array = [
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
         'FrameConfig' => \App\Models\Core\FrameConfig::class,
+        'Configs' => \App\Models\Core\Configs::class,
 
         // 画像処理
         'Image' => Intervention\Image\Facades\Image::class,
