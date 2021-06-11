@@ -6,9 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-
-use DB;
-use File;
+use Illuminate\Support\Facades\File;
 
 use App\Models\Core\Configs;
 use App\Models\Common\Categories;
@@ -707,7 +705,7 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
-     *  Favicon 設定　表示画面
+     * Favicon 設定　表示画面
      */
     public function favicon($request)
     {
@@ -722,7 +720,7 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
-     *  Favicon 設定　更新
+     * Favicon 設定 更新
      */
     public function saveFavicon($request)
     {
@@ -734,15 +732,16 @@ class SiteManage extends ManagePluginBase
         // ファイルがアップロードされた。
         if ($request->hasFile('favicon')) {
             // ファイルの基礎情報
-            $client_original_name = $request->file('favicon')->getClientOriginalName();
-            $mimetype             = $request->file('favicon')->getClientMimeType();
+            // $client_original_name = $request->file('favicon')->getClientOriginalName();
+            // $mimetype             = $request->file('favicon')->getClientMimeType();
             $extension            = $request->file('favicon')->getClientOriginalExtension();
 
             // 拡張子チェック
             if (mb_strtolower($extension) != 'ico') {
                 $validator = Validator::make($request->all(), []);
-                $validator->errors()->add('favicon_error', '.ico 以外はアップロードできません。');
-                return $this->favicon($request)->withErrors($validator);
+                $validator->errors()->add('favicon', '.ico 以外はアップロードできません。');
+                // return $this->favicon($request)->withErrors($validator);
+                return redirect()->back()->withErrors($validator)->withInput();
             }
 
             // ファイルの保存
@@ -779,7 +778,7 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
-     *  Favicon 設定　削除
+     * Favicon 設定 削除
      */
     public function deleteFavicon($request)
     {
