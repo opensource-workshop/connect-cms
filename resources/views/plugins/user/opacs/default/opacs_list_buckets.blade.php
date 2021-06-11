@@ -13,6 +13,15 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+<!-- フラッシュメッセージ -->
+@if (session('change_buckets_opacs'))
+    <div class="alert alert-info" style="margin-top: 10px;">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ session('change_buckets_opacs') }}
+    </div>
+@endif
+
 <form action="{{url('/')}}/plugin/opacs/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     {{ csrf_field() }}
 

@@ -9,6 +9,8 @@
 
 @section("plugin_contents_$frame->id")
 
+{{-- メッセージエリア --}}
+
 @if ($errors)
 <div class="alert alert-danger" role="alert">
     <i class="fas fa-exclamation-circle"></i> エラーがあります。詳しくは各項目のメッセージを参照してください。
@@ -23,20 +25,25 @@
 </div>
 @endif
 
+{{-- モデレータ専用画面 --}}
+
 @can("role_article")
 <div class="card mb-3">
-    <div class="card-header"><a href="{{url('/')}}/plugin/opacs/rentlist/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}">貸出中一覧はこちら（モデレータ権限用）</a></div>
+    <div class="card-header"><a href="{{url('/')}}/plugin/opacs/lentlist/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}">貸出中一覧はこちら（モデレータ権限用）</a></div>
 </div>
 @endcan
+
+{{-- マイページ画面 --}}
 
 <div class="card mb-3">
     <div class="card-header">ログインしているユーザーID:{{$user->userid}}</div>
 </div>
 
+
+{{-- WEB上から借りる/返すは、一般ユーザーは行わない。モデレータは貸出中一覧から行うのでここからは行わない。その為非表示とする
 <form action="{{url('/')}}/plugin/opacs/lent/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
     {{ csrf_field() }}
 
-    {{-- <h4><label class="badge badge-primary mb-0">借りる</label></h4> --}}
     <div class="card mb-3">
         <div class="card-header">書籍を借りる</div>
         <div class="card-body">
@@ -89,13 +96,13 @@
                 <label class="{{$frame->getSettingLabelClass()}}">ログインID <label class="badge badge-danger">必須</label></label>
                 <div class="{{$frame->getSettingInputClass()}}">
                     <input type="text" name="student_no" value="{{old('student_no')}}" class="form-control">
-                    <small class="text-muted">モデレータの場合はログインID（学籍番号）を入力してください。</small>
+                    <small class="text-muted">モデレータの場合はログインID（学籍番号/教職員番号）を入力してください。</small>
                     @if ($errors && $errors->has('student_no')) <div class="text-danger">{{$errors->first('student_no')}}</div> @endif
                 </div>
             </div>
             @endcan
 
-            {{-- Submitボタン --}}
+            <!-- Submitボタン -->
             <div class="form-group text-center mt-3 mb-0">
                 <div class="row">
                     <div class="col-12">
@@ -116,7 +123,6 @@
 
 <form action="{{url('/')}}/plugin/opacs/returnLent/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
     {{ csrf_field() }}
-    {{-- <h4><label class="badge badge-primary mb-0">返す</label></h4> --}}
     <div class="card mb-3">
         <div class="card-header">書籍を返す</div>
         <div class="card-body">
@@ -135,13 +141,13 @@
                 <label class="{{$frame->getSettingLabelClass()}}">ログインID <label class="badge badge-danger">必須</label></label>
                 <div class="{{$frame->getSettingInputClass()}}">
                     <input type="text" name="return_student_no" value="{{old('return_student_no')}}" class="form-control">
-                    <small class="text-muted">モデレータの場合はログインID（学籍番号）を入力してください。</small>
+                    <small class="text-muted">モデレータの場合はログインID（学籍番号/教職員番号）を入力してください。</small>
                     @if ($errors && $errors->has('return_student_no')) <div class="text-danger">{{$errors->first('return_student_no')}}</div> @endif
                 </div>
             </div>
             @endcan
 
-            {{-- Submitボタン --}}
+            <!-- Submitボタン -->
             <div class="form-group text-center mt-3 mb-0">
                 <div class="row">
                     <div class="col-12">
@@ -159,17 +165,39 @@
         </div>
     </div>
 </form>
+--}}
 
-{{-- <h4><label class="badge badge-primary mb-0">貸し出し中</label></h4> --}}
+@if (session('lent_errors'))
+    <div class="alert alert-danger" style="margin-top: 10px;" role="alert">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ session('lent_errors') }}
+    </div>
+@endif
+
 <div class="card">
-    <div class="card-header">現在借りている書籍</div>
+    <div class="card-header" id="frame-{{$frame->id}}-lentlist">現在借りている／郵送リクエストしている書籍</div>
     @if (isset($lents) && count($lents) > 0)
         <ul class="list-group list-group-flush">
         @foreach($lents as $lent)
             <li class="list-group-item">
+                <div style="float: left;">
                 タイトル：{{$lent->title}}<br />
+                @if ($lent->lent_flag !=2)
                 返却期限：{!!$lent->getFormatRreturnScheduled()!!}<br />
+                @endif
                 貸出区分：{{$lent->getLentStr()}}
+                </div>
+                @if ($lent->lent_flag ==2)
+                <div class="form-group text-right mt-3 mb-0" style="float: right;">
+                    <div class="text-center">
+                        <!-- 貸出リクエストキャンセル -->
+                        <form action="{{url('/')}}/plugin/opacs/destroyRequest/{{$page->id}}/{{$frame_id}}/{{$lent->opacs_books_id}}#frame-{{$frame->id}}-lentlist" method="POST">
+                            {{csrf_field()}}
+                            <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('貸し出しリクエストを取り消します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span><i class="fas fa-trash-alt"></i> 貸し出しリクエストを取り消す</button>
+                        </form>
+                    </div>
+                </div>
+                @endif
             </li>
         @endforeach
         </ul>
