@@ -14,4 +14,5 @@ style_formats : [
     {title : 'アイコン(Excel)', selector : 'a', classes : 'cc-icon-excel'},
     {title : 'アイコン(Word)', selector : 'a', classes : 'cc-icon-word'},
     {title : 'アイコン(外部サイト)', selector : 'a', classes : 'cc-icon-external'},
+    { title: '小さい文字', inline: 'small' },
 ],
