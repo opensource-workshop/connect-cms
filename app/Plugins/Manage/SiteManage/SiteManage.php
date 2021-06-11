@@ -770,7 +770,7 @@ class SiteManage extends ManagePluginBase
                  'value'    => $filename]
             );
 
-            session()->flash('save_favicon', 'Favicon を設定しました。');
+            session()->flash('flash_message', 'Favicon を設定しました。');
         }
 
         // ファビコン管理画面に戻る

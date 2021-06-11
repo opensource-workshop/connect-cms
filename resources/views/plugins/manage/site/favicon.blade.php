@@ -21,11 +21,8 @@
         {{-- 共通エラーメッセージ 呼び出し --}}
         @include('common.errors_form_line')
 
-        @if (session('save_favicon'))
-            <div class="alert alert-info" role="alert">
-                {!!session('save_favicon')!!}
-            </div>
-        @endif
+        {{-- 登録後メッセージ表示 --}}
+        @include('plugins.common.flash_message')
 
         <form action="{{url('/')}}/manage/site/saveFavicon" method="POST" enctype="multipart/form-data">
             {{csrf_field()}}
