@@ -1,11 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-use Kalnoy\Nestedset\NestedSet;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class CreateCabinetFolders extends Migration
+class CreateCabinets extends Migration
 {
     /**
      * Run the migrations.
@@ -14,12 +13,11 @@ class CreateCabinetFolders extends Migration
      */
     public function up()
     {
-        Schema::create('cabinet_folders', function (Blueprint $table) {
-            $table->increments('id');
-            $table->integer('cabinet_id')->comment('キャビネットID');
-            $table->string('title')->comment('タイトル');
-            $table->text('description')->nullable()->comment('説明');
-            $table->nestedSet();
+        Schema::create('cabinets', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->integer('bucket_id')->comment('バケツID');
+            $table->string('name', 255)->comment('キャビネット名');
+            $table->string('upload_max_size', 255)->comment('ファイル最大サイズ');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
             $table->timestamp('created_at')->nullable();
@@ -39,6 +37,6 @@ class CreateCabinetFolders extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('cabinet_folders');
+        Schema::dropIfExists('cabinets');
     }
 }

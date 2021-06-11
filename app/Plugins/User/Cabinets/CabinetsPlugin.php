@@ -5,16 +5,24 @@ namespace App\Plugins\User\Cabinets;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-//use App\Models\User\Cabinets\Cabinet;
-use App\Models\User\Cabinets\CabinetFolder;
+use App\Models\Common\Page;
+use App\Models\Common\Uploads;
+use App\Models\User\Cabinets\Cabinet;
+// use App\Models\User\Cabinets\CabinetFolder;
 //use App\Models\User\Cabinets\CabinetFrame;
 //use App\Models\User\Cabinets\CabinetPost;
 
+use App\Enums\UploadMaxSize;
+use App\Models\User\Cabinets\CabinetContent;
 use App\Plugins\User\UserPluginBase;
+
+use function PHPUnit\Framework\isEmpty;
 
 /**
  * キャビネット・プラグイン
@@ -26,19 +34,8 @@ use App\Plugins\User\UserPluginBase;
  */
 class CabinetsPlugin extends UserPluginBase
 {
-    /* DB migrate
-       php artisan make:migration create_cabinets --create=cabinets
-       php artisan make:migration create_cabinet_folders --create=cabinet_folders
-       php artisan make:migration create_cabinet_posts --create=cabinet_posts
-       php artisan make:migration create_cabinet_frames --create=cabinet_frames
-    */
 
     /* オブジェクト変数 */
-
-    /**
-     * 変更時のPOSTデータ
-     */
-    public $post = null;
 
     /* コアから呼び出す関数 */
 
@@ -49,8 +46,8 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'editView'];
-        $functions['post'] = ['edit', 'saveView'];
+        $functions['get']  = ['index', 'download'];
+        $functions['post'] = ['makeFolder', 'upload', 'deleteContents'];
         return $functions;
     }
 
@@ -61,8 +58,9 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_arrangement');
-        $role_ckeck_table["saveView"] = array('role_arrangement');
+        $role_ckeck_table["upload"] = array('posts.create');
+        $role_ckeck_table["makeFolder"] = array('posts.create');
+        $role_ckeck_table["deleteContents"] = array('posts.delete');
         return $role_ckeck_table;
     }
 
@@ -76,31 +74,7 @@ class CabinetsPlugin extends UserPluginBase
         return "editBuckets";
     }
 
-    /**
-     * POST取得関数（コアから呼び出す）
-     * コアがPOSTチェックの際に呼び出す関数
-     */
-    public function getPost($id)
-    {
-        // 一度読んでいれば、そのPOSTを再利用する。
-        if (!empty($this->post)) {
-            return $this->post;
-        }
-
-        // POST を取得する。
-        $this->post = CabinetPost::firstOrNew(['id' => $id]);
-        return $this->post;
-    }
-
     /* private関数 */
-
-    /**
-     * プラグインのフレーム
-     */
-    private function getPluginFrame($frame_id)
-    {
-        return CabinetFrame::firstOrNew(['frame_id' => $frame_id]);
-    }
 
     /**
      * プラグインのバケツ取得関数
@@ -111,172 +85,6 @@ class CabinetsPlugin extends UserPluginBase
         return Cabinet::firstOrNew(['bucket_id' => $bucket_id]);
     }
 
-    /**
-     *  データ取得時の権限条件の付与
-     */
-    protected function appendAuthWhere($query, $table_name)
-    {
-        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
-        // クロージャなしで追記した場合、or は元の whereNull('cabinet_posts.parent_id') を打ち消したりするので注意。
-
-        if (empty($query)) {
-            // 空なら何もしない
-            return $query;
-        }
-
-        // モデレータ(記事修正, role_article)権限以上（role_article, role_article_admin）
-        if ($this->isCan('role_article')) {
-            // 全件取得のため、追加条件なしで戻る。
-            return $query;
-        }
-
-        // 認証状況により、絞り込み条件を変える。
-        if (!Auth::check()) {
-            //
-            // 共通条件（Active）
-            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
-            // 未ログイン
-            //
-            $query->where($table_name . '.status', '=', StatusType::active);
-        } elseif ($this->isCan('role_approval')) {
-            //
-            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::approval_pending);
-            });
-        } elseif ($this->isCan('role_reporter')) {
-            //
-            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
-            // 一時保存の記事も、自分の記事を取得することで含まれる。
-            // 承認待ちの記事であっても、自分の記事なので、修正可能。
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.created_id', '=', Auth::user()->id);
-            });
-        }
-
-        return $query;
-    }
-
-    /**
-     *  POST一覧取得
-     */
-    private function getPosts($folder_id)
-    {
-        // データ取得
-        $posts_query = CabinetPost::select('cabinet_posts.*')
-                                   ->join('cabinets', function ($join) {
-                                       $join->on('cabinets.id', '=', 'cabinet_posts.cabinet_id')
-                                          ->where('cabinets.bucket_id', '=', $this->frame->bucket_id);
-                                   })
-// 対象のフォルダを指定する。
-                                   ->whereNull('cabinet_posts.deleted_at');
-
-        // 権限によって表示する記事を絞る
-        $posts_query = $this->appendAuthWhere($posts_query, 'cabinet_posts');
-
-        // 取得
-        return $posts_query->get();
-    }
-
-    /* スタティック関数 */
-
-    /**
-     *  新着情報用メソッド
-     */
-    public static function getWhatsnewArgs()
-    {
-        // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('cabinet_posts')
-                      ->select(
-                          'frames.page_id           as page_id',
-                          'frames.id                as frame_id',
-                          'cabinet_posts.id         as post_id',
-                          'cabinet_posts.title      as post_title',
-                          DB::raw("null             as important"),
-                          'cabinet_posts.created_at   as posted_at',
-                          'cabinet_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category"),
-                          DB::raw('"cabinets"       as plugin_name')
-                      )
-                      ->join('cabinets', 'cabinets.id', '=', 'cabinet_posts.cabinets_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'cabinets.bucket_id')
-                      ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('cabinets_posts.deleted_at');
-
-        $return[] = 'show_page_frame_post';
-        $return[] = '/plugin/cabinets/show';
-
-        return $return;
-    }
-
-    /**
-     *  検索用メソッド
-     */
-    /*
-    public static function getSearchArgs($search_keyword)
-    {
-        $return[] = DB::table('cabinet_posts')
-                      ->select(
-                          'cabinet_posts.id         as post_id',
-                          'frames.id                as frame_id',
-                          'frames.page_id           as page_id',
-                          'pages.permanent_link     as permanent_link',
-                          'cabinet_posts.title      as post_title',
-                          DB::raw("null             as important"),
-                          'cabinet_posts.created_at   as posted_at',
-                          'cabinet_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category_id"),
-                          DB::raw("null             as category"),
-                          DB::raw('"cabinets"       as plugin_name')
-                      )
-                      ->join('cabinets', 'cabinets.id',    '=', 'cabinet_posts.calendars_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'cabinets.bucket_id')
-                      ->leftjoin('pages', 'pages.id',      '=', 'frames.page_id')
-                      ->where(function ($plugin_query) use ($search_keyword) {
-                          $plugin_query->where('cabinet_posts.title', 'like', '?')
-                                       ->orWhere('cabinet_posts.body', 'like', '?');
-                      })
-                      ->whereNull('cabinet_posts.deleted_at');
-
-        $bind = array('%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $return[] = $bind;
-        $return[] = 'show_page_frame_post';
-        $return[] = '/plugin/cabinets/show';
-
-        return $return;
-    }
-    */
-
-    public function test()
-    {
-        CabinetFolder::truncate();
-        $folder_1     = CabinetFolder::create(['cabinet_id' => 1, 'title' => 'Title_1']);
-        $folder_1_1   = CabinetFolder::create(['cabinet_id' => 1, 'title' => 'Title_1-1'], $folder_1);
-        $folder_1_1_1 = CabinetFolder::create(['cabinet_id' => 1, 'title' => 'Title_1-1-1'], $folder_1_1);
-        $folder_1_2   = CabinetFolder::create(['cabinet_id' => 1, 'title' => 'Title_1-2'], $folder_1);
-        $folder_1_2_1 = CabinetFolder::create(['cabinet_id' => 1, 'title' => 'Title_1-2-1'], $folder_1_2);
-        $folder_2     = CabinetFolder::create(['cabinet_id' => 1, 'title' => 'Title_2']);
-
-        //$tree = CabinetFolder::withDepth()->orderBy('title')->get()->toFlatTree();
-        $tree = CabinetFolder::withDepth()->get()->toFlatTree();
-        //$tree = CabinetFolder::withDepth()->get();
-        foreach ($tree as $folder) {
-            echo $folder->title . "(" . $folder->depth . ")<br />";
-        }
-
-        foreach($folder_1_1_1->ancestors as $ancestor) {
-            echo " &gt; " . $ancestor->title;
-        }
-
-//Log::debug($tree);
-    }
-
     /* 画面アクション関数 */
 
     /**
@@ -285,141 +93,305 @@ class CabinetsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
-// $this->test();
+        // バケツ未設定の場合はバケツ空テンプレートを呼び出す
+        if (!isset($this->frame) || !$this->frame->bucket_id) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->view('empty_bucket');
+        }
 
-        // プラグインのフレームデータ
-//        $plugin_frame = $this->getPluginFrame($frame_id);
+        $cabinet = $this->getPluginBucket($this->frame->bucket_id);
 
-        // 該当フォルダのデータの取得
-$folder_id = 0;
-//        $posts = $this->getPosts($folder_id);
+        $parent = $this->fetchCabinetContent($this->getParentId($request), $cabinet->id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-//            'posts'            => $posts,
-//            'plugin_frame'     => $plugin_frame,
+           'cabinet_contents' => $parent->children()->orderBy('is_folder', 'desc')->orderBy('name', 'asc')->get(),
+           'breadcrumbs' => $this->fetchBreadCrumbs($cabinet->id, $parent->id),
+           'parent_id' =>  $parent->id,
         ]);
     }
 
-    /**
-     *  詳細表示関数
-     */
-    public function show($request, $page_id, $frame_id, $post_id)
+    private function getParentId($request)
     {
-        // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
-
-        // 記事取得
-        $post = $this->getPost($post_id);
-
-        // 詳細画面を呼び出す。
-        return $this->view('show', [
-            'post' => $post,
-        ]);
-    }
-
-    /**
-     * 記事編集画面
-     */
-    public function edit($request, $page_id, $frame_id, $post_id = null)
-    {
-        // 記事取得
-        $post = $this->getPost($post_id);
-
-        // 変更画面を呼び出す。
-        return $this->view('edit', [
-            'post' => $post,
-        ]);
-    }
-
-    /**
-     *  記事登録処理
-     */
-    public function save($request, $page_id, $frame_id, $post_id = null)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'title'      => ['required'],
-            'body'       => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'title'      => 'タイトル',
-            'body'       => '本文',
-        ]);
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        // POSTデータのモデル取得
-        $post = CabinetPost::firstOrNew(['id' => $post_id]);
-
-        // フレームから cabinet_id 取得
-        $cabinet_frame = $this->getPluginFrame($frame_id);
-
-        // 値のセット
-        $post->cabinet_id  = $cabinet_frame->cabinet_id;
-        $post->title       = $request->title;
-        $post->body        = $request->body;
-
-        // 投稿者をセット
-        if (Auth::check()) {
-            $post->created_id = Auth::user()->id;
-        }
-
-        // 承認の要否確認とステータス処理
-        if ($request->status == "1") {
-            $post->status = 1;  // 一時保存
-        } elseif ($this->buckets->needApprovalUser(Auth::user())) {
-            $post->status = 2;  // 承認待ち
+        $parent_id = '';
+        // エラーのとき、セッションからparent_idを取得
+        if (!empty(session('parent_id'))) {
+            $parent_id = session('parent_id');
         } else {
-            $post->status = 0;  // 公開
+            $parent_id = $request->parent_id;
         }
 
-        // 保存
-        $post->save();
+        return $parent_id;
+    }
 
-        // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+    private function fetchCabinetContent($cabinet_content_id, $cabinet_id = null)
+    {
+        // cabinet_content_idがなければ、ルート要素を返す
+        if (empty($cabinet_content_id)) {
+            return CabinetContent::where('cabinet_id', $cabinet_id)->where('parent_id' , null)->first();
+        }
+        return CabinetContent::find($cabinet_content_id);
+    }
+
+    private function fetchBreadCrumbs($cabinet_id, $cabinet_content_id = null)
+    {
+        // 初期表示はルート要素のみ
+        if (empty($cabinet_content_id)) {
+            return CabinetContent::where('cabinet_id', $cabinet_id)
+                ->where('parent_id', null)
+                ->get();
+        }
+        return CabinetContent::ancestorsAndSelf($cabinet_content_id);
+    }
+
+    public function makeFolder($request, $page_id, $frame_id)
+    {
+        $validator = $this->getMakeFoldertValidator($request);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+        }
+
+        $cabinet = $this->getPluginBucket($this->frame->bucket_id);
+        $parent = $this->fetchCabinetContent($request->parent_id);
+
+        $parent->children()->create([
+            'cabinet_id' => $cabinet->id,
+            'upload_id' => null,
+            'name' => $request->folder_name,
+            'is_folder' => CabinetContent::is_folder_on,
+        ]);
+
+        // 登録後はリダイレクトして初期表示。
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
+    }
+
+    public function upload($request, $page_id, $frame_id)
+    {
+        $cabinet = $this->getPluginBucket($this->frame->bucket_id);
+        $validator = $this->getUploadValidator($request, $cabinet);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+        }
+
+        $parent = $this->fetchCabinetContent($request->parent_id);
+
+        if ($this->shouldOverwriteFile($parent, $request->file('upload_file')->getClientOriginalName())) {
+            $this->overwriteFile($request, $page_id, $parent);
+        } else {
+            $this->writeFile($request, $page_id, $parent);
+        }
+
+        // 登録後はリダイレクトして初期表示。
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
+    }
+
+    private function shouldOverwriteFile($parent, $file_name)
+    {
+        return CabinetContent::where('parent_id', $parent->id)
+            ->where('name', $file_name)
+            ->where('is_folder', CabinetContent::is_folder_off)
+            ->exists();
+    }
+
+    private function writeFile($request, $page_id, $parent)
+    {
+        // uploads テーブルに情報追加、ファイルのid を取得する
+        $upload = Uploads::create([
+            'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
+            'mimetype'             => $request->file('upload_file')->getClientMimeType(),
+            'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
+            'size'                 => $request->file('upload_file')->getClientSize(),
+            'plugin_name'          => 'cabinets',
+            'page_id'              => $page_id,
+            'temporary_flag'       => 0,
+            'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
+        ]);
+
+        // ファイル保存
+        $request->file('upload_file')->storeAs(
+            $this->getDirectory($upload->id), $this->getContentsFileName($upload));
+
+        $parent->children()->create([
+            'cabinet_id' => $upload->id,
+            'upload_id' => $upload->id,
+            'name' => $request->file('upload_file')->getClientOriginalName(),
+            'is_folder' => CabinetContent::is_folder_off,
+        ]);
+    } 
+
+    private function overwriteFile($request, $page_id, $parent)
+    {
+        $content = CabinetContent::where('parent_id', $parent->id)
+            ->where('name', $request->file('upload_file')->getClientOriginalName())
+            ->where('is_folder', CabinetContent::is_folder_off)
+            ->first();
+            
+        // uploads テーブルに情報追加、ファイルのid を取得する
+        Uploads::find($content->upload_id)->update([
+            'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
+            'mimetype'             => $request->file('upload_file')->getClientMimeType(),
+            'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
+            'size'                 => $request->file('upload_file')->getClientSize(),
+            'plugin_name'          => 'cabinets',
+            'page_id'              => $page_id,
+            'temporary_flag'       => 0,
+            'updated_id'           => empty(Auth::user()) ? null : Auth::user()->id,
+        ]);
+
+        // ファイル保存
+        $request->file('upload_file')->storeAs(
+            $this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
+
+        // 画面表示される更新日を更新する
+        $content->touch();
     }
 
     /**
-     *  承認処理
+     *  コンテンツ削除処理
      */
-    public function approval($request, $page_id, $frame_id, $post_id)
+    public function deleteContents($request, $page_id, $frame_id)
     {
-        // 記事取得
-        $post = $this->getPost($post_id);
-
-        // データがあることを確認
-        if (empty($post)) {
-            return;
+        $validator = $this->getContentsControlValidator($request);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
         }
 
-        // 更新されたら、行レコードの updated_at を更新したいので、update()
-        $post->updated_at = now();
-        $post->status = 0;  // 公開
-        $post->update();
+        foreach ($request->cabinet_content_id as $cabinet_content_id) {
+            $contents = CabinetContent::descendantsAndSelf($cabinet_content_id);
+            if (!$this->canDelete($request, $contents)){
+                abort(403, '権限がありません。');
+            };
 
-        // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
-        return;
+            $this->deleteCabinetContents($cabinet_content_id, $contents);
+        }
+
+        // 登録後はリダイレクトして初期表示。
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $request->parent_id . "#frame-" . $frame_id ]);
     }
 
-    /**
-     *  削除処理
-     */
-    public function delete($request, $page_id, $frame_id, $post_id)
+    private function deleteCabinetContents($cabinet_content_id, $cabinet_contents)
     {
-        // id がある場合、データを削除
-        if ($post_id) {
-            // データを削除する。（論理削除で削除日、ID などを残すためにupdate）
-            CabinetPost::where('id', $post_id)->update([
-                'deleted_at'   => date('Y-m-d H:i:s'),
-                'deleted_id'   => Auth::user()->id,
-                'deleted_name' => Auth::user()->name,
-            ]);
+        $delete_upload_ids = [];
+        foreach ($cabinet_contents as $content) {
+            if (!empty($content->upload_id)) {
+                $delete_upload_ids[] = $content->upload_id;
+            }
         }
-        return;
+
+        CabinetContent::find($cabinet_content_id)->delete();
+
+        // アップロードテーブル削除、実ファイルの削除
+        Uploads::destroy($delete_upload_ids);
+        foreach ($cabinet_contents->whereNotNull('upload_id') as $content) {
+            Storage::delete($this->getContentsFilePath($content->upload));
+        }
+    }
+
+
+    public function download($request, $page_id, $frame_id)
+    {
+        $validator = $this->getContentsControlValidator($request);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+        }
+
+        $traverse = function ($contents,  $parent_name = '') use (&$traverse, &$zip) {
+            foreach ($contents as $content) {
+                if ($content->is_folder === CabinetContent::is_folder_on && $content->isLeaf()) {
+                    $zip->addEmptyDir($parent_name .'/' . $content->name);
+                } elseif ($content->is_folder === CabinetContent::is_folder_off) {
+                    // データベースがない場合はスキップ
+                    if (empty($content->upload)) {
+                        continue;
+                    }
+                    // ファイルの実体がない場合はスキップ
+                    if (!Storage::exists($this->getContentsFilePath($content->upload))) {
+                        continue;
+                    }
+                    $zip->addFile(storage_path('app/') . $this->getContentsFilePath($content->upload), $parent_name .'/'. $content->name);
+                    Uploads::find($content->upload->id)->increment('download_count');
+                }
+                $traverse($content->children, $parent_name .'/' . $content->name);
+            }
+        };
+
+        $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
+        $zip = new \ZipArchive();
+        $zip->open($save_path, \ZipArchive::CREATE);
+
+        foreach ($request->cabinet_content_id as $cabinet_content_id) {
+            $contents = CabinetContent::descendantsAndSelf($cabinet_content_id)->toTree();
+            if (!$this->canDownload($request, $contents)) {
+                abort(403, 'ファイル参照権限がありません。');
+            }
+
+            // フォルダがないとzipファイルを作れない
+            if (!is_dir($this->getTmpDirectory())) {
+                mkdir($this->getTmpDirectory(), 0777, true);
+            }
+
+            $traverse($contents);
+        }
+
+        if ($zip->count() === 0) {
+            abort(404, 'ファイルがありません。');
+        }
+        $zip->close();
+
+        return response()->download(
+            $save_path,
+            'Files.zip',
+            ['Content-Disposition' => 'filename=Files.zip']
+        );
+    }
+
+    private function getTmpDirectory()
+    {
+        return storage_path('app/') . 'tmp/cabinet/';
+    }
+
+    private function getContentsFilePath($upload)
+    {
+        return $this->getDirectory($upload->id) . '/' . $this->getContentsFileName($upload);
+    }
+
+    private function getContentsFileName($upload)
+    {
+        return $upload->id . '.' . $upload->extension;
+    }
+
+    private function canDelete($request, $cabinet_contents)
+    {
+        // TODO:権限チェック
+        return $this->canTouch($request, $cabinet_contents);
+    }
+
+    private function canDownload($request, $cabinet_contents)
+    {
+        return $this->canTouch($request, $cabinet_contents);
+    }
+
+    private function canTouch($request, $cabinet_contents)
+    {
+        foreach($cabinet_contents as $content) {
+            $page_tree = Page::reversed()->ancestorsAndSelf($content->upload->page_id);
+            // ファイルにページ情報がある場合
+            if ($content->upload->page_id) {
+                $page = Page::find($content->upload->page_id);
+                $page_roles = $this->getPageRoles(array($page->id));
+
+                // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
+                if ($page->isRequestPassword($request, $page_tree)) {
+                    return false;
+                }
+
+                // ファイルに閲覧権限がない場合
+                if (!$page->isView(Auth::user(), true, true, $page_roles)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -440,49 +412,6 @@ $folder_id = 0;
     {
         // 処理的には編集画面を呼ぶ
         return $this->editBuckets($request, $page_id, $frame_id);
-    }
-
-    /**
-     * フレーム表示設定画面の表示
-     */
-    public function editView($request, $page_id, $frame_id)
-    {
-        // 表示テンプレートを呼び出す。
-        return $this->view('frame', [
-            // 表示中のバケツデータ
-            'cabinet'       => $this->getPluginBucket($this->getBucketId()),
-            'cabinet_frame' => $this->getPluginFrame($frame_id),
-        ]);
-    }
-
-    /**
-     * フレーム表示設定の保存
-     */
-    public function saveView($request, $page_id, $frame_id, $cabinet_id)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'view_count'       => ['nullable', 'numeric'],
-            'view_format'      => ['nullable', 'numeric'],
-        ]);
-        $validator->setAttributeNames([
-            'view_count'       => '表示件数',
-            'view_format'      => '表示形式',
-        ]);
-
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        // フレームごとの表示設定の更新
-        $cabinet_frame = CabinetFrame::updateOrCreate(
-            ['cabinet_id'  => $cabinet_id, 'frame_id' => $frame_id],
-            ['view_count'  => $request->view_count,
-             'view_format' => $request->view_format],
-        );
-
-        return;
     }
 
     /**
@@ -508,20 +437,128 @@ $folder_id = 0;
      *  バケツ登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $bucket_id = null)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'name' => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'name' => 'カレンダー名',
-        ]);
-
-        // エラーがあった場合は入力画面に戻る。
+    {  
+        // 入力エラーがあった場合は入力画面に戻る。
+        $validator = $this->getBucketValidator($request);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
+        
+        $bucket_id = $this->saveCabinet($request, $frame_id, $bucket_id);
 
+        // 登録後はリダイレクトして編集ページを開く。
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket_id . "#frame-" . $frame_id]);
+    }
+
+    /**
+     * キャビネット登録/更新のバリデーターを取得する。
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getBucketValidator($request) {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'name' => [
+                'required',
+                 'max:255'
+            ],
+            'upload_max_size'=> [
+                'required',
+                 Rule::in(UploadMaxSize::getMemberKeys()),
+            ],
+        ]);
+        $validator->setAttributeNames([
+            'name' => 'キャビネット名',
+            'upload_max_size' => 'ファイル最大サイズ',
+        ]);
+
+        return $validator;
+    }
+
+    /**
+     * フォルダ作成のバリデーターを取得する。
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getMakeFoldertValidator($request) {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'folder_name' => [
+                'required',
+                'max:255',
+                // 重複チェック（同じ階層で同じ名前はNG）
+                Rule::unique('cabinet_contents', 'name')->where(function ($query) use ($request) {
+                    return $query->where('parent_id', $request->parent_id);
+                }),
+            ],
+        ]);
+        $validator->setAttributeNames([
+            'folder_name' => 'フォルダ名',
+        ]);
+
+        return $validator;
+    }
+
+    /**
+     * ファイルアップロードのバリデーターを取得する。
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param  App\Models\User\Cabinets\Cabinet キャビネット
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getUploadValidator($request, $cabinet)
+    {
+        // ファイルチェック
+        $rules['upload_file'] = [
+            'required',
+        ];
+        if ($cabinet->upload_max_size !== UploadMaxSize::infinity) {
+            $rules['upload_file'][] = 'max:' . $cabinet->upload_max_size;
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames([
+            'upload_file' => 'ファイル',
+        ]);
+
+        return $validator;
+    }
+
+    /**
+     * 一括のファイル削除、ダウンロードのバリデーターを取得する。
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getContentsControlValidator($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'cabinet_content_id' => [
+                'required',
+            ],
+        ]);
+
+        // 項目のエラーチェック
+        $validator->setAttributeNames([
+            'cabinet_content_id' => 'ファイル選択',
+        ]);
+
+        return $validator;
+    }
+
+
+    /**
+     * キャビネットを登録する。
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param string $frame_id フレームID
+     * @param string $bucket_id バケツID
+     * @return string バケツID
+     */
+    private function saveCabinet($request, $frame_id, $bucket_id) {
         // バケツの取得。なければ登録。
         $bucket = Buckets::updateOrCreate(
             ['id' => $bucket_id],
@@ -535,16 +572,25 @@ $folder_id = 0;
         // プラグインバケツにデータを設定して保存
         $cabinet = $this->getPluginBucket($bucket->id);
         $cabinet->name = $request->name;
+        $cabinet->upload_max_size = $request->upload_max_size;
         $cabinet->save();
 
-        // プラグインフレームを作成 or 更新
-        $cabinet_frame = CabinetFrame::updateOrCreate(
-            ['frame_id' => $frame_id],
-            ['cabinet_id' => $cabinet->id, 'frame_id' => $frame_id],
-        );
+        $this->saveRootCabinetContent($cabinet);
 
-        // 登録後はリダイレクトして編集ページを開く。
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/editBuckets/" . $page_id . "/" . $frame_id . "/" . $bucket->id . "#frame-" . $frame_id]);
+        return $bucket->id;
+    }
+
+    /**
+     * ルートディレクトリを登録する
+     * 
+     * @param App\Models\User\Cabinets\Cabinet $cabinet キャビネット
+     */
+    private function saveRootCabinetContent($cabinet) 
+    {
+        CabinetContent::updateOrCreate(
+            ['cabinet_id' => $cabinet->id, 'parent_id' => null, 'is_folder' => CabinetContent::is_folder_on],
+            ['name' => $cabinet->name]
+        );
     }
 
     /**
@@ -558,18 +604,13 @@ $folder_id = 0;
             return;
         }
 
-        // POSTデータ削除(一気にDelete なので、deleted_id は入らない)
-        CabinetPost::where('cabinet_id', $cabinet->id)->delete();
-
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => null]);
 
-        // プラグインフレームデータの削除(deleted_id を記録するために1回読んでから削除)
-        $cabinet_frame = CabinetFrame::where('frame_id', $frame_id)->first();
-        $cabinet_frame->delete();
-
         // バケツ削除
         Buckets::find($cabinet->bucket_id)->delete();
+
+        // $this->deleteCabinetContents();
 
         // プラグインデータ削除
         $cabinet->delete();
@@ -587,13 +628,25 @@ $folder_id = 0;
 
         // Cabinets の特定
         $plugin_bucket = $this->getPluginBucket($request->select_bucket);
+    }
 
-        // フレームごとの表示設定の更新
-        $cabinet_frame = $this->getPluginFrame($frame_id);
-        $cabinet_frame->cabinet_id = $plugin_bucket->id;
-        $cabinet_frame->frame_id = $frame_id;
-        $cabinet_frame->save();
+    /**
+     * 権限設定　変更画面を表示する
+     * 
+     * @see UserPluginBase::editBucketsRoles()
+     */
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false) {
+        // 承認機能は使わない
+        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
+    }
 
-        return;
+    /**
+     * 権限設定を保存する
+     * 
+     * @see UserPluginBase::saveBucketsRoles()
+     */
+    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false) {
+        // 承認機能は使わない
+        return parent::saveBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }
 }

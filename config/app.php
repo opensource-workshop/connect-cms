@@ -270,6 +270,8 @@ $app_array = [
         'CounterDesignType' => \App\Enums\CounterDesignType::class,
         'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
         'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
+        'UploadMaxSize' => \App\Enums\UploadMaxSize::class,
+        
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
