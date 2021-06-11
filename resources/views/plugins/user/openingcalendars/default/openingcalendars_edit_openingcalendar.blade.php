@@ -67,8 +67,8 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <select class="form-control" name="month_format" class="form-control">
                 <option value=""></option>
-                <option value="1" @if(Input::old('month_format', $openingcalendar->month_format)=="1") selected @endif>1:January / YYYY</option>
-                <option value="2" @if(Input::old('month_format', $openingcalendar->month_format)=="2") selected @endif>2:January YYYY</option>
+                <option value="1" @if(old('month_format', $openingcalendar->month_format)=="1") selected @endif>1:January / YYYY</option>
+                <option value="2" @if(old('month_format', $openingcalendar->month_format)=="2") selected @endif>2:January YYYY</option>
             </select>
             @if ($errors && $errors->has('month_format')) <div class="text-danger">{{$errors->first('month_format')}}</div> @endif
         </div>
@@ -79,8 +79,8 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <select class="form-control" name="week_format" class="form-control">
                 <option value=""></option>
-                <option value="1" @if(Input::old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN, MON, ...</option>
-                <option value="2" @if(Input::old('week_format', $openingcalendar->week_format)=="2") selected @endif>日, 月, 火, ...</option>
+                <option value="1" @if(old('week_format', $openingcalendar->week_format)=="1") selected @endif>SUN, MON, ...</option>
+                <option value="2" @if(old('week_format', $openingcalendar->week_format)=="2") selected @endif>日, 月, 火, ...</option>
             </select>
             @if ($errors && $errors->has('week_format')) <div class="text-danger">{{$errors->first('week_format')}}</div> @endif
         </div>
@@ -129,7 +129,7 @@
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
                 </button>
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>

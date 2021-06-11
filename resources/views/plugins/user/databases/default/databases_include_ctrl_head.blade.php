@@ -45,7 +45,7 @@
     </div>
     @endif
 
-    @if(($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
+    @if(($databases_frames->use_select_flag && $select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
         <div class="form-group form-row mb-3">
         {{-- 絞り込み --}}
         @foreach($select_columns as $select_column)
@@ -60,7 +60,7 @@
                 @else
                 <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
                 @endif
-                <select class="form-control" name="search_column[{{$loop->index}}][value]" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}">
+                <select class="form-control" name="search_column[{{$loop->index}}][value]" title="{{$select_column->column_name}}" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}">
                     <option value="">{{$select_column->column_name}}</option>
                     @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
                         <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>

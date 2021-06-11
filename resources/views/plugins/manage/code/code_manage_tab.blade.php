@@ -1,10 +1,6 @@
 {{--
  * 管理画面tabテンプレート
- *
- * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
- * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コード管理
- --}}
+--}}
 <div class="frame-setting-menu">
     <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
         <span class="d-md-none">処理選択 - コード管理</span>
@@ -17,7 +13,7 @@
                 @if ($function == "index")
                     <span class="nav-link"><span class="active">コード一覧</span></span>
                 @else
-                    <a href="{{url('/')}}/manage/code" class="nav-link">コード一覧</a></li>
+                    <a href="{{url('/')}}/manage/code" class="nav-link">コード一覧</a>
                 @endif
                 </li>
 
@@ -25,7 +21,7 @@
                 @if ($function == "regist")
                     <span class="nav-link"><span class="active">コード登録</span></span>
                 @else
-                    <a href="{{url('/')}}/manage/code/regist" class="nav-link">コード登録</a></li>
+                    <a href="{{url('/')}}/manage/code/regist" class="nav-link">コード登録</a>
                 @endif
                 </li>
 
@@ -39,7 +35,7 @@
                 @if ($function == "display")
                     <span class="nav-link"><span class="active">表示設定</span></span>
                 @else
-                    <a href="{{url('/')}}/manage/code/display" class="nav-link">表示設定</a></li>
+                    <a href="{{url('/')}}/manage/code/display" class="nav-link">表示設定</a>
                 @endif
                 </li>
 
@@ -47,7 +43,7 @@
                 @if ($function == "searches")
                     <span class="nav-link"><span class="active">検索条件一覧</span></span>
                 @else
-                    <a href="{{url('/')}}/manage/code/searches" class="nav-link">検索条件一覧</a></li>
+                    <a href="{{url('/')}}/manage/code/searches" class="nav-link">検索条件一覧</a>
                 @endif
                 </li>
 
@@ -55,7 +51,7 @@
                 @if ($function == "searchRegist")
                     <span class="nav-link"><span class="active">検索条件登録</span></span>
                 @else
-                    <a href="{{url('/')}}/manage/code/searchRegist" class="nav-link">検索条件登録</a></li>
+                    <a href="{{url('/')}}/manage/code/searchRegist" class="nav-link">検索条件登録</a>
                 @endif
                 </li>
 
@@ -65,27 +61,41 @@
                     </li>
                 @endif
 
-                <li role="presentation" class="nav-item">
-                @if ($function == "helpMessages")
-                    <span class="nav-link"><span class="active">注釈一覧</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/code/helpMessages" class="nav-link">注釈一覧</a></li>
-                @endif
-                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                        その他設定
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
 
-                <li role="presentation" class="nav-item">
-                @if ($function == "helpMessageRegist")
-                    <span class="nav-link"><span class="active">注釈登録</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/code/helpMessageRegist" class="nav-link">注釈登録</a></li>
-                @endif
-                </li>
+                        @if ($function == "helpMessages")
+                            <a href="{{url('/')}}/manage/code/helpMessages" class="dropdown-item active bg-light">注釈一覧</a>
+                        @else
+                            <a href="{{url('/')}}/manage/code/helpMessages" class="dropdown-item">注釈一覧</a>
+                        @endif
 
-                @if ($function == "helpMessageEdit")
-                    <li role="presentation" class="nav-item">
-                        <span class="nav-link"><span class="active">注釈変更</span></span>
-                    </li>
-                @endif
+                        @if ($function == "helpMessageRegist")
+                            <a href="{{url('/')}}/manage/code/helpMessageRegist" class="dropdown-item active bg-light">注釈登録</a>
+                        @else
+                            <a href="{{url('/')}}/manage/code/helpMessageRegist" class="dropdown-item">注釈登録</a>
+                        @endif
+
+                        @if ($function == "helpMessageEdit")
+                            <span class="dropdown-item active bg-light">注釈変更</span>
+                        @endif
+
+                        @if ($function == "import")
+                            <a href="{{url('/')}}/manage/code/import" class="dropdown-item active bg-light">インポート</a>
+                        @else
+                            <a href="{{url('/')}}/manage/code/import" class="dropdown-item">インポート</a>
+                        @endif
+
+                        @if ($function == "download")
+                            <a href="{{url('/')}}/manage/code/download" class="dropdown-item active bg-light">ダウンロード</a>
+                        @else
+                            <a href="{{url('/')}}/manage/code/download" class="dropdown-item">ダウンロード</a>
+                        @endif
+                    </div>
+                </li>
 
             </ul>
         </div>

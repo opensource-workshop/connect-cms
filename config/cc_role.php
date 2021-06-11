@@ -103,9 +103,9 @@ return [
 
         'role_article_admin' => ['role_article_admin'],
         'role_arrangement'   => ['role_arrangement', 'role_article_admin'],
-        'role_reporter'      => ['role_reporter', 'role_article_admin'],
-        'role_approval'      => ['role_approval', 'role_article_admin'],
         'role_article'       => ['role_article', 'role_article_admin'],
+        'role_approval'      => ['role_approval', 'role_article_admin'],
+        'role_reporter'      => ['role_reporter', 'role_article', 'role_article_admin'],
         'role_guest'         => ['role_guest'],
 
         'admin_system'       => ['admin_system'],
@@ -145,6 +145,11 @@ return [
         'changeBuckets'       => ['frames.change'],
         'editBucketsRoles'    => ['frames.edit'],
         'saveBucketsRoles'    => ['frames.edit'],
+        'editBucketsMails'    => ['frames.edit'],
+        'saveBucketsMails'    => ['frames.edit'],
+        'listCategories'      => ['frames.edit'],
+        'saveCategories'      => ['frames.edit'],
+        'deleteCategories'    => ['frames.edit'],
 
         'addColumn'           => ['buckets.addColumn'],
         'editColumn'          => ['buckets.editColumn'],
@@ -174,6 +179,7 @@ return [
         'approval'            => ['post'],
 
         // ゲストでも実行されるメソッド
+        'rss'                 => ['get'],
         'index'               => ['post'],
         'publicConfirm'       => ['post'],
         'publicStore'         => ['post'],
@@ -183,10 +189,15 @@ return [
         'createBuckets'       => ['get'],
         'editBuckets'         => ['get'],
         'editBucketsRoles'    => ['get'],
+        'editBucketsMails'    => ['get'],
+        'listCategories'      => ['get'],
         'saveBuckets'         => ['post'],
         'destroyBuckets'      => ['post'],
         'changeBuckets'       => ['post'],
         'saveBucketsRoles'    => ['post'],
+        'saveBucketsMails'    => ['post'],
+        'saveCategories'      => ['post'],
+        'deleteCategories'    => ['post'],
 
         'addColumn'           => ['post'],
         'editColumn'          => ['get'],

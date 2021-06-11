@@ -54,6 +54,15 @@
             $value = date('Y/m/d',  strtotime($obj->value));
         }
     }
+    // 複数選択型
+    elseif ($column->column_type == DatabaseColumnType::checkbox) {
+        if (empty($obj)) {
+            $value = '';
+        }
+        else {
+            $value = str_replace('|', ', ', $obj->value);
+        }
+    }
     // 登録日型
     elseif ($column->column_type == DatabaseColumnType::created) {
         // DatabasesPlugin.phpにて、inputでbladeに値を渡すと、値があってもnullになるため、inputsのままでいく
@@ -78,7 +87,9 @@
 
     // 空の場合、なにか出力しないと「項目名<br>値」で出力してるテンプレートは高さがずれてしまうため対応
     if (is_null($value) || $value === '') {
-        $value = "&nbsp;";
+        // change to laravel6.
+        // $value = "&nbsp;";
+        $value = "\n";
     }
 @endphp
 
@@ -94,5 +105,6 @@
 @elseif ($column->column_type == DatabaseColumnType::wysiwyg)
     {!!$value!!}
 @else
+    {{-- 改行だけして他はエスケープ --}}
     {!!nl2br(e($value))!!}
 @endif

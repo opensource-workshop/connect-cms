@@ -39,6 +39,10 @@
         {{-- 投稿日時 --}}
         <dt>
             {{$post->posted_at->format('Y/m/d')}}
+            {{-- 投稿者名 --}}
+            @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+                [{{$post->created_name}}]
+             @endif
             @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
         </dt>
 
@@ -59,7 +63,7 @@
             {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
         </nav>
     @endif
-
+    </dl>
 </div>
 @endif
 @endsection

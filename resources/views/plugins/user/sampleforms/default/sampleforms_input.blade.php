@@ -60,11 +60,11 @@
             <label class="control-label">セレクト</label>
             <select name="column_select" class="form-control">
                 <option value="">選択して下さい</option>
-                <option value="選択肢1" @if(Input::old('column_select', $sampleform->column_select)=="選択肢1") selected @endif>選択肢1</option>
-                <option value="選択肢2" @if(Input::old('column_select', $sampleform->column_select)=="選択肢2") selected @endif>選択肢2</option>
-                <option value="選択肢3" @if(Input::old('column_select', $sampleform->column_select)=="選択肢3") selected @endif>選択肢3</option>
-                <option value="選択肢4" @if(Input::old('column_select', $sampleform->column_select)=="選択肢4") selected @endif>選択肢4</option>
-                <option value="選択肢5" @if(Input::old('column_select', $sampleform->column_select)=="選択肢5") selected @endif>選択肢5</option>
+                <option value="選択肢1" @if(old('column_select', $sampleform->column_select)=="選択肢1") selected @endif>選択肢1</option>
+                <option value="選択肢2" @if(old('column_select', $sampleform->column_select)=="選択肢2") selected @endif>選択肢2</option>
+                <option value="選択肢3" @if(old('column_select', $sampleform->column_select)=="選択肢3") selected @endif>選択肢3</option>
+                <option value="選択肢4" @if(old('column_select', $sampleform->column_select)=="選択肢4") selected @endif>選択肢4</option>
+                <option value="選択肢5" @if(old('column_select', $sampleform->column_select)=="選択肢5") selected @endif>選択肢5</option>
             </select>
         </div>
     </div>
@@ -100,7 +100,7 @@
         <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-addon">
-                    <input type="radio" name="column_radio" value="選択肢{{$i}}"@if(Input::old('column_radio', $sampleform->column_radio)=="選択肢{$i}") checked @endif>
+                    <input type="radio" name="column_radio" value="選択肢{{$i}}"@if(old('column_radio', $sampleform->column_radio)=="選択肢{$i}") checked @endif>
                 </span>
                 <span id="column_checkbox_{{$i}}" class="form-control">選択肢{{$i}}</span>
             </div>
@@ -118,7 +118,7 @@
             確認して変更
         @endif
     </button>
-    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'">キャンセル</button>
+    <button type="button" class="btn btn-default" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">キャンセル</button>
 </div>
 
 </form>

@@ -17,7 +17,7 @@
 
     @if ($default_hide_list)
     @else
-        @foreach($inputs as $input)
+        @forelse($inputs as $input)
             <div class="container @if(! $loop->first) mt-4 @endif">
                 {{-- 行グループ ループ --}}
                 @foreach($group_rows_cols_columns as $group_row_cols_columns)
@@ -49,6 +49,7 @@
                                     <div class="{{$column->classname}}">
                                         @include('plugins.user.databases.default.databases_include_value')
                                     </div>
+                                    <div class="small {{ $column->caption_list_detail_color }}">{!! nl2br($column->caption_list_detail) !!}</div>
                                 </div>
                             </div>
                         @endforeach
@@ -91,7 +92,16 @@
                     </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            {{-- 検索結果0件 --}}
+            @if (session('is_search.'.$frame_id))
+                @if ($database_frame->search_results_empty_message)
+                    {{$database_frame->search_results_empty_message}}
+                @else
+                    {{ __('messages.search_results_empty') }}
+                @endif
+            @endif
+        @endforelse
 
         {{-- ページング処理 --}}
         {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}

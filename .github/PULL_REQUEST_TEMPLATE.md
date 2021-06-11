@@ -14,4 +14,6 @@
 
 ## チェックリスト
 
-- [ ] PHP_CodeSnifferを実行して、本PR内に指摘が存在しないことを確認した。https://github.com/opensource-workshop/connect-cms/wiki/PHP_CodeSniffer
+- [ ] PHP_CodeSnifferを実行して、本PR内に指摘が存在しないことを確認しました。https://github.com/opensource-workshop/connect-cms/wiki/PHP_CodeSniffer
+<!-- （オンラインマニュアルの更新が可能な方で、画面変更があった場合。なければ下記は消す） -->
+- [ ] オンラインマニュアルの更新 https://connect-cms.jp/manual

@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\User;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
+//use App\Providers\RouteServiceProvider;
+use App\User;
 //use Illuminate\Foundation\Auth\RegistersUsers;
 use App\Http\Controllers\Auth\RegistersUsers;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+
+use Illuminate\Support\Facades\Auth;
+use App\Models\Core\Configs;
+use App\Models\Core\UsersInputCols;
+use App\Plugins\Manage\UserManage\UsersTool;
+use App\Rules\CustomValiUserEmailUnique;
 
 class RegisterController extends Controller
 {
@@ -28,6 +36,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
+    //protected $redirectTo = RouteServiceProvider::HOME;
     protected $redirectTo = '/manage/user';
 
     /**
@@ -37,9 +46,7 @@ class RegisterController extends Controller
      */
     public function __construct()
     {
-        // mod by nagahara@opensource-workshop.jp
-//        $this->middleware('guest');
-        // $this->middleware('auth');
+        // $this->middleware('guest');
     }
 
     /**
@@ -50,14 +57,71 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
-            'name' => 'required|string|max:255',
-            // 'email' => 'required|string|email|max:255|unique:users',
-            'userid' => 'required|max:255|unique:users',
-            'email' => 'nullable|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-            'status' => 'required',
-        ]);
+        // change: ユーザーの追加項目に対応
+        // $validate_rule = [
+        //     'name'     => 'required|string|max:255',
+        //     'userid'   => 'required|max:255|unique:users',
+        //     'email'    => 'nullable|email|max:255|unique:users',
+        //     'password' => 'required|string|min:6|confirmed',
+        //     'status'   => 'required',
+        // ];
+        $validator_array = [
+            'column' => [
+                'name'     => 'required|string|max:255',
+                'userid'   => 'required|max:255|unique:users',
+                'email'    => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique(null)],
+                'password' => 'required|string|min:6|confirmed',
+                'status'   => 'required',
+            ],
+            // 項目名
+            'message' => [
+                'name' => 'ユーザ名',
+                'userid' => 'ログインID',
+                'email' => 'eメール',
+                'password' => 'パスワード',
+                'status' => '状態',
+                'user_register_requre_privacy' => '個人情報保護方針への同意',
+            ]
+        ];
+
+        // ユーザ自動登録の場合（認証されていない）は、メールアドレスも必須にする。
+        if (!Auth::user()) {
+            // change: ユーザーの追加項目に対応
+            // $validate_rule['email'] = 'required|string|email|max:255|unique:users';
+            // $validate_rule['user_register_requre_privacy'] = 'required';
+            $validator_array['column']['email'] = ['required', 'email', 'max:255', new CustomValiUserEmailUnique(null)];
+
+            // bugfix: 個人情報保護方針への同意を求める場合、必須にする
+            $user_register_requre_privacy = Configs::where('name', 'user_register_requre_privacy')->first();
+            if (!empty($user_register_requre_privacy) && $user_register_requre_privacy->value == '1') {
+                $validator_array['column']['user_register_requre_privacy'] = 'required';
+            }
+        }
+
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        foreach ($users_columns as $users_column) {
+            // バリデータールールをセット
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, null);
+        }
+
+        // 入力値チェック
+        // $validator = Validator::make($data, $validate_rule);
+        $validator = Validator::make($data, $validator_array['column']);
+
+        // 項目名
+        // change: ユーザーの追加項目に対応
+        // $validator->setAttributeNames([
+        //     'name'                         => 'ユーザ名',
+        //     'userid'                       => 'ログインID',
+        //     'email'                        => 'eメールアドレス',
+        //     'password'                     => 'パスワード',
+        //     'user_register_requre_privacy' => '個人情報保護方針への同意',
+        // ]);
+        $validator->setAttributeNames($validator_array['message']);
+        // dd($validator->errors());
+        return $validator;
     }
 
     /**
@@ -68,12 +132,54 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        // ユーザ自動登録の場合（認証されていない）は、トップページに遷移する。
+        if (!Auth::user()) {
+            $this->redirectTo = '/';
+        }
+
+        // ユーザ登録
+        // change: ユーザーの追加項目に対応
+        // return User::create([
+        //     'name' => $data['name'],
+        //     'email' => $data['email'],
+        //     'userid' => $data['userid'],
+        //     'password' => bcrypt($data['password']),
+        //     'status' => $data['status'],
+        // ]);
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'userid' => $data['userid'],
-            'password' => bcrypt($data['password']),
+            // change to laravel6.
+            // 'password' => bcrypt($data['password']),
+            'password' => Hash::make($data['password']),
             'status' => $data['status'],
         ]);
+
+        //// ユーザーの追加項目の登録.
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns();
+
+        // users_input_cols 登録
+        foreach ($users_columns as $users_column) {
+            $value = "";
+            if (!isset($data['users_columns_value'][$users_column->id])) {
+                // 値なし
+                $value = null;
+            } elseif (is_array($data['users_columns_value'][$users_column->id])) {
+                $value = implode(UsersTool::CHECKBOX_SEPARATOR, $data['users_columns_value'][$users_column->id]);
+            } else {
+                $value = $data['users_columns_value'][$users_column->id];
+            }
+
+            // データ登録フラグを見て登録
+            $users_input_cols = new UsersInputCols();
+            $users_input_cols->users_id = $user->id;
+            $users_input_cols->users_columns_id = $users_column->id;
+            $users_input_cols->value = $value;
+            $users_input_cols->save();
+        }
+
+        return $user;
     }
 }

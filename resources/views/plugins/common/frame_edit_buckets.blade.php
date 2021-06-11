@@ -19,7 +19,7 @@
 {{-- 固定記事プラグイン(=コンテンツプラグイン)はバケツありなし、どちらでも表示する。 --}}
 {{-- 固定記事プラグイン(=コンテンツプラグイン)以外はバケツありのみ、表示する。 --}}
 
-<form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST" class="mt-3">
+<form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST">
     {{ csrf_field() }}
 
     <div class="form-group">
@@ -91,7 +91,7 @@
     </div>
 
     <div class="form-group text-center">
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
+        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 更新</button>
     </div>
 </form>

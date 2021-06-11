@@ -14,7 +14,7 @@
     {{-- タイトル --}}
     <header class="d-flex flex-row">
         <div class="pr-2"><span class="h2"><span class="badge badge-primary">Q</span></span></div>
-        <div><h2>{!!$post->post_title!!}</h2></div>
+        <h2>{{$post->post_title}}</h2>
     </header>
 
     {{-- 記事本文 --}}
@@ -28,8 +28,10 @@
 
     <footer>
         <div class="pt-2">
-            {{-- 投稿日時 --}}
-            {{$post->posted_at->format('Y年n月j日 H時i分')}}
+            @if ($faq_frame->display_posted_at_flag)
+                {{-- 投稿日時 --}}
+                {{$post->posted_at->format('Y年n月j日 H時i分')}}
+            @endif
 
             {{-- 重要記事 --}}
             @if($post->important == 1)<span class="badge badge-danger">重要</span>@endif

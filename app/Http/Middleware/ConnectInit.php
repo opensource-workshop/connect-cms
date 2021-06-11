@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
+
 use Closure;
 
 class ConnectInit
@@ -33,6 +36,30 @@ class ConnectInit
         } elseif ($debug_mode_session === '1') {
             config(['app.debug' => true]);
         }
+
+        /* --- 共通で使用するDB --- */
+
+        // Connect-CMS の各種設定
+        // bugfix:【サイト管理・バグ】サイト名が サイト管理＞サイト基本設定 以外適用されない対応
+        // $request->attributes->add(['configs' => Configs::get()]);
+        $configs = Configs::get();
+
+        // requestにセット
+        $request->attributes->add(['configs' => $configs]);
+
+        // *** 全ビュー間のデータ共有
+        // サイト名
+        if (isset($configs)) {
+            $base_site_name = $configs->firstWhere('name', 'base_site_name');
+            $configs_base_site_name = $base_site_name->value ?? config('app.name', 'Connect-CMS');
+        } else {
+            $configs_base_site_name = config('app.name', 'Connect-CMS');
+        }
+        \View::share('configs_base_site_name', $configs_base_site_name);
+
+        // フレーム設定の共有
+        $frame_configs = FrameConfig::get();
+        $request->attributes->add(['frame_configs' => $frame_configs]);
 
         return $next($request);
     }

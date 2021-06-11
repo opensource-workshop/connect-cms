@@ -179,9 +179,9 @@
         <div class="col-md-10">
             <select class="form-control" name="type" class="form-control">
                 <option value=""></option>
-                <option value="1:一般書" @if(Input::old('type', $opacs_books->type)=="1:一般書") selected @endif>1:一般書</option>
-                <option value="3:雑誌" @if(Input::old('type', $opacs_books->type)=="3:雑誌") selected @endif>3:雑誌</option>
-                <option value="4:ＡＶ" @if(Input::old('type', $opacs_books->type)=="4:ＡＶ") selected @endif>4:ＡＶ</option>
+                <option value="1:一般書" @if(old('type', $opacs_books->type)=="1:一般書") selected @endif>1:一般書</option>
+                <option value="3:雑誌" @if(old('type', $opacs_books->type)=="3:雑誌") selected @endif>3:雑誌</option>
+                <option value="4:ＡＶ" @if(old('type', $opacs_books->type)=="4:ＡＶ") selected @endif>4:ＡＶ</option>
             </select>
             @if ($errors && $errors->has('type')) <div class="text-danger">{{$errors->first('type')}}</div> @endif
         </div>
@@ -201,10 +201,10 @@
         <div class="col-md-10">
             <select class="form-control" name="lend_flag" class="form-control">
                 <option value=""></option>
-                <option value="1" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="1") selected @endif>1</option>
-                <option value="0:一般" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="0:一般") selected @endif>0:一般</option>
-                <option value="2:館内" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="2:館内") selected @endif>2:館内</option>
-                <option value="9:禁帯出" @if(Input::old('lend_flag', $opacs_books->lend_flag)=="9:禁帯出") selected @endif>9:禁帯出</option>
+                <option value="1" @if(old('lend_flag', $opacs_books->lend_flag)=="1") selected @endif>1</option>
+                <option value="0:一般" @if(old('lend_flag', $opacs_books->lend_flag)=="0:一般") selected @endif>0:一般</option>
+                <option value="2:館内" @if(old('lend_flag', $opacs_books->lend_flag)=="2:館内") selected @endif>2:館内</option>
+                <option value="9:禁帯出" @if(old('lend_flag', $opacs_books->lend_flag)=="9:禁帯出") selected @endif>9:禁帯出</option>
             </select>
             @if ($errors && $errors->has('lend_flag')) <div class="text-danger">{{$errors->first('lend_flag')}}</div> @endif
         </div>
@@ -215,9 +215,9 @@
         <div class="col-md-10">
             <select class="form-control" name="accept_flag" class="form-control">
                 <option value=""></option>
-                <option value="0" @if(Input::old('accept_flag', $opacs_books->accept_flag)=="0") selected @endif>0</option>
-                <option value="0:購入" @if(Input::old('accept_flag', $opacs_books->accept_flag)=="0:購入") selected @endif>0:一般</option>
-                <option value="1:寄贈" @if(Input::old('accept_flag', $opacs_books->accept_flag)=="1:寄贈") selected @endif>1:寄贈</option>
+                <option value="0" @if(old('accept_flag', $opacs_books->accept_flag)=="0") selected @endif>0</option>
+                <option value="0:購入" @if(old('accept_flag', $opacs_books->accept_flag)=="0:購入") selected @endif>0:一般</option>
+                <option value="1:寄贈" @if(old('accept_flag', $opacs_books->accept_flag)=="1:寄贈") selected @endif>1:寄贈</option>
             </select>
             @if ($errors && $errors->has('accept_flag')) <div class="text-danger">{{$errors->first('accept_flag')}}</div> @endif
         </div>
@@ -229,7 +229,7 @@
             <div class="input-group date" id="accept_date" data-target-input="nearest">
                 <input type="text" name="accept_date" value="{{old('accept_date', $opacs_books->accept_date)}}" class="form-control datetimepicker-input" data-target="#accept_date"/>
                 <div class="input-group-append" data-target="#accept_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('accept_date')) <div class="text-danger">{{$errors->first('accept_date')}}</div> @endif
@@ -259,7 +259,7 @@
             <div class="input-group date" id="storage_life" data-target-input="nearest">
                 <input type="text" name="storage_life" value="{{old('storage_life', $opacs_books->storage_life)}}" class="form-control datetimepicker-input" data-target="#storage_life"/>
                 <div class="input-group-append" data-target="#storage_life" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('storage_life')) <div class="text-danger">{{$errors->first('storage_life')}}</div> @endif
@@ -280,8 +280,8 @@
         <div class="col-md-10">
             <select class="form-control" name="remove_flag" class="form-control">
                 <option value=""></option>
-                <option value="" @if(Input::old('remove_flag', $opacs_books->remove_flag)=="0") selected @endif>0</option>
-                <option value="5:その他" @if(Input::old('remove_flag', $opacs_books->remove_flag)=="5:その他") selected @endif>5:その他</option>
+                <option value="" @if(old('remove_flag', $opacs_books->remove_flag)=="0") selected @endif>0</option>
+                <option value="5:その他" @if(old('remove_flag', $opacs_books->remove_flag)=="5:その他") selected @endif>5:その他</option>
             </select>
             @if ($errors && $errors->has('remove_flag')) <div class="text-danger">{{$errors->first('remove_flag')}}</div> @endif
         </div>
@@ -293,7 +293,7 @@
             <div class="input-group date" id="remove_date" data-target-input="nearest">
                 <input type="text" name="remove_date" value="{{old('remove_date', $opacs_books->remove_date)}}" class="form-control datetimepicker-input" data-target="#remove_date"/>
                 <div class="input-group-append" data-target="#remove_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('remove_date')) <div class="text-danger">{{$errors->first('remove_date')}}</div> @endif
@@ -314,7 +314,7 @@
         <div class="col-md-10">
             <select class="form-control" name="possession" class="form-control">
                 <option value=""></option>
-                <option value="所蔵" @if(Input::old('possession', $opacs_books->possession)=="所蔵") selected @endif>所蔵</option>
+                <option value="所蔵" @if(old('possession', $opacs_books->possession)=="所蔵") selected @endif>所蔵</option>
             </select>
             @if ($errors && $errors->has('possession')) <div class="text-danger">{{$errors->first('possession')}}</div> @endif
         </div>
@@ -325,7 +325,7 @@
         <div class="col-md-10">
             <select class="form-control" name="library" class="form-control">
                 <option value=""></option>
-                <option value="00:図書館" @if(Input::old('library', $opacs_books->library)=="00:図書館") selected @endif>00:図書館</option>
+                <option value="00:図書館" @if(old('library', $opacs_books->library)=="00:図書館") selected @endif>00:図書館</option>
             </select>
             @if ($errors && $errors->has('library')) <div class="text-danger">{{$errors->first('library')}}</div> @endif
         </div>
@@ -337,7 +337,7 @@
             <div class="input-group date" id="last_lending_date" data-target-input="nearest">
                 <input type="text" name="last_lending_date" value="{{old('last_lending_date', $opacs_books->last_lending_date)}}" class="form-control datetimepicker-input" data-target="#last_lending_date"/>
                 <div class="input-group-append" data-target="#last_lending_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
             @if ($errors && $errors->has('last_lending_date')) <div class="text-danger">{{$errors->first('last_lending_date')}}</div> @endif
@@ -367,7 +367,7 @@
             <div class="col-sm-6">
                 <div class="text-center">
                     <input type="hidden" name="bucket_id" value="">
-                    <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i> キャンセル</button>
                     @if (empty($opacs_books->id))
                         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                     @else
@@ -378,7 +378,7 @@
             <div class="col-sm-3 pull-right text-right">
                 @if (!empty($opacs_books->id))
                     <a data-toggle="collapse" href="#collapse{{$opacs_books->id}}">
-                        <span class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> <span class="hidden-xs">削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                     </a>
                 @endif
             </div>
@@ -386,16 +386,16 @@
     </div>
 </form>
 
-<div id="collapse{{$opacs_books->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="panel panel-danger">
-        <div class="panel-body">
+<div id="collapse{{$opacs_books->id}}" class="collapse">
+    <div class="card border-danger">
+        <div class="card-body">
             <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
                 <form action="{{url('/')}}/plugin/opacs/destroy/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
         </div>

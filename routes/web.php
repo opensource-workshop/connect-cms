@@ -1,11 +1,15 @@
 <?php
 
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Log;
-
-// use App\Http\Controllers\Core\ClassController;
-// use App\Http\Controllers\Core\DefaultController;
-
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
 /*
     [URL ルール]
     コアURL          /core/{action_type(frame等)}/{action}/{page_id?}/{frame_id?}
@@ -18,14 +22,16 @@
 
 // 認証系アクション
 // Auth::routes();
-Route::get('login', 'Auth\LoginController@showLoginForm')->name('login');
-Route::post('login', 'Auth\LoginController@login');
+Route::get(config('connect.LOGIN_PATH'), 'Auth\LoginController@showLoginForm')->name('login');
+Route::post(config('connect.LOGIN_PATH'), 'Auth\LoginController@login')->name('login');
 Route::post('logout', 'Auth\LoginController@logout')->name('logout');
+// shibbolth認証
+Route::get(config('cc_shibboleth_config.login_path', 'secure'), 'Auth\LoginController@shibboleth')->name('shibboleth.login');
 
 Route::get('/password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
 Route::post('/password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
 Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
-Route::post('/password/reset', 'Auth\ResetPasswordController@reset');
+Route::post('/password/reset', 'Auth\ResetPasswordController@reset')->name('password.resetpost');
 
 //ユーザー登録
 Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('register');
@@ -33,9 +39,12 @@ Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('re
 // システム管理者 or ユーザ管理者の場合、OK
 //Route::group(['middleware' => ['auth', 'can:system_user-admin']], function () {
     //Route::post('register', 'Auth\RegisterController@register');
-    Route::post('register', 'Auth\RegisterController@register');
+    Route::post('register', 'Auth\RegisterController@register')->name('register');
 //});
 
+// ユーザ仮登録ONのトークンを使った本登録の確定画面
+Route::get('register/confirmToken/{id}/{token}', 'Auth\RegisterController@confirmToken')->name('register.confirmToken');
+Route::post('register/storeToken/{id}/{token}', 'Auth\RegisterController@storeToken')->name('register.storeToken');
 
 // テスト用アクション
 //Route::get('/test/{language}/{any}', 'Core\TestController@invokeGet')->where('any', '.*');
@@ -69,12 +78,16 @@ Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\
 // 一般プラグインの更新系アクション（画面がある場合）
 Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost')->name('post_plugin');
 
+// 一般プラグインのJSONレスポンスアクション
+Route::get('/json/{plugin_name}/{action}/{page_id?}/{frame_id?}', 'Core\DefaultController@invokeGetJson')->name('get_json');
+
 // 一般プラグインの更新系アクション（リダイレクトする場合）
 Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect')->name('post_redirect');
 Route::get('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect')->name('get_redirect');
 
 // 一般プラグインのダウンロード系アクション
 Route::post('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload')->name('post_download');
+Route::get('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload')->name('get_download');
 
 // CSS の取得アクション
 Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss')->name('get_css');
@@ -97,5 +110,4 @@ Route::get( '{all}', 'Core\DefaultController')->where('all', '.*')->name('get_al
 Route::post('{all}', 'Core\DefaultController')->where('all', '.*')->name('post_all');
 
 // ログの書式
-//Log::debug($request->action);
-
+//\Log::debug($request->action);

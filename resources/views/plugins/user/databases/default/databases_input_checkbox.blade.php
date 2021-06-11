@@ -4,21 +4,15 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- --}}
+--}}
 @if (array_key_exists($database_obj->id, $databases_columns_id_select))
     @php
-        // グループカラムの幅の計算
-        $col_count = floor(12/count($databases_columns_id_select[$database_obj->id]));
-        if ($col_count < 3) {
-            $col_count = 3;
+        // value 値の取得
+        $value_obj = (empty($input_cols)) ? null : $input_cols->where('databases_inputs_id', $id)->where('databases_columns_id', $database_obj->id)->first();
+        $value = '';
+        if (!empty($value_obj)) {
+            $value = $value_obj->value;
         }
-
-	    // value 値の取得
-	    $value_obj = (empty($input_cols)) ? null : $input_cols->where('databases_inputs_id', $id)->where('databases_columns_id', $database_obj->id)->first();
-	    $value = '';
-	    if (!empty($value_obj)) {
-	        $value = $value_obj->value;
-	    }
 
     @endphp
     <div class="container-fluid row">

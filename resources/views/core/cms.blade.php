@@ -42,10 +42,17 @@ $(function(){
 </script>
 
 {{-- *********************************************************** --}}
-    {{-- フラッシュメッセージ表示 --}}
+    {{-- フラッシュメッセージ表示(fadeout あり) --}}
     @if (session('flash_message_for_add_plugin'))
         <div class="connect-flash alert alert-success text-center">
             {{ session('flash_message_for_add_plugin') }}
+        </div>
+    @endif
+
+    {{-- フラッシュメッセージ表示 --}}
+    @if (session('flash_message_for_header'))
+        <div class="alert alert-success text-center">
+            {{ session('flash_message_for_header') }}
         </div>
     @endif
 
@@ -155,8 +162,8 @@ $(function(){
         @endif
 {{--
         <div class="container">
-            <div class="panel panel-default">
-                <div class="panel-body">
+            <div class="card">
+                <div class="card-body">
                     <p class="text-center" style="margin: 0;">
                         Powered by Connect-CMS
                     </p>

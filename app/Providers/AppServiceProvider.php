@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Log;
-
 use Gate;
 
 //use Illuminate\Support\ServiceProvider;
@@ -30,6 +28,16 @@ class AppServiceProvider extends AuthServiceProvider
         $buckets     = ($args != null && is_array($args) && count($args) > 2) ? $args[2] : null;
 //        return [$post, $plugin_name, $mode_switch, $buckets];
         return [$post, $plugin_name, $buckets];
+    }
+
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
     }
 
     /**
@@ -335,15 +343,5 @@ class AppServiceProvider extends AuthServiceProvider
         });
 
         return false;
-    }
-
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register()
-    {
-        //
     }
 }

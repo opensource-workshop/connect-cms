@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category リンクリスト・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -15,8 +15,7 @@
 @section("plugin_setting_$frame->id")
 @if ($plugin_buckets->isEmpty())
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i>
-        選択画面から、使用するリンクリストを選択するか、作成してください。
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
     </div>
 @else
     <form action="{{url('/')}}/redirect/plugin/linklists/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
@@ -47,11 +46,11 @@
         </div>
 
         <div class="text-center">
-            {{ $plugin_buckets->links() }}
+            {{ $plugin_buckets->fragment('frame-' . $frame_id)->links() }}
         </div>
 
-        <div class="form-group text-center">
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
+        <div class="form-group text-center mt-3">
+            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示リンクリスト変更</button>
         </div>
     </form>

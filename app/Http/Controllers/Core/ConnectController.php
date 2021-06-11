@@ -96,7 +96,9 @@ class ConnectController extends Controller
         $this->router = $router;
 
         // ルートパラメータを取得する
-        $allRouteParams = $router->getCurrentRoute()->parameters();
+        // bugfix: php artisan route:list で「Call to a member function parameters() on null」エラー対応
+        // $allRouteParams = $router->getCurrentRoute()->parameters();
+        $allRouteParams = is_null($router->getCurrentRoute()) ? null : $router->getCurrentRoute()->parameters();
 
         // ページID
         if (!empty($allRouteParams) && array_key_exists('page_id', $allRouteParams)) {
@@ -189,7 +191,9 @@ class ConnectController extends Controller
         }
 
         // 対象となる処理は、画面を持つルートの処理とする。
-        $route_name = $router->current()->getName();
+        // bugfix: php artisan route:list 実行時「Call to a member function getName() on null」エラー対応
+        // $route_name = $router->current()->getName();
+        $route_name = is_null($router->current()) ? null : $router->current()->getName();
         if ($route_name == 'get_plugin'    ||
             $route_name == 'post_plugin'   ||
             $route_name == 'post_redirect' ||
@@ -645,7 +649,8 @@ class ConnectController extends Controller
     }
 
     /**
-     *  指定されたテーマにCSS、JS があるか確認
+     *  ・指定された基本テーマにCSS、JS があるか確認
+     *  ・追加テーマにCSS、JS があれば設定
      */
     private function checkAsset($theme, $theme_setting_array)
     {
@@ -659,6 +664,20 @@ class ConnectController extends Controller
             $theme_setting_array['js'] = $theme;
         }
 
+        // 追加テーマが設定されていれば設定する
+        $configs = Configs::where('name', 'additional_theme')->first();
+        if($configs){
+            // CSS 存在チェック
+            if (File::exists(public_path().'/themes/'.$configs->value.'/themes.css')) {
+                $theme_setting_array['additional_css'] = $configs->value;
+            }
+
+            // JS 存在チェック
+            if (File::exists(public_path().'/themes/'.$configs->value.'/themes.js')) {
+                $theme_setting_array['additional_js'] = $configs->value;
+            }
+        }
+
         return $theme_setting_array;
     }
 
@@ -670,7 +689,12 @@ class ConnectController extends Controller
     protected function getThemes($request = null)
     {
         // 戻り値
-        $return_array = array('css' => '', 'js' => '');
+        $return_array = array(
+            'css' => '', 
+            'js' => '',
+            'css_additional' => '', 
+            'js_additional' => ''
+        );
 
         // セッションにテーマの選択がある場合（テーマ・チェンジャーで選択時の動き）
         if ($request && $request->session()->get('session_theme')) {
@@ -763,6 +787,9 @@ class ConnectController extends Controller
 
         // ハンバーガーメニューで使用するページの一覧
         $args["page_list"] = $this->getPageList();
+
+        // ページに対する権限
+        $args["page_roles"] = $this->getPageRoles();
 
         if ($this->http_status_code) {
             return response()->view($blade_path, $args, $this->http_status_code);

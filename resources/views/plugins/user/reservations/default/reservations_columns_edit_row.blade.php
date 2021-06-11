@@ -4,7 +4,7 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
- --}}
+--}}
 <tr @if (isset($column->hide_flag)) class="table-secondary" @endif>
     {{-- 表示順操作 --}}
     <td nowrap>
@@ -49,11 +49,11 @@
         <input name="hide_flag_{{ $column->id }}" id="hide_flag_{{ $column->id }}" value="1" type="checkbox" @if (isset($column->hide_flag)) checked="checked" @endif>
     </td>
     {{-- 選択肢の設定ボタン --}}
-    <td class="text-center">
+    <td class="text-center px-2">
         @if ($column->column_type == ReservationColumnType::radio)
-            <button 
-                type="button" 
-                class="btn btn-primary btn-xs cc-font-90 text-nowrap" 
+            <button
+                type="button"
+                class="btn btn-success btn-xs cc-font-90 text-nowrap"
                 {{-- 選択肢の設定がない場合のみツールチップを表示 --}}
                 @if ($column->select_count == 0)
                     id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
@@ -65,9 +65,9 @@
         @endif
     </td>
     {{-- 更新ボタン --}}
-    <td class="text-center">
-        <button 
-            class="btn btn-primary cc-font-90 text-nowrap" 
+    <td class="text-center px-2">
+        <button
+            class="btn btn-primary cc-font-90 text-nowrap"
             onclick="javascript:submit_update_column({{ $column->id }});"
         >
             <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
@@ -82,7 +82,7 @@
 
     @if ($column->select_count > 0)
         {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
-        <i class="far fa-list-alt"></i> 
+        <i class="far fa-list-alt"></i>
         {{ $column->select_names }}
     @elseif($column->select_count == 0)
         {{-- 選択肢データがない場合はツールチップ分、余白として改行する --}}

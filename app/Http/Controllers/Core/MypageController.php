@@ -7,6 +7,7 @@ use Illuminate\Http\Request;    // 依存注入のための指定
 use App\Http\Controllers\Core\ConnectController;
 
 use App\Traits\ConnectCommonTrait;
+use App\Models\Core\Configs;
 
 /**
  * マイページを呼び出す振り分けコントローラ
@@ -14,6 +15,21 @@ use App\Traits\ConnectCommonTrait;
 class MypageController extends ConnectController
 {
     use ConnectCommonTrait;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        // マイページの使用
+        $use_mypage = Configs::where('name', 'use_mypage')->first();
+
+        if (empty($use_mypage) || $use_mypage->value == '0') {
+            abort(403, "マイページを使用しないため、表示できません。");
+        }
+    }
 
     /**
      * 管理プラグインの呼び出し

@@ -4,19 +4,28 @@ namespace App\Traits;
 
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
+//use Carbon\Carbon;
 use Session;
 
 use App\User;
+use App\Models\Common\ConnectCarbon;
 use App\Models\Common\Frame;
+use App\Models\Common\Holiday;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
+use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
+
+use App\Enums\UserStatus;
+
+use Yasumi\Yasumi;
 
 trait ConnectCommonTrait
 {
@@ -24,11 +33,11 @@ trait ConnectCommonTrait
     //var $directory_file_limit = 1000;
 
     /**
-     * Buckets のrole を配列で返却
+     * Buckets の投稿権限データをrole の配列で返却
      *
-     * @return boolean
+     * @return boolean|array
      */
-    private function getBucketsRoles($buckets)
+    private function getPostBucketsRoles($buckets)
     {
         // Buckets オブジェクトがない場合はfalse を返す。
         if (empty($buckets)) {
@@ -40,7 +49,8 @@ trait ConnectCommonTrait
             return false;
         }
 
-        return $buckets->getBucketsRoles();
+        // return $buckets->getBucketsRoles();
+        return $buckets->getPostArrayBucketsRoles();
 
 //        // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。
 //        if (empty($buckets)) {
@@ -96,15 +106,18 @@ trait ConnectCommonTrait
 
         // チェックする権限を決定
         // Backets にrole が指定されていれば、それを使用。
+        //   - Backets の role は post_flag(投稿できる), approval_flag(承認が必要)の２つのフラグあり。
+        //     ここではpost_flag(投稿できる)のみ取得してチェックする。
+        //     記事の承認は、ユーザ権限のrole_approvalでチェックするので、approval_flag(承認が必要)ではチェックしない。
         // Backets にrole が指定されていなければ、標準のrole を使用
         $check_roles = config('cc_role.CC_AUTHORITY')[$authority];
-        if (!empty($this->getBucketsRoles($buckets_obj))) {
+        if (!empty($this->getPostBucketsRoles($buckets_obj))) {
             $check_roles = array();
-            $buckets_roles = $this->getBucketsRoles($buckets_obj);
+            $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
 //Log::debug($buckets_roles);
             // Buckets に設定されたrole から、関連role を取得してチェック。
-            foreach ($buckets_roles as $buckets_role) {
-                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$buckets_role]);
+            foreach ($post_buckets_roles as $post_buckets_role) {
+                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
             }
             // 配列は添字型になるので、array_merge で結合してから重複を取り除く
             $check_roles = array_unique($check_roles);
@@ -112,7 +125,7 @@ trait ConnectCommonTrait
 
         // 指定された権限を含むロールをループする。
 //        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
-        foreach ($check_roles as $role) {
+        foreach ($check_roles as $check_role) {
             // ユーザの保持しているロールをループ
             // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
             //foreach ($user['user_roles'] as $target) {
@@ -120,36 +133,44 @@ trait ConnectCommonTrait
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
                     // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
-                    if ($authority == 'posts.approval' && $user_role == 'role_approval') {
-                        return true;
-                    }
-
-                    // 必要なロールを保持している
-                    if ($role == $user_role && $user_role_value) {
-                        // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                        if (($user_role == 'role_article_admin') ||
-                            ($user_role == 'role_article') ||
-                            ($user_role == 'role_approval')) {
+                    // bugfix:  モデレータに「承認が必要」としても、モデレータは自分で承認できてしまう不具合修正
+                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtureとならず、必要なロールを保持している（$user_role == 'role_article'）でtureとなっていた。
+                    //          承認権限チェックとそれ以外でif文見直す。
+                    // if ($authority == 'posts.approval' && $user_role == 'role_approval') {
+                    //     return true;
+                    // }
+                    if ($authority == 'posts.approval') {
+                        if ($user_role == 'role_approval') {
                             return true;
                         }
+                    } else {
+                        // 必要なロールを保持している
+                        if ($check_role == $user_role && $user_role_value) {
+                            // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
+                            if (($user_role == 'role_article_admin') ||
+                                ($user_role == 'role_article') ||
+                                ($user_role == 'role_approval')) {
+                                return true;
+                            }
 
-                        // 自分のオブジェクトチェックが必要ならチェックする
-                        if (empty($post)) {
-                            return true;
-                        } else {
-                            if ((($authority == 'buckets.delete') ||
-                                 ($authority == 'posts.create') ||
-                                 ($authority == 'posts.update') ||
-                                 ($authority == 'posts.delete')) &&
-                                ($user->id == $post->created_id)) {
+                            // 自分のオブジェクトチェックが必要ならチェックする
+                            if (empty($post)) {
                                 return true;
                             } else {
-                                // 複数ロールをチェックするため、ここではreturn しない。
-                                // return false;
+                                if ((($authority == 'buckets.delete') ||
+                                    ($authority == 'posts.create') ||
+                                    ($authority == 'posts.update') ||
+                                    ($authority == 'posts.delete')) &&
+                                    ($user->id == $post->created_id)) {
+                                    return true;
+                                } else {
+                                    // 複数ロールをチェックするため、ここではreturn しない。
+                                    // return false;
+                                }
                             }
+                            // 複数ロールをチェックするため、ここではreturn しない。
+                            // return true;
                         }
-                        // 複数ロールをチェックするため、ここではreturn しない。
-                        // return true;
                     }
                 }
             }
@@ -476,6 +497,9 @@ trait ConnectCommonTrait
             abort(403, 'ユーザーにメソッドに対する権限がありません。');
         }
 
+//        // 操作ログの処理
+//        $this->putAppLog($request, $this->getConfigs(), 'page');
+
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
         // view 関数の戻り値はHTML なので、ここではそのままreturn して呼び出し元に返す。
@@ -777,7 +801,7 @@ trait ConnectCommonTrait
      *  利用可能かチェック
      *  戻り値：true なら
      */
-    public function checkUserStstus($request, &$error_msg = "")
+    public function checkUserStatus($request, &$error_msg = "")
     {
         // userid は必要
         if (!$request->filled('userid')) {
@@ -792,31 +816,36 @@ trait ConnectCommonTrait
             return false;
         }
 
-        // 利用不可ならfalse
-        if ($user->status == 0) {
-            return true;
+        // 利用不可・仮登録・仮削除ならfalse
+        if ($user->status == UserStatus::not_active ||
+                $user->status == UserStatus::temporary ||
+                $user->status == UserStatus::temporary_delete) {
+
+            $error_msg = UserStatus::getDescription($user->status) . "のため、ログインできません。";
+            return false;
         }
-        $error_msg = "利用不可のため、ログインできません。";
-        return false;
+
+        return true;
     }
 
     /**
-     *  外部認証
-     *
+     * 外部認証
      */
     public function authMethod($request)
     {
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
 
-        // Config チェック
-        $auth_method = Configs::where('name', 'auth_method')->first();
-
-        // 外部認証ではない場合は戻る
-        if (empty($auth_method) || $auth_method->value == '') {
+        // 外部認証がない場合は戻る
+        if (empty($auth_method_event->value)) {
             return;
         }
 
         // NetCommons2 認証
-        if ($auth_method->value == 'netcommons2') {
+        if ($auth_method_event->value == \AuthMethodType::netcommons2) {
+            // 外部認証設定 取得
+            $auth_method = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
+
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
             // Log::debug($request['password']);
@@ -843,21 +872,50 @@ trait ConnectCommonTrait
                     // ユーザが存在しない
                     if (empty($user)) {
                         // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
-                        $user           = new User;
-                        $user->name     = $request['userid'];
-                        $user->userid   = $request['userid'];
+                        $user = new User;
+                        $user->name = empty( $check_result['handle'] ) ? $request['userid'] : $check_result['handle'];
+                        $user->userid = $request['userid'];
                         $user->password = Hash::make($request['password']);
+                        $user->created_event = \AuthMethodType::netcommons2;
                         $user->save();
 
                         // 追加権限設定があれば作成
                         if (!empty($auth_method['additional4'])) {
-                            $original_rols_options = explode(':', $auth_method['additional4']);
+                        
+                            // NC2側権限値取得
+                            $nc2_auth = "";
+                            if( array_key_exists( 'auth', $check_result ) == true )
+                            {
+                                $nc2_auth = $check_result['auth'];
+                            }
+                            
+                            // |で区切る（|は複数権限の設定がある場合に区切り文字として利用される）
+                            $set_rols = "";
+                            $rols_options_list = explode('|', $auth_method['additional4']);
+                            foreach( $rols_options_list as $value )
+                            {
+                                // :で区切る（:は、NC2側権限とConnectCMS側権限の区切り文字として利用される）
+                                $original_rols_options = explode(':', $value);
+                                
+                                // 一致した権限を設定する
+                                if( $original_rols_options[0] == $nc2_auth ) {
+                                    $set_rols = $original_rols_options[1];
+                                    break;
+                                }
+                            }
+                            
                             UsersRoles::create([
                                 'users_id'   => $user->id,
                                 'target'     => 'original_role',
-                                'role_name'  => $original_rols_options[1],
+                                'role_name'  => $set_rols,
                                 'role_value' => 1
                             ]);
+                        }
+                    }
+                    else {
+                        // ユーザ登録が既にある場合、そのユーザが利用可能になっているかどうかをチェックし、利用不可になっている場合は処理を戻す
+                        if( $user->status != UserStatus::active ) {
+                            return;
                         }
                     }
 
@@ -872,22 +930,101 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  外部ユーザ情報取得
-     *
+     * 外部認証: shibboleth 認証
+     */
+    public function authMethodShibboleth($request)
+    {
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
+
+        // 外部認証がない場合は戻る
+        if (empty($auth_method_event->value)) {
+            return;
+        }
+
+        if ($auth_method_event->value == \AuthMethodType::shibboleth) {
+            // shibboleth 認証
+            //
+            // 必須
+            // $userid = $request->server('REDIRECT_mail');
+            $userid = $request->server(config('cc_shibboleth_config.userid'));
+
+            // ログインするユーザの存在を確認
+            $user = User::where('userid', $userid)->first();
+
+            if (empty($user)) {
+                // ユーザが存在しない
+                //
+                // 必須
+                // $user_name = $request->server('REDIRECT_employeeNumber');
+                $user_name = $request->server(config('cc_shibboleth_config.user_name'));
+
+                // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム
+                $password = Hash::make(Str::random(20));
+
+                // 任意, $request->server()は値がなければnullになる
+                // $email = $request->server('REDIRECT_mail');
+                $email = $request->server(config('cc_shibboleth_config.user_email'));
+
+                // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                $user = new User;
+                $user->name = $user_name;
+                $user->userid = $userid;
+                $user->email = $email;
+                $user->password = $password;
+                $user->created_event = \AuthMethodType::shibboleth;
+                $user->save();
+
+                // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生)
+                //        によって、シボレス認証初回時の自動アカウント設定、何か設定する？
+                // echo "<tr><td>区分</td><td>".$_SERVER['REDIRECT_unscoped-affiliation']."</td></tr>";
+
+                // 追加権限設定があれば作成
+                // if (!empty($auth_method['additional4'])) {
+                //     $original_rols_options = explode(':', $auth_method['additional4']);
+                //     UsersRoles::create([
+                //         'users_id'   => $user->id,
+                //         'target'     => 'original_role',
+                //         'role_name'  => $original_rols_options[1],
+                //         'role_value' => 1
+                //     ]);
+                // }
+            } else {
+                // ユーザが存在する
+                //
+                // 利用可能かチェック
+                if ($user->status != 0) {
+                    abort(403, "利用不可のため、ログインできません。");
+                }
+            }
+
+            // ログイン
+            Auth::login($user, true);
+            // トップページへ
+            return redirect("/");
+        }
+        return;
+    }
+
+    /**
+     * 外部ユーザ情報取得
      */
     public function getOtherAuthUser($request, $userid)
     {
-        // Config チェック
-        $auth_method = Configs::where('name', 'auth_method')->first();
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
 
         // 外部認証ではない場合は戻る
-        if (empty($auth_method) || $auth_method->value == '') {
+        if (empty($auth_method_event->value)) {
             // 外部認証の対象外
             return array('code' => 100, 'message' => '', 'userid' => $userid, 'name' => '');
         }
 
         // NetCommons2 認証
-        if ($auth_method->value == 'netcommons2') {
+        if ($auth_method_event->value == \AuthMethodType::netcommons2) {
+            // 外部認証設定 取得
+            $auth_method = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
+
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_getuser&userid=' . $userid . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5($auth_method['additional5'] . $auth_method['additional3']);
             // Log::debug($request['password']);
@@ -1051,5 +1188,64 @@ trait ConnectCommonTrait
 
         //return $this->page_role;
         return $page_role;
+    }
+
+    /**
+     *  年の祝日を取得
+     */
+    public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
+    {
+        return Yasumi::create($country, (int)$year, $locale);
+    }
+
+    /**
+     * 独自設定祝日データの呼び出し
+     */
+    public function getHolidays($year, $month)
+    {
+        // 独自設定祝日を取得する。
+        return Holiday::where('holiday_date', 'LIKE', $year . '-' .$month . '%')->orderBy('holiday_date')->get();
+    }
+
+    /**
+     *  祝日の追加
+     * date に holiday 属性を追加する。
+     */
+    protected function addHoliday($year, $month, $dates)
+    {
+        // 年の祝日一覧を取得する。
+        $yasumis = $this->getYasumis($year);
+
+        // 独自設定祝日を加味する。
+        foreach ($this->getHolidays($year, $month) as $holiday) {
+            // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
+            // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
+            $found_flag = false;
+            foreach ($yasumis as &$yasumi) {
+                if ($yasumi->format('Y-m-d') == $holiday->holiday_date) {
+                    // 独自設定の祝日と同じ日が計算の祝日にあれば、計算の祝日を消して、独自設定を有効にする。
+                    $found_flag = true;
+                    $yasumis->removeHoliday($yasumi->shortName);
+                    $new_holiday = new YasumiHoliday($holiday->id, ['ja_JP' => $holiday->holiday_name], new ConnectCarbon($holiday->holiday_date), 'ja_JP', 2);
+                    $yasumis->addHoliday($new_holiday);
+                    break;
+                }
+            }
+            // 計算の祝日にない独自設定は、追加祝日として扱う。
+            if ($found_flag == false) {
+                $new_holiday = new YasumiHoliday($holiday->id, ['ja_JP' => $holiday->holiday_name], new ConnectCarbon($holiday->holiday_date), 'ja_JP', 1);
+                $new_holiday->orginal_holiday_post = $holiday;
+                $yasumis->addHoliday($new_holiday);
+            }
+        }
+
+        // 独自祝日を加味した祝日一覧をループ。対象の年月があれば、date オブジェクトに holiday 属性として追加する。
+        foreach ($yasumis as $yasumi) {
+            if ($yasumi->format('Y-m') == $year . "-" . $month) {
+                $dates[$yasumi->format('Y-m-d')]->holiday = $yasumi;
+            }
+        }
+
+        return $dates;
     }
 }

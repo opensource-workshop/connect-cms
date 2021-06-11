@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\View;
 
 class Frame extends Model
 {
+    // 日付型
+    protected $dates = [
+        'content_open_date_from',
+        'content_open_date_to'
+    ];
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
@@ -29,6 +34,9 @@ class Frame extends Model
         'none_hidden',
         'bucket_id',
         'display_sequence',
+        'content_open_type', 
+        'content_open_date_from', 
+        'content_open_date_to',
     ];
 
     /**

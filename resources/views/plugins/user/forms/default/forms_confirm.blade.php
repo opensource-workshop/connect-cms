@@ -29,15 +29,15 @@
         {{-- ラベル --}}
         @if (isset($is_template_label_sm_4))
             {{-- label-sm-4テンプレート --}}
-            <label class="col-sm-4 control-label text-nowrap">{{$form_column->column_name}}</label>
+            <label class="col-sm-4 control-label">{{$form_column->column_name}}</label>
 
         @elseif (isset($is_template_label_sm_6))
             {{-- label-sm-6テンプレート --}}
-            <label class="col-sm-6 control-label text-nowrap">{{$form_column->column_name}}</label>
+            <label class="col-sm-6 control-label">{{$form_column->column_name}}</label>
 
         @else
             {{-- defaultテンプレート --}}
-            <label class="col-sm-2 control-label text-nowrap">{{$form_column->column_name}}</label>
+            <label class="col-sm-2 control-label">{{$form_column->column_name}}</label>
         @endif
 
         {{-- 項目 --}}
@@ -49,72 +49,13 @@
             <div class="form-inline">
                 @foreach($form_column->group as $group_row)
                     <label class="control-label" style="vertical-align: top; margin-right: 10px;@if (!$loop->first) margin-left: 30px;@endif">{{$group_row->column_name}}</label>
-                    {{$request->forms_columns_value[$group_row->id]}}
-                    <input name="forms_columns_value[{{$group_row->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$group_row->id]}}" />
+                    {{-- bugfix: グループ行が各カラムタイプを考慮してなかったため対応 --}}
+                    @include('plugins.user.forms.default.forms_confirm_column_' . $group_row->column_type, ['form_obj' => $group_row])
                 @endforeach
             </div>
             @break
-        @case(FormColumnType::text)
-            {{$request->forms_columns_value[$form_column->id]}}
-            <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
-            @break
-        @case(FormColumnType::textarea)
-            {!!nl2br(e($request->forms_columns_value[$form_column->id]))!!}
-            <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
-            @break
-        @case(FormColumnType::radio)
-            @if (array_key_exists($form_column->id, $request->forms_columns_value))
-                <input name="forms_columns_value[{{$form_column->id}}]" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">{{$request->forms_columns_value[$form_column->id]}}
-            @else
-                <input name="forms_columns_value[{{$form_column->id}}]" type="hidden">
-            @endif
-            @break
-        @case(FormColumnType::checkbox)
-            @if (array_key_exists($form_column->id, $request->forms_columns_value))
-                @foreach($request->forms_columns_value[$form_column->id] as $checkbox_item)
-                    <input name="forms_columns_value[{{$form_column->id}}][]" type="hidden" value="{{$checkbox_item}}">{{$checkbox_item}}@if (!$loop->last), @endif
-                @endforeach
-            @else
-                <input name="forms_columns_value[{{$form_column->id}}][]" type="hidden">
-            @endif
-            @break
-        @case(FormColumnType::select)
-            @if (array_key_exists($form_column->id, $request->forms_columns_value))
-                <input name="forms_columns_value[{{$form_column->id}}]" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">{{$request->forms_columns_value[$form_column->id]}}
-            @else
-                <input name="forms_columns_value[{{$form_column->id}}]" type="hidden">
-            @endif
-            @break
-        @case(FormColumnType::mail)
-            {{$request->forms_columns_value[$form_column->id]}}
-            <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
-            @break
-        @case(FormColumnType::date)
-            {{$request->forms_columns_value[$form_column->id]}}
-            <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
-            @break
-        @case(FormColumnType::time)
-            {{$request->forms_columns_value[$form_column->id]}}
-            <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
-            @break
-        @case(FormColumnType::time_from_to)
-            {{$request->forms_columns_value[$form_column->id]}}
-            <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$request->forms_columns_value[$form_column->id]}}">
-            @break
-        @case(FormColumnType::file)
-            @php
-                // value 値の取得
-                if ($uploads && $uploads->where('columns_id', $form_column->id)) {
-                    $value_obj = $uploads->where('columns_id', $form_column->id)->first();
-                }
-            @endphp
-            @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
-                <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
-                <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
-            @else
-                <input name="forms_columns_value[{{$form_column->id}}]" class="form-control" type="hidden" value="">
-            @endif
-            @break
+        @default
+            @include('plugins.user.forms.default.forms_confirm_column_' . $form_column->column_type, ['form_obj' => $form_column])
         @endswitch
         </div>
     </div>
@@ -125,7 +66,7 @@
         @if ($form->use_temporary_regist_mail_flag)
             <button type="submit" class="btn btn-info" onclick="submit_forms_store();"><i class="fas fa-check"></i> {{__('messages.temporary_regist')}}</button>
         @else
-            <button type="submit" class="btn btn-primary" onclick="submit_forms_store();"><i class="fas fa-check"></i> {{__('messages.main_regist')}}</button>
+            <button type="submit" class="btn btn-primary" onclick="submit_forms_store();"><i class="fas fa-check"></i> {{__('messages.submit')}}</button>
         @endif
     </div>
 </form>

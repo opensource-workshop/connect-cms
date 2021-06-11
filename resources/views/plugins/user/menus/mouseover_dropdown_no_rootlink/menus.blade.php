@@ -33,11 +33,13 @@
                     </a>
                     <div class="dropdown-menu">
 
-                        {{-- 自分へのリンク（ドロップダウンでリンクができなくなるため） --}}
-{{--
+                        {{-- 自分へのリンクなし --}}
+                        {{--
                         <a class="dropdown-item" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>{{$page_obj->page_name}}</a>
+                        --}}
+                        <span class="dropdown-item">{{$page_obj->page_name}}</span>
                         <div class="dropdown-divider"></div>
---}}
+
                         {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
                         @foreach($page_obj->children as $children)
                             @include('plugins.user.menus.mouseover_dropdown_no_rootlink.menu_children',['children' => $children])
@@ -48,9 +50,9 @@
                 <li class="nav-item {{$page_obj->getClass()}}">
                         {{-- カレント --}}
                     @if ($ancestors->contains('id', $page_obj->id))
-                    <a class="nav-link active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
+                    <a class="nav-link text-nowrap active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
                     @else
-                    <a class="nav-link" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
+                    <a class="nav-link text-nowrap" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                         {{$page_obj->page_name}}
                     </a>

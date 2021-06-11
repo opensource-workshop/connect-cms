@@ -25,10 +25,10 @@
 @endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
-        <span class="nav-link"><span class="active">選択</span></span>
+        <span class="nav-link"><span class="active">サイト内検索選択</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/searchs/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">選択</a>
+        <a href="{{url('/')}}/plugin/searchs/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">サイト内検索選択</a>
     </li>
 @endif

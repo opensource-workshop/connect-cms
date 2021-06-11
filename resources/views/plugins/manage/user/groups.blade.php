@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -19,7 +19,8 @@
     <div class="card-body">
 
         <div class="alert alert-info">
-            <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する参加を設定します。
+            <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する参加を設定します。<br />
+            グループ作成は [ <a href="{{url('/')}}/manage/group">グループ管理</a> ] から行えます。
 {{--
             <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する権限を設定します。
 --}}

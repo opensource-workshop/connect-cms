@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
- --}}
+--}}
 <div class="frame-setting-menu">
     <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
         <span class="d-md-none">処理選択 - ユーザ管理</span>
@@ -38,16 +38,57 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
-                @if ($function == "edit")
-                    <span class="nav-link"><span class="active">ユーザ変更</span></span>
+                @if ($function == "autoRegist")
+                    <span class="nav-link"><span class="active">自動ユーザ登録設定</span></span>
+                @else
+                    <a href="{{url('/manage/user/autoRegist')}}" class="nav-link">自動ユーザ登録設定</a></li>
                 @endif
                 </li>
 
                 <li role="presentation" class="nav-item">
-                @if ($function == "groups")
-                    <span class="nav-link"><span class="active">グループ参加</span></span>
-                @endif
+                    @if ($function == "import")
+                        <span class="nav-link"><span class="active">CSVインポート</span></span>
+                    @else
+                        <a href="{{url('/manage/user/import')}}" class="nav-link">CSVインポート</a></li>
+                    @endif
                 </li>
+
+                <li role="presentation" class="nav-item">
+                    @if ($function == "bulkDelete")
+                        <span class="nav-link"><span class="active">一括削除</span></span>
+                    @else
+                        <a href="{{url('/manage/user/bulkDelete')}}" class="nav-link">一括削除</a></li>
+                    @endif
+                </li>
+
+                @if (($function == "edit" || $function == "groups" || $function == "loginHistory") && $user->id)
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                            ユーザ変更
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+
+                            @if ($function == "edit")
+                                <a href="{{url('/manage/user/edit')}}/{{$user->id}}" class="dropdown-item active bg-light">ユーザ変更</a>
+                            @else
+                                <a href="{{url('/manage/user/edit')}}/{{$user->id}}" class="dropdown-item">ユーザ変更</a>
+                            @endif
+
+                            @if ($function == "groups")
+                                <a href="{{url('/manage/user/groups')}}/{{$user->id}}" class="dropdown-item active bg-light">グループ参加</a>
+                            @else
+                                <a href="{{url('/manage/user/groups')}}/{{$user->id}}" class="dropdown-item">グループ参加</a>
+                            @endif
+
+                            @if ($function == "loginHistory")
+                                <a href="{{url('/manage/user/loginHistory')}}/{{$user->id}}" class="dropdown-item active bg-light">ログイン履歴</a>
+                            @else
+                                <a href="{{url('/manage/user/loginHistory')}}/{{$user->id}}" class="dropdown-item">ログイン履歴</a>
+                            @endif
+                        </div>
+                    </li>
+                @endif
+
             </ul>
         </div>
     </nav>

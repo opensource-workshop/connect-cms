@@ -41,39 +41,36 @@
     <div class="accordion" id="accordionFaq{{$frame_id}}">
     @foreach($faqs_posts as $post)
         <article class="card">
-            <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}">
-                <header class="faq-list-title" id="headingFaq{{$post->id}}">
+            <header class="faq-list-title" id="headingFaq{{$post->id}}">
 
-                    <div class="d-flex flex-row">
-                        <div class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></div>
-                        <div>
-                            {{-- タイトル --}}
-                            {!!$post->getNobrPostTitle()!!}
+                <div class="d-flex flex-row">
+                    <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}">
+                        {{-- タイトル --}}
+                        <span class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></span>{{$post->getNobrPostTitle()}}
 
-                            {{-- カテゴリ --}}
-                            @if($post->category)
-                                <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
-                            @endif
+                        {{-- カテゴリ --}}
+                        @if($post->category)
+                            <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
+                        @endif
 
-                            @if ($post->status == 2)
-                                @can('role_update_or_approval',[[$post, 'faqs', $buckets]])
-                                    <span class="badge badge-warning">承認待ち</span>
-                                @endcan
-                            @endif
-                            @can('posts.update',[[$post, 'faqs', $buckets]])
-                                @if ($post->status == 1)
-                                    <span class="badge badge-warning">一時保存</span>
-                                @endif
+                        @if ($post->status == 2)
+                            @can('role_update_or_approval',[[$post, 'faqs', $buckets]])
+                                <span class="badge badge-warning">承認待ち</span>
                             @endcan
-                        </div>
-                    </div>
+                        @endif
+                        @can('posts.update',[[$post, 'faqs', $buckets]])
+                            @if ($post->status == 1)
+                                <span class="badge badge-warning">一時保存</span>
+                            @endif
+                        @endcan
+                    </button>
+                </div>
 
-                </header>
-            </button>
+            </header>
 
             {{-- 記事本文 --}}
             <div id="collapseFaq{{$post->id}}" class="collapse" aria-labelledby="headingFaq{{$post->id}}" data-parent="#accordionFaq{{$frame_id}}">
-                <div class="card-body">
+                <div class="card-body faq-list-body">
 
                     <div class="d-flex flex-row">
                         <div class="pr-2"><span class="h5"><span class="badge badge-secondary">A</span></span></div>
@@ -85,8 +82,10 @@
 
                     <footer>
                         <div class="pt-1">
-                            {{-- 投稿日時 --}}
-                            公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
+                            @if ($faq_frame->display_posted_at_flag)
+                                {{-- 投稿日時 --}}
+                                公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
+                            @endif
 
                             {{-- 重要記事 --}}
                             @if($post->important == 1)
@@ -126,14 +125,14 @@
                                     @if ($post->status == 1)
                                         <span class="badge badge-warning align-bottom">一時保存</span>
                                     @endif
-                                    <a href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
+                                    <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
+                                        <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
                                     </a>
                                 @endcan
 
                                 {{-- 詳細画面 --}}
-                                <a class="ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                                    <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>
+                                <a class="btn btn-success btn-sm ml-2" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" title="{{$post->getNobrPostTitle()}}の詳細">
+                                    詳細 <i class="fas fa-angle-right"></i>
                                 </a>
                             </div>
                         </div>

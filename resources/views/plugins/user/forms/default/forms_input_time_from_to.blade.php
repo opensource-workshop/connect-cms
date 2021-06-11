@@ -60,17 +60,17 @@
     <div class="col-sm-5">
         {{-- 時間From --}}
         <div class="input-group date" id="{{ $form_obj->id }}_from" data-target-input="nearest">
-            <input 
-                type="text" 
-                name="forms_columns_value_for_time_from[{{ $form_obj->id }}]" 
+            <input
+                type="text"
+                name="forms_columns_value_for_time_from[{{ $form_obj->id }}]"
                 value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_from.'.$form_obj->id, $request->forms_columns_value_for_time_from[$form_obj->id])}}@endif"
-                class="form-control datetimepicker-input" 
+                class="form-control datetimepicker-input"
                 data-target="#{{ $form_obj->id }}_from"
                 id="{{$label_id}}"
                 title="{{$form_obj->column_name}}の開始時間"
             >
             <div class="input-group-append" data-target="#{{ $form_obj->id }}_from" data-toggle="datetimepicker">
-                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                <div class="input-group-text"><i class="far fa-clock"></i></div>
             </div>
         </div>
     </div>
@@ -78,16 +78,16 @@
     <div class="col-sm-5">
         {{-- 時間To --}}
         <div class="input-group date" id="{{ $form_obj->id }}_to" data-target-input="nearest">
-            <input 
-                type="text" 
-                name="forms_columns_value_for_time_to[{{ $form_obj->id }}]" 
+            <input
+                type="text"
+                name="forms_columns_value_for_time_to[{{ $form_obj->id }}]"
                 value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_to.'.$form_obj->id, $request->forms_columns_value_for_time_to[$form_obj->id])}}@endif"
-                class="form-control datetimepicker-input" 
+                class="form-control datetimepicker-input"
                 data-target="#{{ $form_obj->id }}_to"
                 title="{{$form_obj->column_name}}の終了時間"
             >
             <div class="input-group-append" data-target="#{{ $form_obj->id }}_to" data-toggle="datetimepicker">
-                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                <div class="input-group-text"><i class="far fa-clock"></i></div>
             </div>
         </div>
     </div>

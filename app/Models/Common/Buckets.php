@@ -3,7 +3,7 @@
 namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\BucketsRoles;
 
@@ -22,10 +22,13 @@ class Buckets extends Model
     private $buckets_roles = null;
 
     /**
-     *  投稿権限データをrole の配列にする。
+     * 投稿権限データをrole の配列で返却
      */
-    private function editArrayBucketsRoles()
+    public function getPostArrayBucketsRoles()
     {
+        // Buckets に対するrole の取得
+        $this->getBucketsRoles();
+
         if (empty($this->buckets_roles)) {
             return array();
         }
@@ -37,8 +40,9 @@ class Buckets extends Model
         }
         return $return_roles;
     }
+
     /**
-     *  投稿権限の確認
+     * Buckets に対するrole の取得
      */
     public function getBucketsRoles()
     {
@@ -51,7 +55,9 @@ class Buckets extends Model
 
         $this->buckets_roles = BucketsRoles::where('buckets_id', $this->id)
                                            ->get();
-        return $this->editArrayBucketsRoles();
+
+        // delete: editArrayBucketsRoles()内で、getBucketsRoles()を呼び出すように見直し
+        // return $this->editArrayBucketsRoles();
     }
 
     /**

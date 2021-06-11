@@ -53,11 +53,11 @@ use App\Models\User\Databases\DatabasesColumns;
             @continue
         @endif
 
-        <div class="form-group container-fluid row">
+        <div class="form-group row">
             {{-- ラベル --}}
-            <label class="col-sm-2 control-label text-nowrap">{{$database_column->column_name}}</label>
+            <label class="col-sm-3 control-label">{{$database_column->column_name}}</label>
             {{-- 項目 --}}
-            <div class="col-sm-10">
+            <div class="col-sm-9">
 
             @switch($database_column->column_type)
 
@@ -170,9 +170,9 @@ use App\Models\User\Databases\DatabasesColumns;
 
     {{-- 固定項目エリア --}}
     <hr>
-    <div class="form-group container-fluid row">
-        <label class="col-sm-2 control-label text-nowrap">公開日時</label>
-        <div class="col-sm-10">
+    <div class="form-group row">
+        <label class="col-sm-3 control-label text-nowrap">公開日時</label>
+        <div class="col-sm-9">
             {{$request->posted_at}}
             <input name="posted_at" class="form-control" type="hidden" value="{{$request->posted_at}}">
         </div>
@@ -181,9 +181,9 @@ use App\Models\User\Databases\DatabasesColumns;
     @if ($is_hide_posted)
         <input name="display_sequence" type="hidden" value="{{$request->display_sequence}}">
     @else
-        <div class="form-group container-fluid row">
-            <label class="col-sm-2 control-label text-nowrap">表示順</label>
-            <div class="col-sm-10">
+        <div class="form-group row">
+            <label class="col-sm-3 control-label text-nowrap">表示順</label>
+            <div class="col-sm-9">
                 {{$request->display_sequence}}
                 <input name="display_sequence" type="hidden" value="{{$request->display_sequence}}">
             </div>

@@ -13,8 +13,9 @@ class CustomVali_CsvImage extends CustomVali_CsvExtensions
      * Create a new rule instance.
      *
      * @return void
+     * @see \Illuminate\Validation\Concerns\ValidatesAttributes validateImage() copy by laravel validate image allow_extension
      */
-    public function __construct(array $allow_extension = ['jpeg', 'png', 'gif', 'bmp', 'svg'])
+    public function __construct(array $allow_extension = ['jpeg', 'jpg', 'png', 'gif', 'bmp', 'svg', 'webp'])
     {
         $this->allow_extension = $allow_extension;
     }

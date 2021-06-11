@@ -95,7 +95,7 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">表示SEQ</label>
+        <label class="control-label">表示順</label>
         <input type="text" name="display_sequence" value="{{old('display_sequence', $learningtasks_posts->display_sequence)}}" class="form-control">
         @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
     </div>
@@ -105,18 +105,20 @@
         <select class="form-control" name="categories_id" class="form-control">
             <option value=""></option>
             @foreach($learningtasks_categories as $category)
-            <option value="{{$category->id}}" @if(Input::old('category', $learningtasks_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+            <option value="{{$category->id}}" @if(old('category', $learningtasks_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
             @endforeach
         </select>
         @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
     </div>
 
+    {{-- delete: oldテンプレートで使ってないが、learningtasks_posts_tagsテーブル削除に伴いコメントアウト
     <div class="form-group">
         <label class="control-label">タグ</label>
         <input type="text" name="tags" value="{{old('tags', $learningtasks_posts_tags)}}" class="form-control">
         @if ($errors && $errors->has('tags')) <div class="text-danger">{{$errors->first('tags')}}</div> @endif
         <small class="form-text text-muted">カンマ区切りで複数指定可能</small>
     </div>
+    --}}
 
     <div class="form-group">
         <div class="row">
@@ -127,7 +129,7 @@
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($learningtasks_posts->id))

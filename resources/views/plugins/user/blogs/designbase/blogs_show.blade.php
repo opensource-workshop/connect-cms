@@ -15,6 +15,10 @@
         {{-- 投稿日時 --}}
         <p>
         {{$post->posted_at->format('Y/m/d')}}
+        {{-- 投稿者名 --}}
+        @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
+            [{{$post->created_name}}]
+        @endif
         </p>
 
         {{-- カテゴリ --}}

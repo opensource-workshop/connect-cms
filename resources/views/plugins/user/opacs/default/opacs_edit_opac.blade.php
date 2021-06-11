@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -87,7 +87,8 @@
         <div class="{{$frame->getSettingInputClass(true)}} row">
             <div class="mb-0 col-12">
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('lent_setting', $opac->lent_setting) == '0')
+                    @if (old('lent_setting', $opac->lent_setting) == null ||
+                        old('lent_setting', $opac->lent_setting) == '0')
                         <input type="radio" value="0" id="lent_setting0" name="lent_setting" class="custom-control-input" checked="checked">
                     @else
                         <input type="radio" value="0" id="lent_setting0" name="lent_setting" class="custom-control-input">
@@ -165,7 +166,8 @@
         <div class="{{$frame->getSettingInputClass(true)}} row">
             <div class="mb-0 col-12">
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('lent_limit', $opac->lent_limit) == '0')
+                    @if (old('lent_limit', $opac->lent_limit) == null ||
+                        old('lent_limit', $opac->lent_limit) == '0')
                         <input type="radio" value="0" id="lent_limit0" name="lent_limit" class="custom-control-input" checked="checked">
                     @else
                         <input type="radio" value="0" id="lent_limit0" name="lent_limit" class="custom-control-input">
@@ -233,10 +235,10 @@
         <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-                <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}'">
+                <button type="button" class="btn btn-secondary mr-3" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </button>
-                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
                     @if (empty($opac) || $create_flag)
                         登録確定
@@ -260,14 +262,14 @@
     </div>
 </form>
 
-<div id="collapse{{$opac_frame->id}}" class="collapse" style="margin-top: 8px;">
-    <div class="panel panel-danger">
-        <div class="panel-body">
+<div id="collapse{{$opac_frame->id}}" class="collapse">
+    <div class="card border-danger">
+        <div class="card-body">
             <span class="text-danger">OPACを削除します。<br>このOPACに登録した書誌情報も削除され、元に戻すことはできないため、よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac_frame->opacs_id}}#frame-{{$frame->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

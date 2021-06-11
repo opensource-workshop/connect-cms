@@ -4,11 +4,11 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
-     {{-- プラグイン側のフレームメニュー --}}
+    {{-- プラグイン側のフレームメニュー --}}
     @include('plugins.user.reservations.reservations_frame_edit_tab')
 @endsection
 
@@ -70,31 +70,31 @@
         <div class="table-responsive">
 
             {{-- 予約項目の一覧 --}}
-            <table class="table table-hover">
-            <thead class="thead-light">
-                <tr>
-                    @if (count($columns) > 0)
-                        <th class="text-center" nowrap>表示順</th>
-                        <th class="text-center" nowrap>項目名</th>
-                        <th class="text-center" nowrap>型</th>
-                        <th class="text-center" nowrap>必須 <span class="fas fa-info-circle" data-toggle="tooltip" title="必須項目として指定します。"></th>
-                        <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした項目を非表示にします。"></th>
-                        <th class="text-center" nowrap>詳細</th>
-                        <th class="text-center" nowrap>更新</th>
-                    @endif
-                </tr>
-            </thead>
-            <tbody>
-                {{-- 更新用の行 --}}
-                @foreach($columns as $column)
-                    @include('plugins.user.reservations.default.reservations_columns_edit_row')
-                @endforeach
-                {{-- 新規登録用の行 --}}
-                <tr class="thead-light">
-                    <th colspan="7">【予約項目の追加行】</th>
-                </tr>
-                @include('plugins.user.reservations.default.reservations_columns_edit_row_add')
-            </tbody>
+            <table class="table table-hover table-sm">
+                <thead class="thead-light">
+                    <tr>
+                        @if (count($columns) > 0)
+                            <th class="text-center" nowrap>表示順</th>
+                            <th class="text-center" nowrap>項目名</th>
+                            <th class="text-center" nowrap>型</th>
+                            <th class="text-center" nowrap>必須 <span class="fas fa-info-circle" data-toggle="tooltip" title="必須項目として指定します。"></th>
+                            <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした項目を非表示にします。"></th>
+                            <th class="text-center" nowrap>詳細</th>
+                            <th class="text-center" nowrap>更新</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    {{-- 更新用の行 --}}
+                    @foreach($columns as $column)
+                        @include('plugins.user.reservations.default.reservations_columns_edit_row')
+                    @endforeach
+                    {{-- 新規登録用の行 --}}
+                    <tr class="thead-light">
+                        <th colspan="7">【予約項目の追加行】</th>
+                    </tr>
+                    @include('plugins.user.reservations.default.reservations_columns_edit_row_add')
+                </tbody>
             </table>
         </div>
         {{-- エラーメッセージエリア --}}

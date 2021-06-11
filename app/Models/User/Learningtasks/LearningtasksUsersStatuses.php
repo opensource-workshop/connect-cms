@@ -4,10 +4,8 @@ namespace App\Models\User\Learningtasks;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Uploads;
-use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 use App\Userable;
 
 class LearningtasksUsersStatuses extends Model

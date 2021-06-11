@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Opac・プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -26,7 +26,7 @@
         <div class="row">
             <div class="col-sm-8">
                 <div class="input-group date">
-                    <input type="text" name="keyword" value="{{Session::get('search_keyword')}}" class="form-control" placeholder="キーワード検索">
+                    <input type="text" name="keyword" value="{{Session::get('search_keyword.'.$frame_id)}}" class="form-control" placeholder="キーワード検索">
                     <span class="input-group-btn">
                         <button type="submit" class="btn btn-primary"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
                     </span>
@@ -50,8 +50,8 @@
                         </button>
                     </p>
                 @else
-                    <div class="panel panel-default">
-                        <div class="panel-body bg-danger">
+                    <div class="card border">
+                        <div class="card-body bg-danger">
                             <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するOPACを選択するか、作成してください。</p>
                         </div>
                     </div>
@@ -219,8 +219,8 @@
             <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="fas fa-plus"></i> 新規登録</button>
         </p>
     @else
-        <div class="panel panel-default">
-            <div class="panel-body bg-danger">
+        <div class="card border">
+            <div class="card-body bg-danger">
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するOPACを選択するか、作成してください。</p>
             </div>
         </div>

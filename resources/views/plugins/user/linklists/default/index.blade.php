@@ -15,7 +15,7 @@
     {{-- バケツなし --}}
     <div class="card border-danger">
         <div class="card-body">
-            <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するリンクリストを選択するか、作成してください。</p>
+            <p class="text-center cc_margin_bottom_0">{{ __('messages.empty_bucket', ['plugin_name' => 'リンクリスト']) }}</p>
         </div>
     </div>
 @endif

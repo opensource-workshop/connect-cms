@@ -41,15 +41,15 @@
 </script>
     {{-- 時間 --}}
     <div class="input-group date" id="{{ $database_obj->id }}" data-target-input="nearest">
-        <input 
-            type="text" 
-            name="databases_columns_value[{{ $database_obj->id }}]" 
+        <input
+            type="text"
+            name="databases_columns_value[{{ $database_obj->id }}]"
             value="{{old('databases_columns_value.'.$database_obj->id, $value)}}"
-            class="form-control datetimepicker-input" 
+            class="form-control datetimepicker-input"
             data-target="#{{ $database_obj->id }}"
         >
         <div class="input-group-append" data-target="#{{ $database_obj->id }}" data-toggle="datetimepicker">
-            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+            <div class="input-group-text"><i class="far fa-clock"></i></div>
         </div>
     </div>
 @if ($errors && $errors->has("databases_columns_value.$database_obj->id"))

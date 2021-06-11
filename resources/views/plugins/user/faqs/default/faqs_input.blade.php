@@ -38,7 +38,7 @@
 
     <div class="form-group">
         <label class="control-label">タイトル <label class="badge badge-danger">必須</label></label>
-        <textarea name="post_title">{!!old('post_title', $faqs_posts->post_title)!!}</textarea>
+        <input type="text" name="post_title" value="{{old('post_title', $faqs_posts->post_title)}}" class="form-control">
         @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
     </div>
 
@@ -54,7 +54,7 @@
         <div class="input-group date" id="posted_at" data-target-input="nearest">
             <input type="text" name="posted_at" value="{{old('posted_at', $faqs_posts->posted_at)}}" class="form-control datetimepicker-input  col-md-3" data-target="#posted_at">
             <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
-                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                <div class="input-group-text"><i class="far fa-clock"></i></div>
             </div>
         </div>
         @if ($errors && $errors->has('posted_at')) <div class="text-danger">{{$errors->first('posted_at')}}</div> @endif
@@ -80,9 +80,13 @@
     </div>
 
     <div class="form-group">
-        <label class="control-label">表示SEQ</label>
+        <label class="control-label">表示順</label>
         <input type="text" name="display_sequence" value="{{old('display_sequence', $faqs_posts->display_sequence)}}" class="form-control">
         @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
+        <small class="text-muted">
+            ※ FAQ設定の「順序条件」で「指定順」を指定した場合のみ、表示順にFAQが表示されます。<br />
+            ※ 未指定時は最後に表示されるように自動登録します。
+        </small>
     </div>
 
     <div class="form-group">
@@ -90,7 +94,7 @@
         <select class="form-control" name="categories_id" class="form-control">
             <option value=""></option>
             @foreach($faqs_categories as $category)
-            <option value="{{$category->id}}" @if(Input::old('category', $faqs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+            <option value="{{$category->id}}" @if(old('category', $faqs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
             @endforeach
         </select>
         @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
@@ -112,7 +116,7 @@
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($faqs_posts->id))

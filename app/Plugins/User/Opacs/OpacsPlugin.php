@@ -2,20 +2,19 @@
 
 namespace App\Plugins\User\Opacs;
 
-use SimpleXMLElement;
+// use SimpleXMLElement;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 
-use DB;
-
 use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
+// use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Opacs\Opacs;
@@ -95,7 +94,7 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  書誌データ取得
+     * 書誌データ取得
      */
     private function getBook($request, $opacs_books)
     {
@@ -164,11 +163,11 @@ class OpacsPlugin extends UserPluginBase
 
     /* 画面アクション関数 */
 
-   /**
-    * lent_flag        = 9:貸出終了(貸し出し可能)、1:貸し出し中、2:貸し出しリクエスト受付中
-    * scheduled_return = 返却予定日(日付)
-    * lent_at          = 貸し出し日時(日時)
-    */
+    /**
+     * lent_flag        = 9:貸出終了(貸し出し可能)、1:貸し出し中、2:貸し出しリクエスト受付中
+     * scheduled_return = 返却予定日(日付)
+     * lent_at          = 貸し出し日時(日時)
+     */
 
     /**
      *  書誌データ取得関数
@@ -270,7 +269,9 @@ class OpacsPlugin extends UserPluginBase
     {
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
-        if (empty($opac_frame)) {
+        // bugfix: フレームはあっても、既に削除したOpac（$opac_frame->bucket_id = null）は表示しない
+        // if (empty($opac_frame)) {
+        if (empty($opac_frame) || empty($opac_frame->bucket_id)) {
             return;
         }
 
@@ -356,15 +357,17 @@ class OpacsPlugin extends UserPluginBase
     {
         // ブログ＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
-        if (empty($opac_frame)) {
+        // bugfix: フレームはあっても、既に削除したOpac（$opac_frame->bucket_id = null）は表示しない
+        // if (empty($opac_frame)) {
+        if (empty($opac_frame) || empty($opac_frame->bucket_id)) {
             return;
         }
 
         // Page データ
-        $page = Page::where('id', $page_id)->first();
+        // $page = Page::where('id', $page_id)->first();
 
         // 検索キーワード
-        $keyword = $request->session()->get('search_keyword');
+        $keyword = $request->session()->get('search_keyword.'.$frame_id);
 
         // データ取得（1ページの表示件数指定）
         if (empty($opac_frame->opacs_id)) {
@@ -403,12 +406,11 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'opacs', [
+        return $this->view('opacs', [
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_books,
-            ]
-        );
+            'messages' => null,
+        ]);
     }
 
     /**
@@ -609,7 +611,7 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $opacs_id)
     {
@@ -618,24 +620,28 @@ class OpacsPlugin extends UserPluginBase
             // 書誌データを削除する。
             OpacsBooks::where('opacs_id', $opacs_id)->delete();
 
-            // OPAC設定を削除する。
-            Opacs::destroy($opacs_id);
-
-            // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
-            $frame = Frame::where('id', $frame_id)->first();
+            // change: backets は $frame->bucket_id で消さない。選択したOpacsのbucket_idで消す
+            $opacs = Opacs::find($opacs_id);
+            // // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
+            // $frame = Frame::where('id', $frame_id)->first();
 
             // FrameのバケツIDの更新
-            Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
+            Frame::where('bucket_id', $opacs->bucket_id)->update(['bucket_id' => null]);
 
             // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            // Buckets::where('id', $frame->bucket_id)->delete();
+            Buckets::destroy($opacs->bucket_id);
+
+            // OPAC設定を削除する。
+            Opacs::destroy($opacs_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
@@ -951,9 +957,9 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  メール送信
+     * メール送信
      */
-    public static function sendMail($opacs, $subject, $content)
+    public static function sendMailOpac($opacs, $subject, $content)
     {
         if (empty($opacs)) {
             return;
@@ -1176,7 +1182,7 @@ class OpacsPlugin extends UserPluginBase
         $content .= '返却期限日：' . $return_scheduled . "\n";
 
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
-        self::sendMail($opacs, $subject, $content);
+        self::sendMailOpac($opacs, $subject, $content);
 
         // MyOpac画面へ遷移
         return $this->index($request, $page_id, $frame_id, null, ['貸し出し処理が完了しました。']);
@@ -1246,7 +1252,7 @@ class OpacsPlugin extends UserPluginBase
         $content .= '連絡先メールアドレス：' . $request->req_email . "\n";
 
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
-        self::sendMail($opacs, $subject, $content);
+        self::sendMailOpac($opacs, $subject, $content);
 
         // 郵送貸し出しリクエスト処理後は詳細表示処理を呼ぶ。(更新成功時もエラー時も同じ)
         return $this->show($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
@@ -1375,7 +1381,7 @@ class OpacsPlugin extends UserPluginBase
         $content .= '返却日：' . $books_lents->return_date . "\n";
 
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
-        self::sendMail($opacs, $subject, $content);
+        self::sendMailOpac($opacs, $subject, $content);
 
         // MyOpac画面へ遷移
         //return redirect($this->page->permanent_link)->with('flash_message_'.$frame_id, '投稿が完了しました');
@@ -1394,7 +1400,7 @@ class OpacsPlugin extends UserPluginBase
         $request->flash();
 
         // キーワードをセッションに保存しておく。
-        $request->session()->put('search_keyword', $request->keyword);
+        $request->session()->put('search_keyword.'.$frame_id, $request->keyword);
 
         // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
         return $this->index($request, $page_id, $frame_id);
@@ -1409,7 +1415,7 @@ class OpacsPlugin extends UserPluginBase
         $request->flash();
 
         // キーワードをセッションに保存しておく。
-        $request->session()->forget('search_keyword');
+        $request->session()->forget('search_keyword.'.$frame_id);
 
         // 検索はフォームでredirect指定しているので、ここは無効になるけれども、一応置いている。
         return $this->index($request, $page_id, $frame_id);

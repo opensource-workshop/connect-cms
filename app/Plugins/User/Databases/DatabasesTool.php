@@ -286,7 +286,8 @@ class DatabasesTool
      */
     public static function appendSearchColumns($where_in_colum_name, $inputs_query, $search_columns)
     {
-        foreach ($search_columns as $search_column) {
+        // bugfix: $search_columns は 絞り込み項目（単一・複数・リスト）がない場合、nullになるため、arrayにキャスト
+        foreach ((array)$search_columns as $search_column) {
             if ($search_column && $search_column['columns_id'] && $search_column['value']) {
                 $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_column) {
                         // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。

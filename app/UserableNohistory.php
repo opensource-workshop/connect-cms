@@ -25,7 +25,7 @@ trait UserableNohistory
     public static function bootUserableNohistory()
     {
         /**
-         *  オブジェクトcreate 時のイベントハンドラ
+         * オブジェクトcreate 時のイベントハンドラ
          */
         static::creating(function (Model $model) {
             // 未ログインなら処理しない。（未ログインで登録する処理、フォーム等に対応）
@@ -38,7 +38,7 @@ trait UserableNohistory
         });
 
         /**
-         *  オブジェクトupdate 時のイベントハンドラ
+         * オブジェクトupdate 時のイベントハンドラ
          */
         static::updating(function (Model $model) {
             // 未ログインなら処理しない
@@ -51,7 +51,25 @@ trait UserableNohistory
         });
 
         /**
-         *  オブジェクトdelete 時のイベントハンドラ
+         * オブジェクトupdate or save 時のイベントハンドラ
+         */
+        static::saving(function (Model $model) {
+            // 未ログインなら処理しない
+            if (! Auth::user()) {
+                return;
+            }
+
+            // 初回確定日時カラム（first_committed_at）と status カラムがある場合、行を表すレコードとみなし、
+            // status = 0（確定）の場合、現在日付を入れる。
+            if (Schema::hasColumn($model->getTable(), 'first_committed_at') && Schema::hasColumn($model->getTable(), 'status') && $model->status == 0) {
+                $model->first_committed_at = date('Y-m-d H:i:s');
+            }
+        });
+
+        /**
+         * オブジェクトdelete 時のイベントハンドラ
+         * ※ deletingイベントは、Model->delete() or Model->destroy() で動作します。
+         *    Collection->delete()では動作しないので注意してください。
          */
         static::deleting(function (Model $model) {
             // 未ログインなら処理しない

@@ -73,12 +73,19 @@
             <a href="{{url('/')}}/manage/message" class="list-group-item">メッセージ管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'auth')
+            <a href="{{url('/')}}/manage/auth" class="list-group-item active">外部認証</a>
+        @else
+            <a href="{{url('/')}}/manage/auth" class="list-group-item">外部認証</a>
+        @endif
+    @endif
     <div class="list-group-item text-secondary bg-light">データ管理系</div>
     @if (Auth::user()->can('admin_site'))
         @if (isset($plugin_name) && $plugin_name == 'uploadfile')
-            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item active">アップロードファイル管理</a>
+            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item active">アップロードファイル</a>
         @else
-            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item">アップロードファイル管理</a>
+            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item">アップロードファイル</a>
         @endif
     @endif
     @if (Auth::user()->can('admin_site'))
@@ -100,6 +107,27 @@
             <a href="{{url('/')}}/manage/code" class="list-group-item active">コード管理</a>
         @else
             <a href="{{url('/')}}/manage/code" class="list-group-item">コード管理</a>
+        @endif
+    @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'log')
+            <a href="{{url('/')}}/manage/log" class="list-group-item active">ログ管理</a>
+        @else
+            <a href="{{url('/')}}/manage/log" class="list-group-item">ログ管理</a>
+        @endif
+    @endif
+    @if (Auth::user()->can('admin_site'))
+        @if (isset($plugin_name) && $plugin_name == 'holiday')
+            <a href="{{url('/')}}/manage/holiday" class="list-group-item active">祝日管理</a>
+        @else
+            <a href="{{url('/')}}/manage/holiday" class="list-group-item">祝日管理</a>
+        @endif
+    @endif
+    @if (Auth::user()->can('admin_system'))
+        @if (isset($plugin_name) && $plugin_name == 'migration')
+            <a href="{{url('/')}}/manage/migration" class="list-group-item active">他システム移行</a>
+        @else
+            <a href="{{url('/')}}/manage/migration" class="list-group-item">他システム移行</a>
         @endif
     @endif
 </div>

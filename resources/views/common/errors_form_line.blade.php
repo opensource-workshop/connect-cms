@@ -1,9 +1,9 @@
 @if ($errors && count($errors) > 0)
     <!-- Form Error List -->
     <div class="alert alert-danger">
-        <strong>エラーがあります。</strong>
+        <strong>{{ __('messages.there_is_an_error') }}</strong>
         <ul>
-            エラーの詳細は各項目のメッセージを参照してください。
+            {{ __('messages.there_is_an_error_refer_to_the_message_of_each_item') }}
 {{--
             @foreach ($errors->all() as $error)
                 <li>{{ $error }}</li>

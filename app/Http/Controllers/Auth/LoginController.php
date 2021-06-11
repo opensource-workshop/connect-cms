@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Providers\RouteServiceProvider;
 use App\Traits\ConnectCommonTrait;
 
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -12,6 +13,9 @@ use Illuminate\Http\Request;
 
 // ログインエラーをCatch するために追加。
 use Illuminate\Validation\ValidationException;
+
+use App\Models\Core\Configs;
+use App\Enums\BaseLoginRedirectPage;
 
 class LoginController extends Controller
 {
@@ -36,8 +40,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/';
-    //protected $redirectTo = '/home';
+    protected $redirectTo = RouteServiceProvider::HOME;
 
     /**
      * Create a new controller instance.
@@ -46,6 +49,7 @@ class LoginController extends Controller
      */
     public function __construct()
     {
+        // exceptで指定されたメソッドは除外する
         $this->middleware('guest')->except('logout');
     }
 
@@ -67,41 +71,143 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // 利用可能かチェック
-        if (!$this->checkUserStstus($request, $error_msg)) {
-            throw ValidationException::withMessages([
-                $this->username() => [$error_msg],
-            ]);
-        }
+// 外部認証を行う場合、先に利用可能かチェックをするとまだユーザー登録されていない場合エラーになる為、チェック処理は後にもっていく
+//        // 利用可能かチェック
+//        if (!$this->checkUserStstus($request, $error_msg)) {
+//            throw ValidationException::withMessages([
+//                $this->username() => [$error_msg],
+//            ]);
+//        }
 
+        // 外部認証を使用
+        $use_auth_method = Configs::where('name', 'use_auth_method')->first();
+
+        if (empty($use_auth_method) || $use_auth_method->value == '0') {
+            // 外部認証を使用しない(通常)
+            //
+            // 以下はもともとのAuthenticatesUsers@login 処理
+            //return $this->laravelLogin($request);
+
+            // 利用可能かチェック
+            if (!$this->checkUserStatus($request, $error_msg)) {
+                throw ValidationException::withMessages([
+                    $this->username() => [$error_msg],
+                ]);
+            }
+
+            try {
+                return $this->laravelLogin($request);
+            } catch (ValidationException $e) {
+                // ログインエラーの場合、NetCommons2 からの移行ユーザとして再度認証する。
+                // bugfix
+                // $this->authNetCommons2Password($request);
+                $redirectNc2 = $this->authNetCommons2Password($request);
+                if (!empty($redirectNc2)) {
+                    return $redirectNc2;
+                }
+
+                // ここに来るということは、NetCommons2 からの移行パスワードでの認証もNG
+                throw $e;
+            }
+        } else {
+            // 外部認証を使用する
+            //
+            // 外部認証の確認と外部認証の場合は関数側で認証してトップページを呼ぶ
+            // Shibboleth認証の場合は戻ってくる。
+            //
+            // bugfix: $this->authMethod($request) メソッド内の return redirect("/"); は、すぐさまリダイレクトするのではなく、RedirectResponseオブジェクトを返して、後続は続行される。
+            // RedirectResponseオブジェクトありの場合は、ちゃんとreturnしてあげないと、1度目は処理されず白画面->同じURLをreloadすると2度目でログインとバグが出る。
+            // $this->authMethod($request);
+            $redirect = $this->authMethod($request);
+            if (!empty($redirect)) {
+                return $redirect;
+            }
+
+            // 利用可能かチェック
+            if (!$this->checkUserStatus($request, $error_msg)) {
+                throw ValidationException::withMessages([
+                    $this->username() => [$error_msg],
+                ]);
+            }
+
+            // 外部認証と併せて、通常ログインも使用
+            $configs_use_normal_login_along_with_auth_method = Configs::where('name', 'use_normal_login_along_with_auth_method')->first();
+            $use_normal_login_along_with_auth_method = empty($configs_use_normal_login_along_with_auth_method) ? null : $configs_use_normal_login_along_with_auth_method->value;
+
+            if ($use_normal_login_along_with_auth_method) {
+                // 通常ログインも使用する
+                try {
+                    // 以下はもともとのAuthenticatesUsers@login 処理
+                    return $this->laravelLogin($request);
+                } catch (ValidationException $e) {
+                    // ログインエラーの場合、NetCommons2 からの移行ユーザとして再度認証する。
+                    $redirectNc2 = $this->authNetCommons2Password($request);
+                    if (!empty($redirectNc2)) {
+                        return $redirectNc2;
+                    }
+
+                    // ここに来るということは、NetCommons2 からの移行パスワードでの認証もNG
+                    throw $e;
+                }
+            } else {
+                // 通常ログインを使用しない
+                //
+                // ここに来るということは、ログインエラー
+                // NetCommons2認証で通常ログインを使用しない場合、NC2パスワード間違いでここに到達する。
+                // Shibboleth認証で通常ログインを使用しない場合、通常ログインは無条件でここに到達する。
+                $error_msg = "ログインできません。";
+                throw ValidationException::withMessages([
+                    $this->username() => [$error_msg],
+                ]);
+            }
+        }
+    }
+
+    /**
+     * shibboleth認証
+     */
+    public function shibboleth(Request $request)
+    {
         // 外部認証の確認と外部認証の場合は関数側で認証してトップページを呼ぶ
         // 外部認証でない場合は戻ってくる。
         //
-        // bugfix: $this->authMethod($request) メソッド内の return redirect("/"); は、すぐさまリダイレクトするのではなく、RedirectResponseオブジェクトを返して、後続は続行される。
+        // メソッド内の return redirect("/"); は、すぐさまリダイレクトするのではなく、RedirectResponseオブジェクトを返して、後続は続行される。
+        // RedirectResponseオブジェクトなしの場合は、shibboleth認証設定なしとしてエラーにする。
         // RedirectResponseオブジェクトありの場合は、ちゃんとreturnしてあげないと、1度目は処理されず白画面->同じURLをreloadすると2度目でログインとバグが出る。
-        // $this->authMethod($request);
-        $redirect = $this->authMethod($request);
-        if (!empty($redirect)) {
-            return $redirect;
+        $redirect = $this->authMethodShibboleth($request);
+        if (empty($redirect)) {
+            abort(403, "外部認証を使用しないため、表示できません。");
         }
+        return $redirect;
+    }
 
-        // 以下はもともとのAuthenticatesUsers@login 処理
-        //return $this->laravelLogin($request);
+    /**
+     * Show the application's login form.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function showLoginForm()
+    {
+        // ログイン後に移動するページ 設定
+        $configs = Configs::where('category', 'general')->get();
+        $base_login_redirect_previous_page = Configs::getConfigsValue($configs, 'base_login_redirect_previous_page');
 
-        // ログインエラーの場合、NetCommons2 からの移行ユーザとして再度認証する。
-        try {
-            return $this->laravelLogin($request);
-        } catch (ValidationException $e) {
-            // 認証OK なら関数内でリダイレクトする。
-            // bugfix
-            // $this->authNetCommons2Password($request);
-            $redirectNc2 = $this->authNetCommons2Password($request);
-            if (!empty($redirectNc2)) {
-                return $redirectNc2;
+        if ($base_login_redirect_previous_page == BaseLoginRedirectPage::previous_page) {
+            // ログイン時に元いたページに遷移
+            if (array_key_exists('HTTP_REFERER', $_SERVER)) {
+                $path = parse_url($_SERVER['HTTP_REFERER']); // URLを分解
+                if (array_key_exists('host', $path)) {
+                    if ($path['host'] == $_SERVER['HTTP_HOST']) { // ホスト部分が自ホストと同じ
+                        session(['url.intended' => $_SERVER['HTTP_REFERER']]);
+                    }
+                }
             }
-    
-            // ここに来るということは、NetCommons2 認証もNG
-            throw $e;
+        } elseif ($base_login_redirect_previous_page == BaseLoginRedirectPage::specified_page) {
+            // 指定したページに遷移
+            $base_login_redirect_select_page = Configs::getConfigsValue($configs, 'base_login_redirect_select_page', RouteServiceProvider::HOME);
+            session(['url.intended' => $base_login_redirect_select_page]);
         }
+
+        return view('auth.login');
     }
 }

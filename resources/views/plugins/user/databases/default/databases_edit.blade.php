@@ -18,8 +18,7 @@
     @auth
         @if (empty($databases_id))
             <div class="alert alert-warning mt-2">
-                <i class="fas fa-exclamation-circle"></i>
-                データベース選択画面から選択するか、データベース新規作成で作成してください。
+                <i class="fas fa-exclamation-circle"></i> データベース選択画面から選択するか、データベース新規作成で作成してください。
             </div>
         @else
             <script type="text/javascript">
@@ -116,7 +115,7 @@
 
                     <div class="table-responsive">
                         {{-- 項目の一覧 --}}
-                        <table class="table table-hover">
+                        <table class="table table-hover table-sm">
                             <thead class="thead-light">
                                 <tr>
                                     <th class="text-center text-nowrap">表示順</th>
