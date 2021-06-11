@@ -62,7 +62,7 @@
         </div>
 
         <div class="form-group form-row">
-            <label for="buckets_id" class="col-md-3 col-form-label text-md-right">CSVファイル <span class="badge badge-danger">必須</span></label>
+            <label class="col-md-3 col-form-label text-md-right">CSVファイル <span class="badge badge-danger">必須</span></label>
             <div class="col-md-9">
                 <div class="custom-file">
                     <input type="file" class="custom-file-input" id="users_csv" name="users_csv">
@@ -77,7 +77,7 @@
         </div>
 
         <div class="form-group form-row">
-            <label for="buckets_id" class="col-md-3 col-form-label text-md-right">文字コード</label>
+            <label class="col-md-3 col-form-label text-md-right">文字コード</label>
             <div class="col-md-9">
                 <select name="character_code" class="form-control">
                     @foreach (CsvCharacterCode::getSelectMembers() as $character_code => $character_code_display)
