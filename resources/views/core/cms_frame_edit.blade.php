@@ -147,6 +147,9 @@
                         <option value="{{$template_name}}"@if($frame->template == $template_name) selected @endif>{{$template_key}}</option>
                     @endforeach
                 </select>
+                @if ($frame->plugin_name == 'menus')
+                    <small class="text-muted">※ 「タブ」「ドロップダウン」「マウスオーバードロップダウン」系テンプレートは、スマートフォンでは表示されません。</small>
+                @endif
             </div>
         </div>
 
