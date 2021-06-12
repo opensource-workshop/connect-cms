@@ -13,31 +13,33 @@ class Configs extends Model
      */
     protected $fillable = ['name', 'value', 'category', 'additional1', 'additional2', 'additional3', 'additional4', 'additional5'];
 
-    /**
-     * 値から改行を取りにぞいたものを返す
-     */
-    public function getNobrValue()
-    {
-        return str_replace("\r\n", "", $this->value);
-    }
+    // move: App\Utilities\String\StringUtils::getNobrValue() に移動
+    // /**
+    //  * 値から改行を取りにぞいたものを返す
+    //  */
+    // public function getNobrValue()
+    // {
+    //     return str_replace("\r\n", "", $this->value);
+    // }
 
-    /**
-     * name をキーにした配列で返す。
-     */
-    public static function getValues($name = null)
-    {
-        if (empty($name)) {
-            $configs = Configs::get();
-        } else {
-            $configs = Configs::where('name', $name)->get();
-        }
+    // delete: どこからも呼び出されてないためコメントアウト
+    // /**
+    //  * name をキーにした配列で返す。
+    //  */
+    // public static function getValues($name = null)
+    // {
+    //     if (empty($name)) {
+    //         $configs = Configs::get();
+    //     } else {
+    //         $configs = Configs::where('name', $name)->get();
+    //     }
 
-        // Config データの変換
-        foreach ($configs as $config) {
-            $configs_array[$config->name] = $config->value;
-        }
-        return $configs_array;
-    }
+    //     // Config データの変換
+    //     foreach ($configs as $config) {
+    //         $configs_array[$config->name] = $config->value;
+    //     }
+    //     return $configs_array;
+    // }
 
     /**
      * 使用する外部認証 取得
@@ -86,5 +88,17 @@ class Configs extends Model
         // oldの値があれば、その値を使う
         $value = old($key, $value);
         return $value;
+    }
+
+    /**
+     * 設定の任意クラス(値)を抽出（カンマ設定時はランダムで１つ設定）
+     */
+    public static function getConfigsRandValue($configs, $key, $default = null)
+    {
+        $value = self::getConfigsValue($configs, $key, $default);
+
+        $values = explode(',', $value);
+        $choise_value = $values[array_rand($values)];
+        return $choise_value;
     }
 }

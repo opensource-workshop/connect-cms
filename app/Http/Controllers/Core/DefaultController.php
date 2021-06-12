@@ -31,7 +31,6 @@ use App\Traits\ConnectCommonTrait;
  */
 class DefaultController extends ConnectController
 {
-
     use ConnectCommonTrait;
 
     /**
@@ -86,7 +85,7 @@ class DefaultController extends ConnectController
         $plugins = $this->getPlugins();
 
         // Config
-        $configs_array = $this->getConfigs('array');
+        // $configs_array = $this->getConfigs('array');
 
         // view の場所を変更するテスト
         //$plugin_instances = ['contents' => new $class_name("User", "contents")];
@@ -104,7 +103,7 @@ class DefaultController extends ConnectController
             'themes'            => $themes,
             'action_core_frame' => $action_core_frame,
             'plugins'           => $plugins,
-            'configs_array'     => $configs_array,
+            // 'configs_array'     => $configs_array,
         ]);
     }
 
@@ -371,7 +370,7 @@ class DefaultController extends ConnectController
         $plugins = $this->getPlugins();
 
         // Config
-        $configs_array = $this->getConfigs('array');
+        // $configs_array = $this->getConfigs('array');
 
         // メインページを呼び出し
         // 各フレーム内容の表示はメインページから行う。
@@ -390,7 +389,7 @@ class DefaultController extends ConnectController
             'themes'            => $themes,
             'action_core_frame' => $action_core_frame,
             'plugins'           => $plugins,
-            'configs_array'     => $configs_array,
+            // 'configs_array'     => $configs_array,
         ]);
 
         return;

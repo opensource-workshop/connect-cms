@@ -41,23 +41,34 @@
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
+{{--
 @if(isset($configs_array['tracking_code']))
     {!!$configs_array['tracking_code']->value!!}
+@endif
+--}}
+@if (Configs::getConfigsValue($cc_configs, 'tracking_code'))
+    {!!Configs::getConfigsValue($cc_configs, 'tracking_code')!!}
 @endif
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+{{--
 @if(isset($configs_array['description']))
     <meta name="description" content="{{$configs_array['description']->getNobrValue()}}">
 @endif
+--}}
+@if (Configs::getConfigsValue($cc_configs, 'description'))
+    <meta name="description" content="{{ StringUtils::getNobrValue(Configs::getConfigsValue($cc_configs, 'description')) }}">
+@endif
     {{-- Page --}}
-@if(isset($page))
+@if (isset($page))
     <meta name="_page_id" content="{{$page->id}}">
 @else
     <meta name="_page_id" content="0">
 @endif
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
+    {{-- cc_configsのセット場所は、app\Http\Middleware\ConnectInit::handle(). 管理画面・一般画面全てのviewで参照できる --}}
     <title>@if(isset($page)){{$page->page_name}} | @endif{{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}</title>
 
     <!-- Styles -->
@@ -126,7 +137,8 @@
     </script>
 
     <!-- Favicon -->
-    @if (isset($configs_array) && isset($configs_array['favicon']))
+    {{--  @if (isset($configs_array) && isset($configs_array['favicon'])) --}}
+    @if (Configs::getConfigsValue($cc_configs, 'favicon'))
         <link href="{{url('/')}}/uploads/favicon/favicon.ico" rel="SHORTCUT ICON" />
     @endif
 
@@ -149,11 +161,12 @@
 </head>
 @php
 // body任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-$body_optional_class = null;
-if(isset($configs_array['body_optional_class'])){
-    $classes = explode(',', $configs_array['body_optional_class']->value);
-    $body_optional_class = $classes[array_rand($classes)];
-}
+// $body_optional_class = null;
+// if (isset($configs_array['body_optional_class'])) {
+//     $classes = explode(',', $configs_array['body_optional_class']->value);
+//     $body_optional_class = $classes[array_rand($classes)];
+// }
+$body_optional_class = Configs::getConfigsRandValue($cc_configs, 'body_optional_class');
 
 // [TODO] $configs, $configs_array はどちらもconfigsの値をもっていて重複しているため、今後整理予定.
 //        本来configsはarray型にする必要ないが、開発初期はわからずarray型にしていた名残。
@@ -180,9 +193,10 @@ if(isset($configs_array['body_optional_class'])){
 $base_header_font_color_class = Configs::getConfigsValue($cc_configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 
 // ヘッダーバー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-$base_header_optional_class = Configs::getConfigsValue($cc_configs, 'base_header_optional_class', null);
-$base_header_classes = explode(',', $base_header_optional_class);
-$base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
+// $base_header_optional_class = Configs::getConfigsValue($cc_configs, 'base_header_optional_class', null);
+// $base_header_classes = explode(',', $base_header_optional_class);
+// $base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
+$base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_header_optional_class');
 
 // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
 // \Log::debug(var_export($configs, true));
@@ -434,13 +448,18 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
     {{-- 初回確認メッセージの表示モーダル --}}
     @php
         // Configsテーブルから設定値を取得
-        $message_first_show_type = isset($configs_array['message_first_show_type']) ? $configs_array['message_first_show_type']->value : 0;
-        $message_first_permission_type = isset($configs_array['message_first_permission_type']) ? $configs_array['message_first_permission_type']->value : 0;
-        $message_first_exclued_urls = isset($configs_array['message_first_exclued_url']) ? explode(',' ,$configs_array['message_first_exclued_url']->value) : array();
-        $message_first_optional_class = isset($configs_array['message_first_optional_class']) ? $configs_array['message_first_optional_class']->value : '';
+        // $message_first_show_type = isset($configs_array['message_first_show_type']) ? $configs_array['message_first_show_type']->value : 0;
+        // $message_first_permission_type = isset($configs_array['message_first_permission_type']) ? $configs_array['message_first_permission_type']->value : 0;
+        // $message_first_exclued_urls = isset($configs_array['message_first_exclued_url']) ? explode(',' ,$configs_array['message_first_exclued_url']->value) : array();
+        // $message_first_optional_class = isset($configs_array['message_first_optional_class']) ? $configs_array['message_first_optional_class']->value : '';
+        $message_first_show_type = Configs::getConfigsValue($cc_configs, 'message_first_show_type', 0);
+        $message_first_permission_type = Configs::getConfigsValue($cc_configs, 'message_first_permission_type', 0);
+        $message_first_exclued_urls = Configs::getConfigsValue($cc_configs, 'message_first_exclued_url', []);
+        $message_first_optional_class = Configs::getConfigsValue($cc_configs, 'message_first_optional_class', '');
+        // dd($message_first_show_type, $message_first_permission_type, $message_first_exclued_urls, $message_first_optional_class, !in_array($page->permanent_link ,$message_first_exclued_urls), Cookie::get('connect_cookie_message_first'));
     @endphp
     {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、同意していない（Cookie未セット）場合にメッセージ表示 --}}
-    @if($message_first_show_type == ShowType::show && !in_array($page->permanent_link ,$message_first_exclued_urls) && Cookie::get('connect_cookie_message_first') != 'agreed')
+    @if($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && Cookie::get('connect_cookie_message_first') != 'agreed')
 
         <!-- 初回確認メッセージ表示用のモーダルウィンドウ -->
         <div class="modal {{ $message_first_optional_class }}" id="first_message_modal" tabindex="-1" role="dialog" aria-labelledby="first_message_modal_label" aria-hidden="true" data-backdrop="{{ $message_first_permission_type == PermissionType::not_allowed ? 'static' : 'true' }}">
@@ -448,7 +467,8 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
                 <div class="modal-content">
                     <div class="modal-body">
                         {{-- メッセージ内容 --}}
-                        {!! $configs_array['message_first_content']->value !!}
+                        {{-- $configs_array['message_first_content']->value --}}
+                        {!! Configs::getConfigsValue($cc_configs, 'message_first_content') !!}
                     </div>
                     <div class="modal-footer">
                         <form action="{{url('/core/cookie/setCookieForMessageFirst')}}/{{$page->id}}" name="form_set_cookie" id="form_set_cookie" method="POST">
@@ -456,7 +476,8 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
 
                             {{-- ボタン --}}
                             <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="submit_form_set_cookie();">
-                                {{ $configs_array['message_first_button_name']->value }}
+                                {{-- $configs_array['message_first_button_name']->value --}}
+                                {{ Configs::getConfigsValue($cc_configs, 'message_first_button_name') }}
                             </button>
                         </form>
                     </div>

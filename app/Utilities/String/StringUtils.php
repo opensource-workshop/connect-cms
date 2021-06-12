@@ -91,6 +91,14 @@ class StringUtils
         return $columns_value;
     }
 
+    /**
+     * 値から改行を取りにぞいたものを返す
+     */
+    public static function getNobrValue($value)
+    {
+        return str_replace("\r\n", "", $value);
+    }
+
     // /**
     //  * 検索ワードのパース
     //  */
