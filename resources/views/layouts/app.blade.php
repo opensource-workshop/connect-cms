@@ -176,11 +176,11 @@ if(isset($configs_array['body_optional_class'])){
 // } else {
 //     $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
 // }
-$config_basic_header = Configs::where('category', 'general')->get();
-$base_header_font_color_class = Configs::getConfigsValue($config_basic_header, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
+// $config_basic_header = Configs::where('category', 'general')->get();
+$base_header_font_color_class = Configs::getConfigsValue($cc_configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 
 // ヘッダーバー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-$base_header_optional_class = Configs::getConfigsValue($config_basic_header, 'base_header_optional_class', null);
+$base_header_optional_class = Configs::getConfigsValue($cc_configs, 'base_header_optional_class', null);
 $base_header_classes = explode(',', $base_header_optional_class);
 $base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
 
