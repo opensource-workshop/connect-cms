@@ -126,10 +126,12 @@
 
     <!-- Context -->
     <script>
-    @if (isset($configs) && ($configs['base_mousedown_off'] == '1'))
+    {{-- @if (isset($configs) && ($configs['base_mousedown_off'] == '1')) --}}
+    @if (Configs::getConfigsValue($cc_configs, 'base_mousedown_off') == '1')
         $(document).on('mousedown', 'img', function (e) { e.preventDefault(); });
     @endif
-    @if (isset($configs) && ($configs['base_contextmenu_off'] == '1'))
+    {{-- @if (isset($configs) && ($configs['base_contextmenu_off'] == '1')) --}}
+    @if (Configs::getConfigsValue($cc_configs, 'base_contextmenu_off') == '1')
         $(document).on('contextmenu', 'img', function () { return false; });
     @endif
     </script>
@@ -201,9 +203,12 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 // \Log::debug(var_export($configs_array['base_header_font_color_class'], true));
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
-
+{{--
 @if (Auth::check() || (isset($configs) && isset($configs['base_header_hidden']) && ($configs['base_header_hidden'] != '1')))
 <nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
+--}}
+@if (Auth::check() || Configs::getConfigsValue($cc_configs, 'base_header_hidden') != '1')
+<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand" href="{{ url('/') }}">
         {{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}
@@ -225,12 +230,14 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
+                    {{--
                     @if (isset($configs) &&
                             (!isset($configs['smartphone_menu_template']) ||
                                 (isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
                             )
                         )
-
+                    --}}
+                    @if (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template', '') == '')
                         {{-- 非表示のページは対象外 --}}
                         @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
@@ -250,7 +257,8 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                 </a>
                             </li>
                         @endif
-                    @elseif (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == 'opencurrenttree'))
+                    {{-- @elseif (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == 'opencurrenttree')) --}}
+                    @elseif (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template') == 'opencurrenttree')
 
                         {{-- 非表示のページは対象外 --}}
                         @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
@@ -342,7 +350,8 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
             @endif
 
             @guest
-                @if (isset($configs['base_header_login_link']) && ($configs['base_header_login_link'] == '1'))
+                {{-- @if (isset($configs['base_header_login_link']) && ($configs['base_header_login_link'] == '1')) --}}
+                @if (Configs::getConfigsValue($cc_configs, 'base_header_login_link') == '1')
                     @php
                         // 外部認証設定 取得
                         $auth_method_event = Configs::getAuthMethodEvent();
@@ -354,7 +363,8 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                         <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
                     @endif
                 @endif
-                @if (isset($configs['user_register_enable']) && ($configs['user_register_enable'] == '1'))
+                {{-- @if (isset($configs['user_register_enable']) && ($configs['user_register_enable'] == '1')) --}}
+                @if (Configs::getConfigsValue($cc_configs, 'user_register_enable') == '1')
                     <li><a class="nav-link" href="{{ route('register') }}">ユーザ登録</a></li>
                 @endif
             @else
