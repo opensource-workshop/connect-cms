@@ -8,8 +8,6 @@
 --}}
 {{-- ページ名 --}}
 <?php
-    use App\Models\Core\Configs;
-
     // URL から現在のURL パスを判定する。
     $current_url = url()->current();
     $base_url = url('/');
