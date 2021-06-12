@@ -169,7 +169,7 @@ if(isset($configs_array['body_optional_class'])){
 //            app\Http\Controllers\Core\DefaultController::invokePost() で全てのconfigsをnameをkeyにしてarrayに詰めなおしてる。
 
 // ヘッダーバーnavの文字色クラス
-// change: 管理画面ではviewに共通的に変数をセットする仕組みがないため、管理画面・一般画面どちらも表示するためにここで再度Configsをgetして対応(苦肉の策)
+// change: 管理画面ではviewに共通的に変数をセットする仕組みがあったため、管理画面・一般画面どちらも表示するためにここで再度Configsをgetした(苦肉の策)を、共通の$cc_configsを参照するよう見直し
 //$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 // if (isset($configs) && isset($configs['base_header_font_color_class'])) {
 //     $base_header_font_color_class = $configs['base_header_font_color_class'];
