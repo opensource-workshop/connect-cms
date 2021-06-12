@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\File;
 
 use App\Http\Controllers\Controller;
 
@@ -19,7 +20,6 @@ use App\Models\Common\Page;
 use App\Models\Common\Permalink;
 use App\Models\Migration\MigrationMapping;
 
-use File;
 // use Storage;
 
 use App\Traits\ConnectCommonTrait;
@@ -34,61 +34,60 @@ use App\Traits\ConnectCommonTrait;
  */
 class ConnectController extends Controller
 {
-
     use ConnectCommonTrait;
 
     /**
-     *  ページID
+     * ページID
      */
     public $page_id = null;
 
     /**
-     *  フレームID
+     * フレームID
      */
     public $frame_id = null;
 
     /**
-     *  テンプレート情報
+     * テンプレート情報
      */
     public $target_frame_templates = array();
 
     /**
-     *  カレントページ
+     * カレントページ
      */
     public $page = null;
 
     /**
-     *  ページ一覧
+     * ページ一覧
      */
     public $pages = null;
 
     /**
-     *  ページ系統
+     * ページ系統
      */
     public $page_tree = null;
 
     /**
-     *  ページ＆ユーザの役割（Role）
+     * ページ＆ユーザの役割（Role）
      */
     public $page_roles = null;
 
     /**
-     *  config 設定
+     * config 設定
      */
     public $configs = null;
 
     /**
-     *  HTTP ステータスコード（null なら200）
+     * HTTP ステータスコード（null なら200）
      */
     public $http_status_code = null;
 
     /**
-     *  router（コンストラクタで受け取ったものを後に使用するため、保持しておく）
+     * router（コンストラクタで受け取ったものを後に使用するため、保持しておく）
      */
     public $router = null;
 
     /**
-     *  コンストラクタ
+     * コンストラクタ
      */
     public function __construct(Request $request, Router $router)
     {
@@ -165,7 +164,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  404 判定
+     * 404 判定
      */
     protected function checkPageNotFound($request, $router)
     {
@@ -273,7 +272,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  403 処理
+     * 403 処理
      */
     protected function doForbidden()
     {
@@ -305,8 +304,8 @@ class ConnectController extends Controller
     }
 
     /**
-     *  403 判定
-     *  403 にする場合は、戻り先で処理の無効化を行う可能性もあるので、HTTPステータスコードを返す。
+     * 403 判定
+     * 403 にする場合は、戻り先で処理の無効化を行う可能性もあるので、HTTPステータスコードを返す。
      */
     protected function checkPageForbidden()
     {
@@ -366,8 +365,8 @@ class ConnectController extends Controller
     }
 
     /**
-     *  アプリのロケールを変更
-     *  コンストラクタではセッションの保持ができなかったので、各ルートから呼び出し
+     * アプリのロケールを変更
+     * コンストラクタではセッションの保持ができなかったので、各ルートから呼び出し
      */
     protected function setAppLocale()
     {
@@ -388,7 +387,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  ページのレイアウト情報
+     * ページのレイアウト情報
      */
     protected function getLayoutsInfo()
     {
@@ -491,7 +490,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  Configのarray変換
+     * Configのarray変換
      */
     protected function changeConfigsArray()
     {
@@ -504,7 +503,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  Configの取得
+     * Configの取得
      */
     protected function getConfigs($format = null)
     {
@@ -526,7 +525,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  言語の取得
+     * 言語の取得
      */
     private function getLanguages()
     {
@@ -545,7 +544,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  多言語設定がonか
+     * 多言語設定がonか
      */
     private function isLanguageMultiOn()
     {
@@ -562,7 +561,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  Config の配列形式での取得
+     * Config の配列形式での取得
      */
     private function getConfigsCategories($category)
     {
@@ -581,7 +580,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  ページの系統取得
+     * ページの系統取得
      */
     protected function getAncestorsAndSelf($page_id)
     {
@@ -597,7 +596,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  ページの系統取得
+     * ページの系統取得
      */
     private function getPageTree($page_id)
     {
@@ -621,7 +620,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  ページのレイアウト取得
+     * ページのレイアウト取得
      */
     private function getLayout($page_tree)
     {
@@ -649,8 +648,8 @@ class ConnectController extends Controller
     }
 
     /**
-     *  ・指定された基本テーマにCSS、JS があるか確認
-     *  ・追加テーマにCSS、JS があれば設定
+     * ・指定された基本テーマにCSS、JS があるか確認
+     * ・追加テーマにCSS、JS があれば設定
      */
     private function checkAsset($theme, $theme_setting_array)
     {
@@ -666,7 +665,7 @@ class ConnectController extends Controller
 
         // 追加テーマが設定されていれば設定する
         $configs = Configs::where('name', 'additional_theme')->first();
-        if($configs){
+        if ($configs) {
             // CSS 存在チェック
             if (File::exists(public_path().'/themes/'.$configs->value.'/themes.css')) {
                 $theme_setting_array['additional_css'] = $configs->value;
@@ -682,17 +681,17 @@ class ConnectController extends Controller
     }
 
     /**
-     *  テーマ取得
-     *  配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
-     *  値がなければキーのみで値は空
+     * テーマ取得
+     * 配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
+     * 値がなければキーのみで値は空
      */
     protected function getThemes($request = null)
     {
         // 戻り値
         $return_array = array(
-            'css' => '', 
+            'css' => '',
             'js' => '',
-            'css_additional' => '', 
+            'css_additional' => '',
             'js_additional' => ''
         );
 
@@ -756,7 +755,7 @@ class ConnectController extends Controller
     }
 
     /**
-     *  ページに関する情報取得
+     * ページに関する情報取得
      */
     private function getPageList()
     {
@@ -764,26 +763,28 @@ class ConnectController extends Controller
         return Page::defaultOrderWithDepth('flat', $this->page);
     }
 
-    /**
-     *  表示しているページに関する情報取得
-     */
-    private function getPageConfig($page_id)
-    {
-    }
+    // delete: どこからも呼び出してないためコメントアウト
+    // /**
+    //  *  表示しているページに関する情報取得
+    //  */
+    // private function getPageConfig($page_id)
+    // {
+    // }
 
     /**
-     *  画面表示
-     *  ページ共通で必要な値をココで取得、viewに渡す。
+     * 画面表示
+     * ページ共通で必要な値をココで取得、viewに渡す。
      */
     protected function view($blade_path, $args)
     {
+        // delete: 管理画面・一般画面全てのviewで参照できる全configsは、$cc_configsとしてセットしたため、ここは廃止。$cc_configsのセット場所は app\Http\Middleware\ConnectInit::handle().
         // 一般設定の取得
-        $configs = Configs::where('category', 'general')->orWhere('category', 'user_register')->get();
-        $configs_array = array();
-        foreach ($configs as $config) {
-            $configs_array[$config['name']] = $config['value'];
-        }
-        $args["configs"] = $configs_array;
+        // $configs = Configs::where('category', 'general')->orWhere('category', 'user_register')->get();
+        // $configs_array = array();
+        // foreach ($configs as $config) {
+        //     $configs_array[$config['name']] = $config['value'];
+        // }
+        // $args["configs"] = $configs_array;
 
         // ハンバーガーメニューで使用するページの一覧
         $args["page_list"] = $this->getPageList();
@@ -798,11 +799,11 @@ class ConnectController extends Controller
         return view($blade_path, $args);
     }
 
-    /**
-     *  ログ出力
-     */
-//    public function putLog($e)
-//    {
-//        Log::error($e);
-//    }
+    // /**
+    //  *  ログ出力
+    //  */
+    // public function putLog($e)
+    // {
+    //     Log::error($e);
+    // }
 }

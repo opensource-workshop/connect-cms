@@ -84,6 +84,7 @@ class DefaultController extends ConnectController
         // プラグイン一覧の取得
         $plugins = $this->getPlugins();
 
+        // delete: 管理画面・一般画面全てのviewで参照できる全configsは、$cc_configsとしてセットしたため、ここは廃止。$cc_configsのセット場所は app\Http\Middleware\ConnectInit::handle().
         // Config
         // $configs_array = $this->getConfigs('array');
 
@@ -369,6 +370,7 @@ class DefaultController extends ConnectController
         // プラグイン一覧の取得
         $plugins = $this->getPlugins();
 
+        // delete: 管理画面・一般画面全てのviewで参照できる全configsは、$cc_configsとしてセットしたため、ここは廃止。$cc_configsのセット場所は app\Http\Middleware\ConnectInit::handle().
         // Config
         // $configs_array = $this->getConfigs('array');
 
