@@ -352,7 +352,7 @@ $base_header_optional_class = $base_header_classes[array_rand($base_header_class
                         @if (\Route::currentRouteName() == 'get_mypage' || \Route::currentRouteName() == 'post_mypage')
                             {{-- マイページのトップ（get_allで来る）もしくは、ルートでget_mypage --}}
                         @else
-                            @if (isset($configs['use_mypage']) && ($configs['use_mypage'] == '1'))
+                            @if (Configs::getConfigsValue($cc_configs, 'use_mypage') == '1')
                                 <a class="dropdown-item" href="{{url('/mypage')}}">マイページ</a>
                                 <div class="dropdown-divider"></div>
                             @endif
