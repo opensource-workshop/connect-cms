@@ -37,8 +37,7 @@ class UploadController extends ConnectController
     // var $directory_file_limit = 1000;
 
     /**
-     *  ファイル送出
-     *
+     * ファイル送出
      */
     public function getFile(Request $request, $id = null)
     {
@@ -103,33 +102,44 @@ class UploadController extends ConnectController
 
         // ファイルを返す(PDFの場合はinline)
         //$content = '';
-        $content_disposition = '';
-        if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
+        $fullpath = storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension;
+
+        // $content_disposition = '';
+        $content_disposition = 'inline; filename="'. $uploads['client_original_name'] .'"' .
+            "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);
+
+        // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
+        if (strtolower($uploads->extension) == 'pdf') {
             return response()
                     ->file(
-                        storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                        [
-                            'Content-Disposition' =>
-                                'inline; filename="'. $uploads['client_original_name'] .'"' .
-                                "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                        ]
+                        // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                        // [
+                        //     'Content-Disposition' =>
+                        //         'inline; filename="'. $uploads['client_original_name'] .'"' .
+                        //         "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
+                        // ]
+                        $fullpath,
+                        ['Content-Disposition' => $content_disposition]
                     );
         } else {
             return response()
                     ->download(
-                        storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                        // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                        // $uploads['client_original_name'],
+                        // [
+                        //     'Content-Disposition' =>
+                        //         'inline; filename="'. $uploads['client_original_name'] .'"' .
+                        //         "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
+                        // ]
+                        $fullpath,
                         $uploads['client_original_name'],
-                        [
-                            'Content-Disposition' =>
-                                    'inline; filename="'. $uploads['client_original_name'] .'"' .
-                                    "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                        ]
+                        ['Content-Disposition' => $content_disposition]
                     );
         }
     }
 
     /**
-     *  ファイルチェックメソッドの呼び出し
+     * ファイルチェックメソッドの呼び出し
      */
     private function callCheckMethod($request, $upload)
     {
@@ -169,8 +179,7 @@ class UploadController extends ConnectController
     }
 
     /**
-     *  CSS送出
-     *
+     * CSS送出
      */
     public function getCss(Request $request, $page_id = null)
     {
@@ -258,8 +267,7 @@ EOD;
     }
 
     /**
-     *  ファイルのMIME Type 取得
-     *
+     * ファイルのMIME Type 取得
      */
     private function getMimetype($file_path)
     {
@@ -270,8 +278,7 @@ EOD;
     }
 
     /**
-     *  対象ディレクトリの取得
-     *
+     * 対象ディレクトリの取得
      */
     // private function getDirectory($file_id)
     // {
@@ -299,8 +306,7 @@ EOD;
     }
 
     /**
-     *  ファイル受け取り
-     *
+     * ファイル受け取り
      */
     public function postFile(Request $request)
     {
