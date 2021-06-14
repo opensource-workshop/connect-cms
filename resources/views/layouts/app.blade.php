@@ -35,6 +35,13 @@
     //$menu_pages = $page_obj::orderBy('display_sequence')->get();
     $menu_pages = $page_obj::defaultOrderWithDepth();
 */
+if (! isset($cc_configs)) {
+    // seederを実行した場合、必ずconfigsにデータができ、データが無い場合は通常ありえないので、異常終了させる。
+    // うっかり操作ミスは誰にでもありえるのため、エラーメッセージで対応方法を表示する。
+    // ※ 新規インストール時、seederを実行しないと、なんでか Middleware の ConnectInit まで到達せず、cc_configsはセットされなかったため、ここで簡易チェックする。（実行されれば空のコレクションがセットされてエラーにならないんだけどねぇ）
+    echo('DBテーブルのconfigsにデータが１件もありません。<code>php artisan db:seed</code> コマンドを実行して初期データを登録してください。');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
