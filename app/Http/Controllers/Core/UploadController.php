@@ -289,8 +289,7 @@ EOD;
 //    }
 
     /**
-     *  対象ディレクトリの取得、なければ作成も。
-     *
+     * 対象ディレクトリの取得、なければ作成も。
      */
     private function makeDirectory($file_id)
     {
@@ -388,7 +387,10 @@ EOD;
                         'page_id'              => $request->page_id,
                     ]);
 
-                    $directory = $this->getDirectory($upload->id);
+                    // bugfix: 新規インストール時、画像アップロードでリサイズ時にUploadsフォルダがなく500エラーになるバグ対応
+                    // $directory = $this->getDirectory($upload->id);
+                    $directory = $this->makeDirectory($upload->id);
+
                     $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $image_file->getClientOriginalExtension());
                 } else {
                     // そのまま画像
