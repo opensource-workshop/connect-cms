@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-use DB;
-
 use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Categories;
@@ -35,8 +33,8 @@ class UploadController extends ConnectController
 
     use ConnectCommonTrait;
 
-//    var $directory_base = "uploads/";
-//    var $directory_file_limit = 1000;
+    // var $directory_base = "uploads/";
+    // var $directory_file_limit = 1000;
 
     /**
      *  ファイル送出
@@ -78,12 +76,12 @@ class UploadController extends ConnectController
 
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
             if ($page->isRequestPassword($request, $this->page_tree)) {
-                 return response()->download(storage_path(config('connect.forbidden_image_path')));
+                return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
 
             // ファイルに閲覧権限がない場合
             if (!$page->isView(Auth::user(), true, true, $page_roles)) {
-                 return response()->download(storage_path(config('connect.forbidden_image_path')));
+                return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
         }
 
@@ -91,9 +89,9 @@ class UploadController extends ConnectController
         if (!empty($uploads->check_method)) {
             list($return_boolean, $return_message) = $this->callCheckMethod($request, $uploads);
             if (!$return_boolean) {
-                  //Log::debug($uploads);
-                  //Log::debug($return_message);
-                 return response()->download(storage_path(config('connect.forbidden_image_path')));
+                //Log::debug($uploads);
+                //Log::debug($return_message);
+                return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
         }
 
@@ -108,23 +106,25 @@ class UploadController extends ConnectController
         $content_disposition = '';
         if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
             return response()
-                     ->file(
-                         storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                         ['Content-Disposition' =>
-                                  'inline; filename="'. $uploads['client_original_name'] .'"' .
-                                  "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                             ]
-                     );
+                    ->file(
+                        storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                        [
+                            'Content-Disposition' =>
+                                'inline; filename="'. $uploads['client_original_name'] .'"' .
+                                "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
+                        ]
+                    );
         } else {
             return response()
-                     ->download(
-                         storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                         $uploads['client_original_name'],
-                         ['Content-Disposition' =>
-                                      'inline; filename="'. $uploads['client_original_name'] .'"' .
-                                      "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                                 ]
-                     );
+                    ->download(
+                        storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
+                        $uploads['client_original_name'],
+                        [
+                            'Content-Disposition' =>
+                                    'inline; filename="'. $uploads['client_original_name'] .'"' .
+                                    "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
+                        ]
+                    );
         }
     }
 
@@ -273,20 +273,20 @@ EOD;
      *  対象ディレクトリの取得
      *
      */
-//    private function getDirectory($file_id)
-//    {
-//        // ファイルID がなければ0ディレクトリを返す。
-//        if (empty($file_id)) {
-//            return $this->directory_base . '0';
-//        }
-//        // 1000で割った余りがディレクトリ名
-//        $quotient = floor($file_id / $this->directory_file_limit);
-//        $remainder = $file_id % $this->directory_file_limit;
-//        $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
-//        $directory = $this->directory_base . $sub_directory;
-//
-//        return $directory;
-//    }
+    // private function getDirectory($file_id)
+    // {
+    //     // ファイルID がなければ0ディレクトリを返す。
+    //     if (empty($file_id)) {
+    //         return $this->directory_base . '0';
+    //     }
+    //     // 1000で割った余りがディレクトリ名
+    //     $quotient = floor($file_id / $this->directory_file_limit);
+    //     $remainder = $file_id % $this->directory_file_limit;
+    //     $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
+    //     $directory = $this->directory_base . $sub_directory;
+
+    //     return $directory;
+    // }
 
     /**
      * 対象ディレクトリの取得、なければ作成も。
