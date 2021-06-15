@@ -16,13 +16,23 @@
             $('#folder_name').val('');
         });
 
-        $('#btn-upload-file').on('click', function(){
-            $('#upload-file').click();
+        $('#collapse_mkdir{{$frame->id}}').on('show.bs.collapse', function () {
+            $('#collapse_upload{{$frame->id}}').collapse('hide');
         });
 
-        $('#upload-file').on('change', function(){
-            $('#upload-file-form').submit();
+        $('#collapse_upload{{$frame->id}}').on('show.bs.collapse', function () {
+            $('#collapse_mkdir{{$frame->id}}').collapse('hide');
         });
+
+        $('#collapse_upload{{$frame->id}}').on('hidden.bs.collapse', function () {
+            $('#upload-file').val('');
+        });
+
+        $('.custom-file-input').on('change',function(){
+            $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+        });
+
+
         @endcan
         
         $('.btn-download').on('click', function(){
@@ -44,12 +54,7 @@
     @include('common.errors_inline', ['name' => 'upload_file'])
     @include('common.errors_inline', ['name' => 'file_name'])
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}"><i class="fas fa-folder-plus"></i><span class="d-none d-sm-inline"> フォルダ作成</span></button>
-    <button class="btn btn-primary" id="btn-upload-file"><i class="fas fa-file-upload"></i><span class="d-none d-sm-inline"> ファイル追加</span></button>
-    <form id="upload-file-form" action="{{url('/')}}/redirect/plugin/cabinets/upload/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" enctype="multipart/form-data">
-        {{csrf_field()}}
-        <input type="hidden" name="parent_id" value="{{$parent_id}}">
-        <input type="file" name="upload_file" class="d-none" id="upload-file">
-    </form>
+    <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}" id="btn-upload-file"><i class="fas fa-file-upload"></i><span class="d-none d-sm-inline"> ファイル追加</span></button>
 </div>
 @endcan
 <form action="{{url('/')}}/redirect/plugin/cabinets/makeFolder/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
@@ -66,6 +71,22 @@
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}">キャンセル</button>
             <button class="btn btn-primary btn-sm" type="submit">作成</button>
+        </div>
+    </div>
+</form>
+<form action="{{url('/')}}/redirect/plugin/cabinets/upload/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" enctype="multipart/form-data">
+    {{csrf_field()}}
+    <input type="hidden" name="parent_id" value="{{$parent_id}}">
+    <div class="collapse @if ($errors && $errors->has('upload_file')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}"> 
+        <div class="form-group">
+            <div class="custom-file">
+                <input type="file" name="upload_file" value="{{old('upload_file')}}" class="custom-file-input @if ($errors && $errors->has('upload_file')) border-danger @endif" id="upload_file">
+                <label class="custom-file-label" for="upload_file" data-browse="参照">ファイル選択...</label>
+            </div>
+        </div>
+        <div class="text-center">
+            <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
+            <button class="btn btn-primary btn-sm" type="submit">追加</button>
         </div>
     </div>
 </form>
