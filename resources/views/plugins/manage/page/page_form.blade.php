@@ -6,7 +6,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
- --}}
+--}}
 
 @if ($page->id)
 <form action="{{url('/manage/page/update')}}/{{$page->id}}" method="POST" class="form-horizontal">
@@ -63,7 +63,10 @@
 
     <div class="form-group row mx-0 mx-md-3">
         <div class="col-md-3"></div>
-        <small class="form-text text-muted">メンバーシップページの下層のページもメンバーシップページになります。<br />ページの権限設定は「その他設定 ＞ 権限設定画面」で設定できます。</small>
+        <small class="form-text text-muted">
+            ※ メンバーシップページの下層のページもメンバーシップページになります。<br />
+            ※ ページ及び、メンバーシップページの権限設定は「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」で設定できます。
+        </small>
     </div>
 
     {{-- navbar メニューの「その他設定」プルダウン内に移動
@@ -79,7 +82,7 @@
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">パスワード</label>
         <div class="col-md-9">
             <input type="text" name="password" id="password" value="{{$page->password}}" class="form-control">
-            <small class="form-text text-muted">ページにパスワードで閲覧制限を設ける場合に使用します。</small>
+            <small class="form-text text-muted">※ ページにパスワードで閲覧制限を設ける場合に使用します。</small>
         </div>
     </div>
     <div id="app">
@@ -99,7 +102,7 @@
                 @if (!$is_ie)
                     {{-- IEなら表示しない --}}
                     <input type="color" v-model="v_background_color">
-                    <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
+                    <small class="text-muted">※ 左のカラーパレットから選択することも可能です。</small>
                 @endif
             </div>
         </div>
@@ -110,7 +113,7 @@
                 @if (!$is_ie)
                     {{-- IEなら表示しない --}}
                     <input type="color" v-model="v_header_color">
-                    <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
+                    <small class="text-muted">※ 左のカラーパレットから選択することも可能です。</small>
                 @endif
             </div>
         </div>
@@ -319,7 +322,7 @@
                     <input name="transfer_lower_page_flag" value="1" type="checkbox" class="custom-control-input" id="transfer_lower_page_flag">
                 @endif
                 <label class="custom-control-label" for="transfer_lower_page_flag">下層ページへ自動転送する</label>
-                <small class="form-text text-muted">下層ページの中から、メニュー表示「表示する」がチェックされた一番上のページに自動転送します。</small>
+                <small class="form-text text-muted">※ 下層ページの中から、メニュー表示「表示する」がチェックされた一番上のページに自動転送します。</small>
             </div>
         </div>
     </div>
@@ -327,21 +330,21 @@
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">IPアドレス制限</label>
         <div class="col-md-9">
             <input type="text" name="ip_address" id="ip_address" value="{{$page->ip_address}}" class="form-control">
-            <small class="form-text text-muted">カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
+            <small class="form-text text-muted">※ カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
         </div>
     </div>
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">外部サイトURL</label>
         <div class="col-md-9">
             <input type="text" name="othersite_url" id="othersite_url" value="{{$page->othersite_url}}" class="form-control">
-            <small class="form-text text-muted">メニューから直接開く外部サイトURL</small>
+            <small class="form-text text-muted">※ メニューから直接開く外部サイトURL</small>
         </div>
     </div>
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">クラス名</label>
         <div class="col-md-9">
             <input type="text" name="class" id="class" value="{{$page->class}}" class="form-control">
-            <small class="form-text text-muted">デザインで使用するためのclass名</small>
+            <small class="form-text text-muted">※ デザインで使用するためのclass名</small>
         </div>
     </div>
 
