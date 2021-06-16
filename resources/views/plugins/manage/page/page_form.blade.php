@@ -61,12 +61,14 @@
         </div>
     </div>
 
-    <div class="form-group row mx-0 mx-md-3">
+    <div class="form-group row">
         <div class="col-md-3"></div>
-        <small class="form-text text-muted">
-            ※ メンバーシップページの下層のページもメンバーシップページになります。<br />
-            ※ ページ及び、メンバーシップページの権限設定は「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」で設定できます。
-        </small>
+        <div class="col mx-0">
+            <small class="form-text text-muted">
+                ※ メンバーシップページの下層のページもメンバーシップページになります。<br />
+                ※ ページ及び、メンバーシップページの権限設定は「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」で設定できます。
+            </small>
+        </div>
     </div>
 
     {{-- navbar メニューの「その他設定」プルダウン内に移動
