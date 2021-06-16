@@ -31,7 +31,7 @@
     </div>
 
     <div class="alert alert-info" role="alert">
-        <i class="fas fa-exclamation-circle"></i> 課題の参加設定ができます。メンバーシップ受講生・教員についての詳細は<a href="https://connect-cms.jp/manual/user/learningtasks#frame-93" target="_blank">オンラインマニュアルの課題管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
+        <i class="fas fa-exclamation-circle"></i> 課題の参加設定ができます。メンバーシップ受講生・教員についての詳細は<a href="https://connect-cms.jp/manual/user/learningtasks#frame-383" target="_blank">オンラインマニュアルの課題管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
     </div>
 
     <h5><span class="badge badge-secondary">閲覧条件</span></h5>
