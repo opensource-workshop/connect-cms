@@ -986,7 +986,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  新規記事画面
+     * 新規記事画面
      */
     public function create($request, $page_id, $frame_id, $learningtasks_posts_id = null)
     {
@@ -2459,7 +2459,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  カテゴリ登録処理
+     * カテゴリ登録処理
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
@@ -2609,10 +2609,15 @@ class LearningtasksPlugin extends UserPluginBase
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
         // 削除(課題管理プラグインのカテゴリ表示データ)
-        LearningtasksCategories::where('categories_id', $id)->delete();
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // LearningtasksCategories::where('categories_id', $id)->delete();
+        $learningtasks_categories_id = LearningtasksCategories::where('categories_id', $id)->pluck('id');
+        LearningtasksCategories::destroy($learningtasks_categories_id);
 
         // 削除(カテゴリ)
-        Categories::where('id', $id)->delete();
+        // Categories::where('id', $id)->delete();
+        $categories_id = Categories::where('id', $id)->where('target', 'learningtasks')->pluck('id');
+        Categories::destroy($categories_id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // deleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
