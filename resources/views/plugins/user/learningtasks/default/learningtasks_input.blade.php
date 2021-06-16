@@ -34,17 +34,19 @@
     <div class="form-group row">
         <label class="col-md-2">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
-            <input type="text" name="post_title" value="{{old('post_title', $learningtasks_posts->post_title)}}" class="form-control">
+            <input type="text" name="post_title" value="{{old('post_title', $learningtasks_posts->post_title)}}" class="form-control @if ($errors->has('post_title')) border-danger @endif">
             {{-- <textarea name="post_title">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea> --}}
-            @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
+            @include('common.errors_inline', ['name' => 'post_title'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="col-md-2">本文 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
-            <textarea name="post_text">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
-            @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
+            <div class="@if ($errors->has('post_text')) border border-danger @endif">
+                <textarea name="post_text">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
+            </div>
+            @include('common.errors_inline', ['name' => 'post_text'])
         </div>
     </div>
 
@@ -52,9 +54,9 @@
         <label class="col-md-2" for="add_task_file">課題ファイル</label>
         <div class="col-md-10">
             <div class="custom-file">
-                <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file" accept=".pdf, .doc, .docx">
-                <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
-                @if ($errors && $errors->has('add_task_file')) <div class="text-danger">{{$errors->first('add_task_file')}}</div> @endif
+                <input type="file" class="custom-file-input @if ($errors->has('add_task_file')) border-danger @endif" id="add_task_file" name="add_task_file" accept=".pdf, .doc, .docx">
+                <label class="custom-file-label @if ($errors->has('add_task_file')) border-danger @endif" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
+                @include('common.errors_inline', ['name' => 'add_task_file'])
                 <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
             </div>
         </div>
@@ -64,14 +66,14 @@
         <label class="col-md-2">ファイル一覧</label>
         <div class="col-md-10">
             <div class="card p-2">
-            @isset($learningtasks_posts_files)
-            @foreach($learningtasks_posts_files as $posts_file)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" name="del_task_file[{{$posts_file->id}}]" value="1" class="custom-control-input" id="del_task_file[{{$posts_file->id}}]" @if(old("del_task_file.$posts_file->id")) checked=checked @endif>
-                    <label class="custom-control-label" for="del_task_file[{{$posts_file->id}}]"><a href="{{url('/')}}/file/{{$posts_file->upload_id}}" target="_blank" rel="noopener">{{$posts_file->client_original_name}}</a></label>
-                </div>
-            @endforeach
-            @endisset
+                @isset($learningtasks_posts_files)
+                    @foreach($learningtasks_posts_files as $posts_file)
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" name="del_task_file[{{$posts_file->id}}]" value="1" class="custom-control-input" id="del_task_file[{{$posts_file->id}}]" @if(old("del_task_file.$posts_file->id")) checked=checked @endif>
+                            <label class="custom-control-label" for="del_task_file[{{$posts_file->id}}]"><a href="{{url('/')}}/file/{{$posts_file->upload_id}}" target="_blank" rel="noopener">{{$posts_file->client_original_name}}</a></label>
+                        </div>
+                    @endforeach
+                @endisset
             </div>
             <small class="text-muted">削除する場合はチェックします。</small>
         </div>
@@ -81,12 +83,12 @@
         <label class="col-md-2">投稿日時 <span class="badge badge-danger">必須</span></label>
         <div class="col-md-10">
             <div class="input-group date" id="posted_at" data-target-input="nearest">
-                <input type="text" name="posted_at" value="{{old('posted_at', $learningtasks_posts->posted_at)}}" class="form-control datetimepicker-input col-md-4" data-target="#posted_at">
+                <input type="text" name="posted_at" value="{{old('posted_at', $learningtasks_posts->posted_at)}}" class="form-control datetimepicker-input col-md-4 @if ($errors->has('posted_at')) border-danger @endif" data-target="#posted_at">
                 <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+                    <div class="input-group-text @if ($errors->has('posted_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('posted_at')) <div class="text-danger">{{$errors->first('posted_at')}}</div> @endif
+            @include('common.errors_inline', ['name' => 'posted_at'])
         </div>
     </div>
     <script type="text/javascript">
@@ -117,7 +119,6 @@
         <label class="col-md-2">表示順</label>
         <div class="col-md-10">
             <input type="text" name="display_sequence" value="{{old('display_sequence', $learningtasks_posts->display_sequence)}}" class="form-control">
-            @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
             <small class="text-muted">
                 ※ 課題管理設定の「順序条件」で「指定順」を指定した場合のみ、表示順に課題が表示されます。<br />
                 ※ 未指定時は最後に表示されるように自動登録します。
@@ -134,7 +135,6 @@
                 <option value="{{$category->id}}" @if(old('category', $learningtasks_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
                 @endforeach
             </select>
-            @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
         </div>
     </div>
 
