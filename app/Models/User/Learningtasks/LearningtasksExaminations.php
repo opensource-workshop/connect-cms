@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Enums\DayOfWeek;
-use App\Userable;
+use App\UserableNohistory;
 use App\Enums\LearningtasksExaminationColumn;
 
 class LearningtasksExaminations extends Model
@@ -14,8 +14,8 @@ class LearningtasksExaminations extends Model
     // 論理削除
     use SoftDeletes;
 
-    // 保存時のユーザー関連データの保持
-    use Userable;
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
 
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = [

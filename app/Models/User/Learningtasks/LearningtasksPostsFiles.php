@@ -5,20 +5,20 @@ namespace App\Models\User\Learningtasks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use App\Userable;
+use App\UserableNohistory;
 
-/*
-    task_flag
-    0 : レポート用
-    1 : 試験用
-*/
+/**
+ * task_flag
+ * 0 : レポート用
+ * 1 : 試験用
+ */
 class LearningtasksPostsFiles extends Model
 {
     // 論理削除
     use SoftDeletes;
 
-    // 保存時のユーザー関連データの保持
-    use Userable;
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
 
     // Carbonインスタンス（日付）に自動的に変換
     protected $dates = ['posted_at'];
