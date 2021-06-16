@@ -1273,18 +1273,35 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 設定内容を保存（一旦削除して新たに保存）
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //         ->where('post_id', $post->id)
+        //         ->where('use_function', 'post_report_setting')
+        //         ->delete();
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //         ->where('post_id', $post->id)
+        //         ->where('use_function', 'like', 'use_report%')
+        //         ->delete();
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //         ->where('post_id', $post->id)
+        //         ->where('use_function', LearningtaskUseFunction::report_end_at)
+        //         ->delete();
+        $learningtasks_use_settings_ids = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
                 ->where('post_id', $post->id)
                 ->where('use_function', 'post_report_setting')
-                ->delete();
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->pluck('id');
+        $learningtasks_use_settings_ids2 = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
                 ->where('post_id', $post->id)
                 ->where('use_function', 'like', 'use_report%')
-                ->delete();
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->pluck('id');
+        $learningtasks_use_settings_ids3 = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
                 ->where('post_id', $post->id)
                 ->where('use_function', LearningtaskUseFunction::report_end_at)
-                ->delete();
+                ->pluck('id');
+
+        // Collectionマージ
+        $del_learningtasks_use_settings_ids = $learningtasks_use_settings_ids->merge($learningtasks_use_settings_ids2)->merge($learningtasks_use_settings_ids3);
+        LearningtasksUseSettings::destroy($del_learningtasks_use_settings_ids);
 
         if ($request->filled('post_report_setting')) {
             LearningtasksUseSettings::create([
@@ -1361,14 +1378,27 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 設定内容を保存（一旦削除して新たに保存）
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
-                                ->where('post_id', $post->id)
-                                ->where('use_function', 'post_evaluate_setting')
-                                ->delete();
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
-                                ->where('post_id', $post->id)
-                                ->where('use_function', 'like', 'use_evaluate%')
-                                ->delete();
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //                         ->where('post_id', $post->id)
+        //                         ->where('use_function', 'post_evaluate_setting')
+        //                         ->delete();
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //                         ->where('post_id', $post->id)
+        //                         ->where('use_function', 'like', 'use_evaluate%')
+        //                         ->delete();
+        $learningtasks_use_settings_ids = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->where('post_id', $post->id)
+                ->where('use_function', 'post_evaluate_setting')
+                ->pluck('id');
+        $learningtasks_use_settings_ids2 = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->where('post_id', $post->id)
+                ->where('use_function', 'like', 'use_evaluate%')
+                ->pluck('id');
+
+        // Collectionマージ
+        $del_learningtasks_use_settings_ids = $learningtasks_use_settings_ids->merge($learningtasks_use_settings_ids2);
+        LearningtasksUseSettings::destroy($del_learningtasks_use_settings_ids);
 
         if ($request->filled('post_evaluate_setting')) {
             LearningtasksUseSettings::create([
@@ -2723,18 +2753,35 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // 設定内容を保存（一旦削除して新たに保存）
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
-                                ->where('post_id', $post->id)
-                                ->where('use_function', 'post_examination_setting')
-                                ->delete();
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
-                                ->where('post_id', $post->id)
-                                ->where('use_function', 'post_examination_timing')
-                                ->delete();
-        LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
-                                ->where('post_id', $post->id)
-                                ->where('use_function', 'like', 'use_examination%')
-                                ->delete();
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //                         ->where('post_id', $post->id)
+        //                         ->where('use_function', 'post_examination_setting')
+        //                         ->delete();
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //                         ->where('post_id', $post->id)
+        //                         ->where('use_function', 'post_examination_timing')
+        //                         ->delete();
+        // LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+        //                         ->where('post_id', $post->id)
+        //                         ->where('use_function', 'like', 'use_examination%')
+        //                         ->delete();
+        $learningtasks_use_settings_ids = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->where('post_id', $post->id)
+                ->where('use_function', 'post_examination_setting')
+                ->pluck('id');
+        $learningtasks_use_settings_ids2 = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->where('post_id', $post->id)
+                ->where('use_function', 'like', 'post_examination_timing')
+                ->pluck('id');
+        $learningtasks_use_settings_ids3 = LearningtasksUseSettings::where('learningtasks_id', $post->learningtasks_id)
+                ->where('post_id', $post->id)
+                ->where('use_function', 'like', 'use_examination%')
+                ->pluck('id');
+
+        // Collectionマージ
+        $del_learningtasks_use_settings_ids = $learningtasks_use_settings_ids->merge($learningtasks_use_settings_ids2)->merge($learningtasks_use_settings_ids3);
+        LearningtasksUseSettings::destroy($del_learningtasks_use_settings_ids);
 
         if ($request->filled('post_examination_setting')) {
             LearningtasksUseSettings::create([
