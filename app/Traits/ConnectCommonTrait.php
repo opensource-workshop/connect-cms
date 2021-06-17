@@ -33,182 +33,6 @@ trait ConnectCommonTrait
     //var $directory_file_limit = 1000;
 
     /**
-     * Buckets の投稿権限データをrole の配列で返却
-     *
-     * @return boolean|array
-     */
-    private function getPostBucketsRoles($buckets)
-    {
-        // Buckets オブジェクトがない場合はfalse を返す。
-        if (empty($buckets)) {
-            return false;
-        }
-
-        // Buckets オブジェクトでない場合もfalse
-        if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
-            return false;
-        }
-
-        // return $buckets->getBucketsRoles();
-        return $buckets->getPostArrayBucketsRoles();
-
-//        // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。
-//        if (empty($buckets)) {
-//            return false;
-//        }
-//        // Buckets オブジェクトでない場合もfalse
-//        if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
-//            return false;
-//        }
-//        // role を配列にして返却
-//        $roles = null;
-//        if ($buckets->post_role) {
-//            $roles = explode(',', $buckets->post_role);
-//        }
-//        if (empty($roles)) {
-//            return false;
-//        }
-//        return $roles;
-    }
-
-    /**
-     * ユーザーが指定された権限を保持しているかチェックする。
-     *
-     * @return boolean
-     */
-    public function check_authority($user, $authority, $args = null)
-    {
-        // preview モードのチェック付きの場合はpreview モードなら権限ナシで返す。
-        $request = app(\Illuminate\Http\Request::class);
-
-        // 引数をバラシてPOST を取得
-//        list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->check_args_obj($args);
-        list($post, $plugin_name, $buckets_obj) = $this->check_args_obj($args);
-//print_r( $buckets_obj );
-
-        // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
-//        if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
-
-        // モードスイッチがプレビューなら、無条件に権限ナシで返す。
-        if ($request->mode == 'preview') {
-            return false;
-        }
-
-        // プレビュー判断はココまで
-        if ($authority == 'preview') {
-            return true;
-        }
-
-        // ログインしていない場合は権限なし
-        if (empty($user)) {
-            return false;
-        }
-
-        // チェックする権限を決定
-        // Backets にrole が指定されていれば、それを使用。
-        //   - Backets の role は post_flag(投稿できる), approval_flag(承認が必要)の２つのフラグあり。
-        //     ここではpost_flag(投稿できる)のみ取得してチェックする。
-        //     記事の承認は、ユーザ権限のrole_approvalでチェックするので、approval_flag(承認が必要)ではチェックしない。
-        // Backets にrole が指定されていなければ、標準のrole を使用
-        $check_roles = config('cc_role.CC_AUTHORITY')[$authority];
-        if (!empty($this->getPostBucketsRoles($buckets_obj))) {
-            $check_roles = array();
-            $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
-//Log::debug($buckets_roles);
-            // Buckets に設定されたrole から、関連role を取得してチェック。
-            foreach ($post_buckets_roles as $post_buckets_role) {
-                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
-            }
-            // 配列は添字型になるので、array_merge で結合してから重複を取り除く
-            $check_roles = array_unique($check_roles);
-        }
-
-        // 指定された権限を含むロールをループする。
-//        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
-        foreach ($check_roles as $check_role) {
-            // ユーザの保持しているロールをループ
-            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
-            //foreach ($user['user_roles'] as $target) {
-            foreach ((array)$user->user_roles as $target) {
-                // ターゲット処理をループ
-                foreach ($target as $user_role => $user_role_value) {
-                    // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
-                    // bugfix:  モデレータに「承認が必要」としても、モデレータは自分で承認できてしまう不具合修正
-                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtureとならず、必要なロールを保持している（$user_role == 'role_article'）でtureとなっていた。
-                    //          承認権限チェックとそれ以外でif文見直す。
-                    // if ($authority == 'posts.approval' && $user_role == 'role_approval') {
-                    //     return true;
-                    // }
-                    if ($authority == 'posts.approval') {
-                        if ($user_role == 'role_approval') {
-                            return true;
-                        }
-                    } else {
-                        // 必要なロールを保持している
-                        if ($check_role == $user_role && $user_role_value) {
-                            // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                            if (($user_role == 'role_article_admin') ||
-                                ($user_role == 'role_article') ||
-                                ($user_role == 'role_approval')) {
-                                return true;
-                            }
-
-                            // 自分のオブジェクトチェックが必要ならチェックする
-                            if (empty($post)) {
-                                return true;
-                            } else {
-                                if ((($authority == 'buckets.delete') ||
-                                    ($authority == 'posts.create') ||
-                                    ($authority == 'posts.update') ||
-                                    ($authority == 'posts.delete')) &&
-                                    ($user->id == $post->created_id)) {
-                                    return true;
-                                } else {
-                                    // 複数ロールをチェックするため、ここではreturn しない。
-                                    // return false;
-                                }
-                            }
-                            // 複数ロールをチェックするため、ここではreturn しない。
-                            // return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * ユーザーが指定された役割を保持しているかチェックする。
-     *
-     * @return boolean
-     */
-    public function check_role($user, $role)
-    {
-        // ログインしていない場合は権限なし
-        if (empty($user)) {
-            return false;
-        }
-
-        // 指定された権限を含むロールをループする。
-        // 記事追加はコンテンツ管理者でもOKのような処理のため。
-        foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
-            // ユーザの保持しているロールをループ
-            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
-            foreach ((array)$user->user_roles as $target) {
-                // ターゲット処理をループ
-                foreach ($target as $user_role => $user_role_value) {
-                    // 必要なロールを保持している場合は、権限ありとして true を返す。
-                    if ($checck_role == $user_role && $user_role_value) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
      * 権限チェック
      * roll_or_auth : 権限 or 役割
      */
@@ -881,14 +705,14 @@ trait ConnectCommonTrait
 
                         // 追加権限設定があれば作成
                         if (!empty($auth_method['additional4'])) {
-                        
+
                             // NC2側権限値取得
                             $nc2_auth = "";
                             if( array_key_exists( 'auth', $check_result ) == true )
                             {
                                 $nc2_auth = $check_result['auth'];
                             }
-                            
+
                             // |で区切る（|は複数権限の設定がある場合に区切り文字として利用される）
                             $set_rols = "";
                             $rols_options_list = explode('|', $auth_method['additional4']);
@@ -896,14 +720,14 @@ trait ConnectCommonTrait
                             {
                                 // :で区切る（:は、NC2側権限とConnectCMS側権限の区切り文字として利用される）
                                 $original_rols_options = explode(':', $value);
-                                
+
                                 // 一致した権限を設定する
                                 if( $original_rols_options[0] == $nc2_auth ) {
                                     $set_rols = $original_rols_options[1];
                                     break;
                                 }
                             }
-                            
+
                             UsersRoles::create([
                                 'users_id'   => $user->id,
                                 'target'     => 'original_role',
