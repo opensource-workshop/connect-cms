@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base')
 
 {{-- 編集画面側のフレームメニュー --}}
@@ -66,31 +66,37 @@
         <h5><span class="badge badge-secondary">課題独自の項目設定</span></h5>
 
         <div class="form-group row mb-0">
-            <label class="col-md-3 text-md-right">総合評価機能</label>
+            <label class="col-md-3 text-md-right">使用する総合評価機能</label>
             <div class="col-md-9 d-md-flex">
                 <div class="custom-control custom-checkbox mr-3">
-                    <input type="checkbox" name="post_settings[use_evaluate]" value="on" class="custom-control-input" id="use_evaluate" @if(old("post_settings.use_evaluate", $tool->getFunction('use_evaluate', true)) == 'on') checked=checked @endif>
-                    <label class="custom-control-label" for="use_evaluate">評価</label>
+                    <input type="checkbox" name="post_settings[use_evaluate]" value="on" class="custom-control-input" id="use_evaluate" data-toggle="collapse" data-target="#collapse_use_evaluate" aria-expanded="false" aria-controls="collapse_use_evaluate" @if(old("post_settings.use_evaluate", $tool->getFunction('use_evaluate', true)) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_evaluate">評価（総合評価機能を使う）</label><br />
+                    <small class="text-muted">※ 総合評価は、レポート提出と試験を使用し、両方合格（A～C評価）した場合のみ、入力できます。</small>
                 </div>
             </div>
         </div>
 
-        <div class="form-group row">
-            <label class="col-md-3 text-md-right">総合評価コメント</label>
-            <div class="col-md-9 d-md-flex">
-                <div class="custom-control custom-checkbox mr-3">
-                    <input type="checkbox" name="post_settings[use_evaluate_file]" value="on" class="custom-control-input" id="use_evaluate_file" @if(old("post_settings.use_evaluate_file", $tool->getFunction('use_evaluate_file', true)) == 'on') checked=checked @endif>
-                    <label class="custom-control-label" for="use_evaluate_file">アップロード</label>
-                </div>
-                <div class="custom-control custom-checkbox mr-3">
-                    <input type="checkbox" name="post_settings[use_evaluate_comment]" value="on" class="custom-control-input" id="use_evaluate_comment" @if(old("post_settings.use_evaluate_comment", $tool->getFunction('use_evaluate_comment', true)) == 'on') checked=checked @endif>
-                    <label class="custom-control-label" for="use_evaluate_comment">コメント入力</label>
-                </div>
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" name="post_settings[use_evaluate_mail]" value="on" class="custom-control-input" id="use_evaluate_mail" @if(old("post_settings.use_evaluate_mail", $tool->getFunction('use_evaluate_mail', true)) == 'on') checked=checked @endif>
-                    <label class="custom-control-label" for="use_evaluate_mail">メール送信（受講者宛）</label>
+        {{-- 評価（総合評価機能を使う）の場合のみ表示、他は隠す --}}
+        <div class="collapse" id="collapse_use_evaluate">
+
+            <div class="form-group row">
+                <label class="col-md-3 text-md-right">総合評価コメント</label>
+                <div class="col-md-9 d-md-flex">
+                    <div class="custom-control custom-checkbox mr-3">
+                        <input type="checkbox" name="post_settings[use_evaluate_file]" value="on" class="custom-control-input" id="use_evaluate_file" @if(old("post_settings.use_evaluate_file", $tool->getFunction('use_evaluate_file', true)) == 'on') checked=checked @endif>
+                        <label class="custom-control-label" for="use_evaluate_file">アップロード</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-3">
+                        <input type="checkbox" name="post_settings[use_evaluate_comment]" value="on" class="custom-control-input" id="use_evaluate_comment" @if(old("post_settings.use_evaluate_comment", $tool->getFunction('use_evaluate_comment', true)) == 'on') checked=checked @endif>
+                        <label class="custom-control-label" for="use_evaluate_comment">コメント入力</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" name="post_settings[use_evaluate_mail]" value="on" class="custom-control-input" id="use_evaluate_mail" @if(old("post_settings.use_evaluate_mail", $tool->getFunction('use_evaluate_mail', true)) == 'on') checked=checked @endif>
+                        <label class="custom-control-label" for="use_evaluate_mail">メール送信（受講者宛）</label>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -110,10 +116,20 @@
         @endif
     </div>
 </form>
+
+    {{-- 初期状態で開くもの --}}
+    @if(old("post_settings.use_evaluate", $tool->getFunction('use_evaluate', true)) == 'on')
+        <script>
+            $('#collapse_use_evaluate').collapse('show')
+        </script>
+    @endif
+
 @endif
+
 <script>
-$('.custom-file-input').on('change',function(){
-    $(this).next('.custom-file-label').html($(this)[0].files[0].name);
-})
+    $('.custom-file-input').on('change',function(){
+        $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+    })
 </script>
+
 @endsection

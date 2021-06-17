@@ -94,87 +94,102 @@
             <h5><span class="badge badge-secondary">課題独自の項目設定</span></h5>
 
             <div class="form-group row mb-0">
-                <label class="col-md-3 text-md-right">試験提出機能</label>
+                <label class="col-md-3 text-md-right">使用するレポート試験機能</label>
                 <div class="col-md-9 d-md-flex">
 
                     <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination]" value="on" class="custom-control-input" id="use_examination" @if(old("use_examination", $tool->getFunction('use_examination', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination">提出</label>
+                        <input type="checkbox" name="post_settings[use_examination]" value="on" class="custom-control-input" id="use_examination"data-toggle="collapse" data-target="#collapse_use_examination" aria-expanded="false" aria-controls="collapse_use_examination" @if(old("use_examination", $tool->getFunction('use_examination', true)) == 'on') checked=checked @endif>
+                        <label class="custom-control-label" for="use_examination">提出（レポート試験機能を使う）</label>
                     </div>
                     <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_evaluate]" value="on" class="custom-control-input" id="use_examination_evaluate" @if(old("use_examination_evaluate", $tool->getFunction('use_examination_evaluate', true)) == 'on') checked=checked @endif>
+                        <input type="checkbox" name="post_settings[use_examination_evaluate]" value="on" class="custom-control-input" id="use_examination_evaluate" data-toggle="collapse" data-target="#collapse_use_examination_evaluate" aria-expanded="false" aria-controls="collapse_use_examination_evaluate" @if(old("use_examination_evaluate", $tool->getFunction('use_examination_evaluate', true)) == 'on') checked=checked @endif>
                         <label class="custom-control-label" for="use_examination_evaluate">評価</label>
                     </div>
                     <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_reference]" value="on" class="custom-control-input" id="use_examination_reference" @if(old("use_examination_reference", $tool->getFunction('use_examination_reference', true)) == 'on') checked=checked @endif>
+                        <input type="checkbox" name="post_settings[use_examination_reference]" value="on" class="custom-control-input" id="use_examination_reference" data-toggle="collapse" data-target="#collapse_use_examination_reference" aria-expanded="false" aria-controls="collapse_use_examination_reference" @if(old("use_examination_reference", $tool->getFunction('use_examination_reference', true)) == 'on') checked=checked @endif>
                         <label class="custom-control-label" for="use_examination_reference">教員から参考資料</label>
                     </div>
                 </div>
             </div>
 
-            <div class="form-group row mb-0">
-                <label class="col-md-3 text-md-right">提出</label>
-                <div class="col-md-9 d-md-flex">
+            {{-- 提出（レポート試験機能を使う）の場合のみ表示、他は隠す --}}
+            <div class="collapse" id="collapse_use_examination">
 
-                    <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_file]" value="on" class="custom-control-input" id="use_examination_file" @if(old("use_examination_file", $tool->getFunction('use_examination_file', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_file">アップロード</label>
-                    </div>
-                    <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_comment]" value="on" class="custom-control-input" id="use_examination_comment" @if(old("use_examination_comment", $tool->getFunction('use_examination_comment', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_comment">本文入力</label>
-                    </div>
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" name="post_settings[use_examination_mail]" value="on" class="custom-control-input" id="use_examination_mail" @if(old("use_examination_mail", $tool->getFunction('use_examination_mail', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_mail">メール送信（教員宛）</label>
+                <div class="form-group row mb-0">
+                    <label class="col-md-3 text-md-right">提出</label>
+                    <div class="col-md-9 d-md-flex">
+
+                        <div class="custom-control custom-checkbox mr-3">
+                            <input type="checkbox" name="post_settings[use_examination_file]" value="on" class="custom-control-input" id="use_examination_file" @if(old("use_examination_file", $tool->getFunction('use_examination_file', true)) == 'on') checked=checked @endif>
+                            <label class="custom-control-label" for="use_examination_file">アップロード</label>
+                        </div>
+                        <div class="custom-control custom-checkbox mr-3">
+                            <input type="checkbox" name="post_settings[use_examination_comment]" value="on" class="custom-control-input" id="use_examination_comment" @if(old("use_examination_comment", $tool->getFunction('use_examination_comment', true)) == 'on') checked=checked @endif>
+                            <label class="custom-control-label" for="use_examination_comment">本文入力</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" name="post_settings[use_examination_mail]" value="on" class="custom-control-input" id="use_examination_mail" @if(old("use_examination_mail", $tool->getFunction('use_examination_mail', true)) == 'on') checked=checked @endif>
+                            <label class="custom-control-label" for="use_examination_mail">メール送信（教員宛）</label>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group row mb-0">
-                <label class="col-md-3 text-md-right">評価</label>
-                <div class="col-md-9 d-md-flex">
-                    <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_evaluate_file]" value="on" class="custom-control-input" id="use_examination_evaluate_file" @if(old("use_examination_evaluate_file", $tool->getFunction('use_examination_evaluate_file', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_evaluate_file">アップロード</label>
+                {{-- レポート試験機能の 評価 を使う場合のみ表示、他は隠す --}}
+                <div class="collapse" id="collapse_use_examination_evaluate">
+
+                    <div class="form-group row mb-0">
+                        <label class="col-md-3 text-md-right">評価</label>
+                        <div class="col-md-9 d-md-flex">
+                            <div class="custom-control custom-checkbox mr-3">
+                                <input type="checkbox" name="post_settings[use_examination_evaluate_file]" value="on" class="custom-control-input" id="use_examination_evaluate_file" @if(old("use_examination_evaluate_file", $tool->getFunction('use_examination_evaluate_file', true)) == 'on') checked=checked @endif>
+                                <label class="custom-control-label" for="use_examination_evaluate_file">アップロード</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mr-3">
+                                <input type="checkbox" name="post_settings[use_examination_evaluate_comment]" value="on" class="custom-control-input" id="use_examination_evaluate_comment" @if(old("use_examination_evaluate_comment", $tool->getFunction('use_examination_evaluate_comment', true)) == 'on') checked=checked @endif>
+                                <label class="custom-control-label" for="use_examination_evaluate_comment">コメント入力</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="post_settings[use_examination_evaluate_mail]" value="on" class="custom-control-input" id="use_examination_evaluate_mail" @if(old("use_examination_evaluate_mail", $tool->getFunction('use_examination_evaluate_mail', true)) == 'on') checked=checked @endif>
+                                <label class="custom-control-label" for="use_examination_evaluate_mail">メール送信（受講者宛）</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_evaluate_comment]" value="on" class="custom-control-input" id="use_examination_evaluate_comment" @if(old("use_examination_evaluate_comment", $tool->getFunction('use_examination_evaluate_comment', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_evaluate_comment">コメント入力</label>
+
+                </div>
+
+                {{-- レポート試験機能の 教員から参考資料 を返す場合のみ表示、他は隠す --}}
+                <div class="collapse" id="collapse_use_examination_reference">
+
+                    <div class="form-group row mb-0">
+                        <label class="col-md-3 text-md-right">教員から参考資料</label>
+                        <div class="col-md-9 d-md-flex">
+                            <div class="custom-control custom-checkbox mr-3">
+                                <input type="checkbox" name="post_settings[use_examination_reference_file]" value="on" class="custom-control-input" id="use_examination_reference_file" @if(old("use_examination_reference_file", $tool->getFunction('use_examination_reference_file', true)) == 'on') checked=checked @endif>
+                                <label class="custom-control-label" for="use_examination_reference_file">アップロード</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mr-3">
+                                <input type="checkbox" name="post_settings[use_examination_reference_comment]" value="on" class="custom-control-input" id="use_examination_reference_comment" @if(old("use_examination_reference_comment", $tool->getFunction('use_examination_reference_comment', true)) == 'on') checked=checked @endif>
+                                <label class="custom-control-label" for="use_examination_reference_comment">コメント入力</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="post_settings[use_examination_reference_mail]" value="on" class="custom-control-input" id="use_examination_reference_mail" @if(old("use_examination_reference_mail", $tool->getFunction('use_examination_reference_mail', true)) == 'on') checked=checked @endif>
+                                <label class="custom-control-label" for="use_examination_reference_mail">メール送信（受講者宛）</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" name="post_settings[use_examination_evaluate_mail]" value="on" class="custom-control-input" id="use_examination_evaluate_mail" @if(old("use_examination_evaluate_mail", $tool->getFunction('use_examination_evaluate_mail', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_evaluate_mail">メール送信（受講者宛）</label>
+
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-md-3 text-md-right">表示方法</label>
+                    <div class="col-md-9 d-md-flex">
+                        <div class="custom-control custom-checkbox mr-3">
+                            <input type="checkbox" name="post_settings[use_examination_status_collapse]" value="on" class="custom-control-input" id="use_examination_status_collapse" @if(old("use_examination_status_collapse", $tool->getFunction('use_examination_status_collapse', true)) == 'on') checked=checked @endif>
+                            <label class="custom-control-label" for="use_examination_status_collapse">履歴を開閉する</label>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group row mb-0">
-                <label class="col-md-3 text-md-right">教員から参考資料</label>
-                <div class="col-md-9 d-md-flex">
-                    <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_reference_file]" value="on" class="custom-control-input" id="use_examination_reference_file" @if(old("use_examination_reference_file", $tool->getFunction('use_examination_reference_file', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_reference_file">アップロード</label>
-                    </div>
-                    <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_reference_comment]" value="on" class="custom-control-input" id="use_examination_reference_comment" @if(old("use_examination_reference_comment", $tool->getFunction('use_examination_reference_comment', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_reference_comment">コメント入力</label>
-                    </div>
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" name="post_settings[use_examination_reference_mail]" value="on" class="custom-control-input" id="use_examination_reference_mail" @if(old("use_examination_reference_mail", $tool->getFunction('use_examination_reference_mail', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_reference_mail">メール送信（受講者宛）</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <label class="col-md-3 text-md-right">表示方法</label>
-                <div class="col-md-9 d-md-flex">
-                    <div class="custom-control custom-checkbox mr-3">
-                        <input type="checkbox" name="post_settings[use_examination_status_collapse]" value="on" class="custom-control-input" id="use_examination_status_collapse" @if(old("use_examination_status_collapse", $tool->getFunction('use_examination_status_collapse', true)) == 'on') checked=checked @endif>
-                        <label class="custom-control-label" for="use_examination_status_collapse">履歴を開閉する</label>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -462,11 +477,32 @@
             @endif
         </div>
     </form>
+
+    {{-- 初期状態で開くもの --}}
+    @if(old("post_settings.use_examination", $tool->getFunction('use_examination', true)) == 'on')
+        <script>
+            $('#collapse_use_examination').collapse('show')
+        </script>
+    @endif
+
+    @if(old("post_settings.use_examination_evaluate", $tool->getFunction('use_examination_evaluate', true)) == 'on')
+        <script>
+            $('#collapse_use_examination_evaluate').collapse('show')
+        </script>
+    @endif
+
+    @if(old("post_settings.use_examination_reference", $tool->getFunction('use_examination_reference', true)) == 'on')
+        <script>
+            $('#collapse_use_examination_reference').collapse('show')
+        </script>
+    @endif
+
 @endif
 
 <script>
-$('.custom-file-input').on('change',function(){
-    $(this).next('.custom-file-label').html($(this)[0].files[0].name);
-})
+    $('.custom-file-input').on('change',function(){
+        $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+    })
 </script>
+
 @endsection
