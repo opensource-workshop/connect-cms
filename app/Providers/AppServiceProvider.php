@@ -41,161 +41,161 @@ class AppServiceProvider extends AuthServiceProvider
 
         // ゲスト
         Gate::define('role_guest', function ($user, $args = null) {
-            return $this->check_role($user, 'role_guest');
+            return $this->checkRole($user, 'role_guest');
         });
 
         // 編集者
         Gate::define('role_reporter', function ($user, $args = null) {
-            return $this->check_role($user, 'role_reporter');
+            return $this->checkRole($user, 'role_reporter');
         });
 
         // プラグイン管理者
         Gate::define('role_arrangement', function ($user, $args = null) {
-            return $this->check_role($user, 'role_arrangement');
+            return $this->checkRole($user, 'role_arrangement');
         });
 
         // 承認者
         Gate::define('role_approval', function ($user, $args = null) {
-            return $this->check_role($user, 'role_approval');
+            return $this->checkRole($user, 'role_approval');
         });
 
         // 記事修正（モデレータ）
         Gate::define('role_article', function ($user, $args = null) {
-            return $this->check_role($user, 'role_article');
+            return $this->checkRole($user, 'role_article');
         });
 
         // コンテンツ管理者
         Gate::define('role_article_admin', function ($user, $args = null) {
-            return $this->check_role($user, 'role_article_admin');
+            return $this->checkRole($user, 'role_article_admin');
         });
 
         // *** ロールから確認（管理）
 
         // ページ管理
         Gate::define('admin_page', function ($user, $args = null) {
-            return $this->check_role($user, 'admin_page');
+            return $this->checkRole($user, 'admin_page');
         });
 
         // サイト管理
         Gate::define('admin_site', function ($user, $args = null) {
-            return $this->check_role($user, 'admin_site');
+            return $this->checkRole($user, 'admin_site');
         });
 
         // ユーザー管理
         Gate::define('admin_user', function ($user, $args = null) {
-            return $this->check_role($user, 'admin_user');
+            return $this->checkRole($user, 'admin_user');
         });
 
         // システム管理
         Gate::define('admin_system', function ($user, $args = null) {
-            return $this->check_role($user, 'admin_system');
+            return $this->checkRole($user, 'admin_system');
         });
 
         // *** フレームの権限から確認
 
         // フレーム追加
         Gate::define('frames.create', function ($user, $args = null) {
-            return $this->check_authority($user, 'frames.create', $args);
+            return $this->checkAuthority($user, 'frames.create', $args);
         });
 
         // フレーム移動
         Gate::define('frames.move', function ($user, $args = null) {
-            return $this->check_authority($user, 'frames.move', $args);
+            return $this->checkAuthority($user, 'frames.move', $args);
         });
 
         // フレーム編集
         Gate::define('frames.edit', function ($user, $args = null) {
-            return $this->check_authority($user, 'frames.edit', $args);
+            return $this->checkAuthority($user, 'frames.edit', $args);
         });
 
         // フレーム選択
         Gate::define('frames.change', function ($user, $args = null) {
-            return $this->check_authority($user, 'frames.change', $args);
+            return $this->checkAuthority($user, 'frames.change', $args);
         });
 
         // フレーム削除
         Gate::define('frames.delete', function ($user, $args = null) {
-            return $this->check_authority($user, 'frames.delete', $args);
+            return $this->checkAuthority($user, 'frames.delete', $args);
         });
 
         // *** バケツの権限から確認
 
         // バケツ作成
         Gate::define('buckets.create', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.create', $args);
+            return $this->checkAuthority($user, 'buckets.create', $args);
         });
 
         // バケツ削除
         Gate::define('buckets.delete', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.delete', $args);
+            return $this->checkAuthority($user, 'buckets.delete', $args);
         });
 
         // カラム追加
         Gate::define('buckets.addColumn', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.addColumn', $args);
+            return $this->checkAuthority($user, 'buckets.addColumn', $args);
         });
 
         // カラム編集
         Gate::define('buckets.editColumn', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.editColumn', $args);
+            return $this->checkAuthority($user, 'buckets.editColumn', $args);
         });
 
         // カラム削除
         Gate::define('buckets.deleteColumn', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.deleteColumn', $args);
+            return $this->checkAuthority($user, 'buckets.deleteColumn', $args);
         });
 
         // カラム再設定
         Gate::define('buckets.reloadColumn', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.reloadColumn', $args);
+            return $this->checkAuthority($user, 'buckets.reloadColumn', $args);
         });
 
         // カラム上移動
         Gate::define('buckets.upColumnSequence', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.upColumnSequence', $args);
+            return $this->checkAuthority($user, 'buckets.upColumnSequence', $args);
         });
 
         // カラム下移動
         Gate::define('buckets.downColumnSequence', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.downColumnSequence', $args);
+            return $this->checkAuthority($user, 'buckets.downColumnSequence', $args);
         });
 
         // カラム保存
         Gate::define('buckets.saveColumn', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.saveColumn', $args);
+            return $this->checkAuthority($user, 'buckets.saveColumn', $args);
         });
 
         // CSVダウンロード
         Gate::define('buckets.downloadCsv', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.downloadCsv', $args);
+            return $this->checkAuthority($user, 'buckets.downloadCsv', $args);
         });
 
         // CSVアップロード（CSVインポート）
         Gate::define('buckets.uploadCsv', function ($user, $args = null) {
-            return $this->check_authority($user, 'buckets.uploadCsv', $args);
+            return $this->checkAuthority($user, 'buckets.uploadCsv', $args);
         });
 
         // *** 記事の権限から確認
 
         // 記事追加
         Gate::define('posts.create', function ($user, $args = null) {
-            return $this->check_authority($user, 'posts.create', $args);
+            return $this->checkAuthority($user, 'posts.create', $args);
         });
 
         // 記事変更
         Gate::define('posts.update', function ($user, $args = null) {
-//print_r($args);
-            return $this->check_authority($user, 'posts.update', $args);
+            //print_r($args);
+            return $this->checkAuthority($user, 'posts.update', $args);
         });
 
         // 記事削除
         Gate::define('posts.delete', function ($user, $args = null) {
-            return $this->check_authority($user, 'posts.delete', $args);
+            return $this->checkAuthority($user, 'posts.delete', $args);
         });
 
         // 記事承認
         Gate::define('posts.approval', function ($user, $args = null) {
-            return $this->check_authority($user, 'posts.approval', $args);
+            return $this->checkAuthority($user, 'posts.approval', $args);
         });
 
         // *** システム権限から確認
@@ -249,18 +249,18 @@ class AppServiceProvider extends AuthServiceProvider
 
         // プレビューのための判定
         Gate::define('preview', function ($user, $args = null) {
-            return $this->check_authority($user, 'preview', $args);
+            return $this->checkAuthority($user, 'preview', $args);
         });
 
         // 変更 or 承認 判定
         Gate::define('role_update_or_approval', function ($user, $args = null) {
 
             // 記事変更
-            if ($this->check_authority($user, 'posts.update', $args)) {
+            if ($this->checkAuthority($user, 'posts.update', $args)) {
                 return true;
             }
             // 記事承認
-            if ($this->check_authority($user, 'posts.approval', $args)) {
+            if ($this->checkAuthority($user, 'posts.approval', $args)) {
                 return true;
             }
             return false;
@@ -270,36 +270,36 @@ class AppServiceProvider extends AuthServiceProvider
         Gate::define('role_manage_or_post', function ($user, $args = null) {
 
             // ページ管理
-            if ($this->check_role($user, 'admin_page')) {
+            if ($this->checkRole($user, 'admin_page')) {
                 return true;
             }
             // サイト管理
-            if ($this->check_role($user, 'admin_site')) {
+            if ($this->checkRole($user, 'admin_site')) {
                 return true;
             }
             // ユーザー管理
-            if ($this->check_role($user, 'admin_user')) {
+            if ($this->checkRole($user, 'admin_user')) {
                 return true;
             }
             // システム管理
-            if ($this->check_role($user, 'admin_system')) {
+            if ($this->checkRole($user, 'admin_system')) {
                 return true;
             }
             // プラグイン管理者
-            if ($this->check_role($user, 'role_arrangement')) {
+            if ($this->checkRole($user, 'role_arrangement')) {
                 return true;
             }
             // delete: 編集者, モデレータ権限は管理メニューで使える機能がないため、使わせない
             // // 編集者
-            // if ($this->check_role($user, 'role_reporter')) {
+            // if ($this->checkRole($user, 'role_reporter')) {
             //     return true;
             // }
             // // モデレータ
-            // if ($this->check_role($user, 'role_article')) {
+            // if ($this->checkRole($user, 'role_article')) {
             //     return true;
             // }
             // コンテンツ管理者
-            if ($this->check_role($user, 'role_article_admin')) {
+            if ($this->checkRole($user, 'role_article_admin')) {
                 return true;
             }
             return false;
@@ -308,19 +308,19 @@ class AppServiceProvider extends AuthServiceProvider
         // 管理メニュー表示判定（管理機能のどこかに付与がある場合）
         Gate::define('role_manage_on', function ($user, $args = null) {
             // ページ管理
-            if ($this->check_role($user, 'admin_page')) {
+            if ($this->checkRole($user, 'admin_page')) {
                 return true;
             }
             // サイト管理
-            if ($this->check_role($user, 'admin_site')) {
+            if ($this->checkRole($user, 'admin_site')) {
                 return true;
             }
             // ユーザー管理
-            if ($this->check_role($user, 'admin_user')) {
+            if ($this->checkRole($user, 'admin_user')) {
                 return true;
             }
             // システム管理
-            if ($this->check_role($user, 'admin_system')) {
+            if ($this->checkRole($user, 'admin_system')) {
                 return true;
             }
             return false;
@@ -334,7 +334,7 @@ class AppServiceProvider extends AuthServiceProvider
      *
      * @return boolean
      */
-    private function check_role($user, $role)
+    private function checkRole($user, $role)
     {
         // ログインしていない場合は権限なし
         if (empty($user)) {
@@ -364,18 +364,18 @@ class AppServiceProvider extends AuthServiceProvider
      *
      * @return boolean
      */
-    private function check_authority($user, $authority, $args = null)
+    private function checkAuthority($user, $authority, $args = null)
     {
         // preview モードのチェック付きの場合はpreview モードなら権限ナシで返す。
         $request = app(\Illuminate\Http\Request::class);
 
         // 引数をバラシてPOST を取得
-//        list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->check_args_obj($args);
-        list($post, $plugin_name, $buckets_obj) = $this->check_args_obj($args);
-//print_r( $buckets_obj );
+        // list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->checkArgsObj($args);
+        list($post, $plugin_name, $buckets_obj) = $this->checkArgsObj($args);
+        //print_r( $buckets_obj );
 
         // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
-//        if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
+        // if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
 
         // モードスイッチがプレビューなら、無条件に権限ナシで返す。
         if ($request->mode == 'preview') {
@@ -398,22 +398,22 @@ class AppServiceProvider extends AuthServiceProvider
         //     ここではpost_flag(投稿できる)のみ取得してチェックする。
         //     記事の承認は、ユーザ権限のrole_approvalでチェックするので、approval_flag(承認が必要)ではチェックしない。
         // Backets にrole が指定されていなければ、標準のrole を使用
-        $check_roles = config('cc_role.CC_AUTHORITY')[$authority];
+        $checkRoles = config('cc_role.CC_AUTHORITY')[$authority];
         if (!empty($this->getPostBucketsRoles($buckets_obj))) {
-            $check_roles = array();
+            $checkRoles = array();
             $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
-//Log::debug($buckets_roles);
+            //Log::debug($buckets_roles);
             // Buckets に設定されたrole から、関連role を取得してチェック。
             foreach ($post_buckets_roles as $post_buckets_role) {
-                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
+                $checkRoles = array_merge($checkRoles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
             }
             // 配列は添字型になるので、array_merge で結合してから重複を取り除く
-            $check_roles = array_unique($check_roles);
+            $checkRoles = array_unique($checkRoles);
         }
 
         // 指定された権限を含むロールをループする。
-//        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
-        foreach ($check_roles as $check_role) {
+        // foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
+        foreach ($checkRoles as $checkRole) {
             // ユーザの保持しているロールをループ
             // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
             //foreach ($user['user_roles'] as $target) {
@@ -433,7 +433,7 @@ class AppServiceProvider extends AuthServiceProvider
                         }
                     } else {
                         // 必要なロールを保持している
-                        if ($check_role == $user_role && $user_role_value) {
+                        if ($checkRole == $user_role && $user_role_value) {
                             // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
                             if (($user_role == 'role_article_admin') ||
                                 ($user_role == 'role_article') ||
@@ -471,7 +471,7 @@ class AppServiceProvider extends AuthServiceProvider
      *
      * @return boolean
      */
-    private function check_args_obj($args)
+    private function checkArgsObj($args)
     {
         $post        = ($args != null) ? $args[0] : null;
         $plugin_name = ($args != null && is_array($args) && count($args) > 1) ? $args[1] : null;
@@ -501,22 +501,22 @@ class AppServiceProvider extends AuthServiceProvider
         // return $buckets->getBucketsRoles();
         return $buckets->getPostArrayBucketsRoles();
 
-//        // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。
-//        if (empty($buckets)) {
-//            return false;
-//        }
-//        // Buckets オブジェクトでない場合もfalse
-//        if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
-//            return false;
-//        }
-//        // role を配列にして返却
-//        $roles = null;
-//        if ($buckets->post_role) {
-//            $roles = explode(',', $buckets->post_role);
-//        }
-//        if (empty($roles)) {
-//            return false;
-//        }
-//        return $roles;
+        // // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。
+        // if (empty($buckets)) {
+        //     return false;
+        // }
+        // // Buckets オブジェクトでない場合もfalse
+        // if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
+        //     return false;
+        // }
+        // // role を配列にして返却
+        // $roles = null;
+        // if ($buckets->post_role) {
+        //     $roles = explode(',', $buckets->post_role);
+        // }
+        // if (empty($roles)) {
+        //     return false;
+        // }
+        // return $roles;
     }
 }
