@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
-use App\Http\Controllers\Core\ConnectController;
+// use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Page;
 
@@ -24,12 +24,27 @@ use App\Models\Common\Page;
  * @category コア
  * @package Contoroller
  */
-class CookieController extends ConnectController
+// class CookieController extends ConnectController
+class CookieController
 {
     // use ConnectCommonTrait;
 
     /**
-     *  コンストラクタ
+     * コンストラクタ
+     *
+     * /core/cookie/xxx 系アクション時に実行される.
+     * ClassController::createCoreInstance() の new $class_name($page_id, $frame_id) で newされる。
+     * 下記順で呼び出される。
+     *   1. ConnectController::__construct （ClassControllerの親クラス）
+     *   2-1. ClassController::invokeGetCore
+     *   2-2. ClassController::createCoreInstance
+     *   3. CookieController::__construct （当コンストラクタ）
+     *   4. CookieController::xxx($request, $page_id, $frame_id); （実行アクション）
+     *
+     * ClassController の親クラスで ConnectController::__construct が既に実行済みであり、
+     * 当クラスはClassControllerから new されて呼ばれる Controller のため、通常のControllerと違い、親クラスに ConnectController の指定は不要。
+     *
+     * @see \App\Http\Controllers\Core\ClassController
      */
     public function __construct($page_id, $frame_id)
     {
@@ -37,7 +52,7 @@ class CookieController extends ConnectController
     }
 
     /**
-     *  パスワードチェック処理
+     * パスワードチェック処理
      */
     public function setCookieForMessageFirst($request, $page_id)
     {

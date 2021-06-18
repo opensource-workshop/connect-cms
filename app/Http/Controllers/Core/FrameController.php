@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Core;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\URL;
+// use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
-use DB;
 use View;
 
-use App\Http\Controllers\Core\ConnectController;
+// use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
@@ -31,13 +31,18 @@ use App\Traits\ConnectCommonTrait;
  * @category コア
  * @package Contoroller
  */
-class FrameController extends ConnectController
+// class FrameController extends ConnectController
+class FrameController
 {
-
     use ConnectCommonTrait;
 
     /**
-     *  コンストラクタ
+     * コンストラクタ
+     *
+     * /core/frame/xxx 系アクション時に実行される.
+     * 当クラスはClassControllerから new されて呼ばれる Controller のため、通常のControllerと違い、親クラスに ConnectController の指定は不要。
+     *
+     * @see \App\Http\Controllers\Core\ClassController
      */
     public function __construct($page_id, $frame_id)
     {
@@ -45,7 +50,7 @@ class FrameController extends ConnectController
     }
 
     /**
-     *  プラグインの追加
+     * プラグインの追加
      *
      * @param String $plugin_name
      * @return view
@@ -87,7 +92,7 @@ class FrameController extends ConnectController
     }
 
     /**
-     *  フレームの削除
+     * フレームの削除
      *
      * @param String $plugin_name
      * @return view
@@ -112,7 +117,7 @@ class FrameController extends ConnectController
     }
 
     /**
-     *  フレーム設定画面の更新
+     * フレーム設定画面の更新
      *
      * @return view
      */
@@ -131,7 +136,7 @@ class FrameController extends ConnectController
         // バリデート
         $validate_targets['content_open_type'] = ['required'];
         $validate_names['content_open_type'] = '公開設定';
-        if($request->content_open_type == ContentOpenType::limited_open){
+        if ($request->content_open_type == ContentOpenType::limited_open) {
             $validate_targets['content_open_date_from'] = ['required', 'date'];
             $validate_targets['content_open_date_to'] = ['required', 'date', 'after:content_open_date_from'];
             $validate_names['content_open_date_from'] = '公開日時From';
@@ -166,7 +171,7 @@ class FrameController extends ConnectController
     }
 
     /**
-     *  フレームの下移動
+     * フレームの下移動
      *
      * @return view
      */
@@ -203,19 +208,19 @@ class FrameController extends ConnectController
                 $change_flag = false;
 
                 Frame::where('id', $frame->id)
-                  ->update(['display_sequence' => $display_sequence - 1]);
+                    ->update(['display_sequence' => $display_sequence - 1]);
             }
             // 指定された番号
             elseif ($frame->id == $frame_id) {
                 $change_flag = true;
 
                 Frame::where('id', $frame->id)
-                  ->update(['display_sequence' => $display_sequence + 1]);
+                    ->update(['display_sequence' => $display_sequence + 1]);
             }
             // その他の項目。番号がおかしくなっている場合などがあっても、再設定するので、きれいになる。
             else {
                 Frame::where('id', $frame->id)
-                  ->update(['display_sequence' => $display_sequence]);
+                    ->update(['display_sequence' => $display_sequence]);
             }
             $display_sequence++;
         }
@@ -223,7 +228,7 @@ class FrameController extends ConnectController
     }
 
     /**
-     *  フレームの上移動
+     * フレームの上移動
      *
      * @return view
      */
@@ -258,19 +263,19 @@ class FrameController extends ConnectController
                 $change_flag = false;
 
                 Frame::where('id', $frame->id)
-                  ->update(['display_sequence' => $display_sequence + 1]);
+                    ->update(['display_sequence' => $display_sequence + 1]);
             }
             // 指定された番号
             elseif ($frame->id == $frame_id) {
                 $change_flag = true;
 
                 Frame::where('id', $frame->id)
-                  ->update(['display_sequence' => $display_sequence - 1]);
+                    ->update(['display_sequence' => $display_sequence - 1]);
             }
             // その他の項目。番号がおかしくなっている場合などがあっても、再設定するので、きれいになる。
             else {
                 Frame::where('id', $frame->id)
-                  ->update(['display_sequence' => $display_sequence]);
+                    ->update(['display_sequence' => $display_sequence]);
             }
             $display_sequence--;
         }
@@ -279,7 +284,6 @@ class FrameController extends ConnectController
 
     /**
      * 編集画面
-     *
      */
     public function edit($request, $page_id, $frame_id)
     {
@@ -304,19 +308,28 @@ class FrameController extends ConnectController
         ]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function frame_setting($request, $page_id, $frame_id)
-    {
-        // 権限チェック
-        if ($this->can("role_arrangement")) {
-            abort(403, '権限がありません。');
-        }
+    // delete: どこからも呼ばれていないメソッド
+    //   一般プラグインのフレーム編集（frame_setting）は、{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/xxx で、
+    //   1. DefaultController::invokePost の $this->view('core.cms', []);
+    //   2. core.cms bladeで @include('core.cms_frame')
+    //   3. 'core.cms_frame' blade内で action が 'frame_setting' であれば @include('core.cms_frame_edit') 呼んでおり、どこかに function frame_setting() がいるわけではなかったです。
+    //   ※ {{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/xxx と
+    //      {{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/xxx は特別なURLで、プラグインのactionを呼ばずに、直で blade表示していました。
+    //      上記以外が 一般プラグイン処理として、 $plugin_instances[$frame->frame_id]->invoke(xxx) を実行され、 一般プラグインの親クラス UserPluginBase::invoke で action 等を実行していました。
+    //
+    // /**
+    //  * Display a listing of the resource.
+    //  *
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function frame_setting($request, $page_id, $frame_id)
+    // {
+    //     // 権限チェック
+    //     if ($this->can("role_arrangement")) {
+    //         abort(403, '権限がありません。');
+    //     }
 
-        echo "frame_setting";
-        exit;
-    }
+    //     echo "frame_setting";
+    //     exit;
+    // }
 }
