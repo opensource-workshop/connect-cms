@@ -109,7 +109,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * 親のキャビネットコンテンツIDを取得する。
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @return int キャビネットコンテンツID
      */
@@ -128,7 +128,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットコンテンツを取得する
-     * 
+     *
      * @param int $cabinet_content_id キャビネットコンテンツID
      * @param int $cabinet_id キャビネットID
      * @return \App\Models\User\Cabinets\CabinetContent キャビネットコンテンツ
@@ -137,14 +137,14 @@ class CabinetsPlugin extends UserPluginBase
     {
         // cabinet_content_idがなければ、ルート要素を返す
         if (empty($cabinet_content_id)) {
-            return CabinetContent::where('cabinet_id', $cabinet_id)->where('parent_id' , null)->first();
+            return CabinetContent::where('cabinet_id', $cabinet_id)->where('parent_id', null)->first();
         }
         return CabinetContent::find($cabinet_content_id);
     }
 
     /**
-     * パンくずリスト（ファルダ階層）を取得する 
-     *    
+     * パンくずリスト（ファルダ階層）を取得する
+     *
      * @param int $cabinet_content_id キャビネットコンテンツID
      * @param int $cabinet_id キャビネットID
      * @return \Illuminate\Support\Collection キャビネットコンテンツのコレクション
@@ -162,11 +162,10 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * フォルダ作成処理
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
-     * @return 
      */
     public function makeFolder($request, $page_id, $frame_id)
     {
@@ -191,7 +190,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * ファイルアップロード処理
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
@@ -218,7 +217,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * ファイルを上書きすべきか
-     * 
+     *
      * @param \App\Models\User\Cabinets\CabinetContent $parent 親要素
      * @param string $file_name アップロードするファイル名
      * @return bool
@@ -233,7 +232,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * ファイル新規保存処理
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
@@ -253,8 +252,8 @@ class CabinetsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $request->file('upload_file')->storeAs(
-            $this->getDirectory($upload->id), $this->getContentsFileName($upload));
+        $request->file('upload_file')
+            ->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         $parent->children()->create([
             'cabinet_id' => $upload->id,
@@ -262,11 +261,11 @@ class CabinetsPlugin extends UserPluginBase
             'name' => $request->file('upload_file')->getClientOriginalName(),
             'is_folder' => CabinetContent::is_folder_off,
         ]);
-    } 
+    }
 
     /**
      * ファイル上書き保存処理
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
@@ -291,8 +290,8 @@ class CabinetsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $request->file('upload_file')->storeAs(
-            $this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
+        $request->file('upload_file')
+            ->storeAs($this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
 
         // 画面表示される更新日を更新する
         $content->touch();
@@ -300,7 +299,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      *  コンテンツ削除処理
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
@@ -314,7 +313,7 @@ class CabinetsPlugin extends UserPluginBase
 
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
             $contents = CabinetContent::descendantsAndSelf($cabinet_content_id);
-            if (!$this->canDelete($request, $contents)){
+            if (!$this->canDelete($request, $contents)) {
                 abort(403, '権限がありません。');
             };
 
@@ -327,7 +326,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットコンテンツを再帰的に削除する
-     * 
+     *
      * @param int $cabinet_content_id キャビネットコンテンツID
      * @param \Illuminate\Support\Collection $cabinet_contents キャビネットコンテンツのコレクション
      */
@@ -337,15 +336,15 @@ class CabinetsPlugin extends UserPluginBase
         foreach ($cabinet_contents->whereNotNull('upload_id') as $content) {
             Storage::delete($this->getContentsFilePath($content->upload));
             Uploads::destroy($content->upload->id);
-        }      
+        }
         
         // キャビネットコンテンツの削除（再帰）
         CabinetContent::find($cabinet_content_id)->delete();
     }
 
-    /** 
+    /**
      * ダウンロード処理
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
@@ -372,9 +371,9 @@ class CabinetsPlugin extends UserPluginBase
         );
     }
 
-    /** 
+    /**
      * ダウンロードするZIPファイルを作成する。
-     * 
+     *
      * @param string $save_path 保存先パス
      * @param \Illuminate\Http\Request $request リクエスト
      */
@@ -393,7 +392,7 @@ class CabinetsPlugin extends UserPluginBase
                 mkdir($this->getTmpDirectory(), 0777, true);
             }
 
-            $this->addContentsToZip($contents, '', $zip);
+            $this->addContentsToZip($zip, $contents);
         }
 
         // 空のZIPファイルが出来たら404
@@ -405,12 +404,12 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * ZIPファイルにフォルダ、ファイルを追加する。
-     * 
+     *
+     * @param \ZipArchive $zip ZIPアーカイブ
      * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
      * @param string $parent_name 親キャビネットの名称
-     * @param \ZipArchive $zip ZIPアーカイブ
      */
-    private function addContentsToZip($contents,  $parent_name = '', &$zip)
+    private function addContentsToZip(&$zip, $contents, $parent_name = '')
     {
         foreach ($contents as $content) {
             // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
@@ -434,13 +433,13 @@ class CabinetsPlugin extends UserPluginBase
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
-            $this->addContentsToZip($content->children, $parent_name .'/' . $content->name, $zip);
+            $this->addContentsToZip($zip, $content->children, $parent_name .'/' . $content->name);
         }
     }
 
     /**
      * 単数のファイルが選択されたか
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @return bool
      */
@@ -465,7 +464,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * 一時フォルダのパスを取得する
-     * 
+     *
      * @return string 一時フォルダのパス
      */
     private function getTmpDirectory()
@@ -475,7 +474,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットに格納されている実ファイルのパスを取得する
-     * 
+     *
      * @return string ファイルのフルパス
      */
     private function getContentsFilePath($upload)
@@ -485,7 +484,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットに格納されている実ファイルの名称を取得する
-     * 
+     *
      * @param \App\Models\Common\Uploads $upload アップロード
      * @return string 物理ファイル名
      */
@@ -496,7 +495,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットコンテンツを削除処理をできるか
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
      * @return bool
@@ -508,7 +507,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットコンテンツをダウンロード処理をできるか
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
      * @return bool
@@ -520,14 +519,14 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットコンテンツが触れる状態にあるか
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
      * @return bool
      */
     private function canTouch($request, $cabinet_contents)
     {
-        foreach($cabinet_contents as $content) {
+        foreach ($cabinet_contents as $content) {
             $page_tree = Page::reversed()->ancestorsAndSelf($content->upload->page_id);
             // ファイルにページ情報がある場合
             if ($content->upload->page_id) {
@@ -591,7 +590,7 @@ class CabinetsPlugin extends UserPluginBase
      *  バケツ登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $bucket_id = null)
-    {  
+    {
         // 入力エラーがあった場合は入力画面に戻る。
         $validator = $this->getBucketValidator($request);
         if ($validator->fails()) {
@@ -606,11 +605,12 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネット登録/更新のバリデーターを取得する。
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @return \Illuminate\Contracts\Validation\Validator バリデーター
      */
-    private function getBucketValidator($request) {
+    private function getBucketValidator($request)
+    {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'name' => [
@@ -632,11 +632,12 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * フォルダ作成のバリデーターを取得する。
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @return \Illuminate\Contracts\Validation\Validator バリデーター
      */
-    private function getMakeFoldertValidator($request) {
+    private function getMakeFoldertValidator($request)
+    {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'folder_name' => [
@@ -657,7 +658,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * ファイルアップロードのバリデーターを取得する。
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param  App\Models\User\Cabinets\Cabinet キャビネット
      * @return \Illuminate\Contracts\Validation\Validator バリデーター
@@ -683,7 +684,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * 一括のファイル削除、ダウンロードのバリデーターを取得する。
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @return \Illuminate\Contracts\Validation\Validator バリデーター
      */
@@ -706,13 +707,14 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * キャビネットを登録する。
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $frame_id フレームID
      * @param int $bucket_id バケツID
      * @return int バケツID
      */
-    private function saveCabinet($request, $frame_id, $bucket_id) {
+    private function saveCabinet($request, $frame_id, $bucket_id)
+    {
         // バケツの取得。なければ登録。
         $bucket = Buckets::updateOrCreate(
             ['id' => $bucket_id],
@@ -736,10 +738,10 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * ルートディレクトリを登録する
-     * 
+     *
      * @param App\Models\User\Cabinets\Cabinet $cabinet キャビネット
      */
-    private function saveRootCabinetContent($cabinet) 
+    private function saveRootCabinetContent($cabinet)
     {
         CabinetContent::updateOrCreate(
             ['cabinet_id' => $cabinet->id, 'parent_id' => null, 'is_folder' => CabinetContent::is_folder_on],
@@ -749,7 +751,7 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      *  キャビネット削除処理
-     * 
+     *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
@@ -783,7 +785,7 @@ class CabinetsPlugin extends UserPluginBase
 
    /**
     * データ紐づけ変更関数
-    * 
+    *
     * @param \Illuminate\Http\Request $request リクエスト
     * @param int $page_id ページID
     * @param int $frame_id フレームID
@@ -799,20 +801,22 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * 権限設定　変更画面を表示する
-     * 
+     *
      * @see UserPluginBase::editBucketsRoles()
      */
-    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false) {
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false)
+    {
         // 承認機能は使わない
         return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }
 
     /**
      * 権限設定を保存する
-     * 
+     *
      * @see UserPluginBase::saveBucketsRoles()
      */
-    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false) {
+    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false)
+    {
         // 承認機能は使わない
         return parent::saveBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }

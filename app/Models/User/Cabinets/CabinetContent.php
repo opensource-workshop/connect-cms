@@ -8,7 +8,6 @@ use App\Userable;
 use App\Models\Common\Uploads;
 use Kalnoy\Nestedset\NodeTrait;
 
-
 class CabinetContent extends Model
 {
     const is_folder_on = 1;
