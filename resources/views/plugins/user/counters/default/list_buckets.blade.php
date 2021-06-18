@@ -59,18 +59,24 @@
                 <td><span class="{{$frame->getSettingCaptionClass()}}">累計：</span>{{$plugin_bucket->total_count}}</td>
                 <td nowrap>
                     <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
+
+                    <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/counters/listCounters/{{$page->id}}/{{$frame_id}}/{{$plugin_bucket->id}}#frame-{{$frame_id}}">
+                        <i class="fas fa-list"></i> <span class="{{$frame->getSettingButtonCaptionClass()}}">カウント</span>一覧
+                    </a>
+
                     <div class="btn-group">
                         <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin_bucket->id}});">
-                            <i class="fas fa-file-download"></i> ダウンロード
+                            <i class="fas fa-file-download"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> ダウンロード</span>
                         </button>
                         <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <span class="sr-only">ドロップダウンボタン</span>
                         </button>
-                        <div class="dropdown-menu">
+                        <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="#" onclick="submit_download_shift_jis({{$plugin_bucket->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
                             <a class="dropdown-item" href="#" onclick="submit_download_utf_8({{$plugin_bucket->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
                         </div>
                     </div>
+
                 </td>
                 <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin_bucket->created_at}}</td>
             </tr>
