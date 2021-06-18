@@ -8,15 +8,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
-use DB;
-
 use App\Http\Controllers\Core\ConnectController;
 
-use App\Models\Common\Frame;
 use App\Models\Common\Page;
-use App\Models\Core\Configs;
 
-use App\Traits\ConnectCommonTrait;
+// use App\Traits\ConnectCommonTrait;
 
 /**
  * Cookie管理
@@ -30,8 +26,7 @@ use App\Traits\ConnectCommonTrait;
  */
 class CookieController extends ConnectController
 {
-
-    use ConnectCommonTrait;
+    // use ConnectCommonTrait;
 
     /**
      *  コンストラクタ
@@ -50,6 +45,6 @@ class CookieController extends ConnectController
         $page = Page::where('id', $page_id)->first();
 
         // cookieをセット（cookie名、値、有効期間（分））して、元ページへリダイレクト
-        return redirect($page->permanent_link)->cookie('connect_cookie_message_first', 'agreed', 525600);;
+        return redirect($page->permanent_link)->cookie('connect_cookie_message_first', 'agreed', 525600);
     }
 }
