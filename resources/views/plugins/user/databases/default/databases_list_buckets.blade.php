@@ -63,7 +63,7 @@
     <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST">
         {{ csrf_field() }}
         <div class="form-group">
-            <table class="table table-hover table-responsive">
+            <table class="table table-hover {{$frame->getSettingTableClass()}}">
             <thead>
                 <tr>
                     <th></th>
@@ -76,45 +76,45 @@
             <tbody>
             @foreach($plugins as $plugin)
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
-                    <td><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
-                    <td>{{$plugin->plugin_bucket_name}}</td>
-                    <td>{{$plugin->entry_count}}</td>
+                    <td class="d-table-cell"><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">{{$frame->plugin_name_full}}名：</span>{{$plugin->plugin_bucket_name}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">件数：</span>{{$plugin->entry_count}}</td>
                     <td nowrap>
+                        <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
                         <div class="btn-group mr-1">
                             <button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
-                                <i class="far fa-edit"></i> 設定変更
+                                <i class="far fa-edit"></i> 設定<span class="{{$frame->getSettingButtonCaptionClass()}}">変更</span>
                             </button>
                             <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="sr-only">ドロップダウンボタン</span>
                             </button>
-                            <div class="dropdown-menu">
+                            <div class="dropdown-menu dropdown-menu-right">
                                 <a class="dropdown-item" href="{{url('/')}}/plugin/databases/createBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">コピーしてDB作成へ</a>
                             </div>
                         </div>
 
                         <div class="btn-group mr-1">
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
-                                <i class="fas fa-file-download"></i> ダウンロード
+                                <i class="fas fa-file-download"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> ダウンロード</span>
                             </button>
                             <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="sr-only">ドロップダウンボタン</span>
                             </button>
-                            <div class="dropdown-menu">
+                            <div class="dropdown-menu dropdown-menu-right">
                                 <a class="dropdown-item" href="#" onclick="submit_download_shift_jis({{$plugin->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
                                 <a class="dropdown-item" href="#" onclick="submit_download_utf_8({{$plugin->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
                             </div>
                         </div>
 
                         <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/import/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
-                            <i class="fas fa-file-upload"></i> インポート
+                            <i class="fas fa-file-upload"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> インポート</span>
                         </button>
                     </td>
-                    <td nowrap>{{$plugin->created_at->format('Y/m/d H:i')}}</td>
+                    <td nowrap><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin->created_at->format('Y/m/d H:i')}}</td>
                 </tr>
             @endforeach
             </tbody>
             </table>
-            <small class="text-muted">※ 横スクロールできます。</small>
         </div>
 
         <div class="text-center">
