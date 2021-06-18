@@ -70,8 +70,6 @@ class CabinetsPlugin extends UserPluginBase
         return "editBuckets";
     }
 
-    /* private関数 */
-
     /**
      * プラグインのバケツ取得関数
      */
@@ -107,6 +105,12 @@ class CabinetsPlugin extends UserPluginBase
         ]);
     }
 
+    /**
+     * 親のキャビネットコンテンツIDを取得する。
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return int キャビネットコンテンツID
+     */
     private function getParentId($request)
     {
         $parent_id = '';
@@ -120,6 +124,13 @@ class CabinetsPlugin extends UserPluginBase
         return $parent_id;
     }
 
+    /**
+     * キャビネットコンテンツを取得する
+     * 
+     * @param int $cabinet_content_id キャビネットコンテンツID
+     * @param int $cabinet_id キャビネットID
+     * @return \App\Models\User\Cabinets\CabinetContent キャビネットコンテンツ
+     */
     private function fetchCabinetContent($cabinet_content_id, $cabinet_id = null)
     {
         // cabinet_content_idがなければ、ルート要素を返す
@@ -129,6 +140,13 @@ class CabinetsPlugin extends UserPluginBase
         return CabinetContent::find($cabinet_content_id);
     }
 
+    /**
+     * パンくずリスト（ファルダ階層）を取得する 
+     *    
+     * @param int $cabinet_content_id キャビネットコンテンツID
+     * @param int $cabinet_id キャビネットID
+     * @return \Illuminate\Support\Collection キャビネットコンテンツのコレクション
+     */
     private function fetchBreadCrumbs($cabinet_id, $cabinet_content_id = null)
     {
         // 初期表示はルート要素のみ
@@ -140,6 +158,14 @@ class CabinetsPlugin extends UserPluginBase
         return CabinetContent::ancestorsAndSelf($cabinet_content_id);
     }
 
+    /**
+     * フォルダ作成処理
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @return 
+     */
     public function makeFolder($request, $page_id, $frame_id)
     {
         $validator = $this->getMakeFoldertValidator($request);
@@ -161,6 +187,13 @@ class CabinetsPlugin extends UserPluginBase
         return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
     }
 
+    /**
+     * ファイルアップロード処理
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
     public function upload($request, $page_id, $frame_id)
     {
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
@@ -181,6 +214,13 @@ class CabinetsPlugin extends UserPluginBase
         return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
     }
 
+    /**
+     * ファイルを上書きすべきか
+     * 
+     * @param \App\Models\User\Cabinets\CabinetContent $parent 親要素
+     * @param string $file_name アップロードするファイル名
+     * @return bool
+     */
     private function shouldOverwriteFile($parent, $file_name)
     {
         return CabinetContent::where('parent_id', $parent->id)
@@ -189,6 +229,13 @@ class CabinetsPlugin extends UserPluginBase
             ->exists();
     }
 
+    /**
+     * ファイル新規保存処理
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
     private function writeFile($request, $page_id, $parent)
     {
         // uploads テーブルに情報追加、ファイルのid を取得する
@@ -215,6 +262,13 @@ class CabinetsPlugin extends UserPluginBase
         ]);
     } 
 
+    /**
+     * ファイル上書き保存処理
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
     private function overwriteFile($request, $page_id, $parent)
     {
         $content = CabinetContent::where('parent_id', $parent->id)
@@ -244,6 +298,10 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      *  コンテンツ削除処理
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
      */
     public function deleteContents($request, $page_id, $frame_id)
     {
@@ -265,6 +323,12 @@ class CabinetsPlugin extends UserPluginBase
         return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $request->parent_id . "#frame-" . $frame_id ]);
     }
 
+    /**
+     * キャビネットコンテンツを再帰的に削除する
+     * 
+     * @param int $cabinet_content_id キャビネットコンテンツID
+     * @param \Illuminate\Support\Collection $cabinet_contents キャビネットコンテンツのコレクション
+     */
     private function deleteCabinetContents($cabinet_content_id, $cabinet_contents)
     {
         $delete_upload_ids = [];
@@ -283,7 +347,13 @@ class CabinetsPlugin extends UserPluginBase
         }
     }
 
-
+    /** 
+     * ダウンロード処理
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
     public function download($request, $page_id, $frame_id)
     {
         $validator = $this->getContentsControlValidator($request);
@@ -341,32 +411,69 @@ class CabinetsPlugin extends UserPluginBase
         );
     }
 
+    /**
+     * 一時フォルダのパスを取得する
+     * 
+     * @return string 一時フォルダのパス
+     */
     private function getTmpDirectory()
     {
         return storage_path('app/') . 'tmp/cabinet/';
     }
 
+    /**
+     * キャビネットに格納されている実ファイルのパスを取得する
+     * 
+     * @return string ファイルのフルパス
+     */
     private function getContentsFilePath($upload)
     {
         return $this->getDirectory($upload->id) . '/' . $this->getContentsFileName($upload);
     }
 
+    /**
+     * キャビネットに格納されている実ファイルの名称を取得する
+     * 
+     * @param \App\Models\Common\Uploads $upload アップロード
+     * @return string 物理ファイル名
+     */
     private function getContentsFileName($upload)
     {
         return $upload->id . '.' . $upload->extension;
     }
 
+    /**
+     * キャビネットコンテンツを削除処理をできるか
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
+     * @return bool
+     */
     private function canDelete($request, $cabinet_contents)
     {
         // TODO:権限チェック
         return $this->canTouch($request, $cabinet_contents);
     }
 
+    /**
+     * キャビネットコンテンツをダウンロード処理をできるか
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
+     * @return bool
+     */
     private function canDownload($request, $cabinet_contents)
     {
         return $this->canTouch($request, $cabinet_contents);
     }
 
+    /**
+     * キャビネットコンテンツが触れる状態にあるか
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
+     * @return bool
+     */
     private function canTouch($request, $cabinet_contents)
     {
         foreach($cabinet_contents as $content) {
@@ -550,9 +657,9 @@ class CabinetsPlugin extends UserPluginBase
      * キャビネットを登録する。
      * 
      * @param \Illuminate\Http\Request $request リクエスト
-     * @param string $frame_id フレームID
-     * @param string $bucket_id バケツID
-     * @return string バケツID
+     * @param int $frame_id フレームID
+     * @param int $bucket_id バケツID
+     * @return int バケツID
      */
     private function saveCabinet($request, $frame_id, $bucket_id) {
         // バケツの取得。なければ登録。
@@ -590,7 +697,11 @@ class CabinetsPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     *  キャビネット削除処理
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
      */
     public function destroyBuckets($request, $page_id, $frame_id, $cabinet_id)
     {
@@ -616,6 +727,10 @@ class CabinetsPlugin extends UserPluginBase
 
    /**
     * データ紐づけ変更関数
+    * 
+    * @param \Illuminate\Http\Request $request リクエスト
+    * @param int $page_id ページID
+    * @param int $frame_id フレームID
     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
