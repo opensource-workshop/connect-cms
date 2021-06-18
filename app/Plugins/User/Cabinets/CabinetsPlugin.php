@@ -32,6 +32,8 @@ class CabinetsPlugin extends UserPluginBase
 {
 
     /* オブジェクト変数 */
+    // ファイルダウンロードURL
+    private $downlod_url = '';
 
     /* コアから呼び出す関数 */
 
@@ -361,27 +363,29 @@ class CabinetsPlugin extends UserPluginBase
             return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
         }
 
-        $traverse = function ($contents,  $parent_name = '') use (&$traverse, &$zip) {
-            foreach ($contents as $content) {
-                if ($content->is_folder === CabinetContent::is_folder_on && $content->isLeaf()) {
-                    $zip->addEmptyDir($parent_name .'/' . $content->name);
-                } elseif ($content->is_folder === CabinetContent::is_folder_off) {
-                    // データベースがない場合はスキップ
-                    if (empty($content->upload)) {
-                        continue;
+        // ファイルの単数選択ならZIP化せずダウンロードレスポンスを返す
+        if ($this->isSelectedSingleFile($request)) {
+            return redirect($this->downlod_url);
                     }
-                    // ファイルの実体がない場合はスキップ
-                    if (!Storage::exists($this->getContentsFilePath($content->upload))) {
-                        continue;
-                    }
-                    $zip->addFile(storage_path('app/') . $this->getContentsFilePath($content->upload), $parent_name .'/'. $content->name);
-                    Uploads::find($content->upload->id)->increment('download_count');
-                }
-                $traverse($content->children, $parent_name .'/' . $content->name);
-            }
-        };
 
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
+        $this->makeZip($save_path, $request);
+
+        return response()->download(
+            $save_path,
+            'Files.zip',
+            ['Content-Disposition' => 'filename=Files.zip']
+        );
+                    }
+
+    /** 
+     * ダウンロードするZIPファイルを作成する。
+     * 
+     * @param string $save_path 保存先パス
+     * @param \Illuminate\Http\Request $request リクエスト
+     */
+    private function makeZip($save_path, $request)
+    {
         $zip = new \ZipArchive();
         $zip->open($save_path, \ZipArchive::CREATE);
 
@@ -390,25 +394,79 @@ class CabinetsPlugin extends UserPluginBase
             if (!$this->canDownload($request, $contents)) {
                 abort(403, 'ファイル参照権限がありません。');
             }
-
             // フォルダがないとzipファイルを作れない
             if (!is_dir($this->getTmpDirectory())) {
                 mkdir($this->getTmpDirectory(), 0777, true);
             }
 
-            $traverse($contents);
+            $this->addContentsToZip($contents, '', $zip);
         }
 
+        // 空のZIPファイルが出来たら404
         if ($zip->count() === 0) {
             abort(404, 'ファイルがありません。');
         }
         $zip->close();
+    }
 
-        return response()->download(
-            $save_path,
-            'Files.zip',
-            ['Content-Disposition' => 'filename=Files.zip']
+    /**
+     * ZIPファイルにフォルダ、ファイルを追加する。
+     * 
+     * @param \Illuminate\Support\Collection $contents キャビネットコンテンツのコレクション
+     * @param string $parent_name 親キャビネットの名称
+     * @param \ZipArchive $zip ZIPアーカイブ
+     */
+    private function addContentsToZip($contents,  $parent_name = '', &$zip)
+    {
+        foreach ($contents as $content) {
+            // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
+            if ($content->is_folder === CabinetContent::is_folder_on && $content->isLeaf()) {
+                $zip->addEmptyDir($parent_name .'/' . $content->name);
+
+            // ファイル追加
+            } elseif ($content->is_folder === CabinetContent::is_folder_off) {
+                // データベースがない場合はスキップ
+                if (empty($content->upload)) {
+                    continue;
+                }
+                // ファイルの実体がない場合はスキップ
+                if (!Storage::exists($this->getContentsFilePath($content->upload))) {
+                    continue;
+                }
+                $zip->addFile(
+                    storage_path('app/') . $this->getContentsFilePath($content->upload),
+                    $parent_name .'/'. $content->name
         );
+                // ダウンロード回数をカウントアップ
+                Uploads::find($content->upload->id)->increment('download_count');
+            }
+            $this->addContentsToZip($content->children, $parent_name .'/' . $content->name, $zip);
+        }
+    }
+
+    /**
+     * 単数のファイルが選択されたか
+     * 
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return bool
+     */
+    private function isSelectedSingleFile($request)
+    {
+        // 複数選択された
+        if (is_array($request->cabinet_content_id) && count($request->cabinet_content_id) !== 1) {
+            return false;
+        }
+
+        // フォルダが選択された
+        $cabinet_content = CabinetContent::find($request->cabinet_content_id[0]);
+        if ($cabinet_content->is_folder === CabinetContent::is_folder_on) {
+            return false;
+        }
+
+        // 単数ファイルダウンロード用パスを設定しておく
+        $this->downlod_url = "/file/" . $cabinet_content->upload_id;
+
+        return true;
     }
 
     /**
