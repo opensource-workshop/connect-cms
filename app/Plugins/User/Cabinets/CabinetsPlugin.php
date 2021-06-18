@@ -12,9 +12,9 @@ use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
-use App\Models\User\Cabinets\Cabinet;
 
 use App\Enums\UploadMaxSize;
+use App\Models\User\Cabinets\Cabinet;
 use App\Models\User\Cabinets\CabinetContent;
 use App\Plugins\User\UserPluginBase;
 
