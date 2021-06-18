@@ -4,7 +4,6 @@ namespace App\Plugins\User\Cabinets;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -14,9 +13,6 @@ use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\User\Cabinets\Cabinet;
-// use App\Models\User\Cabinets\CabinetFolder;
-//use App\Models\User\Cabinets\CabinetFrame;
-//use App\Models\User\Cabinets\CabinetPost;
 
 use App\Enums\UploadMaxSize;
 use App\Models\User\Cabinets\CabinetContent;
