@@ -19,7 +19,7 @@ class CreateCabinets extends Migration
             $table->string('name', 255)->comment('キャビネット名');
             $table->string('upload_max_size', 255)->comment('ファイル最大サイズ');
             $table->integer('approval_flag')->default(0)->comment('承認フラグ');
-            $table->string('comment', 255)->comment('コメント');
+            $table->string('comment', 255)->nullable()->comment('コメント');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
             $table->timestamp('created_at')->nullable();
