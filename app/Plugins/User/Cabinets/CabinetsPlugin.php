@@ -503,7 +503,6 @@ class CabinetsPlugin extends UserPluginBase
      */
     private function canDelete($request, $cabinet_contents)
     {
-        // TODO:権限チェック
         return $this->canTouch($request, $cabinet_contents);
     }
 
