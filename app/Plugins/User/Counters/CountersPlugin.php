@@ -41,6 +41,7 @@ class CountersPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['editView'];
+        $functions['get']  = ['listCounters'];
         $functions['post'] = ['saveView'];
         return $functions;
     }
@@ -54,6 +55,7 @@ class CountersPlugin extends UserPluginBase
         $role_ckeck_table = array();
         $role_ckeck_table["editView"] = array('role_article');
         $role_ckeck_table["saveView"] = array('role_article');
+        $role_ckeck_table["listCounters"] = array('role_article');
         return $role_ckeck_table;
     }
 
@@ -543,5 +545,39 @@ class CountersPlugin extends UserPluginBase
         }
 
         return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
+     * プラグインのバケツ選択表示関数
+     */
+    public function listCounters($request, $page_id, $frame_id, $id = null)
+    {
+        // 表示中のバケツデータ
+        $counter = $this->getPluginBucket($this->getBucketId());
+
+        $counter = new Counter();
+        if (!empty($id)) {
+            // id が渡ってくれば id が対象
+            $counter = Counter::where('id', $id)->first();
+        } else {
+            // 表示中のバケツデータ
+            $counter = $this->getPluginBucket($this->getBucketId());
+        }
+
+        if (empty($counter->id)) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->view('empty_bucket_setting');
+        }
+
+
+        // １ヵ月想定で30件を 日付降順 で取得
+        $counter_counts = CounterCount::where('counter_id', $counter->id)
+                ->orderBy('counted_at', 'desc')->paginate(30);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('list_counters', [
+            'counter_counts' => $counter_counts,
+            'counter' => $counter,
+        ]);
     }
 }

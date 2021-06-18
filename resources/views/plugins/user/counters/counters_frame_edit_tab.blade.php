@@ -28,6 +28,15 @@
         <a href="{{url('/')}}/plugin/counters/editView/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示設定</a>
     </li>
 @endif
+@if ($action == 'listCounters')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">カウント一覧</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/counters/listCounters/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">カウント一覧</a>
+    </li>
+@endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">カウンター選択</span></span>
