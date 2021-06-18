@@ -35,11 +35,33 @@
 
         @endcan
         
+        $('input[type="checkbox"][name="cabinet_content_id[]"]').on('change', function(){
+            
+            $('#selected-contents').html('');
+
+            if ($('input[type="checkbox"][name="cabinet_content_id[]"]:checked').length > 0){
+                $('.btn-download').prop('disabled', false);
+                $('input[type="checkbox"][name="cabinet_content_id[]"]:checked').each(function(){
+                    $('#selected-contents').append('<li>' + $(this).data('name') + '</li>');
+                })
+                @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
+                $('.btn-delete').prop('disabled', false);
+                @endcan
+            } else {
+                $('.btn-download').prop('disabled', true);
+                @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
+                $('.btn-delete').prop('disabled', true);
+                @endcan
+            }
+        });
+
         $('.btn-download').on('click', function(){
             $('#form-cabinet-contents').attr('action', '{{url('/')}}/download/plugin/cabinets/download/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}');
             $('#form-cabinet-contents').submit();
         });
 
+    });
+    
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     function deleteContents() {
         if (window.confirm('データを削除します。\nよろしいですか？')) {
@@ -109,7 +131,7 @@
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
-    <button class="btn btn-primary btn-sm btn-download" type="button"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
+    <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 <table class="table text-break">
     <thead>
@@ -170,7 +192,7 @@
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
-    <button class="btn btn-primary btn-sm btn-download" type="button"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
+    <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 </form>
 @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
