@@ -40,14 +40,15 @@
             $('#form-cabinet-contents').submit();
         });
 
-        @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
-        $('.btn-delete').on('click', function(){
+    @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
+    function deleteContents() {
+        if (window.confirm('データを削除します。\nよろしいですか？')) {
             $('#form-cabinet-contents').attr('action', '{{url('/')}}/redirect/plugin/cabinets/deleteContents/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}');
             $('#form-cabinet-contents').attr('method', 'POST');
             $('#form-cabinet-contents').submit();
-        });
-        @endcan
-    });
+        }
+    }
+    @endcan
 </script>
 @can('posts.create', [[null, $frame->plugin_name, $buckets]])
 <div class="p-2 text-right mb-2">
@@ -106,7 +107,7 @@
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
-    <button class="btn btn-danger btn-sm btn-delete" type="button"><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
+    <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
     <button class="btn btn-primary btn-sm btn-download" type="button"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
@@ -136,7 +137,7 @@
                 <tr>
                     <td>
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck{{$loop->index}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}">
+                            <input type="checkbox" class="custom-control-input" id="customCheck{{$loop->index}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}" data-name="{{$cabinet_content->name}}">
                             <label class="custom-control-label" for="customCheck{{$loop->index}}"></label>
                         </div>
                     </td>
@@ -167,10 +168,43 @@
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
-    <button class="btn btn-danger btn-sm btn-delete" type="button"><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
+    <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
     <button class="btn btn-primary btn-sm btn-download" type="button"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 </form>
-
+@can('posts.delete', [[null, $frame->plugin_name, $buckets]])
+{{-- 削除確認モーダルウィンドウ --}}
+<div class="modal" id="delete-confirm" tabindex="-1" role="dialog" aria-labelledby="delete-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            {{-- ヘッダー --}}
+            <div class="modal-header">
+                <h5 class="modal-title" id="delete-title">削除確認</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {{-- メインコンテンツ --}}
+            <div class="modal-body">
+                <div class="card border-danger">
+                    <div class="card-body">
+                        <div class="text-danger">以下のデータを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</div>
+                        <ul class="text-danger" id="selected-contents"></ul>
+                        </div>
+                        <div class="text-center mb-2">
+                            {{-- キャンセルボタン --}}
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                <i class="fas fa-times"></i> キャンセル
+                            </button>
+                            {{-- 削除ボタン --}}
+                            <button type="button" class="btn btn-danger" onclick="deleteContents()"><i class="fas fa-check"></i> 本当に削除する</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endcan
 @endsection
