@@ -333,20 +333,14 @@ class CabinetsPlugin extends UserPluginBase
      */
     private function deleteCabinetContents($cabinet_content_id, $cabinet_contents)
     {
-        $delete_upload_ids = [];
-        foreach ($cabinet_contents as $content) {
-            if (!empty($content->upload_id)) {
-                $delete_upload_ids[] = $content->upload_id;
-            }
-        }
-
-        CabinetContent::find($cabinet_content_id)->delete();
-
         // アップロードテーブル削除、実ファイルの削除
-        Uploads::destroy($delete_upload_ids);
         foreach ($cabinet_contents->whereNotNull('upload_id') as $content) {
             Storage::delete($this->getContentsFilePath($content->upload));
+            Uploads::destroy($content->upload->id);
         }
+        
+        // キャビネットコンテンツの削除（再帰）
+        CabinetContent::find($cabinet_content_id)->delete();
     }
 
     /** 
