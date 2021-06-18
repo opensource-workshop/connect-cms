@@ -337,7 +337,7 @@ class CabinetsPlugin extends UserPluginBase
         foreach ($cabinet_contents->whereNotNull('upload_id') as $content) {
             Storage::delete($this->getContentsFilePath($content->upload));
             Uploads::destroy($content->upload->id);
-        }
+        }      
         
         // キャビネットコンテンツの削除（再帰）
         CabinetContent::find($cabinet_content_id)->delete();
@@ -360,7 +360,7 @@ class CabinetsPlugin extends UserPluginBase
         // ファイルの単数選択ならZIP化せずダウンロードレスポンスを返す
         if ($this->isSelectedSingleFile($request)) {
             return redirect($this->downlod_url);
-                    }
+        }
 
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
         $this->makeZip($save_path, $request);
@@ -370,7 +370,7 @@ class CabinetsPlugin extends UserPluginBase
             'Files.zip',
             ['Content-Disposition' => 'filename=Files.zip']
         );
-                    }
+    }
 
     /** 
      * ダウンロードするZIPファイルを作成する。
@@ -430,7 +430,7 @@ class CabinetsPlugin extends UserPluginBase
                 $zip->addFile(
                     storage_path('app/') . $this->getContentsFilePath($content->upload),
                     $parent_name .'/'. $content->name
-        );
+                );
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
