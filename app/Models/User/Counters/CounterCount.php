@@ -74,7 +74,7 @@ class CounterCount extends Model
             ]);
 
             // 今日のカウント再取得
-            $today_count = CounterCount::getCount($counter_id, $before_counted_at);
+            $today_count = CounterCount::getCount($counter_id);
         }
 
         return $today_count;
