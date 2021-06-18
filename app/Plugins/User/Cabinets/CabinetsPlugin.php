@@ -775,7 +775,12 @@ class CabinetsPlugin extends UserPluginBase
         // バケツ削除
         Buckets::find($cabinet->bucket_id)->delete();
 
-        // $this->deleteCabinetContents();
+        // キャビネットコンテンツ削除
+        $cabinet_content = $this->fetchCabinetContent(null, $cabinet->id);
+        $this->deleteCabinetContents(
+            $cabinet_content->id,
+            CabinetContent::descendantsAndSelf($cabinet_content->id)
+        );
 
         // プラグインデータ削除
         $cabinet->delete();
