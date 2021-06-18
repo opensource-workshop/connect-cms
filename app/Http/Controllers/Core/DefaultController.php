@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
@@ -15,7 +16,7 @@ use App\Http\Controllers\Core\ConnectController;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
-use App\Models\Core\Plugins;
+// use App\Models\Core\Plugins;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -34,6 +35,17 @@ class DefaultController extends ConnectController
     use ConnectCommonTrait;
 
     /**
+     * コンストラクタ
+     */
+    public function __construct(Request $request, Router $router)
+    {
+        $this->middleware('connect.page');
+        $this->middleware('connect.frame');
+
+        parent::__construct($request, $router);
+    }
+
+    /**
      *  画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
@@ -41,6 +53,8 @@ class DefaultController extends ConnectController
      */
     public function __invoke(Request $request)
     {
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+
         // アプリのロケールを変更
         $this->setAppLocale();
 
