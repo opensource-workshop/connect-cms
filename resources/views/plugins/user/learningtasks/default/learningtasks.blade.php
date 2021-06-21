@@ -189,7 +189,7 @@
                     @endforeach
                 </tbody>
             </table>
-            <small class="text-muted">※ スマートフォンの場合、横スクロールできます。</small>
+            {{-- <small class="text-muted">※ スマートフォンの場合、横スクロールできます。</small> --}}
         </div>
     @endforeach
 
