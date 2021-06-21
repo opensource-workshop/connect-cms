@@ -76,6 +76,7 @@
                             <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$message}}</div>
                         @endforeach
                     @endif
+                    <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
                 </div>
             </div>
 
