@@ -109,11 +109,11 @@ class ClassController extends ConnectController
     {
         // Todo：コアの場合、ホワイトリストを作成して、呼び出せるクラストアクションを指定する。
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
-        $file_path = base_path() . "/app/Http/Controllers/Core/" . ucfirst($plugin_name) . "Controller.php";
+        $file_path = base_path() . "/app/Http/Controllers/Core/" . ucfirst($plugin_name) . "CoreController.php";
         require $file_path;
 
         /// インスタンス生成
-        $class_name = "app\Http\Controllers\Core\\" . ucfirst($plugin_name) . "Controller";
+        $class_name = "app\Http\Controllers\Core\\" . ucfirst($plugin_name) . "CoreController";
         $plugin_instance = new $class_name($page_id, $frame_id);
         return $plugin_instance;
     }

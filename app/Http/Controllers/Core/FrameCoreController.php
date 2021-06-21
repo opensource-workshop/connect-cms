@@ -24,7 +24,7 @@ use App\Traits\ConnectCommonTrait;
 /**
  * Frame の基本処理
  *
- * ルーティング処理から呼び出されるもの
+ * ClassControllerから呼び出されるもの
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -32,7 +32,7 @@ use App\Traits\ConnectCommonTrait;
  * @package Contoroller
  */
 // class FrameController extends ConnectController
-class FrameController
+class FrameCoreController
 {
     use ConnectCommonTrait;
 

@@ -17,7 +17,7 @@ use App\Models\Common\Page;
 /**
  * Cookie管理
  *
- * ルーティング処理から呼び出されるもの
+ * ClassControllerから呼び出されるもの
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -25,7 +25,7 @@ use App\Models\Common\Page;
  * @package Contoroller
  */
 // class CookieController extends ConnectController
-class CookieController
+class CookieCoreController
 {
     // use ConnectCommonTrait;
 
