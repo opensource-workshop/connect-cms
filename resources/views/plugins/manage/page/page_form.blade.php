@@ -109,7 +109,7 @@
             </div>
         </div>
         <div class="form-group row">
-            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーの背景色</label>
+            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーバーの背景色</label>
             <div class="col-md-9">
                 <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control" v-model="v_header_color" placeholder="{{ $placeholder_message }}">
                 @if (!$is_ie)
