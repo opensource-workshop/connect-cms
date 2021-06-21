@@ -305,13 +305,12 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function import($request, $page_id, $errors = null)
+    public function import($request, $page_id)
     {
         // 画面呼び出し
         return view('plugins.manage.page.page_import', [
             "function"     => __FUNCTION__,
             "plugin_name"  => "page",
-            'errors'       => $errors,
         ]);
     }
 
@@ -444,7 +443,8 @@ class PageManage extends ManagePluginBase
             'page_csv' => 'インポートCSV',
         ]);
         if ($validator->fails()) {
-            return ( $this->import($request, $page_id, $validator->errors()->all()) );
+            // return ( $this->import($request, $page_id, $validator->errors()->all()) );
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // CSVファイル一時保孫
@@ -464,7 +464,8 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            return ( $this->import($request, $page_id, $error_msgs) );
+            // return ( $this->import($request, $page_id, $error_msgs) );
+            return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
         // データ項目のエラーチェック
@@ -474,7 +475,8 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            return ( $this->import($request, $page_id, $error_msgs) );
+            // return ( $this->import($request, $page_id, $error_msgs) );
+            return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
         // ファイルを閉じて、開きなおす
@@ -516,7 +518,7 @@ class PageManage extends ManagePluginBase
         Storage::delete($path);
 
         // ページ管理画面に戻る
-        return redirect("/manage/page/import");
+        return redirect("/manage/page/import")->with('flash_message', 'インポートしました。');
     }
 
     /**

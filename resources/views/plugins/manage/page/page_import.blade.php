@@ -18,15 +18,15 @@
     </div>
     <div class="card-body">
 
-        {{-- エラー表示 --}}
-        @if ($errors)
-        <div class="alert alert-danger my-3">
-            @foreach($errors as $error)
-                <i class="fas fa-exclamation-circle"></i>
-                {{$error}}<br />
-            @endforeach
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('common.errors_form_line')
+
+        {{-- 登録後メッセージ表示 --}}
+        @include('plugins.common.flash_message')
+
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ページを一括登録できます。詳細は<a href="https://connect-cms.jp/manual/manager/page#frame-377" target="_blank">オンラインマニュアルのページ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
         </div>
-        @endif
 
         {{-- インポート画面(入力フォーム) --}}
         <form action="{{url('/manage/page/upload')}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
@@ -36,9 +36,14 @@
                 <label for="page_name" class="col-md-3 col-form-label text-md-right">CSVファイル</label>
                 <div class="col-md-9">
                     <div class="custom-file">
-                        <input type="file" class="custom-file-input" id="page_csv" name="page_csv" accept=".csv">
-                        <label class="custom-file-label" for="page_csv" data-browse="参照"></label>
+                        <input type="file" class="custom-file-input @if ($errors->has('page_csv')) border-danger @endif" id="page_csv" name="page_csv" accept=".csv">
+                        <label class="custom-file-label @if ($errors->has('page_csv')) border-danger @endif" for="page_csv" data-browse="参照"></label>
                     </div>
+                    @if ($errors->has('page_csv'))
+                        @foreach ($errors->get('page_csv') as $message)
+                            <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$message}}</div>
+                        @endforeach
+                    @endif
                     <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
                 </div>
             </div>
