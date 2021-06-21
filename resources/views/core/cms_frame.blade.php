@@ -33,9 +33,12 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
 
 @endphp
 
-{{-- 非ログイン、且つ、非表示条件（非公開、又は、限定公開）にマッチした場合はフレームを非表示にする --}}
+{{-- 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開）にマッチした場合はフレームを非表示にする --}}
 @if (
+{{--
         !Auth::check() &&
+--}}
+        ( !Auth::check() || !(Auth::user()->can('role_arrangement')) ) &&
         (
             $frame->content_open_type == ContentOpenType::always_close ||
             (
