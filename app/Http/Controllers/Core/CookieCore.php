@@ -25,7 +25,7 @@ use App\Models\Common\Page;
  * @package Contoroller
  */
 // class CookieController extends ConnectController
-class CookieCoreController
+class CookieCore
 {
     // use ConnectCommonTrait;
 

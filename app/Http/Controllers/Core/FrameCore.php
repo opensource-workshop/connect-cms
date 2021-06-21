@@ -32,7 +32,7 @@ use App\Traits\ConnectCommonTrait;
  * @package Contoroller
  */
 // class FrameController extends ConnectController
-class FrameCoreController
+class FrameCore
 {
     use ConnectCommonTrait;
 
