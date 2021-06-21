@@ -8,6 +8,9 @@
  * @category ページ管理
 --}}
 
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('common.errors_form_line')
+
 @if ($page->id)
 <form action="{{url('/manage/page/update')}}/{{$page->id}}" method="POST" class="form-horizontal">
 @else
@@ -17,10 +20,10 @@
 
     <!-- Page form  -->
     <div class="form-group row @if ($errors && $errors->has('page_name')) has-error @endif">
-        <label for="page_name" class="col-md-3 col-form-label text-md-right">ページ名</label>
+        <label for="page_name" class="col-md-3 col-form-label text-md-right">ページ名 <span class="badge badge-danger">必須</span></label>
         <div class="col-md-9">
-            <input type="text" name="page_name" id="page_name" value="{{$page->page_name}}" class="form-control">
-            @if ($errors && $errors->has('page_name')) <div class="text-danger">{{$errors->first('page_name')}}</div> @endif
+            <input type="text" name="page_name" id="page_name" value="{{$page->page_name}}" class="form-control @if ($errors->has('page_name')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'page_name'])
         </div>
     </div>
     <div class="form-group row">
@@ -109,7 +112,7 @@
             </div>
         </div>
         <div class="form-group row">
-            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーの背景色</label>
+            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーバーの背景色</label>
             <div class="col-md-9">
                 <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control" v-model="v_header_color" placeholder="{{ $placeholder_message }}">
                 @if (!$is_ie)

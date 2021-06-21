@@ -17,7 +17,7 @@
     <div class="card-body">
 
         <div class="form-group table-responsive">
-            <table class="table table-hover cc-font-90">
+            <table class="table table-hover cc-font-90 mb-0">
             <thead>
                 <tr>
                     <th nowrap>ログインID</th>
@@ -37,7 +37,7 @@
             @endforeach
             </tbody>
             </table>
-            <small class="text-muted">※ スマートフォンの場合、表は横スクロールできます。</small>
+            <small class="text-muted">※ スマートフォンの場合、横スクロールできます。</small>
         </div>
 
         {{-- ページング処理 --}}

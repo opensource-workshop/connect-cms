@@ -33,7 +33,7 @@ class PageManage extends ManagePluginBase
     use MigrationTrait;
 
     /**
-     *  権限定義
+     * 権限定義
      */
     public function declareRole()
     {
@@ -71,7 +71,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ初期表示
+     * ページ初期表示
      *
      * @return view
      */
@@ -113,13 +113,12 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ編集画面表示
+     * ページ編集画面表示
      *
      * @return view
      */
     public function edit($request, $page_id = null)
     {
-
         // 編集時と新規で処理を分ける
         if (empty($page_id)) {
             $page = new Page();
@@ -145,7 +144,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ登録処理
+     * ページ登録処理
      */
     public function store($request)
     {
@@ -159,7 +158,8 @@ class PageManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->index($request, null, $validator->errors()) );
+            // return ( $this->index($request, null, $validator->errors()) );
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 固定リンクの先頭に / がない場合、追加する。
@@ -190,10 +190,22 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ更新処理
+     * ページ更新処理
      */
     public function update($request, $page_id)
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'page_name' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'page_name' => 'ページ名',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         // 固定リンクの先頭に / がない場合、追加する。
         if (strncmp($request->permanent_link, '/', 1) !== 0) {
@@ -224,7 +236,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ削除関数
+     * ページ削除関数
      */
     public function destroy($request, $page_id)
     {
@@ -236,7 +248,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ上移動
+     * ページ上移動
      */
     public function sequence_up($request, $page_id)
     {
@@ -249,7 +261,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ下移動
+     * ページ下移動
      */
     public function sequence_down($request, $page_id)
     {
@@ -262,7 +274,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページ指定場所移動
+     * ページ指定場所移動
      */
     public function move_page($request, $page_id)
     {
@@ -289,22 +301,21 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページインポート画面表示
+     * ページインポート画面表示
      *
      * @return view
      */
-    public function import($request, $page_id, $errors = null)
+    public function import($request, $page_id)
     {
         // 画面呼び出し
         return view('plugins.manage.page.page_import', [
             "function"     => __FUNCTION__,
             "plugin_name"  => "page",
-            'errors'       => $errors,
         ]);
     }
 
     /**
-     *  CSVヘッダーチェック
+     * CSVヘッダーチェック
      */
     private function checkHeader($header_columns)
     {
@@ -330,7 +341,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  CSVデータ行チェック
+     * CSVデータ行チェック
      */
     private function checkPageline($fp, $errors = null)
     {
@@ -383,7 +394,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  「固定記事」プラグインを新規で配置
+     * 「固定記事」プラグインを新規で配置
      *
      * @return view
      */
@@ -412,7 +423,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  ページインポート処理
+     * ページインポート処理
      *
      * @return view
      */
@@ -432,7 +443,8 @@ class PageManage extends ManagePluginBase
             'page_csv' => 'インポートCSV',
         ]);
         if ($validator->fails()) {
-            return ( $this->import($request, $page_id, $validator->errors()->all()) );
+            // return ( $this->import($request, $page_id, $validator->errors()->all()) );
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // CSVファイル一時保孫
@@ -452,7 +464,8 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            return ( $this->import($request, $page_id, $error_msgs) );
+            // return ( $this->import($request, $page_id, $error_msgs) );
+            return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
         // データ項目のエラーチェック
@@ -462,7 +475,8 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            return ( $this->import($request, $page_id, $error_msgs) );
+            // return ( $this->import($request, $page_id, $error_msgs) );
+            return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
         // ファイルを閉じて、開きなおす
@@ -504,11 +518,11 @@ class PageManage extends ManagePluginBase
         Storage::delete($path);
 
         // ページ管理画面に戻る
-        return redirect("/manage/page/import");
+        return redirect("/manage/page/import")->with('flash_message', 'インポートしました。');
     }
 
     /**
-     *  グループ権限設定画面表示
+     * グループ権限設定画面表示
      *
      * @return view
      */
@@ -569,7 +583,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  グループ権限保存
+     * グループ権限保存
      *
      * @return view
      */
@@ -590,7 +604,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  外部ページ取り込み指示画面
+     * 外部ページ取り込み指示画面
      *
      * @return view
      */
@@ -639,7 +653,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  取り込み済み移行データ削除
+     * 取り込み済み移行データ削除
      *
      * @return view
      */
@@ -659,7 +673,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  移行データ取り込み実行
+     * 移行データ取り込み実行
      *
      * @return view
      */
@@ -692,7 +706,7 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  移行データインポート実行
+     * 移行データインポート実行
      *
      * @return view
      */

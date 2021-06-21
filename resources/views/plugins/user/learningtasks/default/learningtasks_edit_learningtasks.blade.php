@@ -349,6 +349,13 @@
         </div>
     </div>
 
+    <div class="form-group row mb-0">
+        <div class="{{$frame->getSettingLabelClass()}}"></div>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <small class="text-muted">※ レポート試験は、レポート提出を使用した場合のみ、入力できます。</small>
+        </div>
+    </div>
+
     {{-- 提出（レポート試験機能を使う）の場合のみ表示、他は隠す --}}
     <div class="collapse" id="collapse_use_examination">
 
