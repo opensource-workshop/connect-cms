@@ -115,12 +115,12 @@
     @endif
 
     @foreach($categories_and_posts as $category_id => $categories_and_post)  {{-- カテゴリのループ --}}
-        <div class="accordion @if (!$loop->first) mt-3 @endif" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
+        <div class="accordion @if (!$loop->first) mt-3 @endif table-responsive" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
             <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
 
             <h5><span class="badge badge-secondary">課題一覧</span></h5>
 
-            <table class="table table-bordered">
+            <table class="table table-bordered mb-0">
                 <thead class="bg-light">
                     <tr>
                         @php
@@ -189,10 +189,12 @@
                     @endforeach
                 </tbody>
             </table>
+            <small class="text-muted">※ スマートフォンの場合、横スクロールできます。</small>
         </div>
     @endforeach
+
     {{-- ページング処理 --}}
-    <div class="text-center">
+    <div class="text-center mt-2">
         {{ $posts->fragment('frame-' . $frame_id)->links() }}
     </div>
 @endif
