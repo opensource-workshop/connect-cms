@@ -22,7 +22,7 @@ use App\Models\Common\Page;
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 // class CookieController extends ConnectController
 class CookieCore
