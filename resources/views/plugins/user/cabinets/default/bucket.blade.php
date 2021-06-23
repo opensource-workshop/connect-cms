@@ -60,6 +60,7 @@
                 </select>
                 @include('common.errors_inline', ['name' => 'upload_max_size'])
                 <small id="upload-size-help" class="form-text text-muted">サーバの設定によるため、サイズを変更しても反映されない場合があります。</small>
+                <small id="upload-size-server-help" class="form-text text-muted">サーバ設定：アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{ini_get('upload_max_filesize')}}</span></small>
             </div>
         </div>
         {{-- Submitボタン --}}
