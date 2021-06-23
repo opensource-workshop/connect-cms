@@ -16,9 +16,10 @@ class Uploads extends Model
      */
     public function getFormatSize($r = 0)
     {
+        $size = $this->size;
         $units = array("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB");
-        for ($i = 0; $this->size >= 1024 && $i < 4; $i++) $this->size /= 1024;
-        return round($this->size, $r).$units[$i];
+        for ($i = 0; $size >= 1024 && $i < 4; $i++) $size /= 1024;
+        return round($size, $r).$units[$i];
     }
 
     /**
