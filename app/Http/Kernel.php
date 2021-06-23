@@ -75,11 +75,17 @@ class Kernel extends HttpKernel
         // Connect-CMS ページ処理（一般プラグインページ用）
         'connect.page' => \App\Http\Middleware\ConnectPage::class,
 
+        // Connect-CMS 閲覧パスワードページ処理（一般プラグインページ用）
+        'connect.page.password' => \App\Http\Middleware\ConnectPagePassword::class,
+
         // Connect-CMS フレーム処理（一般プラグインページ用）
         'connect.frame' => \App\Http\Middleware\ConnectFrame::class,
 
         // Connect-CMS パスワード忘れ
         'connect.forgot.password' => \App\Http\Middleware\ConnectForgotPassword::class,
+
+        // Connect-CMS マイページ処理
+        'connect.mypage' => \App\Http\Middleware\ConnectMypage::class,
     ];
 
     /**
