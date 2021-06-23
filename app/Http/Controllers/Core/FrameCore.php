@@ -29,7 +29,7 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 // class FrameController extends ConnectController
 class FrameCore
@@ -282,31 +282,35 @@ class FrameCore
         return redirect($page->permanent_link);
     }
 
-    /**
-     * 編集画面
-     */
-    public function edit($request, $page_id, $frame_id)
-    {
-        // 権限チェック
-        if ($this->can("frames.edit")) {
-            abort(403, '権限がありません。');
-        }
+    // delete: どこからも呼ばれていないメソッド
+    //   一般プラグインのフレーム編集（frame_setting）は、{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/xxx
+    //   $this->view('core.frame', [])は、既に存在しないblade
+    //
+    // /**
+    //  * 編集画面
+    //  */
+    // public function edit($request, $page_id, $frame_id)
+    // {
+    //     // 権限チェック
+    //     if ($this->can("frames.edit")) {
+    //         abort(403, '権限がありません。');
+    //     }
 
-        // Page データ
-        $page = Page::where('id', $page_id)->first();
+    //     // Page データ
+    //     $page = Page::where('id', $page_id)->first();
 
-        // Frame データ
-        $frame = Frame::where('id', $frame_id)->first();
+    //     // Frame データ
+    //     $frame = Frame::where('id', $frame_id)->first();
 
-        return $this->view('core.frame', [
-            'page_id'                => $page_id,
-            'page'                   => $page,
-            'frame_id'               => $frame_id,
-            'frame'                  => $frame,
-            'current_page'           => $this->current_page,
-            'target_frame_templates' => $this->target_frame_templates,
-        ]);
-    }
+    //     return $this->view('core.frame', [
+    //         'page_id'                => $page_id,
+    //         'page'                   => $page,
+    //         'frame_id'               => $frame_id,
+    //         'frame'                  => $frame,
+    //         'current_page'           => $this->current_page,
+    //         'target_frame_templates' => $this->target_frame_templates,
+    //     ]);
+    // }
 
     // delete: どこからも呼ばれていないメソッド
     //   一般プラグインのフレーム編集（frame_setting）は、{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/xxx で、
