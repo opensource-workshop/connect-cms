@@ -4,7 +4,7 @@ namespace App\Models\User\Cabinets;
 
 use Illuminate\Database\Eloquent\Model;
 
-use App\Userable;
+use App\UserableNohistory;
 use App\Models\Common\Uploads;
 use Kalnoy\Nestedset\NodeTrait;
 
@@ -15,7 +15,7 @@ class CabinetContent extends Model
     
     use NodeTrait;
     // 保存時のユーザー関連データの保持
-    use Userable;
+    use UserableNohistory;
 
     // 更新する項目の定義
     protected $fillable = ['cabinet_id', 'upload_id', 'name', 'is_folder'];
