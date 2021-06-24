@@ -95,8 +95,9 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  曜日取得
+     * 曜日取得
      *
+     * @todo app\Plugins\User\Openingcalendars\OpeningcalendarsPlugin.php のみで使われている。今後移動予定
      */
     public function getWeekJp($date)
     {
@@ -126,7 +127,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  IPアドレスが範囲内か
+     * IPアドレスが範囲内か
      */
     private function isRangeIp($remote_ip, $check_ips)
     {
@@ -149,8 +150,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  ログイン可否チェック
-     *
+     * ログイン可否チェック
      */
     public function judgmentLogin($user)
     {
@@ -208,7 +208,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  特別なパスか判定
+     * 特別なパスか判定
      */
     public function isSpecialPath($path)
     {
@@ -359,7 +359,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  指定したパスの呼び出し
+     * 指定したパスの呼び出し
      */
     public function callSpecialPath($path, $request)
     {
@@ -403,7 +403,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  CSRF用トークンの取得
+     * CSRF用トークンの取得
      */
     public function getToken($arg)
     {
@@ -415,7 +415,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  ページの言語の取得
+     * ページの言語の取得
      */
     public function getPageLanguage($page, $languages)
     {
@@ -436,8 +436,8 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  対象ディレクトリの取得
-     *  uploads/1 のような形で返す。
+     * 対象ディレクトリの取得
+     * uploads/1 のような形で返す。
      */
     public function getDirectory($file_id)
     {
@@ -459,8 +459,8 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  利用可能かチェック
-     *  戻り値：true なら
+     * 利用可能かチェック
+     * 戻り値：true なら
      */
     public function checkUserStatus($request, &$error_msg = "")
     {
@@ -724,7 +724,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  NetCommons2 からの移行パスワードでの認証
+     * NetCommons2 からの移行パスワードでの認証
      */
     public function authNetCommons2Password($request)
     {
@@ -746,7 +746,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  URLからページIDを取得
+     * URLからページIDを取得
      */
     public function getPage($permanent_link, $language = null)
     {
@@ -764,7 +764,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  URLから管理画面かどうかを判定
+     * URLから管理画面かどうかを判定
      */
     public function isManagePage($request)
     {
@@ -776,7 +776,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  page 変数がページオブジェクトか判定
+     * page 変数がページオブジェクトか判定
      */
     public function isPageObj($page)
     {
@@ -790,7 +790,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  都道府県のリストの取得
+     * 都道府県のリストの取得
      */
     public function getPrefList()
     {
@@ -804,7 +804,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  年の祝日を取得
+     * 年の祝日を取得
      */
     public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
     {
@@ -821,7 +821,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  祝日の追加
+     * 祝日の追加
      * date に holiday 属性を追加する。
      */
     protected function addHoliday($year, $month, $dates)
