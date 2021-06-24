@@ -101,6 +101,7 @@ class CabinetsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
+           'cabinet' => $cabinet,
            'cabinet_contents' => $parent->children()->orderBy('is_folder', 'desc')->orderBy('name', 'asc')->get(),
            'breadcrumbs' => $this->fetchBreadCrumbs($cabinet->id, $parent->id),
            'parent_id' =>  $parent->id,
