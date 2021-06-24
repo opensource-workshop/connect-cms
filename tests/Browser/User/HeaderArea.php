@@ -65,7 +65,8 @@ class HeaderArea extends DuskTestCase
                     ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
 
-            $browser->driver->executeScript('tinyMCE.get(\'contents\').setContent(\'<h1>Test Description</h1>\')');
+            // $browser->driver->executeScript('tinyMCE.get(\'contents\').setContent(\'<h1>Test Description</h1>\')');
+            $browser->driver->executeScript('tinyMCE.activeEditor.setContent(\'<h1>Test Description</h1>\')');
             //$browser->wysiwyg('tinymce', '#contents-5-form', '<h2>value</h2>');
             //$browser->keys('#contents', 'Text');
 
