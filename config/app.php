@@ -275,6 +275,8 @@ $app_array = [
         'BlogFrameConfig' => \App\Enums\BlogFrameConfig::class,
         'BlogDisplayCreatedName' => \App\Enums\BlogDisplayCreatedName::class,
         'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
+        'UploadMaxSize' => \App\Enums\UploadMaxSize::class,
+        
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
