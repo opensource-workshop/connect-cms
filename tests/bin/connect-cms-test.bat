@@ -1,5 +1,5 @@
-chcp 932
 @echo off
+chcp 932
 
 rem ----------------------------------------------
 rem [How to test]
@@ -37,6 +37,14 @@ if "%1" == "db_clear" (
     echo --- データ・初期追加
     php artisan db:seed
 )
+
+rem ---------------------------------------------
+rem - コア
+rem ---------------------------------------------
+
+echo.
+echo --- ページなし
+rem php artisan dusk tests\Browser\Core\PageNotFound.php
 
 rem ---------------------------------------------
 rem - 管理プラグイン
