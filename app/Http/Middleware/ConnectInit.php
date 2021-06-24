@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Support\Facades\View;
 
 use App\Models\Core\Configs;
-use App\Models\Core\FrameConfig;
+// use App\Models\Core\FrameConfig;
 
 use Closure;
 
@@ -14,12 +14,18 @@ class ConnectInit
     /**
      * Handle an incoming request.
      *
+     * ・requestにセット
+     *   ・configs
+     * ・全ビュー間のデータ共有
+     *   ・cc_configs
+     *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
         /* --- セッション関係 --- */
 
         // セッションのデバックモードは、null(env参照)、0(セッション内 OFF)、1(セッション内 On)
@@ -60,9 +66,10 @@ class ConnectInit
         // View::share('configs_base_site_name', $configs_base_site_name);
         View::share('cc_configs', $configs);
 
-        // フレーム設定の共有
-        $frame_configs = FrameConfig::get();
-        $request->attributes->add(['frame_configs' => $frame_configs]);
+        // move: フレームは一般画面のみ使う変数のため、app\Http\Middleware\ConnectFrame.php に移動
+        // // フレーム設定の共有
+        // $frame_configs = FrameConfig::get();
+        // $request->attributes->add(['frame_configs' => $frame_configs]);
 
         return $next($request);
     }

@@ -101,4 +101,58 @@ class Configs extends Model
         $choise_value = $values[array_rand($values)];
         return $choise_value;
     }
+
+    /**
+     * 言語の取得
+     * （ConnectController から移動してカスタマイズ）
+     */
+    public static function getLanguages()
+    {
+        $configs = self::getSharedConfigs();
+        if (empty($configs)) {
+            return null;
+        }
+
+        $languages = array();
+        foreach ($configs as $config) {
+            if ($config->category == 'language') {
+                $languages[$config->additional1] = $config;
+            }
+        }
+        return $languages;
+    }
+
+    /**
+     * 全Configの取得（Middlewareでセットされたもの）
+     * （ConnectController から移動してカスタマイズ）
+     *
+     * @see \App\Http\Middleware\ConnectInit 全Congigsを request にセットしてる
+     */
+    public static function getSharedConfigs($format = null)
+    {
+        $request = app(\Illuminate\Http\Request::class);
+
+        // Configs. app\Http\Middleware\ConnectInit.php でセットした全Configs
+        $configs = $request->get('configs');
+        // dd($request->get('configs'));
+
+        if ($format == 'array') {
+            return self::changeConfigsArray($configs);
+        }
+        return $configs;
+    }
+
+    /**
+     * Configのarray変換
+     * （ConnectController から移動してカスタマイズ）
+     */
+    private static function changeConfigsArray($configs)
+    {
+        $return_array = array();
+
+        foreach ($configs as $config) {
+            $return_array[$config->name] = $config;
+        }
+        return $return_array;
+    }
 }

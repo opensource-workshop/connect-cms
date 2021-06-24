@@ -16,7 +16,7 @@ use App\Models\Common\ConnectCarbon;
 use App\Models\Common\Frame;
 use App\Models\Common\Holiday;
 use App\Models\Common\Page;
-use App\Models\Common\PageRole;
+// use App\Models\Common\PageRole;
 use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
@@ -67,7 +67,6 @@ trait ConnectCommonTrait
 
     /**
      * エラー画面の表示
-     *
      */
     public function view_error($error_code, $message = null, $debug_message = null)
     {
@@ -77,7 +76,6 @@ trait ConnectCommonTrait
 
     /**
      * プラグイン一覧の取得
-     *
      */
     public function getPlugins($arg_display_flag = true, $force_get = false)
     {
@@ -405,131 +403,6 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  文字列変換
-     */
-    public function replaceConnectTagAll($contents, $page, $configs)
-    {
-        // Connect-CMSタグを値に変換する。
-        if (empty($contents)) {
-            return $contents;
-        }
-
-        $patterns = array();
-        $replacements = array();
-
-        // 固定リンク(多言語切り替えで使用)
-        $config_language_multi_on = null;
-        foreach ($configs as $config) {
-            if ($config->name == 'language_multi_on') {
-                $config_language_multi_on = $config->value;
-            }
-        }
-
-        // 言語設定の取得
-        $languages = array();
-        foreach ($configs as $config) {
-            if ($config->category == 'language') {
-                $languages[$config->additional1] = $config;
-            }
-        }
-        $page_language = $this->getPageLanguage($page, $languages);
-
-        // 確実に言語設定部分を取り除くために、permanent_link を / で分解して、1番目(/ の次)の内容を取得する。
-        $permanent_link_array = explode('/', $page->permanent_link);
-
-        // 多言語on＆現在のページがデフォルト以外の言語の場合、言語指定を取り除く
-        if ($config_language_multi_on &&
-            $page_language &&
-            $permanent_link_array &&
-            array_key_exists(1, $permanent_link_array) &&
-            $permanent_link_array[1] == $page_language) {
-            $patterns[0] = '/{{cc:permanent_link}}/';
-            $replacements[0] = trim(mb_substr($page->permanent_link, mb_strlen('/'.$page_language)), '/');
-        } else {
-            $patterns[0] = '/{{cc:permanent_link}}/';
-            $replacements[0] = trim($page->permanent_link, '/');
-        }
-
-        // 変換と値の返却
-        $contents->content_text = preg_replace($patterns, $replacements, $contents->content_text);
-        return $contents;
-    }
-
-    /**
-     *  固定記事からスマホメニューを出すためのタグ生成
-     */
-    public function getSmpMenu($level1_pages, $page_id = null)
-    {
-        $sp_menu  = '' . "\n";
-        $sp_menu .= '<nav class="sp_menu">' . "\n";
-        $sp_menu .= '<ul>' . "\n";
-        foreach ($level1_pages as $level1_page) {
-            // ページの表示条件の反映（IP制限など）
-            if (!$level1_page['parent']->isView(Auth::user())) {
-                continue;
-            }
-
-            // コンストラクタで全体作業用として取得したページを使用する想定
-            // そのため、ページの基本の表示設定を反映する。
-            if ($level1_page['parent']->base_display_flag == 0) {
-                continue;
-            }
-
-            // ルーツのチェック
-            if ($level1_page['parent']->isAncestorOf($this->page)) {
-                $active_class = ' class="active"';
-            } else {
-                $active_class = '';
-            }
-            //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
-            $sp_menu .= '<li class="' . $level1_page['parent']->getClass() . '">' . "\n";
-
-            // クラス名取得
-            $classes = explode(' ', $level1_page['parent']->getClass());
-
-            // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
-            if (is_array($classes) && in_array('smp_a_link', $classes)) {
-                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
-                $sp_menu .= $level1_page['parent']->page_name;
-                $sp_menu .= '</a>' . "\n";
-            } else {
-                $sp_menu .= '<p' . $active_class . '>';
-                $sp_menu .= $level1_page['parent']->page_name;
-                $sp_menu .= '</p>' . "\n";
-            }
-
-            if (array_key_exists('child', $level1_page)) {
-                $sp_menu .= '<ul' . $active_class . '>' . "\n";
-                foreach ($level1_page['child'] as $child) {
-                    // ページの表示条件の反映（IP制限など）
-                    if (!$child->isView(Auth::user())) {
-                        continue;
-                    }
-
-                    if ($child->base_display_flag == 0) {
-                        continue;
-                    } else {
-                        $child_depth = intval($child->depth) - 1;
-                        $child_margin_left = ($child_depth > 0) ? $child_depth * 20 : 0;
-                        $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . ' style="margin-left:' . $child_margin_left . 'px"' . '>';
-                        if ($page_id == $child->id) {
-                            $sp_menu .= '<u>' . $child->page_name . '</u>';
-                        } else {
-                            $sp_menu .= $child->page_name;
-                        }
-                        $sp_menu .= '</a></li>' . "\n";
-                    }
-                }
-                $sp_menu .= '</ul>' . "\n";
-            }
-            $sp_menu .= '</li>' . "\n";
-        }
-        $sp_menu .= '</ul>' . "\n";
-        $sp_menu .= '</nav>' . "\n";
-        return $sp_menu;
-    }
-
-    /**
      *  CSRF用トークンの取得
      */
     public function getToken($arg)
@@ -560,17 +433,6 @@ trait ConnectCommonTrait
             }
         }
         return $page_language;
-    }
-
-    /**
-     *  現在の言語設定のトップページ
-     */
-    public function getTopPage($page, $languages = null)
-    {
-        $page_language = $this->getPageLanguage($page, $languages);
-
-        // 言語トップのページ確認
-        return Page::where('permanent_link', '/'.$page_language)->first();
     }
 
     /**
@@ -939,54 +801,6 @@ trait ConnectCommonTrait
                      '鳥取県','島根県','岡山県','広島県','山口県',
                      '徳島県','香川県','愛媛県','高知県',
                      '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県');
-    }
-
-    /**
-     *  ページの系統取得
-     */
-    protected function getPageRoles($page_ids = null)
-    {
-        // ページID、ユーザID は必須
-        //if (empty($page_ids) || !is_array($page_ids)) {
-        //    return null;
-        //}
-
-        // シングルトン
-        //if ($this->page_roles) {
-        //    return $this->page_roles;
-        //}
-
-        $user = Auth::user();
-        if (empty($user)) {
-            return null;
-        }
-
-        // ページ、ユーザでpage_roles を検索
-        // ページは階層分、取得する。
-        // グループは複数、含まれている状態で保持しておく。
-        // ページやグループでデータを抜き出す場合は、Laravel のCollection メソッドでwhere を使用。
-        //$this->page_role = PageRole::select('page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
-        $page_role_query = PageRole::select(
-            'page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
-            'group_users.user_id', 'groups.name AS groups_name', 'group_users.group_role'
-        )
-                                    ->join('groups', function ($group_join) {
-                                        $group_join->on('groups.id', '=', 'page_roles.group_id')
-                                                   ->whereNull('groups.deleted_at');
-                                    })
-                                    ->join('group_users', function ($group_users_join) use ($user) {
-                                        $group_users_join->on('group_users.group_id', '=', 'page_roles.group_id')
-                                                         ->where('group_users.user_id', $user->id)
-                                                         ->whereNull('group_users.deleted_at');
-                                    });
-        if ($page_ids) {
-            $page_role_query->whereIn('page_roles.page_id', $page_ids);
-        }
-        $page_role = $page_role_query->whereNull('page_roles.deleted_at')
-                                     ->get();
-
-        //return $this->page_role;
-        return $page_role;
     }
 
     /**

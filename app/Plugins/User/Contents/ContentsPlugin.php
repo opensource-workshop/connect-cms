@@ -22,7 +22,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ContentsPlugin extends UserPluginBase
 {
@@ -289,8 +289,11 @@ class ContentsPlugin extends UserPluginBase
         $format = 'layer1';
         $level1_pages = $this->getPages($format);
 
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->get('page');
+
         // スマホメニュー用タグ生成とコンテンツ変換
-        $sp_menu = $this->getSmpMenu($level1_pages, $page_id);
+        $sp_menu = $this->getSmpMenu($level1_pages, $page_id, $page);
         if ($contents && $sp_menu) {
             $contents->content_text = str_replace('<cc value="cc:menu"></cc>', $sp_menu, $contents->content_text);
         }
@@ -301,11 +304,137 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'contents', [
+        return $this->view('contents', [
             'contents'     => $contents,
-            ]
-        );
+        ]);
+    }
+
+    /**
+     * 文字列変換
+     * （ConnectCommonTraitから移動してきた）
+     */
+    private function replaceConnectTagAll($contents, $page, $configs)
+    {
+        // Connect-CMSタグを値に変換する。
+        if (empty($contents)) {
+            return $contents;
+        }
+
+        $patterns = array();
+        $replacements = array();
+
+        // 固定リンク(多言語切り替えで使用)
+        $config_language_multi_on = null;
+        foreach ($configs as $config) {
+            if ($config->name == 'language_multi_on') {
+                $config_language_multi_on = $config->value;
+            }
+        }
+
+        // 言語設定の取得
+        $languages = array();
+        foreach ($configs as $config) {
+            if ($config->category == 'language') {
+                $languages[$config->additional1] = $config;
+            }
+        }
+        $page_language = $this->getPageLanguage($page, $languages);
+
+        // 確実に言語設定部分を取り除くために、permanent_link を / で分解して、1番目(/ の次)の内容を取得する。
+        $permanent_link_array = explode('/', $page->permanent_link);
+
+        // 多言語on＆現在のページがデフォルト以外の言語の場合、言語指定を取り除く
+        if ($config_language_multi_on &&
+            $page_language &&
+            $permanent_link_array &&
+            array_key_exists(1, $permanent_link_array) &&
+            $permanent_link_array[1] == $page_language) {
+            $patterns[0] = '/{{cc:permanent_link}}/';
+            $replacements[0] = trim(mb_substr($page->permanent_link, mb_strlen('/'.$page_language)), '/');
+        } else {
+            $patterns[0] = '/{{cc:permanent_link}}/';
+            $replacements[0] = trim($page->permanent_link, '/');
+        }
+
+        // 変換と値の返却
+        $contents->content_text = preg_replace($patterns, $replacements, $contents->content_text);
+        return $contents;
+    }
+
+    /**
+     * 固定記事からスマホメニューを出すためのタグ生成
+     * （ConnectController から移動してきた）
+     */
+    private function getSmpMenu($level1_pages, $page_id = null, $page = null)
+    {
+        $sp_menu  = '' . "\n";
+        $sp_menu .= '<nav class="sp_menu">' . "\n";
+        $sp_menu .= '<ul>' . "\n";
+        foreach ($level1_pages as $level1_page) {
+            // ページの表示条件の反映（IP制限など）
+            if (!$level1_page['parent']->isView(Auth::user())) {
+                continue;
+            }
+
+            // コンストラクタで全体作業用として取得したページを使用する想定
+            // そのため、ページの基本の表示設定を反映する。
+            if ($level1_page['parent']->base_display_flag == 0) {
+                continue;
+            }
+
+            // ルーツのチェック
+            // if ($level1_page['parent']->isAncestorOf($this->page)) {
+            if ($level1_page['parent']->isAncestorOf($page)) {
+                $active_class = ' class="active"';
+            } else {
+                $active_class = '';
+            }
+            //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
+            $sp_menu .= '<li class="' . $level1_page['parent']->getClass() . '">' . "\n";
+
+            // クラス名取得
+            $classes = explode(' ', $level1_page['parent']->getClass());
+
+            // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
+            if (is_array($classes) && in_array('smp_a_link', $classes)) {
+                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
+                $sp_menu .= $level1_page['parent']->page_name;
+                $sp_menu .= '</a>' . "\n";
+            } else {
+                $sp_menu .= '<p' . $active_class . '>';
+                $sp_menu .= $level1_page['parent']->page_name;
+                $sp_menu .= '</p>' . "\n";
+            }
+
+            if (array_key_exists('child', $level1_page)) {
+                $sp_menu .= '<ul' . $active_class . '>' . "\n";
+                foreach ($level1_page['child'] as $child) {
+                    // ページの表示条件の反映（IP制限など）
+                    if (!$child->isView(Auth::user())) {
+                        continue;
+                    }
+
+                    if ($child->base_display_flag == 0) {
+                        continue;
+                    } else {
+                        $child_depth = intval($child->depth) - 1;
+                        $child_margin_left = ($child_depth > 0) ? $child_depth * 20 : 0;
+                        $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . ' style="margin-left:' . $child_margin_left . 'px"' . '>';
+                        if ($page_id == $child->id) {
+                            $sp_menu .= '<u>' . $child->page_name . '</u>';
+                        } else {
+                            $sp_menu .= $child->page_name;
+                        }
+                        $sp_menu .= '</a></li>' . "\n";
+                    }
+                }
+                $sp_menu .= '</ul>' . "\n";
+            }
+            $sp_menu .= '</li>' . "\n";
+        }
+        $sp_menu .= '</ul>' . "\n";
+        $sp_menu .= '</nav>' . "\n";
+        return $sp_menu;
     }
 
     /**
@@ -367,9 +496,9 @@ class ContentsPlugin extends UserPluginBase
         );
     }
 
-   /**
-    * データ新規登録関数
-    */
+    /**
+     * データ新規登録関数
+     */
     public function store($request, $page_id = null, $frame_id = null, $id = null, $status = 0)
     {
         // バケツがまだ登録されていなかったら登録する。
@@ -402,14 +531,14 @@ class ContentsPlugin extends UserPluginBase
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
-                  ->update(['bucket_id' => $bucket_id]);
+            ->update(['bucket_id' => $bucket_id]);
 
         return;
     }
 
-   /**
-    * データ更新（確定）関数
-    */
+    /**
+     * データ更新（確定）関数
+     */
     public function update($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
@@ -438,9 +567,9 @@ class ContentsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ一時保存関数
-    */
+    /**
+     * データ一時保存関数
+     */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新規で一時保存しようとしたときは id、レコードがまだない。
@@ -466,9 +595,9 @@ class ContentsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * 承認
-    */
+    /**
+     * 承認
+     */
     public function approval($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
@@ -485,9 +614,9 @@ class ContentsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ削除関数
-    */
+    /**
+     * データ削除関数
+     */
     public function delete($request, $page_id = null, $frame_id = null, $id = null)
     {
         // id がある場合、コンテンツを削除
@@ -582,9 +711,9 @@ class ContentsPlugin extends UserPluginBase
         );
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
