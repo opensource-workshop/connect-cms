@@ -1,75 +1,96 @@
+chcp 932
 @echo off
+
+rem ---------------------------------------------
+rem [How to test]
+rem ŠJ”­ƒ‰ƒCƒuƒ‰ƒŠ dusk “™ƒCƒ“ƒXƒg[ƒ‹
+rem composer install
+rem
+rem ƒNƒ[ƒ€ƒhƒ‰ƒCƒo[‚ğƒCƒ“ƒXƒg[ƒ‹
+rem php artisan dusk:chrome-driver
+rem
+rem ƒeƒXƒgDB‚Ìì¬‚µ‚ÄA.env•ÏXiƒeƒXƒgÀs‚·‚é‚ÆAƒf[ƒ^’Ç‰Á‚µ‚½‚èAƒIƒvƒVƒ‡ƒ“ db_clear ‚ÅDBƒNƒŠƒAo—ˆ‚½‚è‚·‚é‚½‚ßj
+rem #DB_DATABASE=cms
+rem DB_DATABASE=cms_test
+rem
+rem ƒeƒXƒgƒR[ƒh‚ÌÀs
+rem tests\bin\connect-cms-test.bat
+rem tests\bin\connect-cms-test.bat db_clear   ¦ ‰‰ñ‚Í‚±‚Á‚¿
+rem
+rem ¦ ƒXƒNƒŠ[ƒ“ƒVƒ‡ƒbƒg‚Ì•Û‘¶æ
+rem tests\Browser\screenshots
+rem ---------------------------------------------
 
 @php artisan config:clear
 
 if "%1" == "db_clear" (
     echo.
-    echo --- ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã‚¯ãƒªã‚¢
+    echo --- ƒLƒƒƒbƒVƒ…ƒNƒŠƒA
     php artisan cache:clear
     php artisan config:clear
 
     echo.
-    echo --- ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ãƒ»ã‚¯ãƒªã‚¢
+    echo --- ƒf[ƒ^ƒx[ƒXEƒNƒŠƒA
     php artisan migrate:fresh
 
     echo.
-    echo --- ãƒ‡ãƒ¼ã‚¿ãƒ»åˆæœŸè¿½åŠ 
+    echo --- ƒf[ƒ^E‰Šú’Ç‰Á
     php artisan db:seed
 )
 
 rem ---------------------------------------------
-rem - ç®¡ç†ãƒ—ãƒ©ã‚°ã‚¤ãƒ³
+rem - ŠÇ—ƒvƒ‰ƒOƒCƒ“
 rem ---------------------------------------------
 
 echo.
-echo --- ç®¡ç†ç”»é¢ã‚¢ã‚¯ã‚»ã‚¹
+echo --- ŠÇ—‰æ–ÊƒAƒNƒZƒX
 rem php artisan dusk tests\Browser\Manage\IndexManage.php
 
 echo.
-echo --- ãƒšãƒ¼ã‚¸ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒy[ƒWŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\PageManage.php
 
 echo.
-echo --- ã‚µã‚¤ãƒˆç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒTƒCƒgŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\SiteManage.php
 
 echo.
-echo --- ãƒ¦ãƒ¼ã‚¶ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒ†[ƒUŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\UserManage.php
 
 echo.
-echo --- ã‚°ãƒ«ãƒ¼ãƒ—ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒOƒ‹[ƒvŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\GroupManage.php
 
 echo.
-echo --- ã‚»ã‚­ãƒ¥ãƒªãƒ†ã‚£ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒZƒLƒ…ƒŠƒeƒBŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\SecurityManage.php
 
 echo.
-echo --- ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒvƒ‰ƒOƒCƒ“ŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\PluginManage.php
 
 echo.
-echo --- ã‚·ã‚¹ãƒ†ãƒ ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒVƒXƒeƒ€ŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\SystemManage.php
 
 echo.
-echo --- APIç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- APIŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\ApiManage.php
 
 echo.
-echo --- ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ƒƒbƒZ[ƒWŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\MessageManage.php
 
 echo.
-echo --- å¤–éƒ¨èªè¨¼ç®¡ç†ã®ãƒ†ã‚¹ãƒˆ
+echo --- ŠO•””FØŠÇ—‚ÌƒeƒXƒg
 rem php artisan dusk tests\Browser\Manage\AuthManage.php
 
 rem ---------------------------------------------
-rem - ä¸€èˆ¬ãƒ—ãƒ©ã‚°ã‚¤ãƒ³
+rem - ˆê”Êƒvƒ‰ƒOƒCƒ“
 rem ---------------------------------------------
 
 echo.
-echo --- ãƒ˜ãƒƒãƒ€ãƒ¼
+echo --- ƒwƒbƒ_[
 php artisan dusk tests\Browser\User\HeaderArea.php
 
