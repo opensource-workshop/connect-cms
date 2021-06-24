@@ -33,7 +33,7 @@ class PageManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -51,7 +51,7 @@ class PageManage extends DuskTestCase
                     ->type('page_name', 'テスト')
                     ->type('permanent_link', '/test')
                     ->click('#label_base_display_flag')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -63,7 +63,7 @@ class PageManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('ページ追加')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
