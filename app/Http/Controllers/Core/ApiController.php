@@ -28,7 +28,9 @@ use App\User;
 class ApiController extends ConnectController
 {
     /**
-     *  json encode
+     * json encode
+     *
+     * @todo app\Plugins\Api\ApiPluginBase.php で重複
      */
     public function encodeJson($value, $request = null)
     {
