@@ -24,7 +24,7 @@ class IndexManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage')
-                    ->assertTitle('Laravel');
+                    ->assertTitle('Connect-CMS');
             parent::screenshot($browser);
         });
     }
