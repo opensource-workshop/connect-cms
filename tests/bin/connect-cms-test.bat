@@ -1,7 +1,7 @@
 chcp 932
 @echo off
 
-rem ---------------------------------------------
+rem ----------------------------------------------
 rem [How to test]
 rem 開発ライブラリ dusk 等インストール
 rem composer install
@@ -19,7 +19,7 @@ rem tests\bin\connect-cms-test.bat db_clear   ※ 初回はこっち
 rem
 rem ※ スクリーンショットの保存先
 rem tests\Browser\screenshots
-rem ---------------------------------------------
+rem ----------------------------------------------
 
 @php artisan config:clear
 
