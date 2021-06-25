@@ -12,6 +12,7 @@
 .env
 .env.backup
 .env.testing
+.env.dusk.*
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
