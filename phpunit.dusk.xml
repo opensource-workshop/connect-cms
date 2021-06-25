@@ -9,12 +9,19 @@
          processIsolation="false"
          stopOnFailure="false">
     <testsuites>
+        <!-- tests\Browser 配下のファイル末尾Test.phpをテスト対象にする -->
         <testsuite name="Browser Test Suite">
             <directory suffix="Test.php">./tests/Browser</directory>
         </testsuite>
     </testsuites>
     <php>
+        <!-- テストDBは test を指定 -->
         <server name="DB_CONNECTION" value="mysql"/>
         <server name="DB_DATABASE" value="test"/>
+        <!-- セッションとキャッシュをarrayドライバに自動的に設定します。つまり、テスト中のセッションまたはキャッシュデータが保持されることはありません。 -->
+        <server name="CACHE_DRIVER" value="array"/>
+        <server name="MAIL_DRIVER" value="array"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
+        <server name="SESSION_DRIVER" value="array"/>
     </php>
 </phpunit>
