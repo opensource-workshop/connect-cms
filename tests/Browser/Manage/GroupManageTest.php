@@ -9,42 +9,54 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class ApiManage extends DuskTestCase
+class GroupManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests `php artisan dusk --group=manage`
      */
     public function testInvoke()
     {
         $this->login(1);
-        $this->index();
+        $this->edit('テスト一般');
         $this->update();
+        $this->index();
     }
 
     /**
-     * Secret Code の入力
+     * index の表示
      */
     private function index()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/manage/api')
-                    ->type('secret_name', 'テスト')
-                    ->type('secret_code', 'secret_1234')
-                    ->type('ip_address', '192.168.10.101')
-                    ->click('#label_apis_Opac')
-                    ->click('#label_apis_User')
+            $browser->visit('/manage/group')
                     ->assertTitleContains('Laravel');
             $this->screenshot($browser);
         });
     }
 
     /**
-     * Secret Code 登録
+     * グループ登録画面
+     */
+    private function edit($name)
+    {
+        $this->browse(function (Browser $browser) use ($name) {
+            $browser->visit('/manage/group/edit')
+                    ->type('name', $name)
+                    ->assertTitleContains('Laravel');
+            $this->screenshot($browser);
+        });
+    }
+
+    /**
+     * グループ登録処理
      */
     private function update()
     {
         $this->browse(function (Browser $browser) {
-            $browser->press('更新')
+            $browser->press('グループ変更')
                     ->assertTitleContains('Laravel');
             $this->screenshot($browser);
         });

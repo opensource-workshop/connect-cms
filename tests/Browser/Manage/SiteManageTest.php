@@ -9,10 +9,13 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class SiteManage extends DuskTestCase
+class SiteManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests `php artisan dusk --group=manage`
      */
     public function testInvoke()
     {

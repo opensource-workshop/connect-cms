@@ -9,12 +9,29 @@ use Tests\DuskTestCase;
 use App\Models\Common\Frame;
 
 /**
+ * ヘッダーエリアテスト
+ *
+ * 下記いずれかのコマンドでテスト実行
+ *
+ * batファイルで実行)
  * > tests\bin\connect-cms-test.bat
+ *
+ * グループ指定でまとめてテスト実行)
+ * php artisan dusk --group=user
+ *
+ * クラス指定して１つだけテスト実行)
+ * php artisan dusk tests\Browser\User\HeaderArea.php
+ *
+ * tests\Browser 配下のファイル末尾Test.phpを全てテスト実行)
+ * php artisan dusk
  */
-class HeaderArea extends DuskTestCase
+class HeaderAreaTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group user
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests `php artisan dusk --group=user`
      */
     public function testInvoke()
     {

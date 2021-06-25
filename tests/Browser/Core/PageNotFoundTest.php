@@ -6,12 +6,15 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-class PageNotFound extends DuskTestCase
+class PageNotFoundTest extends DuskTestCase
 {
     /**
      * ページなし表示のテスト
      *
      * @return void
+     *
+     * @group core
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests `php artisan dusk --group=core`
      */
     public function testPageNotFound()
     {

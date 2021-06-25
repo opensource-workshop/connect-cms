@@ -11,10 +11,13 @@ use App\Models\Core\Configs;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class UserManage extends DuskTestCase
+class UserManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests `php artisan dusk --group=manage`
      */
     public function testInvoke()
     {
