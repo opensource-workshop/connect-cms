@@ -60,16 +60,10 @@
                                 <tr class="d-none d-xl-table-row">
                                     <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">表示順</th>
                                     <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">表示</th>
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">
-                                        画像
-                                        <label class="badge badge-danger">必須</label>
-                                    </th>
-                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">（上段）リンクURL<br>（下段）キャプション</th>
-                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">
-                                        （上段）リンクターゲット<br>（下段）画像の静止時間（ミリ秒）
-                                        <i class="fas fa-question-circle" data-toggle="tooltip" title="1000ミリ秒 = 1秒"></i>
-                                        <label class="badge badge-danger">必須</label>
-                                    </th>
+                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">画像<label class="badge badge-danger">必須</label></th>
+                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">リンクURL</th>
+                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">キャプション</th>
+                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">リンクターゲット<i class="fas fa-question-circle" data-toggle="tooltip" title="1000ミリ秒 = 1秒"></i></th>
                                     <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">削除</th>
                                 </tr>
                             </thead>
@@ -80,7 +74,7 @@
                                 @endforeach
                                 {{-- 新規登録用の行 --}}
                                 <tr>
-                                    <th colspan="8">【項目の追加行】</th>
+                                    <th colspan="7">【項目の追加行】</th>
                                 </tr>
                                 @include('plugins.user.slideshows.default.slideshows_edit_row_add')
                             </tbody>

@@ -6,10 +6,8 @@
  * @category スライドショー・プラグイン
 --}}
 <tr>
-    <td class="d-none d-xl-display d-xl-table-cell">
-    </td>
-    <td class="d-none d-xl-display d-xl-table-cell">
-    </td>
+    <td class="d-none d-xl-display d-xl-table-cell"></td>
+    <td class="d-none d-xl-display d-xl-table-cell"></td>
     {{-- 画像ファイル --}}
     <td class="d-block d-xl-table-cell align-middle">
         {{-- 画像選択ボタン --}}
@@ -57,9 +55,9 @@
             </div>
         </div>
     </td>
+    {{-- リンクURL --}}
     <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">リンクURL：</strong>
-        {{-- リンクURL --}}
         <input 
             type="text" 
             name="link_url" 
@@ -67,7 +65,9 @@
             value="{{ old('link_url') }}"
             placeholder="例：https://connect-cms.jp/"
         >
-        {{-- キャプション --}}
+    </td>
+    {{-- キャプション --}}
+    <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">キャプション：</strong>
         <input 
             type="text" 
@@ -76,8 +76,8 @@
             value="{{ old('caption') }}"
         >
     </td>
+    {{-- リンクターゲット --}}
     <td class="d-block d-xl-table-cell align-middle">
-        {{-- リンクターゲット --}}
         <strong class="d-xl-none">リンクターゲット：</strong>
         <input 
             type="text" 
