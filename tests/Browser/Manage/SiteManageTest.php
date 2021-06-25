@@ -255,7 +255,9 @@ class SiteManageTest extends DuskTestCase
     private function saveFavicon()
     {
         $this->browse(function (Browser $browser) {
-            $browser->press('ファビコン追加')
+            // bugfix: テストの再実行で、ファビコンが登録されていると「ファビコン更新」になりエラーとなるので修正
+            // $browser->press('ファビコン追加')
+            $browser->click("button[type='submit']")
                     ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
