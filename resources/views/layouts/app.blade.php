@@ -456,7 +456,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
         // $message_first_optional_class = isset($configs_array['message_first_optional_class']) ? $configs_array['message_first_optional_class']->value : '';
         $message_first_show_type = Configs::getConfigsValue($cc_configs, 'message_first_show_type', 0);
         $message_first_permission_type = Configs::getConfigsValue($cc_configs, 'message_first_permission_type', 0);
-        $message_first_exclued_urls = Configs::getConfigsValue($cc_configs, 'message_first_exclued_url', []);
+        $message_first_exclued_urls = explode(',', Configs::getConfigsValue($cc_configs, 'message_first_exclued_url', ''));
         $message_first_optional_class = Configs::getConfigsValue($cc_configs, 'message_first_optional_class', '');
         // dd($message_first_show_type, $message_first_permission_type, $message_first_exclued_urls, $message_first_optional_class, !in_array($page->permanent_link ,$message_first_exclued_urls), Cookie::get('connect_cookie_message_first'));
     @endphp
