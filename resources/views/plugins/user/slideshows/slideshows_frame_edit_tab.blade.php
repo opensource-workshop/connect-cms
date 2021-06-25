@@ -6,8 +6,10 @@
  * @category スライドショー・プラグイン
 --}}
 @php
+    $arr_tab_name['editItem'] = '項目設定';
     $arr_tab_name['editBuckets'] = 'スライドショー設定';
     $arr_tab_name['createBuckets'] = 'スライドショー作成';
+    $arr_tab_name['listBuckets'] = '表示コンテンツ選択';
 @endphp
 {{-- ループしてタブを生成 --}}
 @foreach ($arr_tab_name as $url => $tab_name)

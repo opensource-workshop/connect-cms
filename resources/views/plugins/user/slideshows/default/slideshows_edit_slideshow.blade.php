@@ -18,7 +18,7 @@
 
     @include('common.errors_form_line')
 
-    @if ($slideshow->id || $is_create)
+    @if (($slideshow && $slideshow->id) || $is_create)
 
         <div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i>
             @if ($message)
@@ -36,23 +36,28 @@
 
     @endif
 
-    @if ($slideshow->id || $is_create)
+    @if (($slideshow && $slideshow->id) || $is_create)
 
         @if ($is_create)
             {{-- 新規 --}}
-            <form action="{{url('/')}}/redirect/plugin/slideshows/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
+            <form action="{{url('/')}}/plugin/slideshows/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
         @else
             {{-- 更新 --}}
-            <form action="{{url('/')}}/redirect/plugin/slideshows/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$slideshow->id}}#frame-{{$frame_id}}" method="POST" class="">
+            <form action="{{url('/')}}/plugin/slideshows/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$slideshow->id}}#frame-{{$frame_id}}" method="POST" class="">
         @endif
         {{ csrf_field() }}
-        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/slideshows/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
             {{-- スライドショー名 --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">スライドショー名 <label class="badge badge-danger">必須</label></label>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <input type="text" name="slideshows_name" value="{{old('slideshows_name', $slideshow->slideshows_name)}}" class="form-control @if ($errors && $errors->has('slideshows_name')) border-danger @endif">
+                    <input 
+                        type="text" 
+                        name="slideshows_name" 
+                        value="{{old('slideshows_name', $slideshow->slideshows_name)}}" 
+                        class="form-control @if ($errors && $errors->has('slideshows_name')) border-danger @endif"
+                        required
+                    >
                     @if ($errors && $errors->has('slideshows_name')) <div class="text-danger">{{$errors->first('slideshows_name')}}</div> @endif
                 </div>
             </div>
@@ -123,6 +128,23 @@
                 </div>
             </div>
         
+            {{-- 画像の静止時間 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">
+                    画像の静止時間（ミリ秒） <i class="fas fa-question-circle mr-2" data-toggle="tooltip" title="1000ミリ秒 = 1秒"></i>
+                    <br><label class="badge badge-danger">必須</label></label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <input 
+                        type="number" 
+                        name="image_interval" 
+                        value="{{old('image_interval', isset($slideshow->image_interval) ? $slideshow->image_interval : 5000)}}" 
+                        class="form-control @if ($errors && $errors->has('image_interval')) border-danger @endif"
+                        required
+                    >
+                    @if ($errors && $errors->has('image_interval')) <div class="text-danger">{{$errors->first('image_interval')}}</div> @endif
+                </div>
+            </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <div class="row">
@@ -167,4 +189,13 @@
             </div>
         </div>
     @endif
+    <script>
+        /**
+        * ツールチップ
+        */
+        $(function () {
+            // 有効化
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
 @endsection
