@@ -24,7 +24,7 @@ class ConnectPagePassword
         // パスワード付きページのチェック（パスワードを要求するか確認）
         if ($page && $page->isRequestPassword($request, $page_tree)) {
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            return redirect("/password/input/" . $this->page->id);
+            return redirect("/password/input/" . $page->id);
         }
 
         return $next($request);
