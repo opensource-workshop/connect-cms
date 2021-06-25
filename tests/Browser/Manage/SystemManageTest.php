@@ -34,7 +34,7 @@ class SystemManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/system')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -46,7 +46,7 @@ class SystemManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('デバックモードをOn にする。')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -58,7 +58,7 @@ class SystemManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('デバックモードをOff にする。')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -71,7 +71,7 @@ class SystemManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/system/log')
                     ->type('log_filename', 'debug_log')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -83,7 +83,7 @@ class SystemManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

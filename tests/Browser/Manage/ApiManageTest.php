@@ -36,7 +36,7 @@ class ApiManageTest extends DuskTestCase
                     ->type('ip_address', '192.168.10.101')
                     ->click('#label_apis_Opac')
                     ->click('#label_apis_User')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -48,7 +48,7 @@ class ApiManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

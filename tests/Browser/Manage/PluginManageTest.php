@@ -32,7 +32,7 @@ class PluginManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/plugin')
                     ->type('plugins[1][display_sequence]', '1')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -44,7 +44,7 @@ class PluginManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
