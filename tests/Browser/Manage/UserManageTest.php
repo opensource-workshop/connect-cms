@@ -38,7 +38,7 @@ class UserManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/user')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -65,7 +65,7 @@ class UserManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertPathIs('/manage/user/saveOriginalRoles');
+                    ->assertPathIs('/manage/user/originalRole');
             $this->screenshot($browser);
         });
     }
@@ -88,7 +88,7 @@ class UserManageTest extends DuskTestCase
                     ->type('password_confirmation', 'test-user')
                     ->click('#label_role_reporter')
                     ->click('#label_original_role' . $original_role_student->id)
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -100,7 +100,7 @@ class UserManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('ユーザ登録')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
