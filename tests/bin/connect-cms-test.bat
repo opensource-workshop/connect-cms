@@ -2,8 +2,9 @@
 chcp 932
 
 rem ----------------------------------------------
+rem batでまとめてテスト実行
 rem > tests\bin\connect-cms-test.bat
-rem 
+rem
 rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk
 rem ----------------------------------------------
@@ -18,11 +19,11 @@ if "%1" == "db_clear" (
 
     echo.
     echo --- データベース・クリア
-    php artisan migrate:fresh
+    php artisan migrate:fresh --env=testing
 
     echo.
     echo --- データ・初期追加
-    php artisan db:seed
+    php artisan db:seed --env=testing
 )
 
 rem ---------------------------------------------
@@ -31,7 +32,7 @@ rem ---------------------------------------------
 
 echo.
 echo --- ページなし
-rem php artisan dusk tests\Browser\Core\PageNotFoundTest.php
+rem php artisan dusk tests\Browser\Core\PageNotFoundTest.php --env=testing
 
 rem ---------------------------------------------
 rem - 管理プラグイン
@@ -39,47 +40,47 @@ rem ---------------------------------------------
 
 echo.
 echo --- 管理画面アクセス
-rem php artisan dusk tests\Browser\Manage\IndexManageTest.php
+rem php artisan dusk tests\Browser\Manage\IndexManageTest.php --env=testing
 
 echo.
 echo --- ページ管理のテスト
-rem php artisan dusk tests\Browser\Manage\PageManageTest.php
+rem php artisan dusk tests\Browser\Manage\PageManageTest.php --env=testing
 
 echo.
 echo --- サイト管理のテスト
-rem php artisan dusk tests\Browser\Manage\SiteManageTest.php
+rem php artisan dusk tests\Browser\Manage\SiteManageTest.php --env=testing
 
 echo.
 echo --- ユーザ管理のテスト
-rem php artisan dusk tests\Browser\Manage\UserManageTest.php
+rem php artisan dusk tests\Browser\Manage\UserManageTest.php --env=testing
 
 echo.
 echo --- グループ管理のテスト
-rem php artisan dusk tests\Browser\Manage\GroupManageTest.php
+rem php artisan dusk tests\Browser\Manage\GroupManageTest.php --env=testing
 
 echo.
 echo --- セキュリティ管理のテスト
-rem php artisan dusk tests\Browser\Manage\SecurityManageTest.php
+rem php artisan dusk tests\Browser\Manage\SecurityManageTest.php --env=testing
 
 echo.
 echo --- プラグイン管理のテスト
-rem php artisan dusk tests\Browser\Manage\PluginManageTest.php
+rem php artisan dusk tests\Browser\Manage\PluginManageTest.php --env=testing
 
 echo.
 echo --- システム管理のテスト
-rem php artisan dusk tests\Browser\Manage\SystemManageTest.php
+rem php artisan dusk tests\Browser\Manage\SystemManageTest.php --env=testing
 
 echo.
 echo --- API管理のテスト
-rem php artisan dusk tests\Browser\Manage\ApiManageTest.php
+rem php artisan dusk tests\Browser\Manage\ApiManageTest.php --env=testing
 
 echo.
 echo --- メッセージ管理のテスト
-rem php artisan dusk tests\Browser\Manage\MessageManageTest.php
+rem php artisan dusk tests\Browser\Manage\MessageManageTest.php --env=testing
 
 echo.
 echo --- 外部認証管理のテスト
-rem php artisan dusk tests\Browser\Manage\AuthManageTest.php
+rem php artisan dusk tests\Browser\Manage\AuthManageTest.php --env=testing
 
 rem ---------------------------------------------
 rem - 一般プラグイン
@@ -87,5 +88,8 @@ rem ---------------------------------------------
 
 echo.
 echo --- ヘッダー
-php artisan dusk tests\Browser\User\HeaderAreaTest.php
+php artisan dusk tests\Browser\User\HeaderAreaTest.php --env=testing
 
+echo.
+echo ※ スクリーンショットの保存先
+echo tests\Browser\screenshots
