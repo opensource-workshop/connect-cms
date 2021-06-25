@@ -22,7 +22,6 @@ class CreateSlideshowsItemsTable extends Migration
             $table->integer('slideshows_id')->comment('スライドショーID');
             $table->string('image_path')->comment('画像PATH');
             $table->string('uploads_id')->comment('アップロードID');
-            $table->integer('image_interval')->default(5000)->comment('画像の静止時間（ms）');
             $table->string('link_url')->nullable()->comment('リンクURL');
             $table->string('link_target')->nullable()->comment('リンクターゲット');
             $table->string('caption')->nullable()->comment('キャプション');

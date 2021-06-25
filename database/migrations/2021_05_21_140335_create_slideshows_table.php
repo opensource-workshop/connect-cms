@@ -24,6 +24,7 @@ class CreateSlideshowsTable extends Migration
             $table->integer('control_display_flag')->default(0)->comment('コントロール表示フラグ');
             $table->integer('indicators_display_flag')->default(0)->comment('インジケータ表示フラグ');
             $table->integer('fade_use_flag')->default(0)->comment('フェード使用フラグ');
+            $table->integer('image_interval')->default(5000)->comment('画像の静止時間（ms）');
 
             // 共通項目
             $table->integer('created_id')->nullable();
