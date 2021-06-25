@@ -19,7 +19,6 @@ use App\Models\Common\Page;
 // use App\Models\Common\PageRole;
 use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
-use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
 
@@ -150,61 +149,33 @@ trait ConnectCommonTrait
     }
 
     /**
-     * ログイン可否チェック
+     * ユーザーが指定された役割を保持しているかチェックする。
+     *
+     * @return boolean
      */
-    public function judgmentLogin($user)
+    public function checkRole($user, $role)
     {
-        // IP アドレス取得
-        $remote_ip = \Request::ip();
-        //Log::debug("--- IP：" . $remote_ip);
-
-        // ログイン可否の基本設定を取得
-        $configs = Configs::where('name', 'login_reject')->first();
-
-        // ログイン可否の基本
-        $login_reject = 0;
-        if (!empty($configs)) {
-            $login_reject = $configs->value;
-        }
-        //Log::debug("基本：" . $login_reject);
-
-        // ユーザーオブジェクトにロールデータを付与
-        $users_roles = new UsersRoles();
-        $user->user_roles = $users_roles->getUsersRoles($user->id);
-        // Log::debug($user);
-        // Log::debug($user->user_roles);
-
-        // ログイン可否の個別設定を取得
-        $configs_login_permits = ConfigsLoginPermits::orderBy('apply_sequence', 'asc')->get();
-
-        // ログイン可否の個別設定がない場合はここで判断
-        if (empty($configs_login_permits)) {
-            return ($login_reject == 0) ? true : false;
+        // ログインしていない場合は権限なし
+        if (empty($user)) {
+            return false;
         }
 
-        // ログイン可否の個別設定をループ
-        foreach ($configs_login_permits as $configs_login_permit) {
-            // IPアドレスが範囲内か
-            if (!$this->isRangeIp($remote_ip, $configs_login_permit->ip_address)) {
-                // IPアドレスが範囲外なら、チェック的にはOKなので、次のチェックへ。
-                //Log::debug("IP範囲外：" . $remote_ip . "/" . $configs_login_permit->ip_address);
-                continue;
-            }
-
-            // 権限が範囲内か
-            if (empty($configs_login_permit->role)) {
-                // ロールが入っていない（全対象）の場合は、対象レコードとなるので、設定されている可否を使用
-                //Log::debug("role空で対象：" . $configs_login_permit->reject);
-                $login_reject = $configs_login_permit->reject;
-            } elseif ($this->check_role($user, $configs_login_permit->role)) {
-                // 許可/拒否設定が自分のロールに合致すれば、対象の許可/拒否設定を反映
-                //Log::debug("role合致で対象：" . $configs_login_permit->reject);
-                $login_reject = $configs_login_permit->reject;
+        // 指定された権限を含むロールをループする。
+        // 記事追加はコンテンツ管理者でもOKのような処理のため。
+        foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $check_role) {
+            // ユーザの保持しているロールをループ
+            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
+            foreach ((array)$user->user_roles as $target) {
+                // ターゲット処理をループ
+                foreach ($target as $user_role => $user_role_value) {
+                    // 必要なロールを保持している場合は、権限ありとして true を返す。
+                    if ($check_role == $user_role && $user_role_value) {
+                        return true;
+                    }
+                }
             }
         }
-        // 設定可否の適用
-        //Log::debug("最終：" . $login_reject);
-        return ($login_reject == 0) ? true : false;
+        return false;
     }
 
     /**

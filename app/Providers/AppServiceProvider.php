@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Gate;
 //use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 
-// use App\Traits\ConnectCommonTrait;
+use App\Traits\ConnectCommonTrait;
 
 //class AppServiceProvider extends ServiceProvider
 class AppServiceProvider extends AuthServiceProvider
 {
-    // use ConnectCommonTrait;
+    use ConnectCommonTrait;
 
     /**
      * Register any application services.
@@ -177,6 +177,7 @@ class AppServiceProvider extends AuthServiceProvider
 
         // *** 記事の権限から確認
 
+        // [TODO] page必要
         // 記事追加
         Gate::define('posts.create', function ($user, $args = null) {
             return $this->checkAuthority($user, 'posts.create', $args);
@@ -252,6 +253,7 @@ class AppServiceProvider extends AuthServiceProvider
             return $this->checkAuthority($user, 'preview', $args);
         });
 
+        // [TODO] page必要
         // 変更 or 承認 判定
         Gate::define('role_update_or_approval', function ($user, $args = null) {
 
@@ -330,37 +332,8 @@ class AppServiceProvider extends AuthServiceProvider
     }
 
     /**
-     * ユーザーが指定された役割を保持しているかチェックする。
-     *
-     * @return boolean
-     */
-    private function checkRole($user, $role)
-    {
-        // ログインしていない場合は権限なし
-        if (empty($user)) {
-            return false;
-        }
-
-        // 指定された権限を含むロールをループする。
-        // 記事追加はコンテンツ管理者でもOKのような処理のため。
-        foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
-            // ユーザの保持しているロールをループ
-            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
-            foreach ((array)$user->user_roles as $target) {
-                // ターゲット処理をループ
-                foreach ($target as $user_role => $user_role_value) {
-                    // 必要なロールを保持している場合は、権限ありとして true を返す。
-                    if ($checck_role == $user_role && $user_role_value) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
      * ユーザーが指定された権限を保持しているかチェックする。
+     * (ConnectCommonTraitから移動してきた)
      *
      * @return boolean
      */
@@ -483,6 +456,7 @@ class AppServiceProvider extends AuthServiceProvider
 
     /**
      * Buckets の投稿権限データをrole の配列で返却
+     * (ConnectCommonTraitから移動してきた)
      *
      * @return boolean|array
      */
