@@ -15,7 +15,7 @@ class ApiManageTest extends DuskTestCase
      * テストする関数の制御
      *
      * @group manage
-     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests `php artisan dusk --group=manage`
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
