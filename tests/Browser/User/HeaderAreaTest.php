@@ -2,10 +2,9 @@
 
 namespace Tests\Browser\User;
 
-// use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
-// use TruncateAllTables;
 
 use App\Models\Common\Frame;
 
@@ -24,11 +23,6 @@ class HeaderAreaTest extends DuskTestCase
      */
     public function testInvoke()
     {
-        // 全テーブルを空にするSeederを実行後、通常のSeederを実行
-        // [DBデータを全クリアした場合は、下記コメントを外す。]
-        // $this->seed(TruncateAllTables::class);
-        // $this->seed();
-
         $this->login(1);
         $this->pluginAddModal();
         $this->editContent();

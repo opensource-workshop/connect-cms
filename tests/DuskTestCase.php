@@ -11,9 +11,18 @@ use Laravel\Dusk\Browser;
 
 use App\User;
 
+use TruncateAllTables;
+
 abstract class DuskTestCase extends BaseTestCase
 {
     use CreatesApplication;
+
+    /**
+     * phpunit実行のタイミングで一度だけフラグ
+     *
+     * @var boolean
+     */
+    private static $migrated = false;
 
     /**
      * Prepare for Dusk test execution.
@@ -47,6 +56,33 @@ abstract class DuskTestCase extends BaseTestCase
                 ChromeOptions::CAPABILITY, $options
             )
         );
+    }
+
+    /**
+     * Setup.
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // テスト実行のタイミングで一度だけ実行する
+        if (! self::$migrated) {
+            // config キャッシュクリア
+            $this->artisan('config:clear');
+
+            // マイグレーション実行
+            $this->artisan('migrate');
+
+            // Seederを実行
+            // ・Seederを１つだけ指定して実行（全テーブルを空にするSeeder）
+            // ・通常のDatabaseSeederを実行
+            $this->seed(TruncateAllTables::class);
+            $this->seed();
+
+            self::$migrated = true;
+        }
     }
 
     /**
@@ -94,12 +130,18 @@ abstract class DuskTestCase extends BaseTestCase
         // スクリーンショットの連続保存
         $index = 0;
         for ($i = 0; ($i + $height) <= ($allHeight + $height); $i += $height) {
+            // 0回以外は、連続スクリーンショットのため、少し待つ
+            if ($i > 0) {
+                // 0.8秒スリープ
+                usleep(800000);
+            }
+
             // 画面スクロール
             $browser->script("window.scrollTo(0, {$i});");
             // スクリーンショット撮影
             $browser->screenshot($class_name[count($class_name) - 2] . "/" . $class_name[count($class_name) - 1] . "/" . date('Ymd_His_') . $title . '_' . str_pad(++ $index, 3, 0, STR_PAD_LEFT));
             // 0.8秒スリープ
-            usleep(800000);
+            // usleep(800000);
         }
         return $browser;
     }
