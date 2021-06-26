@@ -43,9 +43,14 @@ class PluginManageTest extends DuskTestCase
     private function update()
     {
         $this->browse(function (Browser $browser) {
+            // bugfix: APP_DEBUG=trueだと,phpdebugbar-header とボタンが被って、ボタンが押せずにテストエラーになるため、ウィンドウサイズを一時的に広げる
+            $browser->resize(1920, 1880);
+
             $browser->press('更新')
                     ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
+
+            $browser->resize(1920, 1080);
         });
     }
 }
