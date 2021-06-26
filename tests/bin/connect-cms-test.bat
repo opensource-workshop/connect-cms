@@ -9,21 +9,24 @@ rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk
 rem ----------------------------------------------
 
-@php artisan config:clear
+rem テストコマンド実行時に１度だけ、自動テストDB初期化をするので不要です。
+rem   (see) https://github.com/opensource-workshop/connect-cms/wiki/Dusk#手動でテストdb初期化
+rem @php artisan config:clear
 
 if "%1" == "db_clear" (
+    rem 下記は、自動テストDB初期化で行っていないコマンド
     echo.
     echo --- キャッシュクリア
     php artisan cache:clear
-    php artisan config:clear
+    rem php artisan config:clear
 
     echo.
     echo --- データベース・クリア
     php artisan migrate:fresh --env=dusk.local
 
-    echo.
-    echo --- データ・初期追加
-    php artisan db:seed --env=dusk.local
+    rem echo.
+    rem echo --- データ・初期追加
+    rem php artisan db:seed --env=dusk.local
 )
 
 rem ---------------------------------------------
@@ -33,6 +36,10 @@ rem ---------------------------------------------
 echo.
 echo --- ページなし
 rem php artisan dusk tests\Browser\Core\PageNotFoundTest.php
+
+echo.
+echo --- 初回確認メッセージ動作テスト
+rem php artisan dusk tests\Browser\Core\MessageFirstShowTest.php
 
 rem ---------------------------------------------
 rem - 管理プラグイン
