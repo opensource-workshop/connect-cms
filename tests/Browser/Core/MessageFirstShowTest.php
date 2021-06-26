@@ -29,6 +29,20 @@ class MessageFirstShowTest extends DuskTestCase
                 'value'    => 1     // 1:表示する
             ]
         );
+        $configs = Configs::updateOrCreate(
+            ['name' => 'message_first_content'],
+            [
+                'category' => 'message',
+                'value'    => 'テストの初回確認メッセージです。',
+            ]
+        );
+        $configs = Configs::updateOrCreate(
+            ['name' => 'message_first_button_name'],
+            [
+                'category' => 'message',
+                'value'    => '確認',
+            ]
+        );
 
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
@@ -37,7 +51,7 @@ class MessageFirstShowTest extends DuskTestCase
             parent::screenshot($browser);
         });
 
-        // 設定を戻す
+        // 設定OFF
         $configs = Configs::updateOrCreate(
             ['name' => 'message_first_show_type'],
             [
