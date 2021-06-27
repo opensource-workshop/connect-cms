@@ -1108,7 +1108,9 @@ class UserPluginBase extends PluginBase
                 }
                 $config->set('Cache.SerializerPath', storage_path('app/tmp/htmlpurifier'));
 
-                $config->set('Attr.AllowedClasses', array()); // class指定を許可する
+                // bugfix: class指定を許可は、デフォルト null ですべてのクラスが許可されている http://htmlpurifier.org/live/configdoc/plain.html#Attr.AllowedClasses
+                // $config->set('Attr.AllowedClasses', array()); // class指定を許可する
+                $config->set('Attr.AllowedClasses', null); // class指定を許可する
                 $config->set('Attr.EnableID', true);          // id属性を許可する
                 $config->set('Filter.YouTube', true);         // Youtube埋め込みを許可する
                 $config->set('HTML.TargetBlank', true);       // target="_blank" が使えるようにする
