@@ -19,6 +19,8 @@ class MessageFirstShowFullTest extends DuskTestCase
      * @return void
      *
      * @group core
+     * @group 918
+     * @see https://github.com/opensource-workshop/connect-cms/issues/918 bug test, 【初回メッセージ管理】最新版で本機能を使用するとシステムエラー
      */
     public function testMessageFirstShowFull()
     {
@@ -67,6 +69,14 @@ class MessageFirstShowFullTest extends DuskTestCase
              'value'    => 'message_first_optional_class']
         );
 
+        // 表示
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/')
+                ->assertTitleContains('Connect-CMS');
+            parent::screenshot($browser);
+        });
+
+        // ボタン押下
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
                 ->press('確認２')
