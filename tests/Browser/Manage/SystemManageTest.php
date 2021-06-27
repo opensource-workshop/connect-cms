@@ -45,7 +45,7 @@ class SystemManageTest extends DuskTestCase
     private function updateDebugmodeOn()
     {
         $this->browse(function (Browser $browser) {
-            // bugfix: テストの途中停止などにより、設定によって「デバックモードをOff にする。」になってる場合があり、エラーとなるので修正
+            // bugfix: APP_DEBUG=trueにすると初期で「デバックモードをOff にする。」になっており、テストエラーになるので修正
             // $browser->press('デバックモードをOn にする。')
             $browser->click("button[type='submit']")
                     ->assertTitleContains('Connect-CMS');
@@ -59,7 +59,6 @@ class SystemManageTest extends DuskTestCase
     private function updateDebugmodeOff()
     {
         $this->browse(function (Browser $browser) {
-            // bugfix: テストの途中停止などにより、設定によって「デバックモードをOn にする。」になってる場合があり、エラーとなるので修正
             // $browser->press('デバックモードをOff にする。')
             $browser->click("button[type='submit']")
                     ->assertTitleContains('Connect-CMS');
