@@ -59,7 +59,7 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
-     * Setup.
+     * テスト前共通処理
      *
      * @return void
      */
