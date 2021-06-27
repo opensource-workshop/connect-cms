@@ -30,4 +30,4 @@ jobs:
           TITLE: ${{ github.event.pages[0].title }}
           HTML_URL: ${{ github.event.pages[0].html_url }}
           WEBHOOK_URL: ${{ secrets.WIKI_SLACK_WEBHOOK }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
