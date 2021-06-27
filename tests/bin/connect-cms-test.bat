@@ -45,6 +45,10 @@ echo.
 echo --- 初回確認メッセージ動作テスト 項目フル入力
 rem php artisan dusk tests\Browser\Core\MessageFirstShowFullTest.php
 
+echo.
+echo --- 閲覧パスワード付ページテスト
+rem php artisan dusk tests\Browser\Core\PagePasswordTest.php
+
 rem ---------------------------------------------
 rem - 管理プラグイン
 rem ---------------------------------------------
