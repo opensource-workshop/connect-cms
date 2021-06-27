@@ -18,7 +18,7 @@ abstract class DuskTestCase extends BaseTestCase
     use CreatesApplication;
 
     /**
-     * phpunit実行のタイミングで一度だけフラグ
+     * テスト実行のタイミングで一度だけフラグ
      *
      * @var boolean
      */
