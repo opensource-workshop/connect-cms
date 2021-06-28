@@ -23,13 +23,13 @@ class PagePasswordTest extends DuskTestCase
         parent::setUp();
 
         // 閲覧パスワード付ページの作成
-        $this->mekePasswordPage();
+        $this->createPasswordPage();
     }
 
     /**
      * 閲覧パスワード付ページの作成
      */
-    private function mekePasswordPage()
+    private function createPasswordPage()
     {
         // --- 更新
         // パスワード付ページ登録更新
