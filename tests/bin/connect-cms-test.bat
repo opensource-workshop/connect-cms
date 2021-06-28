@@ -34,8 +34,12 @@ rem - コア
 rem ---------------------------------------------
 
 echo.
-echo --- ページなし
+echo --- ページなし(404)
 rem php artisan dusk tests\Browser\Core\PageNotFoundTest.php
+
+echo.
+echo --- 権限なし(403)
+rem php artisan dusk tests\Browser\Core\PageForbiddenTest.php
 
 echo.
 echo --- 初回確認メッセージ動作テスト
