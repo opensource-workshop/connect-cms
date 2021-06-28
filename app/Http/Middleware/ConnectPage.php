@@ -93,7 +93,7 @@ class ConnectPage
         // requestにセット
         $request->attributes->add(['pages' => $pages]);
 
-        // 自分のページから親を遡って取得(getAncestorsAndSelf はシングルトンなのでここで取っておいてもレスポンスは問題ないと判断)
+        // 自分のページから親を遡って取得
         $page_tree = null;
         if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
             // $this->page_tree = $this->getAncestorsAndSelf($this->page->id);
@@ -121,6 +121,11 @@ class ConnectPage
             // $this->checkPageNotFound() で404時に、$this->page にセットされることがあるため、ここで詰めなおし
             $request->attributes->add(['page' => $this->page]);
 
+            // 自分のページから親を遡って取得
+            $page_tree = Page::reversed()->ancestorsAndSelf($this->page->id);
+            // requestにセット
+            $request->attributes->add(['page_tree' => $page_tree]);
+
             // *** 全ビュー間のデータ共有
             // ハンバーガーメニューで使用するページの一覧（ConnectController::view から移動してきた）
             View::share('page_list', Page::defaultOrderWithDepth('flat', $this->page));
@@ -137,6 +142,11 @@ class ConnectPage
             $request->attributes->add(['http_status_code' => $http_status_code]);
             // $this->checkPageForbidden() で403時に、$this->page にセットされることがあるため、ここで詰めなおし
             $request->attributes->add(['page' => $this->page]);
+
+            // 自分のページから親を遡って取得
+            $page_tree = Page::reversed()->ancestorsAndSelf($this->page->id);
+            // requestにセット
+            $request->attributes->add(['page_tree' => $page_tree]);
 
             // *** 全ビュー間のデータ共有
             // ハンバーガーメニューで使用するページの一覧（ConnectController::view から移動してきた）
