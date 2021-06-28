@@ -1,0 +1,35 @@
+####################################################
+### 開発環境構築-Linux用（開発環境 → 外部プラグイン）
+####################################################
+# 外部プラグインをConnect-CMSとは別ディレクトリでGit管理したい場合などに使用する、開発用のコピーshellです。
+# 開発環境ディレクトリから、外部プラグインディレクトリにコピーします。
+# コピー不要のディレクトリは、コメントアウトしてください。
+#
+# bashで実行
+# bash .\sync_dev_2_option_private.sh
+
+# 開発環境のあるディレクトリ
+src_root_dir='/path_to_dev_connect-cms/'
+# 外部プラグインのあるディレクトリ
+dist_root_dir='/path_to_option_private_dir/'
+# プラグイン名
+option_plugin="pluginname"
+option_plugin_controller_dir="${option_plugin^}"
+option_plugin_resources_dir="${option_plugin}"
+option_plugin_model_dir=$option_plugin_controller_dir
+option_plugin_command_dir=$option_plugin_controller_dir
+
+# コントローラー
+rsync -arvz --delete "${src_root_dir}app/PluginsOption/User/${option_plugin_controller_dir}" "${dist_root_dir}${option_plugin}/app/PluginsOption/User/"
+# モデル
+rsync -arvz --delete "${src_root_dir}app/ModelsOption/User/${option_plugin_model_dir}" "${dist_root_dir}${option_plugin}/app/ModelsOption/User/" 
+# ビュー
+rsync -arvz --delete "${src_root_dir}resources/views/plugins_option/user/${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}/resources/views/plugins_option/user/"
+# バッチ
+rsync -arvz --delete "${src_root_dir}app/Console/CommandsOption/${option_plugin_command_dir}" "${dist_root_dir}${option_plugin}/app/Console/CommandsOption/" 
+# マイグレーション
+rsync -arvz --delete --exclude '2020_06_03_163936_optionsamples_table.php' --exclude '_readme.txt' "${src_root_dir}database/migrations_option" "${dist_root_dir}${option_plugin}/database/"
+# Enum
+rsync -arvz --delete "${src_root_dir}app/EnumsOption" "${dist_root_dir}${option_plugin}/app/"
+# 画像
+rsync -arvz --delete "${src_root_dir}public/images/plugins/${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}/public/images/plugins/"
