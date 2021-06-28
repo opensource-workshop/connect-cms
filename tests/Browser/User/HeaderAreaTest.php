@@ -76,6 +76,11 @@ class HeaderAreaTest extends DuskTestCase
             //$browser->keys('#contents', 'Text');
 
             $this->screenshot($browser);
+
+            $browser->press('登録確定')
+                    ->assertSee('Test Description');
+
+            $this->screenshot($browser);
         });
     }
 }
