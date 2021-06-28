@@ -43,7 +43,11 @@ class Translate extends ApiPluginBase
         $ch = curl_init();
 
         // 送信データを指定
-        $data = array('text' => $request->inline_text);
+        // $data = array('text' => $request->inline_text);
+        $data = array(
+            'text' => $request->inline_text,
+            'target_language' => $request->target_language,
+        );
 
         // URLとオプションを指定する
         curl_setopt($ch, CURLOPT_URL, $url);
