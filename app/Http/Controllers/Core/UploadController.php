@@ -208,7 +208,7 @@ class UploadController extends ConnectController
         $background_color = null;
 
         // ヘッダーの背景色
-        $base_header_color = null;
+        $header_color = null;
 
         if (!empty($page_id)) {
             $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
