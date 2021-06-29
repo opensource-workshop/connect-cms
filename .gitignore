@@ -27,6 +27,8 @@ composer.phar
 github_copy.bat
 dev_2_option_private.ps1
 option_private_2_dev.ps1
+sync_dev_2_option_private.sh
+sync_option_private_2_dev.sh
 
 /app/ModelsOption/*
 !/app/ModelsOption/User\Optionsamples/*

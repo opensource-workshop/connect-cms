@@ -79,7 +79,7 @@
                 $btn_color .= $whatsnews_frame->read_more_btn_transparent_flag == UseType::use ? 'outline-' : '';
                 $btn_color .= $whatsnews_frame->read_more_btn_color_type;
             @endphp
-            <div v-if="whatsnews_total_count >= offset" class="text-center">
+            <div v-if="whatsnews_total_count > offset" class="text-center">
                 <button class="btn {{ $btn_color }} {{ $whatsnews_frame->read_more_btn_type }}" v-on:click="searchWhatsnewses">
                     {{ $whatsnews_frame->read_more_name }}
                 </button>
