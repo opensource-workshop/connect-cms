@@ -1339,6 +1339,9 @@ class UserManage extends ManagePluginBase
         $import_column[4] = 'email';
         $import_column[5] = 'password';
 
+        // bugfix: 追加項目なしの場合、$no未定義でエラーとなるため修正
+        $no = -1;
+
         // 見出し行
         foreach ($users_columns as $no => $column) {
             $import_column[$no + 6] = $column->id;
@@ -1802,6 +1805,9 @@ class UserManage extends ManagePluginBase
             $attribute_names[3] = $line_count . '行目のグループ';
             $attribute_names[4] = $line_count . '行目のeメールアドレス';
             $attribute_names[5] = $line_count . '行目のパスワード';
+
+            // bugfix: 追加項目なしの場合、$colが初期化されないので修正
+            $col = -1;
 
             foreach ($users_columns as $col => $users_column) {
                 // 行数＋項目名
