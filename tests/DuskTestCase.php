@@ -97,6 +97,17 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     * ログアウトする。
+     */
+    public function logout()
+    {
+        // ログアウト
+        $this->browse(function (Browser $browser) {
+            $browser->logout();
+        });
+    }
+
+    /**
      * 連続スクリーンショット
      * @param Browser $browser
      * @return Browser
@@ -144,5 +155,31 @@ abstract class DuskTestCase extends BaseTestCase
             // usleep(800000);
         }
         return $browser;
+    }
+
+    /**
+     * プラグイン追加
+     */
+    public function addPluginModal($add_plugin)
+    {
+        $this->browse(function (Browser $browser) use ($add_plugin) {
+            // 管理機能からプラグイン追加で固定記事を追加する。
+            $browser->visit('/')
+                    ->clickLink('管理機能')
+                    ->assertTitleContains('Connect-CMS');
+            $this->screenshot($browser);
+
+            // ヘッダーエリアにプラグイン追加
+            $browser->clickLink('プラグイン追加')
+                    ->assertTitleContains('Connect-CMS');
+
+            // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
+            $browser->pause(1000);
+            $this->screenshot($browser);
+
+            $browser->select('add_plugin', $add_plugin)
+                    ->assertTitleContains('Connect-CMS');
+            $this->screenshot($browser);
+        });
     }
 }

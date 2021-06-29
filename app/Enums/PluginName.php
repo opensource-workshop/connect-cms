@@ -51,4 +51,13 @@ final class PluginName extends EnumsBase
         self::themechangers => 'テーマチェンジャー',
         self::receives => 'データ収集',
     ];
+
+    /**
+     * DBに登録される plugin_name を取得
+     * @see resources\views\layouts\add_plugin.blade.php
+     */
+    public static function getPluginName($key): string
+    {
+        return strtolower($key);
+    }
 }

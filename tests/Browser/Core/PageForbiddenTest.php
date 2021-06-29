@@ -9,6 +9,8 @@ use Tests\DuskTestCase;
 use App\Models\Core\Configs;
 use App\Models\Common\Page;
 
+use App\Enums\PluginName;
+
 class PageForbiddenTest extends DuskTestCase
 {
     /**
@@ -38,42 +40,17 @@ class PageForbiddenTest extends DuskTestCase
     public function testPageForbiddenPlugin()
     {
         $this->login(1);
-        $this->pluginAddModal();
+
+        // 固定記事をプラグイン追加
+        $this->addPluginModal(PluginName::getPluginName(PluginName::contents));
 
         // ログアウト
-        $this->browse(function (Browser $browser) {
-            $browser->logout();
-        });
+        $this->logout();
 
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/contents/frame_setting/1/1#frame-1')
                     ->assertSee('403 Forbidden');
             parent::screenshot($browser);
-        });
-    }
-
-    /**
-     * プラグイン追加
-     */
-    private function pluginAddModal()
-    {
-        $this->browse(function (Browser $browser) {
-            // 管理機能からプラグイン追加で固定記事を追加する。
-            $browser->visit('/')
-                    ->clickLink('管理機能')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
-
-            $browser->clickLink('プラグイン追加')
-                    ->assertTitleContains('Connect-CMS');
-
-            // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
-            $browser->pause(1000);
-            $this->screenshot($browser);
-
-            $browser->select('add_plugin', 'contents')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
         });
     }
 
@@ -105,7 +82,7 @@ class PageForbiddenTest extends DuskTestCase
             ]
         );
 
-        // 403
+        // 403ページ設定
         $configs = Configs::updateOrCreate(
             ['name'     => 'page_permanent_link_403'],
             ['category' => 'page_error',

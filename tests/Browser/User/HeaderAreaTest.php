@@ -8,6 +8,8 @@ use Tests\DuskTestCase;
 
 use App\Models\Common\Frame;
 
+use App\Enums\PluginName;
+
 /**
  * ヘッダーエリアテスト
  *
@@ -24,33 +26,11 @@ class HeaderAreaTest extends DuskTestCase
     public function testInvoke()
     {
         $this->login(1);
-        $this->pluginAddModal();
+
+        // 固定記事をプラグイン追加
+        $this->addPluginModal(PluginName::getPluginName(PluginName::contents));
+
         $this->editContent();
-    }
-
-    /**
-     * プラグイン追加
-     */
-    private function pluginAddModal()
-    {
-        $this->browse(function (Browser $browser) {
-            // 管理機能からプラグイン追加で固定記事を追加する。
-            $browser->visit('/')
-                    ->clickLink('管理機能')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
-
-            $browser->clickLink('プラグイン追加')
-                    ->assertTitleContains('Connect-CMS');
-
-            // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
-            $browser->pause(1000);
-            $this->screenshot($browser);
-
-            $browser->select('add_plugin', 'contents')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
-        });
     }
 
     /**
