@@ -44,7 +44,7 @@ class HeaderAreaTest extends DuskTestCase
         }
 
         $this->browse(function (Browser $browser) use ($header_first_content_frame) {
-            // 管理機能からプラグイン追加で固定記事を追加する。
+            // プラグインの（右上）歯車マーク押下
             $browser->visit('/')
                     ->click('#contents-' . $header_first_content_frame->id . '-edit-button')
                     ->assertTitleContains('Connect-CMS');
