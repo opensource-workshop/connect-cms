@@ -14,6 +14,19 @@ use App\Models\Common\Page;
 class PageManageTest extends DuskTestCase
 {
     /**
+     * テスト前共通処理
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // bugfix: APP_DEBUG=trueだと,phpdebugbar-header とボタンが被って、ボタンが押せずにテストエラーになるため、phpdebugbarを閉じる
+        $this->closePhpdebugar();
+    }
+
+    /**
      * テストする関数の制御
      *
      * @group manage
@@ -65,14 +78,9 @@ class PageManageTest extends DuskTestCase
     private function store()
     {
         $this->browse(function (Browser $browser) {
-            // bugfix: APP_DEBUG=trueだと,phpdebugbar-header とボタンが被って、ボタンが押せずにテストエラーになるため、ウィンドウサイズを一時的に広げる
-            $browser->resize(1920, 1880);
-
             $browser->press('ページ追加')
                     ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
-
-            $browser->resize(1920, 1080);
         });
     }
 

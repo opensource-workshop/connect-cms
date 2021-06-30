@@ -6,8 +6,6 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-use App\Models\Common\Frame;
-
 use App\Enums\PluginName;
 
 /**
@@ -18,12 +16,25 @@ use App\Enums\PluginName;
 class BlogTest extends DuskTestCase
 {
     /**
-     * テストする関数の制御
+     * テスト前共通処理
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // APP_DEBUG=trueだと,phpdebugbar-header とボタンが被って、ボタンが押せずにテストエラーになるため、phpdebugbarを閉じる
+        $this->closePhpdebugar();
+    }
+
+    /**
+     * ブログテスト
      *
      * @group user
      * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
-    public function testInvoke()
+    public function testBlog()
     {
         $this->login(1);
 

@@ -67,14 +67,6 @@ abstract class DuskTestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // APP_DEBUG=trueの場合、画面最下部のボタンが被って押下できずテストエラーになるため、phpdebugbarを閉じる
-        if (env('APP_DEBUG')) {
-            // phpdebugbarを閉じる
-            $this->browse(function (Browser $browser) {
-                $browser->visit('/')->click('.phpdebugbar-close-btn');
-            });
-        }
-
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
             // config キャッシュクリア
@@ -163,6 +155,21 @@ abstract class DuskTestCase extends BaseTestCase
             // usleep(800000);
         }
         return $browser;
+    }
+
+    /**
+     * phpdebugbarを閉じる
+     * DuskTestCase::setup() でテスト前に全実行したところ、全テスト実施時になぜか既にphpdebugbarを閉じてるケースがあり、テストエラーになったため、必要なテストで個別に呼び出す。
+     */
+    public function closePhpdebugar()
+    {
+        // APP_DEBUG=trueの場合、画面最下部のボタンが被って押下できずテストエラーになるため、phpdebugbarを閉じる
+        if (env('APP_DEBUG')) {
+            // phpdebugbarを閉じる
+            $this->browse(function (Browser $browser) {
+                $browser->visit('/')->click('.phpdebugbar-close-btn');
+            });
+        }
     }
 
     /**
