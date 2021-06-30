@@ -105,7 +105,9 @@ return [
         'role_arrangement'   => ['role_arrangement', 'role_article_admin'],
         'role_article'       => ['role_article', 'role_article_admin'],
         'role_approval'      => ['role_approval', 'role_article_admin'],
-        'role_reporter'      => ['role_reporter', 'role_article', 'role_article_admin'],
+        // bugfix: 一般プラグインの 権限設定 で編集者とモデレータは別れているため、モデレータ（role_article）に 編集者（role_reporter）を持たせない
+        // 'role_reporter'      => ['role_reporter', 'role_article', 'role_article_admin'],
+        'role_reporter'      => ['role_reporter', 'role_article_admin'],
         'role_guest'         => ['role_guest'],
 
         'admin_system'       => ['admin_system'],
