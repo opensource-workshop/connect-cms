@@ -108,8 +108,7 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // Bucketsに応じたデータを返す。
-        $contents = DB::table('contents')
-                    ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
+        $contents = Contents::select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
                     ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
                     ->join('frames', function ($join) {
                         $join->on('frames.bucket_id', '=', 'buckets.id');
@@ -166,17 +165,25 @@ class ContentsPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+        // コンテンツ管理者の場合、全記事の取得
+        // bugfix: 固定記事のモデレータは 権限設定 で 投稿できる 権限を制御してるため、ここでは許可しない
+        // if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+        if ($this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
         } elseif ($this->isCan('role_approval')) {
+
             // 承認権限の場合、Active ＋ 承認待ちの取得
             $query->Where('status', '=', 0)
                   ->orWhere('status', '=', 2);
+
         } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
-            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('contents.created_id', '=', Auth::user()->id);
+
+            // モデレータ or 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
+            // bugfix: 承認あり なら、自分の承認ありデータも見れる必要あり。
+            // $query->Where('status', '=', 0)
+            $query->WhereIn('status', [0, 2])
+                ->orWhere('contents.created_id', '=', Auth::user()->id);
+
         } else {
             // その他（ゲスト）
             $query->where('status', 0);
@@ -305,7 +312,7 @@ class ContentsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('contents', [
-            'contents'     => $contents,
+            'contents' => $contents,
         ]);
     }
 
