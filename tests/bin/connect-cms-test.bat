@@ -110,5 +110,9 @@ echo --- ヘッダー
 php artisan dusk tests\Browser\User\HeaderAreaTest.php
 
 echo.
+echo --- ブログ
+rem php artisan dusk tests\Browser\User\BlogTest.php
+
+echo.
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
