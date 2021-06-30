@@ -67,6 +67,14 @@ abstract class DuskTestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // APP_DEBUG=trueの場合、画面最下部のボタンが被って押下できずテストエラーになるため、phpdebugbarを閉じる
+        if (env('APP_DEBUG')) {
+            // phpdebugbarを閉じる
+            $this->browse(function (Browser $browser) {
+                $browser->visit('/')->click('.phpdebugbar-close-btn');
+            });
+        }
+
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
             // config キャッシュクリア
