@@ -21,6 +21,21 @@ class PageNotFoundTest extends DuskTestCase
      */
     public function testPageNotFound()
     {
+        // [debug コンソール]
+        // fwrite(STDOUT, __METHOD__ . PHP_EOL);
+
+        // --- 更新
+        // bugfix: php artisan dusk:fails でテストの実行順番がなぜか下記になり、404設定ありでテストNGになったため修正
+        //   1. testPageNotFoundSetting404()
+        //   2. testPageNotFound()
+        //
+        // 404
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'page_permanent_link_404'],
+            ['category' => 'page_error',
+             'value'    => null]
+        );
+
         $this->browse(function (Browser $browser) {
             $browser->visit('/not-found')
                     ->assertSee('404 Not found');
@@ -37,6 +52,9 @@ class PageNotFoundTest extends DuskTestCase
      */
     public function testPageNotFoundSetting404()
     {
+        // [debug コンソール]
+        // fwrite(STDOUT, __METHOD__ . PHP_EOL);
+
         // --- 更新
         // 404ページ登録更新
         $page = Page::updateOrCreate(
