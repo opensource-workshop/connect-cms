@@ -9,6 +9,8 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\PluginName;
+
 //class AppServiceProvider extends ServiceProvider
 class AppServiceProvider extends AuthServiceProvider
 {
@@ -177,7 +179,6 @@ class AppServiceProvider extends AuthServiceProvider
 
         // *** 記事の権限から確認
 
-        // [TODO] page必要
         // 記事追加
         Gate::define('posts.create', function ($user, $args = null) {
             return $this->checkAuthority($user, 'posts.create', $args);
@@ -253,7 +254,6 @@ class AppServiceProvider extends AuthServiceProvider
             return $this->checkAuthority($user, 'preview', $args);
         });
 
-        // [TODO] page必要
         // 変更 or 承認 判定
         Gate::define('role_update_or_approval', function ($user, $args = null) {
 
@@ -347,6 +347,13 @@ class AppServiceProvider extends AuthServiceProvider
         list($post, $plugin_name, $buckets_obj) = $this->checkArgsObj($args);
         //print_r( $buckets_obj );
 
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+        // \Log::debug(var_export($args, true));
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        // $page = $request->get('page');
+        // dd($page);
+
         // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
         // if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
 
@@ -366,15 +373,22 @@ class AppServiceProvider extends AuthServiceProvider
         }
 
         // チェックする権限を決定
-        // Backets にrole が指定されていれば、それを使用。
-        //   - Backets の role は post_flag(投稿できる), approval_flag(承認が必要)の２つのフラグあり。
+        // Buckets にrole が指定されていれば、それを使用。
+        //   - Buckets の role は post_flag(投稿できる), approval_flag(承認が必要)の２つのフラグあり。
         //     ここではpost_flag(投稿できる)のみ取得してチェックする。
         //     記事の承認は、ユーザ権限のrole_approvalでチェックするので、approval_flag(承認が必要)ではチェックしない。
-        // Backets にrole が指定されていなければ、標準のrole を使用
+        // Buckets にrole が指定されていなければ、標準のrole を使用
         $checkRoles = config('cc_role.CC_AUTHORITY')[$authority];
-        if (!empty($this->getPostBucketsRoles($buckets_obj))) {
+        $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+        // \Log::debug(var_export($plugin_name, true));
+        // \Log::debug(var_export($authority, true));
+        // \Log::debug(var_export($post_buckets_roles, true));
+
+        // if (!empty($this->getPostBucketsRoles($buckets_obj))) {
+        if (!empty($post_buckets_roles)) {
             $checkRoles = array();
-            $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
+            // $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
             //Log::debug($buckets_roles);
             // Buckets に設定されたrole から、関連role を取得してチェック。
             foreach ($post_buckets_roles as $post_buckets_role) {
@@ -383,6 +397,11 @@ class AppServiceProvider extends AuthServiceProvider
             // 配列は添字型になるので、array_merge で結合してから重複を取り除く
             $checkRoles = array_unique($checkRoles);
         }
+        // \Log::debug(var_export($checkRoles, true));
+        // \Log::debug(var_export($user->user_roles, true));
+
+        // [TODO] ユーザロール取得。ページ権限あったら、そっちからとる
+        $user_roles = (array)$user->user_roles;
 
         // 指定された権限を含むロールをループする。
         // foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
@@ -395,7 +414,7 @@ class AppServiceProvider extends AuthServiceProvider
                 foreach ($target as $user_role => $user_role_value) {
                     // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
                     // bugfix:  モデレータに「承認が必要」としても、モデレータは自分で承認できてしまう不具合修正
-                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtureとならず、必要なロールを保持している（$user_role == 'role_article'）でtureとなっていた。
+                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtrueとならず、必要なロールを保持している（$user_role == 'role_article'）でtrueとなっていた。
                     //          承認権限チェックとそれ以外でif文見直す。
                     // if ($authority == 'posts.approval' && $user_role == 'role_approval') {
                     //     return true;
@@ -407,10 +426,19 @@ class AppServiceProvider extends AuthServiceProvider
                     } else {
                         // 必要なロールを保持している
                         if ($checkRole == $user_role && $user_role_value) {
+                            // bugfix: 固定記事、権限設定の「投稿できる」権限が機能してないバグ修正
+                            //        ここで role_article モデレータ（他ユーザの記事も更新）を許可すると、
+                            //        固定記事の権限設定で モデレータ を 投稿できるOFF でも設定を無視して、投稿できてしまう。
                             // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
                             if (($user_role == 'role_article_admin') ||
-                                ($user_role == 'role_article') ||
+                                // ($user_role == 'role_article') ||
                                 ($user_role == 'role_approval')) {
+                                return true;
+                            }
+
+                            // モデレータ（role_article ）で 固定記事以外は、許可
+                            if ($user_role == 'role_article' &&
+                                $plugin_name != PluginName::getPluginName(PluginName::contents)) {
                                 return true;
                             }
 
@@ -418,16 +446,34 @@ class AppServiceProvider extends AuthServiceProvider
                             if (empty($post)) {
                                 return true;
                             } else {
-                                if ((($authority == 'buckets.delete') ||
-                                    ($authority == 'posts.create') ||
-                                    ($authority == 'posts.update') ||
-                                    ($authority == 'posts.delete')) &&
-                                    ($user->id == $post->created_id)) {
-                                    return true;
+
+                                // bugfix: 固定記事、権限設定の「投稿できる」権限が機能してないバグ修正
+                                // 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
+                                if ($plugin_name == PluginName::getPluginName(PluginName::contents)) {
+
+                                    if ($authority == 'posts.create' ||
+                                        $authority == 'posts.update' ||
+                                        $authority == 'posts.delete') {
+
+                                        return true;
+                                    }
                                 } else {
-                                    // 複数ロールをチェックするため、ここではreturn しない。
-                                    // return false;
+                                    // 固定記事プラグイン以外
+
+                                    // 投稿者なら編集可
+                                    if ((($authority == 'buckets.delete') ||
+                                        ($authority == 'posts.create') ||
+                                        ($authority == 'posts.update') ||
+                                        ($authority == 'posts.delete')) &&
+                                        ($user->id == $post->created_id)) {
+
+                                        return true;
+                                    } else {
+                                        // 複数ロールをチェックするため、ここではreturn しない。
+                                        // return false;
+                                    }
                                 }
+
                             }
                             // 複数ロールをチェックするため、ここではreturn しない。
                             // return true;
