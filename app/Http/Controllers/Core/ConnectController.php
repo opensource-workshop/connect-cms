@@ -37,7 +37,7 @@ class ConnectController extends Controller
         // }
         // $args["configs"] = $configs_array;
 
-        $request = app(\Illuminate\Http\Request::class);
+        $request = app(Request::class);
 
         // app\Http\Middleware\ConnectPage.php でセットした値
         $http_status_code = $request->get('http_status_code');
