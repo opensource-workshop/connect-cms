@@ -28,6 +28,14 @@ class ClassController extends ConnectController
     use ConnectCommonTrait;
 
     /**
+     * コンストラクタ
+     */
+    public function __construct()
+    {
+        $this->middleware('connect.page');
+    }
+
+    /**
      *  管理プラグインの呼び出し
      *
      * @param String $plugin_name
