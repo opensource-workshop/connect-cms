@@ -26,6 +26,16 @@ class Page extends Model
     use ConnectCommonTrait;
 
     /**
+     * hasMany 設定
+     * - hasManyは、$user->page_roles で使うので、変数名と同義になるので、このメソッド名はphpcs除外
+     * - hasManyは、値があるなしに関わらず collection 型を返す。値がなければ空の collection 型を返す。
+     */
+    public function page_roles()    // phpcs:ignore
+    {
+        return $this->hasMany(PageRole::class);
+    }
+
+    /**
      *  言語設定があれば、特定の言語ページのみに絞る
      *
      */
