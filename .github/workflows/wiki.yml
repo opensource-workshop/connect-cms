@@ -23,11 +23,10 @@ jobs:
         run: |
           url=${HTML_URL}/_compare/$(git rev-parse HEAD^)...$(git rev-parse HEAD)
           curl -X POST --data-urlencode \
-            "payload={\"username\": \"GithubActiosBot\", \"text\": \"Wiki ${ACTION}: <${HTML_URL}|${TITLE}ページ>  <${url}|diff> - ${COMMIT_MESSAGE}\"}" \
+            "payload={\"username\": \"GithubActiosBot\", \"text\": \"Wiki ${ACTION}: <${HTML_URL}|${TITLE}ページ>  <${url}|diff> - ${{ github.event.head_commit.message }}\"}" \
             ${WEBHOOK_URL}
         env:
           ACTION: ${{ github.event.pages[0].action }}
           TITLE: ${{ github.event.pages[0].title }}
           HTML_URL: ${{ github.event.pages[0].html_url }}
           WEBHOOK_URL: ${{ secrets.WIKI_SLACK_WEBHOOK }}
-          COMMIT_MESSAGE: ${{ github.event.commits[0].message }}
