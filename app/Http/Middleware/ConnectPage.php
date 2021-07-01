@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\View;
@@ -45,7 +46,7 @@ class ConnectPage
         // 別メソッドで使用するために保持しておく。
         // $this->router = $router;
 
-        $router = app(\Illuminate\Routing\Router::class);
+        $router = app(Router::class);
 
         // ページの特定
         if (!empty($request->page_id)) {
