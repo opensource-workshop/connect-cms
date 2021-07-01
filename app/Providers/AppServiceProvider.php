@@ -9,6 +9,8 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 
 use App\Traits\ConnectCommonTrait;
 
+use App\Models\Common\PageRole;
+
 use App\Enums\PluginName;
 
 //class AppServiceProvider extends ServiceProvider
@@ -345,14 +347,6 @@ class AppServiceProvider extends AuthServiceProvider
         // 引数をバラシてPOST を取得
         // list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->checkArgsObj($args);
         list($post, $plugin_name, $buckets_obj) = $this->checkArgsObj($args);
-        //print_r( $buckets_obj );
-
-        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-        // \Log::debug(var_export($args, true));
-
-        // app\Http\Middleware\ConnectPage.php でセットした値
-        // $page = $request->get('page');
-        // dd($page);
 
         // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
         // if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
@@ -380,16 +374,12 @@ class AppServiceProvider extends AuthServiceProvider
         // Buckets にrole が指定されていなければ、標準のrole を使用
         $checkRoles = config('cc_role.CC_AUTHORITY')[$authority];
         $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
-        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-        // \Log::debug(var_export($plugin_name, true));
-        // \Log::debug(var_export($authority, true));
-        // \Log::debug(var_export($post_buckets_roles, true));
 
         // if (!empty($this->getPostBucketsRoles($buckets_obj))) {
         if (!empty($post_buckets_roles)) {
             $checkRoles = array();
             // $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
-            //Log::debug($buckets_roles);
+
             // Buckets に設定されたrole から、関連role を取得してチェック。
             foreach ($post_buckets_roles as $post_buckets_role) {
                 $checkRoles = array_merge($checkRoles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
@@ -397,19 +387,49 @@ class AppServiceProvider extends AuthServiceProvider
             // 配列は添字型になるので、array_merge で結合してから重複を取り除く
             $checkRoles = array_unique($checkRoles);
         }
-        // \Log::debug(var_export($checkRoles, true));
-        // \Log::debug(var_export($user->user_roles, true));
 
-        // [TODO] ユーザロール取得。ページ権限あったら、そっちからとる
-        $user_roles = (array)$user->user_roles;
+        // --- ユーザロール取得。ページ権限あったら、そっちからとる
+        //   @see UsersRoles::getUsersRoles()
+        //   $user_roles[target][role_name] = role_value;
+        //   $user_roles['base'] = ['role_reporter' => 1];
+        $user_roles = $user->user_roles;
+        // dd($user_roles, $user->group_users, $user->group_users->pluck('group_id'));
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->get('page');
+        // dd($page, $page->page_roles);
+
+        // プラグイン追加時（例：http://localhost/core/frame/addPlugin/1）は$page=nullになるため対応
+        if ($page) {
+            // 所属グループのページ権限取得
+            // ユーザからグループID取得
+            $user_group_ids = $user->group_users->pluck('group_id');
+
+            // ページ権限から、所属しているグループの権限取得
+            $user_page_roles = $page->page_roles->whereIn('group_id', $user_group_ids);
+            // dd($user_page_roles);
+
+            // user_rolesと同じ配列に変換
+            // ※ グループに複数所属していて、両方のグループに権限が設定されていたら、両方ともの権限を持ちます。
+            //    例）Aグループ：モデレータ, 編集者
+            //        Bグループ：編集者, ゲスト
+            //        => 両方のグループ所属のユーザ権限は、モデレータ, 編集者, ゲスト
+            $user_page_roles_array = PageRole::rolesToArray($user_page_roles);
+            // dd($user_page_roles_array);
+
+            // 所属グループのページ権限があったら、ユーザロールをページ権限に差替える
+            if (!empty($user_page_roles_array)) {
+                $user_roles = $user_page_roles_array;
+            }
+        }
 
         // 指定された権限を含むロールをループする。
         // foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
         foreach ($checkRoles as $checkRole) {
             // ユーザの保持しているロールをループ
-            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
-            //foreach ($user['user_roles'] as $target) {
-            foreach ((array)$user->user_roles as $target) {
+            // foreach ($user['user_roles'] as $target) {
+            // foreach ((array)$user->user_roles as $target) {
+            foreach ($user_roles as $target) {
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
                     // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
@@ -447,8 +467,7 @@ class AppServiceProvider extends AuthServiceProvider
                                 return true;
                             } else {
 
-                                // bugfix: 固定記事、権限設定の「投稿できる」権限が機能してないバグ修正
-                                // 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
+                                // bugfix: 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
                                 if ($plugin_name == PluginName::getPluginName(PluginName::contents)) {
 
                                     if ($authority == 'posts.create' ||
