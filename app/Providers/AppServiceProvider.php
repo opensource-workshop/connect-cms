@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-
 //use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 
@@ -342,7 +342,7 @@ class AppServiceProvider extends AuthServiceProvider
     private function checkAuthority($user, $authority, $args = null)
     {
         // preview モードのチェック付きの場合はpreview モードなら権限ナシで返す。
-        $request = app(\Illuminate\Http\Request::class);
+        $request = app(Request::class);
 
         // 引数をバラシてPOST を取得
         // list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->checkArgsObj($args);
@@ -388,40 +388,12 @@ class AppServiceProvider extends AuthServiceProvider
             $checkRoles = array_unique($checkRoles);
         }
 
-        // --- ユーザロール取得。ページ権限あったら、そっちからとる
-        //   @see UsersRoles::getUsersRoles()
-        //   $user_roles[target][role_name] = role_value;
-        //   $user_roles['base'] = ['role_reporter' => 1];
-        $user_roles = $user->user_roles;
-        // dd($user_roles, $user->group_users, $user->group_users->pluck('group_id'));
-
         // app\Http\Middleware\ConnectPage.php でセットした値
         $page = $request->get('page');
         // dd($page, $page->page_roles);
 
-        // プラグイン追加時（例：http://localhost/core/frame/addPlugin/1）は$page=nullになるため対応
-        if ($page) {
-            // 所属グループのページ権限取得
-            // ユーザからグループID取得
-            $user_group_ids = $user->group_users->pluck('group_id');
-
-            // ページ権限から、所属しているグループの権限取得
-            $user_page_roles = $page->page_roles->whereIn('group_id', $user_group_ids);
-            // dd($user_page_roles);
-
-            // user_rolesと同じ配列に変換
-            // ※ グループに複数所属していて、両方のグループに権限が設定されていたら、両方ともの権限を持ちます。
-            //    例）Aグループ：モデレータ, 編集者
-            //        Bグループ：編集者, ゲスト
-            //        => 両方のグループ所属のユーザ権限は、モデレータ, 編集者, ゲスト
-            $user_page_roles_array = PageRole::rolesToArray($user_page_roles);
-            // dd($user_page_roles_array);
-
-            // 所属グループのページ権限があったら、ユーザロールをページ権限に差替える
-            if (!empty($user_page_roles_array)) {
-                $user_roles = $user_page_roles_array;
-            }
-        }
+        // ユーザロール取得。所属グループのページ権限あったら、そっちからとる
+        $user_roles = $this->choiceUserRolesOrPageRoles($user, $page);
 
         // 指定された権限を含むロールをループする。
         // foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
