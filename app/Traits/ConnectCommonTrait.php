@@ -189,9 +189,11 @@ trait ConnectCommonTrait
 
     /**
      * ユーザロール取得。所属グループのページ権限あったら、そっちからとる
+     *
+     * @param Page|boolean $page 管理画面(例：http://localhost/manage)で$page=falseになるため、型宣言しない
      * @see \App\Models\Core\UsersRoles ::getUsersRoles()
      */
-    public function choiceUserRolesOrPageRoles(User $user, ?Page $page): array
+    public function choiceUserRolesOrPageRoles(User $user, $page): array
     {
         // $user_roles[target][role_name] = role_value;
         // $user_roles['base'] = ['role_reporter' => 1];
@@ -211,7 +213,7 @@ trait ConnectCommonTrait
     /**
      * 所属グループのページ権限取得
      */
-    private function getUserPageRoles(User $user, ?Page $page): array
+    private function getUserPageRoles(User $user, $page): array
     {
         $user_page_roles_array = [];
 
