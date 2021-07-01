@@ -2,12 +2,15 @@
 
 namespace App\Models\Common;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use App\Models\Common\GroupUser;
+// use App\Models\Common\GroupUser;
+use App\Models\Core\UsersRoles;
+
 use App\UserableNohistory;
 
 class PageRole extends Model
@@ -75,5 +78,14 @@ class PageRole extends Model
 
         //return $this->page_role;
         return $page_role;
+    }
+
+    /**
+     * roles を array に変換
+     */
+    public static function rolesToArray(Collection $collect_roles)
+    {
+        // PageRoleも target, role_name, role_value を持つため、UsersRolesのメソッドを利用
+        return UsersRoles::rolesToArray($collect_roles);
     }
 }
