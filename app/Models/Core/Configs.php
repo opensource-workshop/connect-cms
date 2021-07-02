@@ -145,6 +145,7 @@ class Configs extends Model
     /**
      * Configのarray変換
      * （ConnectController から移動してカスタマイズ）
+     * @deprecated [TODO] 今後影響調査・対応して廃止したいなぁ
      */
     private static function changeConfigsArray($configs)
     {
