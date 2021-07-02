@@ -42,7 +42,7 @@ class BlogTest extends DuskTestCase
         $this->addPluginModal(PluginName::getPluginName(PluginName::blogs));
 
         $this->blogSetting();
-        $this->blogCreate();
+        $this->blogPostCreate();
     }
 
     /**
@@ -87,7 +87,7 @@ class BlogTest extends DuskTestCase
     /**
      * ブログの記事作成
      */
-    private function blogCreate()
+    private function blogPostCreate()
     {
         $this->browse(function (Browser $browser) {
             // 新規登録ボタン押下
@@ -105,9 +105,6 @@ class BlogTest extends DuskTestCase
             $browser->driver->executeScript('tinyMCE.get(0).setContent(\'<h1>Test Description</h1>\')');
             $browser->driver->executeScript('tinyMCE.get(1).setContent(\'<h1>Test Description2</h1>\')');
             $this->screenshot($browser);
-
-
-
 
             // 登録確定ボタン押下
             $browser->press('登録確定')
