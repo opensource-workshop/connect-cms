@@ -77,7 +77,6 @@ class ConnectInit
         // View::share('configs_base_site_name', $configs_base_site_name);
         View::share('cc_configs', $configs);
 
-        abort(403, 'DBテーブルのconfigsにデータが１件もありません。php artisan db:seed コマンドを実行して初期データを登録してください。');
         if ($configs->isEmpty()) {
             abort(403, 'DBテーブルのconfigsにデータが１件もありません。php artisan db:seed コマンドを実行して初期データを登録してください。');
         }
