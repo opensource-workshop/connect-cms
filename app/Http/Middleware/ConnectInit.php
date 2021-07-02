@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Schema;
 
 use App\Models\Core\Configs;
 // use App\Models\Core\FrameConfig;
@@ -47,6 +48,16 @@ class ConnectInit
 
         /* --- 共通で使用するDB --- */
 
+        // configsテーブルがなければ、DBマイグレーション未実行と推定。
+        //   - configsテーブルないと Configs::get() で 500エラーになる。
+        //   - APP_KEY は設定されてないとここには到達せず、500エラーになるため、php artisan key:generate は実行済みの想定
+        if (! Schema::hasTable('configs')) {
+            // configsテーブルなしのため、空のコレクション型をセット
+            View::share('cc_configs', collect());
+
+            abort(403, 'DBテーブルのconfigsが存在しません。php artisan migrate コマンドを実行してDBテーブルを作成してください。');
+        }
+
         // Connect-CMS の各種設定
         // bugfix:【サイト管理・バグ】サイト名が サイト管理＞サイト基本設定 以外適用されない対応
         // $request->attributes->add(['configs' => Configs::get()]);
@@ -66,6 +77,10 @@ class ConnectInit
         // View::share('configs_base_site_name', $configs_base_site_name);
         View::share('cc_configs', $configs);
 
+        abort(403, 'DBテーブルのconfigsにデータが１件もありません。php artisan db:seed コマンドを実行して初期データを登録してください。');
+        if ($configs->isEmpty()) {
+            abort(403, 'DBテーブルのconfigsにデータが１件もありません。php artisan db:seed コマンドを実行して初期データを登録してください。');
+        }
         // move: フレームは一般画面のみ使う変数のため、app\Http\Middleware\ConnectFrame.php に移動
         // // フレーム設定の共有
         // $frame_configs = FrameConfig::get();
