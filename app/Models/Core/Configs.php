@@ -3,8 +3,8 @@
 namespace App\Models\Core;
 
 use Illuminate\Database\Eloquent\Model;
-
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class Configs extends Model
 {
@@ -130,7 +130,7 @@ class Configs extends Model
      */
     public static function getSharedConfigs($format = null)
     {
-        $request = app(\Illuminate\Http\Request::class);
+        $request = app(Request::class);
 
         // Configs. app\Http\Middleware\ConnectInit.php でセットした全Configs
         $configs = $request->get('configs');
