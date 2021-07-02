@@ -60,6 +60,7 @@ abstract class DuskTestCase extends BaseTestCase
 
     /**
      * テスト前共通処理
+     * テストケースクラスのテストメソッドごとに (そして最初にインスタンスを作成したときに) 一度実行
      *
      * @return void
      */
