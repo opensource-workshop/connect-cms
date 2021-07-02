@@ -579,7 +579,7 @@ trait ConnectCommonTrait
                     if (empty($user)) {
                         // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
                         $user = new User;
-                        $user->name = empty( $check_result['handle'] ) ? $request['userid'] : $check_result['handle'];
+                        $user->name = empty($check_result['handle']) ? $request['userid'] : $check_result['handle'];
                         $user->userid = $request['userid'];
                         $user->password = Hash::make($request['password']);
                         $user->created_event = \AuthMethodType::netcommons2;
@@ -590,21 +590,19 @@ trait ConnectCommonTrait
 
                             // NC2側権限値取得
                             $nc2_auth = "";
-                            if( array_key_exists( 'auth', $check_result ) == true )
-                            {
+                            if (array_key_exists('auth', $check_result) == true) {
                                 $nc2_auth = $check_result['auth'];
                             }
 
                             // |で区切る（|は複数権限の設定がある場合に区切り文字として利用される）
                             $set_rols = "";
                             $rols_options_list = explode('|', $auth_method['additional4']);
-                            foreach( $rols_options_list as $value )
-                            {
+                            foreach ($rols_options_list as $value) {
                                 // :で区切る（:は、NC2側権限とConnectCMS側権限の区切り文字として利用される）
                                 $original_rols_options = explode(':', $value);
 
                                 // 一致した権限を設定する
-                                if( $original_rols_options[0] == $nc2_auth ) {
+                                if ($original_rols_options[0] == $nc2_auth) {
                                     $set_rols = $original_rols_options[1];
                                     break;
                                 }
@@ -617,10 +615,9 @@ trait ConnectCommonTrait
                                 'role_value' => 1
                             ]);
                         }
-                    }
-                    else {
+                    } else {
                         // ユーザ登録が既にある場合、そのユーザが利用可能になっているかどうかをチェックし、利用不可になっている場合は処理を戻す
-                        if( $user->status != UserStatus::active ) {
+                        if ($user->status != UserStatus::active) {
                             return;
                         }
                     }
