@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -164,10 +165,22 @@ trait ConnectCommonTrait
 
         // app\Http\Middleware\ConnectPage.php でセットした値
         $page = $request->get('page');
-        // dd($page, $page->page_roles);
 
+        // ページロール取得
+        //   $page 管理画面(例：http://localhost/manage)で$page=falseになる
+        $page_roles = $page ? $page->page_roles : collect();
+
+        // 指定された権限を含むロールをループする。
+        return $this->checkRoleHierarchy($user, $role, $page_roles);
+    }
+
+    /**
+     * 指定された権限を含むロールをループしてチェックする。
+     */
+    public function checkRoleHierarchy(User $user, ?string $role, ?Collection $page_roles): bool
+    {
         // ユーザロール取得。所属グループのページ権限あったら、そっちからとる
-        $user_roles = $this->choiceUserRolesOrPageRoles($user, $page);
+        $user_roles = $this->choiceUserRolesOrPageRoles($user, $page_roles);
 
         // 指定された権限を含むロールをループする。
         // 記事追加はコンテンツ管理者でもOKのような処理のため。
@@ -190,10 +203,9 @@ trait ConnectCommonTrait
     /**
      * ユーザロール取得。所属グループのページ権限あったら、そっちからとる
      *
-     * @param Page|boolean $page 管理画面(例：http://localhost/manage)で$page=falseになるため、型宣言しない
      * @see \App\Models\Core\UsersRoles ::getUsersRoles()
      */
-    public function choiceUserRolesOrPageRoles(User $user, $page): array
+    public function choiceUserRolesOrPageRoles(User $user, ?Collection $page_roles): array
     {
         // $user_roles[target][role_name] = role_value;
         // $user_roles['base'] = ['role_reporter' => 1];
@@ -201,7 +213,7 @@ trait ConnectCommonTrait
         // dd($user_roles, $user->group_users, $user->group_users->pluck('group_id'));
 
         // 所属グループのページ権限取得
-        $user_page_roles = $this->getUserPageRoles($user, $page);
+        $user_page_roles = $this->getUserPageRoles($user, $page_roles);
         // 所属グループのページ権限があったら、ユーザロールをページ権限に差替える
         if (!empty($user_page_roles)) {
             $user_roles = $user_page_roles;
@@ -213,28 +225,29 @@ trait ConnectCommonTrait
     /**
      * 所属グループのページ権限取得
      */
-    private function getUserPageRoles(User $user, $page): array
+    private function getUserPageRoles(User $user, ?Collection $page_roles): array
     {
         $user_page_roles_array = [];
 
-        // $page=nullにならない想定だけど、念のため対応
-        if ($page) {
-            // 所属グループのページ権限取得
-            // ユーザからグループID取得
-            $user_group_ids = $user->group_users->pluck('group_id');
-
-            // ページ権限から、所属しているグループの権限取得
-            $user_page_roles = $page->page_roles->whereIn('group_id', $user_group_ids);
-            // dd($user_page_roles);
-
-            // user_rolesと同じ配列に変換
-            // ※ グループに複数所属していて、両方のグループに権限が設定されていたら、両方ともの権限を持ちます。
-            //    例）Aグループ：モデレータ, 編集者
-            //        Bグループ：編集者, ゲスト
-            //        => 両方のグループ所属のユーザ権限は、モデレータ, 編集者, ゲスト
-            $user_page_roles_array = PageRole::rolesToArray($user_page_roles);
-            // dd($user_page_roles_array);
+        if (is_null($page_roles) || $page_roles->isEmpty()) {
+            return $user_page_roles_array;
         }
+
+        // 所属グループのページ権限取得
+        // ユーザからグループID取得
+        $user_group_ids = $user->group_users->pluck('group_id');
+
+        // ページ権限から、所属しているグループの権限取得
+        $user_page_roles = $page_roles->whereIn('group_id', $user_group_ids);
+        // dd($user_page_roles);
+
+        // user_rolesと同じ配列に変換
+        // ※ グループに複数所属していて、両方のグループに権限が設定されていたら、両方ともの権限を持ちます。
+        //    例）Aグループ：モデレータ, 編集者
+        //        Bグループ：編集者, ゲスト
+        //        => 両方のグループ所属のユーザ権限は、モデレータ, 編集者, ゲスト
+        $user_page_roles_array = PageRole::rolesToArray($user_page_roles);
+        // dd($user_page_roles_array);
 
         return $user_page_roles_array;
     }

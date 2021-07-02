@@ -330,6 +330,15 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         });
 
+        // プラグイン設定権限
+        Gate::define('role_frame_header', function ($user, $args = null) {
+            // プラグイン管理者
+            if ($this->checkRoleFrame($user, 'role_arrangement', $args)) {
+                return true;
+            }
+            return false;
+        });
+
         return false;
     }
 
@@ -392,8 +401,12 @@ class AppServiceProvider extends AuthServiceProvider
         $page = $request->get('page');
         // dd($page, $page->page_roles);
 
+        // ページロール取得
+        //   $page 管理画面(例：http://localhost/manage)で$page=falseになる
+        $page_roles = $page ? $page->page_roles : collect();
+
         // ユーザロール取得。所属グループのページ権限あったら、そっちからとる
-        $user_roles = $this->choiceUserRolesOrPageRoles($user, $page);
+        $user_roles = $this->choiceUserRolesOrPageRoles($user, $page_roles);
 
         // 指定された権限を含むロールをループする。
         // foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
@@ -529,5 +542,45 @@ class AppServiceProvider extends AuthServiceProvider
         //     return false;
         // }
         // return $roles;
+    }
+
+    /**
+     * ユーザーが指定された役割を保持しているか、frame->page_id からページロール(役割)をチェックする。
+     */
+    private function checkRoleFrame($user, $role, $args = null): bool
+    {
+        // ログインしていない場合は権限なし
+        if (empty($user)) {
+            return false;
+        }
+
+        // args[0]がない場合はfalse を返す。
+        if (! isset($args[0])) {
+            return false;
+        }
+
+        $frame = $args[0];
+
+        // frameがない場合はfalse を返す。
+        if (empty($frame)) {
+            return false;
+        }
+
+        $request = app(Request::class);
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page_roles = $request->get('page_roles');
+
+        // frame->page_id を基にページロール取得
+        $page_roles = $page_roles ?? collect();
+        $page_roles = $page_roles->where('page_id', $frame->page_id);
+        // \Log::debug(var_export($page_roles, true));
+
+        // [debug]
+        // $page = $request->get('page');
+        // $page_roles = $page ? $page->page_roles : collect();
+
+        // 指定された権限を含むロールをループする。
+        return $this->checkRoleHierarchy($user, $role, $page_roles);
     }
 }

@@ -61,7 +61,7 @@
     @endif
     {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}
     @if (Auth::check() &&
-        (Auth::user()->can('role_arrangement')) &&
+        (Auth::user()->can('role_frame_header', [[$frame]])) &&
          app('request')->input('mode') != 'preview')
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
