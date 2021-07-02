@@ -209,16 +209,16 @@ class FrameCore
 
                 Frame::where('id', $frame->id)
                     ->update(['display_sequence' => $display_sequence - 1]);
-            }
+
             // 指定された番号
-            elseif ($frame->id == $frame_id) {
+            } elseif ($frame->id == $frame_id) {
                 $change_flag = true;
 
                 Frame::where('id', $frame->id)
                     ->update(['display_sequence' => $display_sequence + 1]);
-            }
+
             // その他の項目。番号がおかしくなっている場合などがあっても、再設定するので、きれいになる。
-            else {
+            } else {
                 Frame::where('id', $frame->id)
                     ->update(['display_sequence' => $display_sequence]);
             }
@@ -264,16 +264,16 @@ class FrameCore
 
                 Frame::where('id', $frame->id)
                     ->update(['display_sequence' => $display_sequence + 1]);
-            }
+
             // 指定された番号
-            elseif ($frame->id == $frame_id) {
+            } elseif ($frame->id == $frame_id) {
                 $change_flag = true;
 
                 Frame::where('id', $frame->id)
                     ->update(['display_sequence' => $display_sequence - 1]);
-            }
+
             // その他の項目。番号がおかしくなっている場合などがあっても、再設定するので、きれいになる。
-            else {
+            } else {
                 Frame::where('id', $frame->id)
                     ->update(['display_sequence' => $display_sequence]);
             }
