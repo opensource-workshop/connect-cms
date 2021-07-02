@@ -23,7 +23,7 @@ use App\Models\Core\Configs;
 use App\Traits\ConnectCommonTrait;
 
 /**
- * 一般ページの基本処理
+ * 画面の基本処理
  *
  * ルーティング処理から呼び出されるもの
  *
@@ -32,15 +32,17 @@ use App\Traits\ConnectCommonTrait;
  * @category コア
  * @package Controller
  *
- *                                                                                      | 旧                                                                                               | 新
- * @method __invoke() 基本のアクション（コアの画面処理や各プラグインの処理はここから呼び出す） | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403)                     | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化
- * @method changeLanguage() 言語切り替えアクション                                        | page,frame                                                                                       | 何もつけない
- * @method invokePost() 一般プラグインの表示系・更新系アクション                            | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403)                     | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化
- * @method invokeGetJson() 一般プラグインのJSONレスポンスアクション                         | page,frame,setAppLocale()                                                                       | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ page_id, frame_idを利用しているためチェックしてもよさそう。
- * @method invokePostRedirect() 一般プラグインの更新系アクション（リダイレクトする場合）     | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ 同左
- * @method invokePostDownload() 一般プラグインのダウンロード系アクション                    | page,frame                                                                                      | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ page_id, frame_idを利用しているためチェックしてもよさそう。
+ *                                                                                      | 旧                                                                                                     | 現
+ * @method __invoke() 基本のアクション（コアの画面処理や各プラグインの処理はここから呼び出す。管理画面トップもここにくる） | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403)  | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化
+ * @method changeLanguage() 言語切り替えアクション                                        | page,frame                                                                                             | 何もつけない
+ * @method invokePost() 一般プラグインの表示系・更新系アクション                            | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403)                            | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化
+ * @method invokeGetJson() 一般プラグインのJSONレスポンスアクション                         | page,frame,setAppLocale()                                                                             | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ page_id, frame_idを利用しているためチェック。
+ * @method invokePostRedirect() 一般プラグインの更新系アクション（リダイレクトする場合）     | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化         | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ 同左
+ * @method invokePostDownload() 一般プラグインのダウンロード系アクション                    | page,frame                                                                                             | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ page_id, frame_idを利用しているためチェック。
  * ※ setAppLocale() - page に依存
  * ※ page->isRequestPassword() - session見てチェックしているため、一般プラグインのダウンロード系アクション（invokePostDownload()）でチェックしても、その処理にくるまでに観覧パスワード入力してるだろうから、問題ないだろう。
+ *
+ * @see routes\web.php このルーティングからDefaultController呼ばれる
  */
 class DefaultController extends ConnectController
 {
