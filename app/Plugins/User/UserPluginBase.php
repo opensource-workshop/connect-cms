@@ -1001,6 +1001,9 @@ class UserPluginBase extends PluginBase
     /**
      * 非同期でキューワーカ実行
      * - キューをセット後に非同期でキューワーカを実行、キューされたすべてのジョブを実行して、キューワーカをプロセス停止する。
+     *
+     * @see https://symfony.com/doc/current/components/process.html Processのsymfony公式Doc
+     * @see https://readouble.com/laravel/6.x/ja/queues.html#running-the-queue-worker キューされたすべてのジョブを処理し、終了する - Laravel 6.x キュー
      */
     public function asyncQueueWork()
     {
@@ -1012,8 +1015,19 @@ class UserPluginBase extends PluginBase
         // php artisan queue:work --stop-when-empty
         $process = new Process([$php_binary_path, 'artisan', 'queue:work', '--stop-when-empty'], base_path());
 
-        // 非同期実行（xamppではうまく動かなかった）
+        // 非同期実行（xamppではうまく動かなかった。Linuxサーバでは動いた。）
         $process->start();
+
+        // [debug] 下記実行すると同期実行になった。
+        // foreach ($process as $type => $data) {
+        //     if ($process::OUT === $type) {
+        //         // echo "\nRead from stdout: ".$data;
+        //         \Log::debug(var_export("Read from stdout: ".$data, true));
+        //     } else { // $process::ERR === $type
+        //         // echo "\nRead from stderr: ".$data;
+        //         \Log::debug(var_export("Read from stderr: ".$data, true));
+        //     }
+        // }
 
         // [debug] 同期実行
         // $status = $process->run();
