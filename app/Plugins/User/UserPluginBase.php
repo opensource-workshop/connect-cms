@@ -15,6 +15,9 @@ use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\RotatingFileHandler;
 
+use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\Process;
+
 use DB;
 use File;
 use HTMLPurifier;
@@ -909,6 +912,11 @@ class UserPluginBase extends PluginBase
                 PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
             }
         }
+
+        if ($bucket_mail->timing) {
+            // 非同期でキューワーカ実行
+            $this->asyncQueueWork();
+        }
     }
 
     /**
@@ -941,6 +949,11 @@ class UserPluginBase extends PluginBase
         } else {
             // スケジュール送信
             RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
+        }
+
+        if ($bucket_mail->timing) {
+            // 非同期でキューワーカ実行
+            $this->asyncQueueWork();
         }
     }
 
@@ -978,6 +991,36 @@ class UserPluginBase extends PluginBase
             // スケジュール送信
             DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
         }
+
+        if ($bucket_mail->timing) {
+            // 非同期でキューワーカ実行
+            $this->asyncQueueWork();
+        }
+    }
+
+    /**
+     * 非同期でキューワーカ実行
+     * - キューをセット後に非同期でキューワーカを実行、キューされたすべてのジョブを実行して、キューワーカをプロセス停止する。
+     */
+    public function asyncQueueWork()
+    {
+        // 実行可能な PHP バイナリの検索
+        $php_binary_finder = new PhpExecutableFinder();
+        $php_binary_path = $php_binary_finder->find();
+
+        // キューされたすべてのジョブを処理し、終了する
+        // php artisan queue:work --stop-when-empty
+        $process = new Process([$php_binary_path, 'artisan', 'queue:work', '--stop-when-empty'], base_path());
+
+        // 非同期実行（xamppではうまく動かなかった）
+        $process->start();
+
+        // [debug] 同期実行
+        // $status = $process->run();
+        // \Log::debug(var_export($status, true));
+        // if (!$process->isSuccessful()) {
+        //     throw new ProcessFailedException($process);
+        // }
     }
 
     /**
