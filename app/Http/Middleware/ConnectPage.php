@@ -31,10 +31,9 @@ class ConnectPage
      *   ・pages
      *   ・page_tree （pageがあれば）
      *   ・http_status_code （403, 404エラー時で403,404ページを指定していた場合）
-     *   ・page_roles (全ページロール)
      * ・全ビュー間のデータ共有
      *   ・page_list
-     *   ・page_roles (全ページロール)
+     *   ・page_roles (PageRole::getPageRoles() で取得した全ページロール)
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -74,7 +73,7 @@ class ConnectPage
         }
         // requestにセット
         $request->attributes->add(['page' => $this->page]);
-        $request->attributes->add(['page_roles' => PageRole::get()]);
+        // $request->attributes->add(['page_roles' => PageRole::get()]);
 
         // *** 全ビュー間のデータ共有
         // ハンバーガーメニューで使用するページの一覧（ConnectController::view から移動してきた）

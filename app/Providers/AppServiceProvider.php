@@ -9,7 +9,7 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 
 use App\Traits\ConnectCommonTrait;
 
-use App\Models\Common\PageRole;
+use App\Models\Common\Page;
 
 use App\Enums\PluginName;
 
@@ -399,11 +399,11 @@ class AppServiceProvider extends AuthServiceProvider
 
         // app\Http\Middleware\ConnectPage.php でセットした値
         $page = $request->get('page');
+        $page_tree = $request->get('page_tree');
         // dd($page, $page->page_roles);
 
-        // ページロール取得
-        //   $page 管理画面(例：http://localhost/manage)で$page=falseになる
-        $page_roles = $page ? $page->page_roles : collect();
+        // 自分のページから親を遡ってページロールを取得
+        $page_roles = $this->getPageRolesByGoingBackParent($page, $page_tree);
 
         // ユーザロール取得。所属グループのページ権限あったら、そっちからとる
         $user_roles = $this->choiceUserRolesOrPageRoles($user, $page_roles);
@@ -569,16 +569,36 @@ class AppServiceProvider extends AuthServiceProvider
         $request = app(Request::class);
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page_roles = $request->get('page_roles');
+        // $page_roles = $request->get('page_roles');
+        $page = $request->get('page');
+        $page_tree = $request->get('page_tree');
 
         // frame->page_id を基にページロール取得
-        $page_roles = $page_roles ?? collect();
-        $page_roles = $page_roles->where('page_id', $frame->page_id);
+        // $page_roles = $page_roles ?? collect();
+        // $page_roles = $page_roles->where('page_id', $frame->page_id);
         // \Log::debug(var_export($page_roles, true));
 
-        // [debug]
-        // $page = $request->get('page');
-        // $page_roles = $page ? $page->page_roles : collect();
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+        // \Log::debug(var_export($frame->page_id, true));
+        // \Log::debug(var_export($page->id, true));
+
+        if ($page->id === $frame->page_id) {
+            // プラグインを配置したページと同じ（メインエリア等）
+            // 自ページのため、なにも変更しない
+
+        } else {
+            // プラグインを配置したページと違う（ヘッダーエリアや左エリア等）
+            // フレームの配置ページIDから、親を遡らせる。
+            $page = new Page();
+            $page->id = $frame->page_id;
+
+            // nullを指定する事で、フレームの配置ページから親を遡ってページツリーを再取得する。
+            $page_tree = null;
+        }
+
+        // ページから親を遡ってページロールを取得
+        $page_roles = $this->getPageRolesByGoingBackParent($page, $page_tree);
+
 
         // 指定された権限を含むロールをループする。
         return $this->checkRoleHierarchy($user, $role, $page_roles);

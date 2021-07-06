@@ -165,13 +165,40 @@ trait ConnectCommonTrait
 
         // app\Http\Middleware\ConnectPage.php でセットした値
         $page = $request->get('page');
+        $page_tree = $request->get('page_tree');
 
-        // ページロール取得
-        //   $page 管理画面(例：http://localhost/manage)で$page=falseになる
-        $page_roles = $page ? $page->page_roles : collect();
+        // 自分のページから親を遡ってページロールを取得
+        $page_roles = $this->getPageRolesByGoingBackParent($page, $page_tree);
 
         // 指定された権限を含むロールをループする。
         return $this->checkRoleHierarchy($user, $role, $page_roles);
+    }
+
+    /**
+     * 自分のページから親を遡ってページロールを取得
+     */
+    public function getPageRolesByGoingBackParent(?Page $page, ?Collection $page_tree) : Collection
+    {
+        $page = $page ?? new Page();
+
+        // 自分のページから親を遡って取得
+        $page_tree = $page->getPageTreeByGoingBackParent($page_tree);
+
+        // 自分及び先祖ページにグループ権限が設定されていなければ戻る
+        $page_roles = collect();
+        foreach ($page_tree as $page) {
+            if (! $page->page_roles->isEmpty()) {
+                $page_roles = $page->page_roles;
+                break;
+            }
+        }
+        // dd($page_roles);
+
+        // ページロール取得
+        //   $page 管理画面(例：http://localhost/manage)で$page=falseになる
+        // $page_roles = $page ? $page->page_roles : collect();
+
+        return $page_roles;
     }
 
     /**
