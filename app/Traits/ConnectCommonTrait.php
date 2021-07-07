@@ -179,6 +179,11 @@ trait ConnectCommonTrait
      */
     public function getPageRolesByGoingBackParent(?Page $page, ?Collection $page_tree) : Collection
     {
+        if (is_null($page) && is_null($page_tree)) {
+            // ログインのPOST時（http://localhost/login）に どちらもnullなので 空コレクションを返す
+            return collect();
+        }
+
         $page = $page ?? new Page();
 
         // 自分のページから親を遡って取得

@@ -2,14 +2,14 @@
 
 namespace App\Models\Common;
 
-use RecursiveIteratorIterator;
-use RecursiveArrayIterator;
+// use RecursiveIteratorIterator;
+// use RecursiveArrayIterator;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use DB;
+// use DB;
 
 use Kalnoy\Nestedset\NodeTrait;
 
@@ -478,13 +478,18 @@ class Page extends Model
     /**
      * 自分のページから親を遡ってページツリーを取得
      */
-    public function getPageTreeByGoingBackParent(?Collection $page_tree) : Collection
+    public function getPageTreeByGoingBackParent(?Collection $page_tree): Collection
     {
         // 自分のページから親を遡って取得
         if (empty($page_tree)) {
             $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
         }
-        //Log::debug(json_encode( $page_tree, JSON_UNESCAPED_UNICODE));
+        // \Log::debug(var_export($page_tree, true));
+
+        if ($page_tree->isEmpty()) {
+            // $page_tree=null & $this->id=null の場合、$page_tree が空コレクションになる事に対応
+            return $page_tree;
+        }
 
         // トップページを取得
         $top_page = Page::orderBy('_lft', 'asc')->first();
