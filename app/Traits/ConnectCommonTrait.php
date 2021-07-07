@@ -164,8 +164,13 @@ trait ConnectCommonTrait
         $request = app(Request::class);
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $page_tree = $request->get('page_tree');
+        // bugfix: $request->get(); で $request->attributes の値をとっては「いけなかった」。$request->get()は、
+        //         $request->attributes, $request->query, $request->request の順に値を取得しているため、
+        //         $request->get('page'); とすると、ユーザ管理のページネーション（http://localhost/manage/user?page=2）とした時、page="2"が取得できバグった。
+        // $page = $request->get('page');
+        // $page_tree = $request->get('page_tree');
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
 
         // 自分のページから親を遡ってページロールを取得
         $page_roles = $this->getPageRolesByGoingBackParent($page, $page_tree);
