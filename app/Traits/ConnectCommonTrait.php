@@ -177,10 +177,12 @@ trait ConnectCommonTrait
     /**
      * 自分のページから親を遡ってページロールを取得
      */
-    public function getPageRolesByGoingBackParent(?Page $page, ?Collection $page_tree) : Collection
+    public function getPageRolesByGoingBackParent($page, ?Collection $page_tree) : Collection
     {
-        if (is_null($page) && is_null($page_tree)) {
+        // dd($page, $page_tree);
+        if (!$page && is_null($page_tree)) {
             // ログインのPOST時（http://localhost/login）に どちらもnullなので 空コレクションを返す
+            // 管理画面(http://localhost/manage)で $page=false & $page_tree=null になるので 空コレクションを返す
             return collect();
         }
 
@@ -198,10 +200,6 @@ trait ConnectCommonTrait
             }
         }
         // dd($page_roles);
-
-        // ページロール取得
-        //   $page 管理画面(例：http://localhost/manage)で$page=falseになる
-        // $page_roles = $page ? $page->page_roles : collect();
 
         return $page_roles;
     }
