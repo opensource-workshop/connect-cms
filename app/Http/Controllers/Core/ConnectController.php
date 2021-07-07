@@ -40,7 +40,7 @@ class ConnectController extends Controller
         $request = app(Request::class);
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $http_status_code = $request->get('http_status_code');
+        $http_status_code = $request->attributes->get('http_status_code');
 
         // move: app\Http\Middleware\ConnectPage.php で処理＆全Viewに値セットするように変更
         // ハンバーガーメニューで使用するページの一覧

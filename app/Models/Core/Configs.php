@@ -133,8 +133,8 @@ class Configs extends Model
         $request = app(Request::class);
 
         // Configs. app\Http\Middleware\ConnectInit.php でセットした全Configs
-        $configs = $request->get('configs');
-        // dd($request->get('configs'));
+        $configs = $request->attributes->get('configs');
+        // dd($request->attributes->get('configs'));
 
         if ($format == 'array') {
             return self::changeConfigsArray($configs);

@@ -18,8 +18,8 @@ class ConnectPagePassword
         // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $page_tree = $request->get('page_tree');
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
 
         // パスワード付きページのチェック（パスワードを要求するか確認）
         if ($page && $page->isRequestPassword($request, $page_tree)) {

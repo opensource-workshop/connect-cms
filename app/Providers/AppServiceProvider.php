@@ -398,8 +398,8 @@ class AppServiceProvider extends AuthServiceProvider
         }
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $page_tree = $request->get('page_tree');
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
         // dd($page, $page->page_roles);
 
         // 自分のページから親を遡ってページロールを取得
@@ -569,9 +569,9 @@ class AppServiceProvider extends AuthServiceProvider
         $request = app(Request::class);
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        // $page_roles = $request->get('page_roles');
-        $page = $request->get('page');
-        $page_tree = $request->get('page_tree');
+        // $page_roles = $request->attributes->get('page_roles');
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
 
         // frame->page_id を基にページロール取得
         // $page_roles = $page_roles ?? collect();

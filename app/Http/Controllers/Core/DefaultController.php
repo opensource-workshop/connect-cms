@@ -72,9 +72,9 @@ class DefaultController extends ConnectController
         // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $pages = $request->get('pages');
-        $page_tree = $request->get('page_tree');
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+        $page_tree = $request->attributes->get('page_tree');
 
         // アプリのロケールを変更
         $this->setAppLocale($page);
@@ -137,7 +137,7 @@ class DefaultController extends ConnectController
             'page'              => $page,
             'frames'            => $frames,
             // 'pages'             => $this->pages,
-            'pages'             => $request->get('pages'),
+            'pages'             => $pages,
             'plugin_instances'  => $plugin_instances,
             'layouts_info'      => $layouts_info,
             'themes'            => $themes,
@@ -632,9 +632,9 @@ class DefaultController extends ConnectController
     {
         // dd($request->frame_id, $frame_id, $router);
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $pages = $request->get('pages');
-        $page_tree = $request->get('page_tree');
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+        $page_tree = $request->attributes->get('page_tree');
 
         // アプリのロケールを変更
         $this->setAppLocale($page);
@@ -752,8 +752,8 @@ class DefaultController extends ConnectController
     public function invokeGetJson(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $pages = $request->get('pages');
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
 
         // アプリのロケールを変更
         $this->setAppLocale($page);
@@ -820,8 +820,9 @@ class DefaultController extends ConnectController
     public function invokePostRedirect(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $pages = $request->get('pages');
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+        $http_status_code = $request->attributes->get('http_status_code');
 
         // アプリのロケールを変更
         $this->setAppLocale($page);
@@ -835,9 +836,6 @@ class DefaultController extends ConnectController
         //
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         // $http_status_code = $this->checkPageForbidden();
-        //
-        // app\Http\Middleware\ConnectPage.php でセットした http_status_code
-        $http_status_code = $request->get('http_status_code');
 
         // 403 なら、不正な実行を疑い、action を無効化する。
         if ($http_status_code == 403) {
@@ -944,8 +942,8 @@ class DefaultController extends ConnectController
         }
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $pages = $request->get('pages');
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
 
         // 引数のアクションと同じメソッドを呼び出す。
         //$class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";

@@ -53,11 +53,9 @@ class PasswordController extends ConnectController
      */
     public function input($request, $page_id)
     {
-        $page = $request->get('page');
-
         return $this->view('auth.page_auth', [
             // 'page'    => $this->page,
-            'page'    => $page,
+            'page'    => $request->attributes->get('page'),
             'page_id' => $page_id,
         ]);
     }
@@ -75,8 +73,8 @@ class PasswordController extends ConnectController
         }
 
         // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-        $page_tree = $request->get('page_tree');
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
 
         // if (!$this->page) {
         if (!$page) {

@@ -296,11 +296,8 @@ class ContentsPlugin extends UserPluginBase
         $format = 'layer1';
         $level1_pages = $this->getPages($format);
 
-        // app\Http\Middleware\ConnectPage.php でセットした値
-        $page = $request->get('page');
-
         // スマホメニュー用タグ生成とコンテンツ変換
-        $sp_menu = $this->getSmpMenu($level1_pages, $page_id, $page);
+        $sp_menu = $this->getSmpMenu($level1_pages, $page_id, $this->page);
         if ($contents && $sp_menu) {
             $contents->content_text = str_replace('<cc value="cc:menu"></cc>', $sp_menu, $contents->content_text);
         }
