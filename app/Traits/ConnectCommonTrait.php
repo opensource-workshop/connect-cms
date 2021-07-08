@@ -33,14 +33,18 @@ trait ConnectCommonTrait
     //var $directory_file_limit = 1000;
 
     /**
-     * 権限チェック
+     * 権限チェック ＆ エラー時
      * roll_or_auth : 権限 or 役割
+     *
+     * @return view|null 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
+     *
+     * @see \App\Providers\AppServiceProvider AppServiceProvider::boot()
      */
-    public function can($roll_or_auth, $post = null, $plugin_name = null, $buckets = null)
+    public function can($roll_or_auth, $post = null, $plugin_name = null, $buckets = null, $frame = null)
     {
         $args = null;
-        if ($post != null || $plugin_name != null || $buckets != null) {
-            $args = [[$post, $plugin_name, $buckets]];
+        if ($post != null || $plugin_name != null || $buckets != null || $frame != null) {
+            $args = [[$post, $plugin_name, $buckets, $frame]];
         }
 
         if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
@@ -51,12 +55,16 @@ trait ConnectCommonTrait
     /**
      * 権限チェック
      * roll_or_auth : 権限 or 役割
+     *
+     * @return bool
+     *
+     * @see \App\Providers\AppServiceProvider AppServiceProvider::boot()
      */
-    public function isCan($roll_or_auth, $post = null, $plugin_name = null)
+    public function isCan($roll_or_auth, $post = null, $plugin_name = null, $buckets = null, $frame = null): bool
     {
         $args = null;
-        if ($post != null || $plugin_name != null) {
-            $args = [[$post, $plugin_name]];
+        if ($post != null || $plugin_name != null || $buckets != null || $frame != null) {
+            $args = [[$post, $plugin_name, $buckets, $frame]];
         }
 
         if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {

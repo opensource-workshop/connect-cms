@@ -128,11 +128,6 @@ class FrameCore
             abort(403, '権限がありません。');
         }
 
-        // 権限チェック
-        if ($this->can("frames.edit")) {
-            abort(403, '権限がありません。');
-        }
-
         // バリデート
         $validate_targets['content_open_type'] = ['required'];
         $validate_names['content_open_type'] = '公開設定';
@@ -178,7 +173,18 @@ class FrameCore
     public function sequenceDown($request, $page_id, $frame_id, $area_id)
     {
         // 権限チェック
-        if ($this->can("frames.edit")) {
+        // if ($this->can("frames.edit")) {
+        if ($this->can("frames.move")) {
+            abort(403, '権限がありません。');
+        }
+
+        // ヘッダエリアや左右エリアで、フレーム配置ページとは異なるページで上下移動を考慮
+        $frame_page = Frame::find($frame_id);
+        if (! $frame_page) {
+            abort(404, 'データがありません。');
+        }
+
+        if ($this->can("role_frame_header", null, null, null, $frame_page)) {
             abort(403, '権限がありません。');
         }
 
@@ -187,10 +193,10 @@ class FrameCore
 
         // 一度、現在のページ内のフレーム順を取得し、ページ番号を再採番。その際、指定されたフレームと次のフレームのみロジックで入れ替え。
         // 対象ページのフレームレコードを全て更新するが、ページ内のフレーム数分なので、レスポンスにも問題ないと判断。
-        $frames = DB::table('frames')
-                ->select('frames.id', 'display_sequence')
-                ->join('pages', 'pages.id', '=', 'frames.page_id')
-                ->where('page_id', $page_id)
+        $frames = Frame::select('id', 'display_sequence')
+                // ->join('pages', 'pages.id', '=', 'frames.page_id')
+                // ->where('page_id', $page_id)
+                ->where('page_id', $frame_page->page_id)
                 ->where('area_id', $area_id)
                 ->orderBy('display_sequence')
                 ->get();
@@ -232,10 +238,21 @@ class FrameCore
      *
      * @return view
      */
-    public function sequenceUp($request, $page_id, $frame_id)
+    public function sequenceUp($request, $page_id, $frame_id, $area_id)
     {
         // 権限チェック
-        if ($this->can("frames.edit")) {
+        // if ($this->can("frames.edit")) {
+        if ($this->can("frames.move")) {
+            abort(403, '権限がありません。');
+        }
+
+        // ヘッダエリアや左右エリアで、フレーム配置ページとは異なるページで上下移動を考慮
+        $frame_page = Frame::find($frame_id);
+        if (! $frame_page) {
+            abort(404, 'データがありません。');
+        }
+
+        if ($this->can("role_frame_header", null, null, null, $frame_page)) {
             abort(403, '権限がありません。');
         }
 
@@ -244,9 +261,10 @@ class FrameCore
 
         // 一度、現在のページ内のフレーム順を取得し、ページ番号を再採番。その際、指定されたフレームと次のフレームのみロジックで入れ替え。
         // 対象ページのフレームレコードを全て更新するが、ページ内のフレーム数分なので、レスポンスにも問題ないと判断。
-        $frames = DB::table('frames')
-                ->select('id', 'display_sequence')
-                ->where('page_id', $page_id)
+        $frames = Frame::select('id', 'display_sequence')
+                // ->where('page_id', $page_id)
+                ->where('page_id', $frame_page->page_id)
+                ->where('area_id', $area_id)
                 ->orderBy('display_sequence', 'desc')
                 ->get();
 
@@ -254,7 +272,7 @@ class FrameCore
         $change_flag = false;
 
         // 上移動の場合は、フレームを下から番号を設定していくので、MAX値を取得
-        $display_sequence = DB::table('frames')->where('page_id', $page_id)->count();
+        $display_sequence = Frame::where('page_id', $page_id)->count();
 
         // ページ内フレームをループ。下から順番に番号設定。対象番号の場合に次と入れ替え。
         foreach ($frames as $frame) {

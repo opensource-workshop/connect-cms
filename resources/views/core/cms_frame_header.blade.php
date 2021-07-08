@@ -9,10 +9,34 @@
 --}}
 {{-- フレームヘッダー(表示) --}}
 
-{{-- パネルヘッダーはフレームタイトルが空、認証していない場合はパネルヘッダーを使用しない --}}
+@php
+// フレームヘッダ表示フラグ
+$canFrameHaederDisplayed = false;
+
+// フレームタイトルがあれば、フレームヘッダ表示する。
+if ($frame->frame_title) {
+    $canFrameHaederDisplayed = true;   // 表示
+}
+
+// フレームタイトルが無くても、権限あれば、フレームヘッダ表示する。
+//   - Gate::check()は、Auth::user()->can()と同等メソッド。 @see https://readouble.com/laravel/6.x/ja/authorization.html#authorizing-actions-via-gates
+if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]])) {
+    $canFrameHaederDisplayed = true;   // 表示
+}
+@endphp
+{{--
+フレームヘッダはフレームタイトルが空、認証していない場合はフレームヘッダを使用しない
+　・ログインしてない & フレームタイトル空 = フレームヘッダ表示しない
+　・ログインしてる & フレームタイトル空 & frames.move 権限ない = フレームヘッダ表示しない
+　・それ以外表示
+　　・ログインしてる & フレームタイトルあり = フレームヘッダ表示する。
+　※ これ抜けてた（ログインしてる & フレームタイトルなし & 権限ある = フレームヘッダ表示する）
+
 @if (!Auth::check() && empty($frame->frame_title))
 @elseif (Auth::check() && empty($frame->frame_title) && !( Auth::user()->can('frames.move')))
 @else
+--}}
+@if ($canFrameHaederDisplayed)
     @php
         $class_border = "";
         //
@@ -59,10 +83,14 @@
             </span>
         </small>
     @endif
-    {{-- ログインしていて、システム管理者、サイト管理者権限があれば、編集機能を有効にする --}}
+    {{-- ログインしていて、権限があれば、編集機能を有効にする --}}
+    {{--
     @if (Auth::check() &&
-        (Auth::user()->can('role_frame_header', [[$frame]])) &&
+        (Auth::user()->can('role_arrangement')) &&
          app('request')->input('mode') != 'preview')
+    --}}
+    @if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]]) &&
+        app('request')->input('mode') != 'preview')
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
 {{--

@@ -355,7 +355,7 @@ class AppServiceProvider extends AuthServiceProvider
 
         // 引数をバラシてPOST を取得
         // list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->checkArgsObj($args);
-        list($post, $plugin_name, $buckets_obj) = $this->checkArgsObj($args);
+        list($post, $plugin_name, $buckets_obj, $frame) = $this->checkArgsObj($args);
 
         // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
         // if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
@@ -500,8 +500,10 @@ class AppServiceProvider extends AuthServiceProvider
         $plugin_name = ($args != null && is_array($args) && count($args) > 1) ? $args[1] : null;
         // $mode_switch = ($args != null && is_array($args) && count($args) > 2) ? $args[2] : null;
         $buckets     = ($args != null && is_array($args) && count($args) > 2) ? $args[2] : null;
+        $frame       = ($args != null && is_array($args) && count($args) > 3) ? $args[3] : null;
+
         // return [$post, $plugin_name, $mode_switch, $buckets];
-        return [$post, $plugin_name, $buckets];
+        return [$post, $plugin_name, $buckets, $frame];
     }
 
     /**
@@ -554,12 +556,7 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         }
 
-        // args[0]がない場合はfalse を返す。
-        if (! isset($args[0])) {
-            return false;
-        }
-
-        $frame = $args[0];
+        list($post, $plugin_name, $buckets_obj, $frame) = $this->checkArgsObj($args);
 
         // frameがない場合はfalse を返す。
         if (empty($frame)) {
