@@ -251,15 +251,17 @@ trait ConnectCommonTrait
     public function choiceUserRolesOrPageRoles(User $user, ?Collection $page_roles): array
     {
         // $user_roles[target][role_name] = role_value;
-        // $user_roles['base'] = ['role_reporter' => 1];
+        // $user_roles['base'] = ['role_reporter' => 1];    // ←ページ権限あれば上書き
+        // $user_roles['manage'] = ['admin_system' => 1];   // ←ページ権限ではセットしてないので、そのまま
         $user_roles = $user->user_roles;
-        // dd($user_roles, $user->group_users, $user->group_users->pluck('group_id'));
 
         // 所属グループのページ権限取得
         $user_page_roles = $this->getUserPageRoles($user, $page_roles);
+
         // 所属グループのページ権限があったら、ユーザロールをページ権限に差替える
-        if (!empty($user_page_roles)) {
-            $user_roles = $user_page_roles;
+        if (isset($user_page_roles['base'])) {
+            // ページ権限はbase(コンテンツ権限)のみ。manage(管理権限)はセットしてない。
+            $user_roles['base'] = $user_page_roles['base'];
         }
 
         return $user_roles;
