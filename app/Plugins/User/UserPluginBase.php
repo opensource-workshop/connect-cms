@@ -1029,6 +1029,7 @@ class UserPluginBase extends PluginBase
         // 非同期実行する
         if (strpos(PHP_OS, 'WIN') !== false) {
             // Windows
+            // - start /B 新しいウインドウを開かずにアプリケーションを起動する。
             $command = "start /B {$php_artisan_command}";
             $fp = popen($command, 'r');
             pclose($fp);
