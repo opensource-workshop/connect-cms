@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 use Illuminate\Support\Facades\Log;
 
 use App\Traits\ConnectCommonTrait;
+use App\Traits\ConnectRoleTrait;
 
 use App\User;
 use App\Models\Core\UsersRoles;
@@ -21,7 +22,7 @@ use App\Models\Core\Configs;
  */
 class ConnectEloquentUserProvider extends EloquentUserProvider
 {
-    use ConnectCommonTrait;
+    use ConnectCommonTrait, ConnectRoleTrait;
 
     /**
      * Validate a user against the given credentials.
