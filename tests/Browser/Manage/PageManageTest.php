@@ -10,6 +10,8 @@ use App\Models\Common\Page;
 
 /**
  * > tests\bin\connect-cms-test.bat
+ *
+ * @see https://github.com/opensource-workshop/connect-cms/wiki/Dusk#テスト実行 [How to test]
  */
 class PageManageTest extends DuskTestCase
 {
@@ -112,6 +114,94 @@ class PageManageTest extends DuskTestCase
 
             $browser->visit('/manage/page')
                     ->select('#form_select_page' . $upload2->id . ' .manage-page-selectpage', $upload->id);
+            $this->screenshot($browser);
+        });
+    }
+
+    /**
+     * テストする関数の制御
+     *
+     * @group manage
+     */
+    public function testInvoke2()
+    {
+        $this->login(1);
+
+        // グループ登録
+        $this->groupEdit('管理者グループ');
+        $this->groupUpdate();
+
+        // ページ管理
+        $this->upload();
+        $this->movePage();
+        $this->pageRole();
+        $this->pageRoleUpdate();
+    }
+
+    /**
+     * グループ登録画面
+     */
+    private function groupEdit($name)
+    {
+        $this->browse(function (Browser $browser) use ($name) {
+            $browser->visit('/manage/group/edit')
+                    ->type('name', $name)
+                    ->assertTitleContains('Connect-CMS');
+            $this->screenshot($browser);
+        });
+    }
+
+    /**
+     * グループ登録処理
+     */
+    private function groupUpdate()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->press('グループ変更')
+                    ->assertTitleContains('Connect-CMS');
+            $this->screenshot($browser);
+        });
+    }
+
+    /**
+     * ページ権限表示
+     */
+    private function pageRole()
+    {
+        $this->browse(function (Browser $browser) {
+            $upload  = Page::where('page_name', 'アップロード')->first();
+
+            $browser->visit('/manage/page/role/' . $upload->id)
+                ->clickLink('管理者グループ')
+                ->assertSourceHas('ページ権限設定');
+
+            // collapseが表示されるまで、ちょっと待つ
+            $browser->pause(500);
+
+            $this->screenshot($browser);
+
+            $browser->click("label[for='role_reporter1']");
+            $this->screenshot($browser);
+        });
+    }
+
+    /**
+     * ページ権限更新
+     */
+    private function pageRoleUpdate()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->click("label[for='role_reporter1']")
+                ->assertTitleContains('Connect-CMS');
+
+            // チェックボックスのクリックが反映されるまで、ちょっと待つ
+            $browser->pause(500);
+
+            $this->screenshot($browser);
+
+            // [TODO] チェックボックスONにしてるはずなんだけど、なんでかチェック外れて更新できない。残念ギブアップ。
+            $browser->press('権限更新')
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
