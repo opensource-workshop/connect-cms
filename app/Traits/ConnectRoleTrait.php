@@ -49,7 +49,7 @@ trait ConnectRoleTrait
     /**
      * 自分のページから親を遡ってページロールを取得
      */
-    public function getPageRolesByGoingBackParent($page, ?Collection $page_tree) : Collection
+    private function getPageRolesByGoingBackParent($page, ?Collection $page_tree) : Collection
     {
         // dd($page, $page_tree);
         if (!$page && is_null($page_tree)) {
