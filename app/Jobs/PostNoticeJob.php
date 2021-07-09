@@ -18,6 +18,14 @@ class PostNoticeJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * 最大試行回数
+     * メールは大量送信時に途中で失敗した場合、同じメールが初めの方の人に再度送られるとまずいため、自動リトライしないため１回にする。
+     *
+     * @var int
+     */
+    public $tries = 1;
+
     private $frame = null;
     private $bucket = null;
     private $post = null;
