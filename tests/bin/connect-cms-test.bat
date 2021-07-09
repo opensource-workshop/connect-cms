@@ -53,6 +53,10 @@ echo.
 echo --- 閲覧パスワード付ページテスト
 rem php artisan dusk tests\Browser\Core\PagePasswordTest.php
 
+echo.
+echo --- ログインテスト
+rem php artisan dusk tests\Browser\Core\LoginTest.php
+
 rem ---------------------------------------------
 rem - 管理プラグイン
 rem ---------------------------------------------
