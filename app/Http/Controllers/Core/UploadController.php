@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 
@@ -26,11 +28,10 @@ use Intervention\Image\Facades\Image;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 class UploadController extends ConnectController
 {
-
     use ConnectCommonTrait;
 
     // var $directory_base = "uploads/";
@@ -71,10 +72,15 @@ class UploadController extends ConnectController
         // ファイルにページ情報がある場合
         if ($uploads->page_id) {
             $page = Page::find($uploads->page_id);
-            $page_roles = $this->getPageRoles(array($page->id));
+            // $page_roles = $this->getPageRoles(array($page->id));
+            $page_roles = PageRole::getPageRoles(array($page->id));
+
+            // 自分のページから親を遡って取得
+            $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
 
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            if ($page->isRequestPassword($request, $this->page_tree)) {
+            // if ($page->isRequestPassword($request, $this->page_tree)) {
+            if ($page->isRequestPassword($request, $page_tree)) {
                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
 
@@ -183,14 +189,18 @@ class UploadController extends ConnectController
      */
     public function getCss(Request $request, $page_id = null)
     {
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+
         // config のgeneral カテゴリーを読み込んでおく。
         // id のファイルを読んでhttp request に返す。
-        $config_generals = array();
-        $config_generals_rs = Configs::where('category', 'general')->get();
-        foreach ($config_generals_rs as $config_general) {
-            $config_generals[$config_general['name']]['value'] = $config_general['value'];
-            $config_generals[$config_general['name']]['category'] = $config_general['category'];
-        }
+        // $config_generals = array();
+        // $config_generals_rs = Configs::where('category', 'general')->get();
+        // foreach ($config_generals_rs as $config_general) {
+        //     $config_generals[$config_general['name']]['value'] = $config_general['value'];
+        //     $config_generals[$config_general['name']]['category'] = $config_general['category'];
+        // }
+        $configs = Configs::getSharedConfigs();
+
         // 自分のページと親ページを遡って取得し、ページの背景色を探す。
         // 最下位に設定されているものが採用される。
 
@@ -198,7 +208,7 @@ class UploadController extends ConnectController
         $background_color = null;
 
         // ヘッダーの背景色
-        $base_header_color = null;
+        $header_color = null;
 
         if (!empty($page_id)) {
             $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
@@ -218,14 +228,16 @@ class UploadController extends ConnectController
 
         // 背景色
         if (empty($background_color)) {
-            $base_background_color = Configs::where('name', '=', 'base_background_color')->first();
-            $background_color = $base_background_color->value;
+            // $base_background_color = Configs::where('name', '=', 'base_background_color')->first();
+            // $background_color = $base_background_color->value;
+            $background_color = Configs::getConfigsValue($configs, 'base_background_color', null);
         }
 
         // ヘッダーの背景色
         if (empty($header_color)) {
-            $base_header_color = Configs::where('name', '=', 'base_header_color')->first();
-            $header_color = $base_header_color->value;
+            // $base_header_color = Configs::where('name', '=', 'base_header_color')->first();
+            // $header_color = $base_header_color->value;
+            $header_color = Configs::getConfigsValue($configs, 'base_header_color', null);
         }
 
         // セッションにヘッダーの背景色がある場合（テーマ・チェンジャーで選択時の動き）
@@ -246,7 +258,8 @@ class UploadController extends ConnectController
         }
 
         // 画像の保存機能の無効化(スマホ長押し禁止)
-        if ($config_generals['base_touch_callout']['value'] == '1') {
+        // if ($config_generals['base_touch_callout']['value'] == '1') {
+        if (Configs::getConfigsValue($configs, 'base_touch_callout') == '1') {
             echo <<<EOD
 img {
     -webkit-touch-callout: none;
@@ -266,16 +279,17 @@ EOD;
         exit;
     }
 
-    /**
-     * ファイルのMIME Type 取得
-     */
-    private function getMimetype($file_path)
-    {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimetype = finfo_file($finfo, $file_path);
-        finfo_close($finfo);
-        return $mimetype;
-    }
+    // delete: どこからも呼ばれてないprivateメソッドのため、コメントアウト
+    // /**
+    //  * ファイルのMIME Type 取得
+    //  */
+    // private function getMimetype($file_path)
+    // {
+    //     $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    //     $mimetype = finfo_file($finfo, $file_path);
+    //     finfo_close($finfo);
+    //     return $mimetype;
+    // }
 
     /**
      * 対象ディレクトリの取得

@@ -9,10 +9,13 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class ApiManage extends DuskTestCase
+class ApiManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -33,7 +36,7 @@ class ApiManage extends DuskTestCase
                     ->type('ip_address', '192.168.10.101')
                     ->click('#label_apis_Opac')
                     ->click('#label_apis_User')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -45,7 +48,7 @@ class ApiManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

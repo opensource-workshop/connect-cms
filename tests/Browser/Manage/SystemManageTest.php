@@ -9,10 +9,13 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class SystemManage extends DuskTestCase
+class SystemManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -31,7 +34,7 @@ class SystemManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/system')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -42,8 +45,10 @@ class SystemManage extends DuskTestCase
     private function updateDebugmodeOn()
     {
         $this->browse(function (Browser $browser) {
-            $browser->press('デバックモードをOn にする。')
-                    ->assertTitleContains('Laravel');
+            // bugfix: APP_DEBUG=trueにすると初期で「デバックモードをOff にする。」になっており、テストエラーになるので修正
+            // $browser->press('デバックモードをOn にする。')
+            $browser->click("button[type='submit']")
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -54,8 +59,9 @@ class SystemManage extends DuskTestCase
     private function updateDebugmodeOff()
     {
         $this->browse(function (Browser $browser) {
-            $browser->press('デバックモードをOff にする。')
-                    ->assertTitleContains('Laravel');
+            // $browser->press('デバックモードをOff にする。')
+            $browser->click("button[type='submit']")
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -68,7 +74,7 @@ class SystemManage extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/system/log')
                     ->type('log_filename', 'debug_log')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -80,7 +86,7 @@ class SystemManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

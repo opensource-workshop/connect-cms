@@ -3862,15 +3862,16 @@ class LearningtasksPlugin extends UserPluginBase
         return [false, '提出関係のファイルに対する権限なし'];
     }
 
-    /**
-     * 権限設定 変更画面
-     */
-    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
-    {
-        // 承認は使用しない
-        $use_approval = false;
-        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
-    }
+    // delete: 権限設定廃止のためコメントアウト
+    // /**
+    //  * 権限設定 変更画面
+    //  */
+    // public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    // {
+    //     // 承認は使用しない
+    //     $use_approval = false;
+    //     return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
+    // }
 
     /**
      * 機能選択編集画面

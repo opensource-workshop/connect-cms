@@ -11,10 +11,13 @@ use App\Models\Core\Configs;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class UserManage extends DuskTestCase
+class UserManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -35,7 +38,7 @@ class UserManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/user')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -62,7 +65,7 @@ class UserManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertPathIs('/manage/user/saveOriginalRoles');
+                    ->assertPathIs('/manage/user/originalRole');
             $this->screenshot($browser);
         });
     }
@@ -85,7 +88,7 @@ class UserManage extends DuskTestCase
                     ->type('password_confirmation', 'test-user')
                     ->click('#label_role_reporter')
                     ->click('#label_original_role' . $original_role_student->id)
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -97,7 +100,48 @@ class UserManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('ユーザ登録')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
+            $this->screenshot($browser);
+        });
+    }
+
+    /**
+     * インポート＆ページ送りテスト
+     *
+     * @group manage
+     */
+    public function testPaginate()
+    {
+        $this->login(1);
+        $this->import();
+        $this->index();
+        $this->indexPage2();
+    }
+
+    /**
+     * CSVインポート処理
+     */
+    private function import()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/user/import')
+                    ->attach('users_csv', __DIR__.'/users.csv')
+                    ->press('インポート')
+                    ->acceptDialog()
+                    ->assertSee('インポートしました');
+            $this->screenshot($browser);
+        });
+    }
+
+    /**
+     * index の2ページ目表示
+     */
+    private function indexPage2()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/user?page=2')
+                ->assertSee('ユーザ一覧')
+                ->assertDontSee('500');        // "500" 文字がない事
             $this->screenshot($browser);
         });
     }

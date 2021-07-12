@@ -23,16 +23,18 @@ use App\User;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 class ApiController extends ConnectController
 {
     /**
-     *  json encode
+     * json encode
+     *
+     * @todo app\Plugins\Api\ApiPluginBase.php で重複
      */
     public function encodeJson($value, $request = null)
     {
-        // UNOCIDE エスケープ指定
+        // UNICODE エスケープ指定
         if (!empty($request) && $request->filled('escape') && $request->escape == 'json_unescaped_unicode') {
             return json_encode($value, JSON_UNESCAPED_UNICODE);
         }

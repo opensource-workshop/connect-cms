@@ -9,10 +9,13 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class SiteManage extends DuskTestCase
+class SiteManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -55,10 +58,10 @@ class SiteManage extends DuskTestCase
      */
     private function edit()
     {
-        // 自動ユーザ登録の使用を「許可する」にする。
+        // パスワードリセットの使用を「許可しない」にする。
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site')
-                    ->click('#label_user_register_enable_on')
+                    ->click('label[for="base_login_password_reset_off"]')
                     ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
@@ -84,7 +87,7 @@ class SiteManage extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/meta')
                     ->type('description', 'Connect-CMSのテストサイトです。')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -96,7 +99,7 @@ class SiteManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -109,7 +112,7 @@ class SiteManage extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/layout')
                     ->click('#label_browser_width_footer')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -121,7 +124,7 @@ class SiteManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -138,7 +141,7 @@ class SiteManage extends DuskTestCase
                     ->type('add_category', 'ニュース')
                     ->type('add_color', '#ffffff')
                     ->type('add_background_color', '#0000c0')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -150,7 +153,7 @@ class SiteManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -165,7 +168,7 @@ class SiteManage extends DuskTestCase
                     ->click('#label_language_multi_on_on')
                     ->type('add_language', $add_language)
                     ->type('add_url', $add_url)
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -177,7 +180,7 @@ class SiteManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -191,7 +194,7 @@ class SiteManage extends DuskTestCase
             $browser->visit('/manage/site/pageError')
                     ->type('page_permanent_link_403', "/403")
                     ->type('page_permanent_link_404', "/404")
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -203,7 +206,7 @@ class SiteManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -216,7 +219,7 @@ class SiteManage extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/analytics')
                     ->type('tracking_code', "<!-- Global site tag (gtag.js) - Google Analytics -->")
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -228,7 +231,7 @@ class SiteManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -241,7 +244,7 @@ class SiteManage extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/favicon')
                     ->attach('favicon', __DIR__.'/favicon.ico')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -252,8 +255,9 @@ class SiteManage extends DuskTestCase
     private function saveFavicon()
     {
         $this->browse(function (Browser $browser) {
+            // $browser->click("button[type='submit']")
             $browser->press('ファビコン追加')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

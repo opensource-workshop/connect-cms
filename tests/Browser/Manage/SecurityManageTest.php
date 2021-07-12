@@ -9,10 +9,13 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class SecurityManage extends DuskTestCase
+class SecurityManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -31,7 +34,7 @@ class SecurityManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/security')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -47,7 +50,7 @@ class SecurityManage extends DuskTestCase
                     ->type('add_ip_address', '*')
                     ->select('add_role', 'role_reporter')
                     ->click('#label_add_reject_on')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -59,7 +62,7 @@ class SecurityManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -73,7 +76,7 @@ class SecurityManage extends DuskTestCase
             $browser->visit('/manage/security/purifier')
                     ->click('#label_role_approval_0')
                     ->check('confirm_purifier')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -85,7 +88,7 @@ class SecurityManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('登録')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

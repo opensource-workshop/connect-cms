@@ -9,10 +9,13 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class AuthManage extends DuskTestCase
+class AuthManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -31,7 +34,7 @@ class AuthManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/auth')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -44,7 +47,7 @@ class AuthManage extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->click('#label_use_auth_method_1')
                     ->check('confirm_auth')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -56,7 +59,7 @@ class AuthManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -75,7 +78,7 @@ class AuthManage extends DuskTestCase
                     ->type('auth_netcomons2_salt', 'salt_1234')
                     ->type('auth_netcomons2_add_role', 'original_role:student')
                     ->type('auth_netcomons2_admin_password', 'admin_password_1234')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -87,7 +90,7 @@ class AuthManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

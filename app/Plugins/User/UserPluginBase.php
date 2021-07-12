@@ -49,7 +49,7 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザープラグイン
- * @package Contoroller
+ * @package Controller
  */
 class UserPluginBase extends PluginBase
 {
@@ -140,7 +140,8 @@ class UserPluginBase extends PluginBase
                                 ->first();
 
         // Configs の保持
-        $this->configs = Configs::get();
+        // $this->configs = Configs::get();
+        $this->configs = Configs::getSharedConfigs();
 
         $this->setFrameConfigs();
     }
@@ -1099,24 +1100,26 @@ class UserPluginBase extends PluginBase
         }
     }
 
-    /**
-     *  言語の取得
-     */
-    protected function getLanguages()
-    {
-        $configs = $this->configs;
-        if (empty($configs)) {
-            return null;
-        }
+    // delete: どこからも呼ばれていなかったため、コメントアウト
+    // /**
+    //  * 言語の取得
+    //  */
+    // protected function getLanguages()
+    // {
+    //     return Configs::getLanguages();
+    //     // $configs = $this->configs;
+    //     // if (empty($configs)) {
+    //     //     return null;
+    //     // }
 
-        $languages = array();
-        foreach ($configs as $config) {
-            if ($config->category == 'language') {
-                $languages[$config->additional1] = $config;
-            }
-        }
-        return $languages;
-    }
+    //     // $languages = array();
+    //     // foreach ($configs as $config) {
+    //     //     if ($config->category == 'language') {
+    //     //         $languages[$config->additional1] = $config;
+    //     //     }
+    //     // }
+    //     // return $languages;
+    // }
 
     /**
      *  ログ出力
@@ -1221,8 +1224,9 @@ class UserPluginBase extends PluginBase
 
         // コンテンツ権限がついていること。
         if (!empty($user->user_roles) && array_key_exists('base', $user->user_roles)) {
+            // delete: 使ってない変数
             // セキュリティ管理のHTML制限を取得
-            $config_html_purifiers = $this->configs->where('category', 'html_purifier');
+            // $config_html_purifiers = $this->configs->where('category', 'html_purifier');
 
             // 設定されている権限
             $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');

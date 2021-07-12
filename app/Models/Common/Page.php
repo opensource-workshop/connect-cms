@@ -2,13 +2,14 @@
 
 namespace App\Models\Common;
 
-use RecursiveIteratorIterator;
-use RecursiveArrayIterator;
+// use RecursiveIteratorIterator;
+// use RecursiveArrayIterator;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use DB;
+// use DB;
 
 use Kalnoy\Nestedset\NodeTrait;
 
@@ -20,14 +21,23 @@ class Page extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'membership_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class', 'passowrd'];
+    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'membership_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class', 'password'];
 
     use NodeTrait;
     use ConnectCommonTrait;
 
     /**
-     *  言語設定があれば、特定の言語ページのみに絞る
-     *
+     * hasMany 設定
+     * - hasManyは、$user->page_roles で使うので、変数名と同義になるので、このメソッド名はphpcs除外
+     * - hasManyは、値があるなしに関わらず collection 型を返す。値がなければ空の collection 型を返す。
+     */
+    public function page_roles()    // phpcs:ignore
+    {
+        return $this->hasMany(PageRole::class);
+    }
+
+    /**
+     * 言語設定があれば、特定の言語ページのみに絞る
      */
     public static function getPageIds($current_page_obj = null, $menu = null, $setting_mode = false)
     {
@@ -40,8 +50,7 @@ class Page extends Model
     }
 
     /**
-     *  言語設定があれば、特定の言語ページのみに絞る
-     *
+     * 言語設定があれば、特定の言語ページのみに絞る
      */
     public static function getPages($current_page_obj = null, $menu = null, $setting_mode = false)
     {
@@ -131,7 +140,7 @@ class Page extends Model
     }
 
     /**
-     *  ページデータ取得＆深さの追加関数
+     * ページデータ取得＆深さの追加関数
      *
      * @param int $frame_id
      * @return view
@@ -196,8 +205,7 @@ class Page extends Model
     }
 
     /**
-     *  クラス名取得
-     *
+     * クラス名取得
      */
     public function getClass()
     {
@@ -205,8 +213,7 @@ class Page extends Model
     }
 
     /**
-     *  リンク用URL取得
-     *
+     * リンク用URL取得
      */
     public function getLinkUrl($trim_str = null)
     {
@@ -218,8 +225,7 @@ class Page extends Model
     }
 
     /**
-     *  CSS セレクタ用クラス用取得
-     *
+     * CSS セレクタ用クラス用取得
      */
     public function getPermanentlinkClassname()
     {
@@ -230,8 +236,7 @@ class Page extends Model
     }
 
     /**
-     *  表示可否の判断
-     *
+     * 表示可否の判断
      */
     public function isView($user = null, $check_no_display_flag = false, $view_default = null, $check_page_roles = null)
     {
@@ -302,8 +307,7 @@ class Page extends Model
     }
 
     /**
-     *  ページのURLを返す
-     *
+     * ページのURLを返す
      */
     public function getUrl()
     {
@@ -314,8 +318,7 @@ class Page extends Model
     }
 
     /**
-     *  ページのリンク用target タグを返す
-     *
+     * ページのリンク用target タグを返す
      */
     public function getUrlTargetTag()
     {
@@ -328,8 +331,7 @@ class Page extends Model
     }
 
     /**
-     *  レイアウト判定
-     *
+     * レイアウト判定
      */
     public function isArea($area)
     {
@@ -381,8 +383,7 @@ class Page extends Model
     }
 
     /**
-     *  レイアウト取得
-     *
+     * レイアウト取得
      */
     public function getSimpleLayout()
     {
@@ -390,8 +391,7 @@ class Page extends Model
     }
 
     /**
-     *  レイアウト取得
-     *
+     * レイアウト取得
      */
     public function getLayoutTitle()
     {
@@ -446,23 +446,12 @@ class Page extends Model
     }
 
     /**
-     *  パスワードを要求するかの判断
+     * パスワードを要求するかの判断
      */
     public function isRequestPassword($request, $page_tree)
     {
         // 自分のページから親を遡って取得
-        if (empty($page_tree)) {
-            $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
-        }
-        //Log::debug(json_encode( $page_tree, JSON_UNESCAPED_UNICODE));
-
-        // トップページを取得
-        $top_page = Page::orderBy('_lft', 'asc')->first();
-
-        // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
-        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
-            $page_tree->push($top_page);
-        }
+        $page_tree = $this->getPageTreeByGoingBackParent($page_tree);
 
         // 自分及び先祖ページに閲覧パスワードが設定されていなければ戻る
         $check_page = null;
@@ -487,7 +476,34 @@ class Page extends Model
     }
 
     /**
-     *  パスワードチェックの判定
+     * 自分のページから親を遡ってページツリーを取得
+     */
+    public function getPageTreeByGoingBackParent(?Collection $page_tree): Collection
+    {
+        // 自分のページから親を遡って取得
+        if (empty($page_tree)) {
+            $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
+        }
+        // \Log::debug(var_export($page_tree, true));
+
+        if ($page_tree->isEmpty()) {
+            // $page_tree=null & $this->id=null の場合、$page_tree が空コレクションになる事に対応
+            return $page_tree;
+        }
+
+        // トップページを取得
+        $top_page = Page::orderBy('_lft', 'asc')->first();
+
+        // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
+        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
+            $page_tree->push($top_page);
+        }
+
+        return $page_tree;
+    }
+
+    /**
+     * パスワードチェックの判定
      */
     public function checkPassword($password, $page_tree)
     {
