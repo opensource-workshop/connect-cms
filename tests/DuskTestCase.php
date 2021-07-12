@@ -11,9 +11,18 @@ use Laravel\Dusk\Browser;
 
 use App\User;
 
+use TruncateAllTables;
+
 abstract class DuskTestCase extends BaseTestCase
 {
     use CreatesApplication;
+
+    /**
+     * テスト実行のタイミングで一度だけフラグ
+     *
+     * @var boolean
+     */
+    private static $migrated = false;
 
     /**
      * Prepare for Dusk test execution.
@@ -50,6 +59,34 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     * テスト前共通処理
+     * テストケースクラスのテストメソッドごとに (そして最初にインスタンスを作成したときに) 一度実行
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // テスト実行のタイミングで一度だけ実行する
+        if (! self::$migrated) {
+            // config キャッシュクリア
+            $this->artisan('config:clear');
+
+            // マイグレーション実行
+            $this->artisan('migrate');
+
+            // Seederを実行
+            // ・Seederを１つだけ指定して実行（全テーブルを空にするSeeder）
+            // ・通常のDatabaseSeederを実行
+            $this->seed(TruncateAllTables::class);
+            $this->seed();
+
+            self::$migrated = true;
+        }
+    }
+
+    /**
      * 指定したユーザでログインする。
      */
     protected function login($user_id)
@@ -57,6 +94,17 @@ abstract class DuskTestCase extends BaseTestCase
         $this->browse(function (Browser $browser) use ($user_id) {
             $browser->loginAs(User::find($user_id));
             $this->assertTrue(true);
+        });
+    }
+
+    /**
+     * ログアウトする。
+     */
+    public function logout()
+    {
+        // ログアウト
+        $this->browse(function (Browser $browser) {
+            $browser->logout();
         });
     }
 
@@ -94,13 +142,60 @@ abstract class DuskTestCase extends BaseTestCase
         // スクリーンショットの連続保存
         $index = 0;
         for ($i = 0; ($i + $height) <= ($allHeight + $height); $i += $height) {
+            // 0回以外は、連続スクリーンショットのため、少し待つ
+            if ($i > 0) {
+                // 0.8秒スリープ
+                usleep(800000);
+            }
+
             // 画面スクロール
             $browser->script("window.scrollTo(0, {$i});");
             // スクリーンショット撮影
             $browser->screenshot($class_name[count($class_name) - 2] . "/" . $class_name[count($class_name) - 1] . "/" . date('Ymd_His_') . $title . '_' . str_pad(++ $index, 3, 0, STR_PAD_LEFT));
             // 0.8秒スリープ
-            usleep(800000);
+            // usleep(800000);
         }
         return $browser;
+    }
+
+    /**
+     * phpdebugbarを閉じる
+     * DuskTestCase::setup() でテスト前に全実行したところ、全テスト実施時になぜか既にphpdebugbarを閉じてるケースがあり、テストエラーになったため、必要なテストで個別に呼び出す。
+     */
+    public function closePhpdebugar()
+    {
+        // APP_DEBUG=trueの場合、画面最下部のボタンが被って押下できずテストエラーになるため、phpdebugbarを閉じる
+        if (env('APP_DEBUG')) {
+            // phpdebugbarを閉じる
+            $this->browse(function (Browser $browser) {
+                $browser->visit('/')->click('.phpdebugbar-close-btn');
+            });
+        }
+    }
+
+    /**
+     * プラグイン追加
+     */
+    public function addPluginModal($add_plugin)
+    {
+        $this->browse(function (Browser $browser) use ($add_plugin) {
+            // 管理機能からプラグイン追加で固定記事を追加する。
+            $browser->visit('/')
+                    ->clickLink('管理機能')
+                    ->assertTitleContains('Connect-CMS');
+            $this->screenshot($browser);
+
+            // ヘッダーエリアにプラグイン追加
+            $browser->clickLink('プラグイン追加')
+                    ->assertTitleContains('Connect-CMS');
+
+            // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
+            $browser->pause(1000);
+            $this->screenshot($browser);
+
+            $browser->select('add_plugin', $add_plugin)
+                    ->assertTitleContains('Connect-CMS');
+            $this->screenshot($browser);
+        });
     }
 }

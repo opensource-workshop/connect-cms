@@ -63,7 +63,7 @@ class Receives extends ApiPluginBase
         $values = array();
 
         // Request からcolumns のキーで値を取得
-        foreach($columns as $column) {
+        foreach ($columns as $column) {
             $values[$column] = $request->query($column);
         }
 
@@ -73,7 +73,7 @@ class Receives extends ApiPluginBase
         ]);
 
         // receives_datas に値の保持
-        foreach($values as $column => $value) {
+        foreach ($values as $column => $value) {
             $receive_data = ReceiveData::create([
                 'record_id'  => $receive_record->id,
                 'column_key' => $column,

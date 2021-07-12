@@ -1,10 +1,10 @@
 {{--
- * グループ権限設定画面のテンプレート
+ * ページのグループ権限設定画面のテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
- --}}
+--}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -47,17 +47,6 @@
                 <div id="collapse{{$group->id}}" class="collapse" role="tabpanel" aria-labelledby="heading{{$group->id}}" data-parent="#accordion">
                 @endif
                     <div class="card-body">
-
-                        <div class="card border-warning mb-3">
-                            <div class="card-header bg-warning">実装状況</div>
-                            <div class="card-body">
-                                ※ 2020-07-26 現在、ページ権限は以下の対応となっています。
-                                <ul>
-                                    <li> メンバーシップページに参加するための判定で使用可能（どの権限でも同じ）。
-                                    <li> 各権限を用いての基本権限の上書きはまだ（今後の実装予定）
-                                </ul>
-                            </div>
-                        </div>
 
                         <form class="form-horizontal" method="POST" action="{{url('/manage/page/saveRole/')}}/{{$page->id}}">
                             {{csrf_field()}}
@@ -112,7 +101,15 @@
                                 <label class="custom-control-label" for="role_guest{{$group->id}}">ゲスト</label>
                             </div>
 
-                            <div class="form-group text-center row">
+                            <small class="text-muted">
+                                ※ 権限設定してページを表示すると、ユーザ権限はこの権限で上書きされます。<br />
+                                　例）「コンテンツ管理者」ユーザがグループ1, 2に所属していて、ページのグループ権限でグループ1（編集者）, 所属グループ2（モデレータ）の場合、そのページでの権限は「編集者」「モデレータ」に上書きされます。<br />
+                                ※ 子ページがある場合、この権限を引継ぎます。<br />
+                                ※ メンバーシップページを参照するには、何らかの権限を設定してください。<br />
+                                ※「コンテンツ管理者」は、「コンテンツ管理者」権限と同時に「プラグイン管理者」「モデレータ」「承認者」「編集者」権限も併せて持ちます。
+                            </small>
+
+                            <div class="form-group text-center row mt-2">
                                 <div class="col-12">
                                     <button type="button" class="btn btn-secondary mr-2" onclick="$('#collapse{{$group->id}}').collapse('hide');">
                                         <i class="fas fa-times"></i> キャンセル

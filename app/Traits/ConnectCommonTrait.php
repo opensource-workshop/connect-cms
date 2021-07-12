@@ -2,9 +2,10 @@
 
 namespace App\Traits;
 
-// use Illuminate\Http\Request;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -19,7 +20,6 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
-use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
 
@@ -33,190 +33,18 @@ trait ConnectCommonTrait
     //var $directory_file_limit = 1000;
 
     /**
-     * Buckets の投稿権限データをrole の配列で返却
-     *
-     * @return boolean|array
-     */
-    private function getPostBucketsRoles($buckets)
-    {
-        // Buckets オブジェクトがない場合はfalse を返す。
-        if (empty($buckets)) {
-            return false;
-        }
-
-        // Buckets オブジェクトでない場合もfalse
-        if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
-            return false;
-        }
-
-        // return $buckets->getBucketsRoles();
-        return $buckets->getPostArrayBucketsRoles();
-
-//        // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。
-//        if (empty($buckets)) {
-//            return false;
-//        }
-//        // Buckets オブジェクトでない場合もfalse
-//        if (!is_object($buckets) || get_class($buckets) != "App\Models\Common\Buckets") {
-//            return false;
-//        }
-//        // role を配列にして返却
-//        $roles = null;
-//        if ($buckets->post_role) {
-//            $roles = explode(',', $buckets->post_role);
-//        }
-//        if (empty($roles)) {
-//            return false;
-//        }
-//        return $roles;
-    }
-
-    /**
-     * ユーザーが指定された権限を保持しているかチェックする。
-     *
-     * @return boolean
-     */
-    public function check_authority($user, $authority, $args = null)
-    {
-        // preview モードのチェック付きの場合はpreview モードなら権限ナシで返す。
-        $request = app(\Illuminate\Http\Request::class);
-
-        // 引数をバラシてPOST を取得
-//        list($post, $plugin_name, $mode_switch, $buckets_obj) = $this->check_args_obj($args);
-        list($post, $plugin_name, $buckets_obj) = $this->check_args_obj($args);
-//print_r( $buckets_obj );
-
-        // モードスイッチがプレビューなら表示しないになっていれば、権限ナシで返す。
-//        if ($mode_switch == 'preview_off' && $request->mode == 'preview') {
-
-        // モードスイッチがプレビューなら、無条件に権限ナシで返す。
-        if ($request->mode == 'preview') {
-            return false;
-        }
-
-        // プレビュー判断はココまで
-        if ($authority == 'preview') {
-            return true;
-        }
-
-        // ログインしていない場合は権限なし
-        if (empty($user)) {
-            return false;
-        }
-
-        // チェックする権限を決定
-        // Backets にrole が指定されていれば、それを使用。
-        //   - Backets の role は post_flag(投稿できる), approval_flag(承認が必要)の２つのフラグあり。
-        //     ここではpost_flag(投稿できる)のみ取得してチェックする。
-        //     記事の承認は、ユーザ権限のrole_approvalでチェックするので、approval_flag(承認が必要)ではチェックしない。
-        // Backets にrole が指定されていなければ、標準のrole を使用
-        $check_roles = config('cc_role.CC_AUTHORITY')[$authority];
-        if (!empty($this->getPostBucketsRoles($buckets_obj))) {
-            $check_roles = array();
-            $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
-//Log::debug($buckets_roles);
-            // Buckets に設定されたrole から、関連role を取得してチェック。
-            foreach ($post_buckets_roles as $post_buckets_role) {
-                $check_roles = array_merge($check_roles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
-            }
-            // 配列は添字型になるので、array_merge で結合してから重複を取り除く
-            $check_roles = array_unique($check_roles);
-        }
-
-        // 指定された権限を含むロールをループする。
-//        foreach (config('cc_role.CC_AUTHORITY')[$authority] as $role) {
-        foreach ($check_roles as $check_role) {
-            // ユーザの保持しているロールをループ
-            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
-            //foreach ($user['user_roles'] as $target) {
-            foreach ((array)$user->user_roles as $target) {
-                // ターゲット処理をループ
-                foreach ($target as $user_role => $user_role_value) {
-                    // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
-                    // bugfix:  モデレータに「承認が必要」としても、モデレータは自分で承認できてしまう不具合修正
-                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtureとならず、必要なロールを保持している（$user_role == 'role_article'）でtureとなっていた。
-                    //          承認権限チェックとそれ以外でif文見直す。
-                    // if ($authority == 'posts.approval' && $user_role == 'role_approval') {
-                    //     return true;
-                    // }
-                    if ($authority == 'posts.approval') {
-                        if ($user_role == 'role_approval') {
-                            return true;
-                        }
-                    } else {
-                        // 必要なロールを保持している
-                        if ($check_role == $user_role && $user_role_value) {
-                            // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                            if (($user_role == 'role_article_admin') ||
-                                ($user_role == 'role_article') ||
-                                ($user_role == 'role_approval')) {
-                                return true;
-                            }
-
-                            // 自分のオブジェクトチェックが必要ならチェックする
-                            if (empty($post)) {
-                                return true;
-                            } else {
-                                if ((($authority == 'buckets.delete') ||
-                                    ($authority == 'posts.create') ||
-                                    ($authority == 'posts.update') ||
-                                    ($authority == 'posts.delete')) &&
-                                    ($user->id == $post->created_id)) {
-                                    return true;
-                                } else {
-                                    // 複数ロールをチェックするため、ここではreturn しない。
-                                    // return false;
-                                }
-                            }
-                            // 複数ロールをチェックするため、ここではreturn しない。
-                            // return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * ユーザーが指定された役割を保持しているかチェックする。
-     *
-     * @return boolean
-     */
-    public function check_role($user, $role)
-    {
-        // ログインしていない場合は権限なし
-        if (empty($user)) {
-            return false;
-        }
-
-        // 指定された権限を含むロールをループする。
-        // 記事追加はコンテンツ管理者でもOKのような処理のため。
-        foreach (config('cc_role.CC_ROLE_HIERARCHY')[$role] as $checck_role) {
-            // ユーザの保持しているロールをループ
-            // bugfix:「ログイン状態を維持する」ONで1日たってからブラウザアクセスすると$user->user_roles = nullにより例外「Invalid argument supplied for foreach()」が発生するバグに対応するため、arrayにキャストする。
-            foreach ((array)$user->user_roles as $target) {
-                // ターゲット処理をループ
-                foreach ($target as $user_role => $user_role_value) {
-                    // 必要なロールを保持している場合は、権限ありとして true を返す。
-                    if ($checck_role == $user_role && $user_role_value) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 権限チェック
+     * 権限チェック ＆ エラー時
      * roll_or_auth : 権限 or 役割
+     *
+     * @return view|null 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
+     *
+     * @see \App\Providers\AppServiceProvider AppServiceProvider::boot()
      */
-    public function can($roll_or_auth, $post = null, $plugin_name = null, $buckets = null)
+    public function can($roll_or_auth, $post = null, $plugin_name = null, $buckets = null, $frame = null)
     {
         $args = null;
-        if ($post != null || $plugin_name != null || $buckets != null) {
-            $args = [[$post, $plugin_name, $buckets]];
+        if ($post != null || $plugin_name != null || $buckets != null || $frame != null) {
+            $args = [[$post, $plugin_name, $buckets, $frame]];
         }
 
         if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
@@ -227,12 +55,16 @@ trait ConnectCommonTrait
     /**
      * 権限チェック
      * roll_or_auth : 権限 or 役割
+     *
+     * @return bool
+     *
+     * @see \App\Providers\AppServiceProvider AppServiceProvider::boot()
      */
-    public function isCan($roll_or_auth, $post = null, $plugin_name = null)
+    public function isCan($roll_or_auth, $post = null, $plugin_name = null, $buckets = null, $frame = null): bool
     {
         $args = null;
-        if ($post != null || $plugin_name != null) {
-            $args = [[$post, $plugin_name]];
+        if ($post != null || $plugin_name != null || $buckets != null || $frame != null) {
+            $args = [[$post, $plugin_name, $buckets, $frame]];
         }
 
         if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
@@ -243,7 +75,6 @@ trait ConnectCommonTrait
 
     /**
      * エラー画面の表示
-     *
      */
     public function view_error($error_code, $message = null, $debug_message = null)
     {
@@ -253,7 +84,6 @@ trait ConnectCommonTrait
 
     /**
      * プラグイン一覧の取得
-     *
      */
     public function getPlugins($arg_display_flag = true, $force_get = false)
     {
@@ -273,8 +103,9 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  曜日取得
+     * 曜日取得
      *
+     * @todo app\Plugins\User\Openingcalendars\OpeningcalendarsPlugin.php のみで使われている。今後移動予定
      */
     public function getWeekJp($date)
     {
@@ -304,7 +135,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  IPアドレスが範囲内か
+     * IPアドレスが範囲内か
      */
     private function isRangeIp($remote_ip, $check_ips)
     {
@@ -327,66 +158,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  ログイン可否チェック
-     *
-     */
-    public function judgmentLogin($user)
-    {
-        // IP アドレス取得
-        $remote_ip = \Request::ip();
-        //Log::debug("--- IP：" . $remote_ip);
-
-        // ログイン可否の基本設定を取得
-        $configs = Configs::where('name', 'login_reject')->first();
-
-        // ログイン可否の基本
-        $login_reject = 0;
-        if (!empty($configs)) {
-            $login_reject = $configs->value;
-        }
-        //Log::debug("基本：" . $login_reject);
-
-        // ユーザーオブジェクトにロールデータを付与
-        $users_roles = new UsersRoles();
-        $user->user_roles = $users_roles->getUsersRoles($user->id);
-        // Log::debug($user);
-        // Log::debug($user->user_roles);
-
-        // ログイン可否の個別設定を取得
-        $configs_login_permits = ConfigsLoginPermits::orderBy('apply_sequence', 'asc')->get();
-
-        // ログイン可否の個別設定がない場合はここで判断
-        if (empty($configs_login_permits)) {
-            return ($login_reject == 0) ? true : false;
-        }
-
-        // ログイン可否の個別設定をループ
-        foreach ($configs_login_permits as $configs_login_permit) {
-            // IPアドレスが範囲内か
-            if (!$this->isRangeIp($remote_ip, $configs_login_permit->ip_address)) {
-                // IPアドレスが範囲外なら、チェック的にはOKなので、次のチェックへ。
-                //Log::debug("IP範囲外：" . $remote_ip . "/" . $configs_login_permit->ip_address);
-                continue;
-            }
-
-            // 権限が範囲内か
-            if (empty($configs_login_permit->role)) {
-                // ロールが入っていない（全対象）の場合は、対象レコードとなるので、設定されている可否を使用
-                //Log::debug("role空で対象：" . $configs_login_permit->reject);
-                $login_reject = $configs_login_permit->reject;
-            } elseif ($this->check_role($user, $configs_login_permit->role)) {
-                // 許可/拒否設定が自分のロールに合致すれば、対象の許可/拒否設定を反映
-                //Log::debug("role合致で対象：" . $configs_login_permit->reject);
-                $login_reject = $configs_login_permit->reject;
-            }
-        }
-        // 設定可否の適用
-        //Log::debug("最終：" . $login_reject);
-        return ($login_reject == 0) ? true : false;
-    }
-
-    /**
-     *  特別なパスか判定
+     * 特別なパスか判定
      */
     public function isSpecialPath($path)
     {
@@ -537,7 +309,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  指定したパスの呼び出し
+     * 指定したパスの呼び出し
      */
     public function callSpecialPath($path, $request)
     {
@@ -581,132 +353,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  文字列変換
-     */
-    public function replaceConnectTagAll($contents, $page, $configs)
-    {
-        // Connect-CMSタグを値に変換する。
-        if (empty($contents)) {
-            return $contents;
-        }
-
-        $patterns = array();
-        $replacements = array();
-
-        // 固定リンク(多言語切り替えで使用)
-        $config_language_multi_on = null;
-        foreach ($configs as $config) {
-            if ($config->name == 'language_multi_on') {
-                $config_language_multi_on = $config->value;
-            }
-        }
-
-        // 言語設定の取得
-        $languages = array();
-        foreach ($configs as $config) {
-            if ($config->category == 'language') {
-                $languages[$config->additional1] = $config;
-            }
-        }
-        $page_language = $this->getPageLanguage($page, $languages);
-
-        // 確実に言語設定部分を取り除くために、permanent_link を / で分解して、1番目(/ の次)の内容を取得する。
-        $permanent_link_array = explode('/', $page->permanent_link);
-
-        // 多言語on＆現在のページがデフォルト以外の言語の場合、言語指定を取り除く
-        if ($config_language_multi_on &&
-            $page_language &&
-            $permanent_link_array &&
-            array_key_exists(1, $permanent_link_array) &&
-            $permanent_link_array[1] == $page_language) {
-            $patterns[0] = '/{{cc:permanent_link}}/';
-            $replacements[0] = trim(mb_substr($page->permanent_link, mb_strlen('/'.$page_language)), '/');
-        } else {
-            $patterns[0] = '/{{cc:permanent_link}}/';
-            $replacements[0] = trim($page->permanent_link, '/');
-        }
-
-        // 変換と値の返却
-        $contents->content_text = preg_replace($patterns, $replacements, $contents->content_text);
-        return $contents;
-    }
-
-    /**
-     *  固定記事からスマホメニューを出すためのタグ生成
-     */
-    public function getSmpMenu($level1_pages, $page_id = null)
-    {
-        $sp_menu  = '' . "\n";
-        $sp_menu .= '<nav class="sp_menu">' . "\n";
-        $sp_menu .= '<ul>' . "\n";
-        foreach ($level1_pages as $level1_page) {
-            // ページの表示条件の反映（IP制限など）
-            if (!$level1_page['parent']->isView(Auth::user())) {
-                continue;
-            }
-
-            // コンストラクタで全体作業用として取得したページを使用する想定
-            // そのため、ページの基本の表示設定を反映する。
-            if ($level1_page['parent']->base_display_flag == 0) {
-                continue;
-            }
-
-            // ルーツのチェック
-            if ($level1_page['parent']->isAncestorOf($this->page)) {
-                $active_class = ' class="active"';
-            } else {
-                $active_class = '';
-            }
-            //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
-            $sp_menu .= '<li class="' . $level1_page['parent']->getClass() . '">' . "\n";
-
-            // クラス名取得
-            $classes = explode(' ', $level1_page['parent']->getClass());
-
-            // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
-            if (is_array($classes) && in_array('smp_a_link', $classes)) {
-                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
-                $sp_menu .= $level1_page['parent']->page_name;
-                $sp_menu .= '</a>' . "\n";
-            } else {
-                $sp_menu .= '<p' . $active_class . '>';
-                $sp_menu .= $level1_page['parent']->page_name;
-                $sp_menu .= '</p>' . "\n";
-            }
-
-            if (array_key_exists('child', $level1_page)) {
-                $sp_menu .= '<ul' . $active_class . '>' . "\n";
-                foreach ($level1_page['child'] as $child) {
-                    // ページの表示条件の反映（IP制限など）
-                    if (!$child->isView(Auth::user())) {
-                        continue;
-                    }
-
-                    if ($child->base_display_flag == 0) {
-                        continue;
-                    } else {
-                        $child_depth = intval($child->depth) - 1;
-                        $child_margin_left = ($child_depth > 0) ? $child_depth * 20 : 0;
-                        $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . ' style="margin-left:' . $child_margin_left . 'px"' . '>';
-                        if ($page_id == $child->id) {
-                            $sp_menu .= '<u>' . $child->page_name . '</u>';
-                        } else {
-                            $sp_menu .= $child->page_name;
-                        }
-                        $sp_menu .= '</a></li>' . "\n";
-                    }
-                }
-                $sp_menu .= '</ul>' . "\n";
-            }
-            $sp_menu .= '</li>' . "\n";
-        }
-        $sp_menu .= '</ul>' . "\n";
-        $sp_menu .= '</nav>' . "\n";
-        return $sp_menu;
-    }
-
-    /**
-     *  CSRF用トークンの取得
+     * CSRF用トークンの取得
      */
     public function getToken($arg)
     {
@@ -718,7 +365,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  ページの言語の取得
+     * ページの言語の取得
      */
     public function getPageLanguage($page, $languages)
     {
@@ -739,44 +386,8 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  ページの言語の取得
-     */
-    public function getPageLanguage4url($languages)
-    {
-        // ページの言語
-        $page_language = null;
-
-        $current_url = url()->current();
-        $base_url = url('/');
-        $current_permanent_link = str_replace($base_url, '', $current_url);
-
-        // 今、表示しているページの言語を判定
-        $page_paths = explode('/', $current_permanent_link);
-        if ($page_paths && is_array($page_paths) && array_key_exists(1, $page_paths)) {
-            foreach ($languages as $language) {
-                if (trim($language->additional1, '/') == $page_paths[1]) {
-                    $page_language = $page_paths[1];
-                    break;
-                }
-            }
-        }
-        return $page_language;
-    }
-
-    /**
-     *  現在の言語設定のトップページ
-     */
-    public function getTopPage($page, $languages = null)
-    {
-        $page_language = $this->getPageLanguage($page, $languages);
-
-        // 言語トップのページ確認
-        return Page::where('permanent_link', '/'.$page_language)->first();
-    }
-
-    /**
-     *  対象ディレクトリの取得
-     *  uploads/1 のような形で返す。
+     * 対象ディレクトリの取得
+     * uploads/1 のような形で返す。
      */
     public function getDirectory($file_id)
     {
@@ -798,8 +409,8 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  利用可能かチェック
-     *  戻り値：true なら
+     * 利用可能かチェック
+     * 戻り値：true なら
      */
     public function checkUserStatus($request, &$error_msg = "")
     {
@@ -873,7 +484,7 @@ trait ConnectCommonTrait
                     if (empty($user)) {
                         // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
                         $user = new User;
-                        $user->name = empty( $check_result['handle'] ) ? $request['userid'] : $check_result['handle'];
+                        $user->name = empty($check_result['handle']) ? $request['userid'] : $check_result['handle'];
                         $user->userid = $request['userid'];
                         $user->password = Hash::make($request['password']);
                         $user->created_event = \AuthMethodType::netcommons2;
@@ -881,29 +492,27 @@ trait ConnectCommonTrait
 
                         // 追加権限設定があれば作成
                         if (!empty($auth_method['additional4'])) {
-                        
+
                             // NC2側権限値取得
                             $nc2_auth = "";
-                            if( array_key_exists( 'auth', $check_result ) == true )
-                            {
+                            if (array_key_exists('auth', $check_result) == true) {
                                 $nc2_auth = $check_result['auth'];
                             }
-                            
+
                             // |で区切る（|は複数権限の設定がある場合に区切り文字として利用される）
                             $set_rols = "";
                             $rols_options_list = explode('|', $auth_method['additional4']);
-                            foreach( $rols_options_list as $value )
-                            {
+                            foreach ($rols_options_list as $value) {
                                 // :で区切る（:は、NC2側権限とConnectCMS側権限の区切り文字として利用される）
                                 $original_rols_options = explode(':', $value);
-                                
+
                                 // 一致した権限を設定する
-                                if( $original_rols_options[0] == $nc2_auth ) {
+                                if ($original_rols_options[0] == $nc2_auth) {
                                     $set_rols = $original_rols_options[1];
                                     break;
                                 }
                             }
-                            
+
                             UsersRoles::create([
                                 'users_id'   => $user->id,
                                 'target'     => 'original_role',
@@ -911,10 +520,9 @@ trait ConnectCommonTrait
                                 'role_value' => 1
                             ]);
                         }
-                    }
-                    else {
+                    } else {
                         // ユーザ登録が既にある場合、そのユーザが利用可能になっているかどうかをチェックし、利用不可になっている場合は処理を戻す
-                        if( $user->status != UserStatus::active ) {
+                        if ($user->status != UserStatus::active) {
                             return;
                         }
                     }
@@ -1063,7 +671,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  NetCommons2 からの移行パスワードでの認証
+     * NetCommons2 からの移行パスワードでの認証
      */
     public function authNetCommons2Password($request)
     {
@@ -1085,7 +693,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  URLからページIDを取得
+     * URLからページIDを取得
      */
     public function getPage($permanent_link, $language = null)
     {
@@ -1103,7 +711,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  URLから管理画面かどうかを判定
+     * URLから管理画面かどうかを判定
      */
     public function isManagePage($request)
     {
@@ -1115,7 +723,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  page 変数がページオブジェクトか判定
+     * page 変数がページオブジェクトか判定
      */
     public function isPageObj($page)
     {
@@ -1129,7 +737,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  都道府県のリストの取得
+     * 都道府県のリストの取得
      */
     public function getPrefList()
     {
@@ -1143,55 +751,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  ページの系統取得
-     */
-    protected function getPageRoles($page_ids = null)
-    {
-        // ページID、ユーザID は必須
-        //if (empty($page_ids) || !is_array($page_ids)) {
-        //    return null;
-        //}
-
-        // シングルトン
-        //if ($this->page_roles) {
-        //    return $this->page_roles;
-        //}
-
-        $user = Auth::user();
-        if (empty($user)) {
-            return null;
-        }
-
-        // ページ、ユーザでpage_roles を検索
-        // ページは階層分、取得する。
-        // グループは複数、含まれている状態で保持しておく。
-        // ページやグループでデータを抜き出す場合は、Laravel のCollection メソッドでwhere を使用。
-        //$this->page_role = PageRole::select('page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
-        $page_role_query = PageRole::select(
-            'page_roles.page_id', 'page_roles.group_id', 'page_roles.role_name',
-            'group_users.user_id', 'groups.name AS groups_name', 'group_users.group_role'
-        )
-                                    ->join('groups', function ($group_join) {
-                                        $group_join->on('groups.id', '=', 'page_roles.group_id')
-                                                   ->whereNull('groups.deleted_at');
-                                    })
-                                    ->join('group_users', function ($group_users_join) use ($user) {
-                                        $group_users_join->on('group_users.group_id', '=', 'page_roles.group_id')
-                                                         ->where('group_users.user_id', $user->id)
-                                                         ->whereNull('group_users.deleted_at');
-                                    });
-        if ($page_ids) {
-            $page_role_query->whereIn('page_roles.page_id', $page_ids);
-        }
-        $page_role = $page_role_query->whereNull('page_roles.deleted_at')
-                                     ->get();
-
-        //return $this->page_role;
-        return $page_role;
-    }
-
-    /**
-     *  年の祝日を取得
+     * 年の祝日を取得
      */
     public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
     {
@@ -1208,7 +768,7 @@ trait ConnectCommonTrait
     }
 
     /**
-     *  祝日の追加
+     * 祝日の追加
      * date に holiday 属性を追加する。
      */
     protected function addHoliday($year, $month, $dates)

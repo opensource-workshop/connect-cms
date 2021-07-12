@@ -21,12 +21,20 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 class ClassController extends ConnectController
 {
-
     use ConnectCommonTrait;
+
+    /**
+     * コンストラクタ
+     */
+    public function __construct()
+    {
+        // ClassController::invokeGetCore, invokePostCore のみ指定（only）
+        $this->middleware('connect.page')->only(['invokeGetCore', 'invokePostCore']);
+    }
 
     /**
      *  管理プラグインの呼び出し
@@ -109,11 +117,11 @@ class ClassController extends ConnectController
     {
         // Todo：コアの場合、ホワイトリストを作成して、呼び出せるクラストアクションを指定する。
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
-        $file_path = base_path() . "/app/Http/Controllers/Core/" . ucfirst($plugin_name) . "Controller.php";
+        $file_path = base_path() . "/app/Http/Controllers/Core/" . ucfirst($plugin_name) . "Core.php";
         require $file_path;
 
         /// インスタンス生成
-        $class_name = "app\Http\Controllers\Core\\" . ucfirst($plugin_name) . "Controller";
+        $class_name = "app\Http\Controllers\Core\\" . ucfirst($plugin_name) . "Core";
         $plugin_instance = new $class_name($page_id, $frame_id);
         return $plugin_instance;
     }

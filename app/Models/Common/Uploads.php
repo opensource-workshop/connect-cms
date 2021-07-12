@@ -18,7 +18,9 @@ class Uploads extends Model
     {
         $size = $this->size;
         $units = array("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB");
-        for ($i = 0; $size >= 1024 && $i < 4; $i++) $size /= 1024;
+        for ($i = 0; $size >= 1024 && $i < 4; $i++) {
+            $size /= 1024;
+        }
         return round($size, $r).$units[$i];
     }
 
@@ -31,7 +33,7 @@ class Uploads extends Model
         // 2020-12-15 Connect-CMS 公式サイトで、ファイル名が空になったり一部しか取得できないケースがあった。
         // false を返すことなどもあるようで、ワーニングの抑止の意味も含めて @ 付きでCall
         @setlocale(LC_ALL, 'ja_JP.UTF-8');
-        return $path_parts = pathinfo($this->client_original_name, PATHINFO_FILENAME );
+        return $path_parts = pathinfo($this->client_original_name, PATHINFO_FILENAME);
     }
 
     /**

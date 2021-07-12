@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\User\Menus\Menu;
 
 use App\Plugins\User\UserPluginBase;
@@ -21,11 +22,10 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class MenusPlugin extends UserPluginBase
 {
-
     /**
      *  編集画面の最初のタブ
      *
@@ -58,8 +58,8 @@ class MenusPlugin extends UserPluginBase
         //
         // 権限チェックテーブル
         // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = array();
+        return $role_check_table;
     }
 
     /**
@@ -76,7 +76,8 @@ class MenusPlugin extends UserPluginBase
         //Log::debug(json_encode( $menu, JSON_UNESCAPED_UNICODE));
 
         // ページに対する権限
-        $page_roles = $this->getPageRoles();
+        // $page_roles = $this->getPageRoles();
+        $page_roles = PageRole::getPageRoles();
 
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
@@ -112,7 +113,7 @@ class MenusPlugin extends UserPluginBase
             'menu'         => $menu,
             'page_roles'   => $page_roles,
             // 'ancestors_page_roles' => $ancestors_page_roles,
-//            'page'      => $this->page,
+            // 'page'      => $this->page,
         ]);
     }
 

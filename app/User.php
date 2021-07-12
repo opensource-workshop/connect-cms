@@ -10,6 +10,8 @@ use App\Notifications\PasswordResetNotification;
 
 use App\Enums\UserStatus;
 
+use App\Models\Common\GroupUser;
+
 class User extends Authenticatable
 {
     use Notifiable;
@@ -192,11 +194,11 @@ class User extends Authenticatable
 
     /**
      * hasMany 設定
+     * - hasManyは、$user->group_users で使うので、変数名と同義になるので、このメソッド名はphpcs除外
+     * - hasManyは、値があるなしに関わらず collection 型を返す。値がなければ空の collection 型を返す。
      */
-/*
-    public function group_user()
+    public function group_users()    // phpcs:ignore
     {
-        return $this->hasMany('App\User');
+        return $this->hasMany(GroupUser::class);
     }
-*/
 }

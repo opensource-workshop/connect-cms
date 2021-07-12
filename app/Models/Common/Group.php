@@ -33,8 +33,9 @@ class Group extends Model
 
     /**
      * hasMany 設定
+     * - hasManyは、$group->group_user で使い変数名と同義になるので、このメソッド名はphpcs除外
      */
-    public function group_user()
+    public function group_user()    // phpcs:ignore
     {
         return $this->hasMany(GroupUser::class);
     }

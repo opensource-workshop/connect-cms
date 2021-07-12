@@ -9,10 +9,26 @@ use Tests\DuskTestCase;
 /**
  * > tests\bin\connect-cms-test.bat
  */
-class PluginManage extends DuskTestCase
+class PluginManageTest extends DuskTestCase
 {
     /**
+     * テスト前共通処理
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // bugfix: APP_DEBUG=trueだと,phpdebugbar-header とボタンが被って、ボタンが押せずにテストエラーになるため、phpdebugbarを閉じる
+        $this->closePhpdebugar();
+    }
+
+    /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -29,7 +45,7 @@ class PluginManage extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/plugin')
                     ->type('plugins[1][display_sequence]', '1')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }
@@ -41,7 +57,7 @@ class PluginManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Laravel');
+                    ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
     }

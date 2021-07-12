@@ -30,7 +30,7 @@ class ConnectLog
     public function handle($request, Closure $next)
     {
         // Configs
-        $configs = $request->get('configs');
+        $configs = $request->attributes->get('configs');
 
         // ルート名の取得
         $route_name = Route::current()->getName();

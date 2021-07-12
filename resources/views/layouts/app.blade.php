@@ -35,7 +35,8 @@
     //$menu_pages = $page_obj::orderBy('display_sequence')->get();
     $menu_pages = $page_obj::defaultOrderWithDepth();
 */
-if (! isset($cc_configs)) {
+// move: app\Http\Middleware\ConnectInit.php で処理するように対応
+// if (! isset($cc_configs)) {
     // seederを実行した場合、必ずconfigsにデータができ、データが無い場合は通常ありえないので、異常終了させる。
     // うっかり操作ミスは誰にでもありえるのため、エラーメッセージで対応方法を表示する。
     // ※ 新規インストール時、seederを実行しないと、なんでか Middleware の ConnectInit まで到達せず、cc_configsはセットされなかったため、ここで簡易チェックする。（実行されれば空のコレクションがセットされてエラーにならないんだけどねぇ）
@@ -43,8 +44,9 @@ if (! isset($cc_configs)) {
     // 暫定対応：ページなしの場合、$cc_configsがセットされなかったため、exitしちゃだめ。（ページなし処理 ConnectController::__construct()から呼ばれる $this->checkPageNotFound() でabort() されるの、なんかあやしいかも。Middleware の ConnectInit が実行されない原因かも）
     // echo('DBテーブルのconfigsにデータが１件もありません。<code>php artisan db:seed</code> コマンドを実行して初期データを登録してください。');
     // exit;
-    $cc_configs = collect();
-}
+    // ↓
+    // $cc_configs = collect();
+// }
 ?>
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
@@ -237,7 +239,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 
                             <li class="nav-item">
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                            @if (isset($page_obj) && $page_obj->id == $page->id)
+                            @if (isset($page_obj) && isset($page) && $page_obj->id == $page->id)
                                 <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                             @else
                                 <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
@@ -258,11 +260,11 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                         @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
                             {{-- カレント or 自分のルート筋 or 第1階層 or 子のページ or 同階層のページ なら表示する --}}
-                            @if ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->depth == 0 || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page))
+                            @if (isset($page) && ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page)) || $page_obj->depth == 0)
 
                                 <li class="nav-item">
                                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                                @if (isset($page_obj) && $page_obj->id == $page->id)
+                                @if (isset($page_obj) && isset($page) && $page_obj->id == $page->id)
                                     <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                                 @else
                                     <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
@@ -276,7 +278,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 
                                 {{-- カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
                                 @if (count($page_obj->children) > 0)
-                                    @if ($page_obj->isAncestorOf($page) || $page_obj->id == $page->id)
+                                    @if (isset($page) && ($page_obj->isAncestorOf($page) || $page_obj->id == $page->id))
                                         <i class="fas fa-minus"></i>
                                     @else
                                         <i class="fas fa-plus"></i>

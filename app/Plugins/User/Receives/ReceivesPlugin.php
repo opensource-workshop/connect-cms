@@ -66,11 +66,12 @@ class ReceivesPlugin extends UserPluginBase
     {
         // Frame データ
         $frame = DB::table('frames')
-                 ->select('frames.*',
-                          'receives.id as receive_id',
-                          'receives.dataset_name',
-                          'receives.columns',
-                         )
+                 ->select(
+                     'frames.*',
+                     'receives.id as receive_id',
+                     'receives.dataset_name',
+                     'receives.columns',
+                 )
                  ->leftJoin('receives', 'receives.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
@@ -114,7 +115,8 @@ class ReceivesPlugin extends UserPluginBase
             'receive_frame'  => $receive_frame,
             'receives_count' => $receive_count,
             'receives_last'  => $receive_last,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -169,7 +171,7 @@ class ReceivesPlugin extends UserPluginBase
         $columns = explode(',', $receive_frame->columns);
 
         // 見出し行
-        foreach($columns as $column) {
+        foreach ($columns as $column) {
             $csv_array[0][] = $column;
             $copy_base[$column] = '';
         }
@@ -177,7 +179,7 @@ class ReceivesPlugin extends UserPluginBase
         $copy_base['created_at'] = '';
 
         // データ
-        foreach($receive_datas as $data) {
+        foreach ($receive_datas as $data) {
             if (!array_key_exists($data->record_id, $csv_array)) {
                 $csv_array[$data->record_id] = $copy_base;
                 $csv_array[$data->record_id]['created_at'] = $data->created_at;
@@ -194,8 +196,8 @@ class ReceivesPlugin extends UserPluginBase
  
         // データ
         $csv_data = '';
-        foreach($csv_array as $csv_line) {
-            foreach($csv_line as $csv_col) {
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
                 $csv_data .= '"' . $csv_col . '",';
             }
             $csv_data .= "\n";
@@ -224,7 +226,8 @@ class ReceivesPlugin extends UserPluginBase
             'receives_list_buckets', [
             'receive_frame' => $receive_frame,
             'receives'      => $receives,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -256,7 +259,7 @@ class ReceivesPlugin extends UserPluginBase
             $receive = Receive::where('id', $id)->first();
         }
         // Frame のbucket_id があれば、bucket_id からデータ収集設定取得、なければ、新規作成か選択へ誘導
-        else if (!empty($receive_frame->bucket_id) && $create_flag == false) {
+        elseif (!empty($receive_frame->bucket_id) && $create_flag == false) {
             $receive = Receive::where('bucket_id', $receive_frame->bucket_id)->first();
         }
         // 表示テンプレートを呼び出す。
@@ -267,7 +270,8 @@ class ReceivesPlugin extends UserPluginBase
             'create_flag'   => $create_flag,
             'message'       => $message,
             'errors'        => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -296,8 +300,7 @@ class ReceivesPlugin extends UserPluginBase
             if (empty($id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
-            else  {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }

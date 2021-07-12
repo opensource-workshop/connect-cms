@@ -53,7 +53,7 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
             // カラム定義を取得（before）
             $before_column = $connection->getDoctrineColumn(
-                $arr_table_and_column_names->table_name, 
+                $arr_table_and_column_names->table_name,
                 $arr_table_and_column_names->column_name
             );
 
@@ -84,7 +84,7 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
                 // カラム定義を取得（after）
                 $after_column = $connection->getDoctrineColumn(
-                    $arr_table_and_column_names->table_name, 
+                    $arr_table_and_column_names->table_name,
                     $arr_table_and_column_names->column_name
                 );
 
@@ -137,6 +137,8 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
         /**
          * テーブルへのマイグレーション
          */
+        $connection = DB::connection();
+        $schema_manager = $connection->getDoctrineSchemaManager();
         $table_names = $schema_manager->listTableNames();
         // 「sessions」テーブルのみ除外する
         $table_names_omit_session = array_diff($table_names, array('sessions'));
@@ -177,7 +179,7 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
             // カラム定義を取得（before）
             $before_column = $connection->getDoctrineColumn(
-                $arr_table_and_column_names->table_name, 
+                $arr_table_and_column_names->table_name,
                 $arr_table_and_column_names->column_name
             );
 
@@ -208,7 +210,7 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
                 // カラム定義を取得（after）
                 $after_column = $connection->getDoctrineColumn(
-                    $arr_table_and_column_names->table_name, 
+                    $arr_table_and_column_names->table_name,
                     $arr_table_and_column_names->column_name
                 );
 

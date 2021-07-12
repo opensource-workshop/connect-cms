@@ -68,7 +68,7 @@
                 <label class="col-md-3 col-form-label text-md-right">CSVファイル <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
                     <div class="custom-file">
-                        <input type="file" class="custom-file-input @if ($errors->has('users_csv')) border-danger @endif" id="users_csv" name="users_csv">
+                        <input type="file" class="custom-file-input @if ($errors->has('users_csv')) border-danger @endif" id="users_csv" name="users_csv" accept=".csv">
                         <label class="custom-file-label @if ($errors->has('users_csv')) border-danger @endif" for="users_csv" data-browse="参照"></label>
                     </div>
                     @if ($errors && $errors->has('users_csv'))

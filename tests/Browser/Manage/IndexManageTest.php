@@ -6,10 +6,13 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-class IndexManage extends DuskTestCase
+class IndexManageTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
+     *
+     * @group manage
+     * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
@@ -24,7 +27,7 @@ class IndexManage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage')
-                    ->assertTitle('Laravel');
+                    ->assertTitle('Connect-CMS');
             parent::screenshot($browser);
         });
     }

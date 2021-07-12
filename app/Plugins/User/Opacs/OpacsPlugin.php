@@ -147,16 +147,16 @@ class OpacsPlugin extends UserPluginBase
                 $opacs_books->publisher = $channel["item"][0]->children('dc', true)->publisher;
                 
                 // 請求番号：請求番号は分類コードをもとに作成する為、分類コードを入れる
-                $opacs_books->ndc = $this->getBookDetailByList( $channel["item"], 'dc:subject [@xsi:type="dcndl:NDC10" or @xsi:type="dcndl:NDC9" or @xsi:type="dcndl:NDC8" or @xsi:type="dcndl:NDC7" or @xsi:type="dcndl:NDC6"]' );
+                $opacs_books->ndc = $this->getBookDetailByList($channel["item"], 'dc:subject [@xsi:type="dcndl:NDC10" or @xsi:type="dcndl:NDC9" or @xsi:type="dcndl:NDC8" or @xsi:type="dcndl:NDC7" or @xsi:type="dcndl:NDC6"]');
                 
                 // タイトルヨミ：どのitemにも必ずあるのでチェックせず、１つ目からそのまま取得
                 $opacs_books->title_read = $channel["item"][0]->children('dcndl', true)->titleTranscription;
                 
                 // シリーズ
-                $opacs_books->series = $this->getBookDetailByList( $channel["item"], 'dcndl:seriesTitle' );
+                $opacs_books->series = $this->getBookDetailByList($channel["item"], 'dcndl:seriesTitle');
                 
                 // 出版年
-                $opacs_books->publication_year = $this->getBookDetailByList( $channel["item"], 'dcterms:issued [@xsi:type="dcterms:W3CDTF"]' );
+                $opacs_books->publication_year = $this->getBookDetailByList($channel["item"], 'dcterms:issued [@xsi:type="dcterms:W3CDTF"]');
                 
                 // 分類：請求番号をそのまま入れる
                 $opacs_books->class = $opacs_books->ndc;
@@ -165,29 +165,25 @@ class OpacsPlugin extends UserPluginBase
                 // なので仮に、「dc:extent」が２つある時は、１つ目を頁数、２つ目を大きさと仮定して値を設定する
                 // １しかない時はページ数の方にのみ設定する
                 // ３つ以上ある時は最初の１つ目を頁数、２つ目を大きさとして設定して他を無視する
-                foreach( $channel["item"] as $item )
-                {
+                foreach ($channel["item"] as $item) {
                     $get_element = $item->xpath('dc:extent');
-                    $get_count = count( $get_element );
-                    if( $get_count == 1 )
-                    {
-                        $opacs_books->page_number = trim( $get_element[0]->__toString() );
+                    $get_count = count($get_element);
+                    if ($get_count == 1) {
+                        $opacs_books->page_number = trim($get_element[0]->__toString());
                         break;
-                    }
-                    elseif( $get_count > 1 )
-                    {
-                        $opacs_books->page_number = trim( $get_element[0]->__toString() );
-                        $opacs_books->size = trim( $get_element[1]->__toString() );
+                    } elseif ($get_count > 1) {
+                        $opacs_books->page_number = trim($get_element[0]->__toString());
+                        $opacs_books->size = trim($get_element[1]->__toString());
                         break;
                     }
                 }
                 
                 // MARC NO
-                $opacs_books->marc = $this->getBookDetailByList( $channel["item"], 'dc:identifier [@xsi:type="dcndl:NIIBibID"]' );
+                $opacs_books->marc = $this->getBookDetailByList($channel["item"], 'dc:identifier [@xsi:type="dcndl:NIIBibID"]');
                 
                 // 金額
-                $get_value = $this->getBookDetailByList( $channel["item"], 'dcndl:price' );
-                $opacs_books->accept_price = str_replace( '円', '', $get_value );
+                $get_value = $this->getBookDetailByList($channel["item"], 'dcndl:price');
+                $opacs_books->accept_price = str_replace('円', '', $get_value);
                 
                 
             } else {
@@ -201,16 +197,16 @@ class OpacsPlugin extends UserPluginBase
                 $opacs_books->publisher = $channel["item"]->children('dc', true)->publisher;
                 
                 // 請求番号：請求番号は分類コードをもとに作成する為、分類コードを入れる
-                $opacs_books->ndc = $this->getBookDetail( $channel["item"], 'dc:subject [@xsi:type="dcndl:NDC10" or @xsi:type="dcndl:NDC9" or @xsi:type="dcndl:NDC8" or @xsi:type="dcndl:NDC7" or @xsi:type="dcndl:NDC6"]' );
+                $opacs_books->ndc = $this->getBookDetail($channel["item"], 'dc:subject [@xsi:type="dcndl:NDC10" or @xsi:type="dcndl:NDC9" or @xsi:type="dcndl:NDC8" or @xsi:type="dcndl:NDC7" or @xsi:type="dcndl:NDC6"]');
                 
                 // タイトルヨミ
                 $opacs_books->title_read = $channel["item"]->children('dcndl', true)->titleTranscription;
                 
                 // シリーズ
-                $opacs_books->series = $this->getBookDetail( $channel["item"], 'dcndl:seriesTitle' );
+                $opacs_books->series = $this->getBookDetail($channel["item"], 'dcndl:seriesTitle');
                 
                 // 出版年
-                $opacs_books->publication_year = $this->getBookDetail( $channel["item"], 'dcterms:issued [@xsi:type="dcterms:W3CDTF"]' );
+                $opacs_books->publication_year = $this->getBookDetail($channel["item"], 'dcterms:issued [@xsi:type="dcterms:W3CDTF"]');
                 
                 // 分類：請求番号をそのまま入れる
                 $opacs_books->class = $opacs_books->ndc;
@@ -220,23 +216,20 @@ class OpacsPlugin extends UserPluginBase
                 // １しかない時はページ数の方にのみ設定する
                 // ３つ以上ある時は最初の１つ目を頁数、２つ目を大きさとして設定して他を無視する
                 $get_element = $channel["item"]->xpath('dc:extent');
-                $get_count = count( $get_element );
-                if( $get_count == 1 )
-                {
-                    $opacs_books->page_number = trim( $get_element[0]->__toString() );
-                }
-                elseif( $get_count > 1 )
-                {
-                    $opacs_books->page_number = trim( $get_element[0]->__toString() );
-                    $opacs_books->size = trim( $get_element[1]->__toString() );
+                $get_count = count($get_element);
+                if ($get_count == 1) {
+                    $opacs_books->page_number = trim($get_element[0]->__toString());
+                } elseif ($get_count > 1) {
+                    $opacs_books->page_number = trim($get_element[0]->__toString());
+                    $opacs_books->size = trim($get_element[1]->__toString());
                 }
                 
                 // MARC NO
-                $opacs_books->marc = $this->getBookDetail( $channel["item"], 'dc:identifier [@xsi:type="dcndl:NIIBibID"]' );
+                $opacs_books->marc = $this->getBookDetail($channel["item"], 'dc:identifier [@xsi:type="dcndl:NIIBibID"]');
                 
                 // 金額
-                $get_value = $this->getBookDetail( $channel["item"], 'dcndl:price' );
-                $opacs_books->accept_price = str_replace( '円', '', $get_value );
+                $get_value = $this->getBookDetail($channel["item"], 'dcndl:price');
+                $opacs_books->accept_price = str_replace('円', '', $get_value);
                 
             }
 
@@ -248,33 +241,29 @@ class OpacsPlugin extends UserPluginBase
     /**
      *  書籍詳細情報取得関数
      */
-    private function getBookDetail( $channel_item, $xpath_string )
+    private function getBookDetail($channel_item, $xpath_string)
     {
         // itemの中から、xpathで指定された値を取得する。
         // 取得した値をstring値で返却。ない場合は空の文字列を返却
         $get_element = $channel_item->xpath($xpath_string);
-        if( count( $get_element ) > 0 )
-        {
-            return trim( $get_element[0]->__toString() );
+        if (count($get_element) > 0) {
+            return trim($get_element[0]->__toString());
         }
         
         return "";
-    
     }
     
     /**
      *  書籍詳細情報取得関数
      */
-    private function getBookDetailByList( $channel_items, $xpath_string )
+    private function getBookDetailByList($channel_items, $xpath_string)
     {
         // channelの中にある複数のitemリストの中から、xpathで指定された値を取得する。
         // 取得した値をstring値で返却。ない場合は空の文字列を返却
         
-        foreach( $channel_items as $item )
-        {
-            $get_value = $this->getBookDetail( $item, $xpath_string );
-            if( $get_value != "" )
-            {
+        foreach ($channel_items as $item) {
+            $get_value = $this->getBookDetail($item, $xpath_string);
+            if ($get_value != "") {
                 return $get_value;
             }
         }
@@ -498,11 +487,11 @@ class OpacsPlugin extends UserPluginBase
 
         // 並び順
         $sort_type = $request->session()->get('opac_search_sort_type.'.$frame_id);
-        if( empty( $sort_type ) === true ) {
+        if (empty($sort_type) === true) {
             $sort_type = 1;   // タイトル：昇順
         }
         $sort_query = null;
-        switch( $sort_type ) {
+        switch ($sort_type) {
             case 1:  // タイトル：昇順
                 $sort_query = array('title','asc');
                 break;
@@ -528,20 +517,16 @@ class OpacsPlugin extends UserPluginBase
 
         // 表示件数：セッションに保存されている表示件数を優先。もしない場合はフレームの表示件数を取得
         $opac_search_view_count = $request->session()->get('opac_search_view_count.'.$frame_id);
-        if( empty( $opac_search_view_count ) === true ) {
+        if (empty($opac_search_view_count) === true) {
             $opac_search_view_count = $opac_frame->view_count;
         }
 
         // データ取得（1ページの表示件数指定）
         if (empty($opac_frame->opacs_id)) {
             $opacs_books = null;
-        }
-        elseif( $opac_search_type != 2 && empty( $keyword ) == true )
-        {
+        } elseif ($opac_search_type != 2 && empty($keyword) == true) {
             $opacs_books = null;
-        }
-        elseif( $opac_search_type != 2 )
-        {
+        } elseif ($opac_search_type != 2) {
             // キーワード検索
             $opacs_books = DB::table('opacs_books')
                           ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
@@ -560,48 +545,40 @@ class OpacsPlugin extends UserPluginBase
                           })
                           ->orderBy($sort_query[0], $sort_query[1])
                           ->paginate($opac_search_view_count, ["*"], "frame_{$opac_frame->id}_page");
-            if( count( $opacs_books ) <= 0 )
-            {
+            if (count($opacs_books) <= 0) {
                 $opacs_books = null;
                 session()->flash('search_opacs', '検索条件に該当する書籍情報がありませんでした。');
             }
-        }
-        elseif( empty( $opac_search_condition ) == true || count( $opac_search_condition ) <= 0 )
-        {
+        } elseif (empty($opac_search_condition) == true || count($opac_search_condition) <= 0) {
             $opacs_books = null;
-        }
-        else
-        {
+        } else {
             // 詳細検索
             
             // 検索条件設定
             $where_querys = null;
-            if( isset( $opac_search_condition['title'] ) == true && empty( $opac_search_condition['title'] ) == false ) {
+            if (isset($opac_search_condition['title']) == true && empty($opac_search_condition['title']) == false) {
                 $where_querys[] = array( 'title', 'like', '%' . $opac_search_condition['title'] . '%' );
             }
-            if( isset( $opac_search_condition['isbn'] ) == true && empty( $opac_search_condition['isbn'] ) == false ) {
+            if (isset($opac_search_condition['isbn']) == true && empty($opac_search_condition['isbn']) == false) {
                 $where_querys[] = array( 'isbn', 'like', '%' . $opac_search_condition['isbn'] . '%' );
             }
-            if( isset( $opac_search_condition['creator'] ) == true && empty( $opac_search_condition['creator'] ) == false ) {
+            if (isset($opac_search_condition['creator']) == true && empty($opac_search_condition['creator']) == false) {
                 $where_querys[] = array( 'creator', 'like', '%' . $opac_search_condition['creator'] . '%' );
             }
-            if( isset( $opac_search_condition['ndc'] ) == true && empty( $opac_search_condition['ndc'] ) == false ) {
+            if (isset($opac_search_condition['ndc']) == true && empty($opac_search_condition['ndc']) == false) {
                 $where_querys[] = array( 'ndc', 'like', '%' . $opac_search_condition['ndc'] . '%' );
             }
-            if( isset( $opac_search_condition['publisher'] ) == true && empty( $opac_search_condition['publisher'] ) == false ) {
+            if (isset($opac_search_condition['publisher']) == true && empty($opac_search_condition['publisher']) == false) {
                 $where_querys[] = array( 'publisher', 'like', '%' . $opac_search_condition['publisher'] . '%' );
             }
-            if( isset( $opac_search_condition['publication_year'] ) == true && empty( $opac_search_condition['publication_year'] ) == false ) {
+            if (isset($opac_search_condition['publication_year']) == true && empty($opac_search_condition['publication_year']) == false) {
                 $where_querys[] = array( 'publication_year', 'like', '%' . $opac_search_condition['publication_year'] . '%' );
             }
             
             // 検索条件が何もない時は何もしない
-            if( count( $where_querys ) <= 0 )
-            {
+            if (count($where_querys) <= 0) {
                 $opacs_books = null;
-            }
-            else
-            {
+            } else {
                 $opacs_books = DB::table('opacs_books')
                               ->select('opacs_books.*', 'opacs_books_lents.lent_flag', 'opacs_books_lents.student_no', 'opacs_books_lents.return_scheduled', 'opacs_books_lents.lent_at')
                               ->leftJoin('opacs_books_lents', function ($join) {
@@ -611,16 +588,14 @@ class OpacsPlugin extends UserPluginBase
                               })
                               ->where('opacs_id', $opac_frame->opacs_id)
                               ->where(function ($query) use ($where_querys) {
-                                  foreach( $where_querys as $value )
-                                  {
-                                      $query->Where($value[0], $value[1], $value[2]);
-                                  }
+                                foreach ($where_querys as $value) {
+                                    $query->Where($value[0], $value[1], $value[2]);
+                                }
                               })
                               ->orderBy($sort_query[0], $sort_query[1])
                               ->paginate($opac_search_view_count, ["*"], "frame_{$opac_frame->id}_page");
                 
-                if( count( $opacs_books ) <= 0 )
-                {
+                if (count($opacs_books) <= 0) {
                     $opacs_books = null;
                     session()->flash('search_opacs', '検索条件に該当する書籍情報がありませんでした。');
                 }
@@ -1025,7 +1000,7 @@ class OpacsPlugin extends UserPluginBase
     public function roleLent($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
     {
          // 権限チェック
-         if ($this->can('role_article')) {
+        if ($this->can('role_article')) {
             return $this->view_error(403);
         }
 
@@ -1061,7 +1036,6 @@ class OpacsPlugin extends UserPluginBase
             'errors'                 => $errors,
             ]
         );
-
     }
 
     /**
@@ -1110,8 +1084,7 @@ class OpacsPlugin extends UserPluginBase
         
         // バーコード重複チェック
         $tmp_opacs_books = OpacsBooks::where('barcode', $request->barcode)->first();
-        if( empty( $tmp_opacs_books ) == false && $tmp_opacs_books->id != $opacs_books_id )
-        {
+        if (empty($tmp_opacs_books) == false && $tmp_opacs_books->id != $opacs_books_id) {
             $messages = new MessageBag;
             $messages->add('barcode', '入力されたバーコードは既に存在します。');
             return back()->withErrors($messages)->withInput();
@@ -1162,7 +1135,6 @@ class OpacsPlugin extends UserPluginBase
         
         // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
         return new Collection(['redirect_path' => url('/') . "/plugin/opacs/edit/" . $page_id . "/" . $frame_id . "/" . $opacs_book->id . "#frame-" . $frame_id]);
-        
     }
 
     /**
@@ -1286,8 +1258,8 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 追加アドレスへのメール送付
-        if( empty($add_email) == false ) {
-            Mail::to($add_email)->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $content]));            
+        if (empty($add_email) == false) {
+            Mail::to($add_email)->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $content]));
         }
 
         if ($opacs->moderator_mail_send_flag == 0 || empty($opacs->moderator_mail_send_address)) {
@@ -1332,21 +1304,18 @@ class OpacsPlugin extends UserPluginBase
 
         // lent_idがある場合、郵送リクエストからの貸出処理なのでデータ整合性チェックを行う
         $opacs_books_lent = null;
-        if( empty( $request->req_lent_id ) == false )
-        {
+        if (empty($request->req_lent_id) == false) {
             // 郵送リクエスト情報取得
             $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)
                                                ->where('opacs_books_id', $opacs_books_id)
                                                ->where('student_no', $request->req_student_no)
                                                ->where('lent_flag', [2])->first();
-            if( empty( $opacs_books_lent ) == true ) {
+            if (empty($opacs_books_lent) == true) {
                 $messages = new MessageBag;
                 $messages->add('barcode', '該当する郵送リクエスト情報がありませんでした。');
                 return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
             }
-        }
-        else
-        {
+        } else {
             $opacs_books_lent = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
                                                ->where('student_no', $request->req_student_no)
                                                ->where('lent_flag', [2])->first();
@@ -1354,7 +1323,7 @@ class OpacsPlugin extends UserPluginBase
 
         // 書籍情報取得
         $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
-        if( $opacs_books->barcode != $request->barcode ) {
+        if ($opacs_books->barcode != $request->barcode) {
             $messages = new MessageBag;
             $messages->add('barcode', '確認用バーコードと一致しませんでした。');
             return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
@@ -1394,7 +1363,7 @@ class OpacsPlugin extends UserPluginBase
         $student = User::where('userid', $request->req_student_no)->first();
         if (empty($student)) {
             session()->flash('lent_error', '存在しないログインIDです。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id); 
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
         }
 
         // 役割設定の情報取得
@@ -1409,38 +1378,33 @@ class OpacsPlugin extends UserPluginBase
                                  ->get();
 
         // 最大貸出数をオーバーしていないかどうかチェックする
-        $mex_lent_count = $this->getReturnMaxLentCount( $opac_frame, $users_roles, $opac_configs);
+        $mex_lent_count = $this->getReturnMaxLentCount($opac_frame, $users_roles, $opac_configs);
         $lent_infos = OpacsBooksLents::where('student_no', $request->req_student_no)->get();
-        $lent_count = count( $lent_infos );
-        if( $lent_count > 0 )
-        {
-            if( empty( $opacs_books_lent ) == false ) {
+        $lent_count = count($lent_infos);
+        if ($lent_count > 0) {
+            if (empty($opacs_books_lent) == false) {
                 // lent_idがある場合は、当該ユーザーの貸出情報件数から-1する（一致する貸出情報があれば）
-                foreach( $lent_infos as $lent_info)
-                {
-                    if( $lent_info->id == $opacs_books_lent->id )
-                    {
+                foreach ($lent_infos as $lent_info) {
+                    if ($lent_info->id == $opacs_books_lent->id) {
                         $lent_count = $lent_count -1;
                         break;
                     }
                 }
             }
         }
-        if( $mex_lent_count <= $lent_count ) {
+        if ($mex_lent_count <= $lent_count) {
             session()->flash('lent_error', '対象ユーザーの最大貸出数をオーバーしています。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);             
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
         }
 
-        if( empty( $opacs_books_lent ) ) {
+        if (empty($opacs_books_lent)) {
             // 郵送リクエストがない場合は新規登録
             $opacs_books_lent = new OpacsBooksLents();
             $opacs_books_lent->opacs_books_id   = $opacs_books_id;
             $opacs_books_lent->lent_flag        = 1;
             $opacs_books_lent->student_no       = $request->req_student_no;
             $opacs_books_lent->return_scheduled = date('Y-m-d 00:00:00', strtotime($request->return_scheduled));
-        }
-        else
-        {
+        } else {
             $opacs_books_lent->lent_flag        = 1;
             $opacs_books_lent->return_scheduled = date('Y-m-d 00:00:00', strtotime($request->return_scheduled));
         }
@@ -1460,7 +1424,7 @@ class OpacsPlugin extends UserPluginBase
 
         // 郵送リクエストしたユーザーにもメールを投げる場合は追加アドレスに設定しておく
         $add_email = null;
-        if( $opacs->request_mail_send_flag == 1 ) {
+        if ($opacs->request_mail_send_flag == 1) {
             $add_email = $opacs_books_lent->email;
         }
 
@@ -1508,12 +1472,12 @@ class OpacsPlugin extends UserPluginBase
         if (empty($opac_book) == true) {
             return $this->show($request, $page_id, $frame_id, $opacs_books_id, '書籍情報がありません。', 'danger');
         }
-        if( $opac_book->lend_flag == '9:禁帯出') {
+        if ($opac_book->lend_flag == '9:禁帯出') {
             return $this->show($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は「禁帯出」のため、貸し出しリクエストできません。', 'danger');
         }
 
         // 自分が既に郵送リクエスト済みかチェックする
-        if( $this->lentRequestCheck($opacs_books_id, $request->req_student_no) == true ) {
+        if ($this->lentRequestCheck($opacs_books_id, $request->req_student_no) == true) {
             return $this->show($request, $page_id, $frame_id, $opacs_books_id, 'この書籍は既に郵送リクエスト済みです。', 'danger');
         }
 
@@ -1562,9 +1526,9 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 項目のエラーチェック条件設定（バーコード）
-        if( empty( $request->return_barcode )) {
+        if (empty($request->return_barcode)) {
             $messages = new MessageBag;
-            $messages->add('return_barcode' , '返却用バーコードは必須です。');
+            $messages->add('return_barcode', '返却用バーコードは必須です。');
             return $this->lentList($request, $page_id, $frame_id, null, $messages);
         }
 
@@ -1573,14 +1537,14 @@ class OpacsPlugin extends UserPluginBase
 
         // バーコードから書籍情報を取得する
         $opacs_book = OpacsBooks::where('barcode', $request->return_barcode)->first();
-        if( empty($opacs_book) ) {
+        if (empty($opacs_book)) {
             $messages = new MessageBag;
-            $messages->add('return_barcode' , 'バーコードに該当する書籍がありません。');
+            $messages->add('return_barcode', 'バーコードに該当する書籍がありません。');
             return $this->lentList($request, $page_id, $frame_id, null, $messages);
         }
         
         // opacs_books_idがない場合は、バーコードで取得したIDを設定する
-        if( empty($opacs_books_id) == true ) {
+        if (empty($opacs_books_id) == true) {
             $opacs_books_id = $opacs_book->id;
         }
 
@@ -1626,7 +1590,7 @@ class OpacsPlugin extends UserPluginBase
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
 
         // 郵送リクエスト者にメールを送付しない場合には、追加送付メールアドレスをクリア
-        if( $opacs->request_mail_send_flag != 1 ) {
+        if ($opacs->request_mail_send_flag != 1) {
             $add_email = null;
         }
         self::sendMailOpac($opacs, $subject, $content, $add_email);
@@ -1647,11 +1611,10 @@ class OpacsPlugin extends UserPluginBase
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
-        if( $request->opac_search_type != 2 ) {
+        if ($request->opac_search_type != 2) {
             // キーワードをセッションに保存しておく。
             $request->session()->put('search_keyword.'.$frame_id, $request->keyword);
-        }
-        else {
+        } else {
             // 検索条件をセッションに保存しておく。
             $request->session()->put('opac_search_condition.'.$frame_id, $request->opac_search_condition);
         }
@@ -1818,13 +1781,12 @@ class OpacsPlugin extends UserPluginBase
             'input_error_message' => $input_error_message,
             ]
         )->withInput($request->all);
-
     }
     
     /**
      *  貸出リクエスト削除
      */
-    public function destroyRequest($request, $page_id, $frame_id, $opacs_books_id )
+    public function destroyRequest($request, $page_id, $frame_id, $opacs_books_id)
     {
         // 認証されているか確認
         if (!Auth::check()) {
@@ -1833,16 +1795,13 @@ class OpacsPlugin extends UserPluginBase
         
         // 権限と学籍番号のチェックして、対象ユーザーIDを取得する
         $user_id = "";
-        if( isset( $request->req_student_no ) === true )
-        {
+        if (isset($request->req_student_no) === true) {
             // 学籍番号指定ありなので権限ありであるかどうかチェックする
             if ($this->can('role_article')) {
                 return $this->view_error(403);
             }
             $user_id = $request->req_student_no;
-        }
-        else
-        {
+        } else {
             // 一般ユーザーからのリクエストの場合はこのまま処理
             $user = Auth::user();
             $user_id = $user->userid;
@@ -1858,9 +1817,9 @@ class OpacsPlugin extends UserPluginBase
 //                                      ->get();
                                       ->first();
 //        if (count($books_lents) <= 0) {
-        if (empty( $books_lents ) == true) {
+        if (empty($books_lents) == true) {
                 session()->flash('lent_errors', '対象書籍は貸出リクエストされていません。');
-            return $this->index($request, $page_id, $frame_id );
+            return $this->index($request, $page_id, $frame_id);
         }
 
 /*
@@ -1877,7 +1836,7 @@ class OpacsPlugin extends UserPluginBase
         $books_lents->return_date = date('Y-m-d 00:00:00');
         $books_lents->phone_no    = null;
         $books_lents->email       = null;
-        
+
         // データ保存
         $books_lents->save();
 */

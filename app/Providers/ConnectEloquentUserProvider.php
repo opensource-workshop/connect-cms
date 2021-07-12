@@ -10,17 +10,19 @@ use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 use Illuminate\Support\Facades\Log;
 
 use App\Traits\ConnectCommonTrait;
+use App\Traits\ConnectRoleTrait;
 
 use App\User;
 use App\Models\Core\UsersRoles;
+use App\Models\Core\ConfigsLoginPermits;
+use App\Models\Core\Configs;
 
 /**
  * Laravel標準のEloquentUserProviderを継承して、Connect-CMS用にカスタマイズしたログイン処理です。
  */
 class ConnectEloquentUserProvider extends EloquentUserProvider
 {
-
-    use ConnectCommonTrait;
+    use ConnectCommonTrait, ConnectRoleTrait;
 
     /**
      * Validate a user against the given credentials.
@@ -42,6 +44,64 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
 
         // 通常のログイン
         return parent::validateCredentials($user, $credentials);
+    }
+
+    /**
+     * ログイン可否チェック
+     */
+    private function judgmentLogin($user)
+    {
+        // IP アドレス取得
+        $remote_ip = \Request::ip();
+        //Log::debug("--- IP：" . $remote_ip);
+
+        // ログイン可否の基本設定を取得
+        $configs = Configs::where('name', 'login_reject')->first();
+
+        // ログイン可否の基本
+        $login_reject = 0;
+        if (!empty($configs)) {
+            $login_reject = $configs->value;
+        }
+        //Log::debug("基本：" . $login_reject);
+
+        // ユーザーオブジェクトにロールデータを付与
+        $users_roles = new UsersRoles();
+        $user->user_roles = $users_roles->getUsersRoles($user->id);
+        // Log::debug($user);
+        // Log::debug($user->user_roles);
+
+        // ログイン可否の個別設定を取得
+        $configs_login_permits = ConfigsLoginPermits::orderBy('apply_sequence', 'asc')->get();
+
+        // ログイン可否の個別設定がない場合はここで判断
+        if (empty($configs_login_permits)) {
+            return ($login_reject == 0) ? true : false;
+        }
+
+        // ログイン可否の個別設定をループ
+        foreach ($configs_login_permits as $configs_login_permit) {
+            // IPアドレスが範囲内か
+            if (!$this->isRangeIp($remote_ip, $configs_login_permit->ip_address)) {
+                // IPアドレスが範囲外なら、チェック的にはOKなので、次のチェックへ。
+                //Log::debug("IP範囲外：" . $remote_ip . "/" . $configs_login_permit->ip_address);
+                continue;
+            }
+
+            // 権限が範囲内か
+            if (empty($configs_login_permit->role)) {
+                // ロールが入っていない（全対象）の場合は、対象レコードとなるので、設定されている可否を使用
+                //Log::debug("role空で対象：" . $configs_login_permit->reject);
+                $login_reject = $configs_login_permit->reject;
+            } elseif ($this->checkRole($user, $configs_login_permit->role)) {
+                // 許可/拒否設定が自分のロールに合致すれば、対象の許可/拒否設定を反映
+                //Log::debug("role合致で対象：" . $configs_login_permit->reject);
+                $login_reject = $configs_login_permit->reject;
+            }
+        }
+        // 設定可否の適用
+        //Log::debug("最終：" . $login_reject);
+        return ($login_reject == 0) ? true : false;
     }
 
     /**
