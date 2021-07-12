@@ -15,6 +15,9 @@ use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\RotatingFileHandler;
 
+use Symfony\Component\Process\PhpExecutableFinder;
+// use Symfony\Component\Process\Process;
+
 use DB;
 use File;
 use HTMLPurifier;
@@ -865,51 +868,61 @@ class UserPluginBase extends PluginBase
 
         // 承認通知
         if (in_array("notice_approval", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row, $show_method));
-            } else {
-                // スケジュール送信
-                ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
-            }
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row, $show_method));
+            // } else {
+            //     // スケジュール送信
+            //     ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
+            // }
+
+            // 送信
+            //   - .envのQUEUE_CONNECTION=syncの場合、dispatch()でも即時送信になるため、メール送信メソッド１本化
+            ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
         }
 
         // 承認済み通知
         if (in_array("notice_approved", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method));
-            } else {
-                // スケジュール送信
-                ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
-            }
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method));
+            // } else {
+            //     // スケジュール送信
+            //     ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
+            // }
+            ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
         }
 
         // 投稿通知（登録）
         if (in_array("notice_create", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_create"));
-            } else {
-                // スケジュール送信
-                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
-            }
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_create"));
+            // } else {
+            //     // スケジュール送信
+            //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
+            // }
+            PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
         }
 
         // 投稿通知（変更）
         if (in_array("notice_update", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_update"));
-            } else {
-                // スケジュール送信
-                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
-            }
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_update"));
+            // } else {
+            //     // スケジュール送信
+            //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
+            // }
+            PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
         }
+
+        // 非同期でキューワーカ実行
+        $this->asyncQueueWork();
     }
 
     /**
@@ -935,14 +948,18 @@ class UserPluginBase extends PluginBase
             return;
         }
 
-        // 送信方法の確認
-        if ($bucket_mail->timing == 0) {
-            // 即時送信
-            dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
-        } else {
-            // スケジュール送信
-            RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
-        }
+        // // 送信方法の確認
+        // if ($bucket_mail->timing == 0) {
+        //     // 即時送信
+        //     dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
+        // } else {
+        //     // スケジュール送信
+        //     RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
+        // }
+        RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
+
+        // 非同期でキューワーカ実行
+        $this->asyncQueueWork();
     }
 
     /**
@@ -971,14 +988,73 @@ class UserPluginBase extends PluginBase
             return;
         }
 
-        // 送信方法の確認
-        if ($bucket_mail->timing == 0) {
-            // 即時送信
-            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $show_method, $delete_comment));
-        } else {
-            // スケジュール送信
-            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
+        // // 送信方法の確認
+        // if ($bucket_mail->timing == 0) {
+        //     // 即時送信
+        //     dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $show_method, $delete_comment));
+        // } else {
+        //     // スケジュール送信
+        //     DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
+        // }
+        DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
+
+        // 非同期でキューワーカ実行
+        $this->asyncQueueWork();
+    }
+
+    /**
+     * 非同期でキューワーカ実行
+     * - キューをセット後に非同期でキューワーカを実行、キューされたすべてのジョブを実行して、キューワーカをプロセス停止する。
+     *
+     * @see https://readouble.com/laravel/6.x/ja/queues.html#running-the-queue-worker キューされたすべてのジョブを処理し、終了する - Laravel 6.x キュー
+     * @see config\queue.php キューの設定ファイル。[connections => [database => [retry_after]]](リトライ時間) > --timeout(タイムアウト) でないと例外が発生する。
+     */
+    private function asyncQueueWork()
+    {
+        if (config('queue.default') != 'database') {
+            // キュードライバがdatabase以外は実行しない
+            return;
         }
+
+        // 実行可能な PHP バイナリの検索
+        $php_binary_finder = new PhpExecutableFinder();
+        $php = $php_binary_finder->find();
+
+        // artisanコマンドのパス
+        $artisan = base_path('artisan');
+
+        // キューされたすべてのジョブを処理し、終了する。最大でも１時間でタイムアウト（強制終了）する。
+        // php artisan queue:work --stop-when-empty --timeout=3600
+        $php_artisan_command = "{$php} \"{$artisan}\" queue:work --stop-when-empty --timeout=3600";
+
+        // 非同期実行する
+        if (strpos(PHP_OS, 'WIN') !== false) {
+            // Windows
+            // - start /B 新しいウインドウを開かずにアプリケーションを起動する。
+            $command = "start /B {$php_artisan_command}";
+            $fp = popen($command, 'r');
+            pclose($fp);
+        } else {
+            // Linux
+            $command = "{$php_artisan_command} > /dev/null &";
+            exec($command);
+        }
+
+        // [TODO] Laravel 6.x = Process v4.4.22 のため$process->setOptions()使えない。残念
+        // $timeout = null;    // 念のため、Processクラスでのコマンド実行のタイムアウトの無効化（非同期実行で一瞬でコマンド実行終わるため、問題ないと思うけど念のため）
+        // $process = new Process([$php_binary_path, 'artisan', 'queue:work', '--stop-when-empty', '--timeout=3600'], base_path(), null, null, $timeout);
+
+        // @see https://symfony.com/doc/current/components/process.html Processのsymfony公式Doc
+        // // このオプションを使用すると、メインスクリプトが終了した後も、サブプロセスを実行し続けることができます。
+        // // - (Required Process >= 5.2)
+        // // - Laravel 6.x = Process v4.4.22 のため使えない。残念
+        // $process->setOptions(['create_new_console' => true]);
+
+        // // 非同期実行（xamppではうまく動かなかった。Linuxサーバでは動いた。）
+        // $process->start();
+
+        // [debug] 同期実行
+        // $process->mustRun();
     }
 
     /**

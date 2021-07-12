@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 //use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
+use Illuminate\Queue\Events\JobFailed;
 
 use App\Traits\ConnectRoleTrait;
 
@@ -337,6 +340,12 @@ class AppServiceProvider extends AuthServiceProvider
                 return true;
             }
             return false;
+        });
+
+        // ジョブ失敗イベント
+        Queue::failing(function (JobFailed $event) {
+            // エラーログ出力
+            Log::error("Queue::failing ID:{$event->job->getJobId()} Connection:{$event->connectionName} Message:{$event->exception->getMessage()}");
         });
 
         return false;

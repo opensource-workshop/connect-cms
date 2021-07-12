@@ -22,6 +22,7 @@
     {{csrf_field()}}
 
     {{-- 送信方法 --}}
+    {{-- delete: 送信方法は見なくなったため、コメントアウト
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0">送信方法</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
@@ -42,6 +43,8 @@
             </div>
         </div>
     </div>
+    --}}
+    <input type="hidden" value="0" name="timing">
 
     {{-- 投稿通知 --}}
     @if (isset($use_bucket_mail_methods) && in_array('notice', $use_bucket_mail_methods))
