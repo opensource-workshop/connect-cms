@@ -12,5 +12,5 @@ class Cabinet extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['bucket_id', 'name'];
+    protected $fillable = ['bucket_id', 'name', 'upload_max_size'];
 }
