@@ -110,7 +110,7 @@ class Nc2Block extends Model
         'announcement'  => 'contents',     // お知らせ
         'assignment'    => 'Development',  // レポート
         'bbs'           => 'blogs',        // 掲示板     ※ 2020-09時点では掲示板はブログに移行
-        'cabinet'       => 'Development',  // キャビネット
+        'cabinet'       => 'cabinets',  // キャビネット
         'calendar'      => 'Development',  // カレンダー
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
