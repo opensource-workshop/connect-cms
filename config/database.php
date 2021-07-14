@@ -65,9 +65,9 @@ return [
         ],
 
         'nc2' => [
-            'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
+            'driver' => env('NC2_DB_CONNECTION', 'mysql'),
+            'host' => env('NC2_DB_HOST', '127.0.0.1'),
+            'port' => env('NC2_DB_PORT', '3306'),
             'database' => env('NC2_DB_DATABASE', 'forge'),
             'username' => env('NC2_DB_USERNAME', 'forge'),
             'password' => env('NC2_DB_PASSWORD', ''),
