@@ -11,6 +11,7 @@ use Illuminate\Validation\Rule;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 
 use App\Enums\UploadMaxSize;
@@ -533,7 +534,7 @@ class CabinetsPlugin extends UserPluginBase
             // ファイルにページ情報がある場合
             if ($content->upload->page_id) {
                 $page = Page::find($content->upload->page_id);
-                $page_roles = $this->getPageRoles(array($page->id));
+                $page_roles = PageRole::getPageRoles(array($page->id));
 
                 // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
                 if ($page->isRequestPassword($request, $page_tree)) {
