@@ -386,7 +386,7 @@ class CabinetsPlugin extends UserPluginBase
         $zip->open($save_path, \ZipArchive::CREATE);
 
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
-            $contents = CabinetContent::descendantsAndSelf($cabinet_content_id)->toTree();
+            $contents = CabinetContent::descendantsAndSelf($cabinet_content_id);
             if (!$this->canDownload($request, $contents)) {
                 abort(403, 'ファイル参照権限がありません。');
             }
@@ -395,7 +395,7 @@ class CabinetsPlugin extends UserPluginBase
                 mkdir($this->getTmpDirectory(), 0777, true);
             }
 
-            $this->addContentsToZip($zip, $contents);
+            $this->addContentsToZip($zip, $contents->toTree());
         }
 
         // 空のZIPファイルが出来たら404
