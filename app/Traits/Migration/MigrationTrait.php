@@ -24,6 +24,8 @@ use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
+use App\Models\User\Cabinets\Cabinet;
+use App\Models\User\Cabinets\CabinetContent;
 use App\Models\User\Contents\Contents;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
@@ -359,6 +361,13 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'whatsnews')->delete();
             MigrationMapping::where('target_source_table', 'whatsnews')->delete();
         }
+        
+        if ($target == 'cabinets' || $target == 'all') {
+            Cabinet::truncate();
+            CabinetContent::truncate();
+            Buckets::where('plugin_name', 'cabinets')->delete();
+            MigrationMapping::where('target_source_table', 'cabinets')->delete();
+        }
     }
 
     /**
@@ -678,6 +687,11 @@ trait MigrationTrait
         // 新着情報の取り込み
         if ($this->isTarget('cc_import', 'plugins', 'whatsnews')) {
             $this->importWhatsnews($redo);
+        }
+
+        // キャビネットの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'cabinets')) {
+            $this->importCabinets($redo);
         }
 
         // 固定URLの取り込み
@@ -2435,6 +2449,132 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式のキャビネットをインポート
+     */
+    private function importCabinets($redo)
+    {
+        $this->putMonitor(3, "Cabinets import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('cabinets');
+        }
+
+        // キャビネット定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('cabinets/cabinet_*.ini'));
+
+        // キャビネット定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の cabinet_id
+            $nc2_cabinet_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('cabinet_id', $ini['source_info'])) {
+                $nc2_cabinet_id = $ini['source_info']['cabinet_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'cabinets')->where('source_key', $nc2_cabinet_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // cabinet 取得。この情報から紐づけて、消すものを消してゆく。
+                $cabinet = Cabinet::where('id', $mapping->destination_key)->first();
+                // キャビネットコンテンツ削除
+                CabinetContent::where('cabinet_id', $mapping->destination_key)->delete();
+                if (!empty($cabinet)) {
+                    // Buckets 削除
+                    Buckets::where('id', $cabinet->bucket_id)->delete();
+                    // キャビネット削除
+                    $cabinet->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            // Buckets テーブルと Cabinets テーブル、マッピングテーブルを追加
+            $cabinet_name = '無題';
+            if (array_key_exists('cabinet_base', $ini) && array_key_exists('cabinet_name', $ini['cabinet_base'])) {
+                $cabinet_name = $ini['cabinet_base']['cabinet_name'];
+            }
+            $bucket = Buckets::create(['bucket_name' => $cabinet_name, 'plugin_name' => 'cabinets']);
+
+            $cabinet = Cabinet::create([
+                'bucket_id' => $bucket->id,
+                'name' => $cabinet_name,
+                'upload_max_size' => intval($ini['cabinet_base']['upload_max_size']) / 1024,
+            ]);
+
+            // ルートディレクトを作成する
+            $root_cabinet_content = CabinetContent::create([
+                'cabinet_id' => $cabinet->id,
+                'name' => $cabinet_name,
+                'is_folder' => CabinetContent::is_folder_on,
+            ]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'cabinets',
+                'source_key'           => $nc2_cabinet_id,
+                'destination_key'      => $cabinet->id,
+            ]);
+
+            // ファイルの移行
+            $tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
+            if (Storage::exists($this->getImportPath('cabinets/') . $tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのキャビネット丸ごと）
+                $tsv = Storage::get($this->getImportPath('cabinets/') . $tsv_filename);
+                // ファイル が無いものは対象外
+                if (empty($tsv)) {
+                    continue;
+                }
+
+                // 改行でノード毎に分割
+                $migrated_contents = collect();
+                $tsv_lines = explode("\n", $tsv);
+                foreach ($tsv_lines as $tsv_line) {
+                    // タブで項目に分割
+                    $tsv_cols = explode("\t", $tsv_line);
+
+                    $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')
+                                        ->where('source_key', $tsv_cols[2])->first();
+
+                    $cabinet_content = CabinetContent::create([
+                        'cabinet_id' => $cabinet->id,
+                        'upload_id' => $upload_mapping ? $upload_mapping->destination_key : null,
+                        'name' => empty($tsv_cols[5]) ? $tsv_cols[4] : $tsv_cols[4] . '.' . $tsv_cols[5],
+                        'is_folder' => $tsv_cols[9],
+                        'comment' => $tsv_cols[12],
+                    ]);
+                    $cabinet_content->migrate_parent_id = $tsv_cols[3];
+                    $migrated_contents->push($cabinet_content);
+                    $mapping = MigrationMapping::create([
+                        'target_source_table'  => 'cabinet_contents',
+                        'source_key'           => $tsv_cols[0],
+                        'destination_key'      => $cabinet_content->id,
+                    ]);
+                }
+
+                // 移行したcabinet_contentsの入れ子構造再構築
+                $mapping_migrated = MigrationMapping::where('target_source_table', 'cabinet_contents')->get();
+                foreach ($migrated_contents as $cabinet_content) {
+                    if ($cabinet_content->migrate_parent_id == 0) {
+                        $root = CabinetContent::where('cabinet_id', $cabinet_content->cabinet_id)
+                            ->where('parent_id', null)->first();
+                        $cabinet_content->parent_id = $root->id;
+                    } else {
+                        $cabinet_content->parent_id = $mapping_migrated->where('source_key', $cabinet_content->migrate_parent_id)
+                                                        ->first()->destination_key;
+                    }
+                    $cabinet_content->save();
+                }
+                CabinetContent::fixTree();
+            }
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -2663,6 +2803,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'whatsnews') {
             // 新着情報
             $this->importPluginWhatsnews($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'cabinets') {
+            // キャビネット
+            $this->importPluginCabinets($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -2948,6 +3091,51 @@ trait MigrationTrait
                 'default_hide'      => 0,
             ]);
         }
+    }
+
+    /**
+     * キャビネットプラグインの登録処理
+     */
+    private function importPluginCabinets($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $cabinet_id = null;
+        $cabinet_ini = null;
+        $nc2_cabinet_id = null;
+        $migration_mapping = null;
+        $cabinet = null;
+        $bucket = null;
+
+        // エクスポートファイルの cabinet_id 取得（エクスポート時の連番）
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('cabinet_id', $frame_ini['frame_base'])) {
+            $cabinet_id = $frame_ini['frame_base']['cabinet_id'];
+        }
+        // キャビネットの情報取得
+        if (!empty($cabinet_id) && Storage::exists($this->getImportPath('cabinets/cabinet_') . $cabinet_id . '.ini')) {
+            $cabinet_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('cabinets/cabinet_') . $cabinet_id . '.ini', true);
+        }
+        // NC2 のcabinet_id
+        if (!empty($cabinet_ini) && array_key_exists('source_info', $cabinet_ini) && array_key_exists('cabinet_id', $cabinet_ini['source_info'])) {
+            $nc2_cabinet_id = $cabinet_ini['source_info']['cabinet_id'];
+        }
+        // NC2 のcabinet_id でマップ確認
+        if (!empty($cabinet_ini) && array_key_exists('source_info', $cabinet_ini) && array_key_exists('cabinet_id', $cabinet_ini['source_info'])) {
+            $migration_mapping = MigrationMapping::where('target_source_table', 'cabinets')->where('source_key', $nc2_cabinet_id)->first();
+        }
+        // マップから新Cabinet を取得
+        if (!empty($migration_mapping)) {
+            $cabinet = Cabinet::find($migration_mapping->destination_key);
+        }
+        // 新Blog からBucket ID を取得
+        if (!empty($cabinet)) {
+            $bucket = Buckets::find($cabinet->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Cabinet フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
     }
 
     /**
