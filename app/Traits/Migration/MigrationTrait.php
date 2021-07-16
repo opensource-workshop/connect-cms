@@ -54,6 +54,9 @@ use App\Models\Migration\Nc2\Nc2BbsBlock;
 use App\Models\Migration\Nc2\Nc2BbsPost;
 use App\Models\Migration\Nc2\Nc2BbsPostBody;
 use App\Models\Migration\Nc2\Nc2Block;
+use App\Models\Migration\Nc2\Nc2CabinetBlock;
+use App\Models\Migration\Nc2\Nc2CabinetFile;
+use App\Models\Migration\Nc2\Nc2CabinetManage;
 use App\Models\Migration\Nc2\Nc2Config;
 use App\Models\Migration\Nc2\Nc2Faq;
 use App\Models\Migration\Nc2\Nc2FaqBlock;
@@ -149,7 +152,7 @@ trait MigrationTrait
         'announcement'  => 'contents',     // お知らせ
         'assignment'    => 'Development',  // レポート
         'bbs'           => 'blogs',        // 掲示板（2020-09 時点ではブログに移行）
-        'cabinet'       => 'Development',  // キャビネット
+        'cabinet'       => 'cabinets',     // キャビネット
         'calendar'      => 'Development',  // カレンダー
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
@@ -4188,6 +4191,11 @@ trait MigrationTrait
             $this->nc2ExportWhatsnew($redo);
         }
 
+        // NC2 キャビネット（cabinet）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'cabinets')) {
+            $this->nc2ExportCabinet($redo);
+        }
+
         // NC2 固定リンク（abbreviate_url）データのエクスポート
         $this->nc2ExportAbbreviateUrl($redo);
 
@@ -5791,6 +5799,96 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：キャビネット（キャビネット）の移行
+     */
+    private function nc2ExportCabinet($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportCabinet.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('cabinets/'));
+        }
+
+        // NC2キャビネット（Cabinet）を移行する。
+        $where_cabinet_ids = $this->getMigrationConfig('cabinets', 'nc2_export_where_cabinet_ids');
+        if (empty($where_cabinet_ids)) {
+            $cabinet_manages = Nc2CabinetManage::orderBy('cabinet_id')->get();
+        } else {
+            $cabinet_manages = Nc2CabinetManage::whereIn('cabinet_id', $where_cabinet_ids)->orderBy('cabinet_id')->get();
+        }
+
+        // 空なら戻る
+        if ($cabinet_manages->isEmpty()) {
+            return;
+        }
+
+        // NC2キャビネット（Cabinet）のループ
+        foreach ($cabinet_manages as $cabinet_manage) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($room_ids) && !in_array($cabinet_manage->room_id, $room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // キャビネット設定
+            $ini = "";
+            $ini .= "[cabinet_base]\n";
+            $ini .= "cabinet_name = \"" . $cabinet_manage->cabinet_name . "\"\n";
+            $ini .= "active_flag = " .  $cabinet_manage->active_flag . "\n";
+            $ini .= "add_authority_id = " . $cabinet_manage->add_authority_id . "\n";
+            $ini .= "cabinet_max_size = " . $cabinet_manage->cabinet_max_size . "\n";
+            $ini .= "upload_max_size = " . $cabinet_manage->upload_max_size . "\n";
+
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "cabinet_id = " . $cabinet_manage->cabinet_id . "\n";
+            $ini .= "room_id = " . $cabinet_manage->room_id . "\n";
+            $ini .= "module_name = \"cabinet\"\n";
+
+            // ファイル情報
+            $cabinet_files = Nc2CabinetFile::select('cabinet_file.*', 'cabinet_comment.comment')
+                                ->leftJoin('cabinet_comment','cabinet_file.file_id','=','cabinet_comment.file_id')
+                                ->where('cabinet_file.cabinet_id', $cabinet_manage->cabinet_id)
+                                ->orderBy('cabinet_file.cabinet_id', 'asc')
+                                ->orderBy('cabinet_file.depth', 'asc')
+                                ->get();
+            if (empty($cabinet_files)) {
+                continue;
+            }
+
+            $tsv = '';
+            foreach ($cabinet_files as $index => $cabinet_file) {
+                $tsv .= $cabinet_file['file_id'] . "\t";
+                $tsv .= $cabinet_file['cabinet_id'] . "\t";
+                $tsv .= $cabinet_file['upload_id'] . "\t";
+                $tsv .= $cabinet_file['parent_id'] . "\t";
+                $tsv .= $cabinet_file['file_name'] . "\t";
+                $tsv .= $cabinet_file['extension'] . "\t";
+                $tsv .= $cabinet_file['depth'] . "\t";
+                $tsv .= $cabinet_file['size'] . "\t";
+                $tsv .= $cabinet_file['download_num'] . "\t";
+                $tsv .= $cabinet_file['file_type'] . "\t";
+                $tsv .= $cabinet_file['display_sequence'] . "\t";
+                $tsv .= $cabinet_file['room_id'] . "\t";
+                $tsv .= $cabinet_file['comment'];
+
+                // 最終行は改行コード不要
+                if ($index !== ($cabinet_files->count() - 1)) {
+                    $tsv .= "\n";
+                }
+            }
+            // キャビネットの設定を出力
+            $this->storagePut($this->getImportPath('cabinets/cabinet_') . $this->zeroSuppress($cabinet_manage->cabinet_id) . '.ini', $ini);
+            $tsv = $this->exportStrReplace($tsv, 'cabinets');
+            $this->storagePut($this->getImportPath('cabinets/cabinet_') . $this->zeroSuppress($cabinet_manage->cabinet_id) . '.tsv', $tsv);
+        }
+    }
+
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -6141,6 +6239,12 @@ trait MigrationTrait
         } elseif ($module_name == 'whatsnew') {
             $nc2_whatsnew_block = Nc2WhatsnewBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc2_whatsnew_block->block_id) . "\"\n";
+        } elseif ($module_name == 'cabinet') {
+            $nc2_cabinet_block = Nc2CabinetBlock::where('block_id', $nc2_block->block_id)->first();
+            // ブロックがあり、登録フォームがない場合は対象外
+            if (!empty($nc2_cabinet_block)) {
+                $ret = "cabinet_id = \"" . $this->zeroSuppress($nc2_cabinet_block->cabinet_id) . "\"\n";
+            }
         } elseif ($module_name == 'menu') {
             // メニューの詳細設定（非表示設定が入っている）があれば、設定を加味する。
             $nc2_menu_details = Nc2MenuDetail::select('menu_detail.*', 'pages.permalink')
