@@ -61,9 +61,9 @@
                                     <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">表示順</th>
                                     <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">表示</th>
                                     <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">画像<label class="badge badge-danger">必須</label></th>
-                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">リンクURL</th>
-                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">キャプション</th>
-                                    <th class="text-left text-nowrap align-middle d-block d-xl-table-cell">リンクターゲット</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">リンクURL</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">キャプション</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">リンクターゲット</th>
                                     <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">削除</th>
                                 </tr>
                             </thead>
