@@ -120,6 +120,7 @@
             function submit_delete_item(item_id) {
                 if(confirm('項目を削除します。\nよろしいですか？')){
                     slideshow_items.action = "{{url('/')}}/redirect/plugin/slideshows/deleteItem/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+                    slideshow_items.item_id.value = item_id;
                     slideshow_items.submit();
                 }
                 return false;

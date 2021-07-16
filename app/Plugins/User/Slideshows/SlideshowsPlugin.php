@@ -581,24 +581,28 @@ class SlideshowsPlugin extends UserPluginBase
     {
         $slideshows_item = SlideshowsItems::find($request->item_id);
 
-        // 削除するファイルデータ
-        $delete_upload = Uploads::find($slideshows_item->uploads_id);
+        /**
+         * ※アップロード画像をPATH使い回しで他の箇所でも使用しているケースが想定される為、アップロードファイルの削除は一旦コメントアウト
+         */
+        // // 削除するファイルデータ
+        // $delete_upload = Uploads::find($slideshows_item->uploads_id);
 
-        if ($delete_upload) {
-            // ファイルの削除
-            $directory = $this->getDirectory($delete_upload->id);
-            Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
+        // if ($delete_upload) {
+        //     // ファイルの削除
+        //     $directory = $this->getDirectory($delete_upload->id);
+        //     Storage::delete($directory . '/' . $delete_upload->id . '.' .$delete_upload->extension);
 
-            // uploadsデータの削除
-            $delete_upload->delete();
-        }
+        //     // uploadsデータの削除
+        //     $delete_upload->delete();
+        // }
 
         // 項目の削除
         $slideshows_item->delete();
 
         // フラッシュメッセージ設定
         $request->merge([
-            'flash_message' => 'スライドショー項目を削除しました。（画像ファイル名：' . $delete_upload->client_original_name . '）'
+            // 'flash_message' => 'スライドショー項目を削除しました。（画像ファイル名：' . $delete_upload->client_original_name . '）'
+            'flash_message' => 'スライドショー項目を削除しました。'
         ]);
         
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
