@@ -455,6 +455,7 @@ class SlideshowsPlugin extends UserPluginBase
         $slideshows_item->link_url = $request->link_url;
         $slideshows_item->link_target = $request->link_target;
         $slideshows_item->caption = $request->caption;
+        $slideshows_item->display_flag = ShowType::show;
         $slideshows_item->display_sequence = $max_display_sequence;
         $slideshows_item->save();
 
