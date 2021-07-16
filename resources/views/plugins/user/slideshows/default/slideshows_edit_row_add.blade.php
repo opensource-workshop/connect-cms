@@ -13,7 +13,7 @@
         {{-- 画像選択ボタン --}}
         <label class="input-group-btn d-flex align-items-center justify-content-center">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
-                画像選択<input type="file" name="image_file" style="display:none" @change="selectFile">
+                画像選択<input type="file" name="image_file" style="display:none" @change="selectFileAdd">
                 <label class="badge badge-danger d-xl-none">必須</label>
             </span>
         </label>

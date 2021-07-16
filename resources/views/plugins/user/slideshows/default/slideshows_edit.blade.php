@@ -120,7 +120,6 @@
             function submit_delete_item(item_id) {
                 if(confirm('項目を削除します。\nよろしいですか？')){
                     slideshow_items.action = "{{url('/')}}/redirect/plugin/slideshows/deleteItem/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
-                    slideshow_items.item_id.value = item_id;
                     slideshow_items.submit();
                 }
                 return false;
@@ -161,13 +160,12 @@
                 data: function() {
                     return {
                         tmp_image_url_add:"",
-                        url_add:"",
                         file_name_add:"",
                         items: @json($items)
                     }
                 },
                 methods: {
-                    selectFile(event){
+                    selectFileAdd(event){
                         // input属性に「ref="preview_add"」を追加すれば下記の書き方でも参照可
                         // const file = this.$refs.preview_add.files[0];
                         event.preventDefault()
