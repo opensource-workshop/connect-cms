@@ -6039,7 +6039,7 @@ trait MigrationTrait
 
             // ファイル情報
             $cabinet_files = Nc2CabinetFile::select('cabinet_file.*', 'cabinet_comment.comment')
-                                ->leftJoin('cabinet_comment','cabinet_file.file_id','=','cabinet_comment.file_id')
+                                ->leftJoin('cabinet_comment', 'cabinet_file.file_id', '=', 'cabinet_comment.file_id')
                                 ->where('cabinet_file.cabinet_id', $cabinet_manage->cabinet_id)
                                 ->orderBy('cabinet_file.cabinet_id', 'asc')
                                 ->orderBy('cabinet_file.depth', 'asc')
