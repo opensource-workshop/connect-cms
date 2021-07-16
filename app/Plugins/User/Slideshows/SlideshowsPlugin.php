@@ -14,6 +14,8 @@ use App\Models\Common\Uploads;
 use App\Models\User\Slideshows\Slideshows;
 use App\Models\User\Slideshows\SlideshowsItems;
 
+use App\Enums\ShowType;
+
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -519,6 +521,7 @@ class SlideshowsPlugin extends UserPluginBase
             if($upload){
                 $slideshows_item->uploads_id = $upload->id;
             }
+            $slideshows_item->display_flag = isset($request->display_flags[$item_id]) ? ShowType::show : ShowType::not_show;
             $slideshows_item->link_url = $request->link_urls[$item_id];
             $slideshows_item->link_target = $request->link_targets[$item_id];
             $slideshows_item->caption = $request->captions[$item_id];

@@ -7,7 +7,22 @@
 --}}
 <tr>
     <td class="d-none d-xl-display d-xl-table-cell"></td>
-    <td class="d-none d-xl-display d-xl-table-cell"></td>
+    {{-- 表示フラグ--}}
+    <td class="d-none d-xl-display d-xl-table-cell" style="text-align:center; vertical-align:middle;">
+        <div class="custom-control custom-checkbox">
+            <input 
+                type="checkbox" 
+                class="custom-control-input" 
+                name="display_flags[{{ $item->id }}]" 
+                value="{{ ShowType::show }}" 
+                id="display_flag_{{ $item->id }}" 
+                @if(isset($item->display_flag) && $item->display_flag == ShowType::show)
+                    checked="checked"
+                @endif
+            >
+            <label class="custom-control-label" for="display_flag_{{ $item->id }}"></label>
+        </div>
+    </td>
     {{-- 画像ファイル --}}
     <td class="d-block d-xl-table-cell align-middle">
         {{-- 画像選択ボタン --}}
