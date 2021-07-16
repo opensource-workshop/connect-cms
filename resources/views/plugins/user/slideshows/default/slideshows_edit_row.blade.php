@@ -6,7 +6,18 @@
  * @category スライドショー・プラグイン
 --}}
 <tr>
-    <td class="d-none d-xl-display d-xl-table-cell"></td>
+    {{-- 表示順 --}}
+    <td class="d-none d-xl-display d-xl-table-cell text-nowrap" style="text-align:center; vertical-align:middle;">
+        {{-- 上移動 --}}
+        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $item->id }}, {{ $item->display_sequence }}, 'up')">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+
+        {{-- 下移動 --}}
+        <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $item->id }}, {{ $item->display_sequence }}, 'down')">
+            <i class="fas fa-arrow-down"></i>
+        </button>
+    </td>
     {{-- 表示フラグ--}}
     <td class="d-none d-xl-display d-xl-table-cell" style="text-align:center; vertical-align:middle;">
         <div class="custom-control custom-checkbox">

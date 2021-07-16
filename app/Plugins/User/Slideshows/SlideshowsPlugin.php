@@ -613,13 +613,10 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function updateItemSequence($request, $page_id, $frame_id)
     {
-        // ボタンが押された行の施設データ
-        $target_item = SlideshowsItems::query()
-            ->where('slideshows_id', $request->slideshows_id)
-            ->where('id', $request->item_id)
-            ->first();
+        // ボタンが押された行の項目データ
+        $target_item = SlideshowsItems::find($request->item_id);
 
-        // ボタンが押された前（後）の施設データ
+        // ボタンが押された前（後）の項目データ
         $query = SlideshowsItems::query()
             ->where('slideshows_id', $request->slideshows_id);
         $pair_item = $request->display_sequence_operation == 'up' ?
@@ -636,9 +633,11 @@ class SlideshowsPlugin extends UserPluginBase
         $pair_item->display_sequence = $target_item_display_sequence;
         $pair_item->save();
 
-        $message = '項目【 '. $target_item->item_name .' 】の表示順を更新しました。';
-
-        // 編集画面を呼び出す
-        return $this->editItem($request, $page_id, $frame_id, $request->slideshows_id, $message, null);
+        // フラッシュメッセージ設定
+        $request->merge([
+            'flash_message' => '項目の表示順を更新しました。'
+        ]);
+        
+        // リダイレクト設定はフォーム側で設定している為、return処理は省略
     }
 }
