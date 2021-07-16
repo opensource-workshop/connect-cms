@@ -13,32 +13,29 @@
         {{-- 画像選択ボタン --}}
         <label class="input-group-btn d-flex align-items-center justify-content-center">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
-                画像選択<input type="file" name="image_files[{{ $item->id }}]" style="display:none" @change="selectFile">
+                画像選択<input type="file" name="image_files[{{ $item->id }}]" style="display:none">
                 <label class="badge badge-danger d-xl-none">必須</label>
             </span>
         </label>
         @include('common.errors_inline', ['name' => 'image_files.' . $item->id])
 
-        <div v-if="url_add" class="d-flex align-items-center justify-content-center">
+        <div class="d-flex align-items-center justify-content-center">
             {{-- 画像プレビュー --}}
-            <a href="#" data-toggle="modal" data-target="#modalPreviewAdd">
+            <a href="#" data-toggle="modal" data-target="#modalPreviewRow{{ $item->id }}">
                 <img 
-                    :src="url_add" 
-                    class="border"
+                    src="{{ url('/') }}/file/{{ $item->uploads_id }}"
                     width="100px" 
-                    data-toggle="tooltip"
-                    :title="file_name_add"
                 >
             </a>
         </div>
         {{-- 画像プレビューモーダル --}}
-        <div class="modal fade" id="modalPreviewAdd" tabindex="-1" role="dialog" aria-labelledby="modalPreviewAddTitle" aria-hidden="true">
+        <div class="modal fade" id="modalPreviewRow{{ $item->id }}" tabindex="-1" role="dialog" aria-labelledby="modalPreviewRow{{ $item->id }}Title" aria-hidden="true">
             {{-- モーダルサイズはXL --}}
             <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
                 <div class="modal-content">
                     {{-- ヘッダ ※ファイル名をVueで表示 --}}
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modalPreviewAddTitle">@{{ file_name_add }}</h5>
+                        <h5 class="modal-title" id="modalPreviewRow{{ $item->id }}Title">{{ $item->client_original_name }}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -46,9 +43,9 @@
                     {{-- コンテンツ内容 --}}
                     <div class="modal-body">
                         <img 
-                            :src="url_add" 
+                            src="{{ url('/') }}/file/{{ $item->uploads_id }}"
                             class="border"
-                            width="100%" 
+                            width="100%"
                         >
                     </div>
                 </div>

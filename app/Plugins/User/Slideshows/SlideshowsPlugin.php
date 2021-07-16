@@ -40,27 +40,11 @@ class SlideshowsPlugin extends UserPluginBase
         $functions['post'] = [
             'index',
             'addItem',
-            'updateItem',
+            'updateItems',
             'deleteItem',
             'updateItemSequence',
         ];
         return $functions;
-    }
-
-    /**
-     * 追加の権限定義（コアから呼び出す）
-     */
-    public function declareRole()
-    {
-        // 標準権限以外で設定画面などから呼ばれる権限の定義
-        // 標準権限は右記で定義 config/cc_role.php
-        //
-        // 権限チェックテーブル
-        $role_ckeck_table = [];
-
-        $role_ckeck_table["updateItem"]         = ['buckets.editItem'];
-        $role_ckeck_table["updateItemSequence"] = ['buckets.editItem'];
-        return $role_ckeck_table;
     }
 
     /**
@@ -481,6 +465,75 @@ class SlideshowsPlugin extends UserPluginBase
     }
 
     /**
+     * uploadsテーブルへInsert
+     */
+    private function insertUploads($image_file)
+    {
+        return Uploads::create([
+            'client_original_name' => $image_file->getClientOriginalName(),
+            'mimetype'             => $image_file->getClientMimeType(),
+            'extension'            => $image_file->getClientOriginalExtension(),
+            'size'                 => $image_file->getClientSize(),
+            'plugin_name'          => 'slideshows',
+            'page_id'              => $this->page->id,
+            'temporary_flag'       => 0,
+            'created_id'           => Auth::user()->id,
+        ]);
+    }
+
+    /**
+     * 項目の更新
+     */
+    public function updateItems($request, $page_id, $frame_id)
+    {
+        foreach(array_keys($request->link_urls) as $item_id){
+
+            $upload_image_path = null;
+            $upload = null;
+
+            // 画像のアップロードがあれば書き換える
+            if ($request->hasFile('image_files') && isset($request->file('image_files')[$item_id])) {
+                // UploadedFileオブジェクトを取得
+                $image_file = $request->file('image_files')[$item_id];
+
+                // uploadsテーブルへInsert
+                $upload = $this->insertUploads($image_file);
+
+                // 保存先のディレクトリを取得
+                $directory = $this->getDirectory($upload->id);
+
+                // 保存先のディレクトリがなかったら作成
+                if (!Storage::exists(storage_path('app/') . $directory . '/')) {
+                    Storage::makeDirectory(storage_path('app/') . $directory . '/', 0775, true);
+                }
+
+                // ファイル名は「(uploadsのid).(拡張子)」形式で保存する
+                $upload_image_path = $image_file->storeAs($directory, $upload->id . '.' . $image_file->getClientOriginalExtension());
+            }
+
+            // 項目の更新処理
+            $slideshows_item = SlideshowsItems::find($item_id);
+            if($upload_image_path){
+                $slideshows_item->image_path = $upload_image_path;
+            }
+            if($upload){
+                $slideshows_item->uploads_id = $upload->id;
+            }
+            $slideshows_item->link_url = $request->link_urls[$item_id];
+            $slideshows_item->link_target = $request->link_targets[$item_id];
+            $slideshows_item->caption = $request->captions[$item_id];
+            $slideshows_item->save();
+        }
+
+        // フラッシュメッセージ設定
+        $request->merge([
+            'flash_message' => 'スライドショー項目を更新しました。'
+        ]);
+        
+        // リダイレクト設定はフォーム側で設定している為、return処理は省略
+    }
+
+    /**
      * 項目編集画面の表示
      */
     public function editItem($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
@@ -498,6 +551,11 @@ class SlideshowsPlugin extends UserPluginBase
 
         // 項目データ取得
         $items = SlideshowsItems::query()
+            ->select(
+                'slideshows_items.*',
+                'uploads.client_original_name'
+            )
+            ->join('uploads', 'uploads.id', '=', 'slideshows_items.uploads_id')
             ->where('slideshows_items.slideshows_id', $slideshows_id)
             ->orderby('slideshows_items.display_sequence')
             ->get();
@@ -540,49 +598,6 @@ class SlideshowsPlugin extends UserPluginBase
         ]);
         
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
-    }
-
-    /**
-     * 項目の更新
-     */
-    public function updateItem($request, $page_id, $frame_id)
-    {
-        // 明細行から更新対象を抽出する為のnameを取得
-        $str_item_name = "item_name_".$request->item_id;
-        $str_item_type = "item_type_".$request->item_id;
-        $str_required = "required_".$request->item_id;
-
-        $validate_value = [
-            'item_name_'.$request->item_id => ['required'],
-            'item_type_'.$request->item_id => ['required'],
-        ];
-
-        $validate_attribute = [
-            'item_name_'.$request->item_id  => '項目名',
-            'item_type_'.$request->item_id  => '型',
-        ];
-
-        // エラーチェック
-        $validator = Validator::make($request->all(), $validate_value);
-        $validator->setAttributeNames($validate_attribute);
-
-        $errors = null;
-        if ($validator->fails()) {
-            // エラーと共に編集画面を呼び出す
-            $errors = $validator->errors();
-            return $this->editItem($request, $page_id, $frame_id, $request->slideshows_id, null, $errors);
-        }
-
-        // 項目の更新処理
-        $item = SlideshowsItems::query()->where('id', $request->item_id)->first();
-        $item->item_name = $request->$str_item_name;
-        $item->item_type = $request->$str_item_type;
-        $item->required = $request->$str_required ? \Required::on : \Required::off;
-        $item->save();
-        $message = '項目【 '. $request->$str_item_name .' 】を更新しました。';
-
-        // 編集画面を呼び出す
-        return $this->editItem($request, $page_id, $frame_id, $request->slideshows_id, $message, $errors);
     }
 
     /**
