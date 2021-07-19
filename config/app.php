@@ -276,7 +276,7 @@ $app_array = [
         'BlogDisplayCreatedName' => \App\Enums\BlogDisplayCreatedName::class,
         'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
         'UploadMaxSize' => \App\Enums\UploadMaxSize::class,
-        
+        'SearchsTargetPlugin' => \App\Enums\SearchsTargetPlugin::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

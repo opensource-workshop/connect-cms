@@ -115,10 +115,10 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
-                @foreach($searchs->getTargetPlugins() as $target_plugin => $use_flag)
+                @foreach($searchs->getTargetPlugins() as $key => $target_plugin)
                     <div class="custom-control custom-checkbox custom-control-inline">
-                        <input type="checkbox" name="target_plugin[{{$target_plugin}}]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
-                        <label class="custom-control-label" for="target_plugin_{{$target_plugin}}">{{$target_plugin}}</label>
+                        <input type="checkbox" name="target_plugin[{{$key}}]" value="{{$key}}" class="custom-control-input" id="target_plugin_{{$key}}" @if(old("target_plugin.$key", $target_plugin['use_flag'])) checked=checked @endif>
+                        <label class="custom-control-label" for="target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
                     </div>
                 @endforeach
                 </div>
