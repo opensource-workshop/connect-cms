@@ -68,15 +68,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{-- 更新用の行 --}}
-                                @foreach($items as $item)
-                                    @include('plugins.user.slideshows.default.slideshows_edit_row')
-                                @endforeach
                                 {{-- 新規登録用の行 --}}
                                 <tr>
                                     <th colspan="7">【項目の追加行】</th>
                                 </tr>
                                 @include('plugins.user.slideshows.default.slideshows_edit_row_add')
+                                <tr>
+                                    <th colspan="7">【既存の設定行】</th>
+                                </tr>
+                                {{-- 更新用の行 --}}
+                                @foreach($items as $item)
+                                    @include('plugins.user.slideshows.default.slideshows_edit_row')
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
