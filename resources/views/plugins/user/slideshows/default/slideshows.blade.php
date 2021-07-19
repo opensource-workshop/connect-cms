@@ -9,11 +9,77 @@
 
 @section("plugin_contents_$frame->id")
 
-@include('common.errors_form_line')
+    {{-- 未設定エラーメッセージの表示等 --}}
+    @include('common.errors_form_line')
 
-<fieldset>
-    <legend class="sr-only">{{$slideshow->slideshows_name}}</legend>
-    {{ csrf_field() }}
-
-</fieldset>
+    @if ($slideshows_items->count() > 0)
+        {{-- インジケータの形状は標準だとクリックしづらいので、とりあえず丸型にしておきます。後々の改修でインジケータ形状のデザイン機能も入れられるといいと考えてます。 --}}
+        <style>
+            .carousel-indicators li{
+                border-radius: 50%;
+                height: 20px;
+                width: 20px;
+                background-color: #ffffff;
+            }
+        </style>
+        <div id="carousel_{{ $frame_id }}" class="carousel slide {{ $slideshow->fade_use_flag == ShowType::show ? 'carousel-fade' : '' }}" data-ride="carousel" data-interval="{{ $slideshow->image_interval }}">
+            <div class="carousel-inner">
+                @foreach ($slideshows_items as $item)
+                    <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
+                        @if ($item->link_url)
+                            {{-- 画像＋リンク --}}
+                            <a 
+                                href="{{ $item->link_url }}"
+                                @if ($item->link_target)
+                                    target="{{ $item->link_target }}"
+                                @endif
+                            >
+                                <img 
+                                    src="/file/{{ $item->uploads_id }}" 
+                                    class="d-block w-100" 
+                                >
+                            </a>
+                        @else
+                            {{-- 画像のみ --}}
+                            <img 
+                                src="/file/{{ $item->uploads_id }}" 
+                                class="d-block w-100" 
+                            >
+                        @endif
+                        {{-- キャプション ※設定があれば表示 --}}
+                        @if ($item->caption)
+                            <div class="carousel-caption d-none d-md-block">
+                                <h5>{{ $item->caption }}</h5>
+                        </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+            {{-- コントロール表示 --}}
+            @if ($slideshow->control_display_flag == ShowType::show)
+                <a class="carousel-control-prev" href="#carousel_{{ $frame_id }}" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#carousel_{{ $frame_id }}" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            @endif
+            {{-- インジケータ表示 --}}
+            @if ($slideshow->indicators_display_flag == ShowType::show)
+                <ol class="carousel-indicators">
+                    @foreach ($slideshows_items as $item)
+                        <li 
+                            data-target="#carousel_{{ $frame_id }}" 
+                            data-slide-to="{{ $loop->iteration - 1 }}" 
+                            @if ($loop->first)
+                                class="active"
+                            @endif
+                        ></li>
+                    @endforeach
+                </ol>
+            @endif
+        </div>
+    @endif
 @endsection
