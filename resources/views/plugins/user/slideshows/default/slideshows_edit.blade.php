@@ -159,28 +159,27 @@
                 $('[data-toggle="tooltip"]').tooltip()
             })
 
-            const app_{{ $frame->id }} = new Vue({
+            /**
+             * 新規追加行・更新行のimgのsrc、及び、モーダルのヘッダーに表示しているファイル名をイベントから抽出して動的に書き換える
+             */
+             const app_{{ $frame->id }} = new Vue({
                 el: "#app_{{ $frame->id }}",
                 data: function() {
                     return {
-                        // 新規追加行用
-                        image_url_add:"",
-                        file_name_add:"",
-                        // 更新行用
+                        // 更新行用の変数
                         @foreach($items as $item)
                             image_url_{{ $item->id }} : "{{ url('/') }}/file/{{ $item->uploads_id }}",
                             file_name_{{ $item->id }} : "{{ $item->client_original_name }}",
                         @endforeach
-                        items: @json($items)
+                        // 新規追加行用の変数
+                        image_url_add:"",
+                        file_name_add:""
                     }
                 },
                 methods: {
                     // 受け取ったイベントから画像オブジェクトのURL、ファイル名を生成してHTMLにセットする
                     setImageResource(items_id, event){
-                        // input属性に「ref="preview_add"」を追加すれば下記の書き方でも参照可
-                        // const file = this.$refs.preview_add.files[0];
-                        event.preventDefault()
-                        const file = event.target.files[0]
+                        const file = event.target.files[0];
                         // console.log(file);
                         eval("this.image_url_" + items_id + " = URL.createObjectURL(file);");
                         eval("this.file_name_" + items_id + " = file.name;");
