@@ -160,12 +160,19 @@
                 el: "#app_{{ $frame->id }}",
                 data: function() {
                     return {
+                        // 新規追加行用
                         tmp_image_url_add:"",
                         file_name_add:"",
+                        // 更新行用
+                        @foreach($items as $item)
+                            tmp_image_url_{{ $item->id }} : "{{ url('/') }}/file/{{ $item->uploads_id }}",
+                            file_name_{{ $item->id }} : "{{ $item->client_original_name }}",
+                        @endforeach
                         items: @json($items)
                     }
                 },
                 methods: {
+                    // 新規追加行用
                     selectFileAdd(event){
                         // input属性に「ref="preview_add"」を追加すれば下記の書き方でも参照可
                         // const file = this.$refs.preview_add.files[0];
@@ -174,6 +181,16 @@
                         // console.log(file);
                         this.tmp_image_url_add = URL.createObjectURL(file);
                         this.file_name_add = file.name;
+                    },
+                    // 更新行用
+                    selectFile(items_id, event){
+                        // input属性に「ref="preview_add"」を追加すれば下記の書き方でも参照可
+                        // const file = this.$refs.preview_add.files[0];
+                        event.preventDefault()
+                        const file = event.target.files[0]
+                        // console.log(file);
+                        eval("this.tmp_image_url_" + items_id + " = URL.createObjectURL(file);");
+                        eval("this.file_name_" + items_id + " = file.name;");
                     }
                 }
             });
