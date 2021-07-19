@@ -39,7 +39,7 @@
         {{-- 画像選択ボタン --}}
         <label class="input-group-btn d-flex align-items-center justify-content-center">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
-                画像選択<input type="file" name="image_files[{{ $item->id }}]" style="display:none" @change="selectFile({{ $item->id }}, arguments[0])">
+                画像選択<input type="file" name="image_files[{{ $item->id }}]" style="display:none" @change="setImageResource({{ $item->id }}, arguments[0])">
                 <label class="badge badge-danger d-xl-none">必須</label>
             </span>
         </label>
@@ -49,7 +49,7 @@
             {{-- 画像プレビュー --}}
             <a href="#" data-toggle="modal" data-target="#modalPreviewRow{{ $item->id }}">
                 <img 
-                    :src="tmp_image_url_{{ $item->id }}"
+                    :src="image_url_{{ $item->id }}"
                     width="100px" 
                 >
             </a>
@@ -69,7 +69,7 @@
                     {{-- コンテンツ内容 --}}
                     <div class="modal-body">
                         <img 
-                            :src="tmp_image_url_{{ $item->id }}"
+                            :src="image_url_{{ $item->id }}"
                             class="border img-fluid"
                         >
                     </div>

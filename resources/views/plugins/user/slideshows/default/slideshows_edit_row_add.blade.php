@@ -13,17 +13,17 @@
         {{-- 画像選択ボタン --}}
         <label class="input-group-btn d-flex align-items-center justify-content-center">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
-                画像選択<input type="file" name="image_file" style="display:none" @change="selectFile('add', arguments[0])">
+                画像選択<input type="file" name="image_file" style="display:none" @change="setImageResource('add', arguments[0])">
                 <label class="badge badge-danger d-xl-none">必須</label>
             </span>
         </label>
         @include('common.errors_inline', ['name' => 'image_file'])
 
-        <div v-if="tmp_image_url_add" class="d-flex align-items-center justify-content-center">
+        <div v-if="image_url_add" class="d-flex align-items-center justify-content-center">
             {{-- 画像プレビュー --}}
             <a href="#" data-toggle="modal" data-target="#modalPreviewAdd">
                 <img 
-                    :src="tmp_image_url_add" 
+                    :src="image_url_add" 
                     class="border"
                     width="100px" 
                     data-toggle="tooltip"
@@ -46,7 +46,7 @@
                     {{-- コンテンツ内容 --}}
                     <div class="modal-body">
                         <img 
-                            :src="tmp_image_url_add" 
+                            :src="image_url_add" 
                             class="border img-fluid"
                         >
                     </div>
