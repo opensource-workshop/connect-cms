@@ -18,7 +18,7 @@
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
     function save_action() {
-        form_bbses_posts{{$frame_id}}.status.value = "1";
+        form_bbses_posts{{$frame_id}}.status.value = "{{StatusType::temporary}}";
         form_bbses_posts{{$frame_id}}.submit();
     }
 </script>
@@ -38,7 +38,7 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
-    <input type="hidden" name="status" value="0">
+    <input type="hidden" name="status" value="{{StatusType::active}}">
     @if (isset($parent_post))
         <input type="hidden" name="parent_id" value="{{$parent_post->id}}">
     @endif

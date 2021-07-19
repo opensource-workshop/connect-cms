@@ -4,12 +4,12 @@ namespace App\Plugins\User\Bbses;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
 use App\Enums\StatusType;
+use App\Enums\UserStatus;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -25,7 +25,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 掲示板・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class BbsesPlugin extends UserPluginBase
 {
@@ -57,7 +57,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  権限定義
+     * 権限定義
      */
     public function declareRole()
     {
@@ -115,7 +115,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  データ取得時の権限条件の付与
+     * データ取得時の権限条件の付与
      */
     protected function appendAuthWhere($query, $table_name)
     {
@@ -165,7 +165,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  Root の POST一覧取得
+     * Root の POST一覧取得
      */
     private function getRootPosts($bbs_frame)
     {
@@ -195,7 +195,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  指定されたスレッドの記事一覧取得
+     * 指定されたスレッドの記事一覧取得
      */
     private function getThreadPosts($bbs_frame, $thread_root_ids, $children_only = false)
     {
@@ -226,29 +226,32 @@ class BbsesPlugin extends UserPluginBase
     /* スタティック関数 */
 
     /**
-     *  新着情報用メソッド
+     * 新着情報用メソッド
      */
     public static function getWhatsnewArgs()
     {
         // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('bbs_posts')
-                      ->select(
-                          'frames.page_id         as page_id',
-                          'frames.id              as frame_id',
-                          'bbs_posts.id           as post_id',
-                          'bbs_posts.title        as post_title',
-                          DB::raw("null           as important"),
-                          'bbs_posts.created_at   as posted_at',
-                          'bbs_posts.created_name as posted_name',
-                          DB::raw("null           as classname"),
-                          DB::raw("null           as category"),
-                          DB::raw('"bbses"        as plugin_name')
-                      )
-                      ->join('bbses', 'bbses.id', '=', 'bbs_posts.bbs_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
-                      ->where('bbs_posts.status', 0)
-                      ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('bbs_posts.deleted_at');
+        $return[] = BbsPost::
+            select(
+                'frames.page_id         as page_id',
+                'frames.id              as frame_id',
+                'bbs_posts.id           as post_id',
+                'bbs_posts.title        as post_title',
+                DB::raw("null           as important"),
+                'bbs_posts.created_at   as posted_at',
+                'bbs_posts.created_name as posted_name',
+                DB::raw("null           as classname"),
+                DB::raw("null           as category"),
+                DB::raw('"bbses"        as plugin_name')
+            )
+            ->join('bbses', function ($join) {
+                // 論理削除対応
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->whereNull('bbses.deleted_at');
+            })
+            ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+            ->where('bbs_posts.status', StatusType::active)
+            ->where('frames.disable_whatsnews', 0);
 
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/bbses/show';
@@ -257,7 +260,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  検索用メソッド
+     * 検索用メソッド
      */
     /*
     public static function getSearchArgs($search_keyword)
@@ -298,8 +301,8 @@ class BbsesPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -323,7 +326,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  詳細表示関数
+     * 詳細表示関数
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
@@ -394,7 +397,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  記事登録処理
+     * 記事登録処理
      */
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
@@ -440,12 +443,12 @@ class BbsesPlugin extends UserPluginBase
         }
 
         // 承認の要否確認とステータス処理
-        if ($request->status == "1") {
-            $post->status = 1;  // 一時保存
+        if ($request->status == StatusType::temporary) {
+            $post->status = StatusType::temporary;  // 一時保存
         } elseif ($this->buckets->needApprovalUser(Auth::user())) {
-            $post->status = 2;  // 承認待ち
+            $post->status = StatusType::approval_pending;  // 承認待ち
         } else {
-            $post->status = 0;  // 公開
+            $post->status = StatusType::active;  // 公開
         }
 
         // 返信の場合
@@ -478,11 +481,11 @@ class BbsesPlugin extends UserPluginBase
         // この post の thread_root_id と同じ post でかつ、この post 自身ではなく、データの status は公開のもの。
         $mail_users = BbsPost::select('users.name', 'users.email')
                              ->join('users', 'users.id', '=', 'bbs_posts.created_id')
-                             ->where('users.status', 0)
+                             ->where('users.status', UserStatus::active)
                              ->whereNotNull('users.email')
                              ->where('bbs_posts.thread_root_id', $post->thread_root_id)
                              ->where('bbs_posts.id', '!=', $post->id)
-                             ->where('bbs_posts.status', 0)
+                             ->where('bbs_posts.status', StatusType::active)
                              ->distinct()
                              ->get();
         $this->sendRelateNotice($post, $mail_users, 'show');
@@ -492,7 +495,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  承認処理
+     * 承認処理
      */
     public function approval($request, $page_id, $frame_id, $post_id)
     {
@@ -509,7 +512,7 @@ class BbsesPlugin extends UserPluginBase
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $post->updated_at = now();
-        $post->status = 0;  // 公開
+        $post->status = StatusType::active;  // 公開
         $post->update();
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
@@ -520,7 +523,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function delete($request, $page_id, $frame_id, $post_id)
     {
@@ -644,7 +647,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  バケツ登録処理
+     * バケツ登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $bucket_id = null)
     {
@@ -687,7 +690,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $bbs_id)
     {
@@ -716,9 +719,9 @@ class BbsesPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新
