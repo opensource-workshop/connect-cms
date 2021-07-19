@@ -110,7 +110,11 @@ class SlideshowsPlugin extends UserPluginBase
         $setting_error_messages = null;
         $slideshows_items = new Collection();
         if ($slideshow) {
-            $slideshows_items = SlideshowsItems::query()->where('slideshows_id', $slideshow->id)->get();
+            $slideshows_items = SlideshowsItems::query()
+                ->where('slideshows_id', $slideshow->id)
+                ->where('display_flag', ShowType::show)
+                ->orderBy('display_sequence')
+                ->get();
         } else {
             // フレームに紐づくスライドショー親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するスライドショーを選択するか、作成してください。';
