@@ -83,7 +83,7 @@ class SlideshowsPlugin extends UserPluginBase
         // Frame データ
         $frame = Frame::query()
             ->select(
-                'frames.*', 
+                'frames.*',
                 'slideshows.id as slideshows_id'
             )
             ->leftJoin('slideshows', 'slideshows.bucket_id', '=', 'frames.bucket_id')
@@ -120,7 +120,7 @@ class SlideshowsPlugin extends UserPluginBase
             $setting_error_messages[] = 'フレームの設定画面から、使用するスライドショーを選択するか、作成してください。';
         }
 
-        if($slideshows_items->count() == 0){
+        if ($slideshows_items->count() == 0) {
             // フレームに紐づくスライドショー子データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するスライドショーの項目を定義してください。';
         }
@@ -180,7 +180,8 @@ class SlideshowsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view('slideshows_edit_slideshow',
+        return $this->view(
+            'slideshows_edit_slideshow',
             [
                 'slideshow_frame' => $slideshow_frame,
                 'slideshow' => $slideshow,
@@ -361,11 +362,11 @@ class SlideshowsPlugin extends UserPluginBase
         // * 現在のものを最初に表示する。orderByRaw('buckets.id = ' . $this->buckets->id . ' desc') ※ desc 指定が必要だった。
         $buckets_query = DB::table('buckets')
             ->select(
-                'buckets.*', 
-                'slideshows.id as slideshows_id', 
-                'slideshows.slideshows_name', 
-                'slideshows.updated_at as slideshows_updated_at', 
-                'frames.id as frames_id', 
+                'buckets.*',
+                'slideshows.id as slideshows_id',
+                'slideshows.slideshows_name',
+                'slideshows.updated_at as slideshows_updated_at',
+                'frames.id as frames_id',
                 'frames.frame_title',
                 'pages.page_name'
             )
@@ -388,7 +389,7 @@ class SlideshowsPlugin extends UserPluginBase
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         return $this->view(
-            'slideshows_list_buckets', 
+            'slideshows_list_buckets',
             [
                 'buckets_list'      => $buckets_list,
                 'order_link'        => $order_link,
@@ -493,7 +494,7 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function updateItems($request, $page_id, $frame_id)
     {
-        foreach(array_keys($request->link_urls) as $item_id){
+        foreach (array_keys($request->link_urls) as $item_id) {
 
             $upload_image_path = null;
             $upload = null;
@@ -520,10 +521,10 @@ class SlideshowsPlugin extends UserPluginBase
 
             // 項目の更新処理
             $slideshows_item = SlideshowsItems::find($item_id);
-            if($upload_image_path){
+            if ($upload_image_path) {
                 $slideshows_item->image_path = $upload_image_path;
             }
-            if($upload){
+            if ($upload) {
                 $slideshows_item->uploads_id = $upload->id;
             }
             $slideshows_item->display_flag = isset($request->display_flags[$item_id]) ? ShowType::show : ShowType::not_show;
