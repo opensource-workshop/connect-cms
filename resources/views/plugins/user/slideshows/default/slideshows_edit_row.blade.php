@@ -57,7 +57,7 @@
         {{-- 画像プレビューモーダル --}}
         <div class="modal fade" id="modalPreviewRow{{ $item->id }}" tabindex="-1" role="dialog" aria-labelledby="modalPreviewRow{{ $item->id }}Title" aria-hidden="true">
             {{-- モーダルサイズはXL --}}
-            <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     {{-- ヘッダ ※ファイル名をVueで表示 --}}
                     <div class="modal-header">
@@ -70,8 +70,7 @@
                     <div class="modal-body">
                         <img 
                             :src="tmp_image_url_{{ $item->id }}"
-                            class="border"
-                            width="100%"
+                            class="border img-fluid"
                         >
                     </div>
                 </div>

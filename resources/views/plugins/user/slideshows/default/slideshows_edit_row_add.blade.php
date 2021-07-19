@@ -34,7 +34,7 @@
         {{-- 画像プレビューモーダル --}}
         <div class="modal fade" id="modalPreviewAdd" tabindex="-1" role="dialog" aria-labelledby="modalPreviewAddTitle" aria-hidden="true">
             {{-- モーダルサイズはXL --}}
-            <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     {{-- ヘッダ ※ファイル名をVueで表示 --}}
                     <div class="modal-header">
@@ -47,8 +47,7 @@
                     <div class="modal-body">
                         <img 
                             :src="tmp_image_url_add" 
-                            class="border"
-                            width="100%" 
+                            class="border img-fluid"
                         >
                     </div>
                 </div>
