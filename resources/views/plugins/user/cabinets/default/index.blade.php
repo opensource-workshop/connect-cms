@@ -214,15 +214,14 @@
                     <div class="card-body">
                         <div class="text-danger">以下のデータを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</div>
                         <ul class="text-danger" id="selected-contents"></ul>
-                        </div>
-                        <div class="text-center mb-2">
-                            {{-- キャンセルボタン --}}
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                <i class="fas fa-times"></i> キャンセル
-                            </button>
-                            {{-- 削除ボタン --}}
-                            <button type="button" class="btn btn-danger" onclick="deleteContents()"><i class="fas fa-check"></i> 本当に削除する</button>
-                        </div>
+                    </div>
+                    <div class="text-center mb-2">
+                        {{-- キャンセルボタン --}}
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> キャンセル
+                        </button>
+                        {{-- 削除ボタン --}}
+                        <button type="button" class="btn btn-danger" onclick="deleteContents()"><i class="fas fa-check"></i> 本当に削除する</button>
                     </div>
                 </div>
             </div>
