@@ -11,6 +11,7 @@ use Illuminate\Validation\Rule;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 
 use App\Enums\UploadMaxSize;
@@ -385,7 +386,7 @@ class CabinetsPlugin extends UserPluginBase
         $zip->open($save_path, \ZipArchive::CREATE);
 
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
-            $contents = CabinetContent::descendantsAndSelf($cabinet_content_id)->toTree();
+            $contents = CabinetContent::descendantsAndSelf($cabinet_content_id);
             if (!$this->canDownload($request, $contents)) {
                 abort(403, 'ファイル参照権限がありません。');
             }
@@ -394,7 +395,7 @@ class CabinetsPlugin extends UserPluginBase
                 mkdir($this->getTmpDirectory(), 0777, true);
             }
 
-            $this->addContentsToZip($zip, $contents);
+            $this->addContentsToZip($zip, $contents->toTree());
         }
 
         // 空のZIPファイルが出来たら404
@@ -533,7 +534,7 @@ class CabinetsPlugin extends UserPluginBase
             // ファイルにページ情報がある場合
             if ($content->upload->page_id) {
                 $page = Page::find($content->upload->page_id);
-                $page_roles = $this->getPageRoles(array($page->id));
+                $page_roles = PageRole::getPageRoles(array($page->id));
 
                 // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
                 if ($page->isRequestPassword($request, $page_tree)) {
