@@ -34,8 +34,8 @@
                                 @endfor
                                 {{$page->page_name}}
 
-                                {{-- カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
-                                @if ($menu)
+                                {{-- メニュー設定が生成されていて、表示する子ページがあり、カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
+                                @if ($menu && $page->existChildrenPagesToDisplay($page->children))
                                     @if ($page->isAncestorOf($current_page) || $current_page->id == $page->id)
                                         {!!$menu->getFolderCloseFont()!!}
                                     @else

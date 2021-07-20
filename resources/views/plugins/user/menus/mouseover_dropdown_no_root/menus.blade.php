@@ -14,8 +14,8 @@
         {{-- 非表示のページは対象外 --}}
         @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
-                {{-- 子供のページがある場合 --}}
-                @if (count($page_obj->children) > 0)
+            {{-- 子供のページがあり、表示する子ページがある場合 --}}
+            @if (count($page_obj->children) > 0 && $page->existChildrenPagesToDisplay($page_obj->children))
 
                     <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     {{-- カレント --}}

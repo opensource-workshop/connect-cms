@@ -547,4 +547,13 @@ class Page extends Model
         }
         return false;
     }
+
+    /**
+     * 表示する子ページが存在する
+     */
+    public function existChildrenPagesToDisplay($children)
+    {
+        $display_children = $children->where('display_flag', 1);
+        return $display_children->isNotEmpty();
+    }
 }
