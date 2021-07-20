@@ -6,19 +6,21 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use Carbon\Carbon;
+// use Carbon\Carbon;
 
 use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
-use App\Models\Core\Configs;
+// use App\Models\Core\Configs;
 use App\Models\User\Searchs\Searchs;
-use App\Models\User\Searchs\SearchsDual;
+// use App\Models\User\Searchs\SearchsDual;
 
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
+
+use App\Enums\SearchsTargetPlugin;
 
 /**
  * 検索プラグイン
@@ -39,7 +41,7 @@ class SearchsPlugin extends UserPluginBase
     /* コアから呼び出す関数 */
 
     /**
-     *  関数定義（コアから呼び出す）
+     * 関数定義（コアから呼び出す）
      */
     public function getPublicFunctions()
     {
@@ -65,9 +67,9 @@ class SearchsPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面の最初のタブ（コアから呼び出す）
+     * 編集画面の最初のタブ（コアから呼び出す）
      *
-     *  スーパークラスをオーバーライド
+     * スーパークラスをオーバーライド
      */
     public function getFirstFrameEditAction()
     {
@@ -77,7 +79,7 @@ class SearchsPlugin extends UserPluginBase
     /* private関数 */
 
     /**
-     *  紐づく検索とフレームデータの取得
+     * 紐づく検索とフレームデータの取得
      */
     private function getSearchsFrame($frame_id)
     {
@@ -96,18 +98,20 @@ class SearchsPlugin extends UserPluginBase
     }
 
     /**
-     *  新着対象のプラグインがあるフレームデータの取得
+     * 新着対象のプラグインがあるフレームデータの取得
      */
     private function getTargetPluginsFrames()
     {
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                       ->whereIn('frames.plugin_name', array('blogs'))
-                       ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
-                       ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
-                       ->where('disable_searchs', 0)
-                       ->orderBy('pages._lft', 'asc')
-                       ->get();
+            // ->whereIn('frames.plugin_name', array('blogs'))
+            ->whereIn('frames.plugin_name', SearchsTargetPlugin::getKeysPluginsCanSpecifiedFrames())
+            ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+            ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+            ->where('disable_searchs', 0)
+            ->orderBy('pages._lft', 'asc')
+            ->get();
+
         return $frames;
     }
 
@@ -210,8 +214,8 @@ class SearchsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -239,7 +243,7 @@ class SearchsPlugin extends UserPluginBase
     }
 
     /**
-     *  検索アクション
+     * 検索アクション
      */
     public function search($request, $page_id, $frame_id)
     {
@@ -347,7 +351,7 @@ class SearchsPlugin extends UserPluginBase
     }
 
     /**
-     *  設定の登録処理
+     * 設定の登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -430,7 +434,7 @@ class SearchsPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $id)
     {
@@ -451,9 +455,9 @@ class SearchsPlugin extends UserPluginBase
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新

@@ -262,41 +262,42 @@ class BbsesPlugin extends UserPluginBase
     /**
      * 検索用メソッド
      */
-    /*
     public static function getSearchArgs($search_keyword)
     {
-        $return[] = DB::table('bbses_posts')
-                      ->select(
-                          'bbses_posts.id           as post_id',
-                          'frames.id                as frame_id',
-                          'frames.page_id           as page_id',
-                          'pages.permanent_link     as permanent_link',
-                          'bbses_posts.title        as post_title',
-                          DB::raw("null             as important"),
-                          'bbses_posts.created_at   as posted_at',
-                          'bbses_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category_id"),
-                          DB::raw("null             as category"),
-                          DB::raw('"bbses"          as plugin_name')
-                      )
-                      ->join('bbses', 'bbses.id',  '=', 'bbses_posts.bbses_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
-                      ->leftjoin('pages', 'pages.id',      '=', 'frames.page_id')
-                      ->where(function ($plugin_query) use ($search_keyword) {
-                          $plugin_query->where('bbses_posts.title', 'like', '?')
-                                       ->orWhere('bbses_posts.body', 'like', '?');
-                      })
-                      ->whereNull('bbses_posts.deleted_at');
+        $return[] = BbsPost::
+            select(
+                'bbs_posts.id           as post_id',
+                'frames.id                as frame_id',
+                'frames.page_id           as page_id',
+                'pages.permanent_link     as permanent_link',
+                'bbs_posts.title        as post_title',
+                DB::raw("null             as important"),
+                'bbs_posts.created_at   as posted_at',
+                'bbs_posts.created_name as posted_name',
+                DB::raw("null             as classname"),
+                DB::raw("null             as category_id"),
+                DB::raw("null             as category"),
+                DB::raw('"bbses"          as plugin_name')
+            )
+            ->join('bbses', function ($join) {
+                // 論理削除対応
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->whereNull('bbses.deleted_at');
+            })
+            ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+            ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
+            ->where(function ($plugin_query) {
+                $plugin_query->where('bbs_posts.title', 'like', '?')
+                    ->orWhere('bbs_posts.body', 'like', '?');
+            });
 
-        $bind = array('%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $bind = array('%' . $search_keyword . '%', '%' . $search_keyword . '%');
         $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/bbses/show';
 
         return $return;
     }
-    */
 
     /* 画面アクション関数 */
 

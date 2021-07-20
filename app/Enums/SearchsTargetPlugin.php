@@ -18,6 +18,26 @@ final class SearchsTargetPlugin extends EnumsBase
     const enum = [
         self::contents => '固定記事',
         self::blogs => 'ブログ',
-        // self::bbses => '掲示板',
+        self::bbses => '掲示板',
     ];
+
+    /**
+     * フレーム指定できるプラグイン取得
+     */
+    public static function getPluginsCanSpecifiedFrames()
+    {
+        $enum = static::enum;
+        // 固定記事は除外
+        unset($enum[self::contents]);
+
+        return $enum;
+    }
+
+    /**
+     * フレーム指定できるプラグインキー取得
+     */
+    public static function getKeysPluginsCanSpecifiedFrames()
+    {
+        return array_keys(self::getPluginsCanSpecifiedFrames());
+    }
 }
