@@ -5,6 +5,7 @@ namespace App\Models\Common;
 // use RecursiveIteratorIterator;
 // use RecursiveArrayIterator;
 
+use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -492,7 +493,8 @@ class Page extends Model
         }
 
         // トップページを取得
-        $top_page = Page::orderBy('_lft', 'asc')->first();
+        // $top_page = Page::orderBy('_lft', 'asc')->first();
+        $top_page = self::getTopPage();
 
         // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
         if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
@@ -503,12 +505,30 @@ class Page extends Model
     }
 
     /**
+     * トップページを取得
+     */
+    public static function getTopPage()
+    {
+        $request = app(Request::class);
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $top_page = $request->attributes->get('top_page');
+
+        if (is_null($top_page)) {
+            $top_page = Page::orderBy('_lft', 'asc')->first();
+        }
+
+        return $top_page;
+    }
+
+    /**
      * パスワードチェックの判定
      */
     public function checkPassword($password, $page_tree)
     {
         // トップページを取得
-        $top_page = Page::orderBy('_lft', 'asc')->first();
+        // $top_page = Page::orderBy('_lft', 'asc')->first();
+        $top_page = self::getTopPage();
 
         // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
         if ($page_tree[count($page_tree)-1]->id != $top_page->id) {

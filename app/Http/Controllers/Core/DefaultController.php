@@ -307,7 +307,8 @@ class DefaultController extends ConnectController
         // $page_tree = $this->getAncestorsAndSelf($page_id);
 
         // トップページを取得
-        $top_page = Page::orderBy('_lft', 'asc')->first();
+        // $top_page = Page::orderBy('_lft', 'asc')->first();
+        $top_page = Page::getTopPage();
 
         // 多言語設定の場合、多言語のトップページをツリーのrootに入れる。
         if ($this->isLanguageMultiOn()) {

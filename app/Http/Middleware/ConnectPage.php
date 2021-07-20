@@ -75,6 +75,10 @@ class ConnectPage
         $request->attributes->add(['page' => $this->page]);
         // $request->attributes->add(['page_roles' => PageRole::get()]);
 
+        // トップページを取得
+        $top_page = Page::orderBy('_lft', 'asc')->first();
+        $request->attributes->add(['top_page' => $top_page]);
+
         // *** 全ビュー間のデータ共有
         // ハンバーガーメニューで使用するページの一覧（ConnectController::view から移動してきた）
         View::share('page_list', Page::defaultOrderWithDepth('flat', $this->page));
