@@ -35,14 +35,14 @@
                                 @endif
                             >
                                 <img 
-                                    src="/file/{{ $item->uploads_id }}" 
+                                    src="{{url('/')}}/file/{{ $item->uploads_id }}" 
                                     class="d-block w-100" 
                                 >
                             </a>
                         @else
                             {{-- 画像のみ --}}
                             <img 
-                                src="/file/{{ $item->uploads_id }}" 
+                                src="{{url('/')}}/file/{{ $item->uploads_id }}" 
                                 class="d-block w-100" 
                             >
                         @endif
