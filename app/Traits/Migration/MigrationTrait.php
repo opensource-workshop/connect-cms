@@ -5169,8 +5169,9 @@ trait MigrationTrait
             $journals_ini .= "module_name = \"bbs\"\n";
 
             // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
-            $nc2_bbs_posts = Nc2BbsPost::select('bbs_post.*', 'bbs_post_body.body')
+            $nc2_bbs_posts = Nc2BbsPost::select('bbs_post.*', 'bbs_post_body.body', 'bbs_topic.newest_time')
                                        ->join('bbs_post_body', 'bbs_post_body.post_id', '=', 'bbs_post.post_id')
+                                       ->leftJoin('bbs_topic', 'bbs_topic.topic_id', '=', 'bbs_post.post_id')
                                        ->where('bbs_id', $nc2_bbs->bbs_id)
                                        ->orderBy('post_id')
                                        ->get();
@@ -5199,6 +5200,10 @@ trait MigrationTrait
                 $journals_tsv .=                              "\t"; // more_content
                 $journals_tsv .=                              "\t"; // more_title
                 $journals_tsv .=                              "\t"; // hide_more_title
+                $journals_tsv .= $nc2_bbs_post->parent_id   . "\t"; // 親ID
+                $journals_tsv .= $nc2_bbs_post->topic_id .    "\t"; // トピックID
+                $journals_tsv .= $nc2_bbs_post->newest_time . "\t"; // 最新投稿日時
+                $journals_tsv .= $nc2_bbs_post->insert_user_name . "\t"; // 投稿者名
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -6894,5 +6899,34 @@ trait MigrationTrait
     {
         // ページ、ブロック構成を最後に出力するために保持
         $this->frame_tree .= $nc2_page->page_id . ',' . $nc2_page->page_name . ',' . $nc2_page->permalink . ',' . $nc2_block->action_name . ',' . $nc2_block->block_id . ',' . $nc2_block->block_name . "\n";
+    }
+
+    /**
+     * NC2の日時をConnect-CMCの日時に変換する
+     *
+     * @param string $datetime 日時(YmdHis)
+     * @return string 日時(Y-m-d H:i:s)
+     */
+    private function convertNc2Datetime(string $datetime) : ?string
+    {
+        if (empty($datetime)) {
+            return null;
+        }
+
+        // NC2 の投稿日時はGMT のため、9時間プラスする NC2=20151020122600
+        $time = mktime(
+            substr($datetime, 8, 2),
+            substr($datetime, 10, 2),
+            substr($datetime, 12, 2),
+            substr($datetime, 4, 2),
+            substr($datetime, 6, 2),
+            substr($datetime, 0, 4)
+        );
+
+        // 変換失敗なら空文字を返却する
+        if ($time === false) {
+            return null;
+        }
+        return  date('Y-m-d H:i:s', $time + (60 * 60 * 9));
     }
 }
