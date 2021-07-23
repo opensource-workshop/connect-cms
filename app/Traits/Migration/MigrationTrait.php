@@ -5214,14 +5214,20 @@ trait MigrationTrait
                 $journals_ini .= "post_title[" . $nc2_bbs_post->post_id . "] = \"" . str_replace('"', '', $nc2_bbs_post->subject) . "\"\n";
             }
 
+            // bbs->blog移行の場合は、blog用のフォルダに吐き出す
+            $export_path = 'bbses/bbs_';
+            if ($this->plugin_name['bbs'] === 'blogs') {
+                $export_path = 'blogs/blog_bbs_';
+            }
+
             // blog の設定
             //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
-            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs->bbs_id) . '.ini', $journals_ini);
+            $this->storagePut($this->getImportPath($export_path) . $this->zeroSuppress($nc2_bbs->bbs_id) . '.ini', $journals_ini);
 
             // blog の記事
             //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
             $journals_tsv = $this->exportStrReplace($journals_tsv, 'bbses');
-            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs->bbs_id) . '.tsv', $journals_tsv);
+            $this->storagePut($this->getImportPath($export_path) . $this->zeroSuppress($nc2_bbs->bbs_id) . '.tsv', $journals_tsv);
         }
     }
 
