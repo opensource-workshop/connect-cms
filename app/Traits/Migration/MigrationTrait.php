@@ -22,6 +22,8 @@ use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\User\Bbses\Bbs;
+use App\Models\User\Bbses\BbsPost;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Cabinets\Cabinet;
@@ -367,6 +369,14 @@ trait MigrationTrait
             CabinetContent::truncate();
             Buckets::where('plugin_name', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinets')->delete();
+        }
+
+        if ($target == 'bbses' || $target == 'all') {
+            Bbs::truncate();
+            BbsPost::truncate();
+            Buckets::where('plugin_name', 'bbses')->delete();
+            MigrationMapping::where('target_source_table', 'bbses')->delete();
+            MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
         }
     }
 
@@ -5106,10 +5116,10 @@ trait MigrationTrait
         $this->putMonitor(3, "Start nc2ExportBbs.");
 
         // データクリア
-        //if ($redo === true) {
-        //    // 移行用ファイルの削除
-        //    Storage::deleteDirectory($this->getImportPath('blogs/'));
-        //}
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('bbses/'));
+        }
 
         // NC2掲示板（Bbs）を移行する。
         $nc2_bbses = Nc2Bbs::orderBy('bbs_id')->get();
