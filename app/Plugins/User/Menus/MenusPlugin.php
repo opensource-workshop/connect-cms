@@ -27,7 +27,7 @@ use App\Plugins\User\UserPluginBase;
 class MenusPlugin extends UserPluginBase
 {
     /**
-     *  編集画面の最初のタブ
+     * 編集画面の最初のタブ
      *
      *  スーパークラスをオーバーライド
      */
@@ -37,7 +37,7 @@ class MenusPlugin extends UserPluginBase
     }
 
     /**
-     *  関数定義（コアから呼び出す）
+     * 関数定義（コアから呼び出す）
      */
     public function getPublicFunctions()
     {
@@ -63,9 +63,9 @@ class MenusPlugin extends UserPluginBase
     }
 
     /**
-     *  ページデータ取得関数
+     * ページデータ取得関数
      *
-     *  ページデータを取得し、深さを追加して画面に。
+     * ページデータを取得し、深さを追加して画面に。
      *
      * @return view
      */
@@ -92,7 +92,9 @@ class MenusPlugin extends UserPluginBase
 
         // パンくずリスト用に複製
         $ancestors_breadcrumbs = clone $ancestors;
-        $top_page = Page::where('permanent_link', '/')->first();
+        // $top_page = Page::where('permanent_link', '/')->first();
+        $top_page = Page::getTopPage();
+
         // トップページ以外は、トップページをパンくず先頭に追加
         if ($top_page && $top_page->id != $page_id) {
             // コレクションクラスの先頭に追加
@@ -118,7 +120,7 @@ class MenusPlugin extends UserPluginBase
     }
 
     /**
-     *  ページ選択画面
+     * ページ選択画面
      */
     public function select($request, $page_id, $frame_id)
     {
@@ -150,7 +152,7 @@ class MenusPlugin extends UserPluginBase
     }
 
     /**
-     *  ページ選択保存
+     * ページ選択保存
      */
     public function saveSelect($request, $page_id, $frame_id)
     {
