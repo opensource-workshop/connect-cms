@@ -167,16 +167,16 @@ class BbsesPlugin extends UserPluginBase
     /**
      * Root の POST一覧取得
      */
-    private function getRootPosts($bbs_frame)
+    private function getRootPosts($bbs_frame, $frame_id)
     {
         // データ取得
         $posts_query = BbsPost::select('bbs_posts.*')
-                                   ->join('bbses', function ($join) {
-                                       $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
-                                          ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
-                                   })
-                                   ->whereNull('bbs_posts.parent_id')
-                                   ->whereNull('bbs_posts.deleted_at');
+            ->join('bbses', function ($join) {
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+            })
+            ->whereNull('bbs_posts.parent_id')
+            ->whereNull('bbs_posts.deleted_at');
 
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
@@ -191,7 +191,7 @@ class BbsesPlugin extends UserPluginBase
         }
 
         // 取得
-        return $posts_query->paginate($bbs_frame->getViewCount());
+        return $posts_query->paginate($bbs_frame->getViewCount(), ["*"], "frame_{$frame_id}_page");
     }
 
     /**
@@ -311,7 +311,7 @@ class BbsesPlugin extends UserPluginBase
         $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 掲示板データ一覧の取得
-        $posts = $this->getRootPosts($plugin_frame);
+        $posts = $this->getRootPosts($plugin_frame, $frame_id);
 
         // 表示対象のスレッドの記事一覧
         $thread_ids = $posts->pluck("id");
@@ -559,7 +559,7 @@ class BbsesPlugin extends UserPluginBase
     {
         // 表示テンプレートを呼び出す。
         return $this->view('list_buckets', [
-            'plugin_buckets' => Bbs::orderBy('created_at', 'desc')->paginate(10),
+            'plugin_buckets' => Bbs::orderBy('created_at', 'desc')->paginate(10, ["*"], "frame_{$frame_id}_page"),
         ]);
     }
 
