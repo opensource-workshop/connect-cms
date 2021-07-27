@@ -2,7 +2,6 @@
 
 namespace App\Plugins\User\Slideshows;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -360,8 +359,8 @@ class SlideshowsPlugin extends UserPluginBase
         // データリストの場合の追加処理
         // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
         // * 現在のものを最初に表示する。orderByRaw('buckets.id = ' . $this->buckets->id . ' desc') ※ desc 指定が必要だった。
-        $buckets_query = DB::table('buckets')
-            ->select(
+        $buckets_query = Buckets::
+            select(
                 'buckets.*',
                 'slideshows.id as slideshows_id',
                 'slideshows.slideshows_name',
@@ -398,14 +397,14 @@ class SlideshowsPlugin extends UserPluginBase
         );
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
-        
+
         return;
     }
 
@@ -468,7 +467,7 @@ class SlideshowsPlugin extends UserPluginBase
         $request->merge([
             'flash_message' => 'スライドショー項目を登録しました。'
         ]);
-        
+
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
     }
 
@@ -538,7 +537,7 @@ class SlideshowsPlugin extends UserPluginBase
         $request->merge([
             'flash_message' => 'スライドショー項目を更新しました。'
         ]);
-        
+
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
     }
 
@@ -609,7 +608,7 @@ class SlideshowsPlugin extends UserPluginBase
             // 'flash_message' => 'スライドショー項目を削除しました。（画像ファイル名：' . $delete_upload->client_original_name . '）'
             'flash_message' => 'スライドショー項目を削除しました。'
         ]);
-        
+
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
     }
 
@@ -642,7 +641,7 @@ class SlideshowsPlugin extends UserPluginBase
         $request->merge([
             'flash_message' => '項目の表示順を更新しました。'
         ]);
-        
+
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
     }
 }
