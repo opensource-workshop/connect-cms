@@ -277,6 +277,7 @@ $app_array = [
         'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
         'UploadMaxSize' => \App\Enums\UploadMaxSize::class,
         'SearchsTargetPlugin' => \App\Enums\SearchsTargetPlugin::class,
+        'LayoutArea' => \App\Enums\LayoutArea::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

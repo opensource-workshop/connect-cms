@@ -113,11 +113,6 @@
 @endif
 
 {{-- ページング処理 --}}
-{{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-@if ($posts->lastPage() > 1)
-    <nav class="text-center" aria-label="{{$bbs->name}}のページ付け">
-        {{ $posts->fragment('frame-' . $frame_id)->links() }}
-    </nav>
-@endif
+@include('plugins.common.user_paginate', ['posts' => $posts, 'frame' => $frame, 'aria_label_name' => $bbs->name])
 
 @endsection
