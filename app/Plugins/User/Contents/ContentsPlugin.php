@@ -686,8 +686,7 @@ class ContentsPlugin extends UserPluginBase
         // データリストの場合の追加処理
         // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
         // * 現在のものを最初に表示する。orderByRaw('buckets.id = ' . $this->buckets->id . ' desc') ※ desc 指定が必要だった。
-        $buckets_query = DB::table('buckets')
-                           ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
+        $buckets_query = Buckets::select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
                            ->join('contents', function ($join) {
                                $join->on('contents.bucket_id', '=', 'buckets.id');
                                $join->where('contents.status', '=', 0);
@@ -704,15 +703,13 @@ class ContentsPlugin extends UserPluginBase
         }
 
         $buckets_list = $buckets_query->orderBy($request_order_by[0], $request_order_by[1])
-                                      ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
-        return $this->view(
-            'contents_list_buckets', [
+        return $this->view('contents_list_buckets', [
             'buckets_list'      => $buckets_list,
             'order_link'        => $order_link,
             'request_order_str' => implode('|', $request_order_by)
-            ]
-        );
+        ]);
     }
 
     /**
