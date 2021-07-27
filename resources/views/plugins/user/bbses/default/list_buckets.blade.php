@@ -46,11 +46,10 @@
             </table>
         </div>
 
-        <div class="text-center">
-            {{ $plugin_buckets->links() }}
-        </div>
+        {{-- ページング処理 --}}
+        @include('plugins.common.user_paginate', ['posts' => $plugin_buckets, 'frame' => $frame, 'aria_label_name' => '掲示板選択'])
 
-        <div class="form-group text-center">
+        <div class="form-group text-center mt-2">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示掲示板変更</button>
         </div>
