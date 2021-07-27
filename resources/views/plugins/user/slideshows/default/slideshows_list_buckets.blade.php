@@ -73,11 +73,10 @@
         </table>
     </div>
 
-    <div class="m-2">
-        {{ $buckets_list->appends(['sort' => $request_order_str])->fragment($frame_id)->links() }}
-    </div>
+    {{-- ページング処理 --}}
+    @include('plugins.common.user_paginate', ['posts' => $buckets_list, 'frame' => $frame, 'sort' => $request_order_str, 'aria_label_name' => '表示コンテンツ選択'])
 
-    <div class="text-center">
+    <div class="text-center mt-2">
         <button type="button" class="btn btn-secondary mr-2" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
     </div>
