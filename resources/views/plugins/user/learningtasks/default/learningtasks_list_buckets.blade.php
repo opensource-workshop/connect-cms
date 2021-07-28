@@ -96,9 +96,8 @@
         </table>
     </div>
 
-    <div class="text-center">
-        {{ $learningtasks->fragment('frame-' . $frame_id)->links() }}
-    </div>
+    {{-- ページング処理 --}}
+    @include('plugins.common.user_paginate', ['posts' => $learningtasks, 'frame' => $frame, 'aria_label_name' => '課題管理選択'])
 
     <div class="form-group text-center mt-3">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
