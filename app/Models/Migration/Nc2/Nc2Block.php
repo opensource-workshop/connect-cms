@@ -109,7 +109,7 @@ class Nc2Block extends Model
     protected $plugin_name = [
         'announcement'  => 'contents',     // お知らせ
         'assignment'    => 'Development',  // レポート
-        'bbs'           => 'blogs',        // 掲示板     ※ 2020-09時点では掲示板はブログに移行
+        'bbs'           => 'bbses',        // 掲示板
         'cabinet'       => 'cabinets',  // キャビネット
         'calendar'      => 'Development',  // カレンダー
         'chat'          => 'Development',  // チャット
