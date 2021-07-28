@@ -4,6 +4,7 @@ namespace App\Plugins\User;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +19,6 @@ use Monolog\Handler\RotatingFileHandler;
 use Symfony\Component\Process\PhpExecutableFinder;
 // use Symfony\Component\Process\Process;
 
-use DB;
 use File;
 use HTMLPurifier;
 use HTMLPurifier_Config;
@@ -481,7 +481,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * フォーム選択表示関数
+     * バケツ選択表示関数
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -489,23 +489,19 @@ class UserPluginBase extends PluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = DB::table('frames')
-                            ->select('frames.*')
-                            ->where('frames.id', $frame_id)->first();
+        $plugin_frame = Frame::where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $plugins = DB::table($plugin_name)
-                       ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10);
+            ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->commonView(
-            'edit_datalist', [
+        return $this->commonView('edit_datalist', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
-            ]
-        );
+        ]);
     }
 
     /**
