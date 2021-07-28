@@ -143,13 +143,10 @@
     @endforeach
     </div>
 
-    {{-- ページング処理 --}}
-    {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-    @if ($faqs_posts->lastPage() > 1)
-        <nav class="text-center mt-3" aria-label="{{$faq_frame->faq_name}}のページ付け">
-            {{ $faqs_posts->fragment('frame-' . $frame_id)->links() }}
-        </nav>
-    @endif
+    <div class="mt-3">
+        {{-- ページング処理 --}}
+        @include('plugins.common.user_paginate', ['posts' => $faqs_posts, 'frame' => $frame, 'aria_label_name' => $faq_frame->faq_name])
+    </div>
 
 @endif
 @endsection
