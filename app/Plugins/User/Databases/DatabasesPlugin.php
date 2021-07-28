@@ -228,31 +228,31 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  紐づくデータベースID とフレームデータの取得
+     * 紐づくデータベースID とフレームデータの取得
      */
     private function getDatabaseFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select(
-                     'frames.*',
-                     'databases.id as databases_id',
-                     'databases_frames.id as databases_frames_id',
-                     'databases.databases_name',
-                     'databases.search_results_empty_message',
-                     'use_search_flag',
-                     'placeholder_search',
-                     'use_select_flag',
-                     'use_sort_flag',
-                     'view_count',
-                     'default_hide',
-                     'view_page_id',
-                     'view_frame_id'
-                 )
-                 ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
-                 ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::
+            select(
+                'frames.*',
+                'databases.id as databases_id',
+                'databases_frames.id as databases_frames_id',
+                'databases.databases_name',
+                'databases.search_results_empty_message',
+                'use_search_flag',
+                'placeholder_search',
+                'use_select_flag',
+                'use_sort_flag',
+                'view_count',
+                'default_hide'
+                // 'view_page_id',
+                // 'view_frame_id'
+            )
+            ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
+            ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
@@ -3588,10 +3588,10 @@ class DatabasesPlugin extends UserPluginBase
 
         // menuテンプレートでのみ使われる項目
         // 半角数字
-        $validator_values['view_page_id'] = ['numeric'];
-        $validator_attributes['view_page_id'] = '表示するページID';
-        $validator_values['view_frame_id'] = ['numeric'];
-        $validator_attributes['view_frame_id'] = '表示するフレームID';
+        // $validator_values['view_page_id'] = ['numeric'];
+        // $validator_attributes['view_page_id'] = '表示するページID';
+        // $validator_values['view_frame_id'] = ['numeric'];
+        // $validator_attributes['view_frame_id'] = '表示するフレームID';
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_values);
@@ -3632,8 +3632,8 @@ class DatabasesPlugin extends UserPluginBase
                 'use_filter_flag'   => $request->use_filter_flag,
                 'filter_search_keyword' => $request->filter_search_keyword,
                 'filter_search_columns' => json_encode($request->filter_search_columns),
-                'view_page_id'        => $request->view_page_id,
-                'view_frame_id'        => $request->view_frame_id
+                // 'view_page_id'        => $request->view_page_id,
+                // 'view_frame_id'        => $request->view_frame_id
             ]
         );
 

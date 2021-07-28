@@ -26,8 +26,8 @@ class DatabasesFrames extends Model
         'use_filter_flag',
         'filter_search_keyword',
         'filter_search_columns',
-        'view_page_id',
-        'view_frame_id',
+        // 'view_page_id',     // delete: menuテンプレートのみDB項目利用のため廃止
+        // 'view_frame_id',    // delete: menuテンプレートのみDB項目利用のため廃止
         'created_at',
         'updated_at'
     ];
