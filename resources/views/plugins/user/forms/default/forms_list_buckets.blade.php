@@ -123,9 +123,8 @@
             </table>
         </div>
 
-        <div class="text-center">
-            {{ $plugins->fragment('frame-' . $frame_id)->links() }}
-        </div>
+        {{-- ページング処理 --}}
+        @include('plugins.common.user_paginate', ['posts' => $plugins, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択'])
 
         <div class="form-group text-center mt-3">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
