@@ -302,7 +302,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 <li class="nav-item dropdown">
                     {{-- ページリストがある場合は、コンテンツ画面 --}}
                     @if (isset($page_list) && !$is_manage_page)
-                        <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">管理機能</a>
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">管理機能</a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_manage">
 
                             {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
@@ -365,7 +365,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 @endif
             @else
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="dropdown_auth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">{{Auth::user()->name}}</a>
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown_auth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{Auth::user()->name}}</a>
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_auth">
                         @if (\Route::currentRouteName() == 'get_mypage' || \Route::currentRouteName() == 'post_mypage')
                             {{-- マイページのトップ（get_allで来る）もしくは、ルートでget_mypage --}}
