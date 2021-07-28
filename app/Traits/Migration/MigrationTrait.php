@@ -22,6 +22,8 @@ use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
+use App\Models\User\Bbses\Bbs;
+use App\Models\User\Bbses\BbsPost;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Cabinets\Cabinet;
@@ -153,7 +155,7 @@ trait MigrationTrait
     protected $plugin_name = [
         'announcement'  => 'contents',     // お知らせ
         'assignment'    => 'Development',  // レポート
-        'bbs'           => 'blogs',        // 掲示板（2020-09 時点ではブログに移行）
+        'bbs'           => 'bbses',        // 掲示板
         'cabinet'       => 'cabinets',     // キャビネット
         'calendar'      => 'Development',  // カレンダー
         'chat'          => 'Development',  // チャット
@@ -367,6 +369,14 @@ trait MigrationTrait
             CabinetContent::truncate();
             Buckets::where('plugin_name', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinets')->delete();
+        }
+
+        if ($target == 'bbses' || $target == 'all') {
+            Bbs::truncate();
+            BbsPost::truncate();
+            Buckets::where('plugin_name', 'bbses')->delete();
+            MigrationMapping::where('target_source_table', 'bbses')->delete();
+            MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
         }
     }
 
@@ -692,6 +702,11 @@ trait MigrationTrait
         // キャビネットの取り込み
         if ($this->isTarget('cc_import', 'plugins', 'cabinets')) {
             $this->importCabinets($redo);
+        }
+
+        // BBSの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'bbses')) {
+            $this->importBbses($redo);
         }
 
         // 固定URLの取り込み
@@ -2575,6 +2590,135 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式のBBSをインポート
+     */
+    private function importBbses($redo)
+    {
+        $this->putMonitor(3, "Bbses import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('bbses');
+        }
+
+        // BBS定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('bbses/bbs_*.ini'));
+
+        // BBS定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の bbs_id
+            $nc2_bbs_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('journal_id', $ini['source_info'])) {
+                $tmp = explode('_', $ini['source_info']['journal_id']);
+                $nc2_bbs_id = $tmp[1];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'bbses')->where('source_key', $nc2_bbs_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // cabinet 取得。この情報から紐づけて、消すものを消してゆく。
+                $bbs = Bbs::where('id', $mapping->destination_key)->first();
+                // BBS投稿削除
+                BbsPost::where('bbs_id', $mapping->destination_key)->delete();
+                if (!empty($cabinet)) {
+                    // Buckets 削除
+                    Buckets::where('id', $bbs->bucket_id)->delete();
+                    // BBS削除
+                    $bbs->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            // Buckets テーブルと Cabinets テーブル、マッピングテーブルを追加
+            $bbs_name = '無題';
+            if (array_key_exists('blog_base', $ini) && array_key_exists('blog_name', $ini['blog_base'])) {
+                $bbs_name = $ini['blog_base']['blog_name'];
+            }
+            $bucket = Buckets::create(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
+
+            $bbs = Bbs::create([
+                'bucket_id' => $bucket->id,
+                'name' => $bbs_name,
+            ]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'bbses',
+                'source_key'           => $nc2_bbs_id,
+                'destination_key'      => $bbs->id,
+            ]);
+
+            // 記事のマッピングテーブル作成用に記事一覧（post_title）を使用する。
+            // post_title のキーはNC2 のBBSID になっている。
+            $post_source_keys = array();
+            if (array_key_exists('blog_post', $ini) && array_key_exists('post_title', $ini['blog_post'])) {
+                $post_source_keys = array_keys($ini['blog_post']['post_title']);
+            }
+
+            // 投稿の移行
+            $post_index = 0;
+            $tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
+            if (Storage::exists($this->getImportPath('bbses/') . $tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのキャビネット丸ごと）
+                $tsv = Storage::get($this->getImportPath('bbses/') . $tsv_filename);
+                // ファイル が無いものは対象外
+                if (empty($tsv)) {
+                    continue;
+                }
+
+                // 改行でノード毎に分割
+                $tsv_lines = explode("\n", $tsv);
+                foreach ($tsv_lines as $tsv_line) {
+                    // タブで項目に分割
+                    $tsv_cols = explode("\t", $tsv_line);
+                    $bbs_post = new BbsPost([
+                        'bbs_id' => $bbs->id,
+                        'title' => $tsv_cols[4],
+                        'body' => $this->changeWYSIWYG($tsv_cols[5]),
+                        'thread_root_id' => $tsv_cols[9] === '0' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
+                        'thread_updated_at' => $this->convertNc2Datetime($tsv_cols[11]),
+                        'first_committed_at' => $this->convertNc2Datetime($tsv_cols[0]),
+                        'parent_id' => $this->fetchMigratedKey('bbses_post', $tsv_cols[9]),
+                        'created_name' => $tsv_cols[12],
+                    ]);
+                    $bbs_post->save();
+                    // 根記事の場合、保存後のid をthread_root_id にセットして更新
+                    if ($tsv_cols[9] === '0') {
+                        $bbs_post->thread_root_id = $bbs_post->id;
+                        $bbs_post->save();
+                    }
+                    // マッピングテーブルの追加
+                    if (array_key_exists($post_index, $post_source_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'bbses_post',
+                            'source_key'           => $post_source_keys[$post_index],
+                            'destination_key'      => $bbs_post->id,
+                        ]);
+                    }
+                    $post_index++;
+                }
+            }
+        }
+    }
+
+    private function fetchMigratedKey($target_table, $key)
+    {
+        $mapping = MigrationMapping::where('target_source_table', $target_table)
+                            ->where('source_key', $key)
+                            ->first();
+        if ($mapping) {
+            return $mapping->destination_key;
+        }
+        return null;
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -2806,6 +2950,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'cabinets') {
             // キャビネット
             $this->importPluginCabinets($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'bbses') {
+            // キャビネット
+            $this->importPluginBbses($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -3133,6 +3280,53 @@ trait MigrationTrait
         // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
         if (empty($bucket)) {
             $this->putError(1, 'Cabinet フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+    /**
+     * キャビネットプラグインの登録処理
+     */
+    private function importPluginBbses($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $bbs_id = null;
+        $bbs_ini = null;
+        $nc2_bbs_id = null;
+        $migration_mapping = null;
+        $bbs = null;
+        $bucket = null;
+
+        // エクスポートファイルの bbs_id 取得（エクスポート時の連番）
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('blog_id', $frame_ini['frame_base'])) {
+            $tmp = explode('_', $frame_ini['frame_base']['blog_id']);
+            $bbs_id = $tmp[1];
+        }
+        // 掲示板の情報取得
+        if (!empty($bbs_id) && Storage::exists($this->getImportPath('bbses/bbs_') . $bbs_id . '.ini')) {
+            $bbs_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('bbses/bbs_') . $bbs_id . '.ini', true);
+        }
+        // NC2 のbbs_id
+        if (!empty($bbs_ini) && array_key_exists('source_info', $bbs_ini) && array_key_exists('journal_id', $bbs_ini['source_info'])) {
+            $tmp = explode('_', $bbs_ini['source_info']['journal_id']);
+            $nc2_bbs_id = $tmp[1];
+        }
+        // NC2 のbbs_id でマップ確認
+        if (!empty($bbs_ini) && array_key_exists('source_info', $bbs_ini) && array_key_exists('journal_id', $bbs_ini['source_info'])) {
+            $migration_mapping = MigrationMapping::where('target_source_table', 'bbses')->where('source_key', $nc2_bbs_id)->first();
+        }
+        // マップから新bbs を取得
+        if (!empty($migration_mapping)) {
+            $bbs = bbs::find($migration_mapping->destination_key);
+        }
+        // 新BBS からBucket ID を取得
+        if (!empty($bbs)) {
+            $bucket = Buckets::find($bbs->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'bbs フレームのみで実体なし', "page_dir = " . $page_dir);
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
@@ -5106,10 +5300,10 @@ trait MigrationTrait
         $this->putMonitor(3, "Start nc2ExportBbs.");
 
         // データクリア
-        //if ($redo === true) {
-        //    // 移行用ファイルの削除
-        //    Storage::deleteDirectory($this->getImportPath('blogs/'));
-        //}
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('bbses/'));
+        }
 
         // NC2掲示板（Bbs）を移行する。
         $nc2_bbses = Nc2Bbs::orderBy('bbs_id')->get();
@@ -5159,8 +5353,9 @@ trait MigrationTrait
             $journals_ini .= "module_name = \"bbs\"\n";
 
             // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
-            $nc2_bbs_posts = Nc2BbsPost::select('bbs_post.*', 'bbs_post_body.body')
+            $nc2_bbs_posts = Nc2BbsPost::select('bbs_post.*', 'bbs_post_body.body', 'bbs_topic.newest_time')
                                        ->join('bbs_post_body', 'bbs_post_body.post_id', '=', 'bbs_post.post_id')
+                                       ->leftJoin('bbs_topic', 'bbs_topic.topic_id', '=', 'bbs_post.post_id')
                                        ->where('bbs_id', $nc2_bbs->bbs_id)
                                        ->orderBy('post_id')
                                        ->get();
@@ -5189,6 +5384,10 @@ trait MigrationTrait
                 $journals_tsv .=                              "\t"; // more_content
                 $journals_tsv .=                              "\t"; // more_title
                 $journals_tsv .=                              "\t"; // hide_more_title
+                $journals_tsv .= $nc2_bbs_post->parent_id   . "\t"; // 親ID
+                $journals_tsv .= $nc2_bbs_post->topic_id .    "\t"; // トピックID
+                $journals_tsv .= $nc2_bbs_post->newest_time . "\t"; // 最新投稿日時
+                $journals_tsv .= $nc2_bbs_post->insert_user_name . "\t"; // 投稿者名
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -5199,14 +5398,20 @@ trait MigrationTrait
                 $journals_ini .= "post_title[" . $nc2_bbs_post->post_id . "] = \"" . str_replace('"', '', $nc2_bbs_post->subject) . "\"\n";
             }
 
+            // bbs->blog移行の場合は、blog用のフォルダに吐き出す
+            $export_path = 'bbses/bbs_';
+            if ($this->plugin_name['bbs'] === 'blogs') {
+                $export_path = 'blogs/blog_bbs_';
+            }
+
             // blog の設定
             //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.ini', $journals_ini);
-            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs->bbs_id) . '.ini', $journals_ini);
+            $this->storagePut($this->getImportPath($export_path) . $this->zeroSuppress($nc2_bbs->bbs_id) . '.ini', $journals_ini);
 
             // blog の記事
             //Storage::put($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs_post->bbs_id) . '.tsv', $journals_tsv);
             $journals_tsv = $this->exportStrReplace($journals_tsv, 'bbses');
-            $this->storagePut($this->getImportPath('blogs/blog_bbs_') . $this->zeroSuppress($nc2_bbs->bbs_id) . '.tsv', $journals_tsv);
+            $this->storagePut($this->getImportPath($export_path) . $this->zeroSuppress($nc2_bbs->bbs_id) . '.tsv', $journals_tsv);
         }
     }
 
@@ -6887,5 +7092,34 @@ trait MigrationTrait
     {
         // ページ、ブロック構成を最後に出力するために保持
         $this->frame_tree .= $nc2_page->page_id . ',' . $nc2_page->page_name . ',' . $nc2_page->permalink . ',' . $nc2_block->action_name . ',' . $nc2_block->block_id . ',' . $nc2_block->block_name . "\n";
+    }
+
+    /**
+     * NC2の日時をConnect-CMCの日時に変換する
+     *
+     * @param string $datetime 日時(YmdHis)
+     * @return string 日時(Y-m-d H:i:s)
+     */
+    private function convertNc2Datetime(string $datetime) : ?string
+    {
+        if (empty($datetime)) {
+            return null;
+        }
+
+        // NC2 の投稿日時はGMT のため、9時間プラスする NC2=20151020122600
+        $time = mktime(
+            substr($datetime, 8, 2),
+            substr($datetime, 10, 2),
+            substr($datetime, 12, 2),
+            substr($datetime, 4, 2),
+            substr($datetime, 6, 2),
+            substr($datetime, 0, 4)
+        );
+
+        // 変換失敗なら空文字を返却する
+        if ($time === false) {
+            return null;
+        }
+        return  date('Y-m-d H:i:s', $time + (60 * 60 * 9));
     }
 }
