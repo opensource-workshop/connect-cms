@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カレンダープラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -22,8 +22,7 @@
     <form action="{{url('/')}}/redirect/plugin/calendars/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
         {{ csrf_field() }}
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/calendars/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
-        <div class="form-group">
-            <table class="table table-hover {{$frame->getSettingTableClass()}}">
+        <table class="table table-hover {{$frame->getSettingTableClass()}}">
             <thead>
                 <tr>
                     <th></th>
@@ -43,14 +42,12 @@
                 </tr>
             @endforeach
             </tbody>
-            </table>
-        </div>
+        </table>
 
-        <div class="text-center">
-            {{ $plugin_buckets->links() }}
-        </div>
+        {{-- ページング処理 --}}
+        @include('plugins.common.user_paginate', ['posts' => $plugin_buckets, 'frame' => $frame, 'aria_label_name' => 'カレンダー選択'])
 
-        <div class="form-group text-center">
+        <div class="text-center mt-3">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示カレンダー変更</button>
         </div>
