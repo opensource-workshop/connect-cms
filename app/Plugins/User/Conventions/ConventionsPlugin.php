@@ -401,7 +401,7 @@ class ConventionsPlugin extends UserPluginBase
     {
         // 表示テンプレートを呼び出す。
         return $this->view('list_buckets', [
-            'plugin_buckets' => Convention::orderBy('created_at', 'desc')->paginate(10),
+            'plugin_buckets' => Convention::orderBy('created_at', 'desc')->paginate(10, ["*"], "frame_{$frame_id}_page"),
         ]);
     }
 
