@@ -42,12 +42,7 @@
 </div>
 
 {{-- ページング処理 --}}
-{{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-@if ($counter_counts->lastPage() > 1)
-    <nav class="text-center mt-3" aria-label="{{$counter->name}}のページ付け">
-        {{ $counter_counts->fragment('frame-' . $frame_id)->links() }}
-    </nav>
-@endif
+@include('plugins.common.user_paginate', ['posts' => $counter_counts, 'frame' => $frame, 'aria_label_name' => $counter->name])
 
 {{-- ボタン --}}
 <div class="form-group text-center mt-3">
