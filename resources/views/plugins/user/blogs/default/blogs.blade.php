@@ -198,7 +198,7 @@
     @if (isset($is_template_sidetitleindex))
     @else
         {{-- ページング処理 --}}
-        @include('plugins.common.user_paginate', ['posts' => $blogs_posts, 'frame' => $frame, 'aria_label_name' => $blog_frame->blog_name])
+        @include('plugins.common.user_paginate', ['posts' => $blogs_posts, 'frame' => $frame, 'aria_label_name' => $blog_frame->blog_name, 'class' => 'mt-3'])
     @endif
 
     {{-- titleindexテンプレート・sidetitleindexテンプレート --}}

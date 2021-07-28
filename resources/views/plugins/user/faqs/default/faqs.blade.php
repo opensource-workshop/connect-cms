@@ -143,10 +143,8 @@
     @endforeach
     </div>
 
-    <div class="mt-3">
-        {{-- ページング処理 --}}
-        @include('plugins.common.user_paginate', ['posts' => $faqs_posts, 'frame' => $frame, 'aria_label_name' => $faq_frame->faq_name])
-    </div>
+    {{-- ページング処理 --}}
+    @include('plugins.common.user_paginate', ['posts' => $faqs_posts, 'frame' => $frame, 'aria_label_name' => $faq_frame->faq_name, 'class' => 'mt-3'])
 
 @endif
 @endsection
