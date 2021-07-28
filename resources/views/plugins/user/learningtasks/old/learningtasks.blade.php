@@ -308,9 +308,8 @@
     @endforeach
     </div>
     @endforeach
+
     {{-- ページング処理 --}}
-    <div class="text-center">
-        {{ $learningtasks_posts->links() }}
-    </div>
+    @include('plugins.common.user_paginate', ['posts' => $posts, 'frame' => $frame, 'aria_label_name' => $learningtask->learningtasks_name, 'class' => 'mt-3'])
 @endif
 @endsection
