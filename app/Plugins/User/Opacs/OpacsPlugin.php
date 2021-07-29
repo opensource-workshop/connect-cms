@@ -86,11 +86,10 @@ class OpacsPlugin extends UserPluginBase
     private function getOpacFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'opacs.id as opacs_id', 'opacs.opac_name', 'opacs.view_count', 'lent_setting', 'lent_limit')
-                 ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::select('frames.*', 'opacs.id as opacs_id', 'opacs.opac_name', 'opacs.view_count', 'lent_setting', 'lent_limit')
+            ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
