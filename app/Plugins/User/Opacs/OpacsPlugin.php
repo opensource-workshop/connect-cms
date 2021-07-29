@@ -618,22 +618,19 @@ class OpacsPlugin extends UserPluginBase
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // Frame データ
-        $opac_frame = DB::table('frames')
-                      ->select('frames.*', 'opacs.id as opacs_id', 'opacs.view_count')
-                      ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
-                      ->where('frames.id', $frame_id)->first();
+        $opac_frame = Frame::select('frames.*', 'opacs.id as opacs_id', 'opacs.view_count')
+            ->leftJoin('opacs', 'opacs.bucket_id', '=', 'frames.bucket_id')
+            ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $opacs = Opacs::orderBy('created_at', 'desc')
-                       ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'opacs_list_buckets', [
+        return $this->view('opacs_list_buckets', [
             'opac_frame' => $opac_frame,
             'opacs'      => $opacs,
-            ]
-        );
+        ]);
     }
 
     /**
