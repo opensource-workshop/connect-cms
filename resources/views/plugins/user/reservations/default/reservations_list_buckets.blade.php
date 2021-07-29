@@ -75,7 +75,7 @@
     @include('plugins.common.user_paginate', ['posts' => $reservations, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
     {{-- ボタンエリア --}}
-    <div class="form-group text-center">
+    <div class="text-center">
         {{-- キャンセル --}}
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link) . '#frame-' . $frame->id}}'">
             <i class="fas fa-times"></i> キャンセル

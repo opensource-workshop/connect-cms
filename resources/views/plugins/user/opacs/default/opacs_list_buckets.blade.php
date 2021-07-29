@@ -56,7 +56,7 @@
     {{-- ページング処理 --}}
     @include('plugins.common.user_paginate', ['posts' => $opacs, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
-    <div class="form-group text-center">
+    <div class="text-center">
         <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></a>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示OPAC変更</button>
     </div>

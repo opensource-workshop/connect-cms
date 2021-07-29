@@ -51,9 +51,9 @@
     </table>
 
     {{-- ページング処理 --}}
-    @include('plugins.common.user_paginate', ['posts' => $blogs, 'frame' => $frame, 'aria_label_name' => 'ブログ選択'])
+    @include('plugins.common.user_paginate', ['posts' => $blogs, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
-    <div class="text-center mt-3">
+    <div class="text-center">
         <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}">
             <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
         </a>

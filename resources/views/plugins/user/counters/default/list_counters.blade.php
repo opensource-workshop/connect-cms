@@ -42,10 +42,10 @@
 </div>
 
 {{-- ページング処理 --}}
-@include('plugins.common.user_paginate', ['posts' => $counter_counts, 'frame' => $frame, 'aria_label_name' => $counter->name])
+@include('plugins.common.user_paginate', ['posts' => $counter_counts, 'frame' => $frame, 'aria_label_name' => $counter->name, 'class' => 'form-group'])
 
 {{-- ボタン --}}
-<div class="form-group text-center mt-3">
+<div class="text-center">
     <div class="row">
         <div class="col">
             <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">

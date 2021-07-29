@@ -86,9 +86,9 @@
     </div>
 
     {{-- ページング処理 --}}
-    @include('plugins.common.user_paginate', ['posts' => $plugin_buckets, 'frame' => $frame, 'aria_label_name' => 'カウンター選択'])
+    @include('plugins.common.user_paginate', ['posts' => $plugin_buckets, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
-    <div class="form-group text-center mt-3">
+    <div class="text-center">
         <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2">
             <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
         </a>
