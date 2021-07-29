@@ -160,13 +160,13 @@
                 <tr>
                     <td>
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck{{$loop->index}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}" data-name="{{$cabinet_content->name}}">
+                            <input type="checkbox" class="custom-control-input" id="customCheck{{$loop->index}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}" data-name="{{$cabinet_content->displayName}}">
                             <label class="custom-control-label" for="customCheck{{$loop->index}}"></label>
                         </div>
                     </td>
                     @if ($cabinet_content->is_folder == true)
                         <td>
-                            <i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/cabinets/index/{{$page->id}}/{{$frame_id}}?parent_id={{$cabinet_content->id}}#frame-{{$frame->id}}">{{$cabinet_content->name}}</a>
+                            <i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/cabinets/index/{{$page->id}}/{{$frame_id}}?parent_id={{$cabinet_content->id}}#frame-{{$frame->id}}">{{$cabinet_content->displayName}}</a>
                             <small class="form-text text-muted d-block d-md-none">
                                 - | {{$cabinet_content->created_at}}
                             </small>
@@ -175,7 +175,7 @@
                         <td class="d-none d-md-table-cell">{{$cabinet_content->created_at}}</td>
                     @else
                         <td>
-                            <i class="far fa-file mr-1 text-secondary"></i><a href="{{url('/')}}/file/{{$cabinet_content->upload_id}}" target="_blank">{{$cabinet_content->name}}</a>
+                            <i class="far fa-file mr-1 text-secondary"></i><a href="{{url('/')}}/file/{{$cabinet_content->upload_id}}" target="_blank">{{$cabinet_content->displayName}}</a>
                             <small class="form-text text-muted d-block d-md-none">
                                 {{$cabinet_content->upload->getFormatSize()}} | {{$cabinet_content->created_at}}
                             </small>

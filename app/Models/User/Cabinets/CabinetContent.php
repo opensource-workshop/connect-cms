@@ -32,4 +32,20 @@ class CabinetContent extends Model
         // withDefault() を指定しておくことで、Uploads がないときに空のオブジェクトが返ってくるので、null po 防止。
         return $this->hasOne(Uploads::class, 'id', 'upload_id')->withDefault();
     }
+
+    /**
+     * 画面表示用のファイル名を取得する
+     *
+     * @return string  画面表示用のファイル名
+     */
+    public function getDisplayNameAttribute()
+    {
+        $displayName = $this->name;
+        // 管理機能のアップロードファイル管理で、ファイル名の変更ができるため、
+        // ファイルはアップロードテーブルから名称取得する
+        if ($this->is_folder === self::is_folder_off) {
+            $displayName = $this->upload->client_original_name;
+        }
+        return $displayName;
+    }
 }
