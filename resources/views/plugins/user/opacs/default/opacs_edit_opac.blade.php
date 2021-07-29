@@ -68,6 +68,8 @@
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
+                {{-- チェック外した場合にも値を飛ばす対応 --}}
+                <input type="hidden" value="0" name="moderator_mail_send_flag">
                 <input type="checkbox" name="moderator_mail_send_flag" value="1" class="custom-control-input" id="moderator_mail_send_flag" @if(old('moderator_mail_send_flag', $opac->moderator_mail_send_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="moderator_mail_send_flag">貸し出し・返却時に以下のアドレスにメール送信する</label>
             </div>
@@ -86,6 +88,8 @@
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
+                {{-- チェック外した場合にも値を飛ばす対応 --}}
+                <input type="hidden" value="0" name="request_mail_send_flag">
                 <input type="checkbox" name="request_mail_send_flag" value="1" class="custom-control-input" id="request_mail_send_flag" @if(old('request_mail_send_flag', $opac->request_mail_send_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="request_mail_send_flag">貸出時郵送リクエストしたユーザーにメールを送る</label>
             </div>

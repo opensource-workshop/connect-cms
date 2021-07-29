@@ -788,7 +788,7 @@ class OpacsPlugin extends UserPluginBase
         $opacs->opac_name                   = $request->opac_name;
         $opacs->view_count                  = $request->view_count;
         $opacs->moderator_mail_send_flag    = (empty($request->moderator_mail_send_flag)) ? 0 : $request->moderator_mail_send_flag;
-        $opacs->moderator_mail_send_address = $request->moderator_mail_send_address;
+        $opacs->moderator_mail_send_address = $request->moderator_mail_send_address ?? 0;
         $opacs->request_mail_send_flag      = $request->request_mail_send_flag;
         $opacs->lent_setting                = $request->lent_setting;
         $opacs->lent_limit                  = $request->lent_limit;
