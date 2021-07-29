@@ -102,10 +102,16 @@ class CabinetsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-           'cabinet' => $cabinet,
-           'cabinet_contents' => $parent->children()->orderBy('is_folder', 'desc')->orderBy('name', 'asc')->get(),
-           'breadcrumbs' => $this->fetchBreadCrumbs($cabinet->id, $parent->id),
-           'parent_id' =>  $parent->id,
+            'cabinet' => $cabinet,
+            'cabinet_contents' => $parent->children()->get()->sort(function ($first, $second) {
+                // フォルダ>ファイル>名前順（昇順）
+                if ($first['is_folder'] == $second['is_folder']) {
+                    return $first['displayName'] < $second['displayName'] ? -1 : 1;
+                }
+                return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
+            }),
+            'breadcrumbs' => $this->fetchBreadCrumbs($cabinet->id, $parent->id),
+            'parent_id' =>  $parent->id,
         ]);
     }
 
