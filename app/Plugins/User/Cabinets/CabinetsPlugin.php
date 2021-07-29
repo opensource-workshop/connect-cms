@@ -19,7 +19,7 @@ use App\Models\User\Cabinets\Cabinet;
 use App\Models\User\Cabinets\CabinetContent;
 use App\Plugins\User\UserPluginBase;
 
-use function PHPUnit\Framework\isEmpty;
+// use function PHPUnit\Framework\isEmpty;
 
 /**
  * キャビネット・プラグイン
@@ -27,14 +27,14 @@ use function PHPUnit\Framework\isEmpty;
  * @author 石垣 佑樹 <ishigaki@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category キャビネット・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class CabinetsPlugin extends UserPluginBase
 {
 
     /* オブジェクト変数 */
     // ファイルダウンロードURL
-    private $downlod_url = '';
+    private $download_url = '';
 
     /* コアから呼び出す関数 */
 
@@ -284,7 +284,7 @@ class CabinetsPlugin extends UserPluginBase
             ->where('name', $request->file('upload_file')->getClientOriginalName())
             ->where('is_folder', CabinetContent::is_folder_off)
             ->first();
-            
+
         // uploads テーブルに情報追加、ファイルのid を取得する
         Uploads::find($content->upload_id)->update([
             'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
@@ -345,7 +345,7 @@ class CabinetsPlugin extends UserPluginBase
             Storage::delete($this->getContentsFilePath($content->upload));
             Uploads::destroy($content->upload->id);
         }
-        
+
         // キャビネットコンテンツの削除（再帰）
         CabinetContent::find($cabinet_content_id)->delete();
     }
@@ -366,7 +366,7 @@ class CabinetsPlugin extends UserPluginBase
 
         // ファイルの単数選択ならZIP化せずダウンロードレスポンスを返す
         if ($this->isSelectedSingleFile($request)) {
-            return redirect($this->downlod_url);
+            return redirect($this->download_url);
         }
 
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
@@ -466,7 +466,7 @@ class CabinetsPlugin extends UserPluginBase
         }
 
         // 単数ファイルダウンロード用パスを設定しておく
-        $this->downlod_url = "/file/" . $cabinet_content->upload_id;
+        $this->download_url = "/file/" . $cabinet_content->upload_id;
 
         return true;
     }
@@ -605,7 +605,7 @@ class CabinetsPlugin extends UserPluginBase
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
-        
+
         $bucket_id = $this->saveCabinet($request, $frame_id, $bucket_id);
 
         // 登録後はリダイレクトして編集ページを開く。
@@ -624,11 +624,11 @@ class CabinetsPlugin extends UserPluginBase
         $validator = Validator::make($request->all(), [
             'name' => [
                 'required',
-                 'max:255'
+                'max:255'
             ],
             'upload_max_size'=> [
                 'required',
-                 Rule::in(UploadMaxSize::getMemberKeys()),
+                Rule::in(UploadMaxSize::getMemberKeys()),
             ],
         ]);
         $validator->setAttributeNames([
@@ -792,13 +792,13 @@ class CabinetsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ紐づけ変更関数
-    *
-    * @param \Illuminate\Http\Request $request リクエスト
-    * @param int $page_id ページID
-    * @param int $frame_id フレームID
-    */
+    /**
+     * データ紐づけ変更関数
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新
