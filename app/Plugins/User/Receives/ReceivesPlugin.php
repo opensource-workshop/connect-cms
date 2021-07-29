@@ -65,16 +65,16 @@ class ReceivesPlugin extends UserPluginBase
     private function getReceiveFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select(
-                     'frames.*',
-                     'receives.id as receive_id',
-                     'receives.dataset_name',
-                     'receives.columns',
-                 )
-                 ->leftJoin('receives', 'receives.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::
+            select(
+                'frames.*',
+                'receives.id as receive_id',
+                'receives.dataset_name',
+                'receives.columns',
+            )
+            ->leftJoin('receives', 'receives.bucket_id', '=', 'frames.bucket_id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
@@ -86,37 +86,32 @@ class ReceivesPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
-
         // Frame データ
         $receive_frame = $this->getReceiveFrame($frame_id);
 
         // データ件数
-        $receive_count = DB::table('receive_records')
-                           ->join('receives', 'receive_records.receive_id', '=', 'receives.id')
-                           ->join('frames', function ($join) use ($frame_id) {
-                               $join->on('frames.bucket_id', '=', 'receives.bucket_id')
-                                    ->where('frames.id', $frame_id);
-                           })
-                           ->count();
+        $receive_count = ReceiveRecord::join('receives', 'receive_records.receive_id', '=', 'receives.id')
+            ->join('frames', function ($join) use ($frame_id) {
+                $join->on('frames.bucket_id', '=', 'receives.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->count();
 
         // 最終登録日時
-        $receive_last = ReceiveRecord::select('receive_records.*')
-                            ->join('receives', 'receive_records.receive_id', '=', 'receives.id')
-                            ->join('frames', function ($join) use ($frame_id) {
-                                $join->on('frames.bucket_id', '=', 'receives.bucket_id')
-                                    ->where('frames.id', $frame_id);
-                            })
-                            ->orderBy('receive_records.created_at', 'desc')
-                            ->first();
+        $receive_last = ReceiveRecord::join('receives', 'receive_records.receive_id', '=', 'receives.id')
+            ->join('frames', function ($join) use ($frame_id) {
+                $join->on('frames.bucket_id', '=', 'receives.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->orderBy('receive_records.created_at', 'desc')
+            ->first();
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'receives', [
+        return $this->view('receives', [
             'receive_frame'  => $receive_frame,
             'receives_count' => $receive_count,
             'receives_last'  => $receive_last,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -193,7 +188,7 @@ class ReceivesPlugin extends UserPluginBase
             'Content-Type' => 'text/csv',
             'content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
- 
+
         // データ
         $csv_data = '';
         foreach ($csv_array as $csv_line) {
@@ -218,16 +213,14 @@ class ReceivesPlugin extends UserPluginBase
         $receive_frame = $this->getReceiveFrame($frame_id);
 
         // データ取得（1ページの表示件数指定）
-        $receives = Receives::orderBy('created_at', 'desc')
-                            ->paginate(10);
+        $receives = Receive::orderBy('created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'receives_list_buckets', [
+        return $this->view('receives_list_buckets', [
             'receive_frame' => $receive_frame,
             'receives'      => $receives,
-            ]
-        );
+        ]);
     }
 
     /**
