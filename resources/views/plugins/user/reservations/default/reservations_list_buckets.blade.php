@@ -71,10 +71,8 @@
         </table>
     </div>
 
-    {{-- ページャー --}}
-    <div class="text-center">
-        {{ $reservations->links() }}
-    </div>
+    {{-- ページング処理 --}}
+    @include('plugins.common.user_paginate', ['posts' => $reservations, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
