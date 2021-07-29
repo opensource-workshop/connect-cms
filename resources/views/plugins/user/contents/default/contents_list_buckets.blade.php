@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -78,9 +78,9 @@
     </table>
 
     {{-- ページング処理 --}}
-    @include('plugins.common.user_paginate', ['posts' => $buckets_list, 'frame' => $frame, 'sort' => $request_order_str, 'aria_label_name' => '表示コンテンツ選択'])
+    @include('plugins.common.user_paginate', ['posts' => $buckets_list, 'frame' => $frame, 'appends' => ['sort' => $request_order_str], 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
-    <div class="text-center mt-2">
+    <div class="text-center">
         <button type="button" class="btn btn-secondary mr-2" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
     </div>
