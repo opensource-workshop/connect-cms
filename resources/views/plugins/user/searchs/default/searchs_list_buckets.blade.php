@@ -39,11 +39,10 @@
         </table>
     </div>
 
-    <div class="text-center">
-        {{ $searchs->fragment('frame-' . $frame_id)->links() }}
-    </div>
+    {{-- ページング処理 --}}
+    @include('plugins.common.user_paginate', ['posts' => $searchs, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
-    <div class="form-group text-center mt-3">
+    <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示サイト内検索変更</button>
     </div>
