@@ -111,7 +111,11 @@ class FrameCore
         // バケツとプラグイン・データはプラグイン側で対応する。
         // 関数を呼び出しても良いかも。
         Frame::destroy($frame_id);
-        FrameConfig::where('frame_id', $frame_id)->delete();
+
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // FrameConfig::where('frame_id', $frame_id)->delete();
+        $frame_config_ids = FrameConfig::where('frame_id', $frame_id)->pluck('id');
+        FrameConfig::destroy($frame_config_ids);
 
         return redirect($page->permanent_link);
     }
