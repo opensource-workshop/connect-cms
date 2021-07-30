@@ -152,6 +152,8 @@ return [
         'listCategories'      => ['frames.edit'],
         'saveCategories'      => ['frames.edit'],
         'deleteCategories'    => ['frames.edit'],
+        'editView'            => ['frames.edit'],
+        'saveView'            => ['frames.edit'],
 
         'addColumn'           => ['buckets.addColumn'],
         'editColumn'          => ['buckets.editColumn'],
@@ -200,6 +202,8 @@ return [
         'saveBucketsMails'    => ['post'],
         'saveCategories'      => ['post'],
         'deleteCategories'    => ['post'],
+        'editView'            => ['get'],
+        'saveView'            => ['post'],
 
         'addColumn'           => ['post'],
         'editColumn'          => ['get'],

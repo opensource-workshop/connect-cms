@@ -278,6 +278,8 @@ $app_array = [
         'UploadMaxSize' => \App\Enums\UploadMaxSize::class,
         'SearchsTargetPlugin' => \App\Enums\SearchsTargetPlugin::class,
         'LayoutArea' => \App\Enums\LayoutArea::class,
+        'CabinetFrameConfig' => \App\Enums\CabinetFrameConfig::class,
+        'CabinetSort' => \App\Enums\CabinetSort::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

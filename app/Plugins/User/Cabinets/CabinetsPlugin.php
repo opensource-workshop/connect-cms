@@ -13,10 +13,14 @@ use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
-
-use App\Enums\UploadMaxSize;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Cabinets\Cabinet;
 use App\Models\User\Cabinets\CabinetContent;
+
+use App\Enums\UploadMaxSize;
+use App\Enums\CabinetFrameConfig;
+use App\Enums\CabinetSort;
+
 use App\Plugins\User\UserPluginBase;
 
 // use function PHPUnit\Framework\isEmpty;
@@ -104,11 +108,38 @@ class CabinetsPlugin extends UserPluginBase
         return $this->view('index', [
             'cabinet' => $cabinet,
             'cabinet_contents' => $parent->children()->get()->sort(function ($first, $second) {
-                // フォルダ>ファイル>名前順（昇順）
+                // フォルダ>ファイル
+
                 if ($first['is_folder'] == $second['is_folder']) {
-                    return $first['displayName'] < $second['displayName'] ? -1 : 1;
+                    // フォルダ同士 or ファイル同士を比較
+
+                    $sort = FrameConfig::getConfigValue($this->frame_configs, CabinetFrameConfig::sort);
+
+                    if ($sort == '' || $sort == CabinetSort::name_asc) {
+                        // 名前（昇順）
+                        // return $first['displayName'] < $second['displayName'] ? -1 : 1;
+                        return $this->sortAsc($first['displayName'], $second['displayName']);
+                    } elseif ($sort == CabinetSort::name_desc) {
+                        // 名前（降順）
+                        return $this->sortDesc($first['displayName'], $second['displayName']);
+                    // } elseif ($sort == CabinetSort::created_asc) {
+                    //     // 登録日（昇順）
+                    //     return $this->sortAsc($first['created_at'], $second['created_at']);
+                    // } elseif ($sort == CabinetSort::created_desc) {
+                    //     // 登録日（降順）
+                    //     return $this->sortDesc($first['created_at'], $second['created_at']);
+                    } elseif ($sort == CabinetSort::updated_asc) {
+                        // 更新日（昇順）
+                        return $this->sortAsc($first['updated_at'], $second['updated_at']);
+                    } elseif ($sort == CabinetSort::updated_desc) {
+                        // 更新日（降順）
+                        return $this->sortDesc($first['updated_at'], $second['updated_at']);
+                    }
                 }
-                return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
+                // フォルダとファイルの比較
+                // ファイル(is_folder=0)よりフォルダ(is_folder=1)を上（降順）にする
+                // return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
+                return $this->sortDesc($first['is_folder'], $second['is_folder']);
             }),
             'breadcrumbs' => $this->fetchBreadCrumbs($cabinet->id, $parent->id),
             'parent_id' =>  $parent->id,
@@ -166,6 +197,46 @@ class CabinetsPlugin extends UserPluginBase
                 ->get();
         }
         return CabinetContent::ancestorsAndSelf($cabinet_content_id);
+    }
+
+    /**
+     * コレクションのsortメソッドでコールバック使用時の昇順処理
+     *
+     * firstが小さい時(-1), firstが大きい時(1)  = 昇順
+     * firstが小さい時(1),  firstが大きい時(-1) = 降順
+     *
+     * @param int $first
+     * @param int $second
+     * @return int
+     * @see https://readouble.com/laravel/6.x/ja/collections.html#method-some
+     * @see https://www.php.net/manual/ja/function.uasort.php
+     */
+    private function sortAsc($first, $second)
+    {
+        if ($first == $second) {
+            return 0;
+        }
+        return $first < $second ? -1 : 1;
+    }
+
+    /**
+     * コレクションのsortメソッドでコールバック使用時の降順処理
+     *
+     * firstが小さい時(-1), firstが大きい時(1)  = 昇順
+     * firstが小さい時(1),  firstが大きい時(-1) = 降順
+     *
+     * @param int $first
+     * @param int $second
+     * @return int
+     * @see https://readouble.com/laravel/6.x/ja/collections.html#method-some
+     * @see https://www.php.net/manual/ja/function.uasort.php
+     */
+    private function sortDesc($first, $second)
+    {
+        if ($first == $second) {
+            return 0;
+        }
+        return $first < $second ? 1 : -1;
     }
 
     /**
@@ -828,5 +899,51 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 承認機能は使わない
         return parent::saveBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
+    }
+
+    /**
+     * フレーム表示設定画面の表示
+     */
+    public function editView($request, $page_id, $frame_id)
+    {
+        // 表示テンプレートを呼び出す。
+        return $this->view('frame', [
+            'cabinet' => $this->getPluginBucket($this->getBucketId()),
+        ]);
+    }
+
+    /**
+     * フレーム表示設定の保存
+     */
+    public function saveView($request, $page_id, $frame_id, $cabinet_id)
+    {
+        // フレーム設定保存
+        $this->saveFrameConfigs($request, $frame_id, CabinetFrameConfig::getMemberKeys());
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
+        return;
+    }
+
+    /**
+     * フレーム設定を保存する。
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     * @param array $frame_config_names フレーム設定のname配列
+     */
+    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
+    {
+        foreach ($frame_config_names as $key => $value) {
+
+            if (empty($request->$value)) {
+                return;
+            }
+
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $value],
+                ['value' => $request->$value]
+            );
+        }
     }
 }
