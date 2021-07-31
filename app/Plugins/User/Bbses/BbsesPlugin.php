@@ -90,8 +90,13 @@ class BbsesPlugin extends UserPluginBase
             return $this->post;
         }
 
-        // POST を取得する。
-        $this->post = BbsPost::firstOrNew(['id' => $id]);
+        // 権限によって表示する記事を絞る
+        $this->post = BbsPost::select('bbs_posts.*')
+                             ->where(function ($query) {
+                                 $query = $this->appendAuthWhere($query, 'bbs_posts');
+                             })
+                             ->firstOrNew(['id' => $id]);
+
         return $this->post;
     }
 
