@@ -29,6 +29,9 @@ use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Cabinets\Cabinet;
 use App\Models\User\Cabinets\CabinetContent;
 use App\Models\User\Contents\Contents;
+use App\Models\User\Counters\Counter;
+use App\Models\User\Counters\CounterCount;
+use App\Models\User\Counters\CounterFrame;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesColumnsSelects;
@@ -62,6 +65,7 @@ use App\Models\Migration\Nc2\Nc2CabinetBlock;
 use App\Models\Migration\Nc2\Nc2CabinetFile;
 use App\Models\Migration\Nc2\Nc2CabinetManage;
 use App\Models\Migration\Nc2\Nc2Config;
+use App\Models\Migration\Nc2\Nc2Counter;
 use App\Models\Migration\Nc2\Nc2Faq;
 use App\Models\Migration\Nc2\Nc2FaqBlock;
 use App\Models\Migration\Nc2\Nc2FaqCategory;
@@ -92,6 +96,8 @@ use App\Models\Migration\Nc2\Nc2User;
 use App\Models\Migration\Nc2\Nc2WhatsnewBlock;
 
 use App\Traits\ConnectCommonTrait;
+
+use App\Enums\CounterDesignType;
 
 /**
  * 移行プログラム
@@ -160,7 +166,7 @@ trait MigrationTrait
         'calendar'      => 'Development',  // カレンダー
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
-        'counter'       => 'Development',  // カウンター
+        'counter'       => 'counters',     // カウンター
         'faq'           => 'faqs',         // FAQ
         'iframe'        => 'Development',  // iFrame
         'imagine'       => 'Abolition',    // imagine
@@ -316,17 +322,21 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'blogs')->delete();
             MigrationMapping::where('target_source_table', 'blogs_post')->delete();
 
-            // bbs to blog の移行用
-            MigrationMapping::where('target_source_table', 'bbses_post')->delete();
+            // bbs to blog 移行を指定されたら
+            if ($this->plugin_name['bbs'] === 'blogs') {
+                // bbs to blog の移行用
+                MigrationMapping::where('target_source_table', 'bbses_post')->delete();
+            }
         }
 
         if ($target == 'databases' || $target == 'all') {
-            // databases、databases_columns、databases_columns_selects、databases_inputs、databases_input_cols のtruncate
+            // databases、databases_columns、databases_columns_selects、databases_inputs、databases_input_cols、databases_frames のtruncate
             Databases::truncate();
             DatabasesColumns::truncate();
             DatabasesColumnsSelects::truncate();
             DatabasesInputs::truncate();
             DatabasesInputCols::truncate();
+            DatabasesFrames::truncate();
             Buckets::where('plugin_name', 'databases')->delete();
             MigrationMapping::where('target_source_table', 'databases')->delete();
             MigrationMapping::where('target_source_table', 'databases_post')->delete();
@@ -363,7 +373,7 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'whatsnews')->delete();
             MigrationMapping::where('target_source_table', 'whatsnews')->delete();
         }
-        
+
         if ($target == 'cabinets' || $target == 'all') {
             Cabinet::truncate();
             CabinetContent::truncate();
@@ -377,6 +387,14 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'bbses')->delete();
             MigrationMapping::where('target_source_table', 'bbses')->delete();
             MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
+        }
+
+        if ($target == 'counters' || $target == 'all') {
+            Counter::truncate();
+            CounterCount::truncate();
+            CounterFrame::truncate();
+            Buckets::where('plugin_name', 'counters')->delete();
+            MigrationMapping::where('target_source_table', 'counters')->delete();
         }
     }
 
@@ -707,6 +725,11 @@ trait MigrationTrait
         // BBSの取り込み
         if ($this->isTarget('cc_import', 'plugins', 'bbses')) {
             $this->importBbses($redo);
+        }
+
+        // カウンターの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'counters')) {
+            $this->importCounters($redo);
         }
 
         // 固定URLの取り込み
@@ -2719,6 +2742,77 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式のカウンターをインポート
+     */
+    private function importCounters($redo)
+    {
+        $this->putMonitor(3, "Counters import start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('counters');
+        }
+
+        // カウンター定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('counters/counter_*.ini'));
+
+        // カウンター定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の counter_block_id
+            $nc2_counter_block_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('counter_block_id', $ini['source_info'])) {
+                $nc2_counter_block_id = $ini['source_info']['counter_block_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'counters')->where('source_key', $nc2_counter_block_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // counter 取得。この情報から紐づけて、消すものを消してゆく。
+                $counter = Counter::where('id', $mapping->destination_key)->first();
+                // カウンターコンテンツ削除
+                CounterCount::where('counter_id', $mapping->destination_key)->delete();
+                if (!empty($counter)) {
+                    // Buckets 削除
+                    Buckets::where('id', $counter->bucket_id)->delete();
+                    // カウンター削除
+                    $counter->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            // Buckets テーブルと Counters テーブル、マッピングテーブルを追加
+            $counter_name = '無題';
+            $bucket = Buckets::create(['bucket_name' => $counter_name, 'plugin_name' => 'counters']);
+
+            $counter = Counter::create([
+                'bucket_id' => $bucket->id,
+                'name' => $counter_name,
+            ]);
+
+            // カウントを作成する
+            $counter_count = CounterCount::create([
+                'counter_id' => $counter->id,
+                'counted_at' => now()->format('Y-m-d'),
+                'day_count' => intval($ini['counter_base']['counter_num']),
+                'total_count' => intval($ini['counter_base']['counter_num']),
+            ]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'counters',
+                'source_key'           => $nc2_counter_block_id,
+                'destination_key'      => $counter->id,
+            ]);
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -2951,8 +3045,11 @@ trait MigrationTrait
             // キャビネット
             $this->importPluginCabinets($page, $page_dir, $frame_ini, $display_sequence);
         } elseif ($plugin_name == 'bbses') {
-            // キャビネット
+            // BBS
             $this->importPluginBbses($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'counters') {
+            // カウンター
+            $this->importPluginCounters($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -3273,7 +3370,7 @@ trait MigrationTrait
         if (!empty($migration_mapping)) {
             $cabinet = Cabinet::find($migration_mapping->destination_key);
         }
-        // 新Blog からBucket ID を取得
+        // 新Cabinet からBucket ID を取得
         if (!empty($cabinet)) {
             $bucket = Buckets::find($cabinet->bucket_id);
         }
@@ -3286,7 +3383,7 @@ trait MigrationTrait
     }
 
     /**
-     * キャビネットプラグインの登録処理
+     * 掲示板プラグインの登録処理
      */
     private function importPluginBbses($page, $page_dir, $frame_ini, $display_sequence)
     {
@@ -3417,6 +3514,105 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+    /**
+     * カウンタープラグインの登録処理
+     */
+    private function importPluginCounters($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $counter_block_id = null;
+        $counter_ini = null;
+        $nc2_counter_block_id = null;
+        $migration_mapping = null;
+        $counter = null;
+        $bucket = null;
+
+        // エクスポートファイルの counter_block_id 取得（エクスポート時の連番）
+        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('counter_block_id', $frame_ini['frame_base'])) {
+            $counter_block_id = $frame_ini['frame_base']['counter_block_id'];
+        }
+        // カウンターの情報取得
+        if (!empty($counter_block_id) && Storage::exists($this->getImportPath('counters/counter_') . $counter_block_id . '.ini')) {
+            $counter_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('counters/counter_') . $counter_block_id . '.ini', true);
+        }
+        // NC2 のcounter_block_id
+        if (!empty($counter_ini) && array_key_exists('source_info', $counter_ini) && array_key_exists('counter_block_id', $counter_ini['source_info'])) {
+            $nc2_counter_block_id = $counter_ini['source_info']['counter_block_id'];
+        }
+        // NC2 のcounter_block_id でマップ確認
+        if (!empty($counter_ini) && array_key_exists('source_info', $counter_ini) && array_key_exists('counter_block_id', $counter_ini['source_info'])) {
+            $migration_mapping = MigrationMapping::where('target_source_table', 'counters')->where('source_key', $nc2_counter_block_id)->first();
+        }
+        // マップから新Counter を取得
+        if (!empty($migration_mapping)) {
+            $counter = Counter::find($migration_mapping->destination_key);
+        }
+        // 新Counter からBucket ID を取得
+        if (!empty($counter)) {
+            $bucket = Buckets::find($counter->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Counter フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+
+        // NC2 のshow_type
+        $show_type = 'green'; // 初期値
+        if (!empty($counter_ini) && array_key_exists('counter', $counter_ini) && array_key_exists('show_type', $counter_ini['counter'])) {
+            $show_type = $counter_ini['counter']['show_type'];
+        }
+
+        // (NC2)show_type -> (Connect)design_type 変換
+        $convert_design_types = [
+            'black'       => CounterDesignType::badge_dark,
+            'black2'      => CounterDesignType::badge_dark,
+            'black3'      => CounterDesignType::badge_dark,
+            'color'       => CounterDesignType::badge_light,
+            'digit01'     => CounterDesignType::white_number_warning,
+            'digit02'     => CounterDesignType::white_number_warning,
+            'digit03'     => CounterDesignType::white_number_danger,
+            'digit04'     => CounterDesignType::white_number_danger,
+            'digit05'     => CounterDesignType::white_number_primary,
+            'digit06'     => CounterDesignType::white_number_info,
+            'digit07'     => CounterDesignType::white_number_dark,
+            'digit08'     => CounterDesignType::white_number_dark,
+            'digit09'     => CounterDesignType::white_number_dark,
+            'digit10'     => CounterDesignType::white_number_dark,
+            'digit11'     => CounterDesignType::white_number_success,
+            'digit12'     => CounterDesignType::white_number_success,
+            'gray'        => CounterDesignType::badge_light,
+            'gray2'       => CounterDesignType::badge_light,
+            'gray3'       => CounterDesignType::badge_light,
+            'gray_large'  => CounterDesignType::badge_light,
+            'green'       => CounterDesignType::badge_success,
+            'green_large' => CounterDesignType::badge_success,
+            'white'       => CounterDesignType::white_number,
+            'white_large' => CounterDesignType::circle_success,
+        ];
+        $design_type = isset($convert_design_types[$show_type]) ? $convert_design_types[$show_type] : CounterDesignType::numeric;
+
+        // counter_frames 登録
+        if (!empty($counter)) {
+            CounterFrame::create([
+                'counter_id' => $counter->id,
+                'frames_id' => $frame->id,
+                'design_type' => $design_type,
+                'use_total_count' => 1,
+                'use_today_count' => 1,
+                'use_yestday_count' => 1,
+                'total_count_title' => $this->getArrayValue($frame_ini, 'counter', 'show_char_before', '累計'),
+                'today_count_title' => '今日',
+                'yestday_count_title' => '昨日',
+                'total_count_after' => $this->getArrayValue($frame_ini, 'counter', 'show_char_after', null),
+                'today_count_after' => null,
+                'yestday_count_after' => null,
+            ]);
+        }
     }
 
     /**
@@ -4576,6 +4772,11 @@ trait MigrationTrait
         // NC2 キャビネット（cabinet）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'cabinets')) {
             $this->nc2ExportCabinet($redo);
+        }
+
+        // NC2 カウンター（counter）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'counters')) {
+            $this->nc2ExportCounter($redo);
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
@@ -6282,6 +6483,59 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：カウンター（カウンター）の移行
+     */
+    private function nc2ExportCounter($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportCounter.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('counters/'));
+        }
+
+        // NC2カウンター（Counter）を移行する。
+        $where_counter_block_ids = $this->getMigrationConfig('counters', 'nc2_export_where_counter_block_ids');
+        if (empty($where_cabinet_ids)) {
+            $nc2_counters = Nc2Counter::orderBy('block_id')->get();
+        } else {
+            $nc2_counters = Nc2Counter::whereIn('block_id', $where_counter_block_ids)->orderBy('block_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_counters->isEmpty()) {
+            return;
+        }
+
+        // NC2カウンター（Counter）のループ
+        foreach ($nc2_counters as $nc2_counter) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($room_ids) && !in_array($nc2_counter->room_id, $room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // カウンター設定
+            $ini = "";
+            $ini .= "[counter_base]\n";
+            // カウント数
+            $ini .= "counter_num = " . $nc2_counter->counter_num . "\n";
+
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "counter_block_id = " . $nc2_counter->block_id . "\n";
+            $ini .= "room_id = " . $nc2_counter->room_id . "\n";
+            $ini .= "module_name = \"counter\"\n";
+
+            // カウンターの設定を出力
+            $this->storagePut($this->getImportPath('counters/counter_') . $this->zeroSuppress($nc2_counter->block_id) . '.ini', $ini);
+        }
+    }
+
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -6637,7 +6891,7 @@ trait MigrationTrait
             $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc2_whatsnew_block->block_id) . "\"\n";
         } elseif ($module_name == 'cabinet') {
             $nc2_cabinet_block = Nc2CabinetBlock::where('block_id', $nc2_block->block_id)->first();
-            // ブロックがあり、登録フォームがない場合は対象外
+            // ブロックがあり、キャビネットがない場合は対象外
             if (!empty($nc2_cabinet_block)) {
                 $ret = "cabinet_id = \"" . $this->zeroSuppress($nc2_cabinet_block->cabinet_id) . "\"\n";
             }
@@ -6680,6 +6934,12 @@ trait MigrationTrait
                     asort($ommit_nc2_pages);
                     $ret .= "ommit_page_ids_nc2 = \"" . implode(",", $ommit_nc2_pages) . "\"\n";
                 }
+            }
+        } elseif ($module_name == 'counter') {
+            $nc2_counter = Nc2Counter::where('block_id', $nc2_block->block_id)->first();
+            // ブロックがあり、カウンターがない場合は対象外
+            if (!empty($nc2_counter)) {
+                $ret = "counter_block_id = \"" . $this->zeroSuppress($nc2_counter->block_id) . "\"\n";
             }
         }
         return $ret;
@@ -6742,20 +7002,23 @@ trait MigrationTrait
         // プラグインで振り分け
         if ($plugin_name == 'contents') {
             // 固定記事（お知らせ）
-            $this->nc2ExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+            $this->nc2BlockExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         } elseif ($plugin_name == 'menus') {
             // メニュー
             // 今のところ、メニューの追加設定はなし。
         } elseif ($plugin_name == 'databases') {
             // データベース
-            $this->nc2ExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+            $this->nc2BlockExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'counters') {
+            // カウンター
+            $this->nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
     }
 
     /**
      * NC2：汎用データベースのブロック特有部分のエクスポート
      */
-    private function nc2ExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    private function nc2BlockExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
     {
         // NC2 ブロック設定の取得
         $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc2_block->block_id)->first();
@@ -6791,7 +7054,7 @@ trait MigrationTrait
     /**
      * NC2：固定記事（お知らせ）のエクスポート
      */
-    private function nc2ExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    private function nc2BlockExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
     {
         // お知らせモジュールのデータの取得
         // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
@@ -6815,7 +7078,37 @@ trait MigrationTrait
 
         $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
 
-        //echo "nc2ExportContents";
+        //echo "nc2BlockExportContents";
+    }
+
+    /**
+     * NC2：カウンターのブロック特有部分のエクスポート
+     */
+    private function nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // NC2 ブロック設定の取得
+        $nc2_counter = Nc2Counter::where('block_id', $nc2_block->block_id)->first();
+        if (empty($nc2_counter)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[counter]\n";
+        // 表示する桁数
+        $frame_ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
+        // 画像選択
+        $frame_ini .= "show_type = " . $nc2_counter->show_type . "\n";
+        // 文字(前)
+        $frame_ini .= "show_char_before = " . $nc2_counter->show_char_before . "\n";
+        // 文字(後)
+        $frame_ini .= "show_char_after = " . $nc2_counter->show_char_after . "\n";
+        // 上記以外に表示したい文字
+        $frame_ini .= "comment = " . $nc2_counter->comment . "\n";
+
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
     /**
