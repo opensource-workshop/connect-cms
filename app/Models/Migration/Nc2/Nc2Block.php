@@ -110,11 +110,11 @@ class Nc2Block extends Model
         'announcement'  => 'contents',     // お知らせ
         'assignment'    => 'Development',  // レポート
         'bbs'           => 'bbses',        // 掲示板
-        'cabinet'       => 'cabinets',  // キャビネット
+        'cabinet'       => 'cabinets',     // キャビネット
         'calendar'      => 'Development',  // カレンダー
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
-        'counter'       => 'Development',  // カウンター
+        'counter'       => 'counters',     // カウンター
         'faq'           => 'faqs',         // FAQ
         'iframe'        => 'Development',  // iFrame
         'imagine'       => 'Abolition',    // imagine
