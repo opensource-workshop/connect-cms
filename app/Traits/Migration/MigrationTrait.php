@@ -514,6 +514,10 @@ trait MigrationTrait
      */
     private function getArrayValue($array, $key1, $key2 = null, $default = "")
     {
+        if (empty($array)) {
+            return $default;
+        }
+
         $value1 = $default;
         if (array_key_exists($key1, $array)) {
             $value1 = $array[$key1];
@@ -3530,17 +3534,15 @@ trait MigrationTrait
         $bucket = null;
 
         // エクスポートファイルの counter_block_id 取得（エクスポート時の連番）
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('counter_block_id', $frame_ini['frame_base'])) {
-            $counter_block_id = $frame_ini['frame_base']['counter_block_id'];
-        }
+        $counter_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'counter_block_id', null);
+
         // カウンターの情報取得
         if (!empty($counter_block_id) && Storage::exists($this->getImportPath('counters/counter_') . $counter_block_id . '.ini')) {
             $counter_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('counters/counter_') . $counter_block_id . '.ini', true);
         }
         // NC2 のcounter_block_id
-        if (!empty($counter_ini) && array_key_exists('source_info', $counter_ini) && array_key_exists('counter_block_id', $counter_ini['source_info'])) {
-            $nc2_counter_block_id = $counter_ini['source_info']['counter_block_id'];
-        }
+        $nc2_counter_block_id = $this->getArrayValue($counter_ini, 'source_info', 'counter_block_id', null);
+
         // NC2 のcounter_block_id でマップ確認
         if (!empty($counter_ini) && array_key_exists('source_info', $counter_ini) && array_key_exists('counter_block_id', $counter_ini['source_info'])) {
             $migration_mapping = MigrationMapping::where('target_source_table', 'counters')->where('source_key', $nc2_counter_block_id)->first();
@@ -3562,10 +3564,7 @@ trait MigrationTrait
 
 
         // NC2 のshow_type
-        $show_type = 'green'; // 初期値
-        if (!empty($counter_ini) && array_key_exists('counter', $counter_ini) && array_key_exists('show_type', $counter_ini['counter'])) {
-            $show_type = $counter_ini['counter']['show_type'];
-        }
+        $show_type = $this->getArrayValue($counter_ini, 'counter_base', 'show_type', 'green');
 
         // (NC2)show_type -> (Connect)design_type 変換
         $convert_design_types = [
@@ -3594,20 +3593,19 @@ trait MigrationTrait
             'white'       => CounterDesignType::white_number,
             'white_large' => CounterDesignType::circle_success,
         ];
-        $design_type = isset($convert_design_types[$show_type]) ? $convert_design_types[$show_type] : CounterDesignType::numeric;
 
         // counter_frames 登録
         if (!empty($counter)) {
             CounterFrame::create([
                 'frame_id' => $frame->id,
-                'design_type' => $design_type,
+                'design_type' => isset($convert_design_types[$show_type]) ? $convert_design_types[$show_type] : CounterDesignType::numeric,
                 'use_total_count' => 1,
                 'use_today_count' => 1,
                 'use_yesterday_count' => 1,
-                'total_count_title' => $this->getArrayValue($frame_ini, 'counter', 'show_char_before', '累計'),
+                'total_count_title' => $this->getArrayValue($counter_ini, 'counter_base', 'show_char_before', '累計'),
                 'today_count_title' => '今日',
                 'yesterday_count_title' => '昨日',
-                'total_count_after' => $this->getArrayValue($frame_ini, 'counter', 'show_char_after', null),
+                'total_count_after' => $this->getArrayValue($counter_ini, 'counter_base', 'show_char_after', null),
                 'today_count_after' => null,
                 'yesterday_count_after' => null,
             ]);
@@ -6521,6 +6519,16 @@ trait MigrationTrait
             $ini .= "[counter_base]\n";
             // カウント数
             $ini .= "counter_num = " . $nc2_counter->counter_num . "\n";
+            // 表示する桁数
+            $ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
+            // 画像選択
+            $ini .= "show_type = " . $nc2_counter->show_type . "\n";
+            // 文字(前)
+            $ini .= "show_char_before = " . $nc2_counter->show_char_before . "\n";
+            // 文字(後)
+            $ini .= "show_char_after = " . $nc2_counter->show_char_after . "\n";
+            // 上記以外に表示したい文字
+            $ini .= "comment = " . $nc2_counter->comment . "\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -7008,9 +7016,6 @@ trait MigrationTrait
         } elseif ($plugin_name == 'databases') {
             // データベース
             $this->nc2BlockExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
-        } elseif ($plugin_name == 'counters') {
-            // カウンター
-            $this->nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
     }
 
@@ -7078,36 +7083,6 @@ trait MigrationTrait
         $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
 
         //echo "nc2BlockExportContents";
-    }
-
-    /**
-     * NC2：カウンターのブロック特有部分のエクスポート
-     */
-    private function nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
-    {
-        // NC2 ブロック設定の取得
-        $nc2_counter = Nc2Counter::where('block_id', $nc2_block->block_id)->first();
-        if (empty($nc2_counter)) {
-            return;
-        }
-
-        $ini_filename = "frame_" . $frame_index_str . '.ini';
-
-        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
-
-        $frame_ini = "[counter]\n";
-        // 表示する桁数
-        $frame_ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
-        // 画像選択
-        $frame_ini .= "show_type = " . $nc2_counter->show_type . "\n";
-        // 文字(前)
-        $frame_ini .= "show_char_before = " . $nc2_counter->show_char_before . "\n";
-        // 文字(後)
-        $frame_ini .= "show_char_after = " . $nc2_counter->show_char_after . "\n";
-        // 上記以外に表示したい文字
-        $frame_ini .= "comment = " . $nc2_counter->comment . "\n";
-
-        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
     /**
