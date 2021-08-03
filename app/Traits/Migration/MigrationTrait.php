@@ -6494,7 +6494,7 @@ trait MigrationTrait
 
         // NC2カウンター（Counter）を移行する。
         $where_counter_block_ids = $this->getMigrationConfig('counters', 'nc2_export_where_counter_block_ids');
-        if (empty($where_cabinet_ids)) {
+        if (empty($where_counter_block_ids)) {
             $nc2_counters = Nc2Counter::orderBy('block_id')->get();
         } else {
             $nc2_counters = Nc2Counter::whereIn('block_id', $where_counter_block_ids)->orderBy('block_id')->get();
