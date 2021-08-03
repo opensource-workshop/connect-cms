@@ -3599,18 +3599,17 @@ trait MigrationTrait
         // counter_frames 登録
         if (!empty($counter)) {
             CounterFrame::create([
-                'counter_id' => $counter->id,
-                'frames_id' => $frame->id,
+                'frame_id' => $frame->id,
                 'design_type' => $design_type,
                 'use_total_count' => 1,
                 'use_today_count' => 1,
-                'use_yestday_count' => 1,
+                'use_yesterday_count' => 1,
                 'total_count_title' => $this->getArrayValue($frame_ini, 'counter', 'show_char_before', '累計'),
                 'today_count_title' => '今日',
-                'yestday_count_title' => '昨日',
+                'yesterday_count_title' => '昨日',
                 'total_count_after' => $this->getArrayValue($frame_ini, 'counter', 'show_char_after', null),
                 'today_count_after' => null,
-                'yestday_count_after' => null,
+                'yesterday_count_after' => null,
             ]);
         }
     }
