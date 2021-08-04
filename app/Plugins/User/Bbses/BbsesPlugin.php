@@ -451,7 +451,8 @@ class BbsesPlugin extends UserPluginBase
         // 承認の要否確認とステータス処理
         if ($request->status == StatusType::temporary) {
             $post->status = StatusType::temporary;  // 一時保存
-        } elseif ($this->buckets->needApprovalUser(Auth::user())) {
+        // } elseif ($this->buckets->needApprovalUser(Auth::user())) {
+        } elseif ($this->isApproval()) {
             $post->status = StatusType::approval_pending;  // 承認待ち
         } else {
             $post->status = StatusType::active;  // 公開

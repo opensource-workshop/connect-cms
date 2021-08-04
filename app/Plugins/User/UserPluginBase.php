@@ -57,67 +57,66 @@ class UserPluginBase extends PluginBase
     use ConnectCommonTrait;
 
     /**
-     *  ページオブジェクト
+     * ページオブジェクト
      */
     public $page = null;
 
     /**
-     *  ページ一覧オブジェクト
+     * ページ一覧オブジェクト
      */
     public $pages = null;
 
     /**
-     *  フレームオブジェクト
+     * フレームオブジェクト
      */
     public $frame = null;
 
     /**
-     *  Buckets オブジェクト
+     * Buckets オブジェクト
      */
     public $buckets = null;
 
     /**
-     *  Configs オブジェクト
+     * Configs オブジェクト
      */
     public $configs = null;
 
     /**
      * FrameConfig オブジェクト
      * FrameConfigのCollection
-     *
      */
     public $frame_configs = null;
 
     /**
-     *  アクション
+     * アクション
      */
     public $action = null;
 
     /**
-     *  リクエスト
+     * リクエスト
      */
     public $request = null;
 
     /**
-     *  id
+     * id
      */
     public $id = null;
 
     /**
-     *  purifier
-     *  保存処理時にインスタンスが代入され、シングルトンで使うことを想定
+     * purifier
+     * 保存処理時にインスタンスが代入され、シングルトンで使うことを想定
      */
     public $purifier = null;
 
     /**
-     *  画面間用メッセージ
+     * 画面間用メッセージ
      */
     public $cc_massage = null;
 
     /**
-     *  コンストラクタ
+     * コンストラクタ
      */
-    public function __construct($page = null, $frame = null, $pages = null)
+    public function __construct($page = null, $frame = null, $pages = null, $page_tree = null)
     {
         // ページの保持
         $this->page = $page;
@@ -133,11 +132,11 @@ class UserPluginBase extends PluginBase
 
         // Buckets の保持
         $this->buckets = Buckets::select('buckets.*')
-                                ->join('frames', function ($join) use ($frame) {
-                                    $join->on('frames.bucket_id', '=', 'buckets.id')
-                                         ->where('frames.id', '=', $frame->id);
-                                })
-                                ->first();
+            ->join('frames', function ($join) use ($frame) {
+                $join->on('frames.bucket_id', '=', 'buckets.id')
+                    ->where('frames.id', '=', $frame->id);
+            })
+            ->first();
 
         // Configs の保持
         // $this->configs = Configs::get();
@@ -147,7 +146,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  HTTPリクエストメソッドチェック
+     * HTTPリクエストメソッドチェック
      *
      * @param String $plugin_name
      * @return view
@@ -167,7 +166,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  関数定義チェック
+     * 関数定義チェック
      *
      * @param String $plugin_name
      * @return view
@@ -313,7 +312,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  View のパス
+     * View のパス
      *
      * @return view
      */
@@ -343,7 +342,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  View のパス
+     * View のパス
      *
      * @return view
      */
@@ -353,9 +352,9 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  編集画面の最初のタブ
+     * 編集画面の最初のタブ
      *
-     *  フレームの編集画面がある各プラグインからオーバーライドされることを想定。
+     * フレームの編集画面がある各プラグインからオーバーライドされることを想定。
      */
     public function getFirstFrameEditAction()
     {
@@ -363,7 +362,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  テンプレート
+     * テンプレート
      *
      * @return view
      */
@@ -373,9 +372,9 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  テーマ取得
-     *  配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
-     *  値がなければキーのみで値は空
+     * テーマ取得
+     * 配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
+     * 値がなければキーのみで値は空
      */
     protected function getThemeName()
     {
@@ -544,7 +543,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  フレームとBuckets 取得
+     * フレームとBuckets 取得
      */
     protected function getBuckets($frame_id)
     {
@@ -556,7 +555,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  Buckets のメール設定取得
+     * Buckets のメール設定取得
      */
     protected function getBucketMail($backet)
     {
@@ -1054,7 +1053,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  ページ取得
+     * ページ取得
      */
     protected function getPages($format = null)
     {
@@ -1118,7 +1117,7 @@ class UserPluginBase extends PluginBase
     // }
 
     /**
-     *  ログ出力
+     * ログ出力
      */
     public function putLog($e)
     {
@@ -1169,7 +1168,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  HTMLPurifier の実行
+     * HTMLPurifier の実行
      */
     public function clean($text)
     {
@@ -1202,8 +1201,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  HTMLPurifier 制限の判定
-     *
+     * HTMLPurifier 制限の判定
      */
     private function isHtmlPurifier()
     {
@@ -1250,8 +1248,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  プラグイン名の取得
-     *
+     * プラグイン名の取得
      */
     protected function getPluginName()
     {
@@ -1280,6 +1277,17 @@ class UserPluginBase extends PluginBase
     protected function refreshFrameConfigs()
     {
         $this->frame_configs = FrameConfig::where('frame_id', $this->frame->id)->get();
+    }
+
+    /**
+     * 要承認の判断
+     */
+    protected function isApproval()
+    {
+        if (empty($this->buckets)) {
+            return false;
+        }
+        return $this->buckets->needApprovalUser(Auth::user(), $this->frame);
     }
 
     /**

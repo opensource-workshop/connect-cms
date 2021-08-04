@@ -3,12 +3,16 @@
 namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 use App\Models\Common\BucketsRoles;
 
+use App\Traits\ConnectRoleTrait;
+
 class Buckets extends Model
 {
+    use ConnectRoleTrait;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
@@ -61,7 +65,7 @@ class Buckets extends Model
     }
 
     /**
-     *  投稿権限の保持確認
+     * 投稿権限の保持確認
      */
     public function canPost($role)
     {
@@ -87,7 +91,7 @@ class Buckets extends Model
     }
 
     /**
-     *  ユーザーの投稿権限の有無確認
+     * ユーザーの投稿権限の有無確認
      */
     public function canPostUser($user)
     {
@@ -123,7 +127,7 @@ class Buckets extends Model
     }
 
     /**
-     *  承認の有無確認
+     * 承認の有無確認
      */
     public function needApproval($role)
     {
@@ -146,9 +150,9 @@ class Buckets extends Model
     }
 
     /**
-     *  ユーザーの承認の有無確認
+     * ユーザーの承認の有無確認
      */
-    public function needApprovalUser($user)
+    public function needApprovalUser($user, $frame = null)
     {
         // ユーザーの持つBASE権限を全て確認し、全てで承認が必要な場合、承認が必要となる。
         // (権限のひとつでも、承認が不要な場合は、承認は不要になる)
@@ -156,7 +160,25 @@ class Buckets extends Model
             return false;
         }
 
-        $user_roles_base = $user->user_roles['base'];
+        $request = app(Request::class);
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
+        // dd($page, $page->page_roles);
+
+        // フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
+        $page_roles = $this->choicePageRolesByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
+
+        // ユーザロール取得。所属グループのページ権限あったら、そっちからとる
+        $user_roles = $this->choiceUserRolesOrPageRoles($user, $page_roles);
+
+        if (!array_key_exists('base', (array)$user_roles)) {
+            return false;
+        }
+
+        // $user_roles_base = $user->user_roles['base'];
+        $user_roles_base = $user_roles['base'];
         if (empty($user_roles_base)) {
             return false;
         }

@@ -305,24 +305,25 @@ class BlogsPlugin extends UserPluginBase
         return $blogs_posts;
     }
 
-    /**
-     *  要承認の判断
-     */
-    private function isApproval($frame_id)
-    {
-        return $this->buckets->needApprovalUser(Auth::user());
+    // move: UserPluginBaseに移動
+    // /**
+    //  *  要承認の判断
+    //  */
+    // protected function isApproval($frame_id)
+    // {
+    //     return $this->buckets->needApprovalUser(Auth::user(), $this->frame);
 
-//        // 承認の要否確認とステータス処理
-//        $blog_frame = $this->getBlogFrame($frame_id);
-//        if ($blog_frame->approval_flag == 1) {
-//
-//            // 記事修正、コンテンツ管理者権限がない場合は要承認
-//            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-//                return true;
-//            }
-//        }
-//        return false;
-    }
+    //     //        // 承認の要否確認とステータス処理
+    //     //        $blog_frame = $this->getBlogFrame($frame_id);
+    //     //        if ($blog_frame->approval_flag == 1) {
+    //     //
+    //     //            // 記事修正、コンテンツ管理者権限がない場合は要承認
+    //     //            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
+    //     //                return true;
+    //     //            }
+    //     //        }
+    //     //        return false;
+    // }
 
     /**
      *  タグの保存
@@ -782,7 +783,7 @@ WHERE status = 0
         $blogs_post->close_more_button = $request->close_more_button;
 
         // 承認の要否確認とステータス処理
-        if ($this->isApproval($frame_id)) {
+        if ($this->isApproval()) {
             $blogs_post->status = 2;
         }
 

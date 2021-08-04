@@ -174,13 +174,13 @@
                     </button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($learningtasks_posts->id))
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success" onclick="javascript:return confirm('登録します。\nよろしいですか？')"><i class="far fa-edit"></i> 登録申請</button>
                         @else
                             <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('登録します。\nよろしいですか？')"><i class="fas fa-check"></i> 登録確定</button>
                         @endif
                     @else
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success" onclick="javascript:return confirm('変更します。\nよろしいですか？')"><i class="far fa-edit"></i> 変更申請</button>
                         @else
                             <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('変更します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>

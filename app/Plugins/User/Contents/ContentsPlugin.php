@@ -192,16 +192,17 @@ class ContentsPlugin extends UserPluginBase
         return $query;
     }
 
-    /**
-     *  要承認の判断
-     */
-    private function isApproval($frame_id)
-    {
-        if (empty($this->buckets)) {
-            return false;
-        }
-        return $this->buckets->needApprovalUser(Auth::user());
-    }
+    // move: UserPluginBaseに移動
+    // /**
+    //  *  要承認の判断
+    //  */
+    // protected function isApproval($frame_id)
+    // {
+    //     if (empty($this->buckets)) {
+    //         return false;
+    //     }
+    //     return $this->buckets->needApprovalUser(Auth::user());
+    // }
 
     /**
      *  検索用メソッド
@@ -524,7 +525,7 @@ class ContentsPlugin extends UserPluginBase
         // 一時保存(status が 1 になる。)
         if ($status == 1) {
             $contents->status = 1;
-        } elseif ($this->isApproval($frame_id)) {
+        } elseif ($this->isApproval()) {
             // 承認フラグ(要承認の場合はstatus が 2 になる。)
             $contents->status = 2;
         } else {
@@ -553,7 +554,7 @@ class ContentsPlugin extends UserPluginBase
         $newrow->content_text = $this->clean($request->contents);
 
         // 承認フラグ(要承認の場合はstatus が2 になる。)
-        if ($this->isApproval($frame_id)) {
+        if ($this->isApproval()) {
             $newrow->status = 2;
         } else {
             $newrow->status = 0;

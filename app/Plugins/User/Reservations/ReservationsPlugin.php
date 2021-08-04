@@ -160,13 +160,14 @@ class ReservationsPlugin extends UserPluginBase
         return $validator;
     }
 
-    /**
-     *  要承認の判断
-     */
-    private function isApproval($frame_id)
-    {
-        return $this->buckets->needApprovalUser(Auth::user());
-    }
+    // move: UserPluginBaseに移動
+    // /**
+    //  *  要承認の判断
+    //  */
+    // protected function isApproval($frame_id)
+    // {
+    //     return $this->buckets->needApprovalUser(Auth::user());
+    // }
 
     /* スタティック関数 */
 
@@ -460,7 +461,7 @@ class ReservationsPlugin extends UserPluginBase
             $count = 31 + $addDay;
             $count =  ceil($count / 7) * 7;
             // dd("addDay：$addDay","カレンダー1日目：$firstDay","カレンダー1日目の曜日：$firstDay->dayOfWeek","count:$count");
-    
+
             for ($i = 0; $i < $count; $i++, $firstDay->addDay()) {
                 $dates[] = $firstDay->copy();
             }
@@ -689,9 +690,9 @@ class ReservationsPlugin extends UserPluginBase
         //$reservations->終了日時 = $request->終了日時;
 
         // 承認の要否確認とステータス処理
-        if ($this->isApproval($frame_id)) {
+        // if ($this->isApproval()) {
             //$reservations->status = 2;
-        }
+        // }
 
         // 予約データ保存
         //$reservations->save();

@@ -445,7 +445,8 @@ class CalendarsPlugin extends UserPluginBase
         // 承認の要否確認とステータス処理
         if ($request->status == "1") {
             $post->status = 1;  // 一時保存
-        } elseif ($this->buckets->needApprovalUser(Auth::user())) {
+        // } elseif ($this->buckets->needApprovalUser(Auth::user())) {
+        } elseif ($this->isApproval()) {
             $post->status = 2;  // 承認待ち
         } else {
             $post->status = 0;  // 公開

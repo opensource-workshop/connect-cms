@@ -265,24 +265,25 @@ class FaqsPlugin extends UserPluginBase
         return $faqs_posts_recored;
     }
 
-    /**
-     *  要承認の判断
-     */
-    private function isApproval($frame_id)
-    {
-        return $this->buckets->needApprovalUser(Auth::user());
-
-//        // 承認の要否確認とステータス処理
-//        $faq_frame = $this->getFaqFrame($frame_id);
-//        if ($faq_frame->approval_flag == 1) {
-//
-//            // 記事修正、コンテンツ管理者権限がない場合は要承認
-//            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-//                return true;
-//            }
-//        }
-//        return false;
-    }
+    // move: UserPluginBaseに移動
+    // /**
+    //  *  要承認の判断
+    //  */
+    // protected function isApproval($frame_id)
+    // {
+    //     return $this->buckets->needApprovalUser(Auth::user());
+    //
+    //     //        // 承認の要否確認とステータス処理
+    //     //        $faq_frame = $this->getFaqFrame($frame_id);
+    //     //        if ($faq_frame->approval_flag == 1) {
+    //     //
+    //     //            // 記事修正、コンテンツ管理者権限がない場合は要承認
+    //     //            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
+    //     //                return true;
+    //     //            }
+    //     //        }
+    //     //        return false;
+    // }
 
     /**
      *  タグの保存
@@ -627,7 +628,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs_post->display_sequence = $display_sequence;
 
         // 承認の要否確認とステータス処理
-        if ($this->isApproval($frame_id)) {
+        if ($this->isApproval()) {
             $faqs_post->status = 2;
         }
 

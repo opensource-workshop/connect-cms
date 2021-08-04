@@ -1366,7 +1366,8 @@ class DatabasesPlugin extends UserPluginBase
             $status = 1;  // 一時保存
         } else {
             // 承認の要否確認とステータス処理
-            if ($this->buckets->needApprovalUser(Auth::user())) {
+            // if ($this->buckets->needApprovalUser(Auth::user())) {
+            if ($this->isApproval()) {
                 $status = 2;  // 承認待ち
             } else {
                 $status = 0;  // 公開
