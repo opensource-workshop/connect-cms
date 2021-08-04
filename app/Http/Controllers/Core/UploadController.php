@@ -42,8 +42,7 @@ class UploadController extends ConnectController
      */
     public function __construct()
     {
-        // postFile のみmiddleware使用（only）
-        $this->middleware('connect.page')->only(['postFile']);
+        $this->middleware('connect.page');
     }
 
     /**
