@@ -26,9 +26,10 @@ class ConnectPage
     /**
      * Handle an incoming request.
      *
-     * ・requestにセット
+     * ・request->attributesにセット
      *   ・page
      *   ・pages
+     *   ・top_page
      *   ・page_tree （pageがあれば）
      *   ・http_status_code （403, 404エラー時で403,404ページを指定していた場合）
      * ・全ビュー間のデータ共有

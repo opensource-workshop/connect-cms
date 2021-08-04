@@ -1023,7 +1023,6 @@ class DefaultController extends ConnectController
 
     /**
      * 共通エリアのプラグインのインスタンス生成
-     *
      */
     private function createInstanceCommonArea($layouts_info, $plugin_instances, $page, $pages)
     {
