@@ -38,6 +38,15 @@ class UploadController extends ConnectController
     // var $directory_file_limit = 1000;
 
     /**
+     * コンストラクタ
+     */
+    public function __construct()
+    {
+        // postFile のみmiddleware使用（only）
+        $this->middleware('connect.page')->only(['postFile']);
+    }
+
+    /**
      * ファイル送出
      */
     public function getFile(Request $request, $id = null)
