@@ -27,7 +27,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カレンダー・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class CalendarsPlugin extends UserPluginBase
 {
