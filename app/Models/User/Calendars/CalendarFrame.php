@@ -5,7 +5,7 @@ namespace App\Models\User\Calendars;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use App\Userable;
+use App\UserableNohistory;
 
 /**
  * カレンダー・フレーム
@@ -20,8 +20,8 @@ class CalendarFrame extends Model
     // 論理削除
     use SoftDeletes;
 
-    // 保存時のユーザー関連データの保持
-    use Userable;
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
 
     // 更新する項目の定義
     protected $fillable = ['calendar_id', 'frame_id', 'view_format'];
