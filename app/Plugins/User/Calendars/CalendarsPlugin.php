@@ -53,8 +53,8 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'editView'];
-        $functions['post'] = ['saveView', 'edit'];
+        $functions['get']  = ['index'];
+        $functions['post'] = ['edit'];
         return $functions;
     }
 
@@ -65,8 +65,6 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 権限チェックテーブル
         $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_arrangement');
-        $role_ckeck_table["saveView"] = array('role_arrangement');
         return $role_ckeck_table;
     }
 
@@ -518,51 +516,53 @@ class CalendarsPlugin extends UserPluginBase
         return $this->editBuckets($request, $page_id, $frame_id);
     }
 
-    /**
-     * フレーム表示設定画面の表示
-     */
-    public function editView($request, $page_id, $frame_id)
-    {
-        // 表示テンプレートを呼び出す。
-        return $this->view('frame', [
-            // 表示中のバケツデータ
-            'calendar'       => $this->getPluginBucket($this->getBucketId()),
-            'calendar_frame' => $this->getPluginFrame($frame_id),
-        ]);
-    }
+    // delete: 使ってない
+    // /**
+    //  * フレーム表示設定画面の表示
+    //  */
+    // public function editView($request, $page_id, $frame_id)
+    // {
+    //     // 表示テンプレートを呼び出す。
+    //     return $this->view('frame', [
+    //         // 表示中のバケツデータ
+    //         'calendar'       => $this->getPluginBucket($this->getBucketId()),
+    //         'calendar_frame' => $this->getPluginFrame($frame_id),
+    //     ]);
+    // }
 
-    /**
-     * フレーム表示設定の保存
-     */
-    public function saveView($request, $page_id, $frame_id, $calendar_id)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'view_count'       => ['nullable', 'numeric'],
-            'view_format'      => ['nullable', 'numeric'],
-            'thread_sort_flag' => ['nullable', 'numeric'],
-        ]);
-        $validator->setAttributeNames([
-            'view_count'       => '表示件数',
-            'view_format'      => '表示形式',
-            'thread_sort_flag' => '根記事の表示順',
-        ]);
+    // delete: 使ってない
+    // /**
+    //  * フレーム表示設定の保存
+    //  */
+    // public function saveView($request, $page_id, $frame_id, $calendar_id)
+    // {
+    //     // 項目のエラーチェック
+    //     $validator = Validator::make($request->all(), [
+    //         'view_count'       => ['nullable', 'numeric'],
+    //         'view_format'      => ['nullable', 'numeric'],
+    //         'thread_sort_flag' => ['nullable', 'numeric'],
+    //     ]);
+    //     $validator->setAttributeNames([
+    //         'view_count'       => '表示件数',
+    //         'view_format'      => '表示形式',
+    //         'thread_sort_flag' => '根記事の表示順',
+    //     ]);
 
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+    //     // エラーがあった場合は入力画面に戻る。
+    //     if ($validator->fails()) {
+    //         return back()->withErrors($validator)->withInput();
+    //     }
 
-        // フレームごとの表示設定の更新
-        $calendar_frame = CalendarFrame::updateOrCreate(
-            ['calendar_id' => $calendar_id, 'frame_id' => $frame_id],
-            ['view_count'       => $request->view_count,
-             'view_format'      => $request->view_format,
-             'thread_sort_flag' => $request->thread_sort_flag],
-        );
+    //     // フレームごとの表示設定の更新
+    //     $calendar_frame = CalendarFrame::updateOrCreate(
+    //         ['calendar_id' => $calendar_id, 'frame_id' => $frame_id],
+    //         ['view_count'       => $request->view_count,
+    //          'view_format'      => $request->view_format,
+    //          'thread_sort_flag' => $request->thread_sort_flag],
+    //     );
 
-        return;
-    }
+    //     return;
+    // }
 
     /**
      * バケツ設定変更画面の表示
