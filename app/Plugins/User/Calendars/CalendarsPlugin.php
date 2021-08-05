@@ -627,7 +627,7 @@ class CalendarsPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $calendar_id)
     {
@@ -638,7 +638,10 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // POSTデータ削除(一気にDelete なので、deleted_id は入らない)
-        CalendarPost::where('calendar_id', $calendar->id)->delete();
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // CalendarPost::where('calendar_id', $calendar->id)->delete();
+        $calendar_post_ids = CalendarPost::where('calendar_id', $calendar->id)->pluck('id');
+        CalendarPost::destroy($calendar_post_ids);
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => null]);
@@ -656,9 +659,9 @@ class CalendarsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新
