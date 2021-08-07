@@ -111,22 +111,22 @@
 
     <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '')
-    <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css?version={{ filemtime($_SERVER['DOCUMENT_ROOT'] . "/themes/{$themes['css']}/themes.css") }}" rel="stylesheet">
+    <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['css']}/themes.css") }}" rel="stylesheet">
 @endif
 
     <!-- Themes JS（基本） -->
 @if (isset($themes['js']) && $themes['js'] != '')
-    <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js?version={{ filemtime($_SERVER['DOCUMENT_ROOT'] . "/themes/{$themes['js']}/themes.js") }}"></script>
+    <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['js']}/themes.js") }}"></script>
 @endif
 
     <!-- Themes CSS（追加） -->
 @if (isset($themes['additional_css']) && $themes['additional_css'] != '')
-    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css?version={{ filemtime($_SERVER['DOCUMENT_ROOT'] . "/themes/{$themes['additional_css']}/themes.js") }}" rel="stylesheet">
+    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['additional_css']}/themes.js") }}" rel="stylesheet">
 @endif
 
     <!-- Themes JS（追加） -->
 @if (isset($themes['additional_js']) && $themes['additional_js'] != '')
-    <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js?version={{ filemtime($_SERVER['DOCUMENT_ROOT'] . "/themes/{$themes['additional_js']}/themes.js") }}"></script>
+    <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['additional_js']}/themes.js") }}"></script>
 @endif
 
     <!-- Connect-CMS Page CSS -->
