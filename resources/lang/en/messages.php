@@ -6,7 +6,12 @@
  |-----------------------------------------------------------------
  */
 return [
-
+    'confirm' => 'Confirm',
+    'subject' => 'Subject',
+    'kinds' => 'Kinds',
+    'authors_etc' => 'Authors, etc',
+    'title' => 'Title',
+    'year_month' => 'Year month',
     'to_this_month' => 'To this month',
     'to_today' => 'To today',
     'month' => 'Month',
