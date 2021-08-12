@@ -13,7 +13,7 @@
 @include('common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -57,9 +57,28 @@
     @if (isset($parent_post))
         <input type="hidden" name="parent_id" value="{{$parent_post->id}}">
     @endif
+
+    @php
+    if ($frame->area_id == LayoutArea::left || $frame->area_id == LayoutArea::right) {
+        // 右・左エリア = スマホ表示と同等にする
+        $label_class = 'col-12 control-label';
+        $input_area_class = 'col-12';
+        $input_area_date_class = 'col-12';
+        $input_area_time_class = 'col-12';
+        $errors_div_class = 'col-12';
+    } else {
+        // メインエリア・フッターエリア
+        $label_class = 'col-md-2 control-label text-md-right pr-3';
+        $input_area_class = 'col-md-10';
+        $input_area_date_class = 'col-md-3';
+        $input_area_time_class = 'col-md-2';
+        $errors_div_class = 'col-md-10 offset-md-2';
+    }
+    @endphp
+
     <div class="form-group form-row">
-        <label class="col-md-2 control-label text-md-right pr-3">状態</label>
-        <div class="col-md-10">
+        <label class="{{$label_class}}">状態</label>
+        <div class="{{$input_area_class}}">
             @if ($post->status === null)
                 <span class="badge badge-info align-bottom">新規</span>
             @elseif ($post->status == 0)
@@ -73,16 +92,16 @@
     </div>
 
     <div class="form-group form-row">
-        <label class="col-md-2 control-label text-md-right pr-3"><label class="badge badge-danger">必須</label> タイトル</label>
-        <div class="col-md-10">
+        <label class="{{$label_class}}"><label class="badge badge-danger">必須</label> タイトル</label>
+        <div class="{{$input_area_class}}">
             <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control @if ($errors && $errors->has('title')) border-danger @endif">
             @include('common.errors_inline', ['name' => 'title'])
         </div>
     </div>
 
     <div class="form-group form-row">
-        <label class="col-md-2 control-label text-md-right pr-3">全日予定</label>
-        <div class="col-md-10">
+        <label class="{{$label_class}}">全日予定</label>
+        <div class="{{$input_area_class}}">
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="allday_flag" value="1" class="custom-control-input" id="allday_flag{{$frame_id}}" onclick="check_allday();"@if(old('allday_flag', $post->allday_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="allday_flag{{$frame_id}}">チェックすると、全日予定として扱います。</label>
@@ -91,9 +110,9 @@
     </div>
 
     <div class="form-group form-row mb-0">
-        <label class="col-md-2 control-label text-md-right pr-3"><label class="badge badge-danger">必須</label> 開始日時</label>
+        <label class="{{$label_class}}"><label class="badge badge-danger">必須</label> 開始日時</label>
 
-        <div class="col-md-3">
+        <div class="{{$input_area_date_class}}">
             <div class="input-group date" id="start_date" data-target-input="nearest">
                 <input type="text" name="start_date" value="{{old('start_date', $post->start_date)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('start_date')) border-danger @endif" data-target="#start_date"/>
                 <div class="input-group-append" data-target="#start_date" data-toggle="datetimepicker">
@@ -111,7 +130,7 @@
             </script>
         </div>
 
-        <div class="col-md-2">
+        <div class="{{$input_area_time_class}}">
             <div class="input-group date" id="start_time" data-target-input="nearest">
                 @if(old('allday_flag', $post->allday_flag))
                 <input type="text" name="start_time" value="" class="form-control datetimepicker-input" data-target="#start_time" disabled />
@@ -134,12 +153,12 @@
         </div>
     </div>
     <div class="form-group form-row">
-        @include('common.errors_inline', ['name' => 'start_date', 'class' => 'col-md-10 offset-md-2'])
+        @include('common.errors_inline', ['name' => 'start_date', 'class' => $errors_div_class])
     </div>
 
     <div class="form-group form-row mb-0">
-        <label class="col-md-2 control-label text-md-right pr-3">終了日時</label>
-        <div class="col-md-3">
+        <label class="{{$label_class}}">終了日時</label>
+        <div class="{{$input_area_date_class}}">
             <div class="input-group date" id="end_date" data-target-input="nearest">
                 <input type="text" name="end_date" value="{{old('end_date', $post->end_date)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('end_date')) border-danger @endif" data-target="#end_date" />
                 <div class="input-group-append" data-target="#end_date" data-toggle="datetimepicker">
@@ -157,7 +176,7 @@
             </script>
         </div>
 
-        <div class="col-md-2">
+        <div class="{{$input_area_time_class}}">
             <div class="input-group date" id="end_time" data-target-input="nearest">
                 @if(old('allday_flag', $post->allday_flag))
                 <input type="text" name="end_time" value="" class="form-control datetimepicker-input" data-target="#end_time" disabled />
@@ -180,17 +199,17 @@
     </div>
 
     <div class="form-group form-row">
-        @include('common.errors_inline', ['name' => 'end_date', 'class' => 'col-md-10 offset-md-2'])
+        @include('common.errors_inline', ['name' => 'end_date', 'class' => $errors_div_class])
     </div>
 
     <div class="form-group form-row">
-        <label class="col-md-2 control-label text-md-right pr-3"><label class="badge badge-danger">必須</label> 本文</label>
-        <div class="col-md-10">
+        <label class="{{$label_class}}"><label class="badge badge-danger">必須</label> 本文</label>
+        <div class="{{$input_area_class}}">
             <div @if ($errors && $errors->has('body')) class="border border-danger" @endif>
                 @if (isset($reply) && $reply == true)
-                    <textarea name="body" class="form-control" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
                 @else
-                    <textarea name="body" class="form-control" rows=2>{!!old('body', $post->body)!!}</textarea>
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
                 @endif
             </div>
             @include('common.errors_inline', ['name' => 'body'])
