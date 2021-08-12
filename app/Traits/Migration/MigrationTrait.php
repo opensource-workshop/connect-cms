@@ -3029,12 +3029,25 @@ trait MigrationTrait
                 }
             }
 
-            // マッピングテーブルの追加
-            $mapping = MigrationMapping::create([
-                'target_source_table'  => 'calendars',
-                'source_key'           => $nc2_calendar_room_id,
-                'destination_key'      => $calendar->id,
-            ]);
+            if (CalendarPost::where('calendar_id', $calendar->id)->count() == 0) {
+                // カレンダー予定の移行なし
+
+                $this->putError(3, 'カレンダー予定なし', "カレンダー名={$calendar->name}, ini_path={$ini_path}");
+
+                // 予定空のカレンダーは移行せず、ログ出力する。
+                Calendar::destroy($calendar->id);
+
+            } else {
+                // カレンダー予定の移行あり
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'calendars',
+                    'source_key'           => $nc2_calendar_room_id,
+                    'destination_key'      => $calendar->id,
+                ]);
+            }
+
         }
     }
 
@@ -6897,12 +6910,24 @@ trait MigrationTrait
         //   ※ ルームなしはありえない（必ずパブリックルームがあるため）
         // ・NC2カレンダーブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
 
-        // NC2ルーム一覧取得
-        $nc2_page_rooms = Nc2Page::whereColumn('page_id', 'room_id')
-            ->whereIn('space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
-            ->where('room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
-            ->orderBy('room_id')
-            ->get();
+        // NC2ルーム一覧を移行する。
+        $nc2_export_private_room_calendar = $this->getMigrationConfig('calendars', 'nc2_export_private_room_calendar');
+        if (empty($nc2_export_private_room_calendar)) {
+            // プライベートルームをエクスポート（=移行）しない
+            $nc2_page_rooms = Nc2Page::whereColumn('page_id', 'room_id')
+                ->whereIn('space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
+                ->where('room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                ->where('private_flag', 0)          // 0:プライベートルーム以外
+                ->orderBy('room_id')
+                ->get();
+        } else {
+            // プライベートルームをエクスポート（=移行）する
+            $nc2_page_rooms = Nc2Page::whereColumn('page_id', 'room_id')
+                ->whereIn('space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
+                ->where('room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                ->orderBy('room_id')
+                ->get();
+        }
 
         // NC2権限設定（サイト全体で１設定のみ）. インストール時は空。権限設定でOK押さないとデータできない。
         $nc2_calendar_manages = Nc2CalendarManage::orderBy('room_id')->get();
@@ -6944,7 +6969,7 @@ trait MigrationTrait
             $ini .= "room_id = " . $nc2_page_room->room_id . "\n";
             // ルーム名
             $ini .= "room_name = " . $nc2_page_room->page_name . "\n";
-            // プライベートフラグ, 1:プライベートルーム
+            // プライベートフラグ, 1:プライベートルーム, 0:プライベートルーム以外
             $ini .= "private_flag = " . $nc2_page_room->private_flag . "\n";
             // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $ini .= "space_type = " . $nc2_page_room->space_type . "\n";
