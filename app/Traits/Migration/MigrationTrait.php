@@ -10,8 +10,10 @@ use DB;
 use File;
 use Session;
 use Storage;
+use Carbon\Carbon;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
@@ -28,6 +30,9 @@ use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Cabinets\Cabinet;
 use App\Models\User\Cabinets\CabinetContent;
+use App\Models\User\Calendars\Calendar;
+use App\Models\User\Calendars\CalendarFrame;
+use App\Models\User\Calendars\CalendarPost;
 use App\Models\User\Contents\Contents;
 use App\Models\User\Counters\Counter;
 use App\Models\User\Counters\CounterCount;
@@ -64,6 +69,11 @@ use App\Models\Migration\Nc2\Nc2Block;
 use App\Models\Migration\Nc2\Nc2CabinetBlock;
 use App\Models\Migration\Nc2\Nc2CabinetFile;
 use App\Models\Migration\Nc2\Nc2CabinetManage;
+use App\Models\Migration\Nc2\Nc2CalendarBlock;
+use App\Models\Migration\Nc2\Nc2CalendarManage;
+use App\Models\Migration\Nc2\Nc2CalendarPlan;
+use App\Models\Migration\Nc2\Nc2CalendarPlanDetails;
+use App\Models\Migration\Nc2\Nc2CalendarSelectRoom;
 use App\Models\Migration\Nc2\Nc2Config;
 use App\Models\Migration\Nc2\Nc2Counter;
 use App\Models\Migration\Nc2\Nc2Faq;
@@ -163,7 +173,7 @@ trait MigrationTrait
         'assignment'    => 'Development',  // レポート
         'bbs'           => 'bbses',        // 掲示板
         'cabinet'       => 'cabinets',     // キャビネット
-        'calendar'      => 'Development',  // カレンダー
+        'calendar'      => 'calendars',    // カレンダー
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
         'counter'       => 'counters',     // カウンター
@@ -268,6 +278,7 @@ trait MigrationTrait
         if ($target == 'all' && $initial == true) {
             // 全クリア
             Buckets::truncate();
+            BucketsRoles::truncate();
             Categories::truncate();
             Page::truncate();
         }
@@ -395,6 +406,16 @@ trait MigrationTrait
             CounterFrame::truncate();
             Buckets::where('plugin_name', 'counters')->delete();
             MigrationMapping::where('target_source_table', 'counters')->delete();
+        }
+
+        if ($target == 'calendars' || $target == 'all') {
+            Calendar::truncate();
+            CalendarFrame::truncate();
+            CalendarPost::truncate();
+            $buckets_ids = Buckets::where('plugin_name', 'calendars')->pluck('id');
+            BucketsRoles::whereIn('buckets_id', $buckets_ids)->delete();
+            Buckets::where('plugin_name', 'calendars')->delete();
+            MigrationMapping::where('target_source_table', 'calendars')->delete();
         }
     }
 
@@ -633,6 +654,31 @@ trait MigrationTrait
     }
 
     /**
+     * インポート時TSVから日時取得 ＆ 日時フォーマットチェック
+     */
+    private function getDatetimeFromTsvAndCheckFormat($idx, $tsv_cols, $column_name, $default = null)
+    {
+        if (is_null($default)) {
+            $default = date('Y-m-d H:i:s');
+        }
+
+        // カラムがない or データが空の場合は、処理時間を入れる。
+        if ($idx != 0 && array_key_exists($idx, $tsv_cols) && !empty($tsv_cols[$idx])) {
+            $date = $tsv_cols[$idx];
+            if (!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
+                $this->putError(3, '日付エラー', "{$column_name} = {$date}");
+                // $date = date('Y-m-d H:i:s');
+                $date = $default;
+            }
+        } else {
+            // $date = date('Y-m-d H:i:s');
+            $date = $default;
+        }
+
+        return $date;
+    }
+
+    /**
      * Connect-CMS 移行形式のHTML をインポート
      */
     private function importSite($target, $target_plugin, $redo = null)
@@ -734,6 +780,11 @@ trait MigrationTrait
         // カウンターの取り込み
         if ($this->isTarget('cc_import', 'plugins', 'counters')) {
             $this->importCounters($redo);
+        }
+
+        // カレンダーの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'calendars')) {
+            $this->importCalendars($redo);
         }
 
         // 固定URLの取り込み
@@ -2817,6 +2868,190 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式のカレンダーの予定をインポート
+     */
+    private function importCalendars($redo)
+    {
+        $this->putMonitor(3, "Calendars import start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('calendars');
+        }
+
+        // カレンダー定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_room_*.ini'));
+
+        // カレンダー定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の calendar_room_id
+            $nc2_calendar_room_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('room_id', $ini['source_info'])) {
+                $nc2_calendar_room_id = $ini['source_info']['room_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'calendars')->where('source_key', $nc2_calendar_room_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // calendar 取得。この情報から紐づけて、消すものを消してゆく。
+                $calendar = Calendar::where('id', $mapping->destination_key)->first();
+
+                // カレンダー予定 削除
+                CalendarPost::where('calendar_id', $mapping->destination_key)->delete();
+                if (!empty($calendar)) {
+                    // Buckets 削除
+                    Buckets::where('id', $calendar->bucket_id)->delete();
+                    // カレンダー削除
+                    $calendar->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            // Buckets テーブルと Calendars テーブル、マッピングテーブルを追加
+            $calendar_name = $ini['source_info']['room_name'];
+
+            $bucket = Buckets::create(['bucket_name' => $calendar_name, 'plugin_name' => 'calendars']);
+
+            $calendar = Calendar::create([
+                'bucket_id' => $bucket->id,
+                'name' => $calendar_name,
+            ]);
+
+
+            // Calendar のデータを取得（TSV） ※ iniとtsvが同じ名前の時、この処理でファイル名が取れる。
+            $calendar_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
+
+            if (Storage::exists($this->getImportPath('calendars/') . $calendar_tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのデータベース丸ごと）
+                $calendar_tsv = Storage::get($this->getImportPath('calendars/') . $calendar_tsv_filename);
+                // POST が無いものは対象外
+                if (empty($calendar_tsv)) {
+                    continue;
+                }
+
+                // 行ループで使用する各種変数
+                $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
+
+                // NC2 calendar_plan
+                $tsv_idxs['calendar_id'] = 0;
+                $tsv_idxs['plan_id'] = 0;
+                $tsv_idxs['room_id'] = 0;
+                $tsv_idxs['user_id'] = 0;
+                $tsv_idxs['user_name'] = 0;
+                $tsv_idxs['title'] = 0;
+                $tsv_idxs['title_icon'] = 0;
+                $tsv_idxs['allday_flag'] = 0;
+                $tsv_idxs['start_date'] = 0;
+                $tsv_idxs['start_time'] = 0;
+                $tsv_idxs['start_time_full'] = 0;
+                $tsv_idxs['end_date'] = 0;
+                $tsv_idxs['end_time'] = 0;
+                $tsv_idxs['end_time_full'] = 0;
+                $tsv_idxs['timezone_offset'] = 0;
+                $tsv_idxs['link_module'] = 0;
+                $tsv_idxs['link_id'] = 0;
+                $tsv_idxs['link_action_name'] = 0;
+
+                // NC2 calendar_plan_details
+                // 場所
+                $tsv_idxs['location'] = 0;
+                // 連絡先
+                $tsv_idxs['contact'] = 0;
+                // 内容
+                $tsv_idxs['description'] = 0;
+                // 繰り返し条件
+                $tsv_idxs['rrule'] = 0;
+
+                // NC2 calendar_plan 登録日・更新日
+                $tsv_idxs['insert_time'] = 0;
+                $tsv_idxs['update_time'] = 0;
+
+                // CC 状態
+                $tsv_idxs['status'] = 0;
+
+
+                // 改行で記事毎に分割（行の処理）
+                $calendar_tsv_lines = explode("\n", $calendar_tsv);
+                foreach ($calendar_tsv_lines as $calendar_tsv_line) {
+                    // 1行目はカラム名の行のため、対象外
+                    if ($header_skip) {
+                        $header_skip = false;
+
+                        // タブで項目に分割
+                        $calendar_tsv_cols = explode("\t", trim($calendar_tsv_line, "\n\r"));
+
+                        foreach ($calendar_tsv_cols as $loop_idx => $calendar_tsv_col) {
+                            if (isset($tsv_idxs[$calendar_tsv_col])) {
+                                $tsv_idxs[$calendar_tsv_col] = $loop_idx;
+                            } else {
+                                // dd($tsv_idxs, $calendar_tsv_cols);
+                                $this->putError(3, 'インポートに必要なカラムなしエラー', "{$calendar_tsv_col}, ini_path={$ini_path}");
+                            }
+                        }
+                        continue;
+                    }
+                    // 行データをタブで項目に分割
+                    $calendar_tsv_cols = explode("\t", trim($calendar_tsv_line, "\n\r"));
+                    if (!isset($calendar_tsv_cols[1])) {
+                        // タブ区切りで１番目がセットされないのは、末尾空行と判断してスルーする。
+                        // dd($calendar_tsv_cols);
+                        continue;
+                    }
+
+                    // カレンダー予定の追加
+                    $calendar_post = CalendarPost::create([
+                        'calendar_id'      => $calendar->id,
+                        'allday_flag'      => $calendar_tsv_cols[$tsv_idxs['allday_flag']],
+                        'start_date'       => $calendar_tsv_cols[$tsv_idxs['start_date']],
+                        'start_time'       => $calendar_tsv_cols[$tsv_idxs['start_time']],
+                        'end_date'         => $calendar_tsv_cols[$tsv_idxs['end_date']],
+                        'end_time'         => $calendar_tsv_cols[$tsv_idxs['end_time']],
+                        'title'            => $calendar_tsv_cols[$tsv_idxs['title']],
+                        'body'             => $this->changeWYSIWYG($calendar_tsv_cols[$tsv_idxs['description']]),
+                        'status'           => $calendar_tsv_cols[$tsv_idxs['status']],
+                        'created_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $calendar_tsv_cols, 'insert_time'),
+                        'updated_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['update_time'], $calendar_tsv_cols, 'update_time'),
+                    ]);
+
+                    // 記事のマッピングテーブルの追加
+                    $mapping = MigrationMapping::create([
+                        'target_source_table'  => 'calendars_post',
+                        'source_key'           => $calendar_tsv_cols[$tsv_idxs['calendar_id']],
+                        'destination_key'      => $calendar_post->id,
+                    ]);
+
+                }
+            }
+
+            if (CalendarPost::where('calendar_id', $calendar->id)->count() == 0) {
+                // カレンダー予定の移行なし
+
+                $this->putError(3, 'カレンダー予定なし', "カレンダー名={$calendar->name}, ini_path={$ini_path}");
+
+                // 予定空のカレンダーは移行せず、ログ出力する。
+                Calendar::destroy($calendar->id);
+
+            } else {
+                // カレンダー予定の移行あり
+
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'calendars',
+                    'source_key'           => $nc2_calendar_room_id,
+                    'destination_key'      => $calendar->id,
+                ]);
+            }
+
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -3054,6 +3289,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'counters') {
             // カウンター
             $this->importPluginCounters($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'calendars') {
+            // カレンダー
+            $this->importPluginCalendars($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -3608,6 +3846,114 @@ trait MigrationTrait
                 'total_count_after' => $this->getArrayValue($counter_ini, 'counter_base', 'show_char_after', null),
                 'today_count_after' => null,
                 'yesterday_count_after' => null,
+            ]);
+        }
+    }
+
+    /**
+     * カレンダープラグインの登録処理
+     */
+    private function importPluginCalendars($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $calendar_block_id = null;
+        $calendar_block_ini = null;
+        $nc2_calendar_room_id = null;
+        $calendar_room_ini = null;
+        $migration_mapping = null;
+        $calendar = null;
+        $bucket = null;
+
+        // エクスポートファイルの calendar_block_id 取得（エクスポート時の連番）
+        $calendar_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'calendar_block_id', null);
+
+        // カレンダーブロックの情報取得
+        if (!empty($calendar_block_id) && Storage::exists($this->getImportPath('calendars/calendar_block_') . $calendar_block_id . '.ini')) {
+            $calendar_block_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_block_') . $calendar_block_id . '.ini', true);
+        }
+
+        // NC2 のcalendar_block_id でマップ確認
+        if (!empty($calendar_block_ini) && array_key_exists('source_info', $calendar_block_ini) && array_key_exists('room_id', $calendar_block_ini['source_info'])) {
+            // NC2 のcalendar の room_id
+            $nc2_calendar_room_id = $this->getArrayValue($calendar_block_ini, 'source_info', 'room_id', null);
+
+            $migration_mapping = MigrationMapping::where('target_source_table', 'calendars')->where('source_key', $nc2_calendar_room_id)->first();
+        }
+
+        // カレンダールームの情報取得
+        if (!empty($nc2_calendar_room_id) && Storage::exists($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc2_calendar_room_id) . '.ini')) {
+            // dd($nc2_calendar_room_id);
+
+            $calendar_room_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc2_calendar_room_id) . '.ini', true);
+        }
+
+        // マップから新Calendar を取得
+        if (!empty($migration_mapping)) {
+            $calendar = Calendar::find($migration_mapping->destination_key);
+        }
+        // 新Calendar からBucket ID を取得
+        if (!empty($calendar)) {
+            $bucket = Buckets::find($calendar->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Calendar フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+
+        // bucketあり
+        if (!empty($bucket)) {
+
+            // calendar_room_iniに[calendar_manage]add_authority_idあり
+            if (!empty($calendar_room_ini) && array_key_exists('calendar_manage', $calendar_room_ini) && array_key_exists('add_authority_id', $calendar_room_ini['calendar_manage'])) {
+
+                // NC2 のcalendar の add_authority_id
+                $add_authority_id = $this->getArrayValue($calendar_room_ini, 'calendar_manage', 'add_authority_id', null);
+
+                // 権限設定
+                // 投稿権限：(nc2) あり、(cc) あり
+                //   (nc2) モデレータ⇒ (cc) モデレータ
+                //   (nc2) 一般⇒ (cc) 編集者
+                //   (nc2) [calendar_manage] => add_authority_id, 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
+                // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
+
+                // モデレータの投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+                $role_article_post_flags = [
+                    2 => 1,
+                    3 => 1,
+                    4 => 0,
+                    5 => 0,
+                ];
+                // 編集者の投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+                $role_reporter_post_flags = [
+                    2 => 1,
+                    3 => 0,
+                    4 => 0,
+                    5 => 0,
+                ];
+
+                BucketsRoles::create([
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                    'post_flag' => $role_article_post_flags[$add_authority_id] ?? 0,
+                    'approval_flag' => 0,
+                ]);
+                BucketsRoles::create([
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                    'post_flag' => $role_reporter_post_flags[$add_authority_id] ?? 0,
+                    'approval_flag' => 0,
+                ]);
+            }
+        }
+
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // calendar_frames 登録
+        if (!empty($calendar)) {
+            CalendarFrame::create([
+                'calendar_id' => $calendar->id,
+                'frame_id' => $frame->id,
             ]);
         }
     }
@@ -4774,6 +5120,11 @@ trait MigrationTrait
         // NC2 カウンター（counter）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'counters')) {
             $this->nc2ExportCounter($redo);
+        }
+
+        // NC2 カレンダー（calendar）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'calendars')) {
+            $this->nc2ExportCalendar($redo);
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
@@ -6543,6 +6894,347 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：カレンダー（カレンダー）の移行
+     */
+    private function nc2ExportCalendar($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportCalendar.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('calendars/'));
+        }
+
+        // ・NC2ルーム一覧とって、NC2予定データを移行する
+        //   ※ ルームなしはありえない（必ずパブリックルームがあるため）
+        // ・NC2カレンダーブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
+
+        // NC2ルーム一覧を移行する。
+        $nc2_export_private_room_calendar = $this->getMigrationConfig('calendars', 'nc2_export_private_room_calendar');
+        if (empty($nc2_export_private_room_calendar)) {
+            // プライベートルームをエクスポート（=移行）しない
+            $nc2_page_rooms = Nc2Page::whereColumn('page_id', 'room_id')
+                ->whereIn('space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
+                ->where('room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                ->where('private_flag', 0)          // 0:プライベートルーム以外
+                ->orderBy('room_id')
+                ->get();
+        } else {
+            // プライベートルームをエクスポート（=移行）する
+            $nc2_page_rooms = Nc2Page::whereColumn('page_id', 'room_id')
+                ->whereIn('space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
+                ->where('room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                ->orderBy('room_id')
+                ->get();
+        }
+
+        // NC2権限設定（サイト全体で１設定のみ）. インストール時は空。権限設定でOK押さないとデータできない。
+        $nc2_calendar_manages = Nc2CalendarManage::orderBy('room_id')->get();
+
+        $nc2_export_room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+
+        // ルームでループ（NC2カレンダーはルーム単位でエクスポート）
+        foreach ($nc2_page_rooms as $nc2_page_room) {
+
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($nc2_export_room_ids) && !in_array($nc2_page_room->room_id, $nc2_export_room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // カレンダー設定
+            $ini = "";
+            $ini .= "[calendar_base]\n";
+
+            // NC2 権限設定
+            $nc2_calendar_manage = $nc2_calendar_manages->firstWhere('room_id', $nc2_page_room->room_id);
+            $ini .= "\n";
+            $ini .= "[calendar_manage]\n";
+            if (is_null($nc2_calendar_manage)) {
+                // データなしは 4:主担。 ここに全会員ルームのデータは入ってこないため、これでOK
+                $ini .= "add_authority_id = 4\n";
+                // フラグは必ず1
+                $ini .= "use_flag = 1\n";
+            } else {
+                // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
+                $ini .= "add_authority_id = " . $nc2_calendar_manage->add_authority_id . "\n";
+                // フラグ. 1:使う
+                $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
+            }
+
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "room_id = " . $nc2_page_room->room_id . "\n";
+            // ルーム名
+            $ini .= "room_name = " . $nc2_page_room->page_name . "\n";
+            // プライベートフラグ, 1:プライベートルーム, 0:プライベートルーム以外
+            $ini .= "private_flag = " . $nc2_page_room->private_flag . "\n";
+            // スペースタイプ, 1:パブリックスペース, 2:グループスペース
+            $ini .= "space_type = " . $nc2_page_room->space_type . "\n";
+            $ini .= "module_name = \"calendar\"\n";
+
+
+            // カラムのヘッダー及びTSV 行毎の枠準備
+            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "room_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" ."title_icon" . "\t" .
+                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "start_time_full" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
+                "end_time_full" . "\t" . "timezone_offset" . "\t" . "link_module" . "\t" . "link_id" . "\t" . "link_action_name" . "\t" .
+                // NC2 calendar_plan_details
+                "location" . "\t" . "contact" . "\t" . "description" . "\t" . "rrule" . "\t" .
+                // NC2 calendar_plan 登録日・更新日
+                "insert_time" . "\t" . "update_time" . "\t" .
+                // CC 状態
+                "status";
+
+            // NC2 calendar_plan
+            $tsv_cols['calendar_id'] = "";
+            $tsv_cols['plan_id'] = "";
+            $tsv_cols['room_id'] = "";
+            $tsv_cols['user_id'] = "";
+            $tsv_cols['user_name'] = "";
+            $tsv_cols['title'] = "";
+            $tsv_cols['title_icon'] = "";
+            $tsv_cols['allday_flag'] = "";
+            $tsv_cols['start_date'] = "";
+            $tsv_cols['start_time'] = "";
+            $tsv_cols['start_time_full'] = "";
+            $tsv_cols['end_date'] = "";
+            $tsv_cols['end_time'] = "";
+            $tsv_cols['end_time_full'] = "";
+            $tsv_cols['timezone_offset'] = "";
+            $tsv_cols['link_module'] = "";
+            $tsv_cols['link_id'] = "";
+            $tsv_cols['link_action_name'] = "";
+
+            // NC2 calendar_plan_details
+            // 場所
+            $tsv_cols['location'] = "";
+            // 連絡先
+            $tsv_cols['contact'] = "";
+            // 内容
+            $tsv_cols['description'] = "";
+            // 繰り返し条件
+            $tsv_cols['rrule'] = "";
+
+            // NC2 calendar_plan 登録日・更新日
+            $tsv_cols['insert_time'] = "";
+            $tsv_cols['update_time'] = "";
+
+            // CC 状態
+            $tsv_cols['status'] = "";
+
+            // カレンダーの予定 calendar_plan
+            $calendar_plans = Nc2CalendarPlan::
+                leftjoin('calendar_plan_details', function ($join) {
+                    $join->on('calendar_plan.plan_id', '=', 'calendar_plan_details.plan_id')
+                        ->whereColumn('calendar_plan.room_id', 'calendar_plan_details.room_id');
+                })
+                ->where('calendar_plan.room_id', $nc2_page_room->room_id)
+                ->orderBy('calendar_plan.calendar_id', 'asc')
+                ->get();
+
+            // カラムデータのループ
+            Storage::delete($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc2_page_room->room_id) . '.tsv');
+
+            $tsv = '';
+            $tsv .= $tsv_header . "\n";
+
+            foreach ($calendar_plans as $calendar_plan) {
+
+                // 初期化
+                $tsv_record = $tsv_cols;
+
+                // NC2 calendar_plan
+                $tsv_record['calendar_id'] = $calendar_plan->calendar_id;
+                $tsv_record['plan_id'] = $calendar_plan->plan_id;
+                $tsv_record['room_id'] = $calendar_plan->room_id;
+                $tsv_record['user_id'] = $calendar_plan->user_id;
+                $tsv_record['user_name'] = $calendar_plan->user_name;
+                $tsv_record['title'] = $calendar_plan->title;
+                $tsv_record['title_icon'] = $calendar_plan->title_icon;
+                $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
+
+                // 予定開始日時
+                // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
+                $start_time_full = (new Carbon($calendar_plan->start_time_full))->addHour($calendar_plan->timezone_offset);
+                // $tsv_record['start_date'] = $calendar_plan->start_date;
+                // $tsv_record['start_time'] = $calendar_plan->start_time;
+                $tsv_record['start_date'] = $start_time_full->format('Y-m-d');
+                $tsv_record['start_time'] = $start_time_full->format('H:i:s');
+                $tsv_record['start_time_full'] = $start_time_full;
+
+                // 予定終了日時
+                // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
+                $end_time_full = (new Carbon($calendar_plan->end_time_full))->addHour($calendar_plan->timezone_offset);
+                if ($calendar_plan->allday_flag == 1) {
+                    // 全日で終了日時の変換対応. -1日する。
+                    //
+                    // ・NC2 で登録できる開始時間：0:00～23:55 （24:00ないため、こっちは対応不要）
+                    // ・NC2 で登録できる終了時間：0:05～24:00 （0:00に設定しても前日24:00に自動変換される）
+                    // ・Connect 終了時間 0:00～23:59
+                    // 24:00はデータ上0:00のため、0:00から-1日して23:59に変換する。
+                    //
+                    // ※ NC2の全日１日は、        20210810 150000（+9時間）～20210811 150000（+9時間）←当日～翌日
+                    //    Connect-CMSの全日１日は、2021-08-11 00:00:00～2021-08-11 00:00:00 ←前後同じ, 時間は設定できず 00:00:00 で登録される。
+                    //    そのため、2021/08/11 0:00～2021/08/12 0:00 を 2021/08/11 0:00～2021/08/11 0:00に変換する。
+
+                    // -1日
+                    $end_time_full = $end_time_full->subDay();
+                } elseif ($end_time_full->format('H:i:s') == '00:00:00') {
+                    // 全日以外で終了日時が0:00の変換対応. -1分する。
+                    // ※ 例えばNC2の「時間指定」で10:00～24:00という予定に対応して、10:00～23:59に終了時間を変換する
+
+                    // -1分
+                    $end_time_full = $end_time_full->subMinute();
+                }
+                // $tsv_record['end_date'] = $calendar_plan->end_date;
+                // $tsv_record['end_time'] = $calendar_plan->end_time;
+                $tsv_record['end_date'] = $end_time_full->format('Y-m-d');
+                $tsv_record['end_time'] = $end_time_full->format('H:i:s');
+                $tsv_record['end_time_full'] = $end_time_full;
+
+                $tsv_record['timezone_offset'] = $calendar_plan->timezone_offset;
+                $tsv_record['link_module'] = $calendar_plan->link_module;
+                $tsv_record['link_id'] = $calendar_plan->link_id;
+                $tsv_record['link_action_name'] = $calendar_plan->link_action_name;
+
+                // NC2 calendar_plan_details（plan_id, room_idあり）
+                // 場所
+                $tsv_record['location'] = $calendar_plan->location;
+                // 連絡先
+                $tsv_record['contact'] = $calendar_plan->contact;
+                // 内容 [WYSIWYG]
+                $tsv_record['description'] = $this->nc2Wysiwyg(null, null, null, null, $calendar_plan->description, 'calendar');
+
+                // 繰り返し条件
+                $tsv_record['rrule'] = $calendar_plan->rrule;
+
+                // NC2 calendar_plan 登録日・更新日
+                $tsv_record['insert_time'] = $this->getCCDatetime($calendar_plan->insert_time);
+                $tsv_record['update_time'] = $this->getCCDatetime($calendar_plan->update_time);
+
+                // NC2カレンダー予定は公開のみ
+                $tsv_record['status'] = 0;
+
+                $tsv .= implode("\t", $tsv_record) . "\n";
+            }
+
+            // データ行の書き出し
+            $tsv = $this->exportStrReplace($tsv, 'calendars');
+            $this->storageAppend($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc2_page_room->room_id) . '.tsv', $tsv);
+
+            // カレンダーの設定を出力
+            $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc2_page_room->room_id) . '.ini', $ini);
+        }
+
+
+        // NC2全会員 room_id=0（nc2_page にデータないため手動で設定）
+        $all_users_room_id = 0;
+
+        // ルーム指定があれば、指定されたルームのみ処理する。
+        if (empty($nc2_export_room_ids) || in_array($all_users_room_id, $nc2_export_room_ids)) {
+
+            // カレンダー設定
+            $ini = "";
+            $ini .= "[calendar_base]\n";
+
+            // NC2 権限設定
+            $nc2_calendar_manage = $nc2_calendar_manages->firstWhere('room_id', $all_users_room_id);
+            $ini .= "\n";
+            $ini .= "[calendar_manage]\n";
+            if (is_null($nc2_calendar_manage)) {
+                // 全会員のデータなしは 5:なし（全会員のみ設定可能）
+                $ini .= "add_authority_id = 5\n";
+                // フラグは必ず1
+                $ini .= "use_flag = 1\n";
+            } else {
+                // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
+                $ini .= "add_authority_id = " . $nc2_calendar_manage->add_authority_id . "\n";
+                // フラグ. 1:使う
+                $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
+            }
+
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "room_id = " . $all_users_room_id . "\n";
+            // ルーム名
+            $ini .= "room_name = 全会員\n";
+            // プライベートフラグ, 1:プライベートルーム
+            $ini .= "private_flag = 0\n";
+            // スペースタイプ, 1:パブリックスペース, 2:グループスペース
+            $ini .= "space_type =\n";
+            $ini .= "module_name = \"calendar\"\n";
+
+            // カレンダーの設定を出力
+            $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($all_users_room_id) . '.ini', $ini);
+        }
+
+
+        // NC2カレンダーブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
+        $where_calendar_block_ids = $this->getMigrationConfig('calendars', 'nc2_export_where_calendar_block_ids');
+        if (empty($where_calendar_block_ids)) {
+            $nc2_calendar_blocks = Nc2CalendarBlock::orderBy('block_id')->get();
+        } else {
+            $nc2_calendar_blocks = Nc2CalendarBlock::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_calendar_blocks->isEmpty()) {
+            return;
+        }
+
+        // NC2 指定ルームのみ表示 nc2_calendar_select_room
+        if (empty($where_calendar_block_ids)) {
+            $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::orderBy('block_id')->get();
+        } else {
+            $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
+        }
+
+        // NC2カレンダーブロックのループ
+        foreach ($nc2_calendar_blocks as $nc2_calendar_block) {
+
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($nc2_export_room_ids) && !in_array($nc2_page_room->room_id, $nc2_export_room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // NC2 カレンダーブロック（表示方法）設定
+            $ini = "";
+            $ini .= "[calendar_block]\n";
+            // 表示方法
+            $ini .= "display_type = " . $nc2_calendar_block->display_type . "\n";
+            // 開始位置
+            $ini .= "start_pos = " .  $nc2_calendar_block->start_pos . "\n";
+            // 表示日数
+            $ini .= "display_count = " . $nc2_calendar_block->display_count . "\n";
+            // 指定したルームのみ表示する 1:ルーム指定する 0:指定しない
+            $ini .= "select_room = " . $nc2_calendar_block->select_room . "\n";
+            // [不明] 画面に該当項目なし。プライベートルームにカレンダー配置しても 0 だった。
+            $ini .= "myroom_flag = " . $nc2_calendar_block->myroom_flag . "\n";
+
+            // NC2 指定ルームのみ表示
+            $ini .= "\n";
+            $ini .= "[calendar_select_room]\n";
+            foreach ($nc2_calendar_select_rooms as $nc2_calendar_select_room) {
+                $ini .= "room_id[] = " . $nc2_calendar_select_room->room_id . "\n";
+            }
+
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "calendar_block_id = " . $nc2_calendar_block->block_id . "\n";
+            $ini .= "room_id = " . $nc2_calendar_block->room_id . "\n";
+            $ini .= "module_name = \"calendar\"\n";
+
+            // カレンダーの設定を出力
+            $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_calendar_block->block_id) . '.ini', $ini);
+        }
+    }
+
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -6947,6 +7639,12 @@ trait MigrationTrait
             // ブロックがあり、カウンターがない場合は対象外
             if (!empty($nc2_counter)) {
                 $ret = "counter_block_id = \"" . $this->zeroSuppress($nc2_counter->block_id) . "\"\n";
+            }
+        } elseif ($module_name == 'calendar') {
+            $nc2_calendar_block = Nc2CalendarBlock::where('block_id', $nc2_block->block_id)->first();
+            // ブロックがあり、カレンダーがない場合は対象外
+            if (!empty($nc2_calendar_block)) {
+                $ret = "calendar_block_id = \"" . $this->zeroSuppress($nc2_calendar_block->block_id) . "\"\n";
             }
         }
         return $ret;

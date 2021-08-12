@@ -111,7 +111,7 @@ class Nc2Block extends Model
         'assignment'    => 'Development',  // レポート
         'bbs'           => 'bbses',        // 掲示板
         'cabinet'       => 'cabinets',     // キャビネット
-        'calendar'      => 'Development',  // カレンダー
+        'calendar'      => 'calendars',    // カレンダー
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
         'counter'       => 'counters',     // カウンター
