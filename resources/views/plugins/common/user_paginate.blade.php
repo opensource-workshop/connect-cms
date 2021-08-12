@@ -9,7 +9,7 @@
 --}}
 @php
     $aria_label = isset($aria_label_name) ? "{$aria_label_name}のページ付け" : 'ページ付け';
-    $class= isset($class) ? $class : null;
+    $class = isset($class) ? $class : null;
     $appends = isset($appends) ? $appends : null;
 @endphp
 
