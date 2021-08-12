@@ -9,7 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -25,7 +25,7 @@
         {{ csrf_field() }}
         <input type="hidden" name="action" value="edit">
 
-        <textarea name="contents"></textarea>
+        <textarea name="contents" class="wysiwyg{{$frame->id}}"></textarea>
 
         <div class="form-group">
             <input type="hidden" name="bucket_id" value="">

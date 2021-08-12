@@ -9,7 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -25,7 +25,7 @@
         {{ csrf_field() }}
         <input type="hidden" name="action" value="edit">
 
-        <textarea name="contents">{!! $contents->content_text !!}</textarea>
+        <textarea name="contents" class="wysiwyg{{$frame->id}}">{!! $contents->content_text !!}</textarea>
 
         @if ($contents->status == 1)
             <span class="badge badge-warning align-bottom float-left mt-1">一時保存</span>

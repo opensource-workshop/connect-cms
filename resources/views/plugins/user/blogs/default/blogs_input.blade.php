@@ -18,7 +18,7 @@ use App\Models\User\Blogs\BlogsPosts;
 @include('common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -82,7 +82,7 @@ use App\Models\User\Blogs\BlogsPosts;
 
     <div class="form-group">
         <label class="control-label">本文 <span class="badge badge-danger">必須</span></label>
-        <textarea name="post_text">{!!old('post_text', $blogs_posts->post_text)!!}</textarea>
+        <textarea name="post_text" class="wysiwyg{{$frame->id}}">{!!old('post_text', $blogs_posts->post_text)!!}</textarea>
         @include('common.errors_inline', ['name' => 'post_text'])
     </div>
 
@@ -111,7 +111,7 @@ use App\Models\User\Blogs\BlogsPosts;
 
     <div class="form-group">
         <label class="control-label">続き本文</label>
-        <textarea name="post_text2">{!!old('post_text2', $blogs_posts->post_text2)!!}</textarea>
+        <textarea name="post_text2" class="wysiwyg{{$frame->id}}">{!!old('post_text2', $blogs_posts->post_text2)!!}</textarea>
         @include('common.errors_inline', ['name' => 'post_text2'])
     </div>
 

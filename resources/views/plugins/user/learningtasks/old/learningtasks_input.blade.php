@@ -9,7 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -34,13 +34,13 @@
 
     <div class="form-group">
         <label class="control-label">タイトル <label class="badge badge-danger">必須</label></label>
-        <textarea name="post_title">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea>
+        <textarea name="post_title" class="wysiwyg{{$frame->id}}">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea>
         @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
     </div>
 
     <div class="form-group">
         <label class="control-label">本文 <label class="badge badge-danger">必須</label></label>
-        <textarea name="post_text">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
+        <textarea name="post_text" class="wysiwyg{{$frame->id}}">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
         @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
     </div>
 

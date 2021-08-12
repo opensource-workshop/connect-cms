@@ -13,7 +13,7 @@
 @include('common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -73,9 +73,9 @@
         <label class="col-md-2 control-label text-md-right">本文 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
             @if (isset($reply) && $reply == true)
-                <textarea name="body" class="form-control" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
+                <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
             @else
-                <textarea name="body" class="form-control" rows=2>{!!old('body', $post->body)!!}</textarea>
+                <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
             @endif
             @if ($errors && $errors->has('body')) <div class="text-danger">{{$errors->first('body')}}</div> @endif
         </div>
