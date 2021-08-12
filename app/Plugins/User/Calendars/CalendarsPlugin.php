@@ -312,6 +312,13 @@ class CalendarsPlugin extends UserPluginBase
             // 画面の指定もセッションにも値がなければ当日をセット
             $request->session()->put('calendar_month', date("m"));
         }
+        if ($request->filled('day')) {
+            // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
+            $request->session()->put('calendar_day', $request->day);
+        } elseif (!session()->has('calendar_day')) {
+            // 画面の指定もセッションにも値がなければ 1日 をセット
+            $request->session()->put('calendar_day', '01');
+        }
 
         // カレンダーデータ一覧の取得
         $dates = $this->getCalendarDates(session('calendar_year'), session('calendar_month'));
@@ -323,7 +330,8 @@ class CalendarsPlugin extends UserPluginBase
         return $this->view('index', [
             'dates'            => $dates,
             'posts'            => $posts,
-            'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/01"),
+            // 'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/01"),
+            'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/" . session('calendar_day')),
             'current_month'    => session('calendar_month'),
             'plugin_frame'     => $plugin_frame,
         ]);
