@@ -27,14 +27,14 @@
 
     <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year={{date('Y', strtotime('+1 day', $current_ym_first))}}&month={{date('m', strtotime('+1 day', $current_ym_first))}}&day={{date('d', strtotime('+1 day', $current_ym_first))}}#frame-{{$frame_id}}"><i class="fas fa-chevron-circle-right"></i></a>
 
-    {{-- 右・左エリアは「今日へ」表示しない --}}
+    {{-- 「今日へ」表示 --}}
     @if ($frame->area_id == LayoutArea::left || $frame->area_id == LayoutArea::right)
     @else
         <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year={{date('Y')}}&month={{date('m')}}&day={{date('d')}}#frame-{{$frame_id}}"><div class="badge badge-pill badge-info align-bottom ml-3">今日へ</div></a>
     @endif
 </div>
 
-<table class="table table-bordered">
+<table class="table table-bordered mb-1">
     @php
     $date = $dates[date('Y-m-d', $current_ym_first)];
     @endphp
@@ -127,5 +127,12 @@
 
     </tbody>
 </table>
+
+{{-- 右・左エリアは「今日へ」表示は、右下で表示する --}}
+@if ($frame->area_id == LayoutArea::left || $frame->area_id == LayoutArea::right)
+    <div class="text-right">
+        <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year={{date('Y')}}&month={{date('m')}}&day={{date('d')}}#frame-{{$frame_id}}"><div class="badge badge-pill badge-info align-bottom">今日へ</div></a>
+    </div>
+@endif
 
 @endsection
