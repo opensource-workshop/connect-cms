@@ -75,7 +75,7 @@
                 <select name="plugin_name" id="plugin_name" class="form-control">
                     <option value=""@if($code->plugin_name == "") selected @endif>設定なし</option>
                     @foreach ($plugins as $plugin)
-                        <option value="{{$plugin->plugin_name}}"@if(old('plugin_name', $code->plugin_name) == $plugin->plugin_name) selected @endif>{{$plugin->plugin_name_full}}</option>
+                        <option value="{{strtolower($plugin->plugin_name)}}"@if(old('plugin_name', $code->plugin_name) == strtolower($plugin->plugin_name)) selected @endif>{{$plugin->plugin_name_full}}</option>
                     @endforeach
                 </select>
                 <div class="text-muted">{{$codes_help_message->plugin_name_help_message}}</div>
