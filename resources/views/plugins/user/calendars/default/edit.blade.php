@@ -57,8 +57,8 @@
     @if (isset($parent_post))
         <input type="hidden" name="parent_id" value="{{$parent_post->id}}">
     @endif
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right">状態</label>
+    <div class="form-group form-row">
+        <label class="col-md-2 control-label text-md-right pr-3">状態</label>
         <div class="col-md-10">
             @if ($post->status === null)
                 <span class="badge badge-info align-bottom">新規</span>
@@ -72,16 +72,16 @@
         </div>
     </div>
 
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right"><label class="badge badge-danger">必須</label> タイトル</label>
+    <div class="form-group form-row">
+        <label class="col-md-2 control-label text-md-right pr-3"><label class="badge badge-danger">必須</label> タイトル</label>
         <div class="col-md-10">
             <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control">
             @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
         </div>
     </div>
 
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right">全日予定</label>
+    <div class="form-group form-row">
+        <label class="col-md-2 control-label text-md-right pr-3">全日予定</label>
         <div class="col-md-10">
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="allday_flag" value="1" class="custom-control-input" id="allday_flag{{$frame_id}}" onclick="check_allday();"@if(old('allday_flag', $post->allday_flag)) checked=checked @endif>
@@ -90,8 +90,8 @@
         </div>
     </div>
 
-    <div class="form-group row mb-0">
-        <label class="col-md-2 control-label text-md-right"><label class="badge badge-danger">必須</label> 開始日時</label>
+    <div class="form-group form-row mb-0">
+        <label class="col-md-2 control-label text-md-right pr-3"><label class="badge badge-danger">必須</label> 開始日時</label>
 
         <div class="col-md-3">
             <div class="input-group date" id="start_date" data-target-input="nearest">
@@ -133,15 +133,15 @@
             </script>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="form-group form-row">
     @if ($errors && $errors->has('start_date'))
         <div class="col-md-2"></div>
         <div class="col-md-10 text-danger">{{$errors->first('start_date')}}</div>
     @endif
     </div>
 
-    <div class="form-group row mb-0">
-        <label class="col-md-2 control-label text-md-right">終了日時</label>
+    <div class="form-group form-row mb-0">
+        <label class="col-md-2 control-label text-md-right pr-3">終了日時</label>
         <div class="col-md-3">
             <div class="input-group date" id="end_date" data-target-input="nearest">
                 <input type="text" name="end_date" value="{{old('end_date', $post->end_date)}}" class="form-control datetimepicker-input" data-target="#end_date" />
@@ -182,15 +182,15 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group form-row">
     @if ($errors && $errors->has('end_date'))
         <div class="col-md-2"></div>
         <div class="col-md-10 text-danger">{{$errors->first('end_date')}}</div>
     @endif
     </div>
 
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right"><label class="badge badge-danger">必須</label> 本文</label>
+    <div class="form-group form-row">
+        <label class="col-md-2 control-label text-md-right pr-3"><label class="badge badge-danger">必須</label> 本文</label>
         <div class="col-md-10">
             @if (isset($reply) && $reply == true)
                 <textarea name="body" class="form-control" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
