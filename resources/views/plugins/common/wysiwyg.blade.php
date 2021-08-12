@@ -176,6 +176,27 @@
     $toolbar = "toolbar  : '" . $toolbar . "',";
     $mobile_toolbar = "toolbar  : '" . $mobile_toolbar . "',";
 
+    $pc_toolbar_mode = '';
+    if ($frame->area_id == 0) {
+        $pc_toolbar_mode = 'wrap';
+    }
+    elseif ($frame->area_id == 1) {
+        // 左右エリアは、スマホ表示と同等にする
+        $pc_toolbar_mode = 'floating';
+        $toolbar = $mobile_toolbar;
+    }
+    elseif ($frame->area_id == 2) {
+        $pc_toolbar_mode = 'wrap';
+    }
+    elseif ($frame->area_id == 3) {
+        // 左右エリアは、スマホ表示と同等にする
+        $pc_toolbar_mode = 'floating';
+        $toolbar = $mobile_toolbar;
+    }
+    elseif ($frame->area_id == 4) {
+        $pc_toolbar_mode = 'wrap';
+    }
+
     // imagetools_toolbar (need imagetools plugin)
     // rotateleft rotateright flipv fliphは、フォーカスが外れないと images_upload_handler が走らないため、使わない。フォーカスが外さないで確定すると、固定記事の場合、コンテンツカラム内にbase64画像（超長い文字列)がそのまま送られ、カラムサイズオーバーでSQLエラーになる。
     // しかし editimage (画像の編集) であれば、モーダルを開いてそこで編集し「保存」ボタンを押下時に images_upload_handler が走るため、base64問題を回避できる。
@@ -264,7 +285,8 @@
         contextmenu : '',
 
         // add: tinymce5対応
-        toolbar_mode : 'wrap',
+        // toolbar_mode : 'wrap',
+        toolbar_mode : '{{$pc_toolbar_mode}}',
         mobile: {
             toolbar_mode : 'floating',
 
