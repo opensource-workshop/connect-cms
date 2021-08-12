@@ -3004,28 +3004,14 @@ trait MigrationTrait
                         continue;
                     }
 
-                    $start_time_full = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['start_time_full'], $calendar_tsv_cols, 'start_time_full', '');
-                    if (!empty($start_time_full)) {
-                        // 値がある場合のみCarbon()で処理。必須値のため基本値がある。値がなければ変なデータのため、CalendarPost::create()あたりでエラーでこけてOK。
-                        $start_time_full = new Carbon($start_time_full);
-                    }
-
-                    $end_time_full = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['end_time_full'], $calendar_tsv_cols, 'end_time_full', '');
-                    if (!empty($end_time_full)) {
-                        // 値がある場合のみCarbon()で処理。必須値のため基本値がある。値がなければ変なデータのため、CalendarPost::create()あたりでエラーでこけてOK。
-                        $end_time_full = new Carbon($end_time_full);
-                    }
-
-                    // \Log::debug(var_export($calendar_tsv_cols, true));
-
                     // カレンダー予定の追加
                     $calendar_post = CalendarPost::create([
                         'calendar_id'      => $calendar->id,
                         'allday_flag'      => $calendar_tsv_cols[$tsv_idxs['allday_flag']],
-                        'start_date'       => $start_time_full->format('Y-m-d'),
-                        'start_time'       => $start_time_full->format('H:i:s'),
-                        'end_date'         => $end_time_full->format('Y-m-d'),
-                        'end_time'         => $end_time_full->format('H:i:s'),
+                        'start_date'       => $calendar_tsv_cols[$tsv_idxs['start_date']],
+                        'start_time'       => $calendar_tsv_cols[$tsv_idxs['start_time']],
+                        'end_date'         => $calendar_tsv_cols[$tsv_idxs['end_date']],
+                        'end_time'         => $calendar_tsv_cols[$tsv_idxs['end_time']],
                         'title'            => $calendar_tsv_cols[$tsv_idxs['title']],
                         'body'             => $this->changeWYSIWYG($calendar_tsv_cols[$tsv_idxs['description']]),
                         'status'           => $calendar_tsv_cols[$tsv_idxs['status']],
@@ -7045,16 +7031,43 @@ trait MigrationTrait
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
                 // 予定開始日時
-                $tsv_record['start_date'] = $calendar_plan->start_date;
-                $tsv_record['start_time'] = $calendar_plan->start_time;
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
-                $tsv_record['start_time_full'] = (new Carbon($calendar_plan->start_time_full))->addHour($calendar_plan->timezone_offset);
+                $start_time_full = (new Carbon($calendar_plan->start_time_full))->addHour($calendar_plan->timezone_offset);
+                // $tsv_record['start_date'] = $calendar_plan->start_date;
+                // $tsv_record['start_time'] = $calendar_plan->start_time;
+                $tsv_record['start_date'] = $start_time_full->format('Y-m-d');
+                $tsv_record['start_time'] = $start_time_full->format('H:i:s');
+                $tsv_record['start_time_full'] = $start_time_full;
 
                 // 予定終了日時
-                $tsv_record['end_date'] = $calendar_plan->end_date;
-                $tsv_record['end_time'] = $calendar_plan->end_time;
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
-                $tsv_record['end_time_full'] = (new Carbon($calendar_plan->end_time_full))->addHour($calendar_plan->timezone_offset);
+                $end_time_full = (new Carbon($calendar_plan->end_time_full))->addHour($calendar_plan->timezone_offset);
+                if ($calendar_plan->allday_flag == 1) {
+                    // 全日で終了日時の変換対応. -1日する。
+                    //
+                    // ・NC2 で登録できる開始時間：0:00～23:55 （24:00ないため、こっちは対応不要）
+                    // ・NC2 で登録できる終了時間：0:05～24:00 （0:00に設定しても前日24:00に自動変換される）
+                    // ・Connect 終了時間 0:00～23:59
+                    // 24:00はデータ上0:00のため、0:00から-1日して23:59に変換する。
+                    //
+                    // ※ NC2の全日１日は、        20210810 150000（+9時間）～20210811 150000（+9時間）←当日～翌日
+                    //    Connect-CMSの全日１日は、2021-08-11 00:00:00～2021-08-11 00:00:00 ←前後同じ, 時間は設定できず 00:00:00 で登録される。
+                    //    そのため、2021/08/11 0:00～2021/08/12 0:00 を 2021/08/11 0:00～2021/08/11 0:00に変換する。
+
+                    // -1日
+                    $end_time_full = $end_time_full->subDay();
+                } elseif ($end_time_full->format('H:i:s') == '00:00:00') {
+                    // 全日以外で終了日時が0:00の変換対応. -1分する。
+                    // ※ 例えばNC2の「時間指定」で10:00～24:00という予定に対応して、10:00～23:59に終了時間を変換する
+
+                    // -1分
+                    $end_time_full = $end_time_full->subMinute();
+                }
+                // $tsv_record['end_date'] = $calendar_plan->end_date;
+                // $tsv_record['end_time'] = $calendar_plan->end_time;
+                $tsv_record['end_date'] = $end_time_full->format('Y-m-d');
+                $tsv_record['end_time'] = $end_time_full->format('H:i:s');
+                $tsv_record['end_time_full'] = $end_time_full;
 
                 $tsv_record['timezone_offset'] = $calendar_plan->timezone_offset;
                 $tsv_record['link_module'] = $calendar_plan->link_module;
