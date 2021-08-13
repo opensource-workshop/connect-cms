@@ -33,21 +33,33 @@
         }
     </script>
 
+    @php
+    if ($frame->isExpandNarrow()) {
+        // 右・左エリア = スマホ表示と同等にする
+        $label_class = 'col-12';
+        $value_class = 'col-12';
+    } else {
+        // メインエリア・フッターエリア
+        $label_class = 'col-sm-2 py-1';
+        $value_class = 'col-sm-10 py-1';
+    }
+    @endphp
+
     <dl class="row">
-        <dt class="col-sm-2 py-1">タイトル</dt>
-        <dd class="col-sm-10 py-1">{{$post->title}}</dd>
+        <dt class="{{$label_class}}">タイトル</dt>
+        <dd class="{{$value_class}}">{{$post->title}}</dd>
 
-        <dt class="col-sm-2 py-1">全日予定</dt>
-        <dd class="col-sm-10 py-1">{{$post->getAlldayFlagString()}}</dd>
+        <dt class="{{$label_class}}">全日予定</dt>
+        <dd class="{{$value_class}}">{{$post->getAlldayFlagString()}}</dd>
 
-        <dt class="col-sm-2 py-1">開始日時</dt>
-        <dd class="col-sm-10 py-1">{{$post->getStartDateTime()}}</dd>
+        <dt class="{{$label_class}}">開始日時</dt>
+        <dd class="{{$value_class}}">{{$post->getStartDateTime()}}</dd>
 
-        <dt class="col-sm-2 py-1">終了日時</dt>
-        <dd class="col-sm-10 py-1">{{$post->getEndDateTime()}}</dd>
+        <dt class="{{$label_class}}">終了日時</dt>
+        <dd class="{{$value_class}}">{{$post->getEndDateTime()}}</dd>
 
-        <dt class="col-sm-2 py-1">本文</dt>
-        <dd class="col-sm-10 py-1">{!!$post->body!!}</dd>
+        <dt class="{{$label_class}}">本文</dt>
+        <dd class="{{$value_class}}">{!!$post->body!!}</dd>
     </dl>
 
     <div class="row">
