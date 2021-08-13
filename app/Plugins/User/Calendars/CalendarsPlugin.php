@@ -297,31 +297,45 @@ class CalendarsPlugin extends UserPluginBase
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);
 
+        // 1ページ複数カレンダー配置に対応するため、'month' . $frame_id 等 フレームIDを付けて対応する。
+        // 例えば 1ページ複数カレンダー配置して １個目カレンダーで $request->month = 11 とすると、２個目も $request->month = 11  がindex()に飛んでくるため。
+        $request_year_name = 'year' . $frame_id;
+        $request_month_name = 'month' . $frame_id;
+        $request_day_name = 'day' . $frame_id;
+        $session_year_name = 'calendar_year' . $frame_id;
+        $session_month_name = 'calendar_month' . $frame_id;
+        $session_day_name = 'calendar_day' . $frame_id;
+
         // 年月のセッション処理
-        if ($request->filled('year')) {
+        if ($request->filled($request_year_name)) {
             // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-            $request->session()->put('calendar_year', $request->year);
-        } elseif (!session()->has('calendar_year')) {
+            $request->session()->put($session_year_name, $request->$request_year_name);
+        } elseif (!session()->has($session_year_name)) {
             // 画面の指定もセッションにも値がなければ当日をセット
-            $request->session()->put('calendar_year', date("Y"));
+            $request->session()->put($session_year_name, date("Y"));
         }
-        if ($request->filled('month')) {
+        if ($request->filled($request_month_name)) {
             // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-            $request->session()->put('calendar_month', $request->month);
-        } elseif (!session()->has('calendar_month')) {
+            $request->session()->put($session_month_name, $request->$request_month_name);
+        } elseif (!session()->has($session_month_name)) {
             // 画面の指定もセッションにも値がなければ当日をセット
-            $request->session()->put('calendar_month', date("m"));
+            $request->session()->put($session_month_name, date("m"));
         }
-        if ($request->filled('day')) {
+        if ($request->filled($request_day_name)) {
             // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-            $request->session()->put('calendar_day', $request->day);
-        } elseif (!session()->has('calendar_day')) {
-            // 画面の指定もセッションにも値がなければ 1日 をセット
-            $request->session()->put('calendar_day', '01');
+            $request->session()->put($session_day_name, $request->$request_day_name);
+        } elseif (!session()->has($session_day_name)) {
+
+            // 画面の指定もセッションにも値がなければ、テンプレートによって 01か当日 をセット
+            if ($this->frame->template == 'day') {
+                $request->session()->put($session_day_name, date("d"));
+            } else {
+                $request->session()->put($session_day_name, '01');
+            }
         }
 
         // カレンダーデータ一覧の取得
-        $dates = $this->getCalendarDates(session('calendar_year'), session('calendar_month'));
+        $dates = $this->getCalendarDates(session($session_year_name), session($session_month_name));
 
         // 該当年月のデータの取得
         $posts = $this->getPosts(array_key_first($dates), array_key_last($dates));
@@ -331,8 +345,8 @@ class CalendarsPlugin extends UserPluginBase
             'dates'            => $dates,
             'posts'            => $posts,
             // 'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/01"),
-            'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/" . session('calendar_day')),
-            'current_month'    => session('calendar_month'),
+            'current_ym_first' => strtotime(session($session_year_name) . "/" . session($session_month_name) . "/" . session($session_day_name)),
+            'current_month'    => session($session_month_name),
             'plugin_frame'     => $plugin_frame,
         ]);
     }
