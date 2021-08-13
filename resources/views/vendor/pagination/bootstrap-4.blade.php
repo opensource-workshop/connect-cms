@@ -25,10 +25,10 @@
                         } else {
                             // bugfix: ページ送り（paginate）が左右エリアに配置するとはみ出る事に対応
                             // $sm_class = ' d-none d-sm-block';
-                            $area_id = isset($frame) ? $frame->area_id : null;
+                            $is_expand_narrow = isset($frame) ? $frame->isExpandNarrow() : false;
 
                             // 右・左エリアなら、スマホ表示と同様にする
-                            if ($area_id == LayoutArea::left || $area_id == LayoutArea::right) {
+                            if ($is_expand_narrow) {
                                 $sm_class = ' d-none';
                             } else {
                                 $sm_class = ' d-none d-sm-block';

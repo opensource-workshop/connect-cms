@@ -12,7 +12,7 @@
     <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y', strtotime('-1 day', $current_ym_first))}}&month{{$frame_id}}={{date('m', strtotime('-1 day', $current_ym_first))}}&day{{$frame_id}}={{date('d', strtotime('-1 day', $current_ym_first))}}#frame-{{$frame_id}}"><i class="fas fa-chevron-circle-left"></i></a>
 
     {{-- 右・左エリアは 年 を表示しない --}}
-    @if ($frame->area_id == LayoutArea::left || $frame->area_id == LayoutArea::right)
+    @if ($frame->isExpandNarrow())
         <div class="h5 d-inline">
             {{date('n', $current_ym_first)}}月{{date('j', $current_ym_first)}}日
         </div>
@@ -28,8 +28,7 @@
     <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y', strtotime('+1 day', $current_ym_first))}}&month{{$frame_id}}={{date('m', strtotime('+1 day', $current_ym_first))}}&day{{$frame_id}}={{date('d', strtotime('+1 day', $current_ym_first))}}#frame-{{$frame_id}}"><i class="fas fa-chevron-circle-right"></i></a>
 
     {{-- 「今日へ」表示 --}}
-    @if ($frame->area_id == LayoutArea::left || $frame->area_id == LayoutArea::right)
-    @else
+    @if (! $frame->isExpandNarrow())
         <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}&day{{$frame_id}}={{date('d')}}#frame-{{$frame_id}}"><div class="badge badge-pill badge-info align-bottom ml-3">今日へ</div></a>
     @endif
 </div>
@@ -129,7 +128,7 @@
 </table>
 
 {{-- 右・左エリアは「今日へ」表示は、右下で表示する --}}
-@if ($frame->area_id == LayoutArea::left || $frame->area_id == LayoutArea::right)
+@if ($frame->isExpandNarrow())
     <div class="text-right">
         <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}&day{{$frame_id}}={{date('d')}}#frame-{{$frame_id}}"><div class="badge badge-pill badge-info align-bottom">今日へ</div></a>
     </div>

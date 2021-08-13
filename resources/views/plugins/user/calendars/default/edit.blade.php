@@ -59,7 +59,7 @@
     @endif
 
     @php
-    if ($frame->area_id == LayoutArea::left || $frame->area_id == LayoutArea::right) {
+    if ($frame->isExpandNarrow()) {
         // 右・左エリア = スマホ表示と同等にする
         $label_class = 'col-12 control-label';
         $input_area_class = 'col-12';
