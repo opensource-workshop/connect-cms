@@ -14,7 +14,12 @@
     <h5 class="d-inline">{{date('Y', $current_ym_first)}}年</h5>
     <h3 class="d-inline">{{date('n', $current_ym_first)}}月</h3>
     <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y', strtotime('+1 month', $current_ym_first))}}&month{{$frame_id}}={{date('m', strtotime('+1 month', $current_ym_first))}}#frame-{{$frame_id}}"><i class="fas fa-chevron-circle-right"></i></a>
-    <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}#frame-{{$frame_id}}"><div class="badge badge-pill badge-info align-bottom ml-3">今月へ</div></a>
+
+    <div class="d-inline align-bottom ml-3">
+        <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}#frame-{{$frame_id}}" class="badge badge-pill badge-info">
+            今月へ
+        </a>
+    </div>
 </div>
 
 <table class="table table-bordered">

@@ -29,7 +29,11 @@
 
     {{-- 「今日へ」表示 --}}
     @if (! $frame->isExpandNarrow())
-        <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}&day{{$frame_id}}={{date('d')}}#frame-{{$frame_id}}"><div class="badge badge-pill badge-info align-bottom ml-3">今日へ</div></a>
+        <div class="d-inline align-bottom ml-3">
+            <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}&day{{$frame_id}}={{date('d')}}#frame-{{$frame_id}}" class="badge badge-pill badge-info">
+                今日へ
+            </a>
+        </div>
     @endif
 </div>
 
@@ -130,7 +134,9 @@
 {{-- 右・左エリアは「今日へ」表示は、右下で表示する --}}
 @if ($frame->isExpandNarrow())
     <div class="text-right">
-        <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}&day{{$frame_id}}={{date('d')}}#frame-{{$frame_id}}"><div class="badge badge-pill badge-info align-bottom">今日へ</div></a>
+        <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y')}}&month{{$frame_id}}={{date('m')}}&day{{$frame_id}}={{date('d')}}#frame-{{$frame_id}}" class="badge badge-pill badge-info">
+            今日へ
+        </a>
     </div>
 @endif
 
