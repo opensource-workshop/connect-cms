@@ -177,23 +177,11 @@
     $mobile_toolbar = "toolbar  : '" . $mobile_toolbar . "',";
 
     $pc_toolbar_mode = '';
-    if ($frame->area_id == 0) {
-        $pc_toolbar_mode = 'wrap';
-    }
-    elseif ($frame->area_id == 1) {
+    if ($frame->isExpandNarrow()) {
         // 左右エリアは、スマホ表示と同等にする
         $pc_toolbar_mode = 'floating';
         $toolbar = $mobile_toolbar;
-    }
-    elseif ($frame->area_id == 2) {
-        $pc_toolbar_mode = 'wrap';
-    }
-    elseif ($frame->area_id == 3) {
-        // 左右エリアは、スマホ表示と同等にする
-        $pc_toolbar_mode = 'floating';
-        $toolbar = $mobile_toolbar;
-    }
-    elseif ($frame->area_id == 4) {
+    } else {
         $pc_toolbar_mode = 'wrap';
     }
 
