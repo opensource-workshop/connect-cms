@@ -100,9 +100,12 @@
     <div
         @if ($date->month != $current_month)
             class="card card-body cc-font-80 p-2 collapse bg-light" id="collapse-{{$frame_id}}-{{$date->format('Y-m-d')}}"
+
+        {{--
         @elseif ($date->format('Y-m-d') == date('Y-m-d'))
-            {{-- 今日予定のみ初期表示する --}}
+            {{-- 今日予定のみ初期表示する
             class="card card-body cc-font-80 p-2 collapse show" id="collapse-{{$frame_id}}-{{$date->format('Y-m-d')}}"
+        --}}
         @else
             class="card card-body cc-font-80 p-2 collapse" id="collapse-{{$frame_id}}-{{$date->format('Y-m-d')}}"
         @endif
