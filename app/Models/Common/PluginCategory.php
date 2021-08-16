@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\User\Linklists;
+namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\UserableNohistory;
 
-class LinklistPost extends Model
+class PluginCategory extends Model
 {
     // 論理削除
     use SoftDeletes;
@@ -15,14 +15,14 @@ class LinklistPost extends Model
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
 
-    // 更新する項目の定義
+    /**
+     * create()やupdate()で入力を受け付ける ホワイトリスト
+     */
     protected $fillable = [
-        'linklist_id',
-        'title',
-        'url',
-        'description',
+        'target',
+        'target_id',
         'categories_id',
-        'target_blank_flag',
+        'view_flag',
         'display_sequence',
     ];
 }
