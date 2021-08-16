@@ -7464,7 +7464,35 @@ trait MigrationTrait
             }
 
             // 各項目
-            if (!empty($nc2_block->template)) {
+            if ($nc2_block->getModuleName() == 'calendar') {
+                $calendar_block_ini = null;
+                $calendar_display_type = null;
+
+                // カレンダーブロックの情報取得
+                if (Storage::exists($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_block->block_id) . '.ini')) {
+                    $calendar_block_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_block->block_id) . '.ini', true);
+                }
+
+                if (!empty($calendar_block_ini) && array_key_exists('calendar_block', $calendar_block_ini) && array_key_exists('display_type', $calendar_block_ini['calendar_block'])) {
+                    // NC2 のcalendar の display_type
+                    $calendar_display_type = $this->getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
+                }
+
+                // frame_design 変換 (key:nc2)display_type => (value:cc)template
+                // (NC2)初期値 = 月表示（縮小）= 2
+                // (CC) 初期値 = 月表示（大）= default
+                $display_type_to_frame_designs = [
+                    1 => 'default',     // 1:年間表示
+                    2 => 'small_month', // 2:月表示（縮小）
+                    3 => 'default',     // 3:月表示（拡大）
+                    4 => 'default',     // 4:週表示
+                    5 => 'day',         // 5:日表示
+                    6 => 'day',         // 6:スケジュール（時間順）
+                    7 => 'day',         // 7:スケジュール（会員順）
+                ];
+                $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
+                $frame_ini .= "template = \"" . $frame_design . "\"\n";
+            } elseif (!empty($nc2_block->template)) {
                 $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
             } else {
                 $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
