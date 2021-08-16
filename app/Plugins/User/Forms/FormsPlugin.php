@@ -44,7 +44,7 @@ use App\Enums\FormStatusType;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class FormsPlugin extends UserPluginBase
 {
@@ -2378,7 +2378,8 @@ ORDER BY forms_inputs_id, forms_columns_id
         $columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence', 'asc')->get();
 
         $inputs_query = FormsInputs::where('forms_id', $form->id);
-        $inputs_query->orderBy('forms_inputs.id', 'asc');
+        // $inputs_query->orderBy('forms_inputs.id', 'asc');
+        $inputs_query->orderBy('forms_inputs.created_at', 'desc');
 
         // データ取得
         $get_count = 10;
