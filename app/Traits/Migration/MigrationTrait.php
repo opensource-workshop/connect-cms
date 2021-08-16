@@ -6871,7 +6871,7 @@ trait MigrationTrait
             // カウント数
             $ini .= "counter_num = " . $nc2_counter->counter_num . "\n";
             // 表示する桁数
-            $ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
+            // $ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
             // 画像選択
             $ini .= "show_type = " . $nc2_counter->show_type . "\n";
             // 文字(前)
@@ -6879,7 +6879,7 @@ trait MigrationTrait
             // 文字(後)
             $ini .= "show_char_after = " . $nc2_counter->show_char_after . "\n";
             // 上記以外に表示したい文字
-            $ini .= "comment = " . $nc2_counter->comment . "\n";
+            // $ini .= "comment = " . $nc2_counter->comment . "\n";
 
             // NC2 情報
             $ini .= "\n";
