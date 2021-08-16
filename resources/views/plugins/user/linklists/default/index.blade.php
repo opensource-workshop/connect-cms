@@ -75,6 +75,9 @@
                     <a href="{{$post->url}}">{{$post->title}}</a>
                 @endif
             @endif
+            @if (!empty($post->description))
+                <br /><small class="text-muted">{!!nl2br(e($post->description))!!}</small>
+            @endif
 
         @if (!$plugin_frame->type)
         </dd>
