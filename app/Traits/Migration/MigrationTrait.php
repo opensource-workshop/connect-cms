@@ -6955,12 +6955,12 @@ trait MigrationTrait
                 // データなしは 4:主担。 ここに全会員ルームのデータは入ってこないため、これでOK
                 $ini .= "add_authority_id = 4\n";
                 // フラグは必ず1
-                $ini .= "use_flag = 1\n";
+                // $ini .= "use_flag = 1\n";
             } else {
                 // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
                 $ini .= "add_authority_id = " . $nc2_calendar_manage->add_authority_id . "\n";
                 // フラグ. 1:使う
-                $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
+                // $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
             }
 
             // NC2 情報
@@ -7147,12 +7147,12 @@ trait MigrationTrait
                 // 全会員のデータなしは 5:なし（全会員のみ設定可能）
                 $ini .= "add_authority_id = 5\n";
                 // フラグは必ず1
-                $ini .= "use_flag = 1\n";
+                // $ini .= "use_flag = 1\n";
             } else {
                 // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
                 $ini .= "add_authority_id = " . $nc2_calendar_manage->add_authority_id . "\n";
                 // フラグ. 1:使う
-                $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
+                // $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
             }
 
             // NC2 情報
@@ -7186,11 +7186,11 @@ trait MigrationTrait
         }
 
         // NC2 指定ルームのみ表示 nc2_calendar_select_room
-        if (empty($where_calendar_block_ids)) {
-            $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::orderBy('block_id')->get();
-        } else {
-            $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
-        }
+        // if (empty($where_calendar_block_ids)) {
+        //     $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::orderBy('block_id')->get();
+        // } else {
+        //     $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
+        // }
 
         // NC2カレンダーブロックのループ
         foreach ($nc2_calendar_blocks as $nc2_calendar_block) {
@@ -7207,20 +7207,20 @@ trait MigrationTrait
             // 表示方法
             $ini .= "display_type = " . $nc2_calendar_block->display_type . "\n";
             // 開始位置
-            $ini .= "start_pos = " .  $nc2_calendar_block->start_pos . "\n";
+            // $ini .= "start_pos = " .  $nc2_calendar_block->start_pos . "\n";
             // 表示日数
-            $ini .= "display_count = " . $nc2_calendar_block->display_count . "\n";
+            // $ini .= "display_count = " . $nc2_calendar_block->display_count . "\n";
             // 指定したルームのみ表示する 1:ルーム指定する 0:指定しない
-            $ini .= "select_room = " . $nc2_calendar_block->select_room . "\n";
+            // $ini .= "select_room = " . $nc2_calendar_block->select_room . "\n";
             // [不明] 画面に該当項目なし。プライベートルームにカレンダー配置しても 0 だった。
-            $ini .= "myroom_flag = " . $nc2_calendar_block->myroom_flag . "\n";
+            // $ini .= "myroom_flag = " . $nc2_calendar_block->myroom_flag . "\n";
 
             // NC2 指定ルームのみ表示
-            $ini .= "\n";
-            $ini .= "[calendar_select_room]\n";
-            foreach ($nc2_calendar_select_rooms as $nc2_calendar_select_room) {
-                $ini .= "room_id[] = " . $nc2_calendar_select_room->room_id . "\n";
-            }
+            // $ini .= "\n";
+            // $ini .= "[calendar_select_room]\n";
+            // foreach ($nc2_calendar_select_rooms as $nc2_calendar_select_room) {
+            //     $ini .= "room_id[] = " . $nc2_calendar_select_room->room_id . "\n";
+            // }
 
             // NC2 情報
             $ini .= "\n";
