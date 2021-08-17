@@ -61,6 +61,7 @@ class Categories extends Model
             })
             ->where('categories.target', null)
             ->orderBy('plugin_categories.display_sequence', 'asc')
+            ->orderBy('categories.display_sequence', 'asc')
             ->get();
 
         foreach ($general_categories as $general_category) {
