@@ -12,14 +12,11 @@ use DB;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Categories;
-use App\Models\Common\PluginCategory;
 use App\Models\User\Linklists\Linklist;
 use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
 
 use App\Plugins\User\UserPluginBase;
-
-use App\Enums\PluginName;
 
 /**
  * リンクリスト・プラグイン
@@ -272,7 +269,7 @@ class LinklistsPlugin extends UserPluginBase
         $linklist = $this->getPluginBucket($this->getBucketId());
 
         // カテゴリ
-        $categories = $this->getCategories($linklist->id);
+        $categories = Categories::getInputCategories($this->frame->plugin_name, $linklist->id);
 
         // 変更画面を呼び出す。
         return $this->view('edit', [
@@ -491,6 +488,9 @@ class LinklistsPlugin extends UserPluginBase
         $linklist_post_ids = LinklistPost::where('linklist_id', $linklist->id)->pluck('id');
         LinklistPost::destroy($linklist_post_ids);
 
+        // カテゴリ削除
+        Categories::destroyBucketsCategories($this->frame->plugin_name, $linklist->id);
+
         // FrameのバケツIDの更新
         // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
         Frame::where('bucket_id', $linklist->bucket_id)->update(['bucket_id' => null]);
@@ -532,27 +532,6 @@ class LinklistsPlugin extends UserPluginBase
     }
 
     /**
-     * カテゴリデータの取得
-     */
-    private function getCategories($linklists_id)
-    {
-        $categories = Categories::select('categories.*')
-            ->join('plugin_categories', function ($join) use ($linklists_id) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', '=', PluginName::getPluginName(PluginName::linklists))
-                    ->where('plugin_categories.target_id', '=', $linklists_id)
-                    ->where('plugin_categories.view_flag', 1);
-            })
-            ->whereNull('categories.plugin_id')
-            ->orWhere('categories.plugin_id', $linklists_id)
-            ->orderBy('categories.target', 'asc')
-            ->orderBy('plugin_categories.display_sequence', 'asc')
-            ->get();
-
-        return $categories;
-    }
-
-    /**
      * カテゴリ表示関数
      */
     public function listCategories($request, $page_id, $frame_id, $id = null)
@@ -560,114 +539,29 @@ class LinklistsPlugin extends UserPluginBase
         // バケツから linklist_id 取得
         $linklist = $this->getPluginBucket($this->getBucketId());
 
-        // カテゴリ（全体）
-        $general_categories = Categories::
-            select(
-                'categories.*',
-                'plugin_categories.view_flag',
-                'plugin_categories.display_sequence as general_display_sequence'
-            )
-            ->leftJoin('plugin_categories', function ($join) use ($linklist) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                        ->where('plugin_categories.target_id', '=', $linklist->id)
-                        ->where('plugin_categories.deleted_at', null);
-            })
-            ->where('categories.target', null)
-            ->orderBy('plugin_categories.display_sequence', 'asc')
-            ->get();
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($linklist->id);
 
-        foreach ($general_categories as $general_categorie) {
-            // （初期登録時を想定）プラグイン側カテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
-            if (is_null($general_categorie->general_display_sequence)) {
-                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
-            }
-        }
-
-        // カテゴリ（プラグイン）
-        $plugin_categories = null;
-        if ($linklist->id) {
-            $plugin_categories = Categories::
-                select(
-                    'categories.*',
-                    'plugin_categories.view_flag',
-                    'plugin_categories.display_sequence as plugin_display_sequence'
-                )
-                ->leftJoin('plugin_categories', function ($join) use ($linklist) {
-                    $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                            ->where('plugin_categories.target_id', '=', $linklist->id)
-                            ->where('plugin_categories.deleted_at', null);
-                })
-                ->where('categories.target', PluginName::getPluginName(PluginName::linklists))
-                ->where('categories.plugin_id', $linklist->id)
-                ->orderBy('plugin_categories.display_sequence', 'asc')
-                ->get();
-        }
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $linklist->id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('list_categories', [
             'general_categories' => $general_categories,
             'plugin_categories' => $plugin_categories,
-            // 'faq_frame' => $faq_frame,
             'linklist' => $linklist,
         ]);
     }
 
     /**
-     *  カテゴリ登録処理
+     * カテゴリ登録処理
      */
     public function saveCategories($request, $page_id, $frame_id, $id = null)
     {
         /* エラーチェック
         ------------------------------------ */
 
-        $rules = [];
-
-        // エラーチェックの項目名
-        $setAttributeNames = [];
-
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $rules['add_display_sequence'] = ['required'];
-            $rules['add_category'] = ['required'];
-            $rules['add_color'] = ['required'];
-            $rules['add_background_color'] = ['required'];
-
-            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
-            $setAttributeNames['add_category'] = '追加行のカテゴリ';
-            $setAttributeNames['add_color'] = '追加行の文字色';
-            $setAttributeNames['add_background_color'] = '追加行の背景色';
-        }
-
-        // 共通項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['general_display_sequence.'.$category_id] = ['required'];
-
-                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
-            }
-        }
-
-        // 既存項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['plugin_display_sequence.'.$category_id] = ['required'];
-                $rules['plugin_category.'.$category_id] = ['required'];
-                $rules['plugin_color.'.$category_id] = ['required'];
-                $rules['plugin_background_color.'.$category_id] = ['required'];
-
-                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
-                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
-                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
-                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
-            }
-        }
-
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), $rules);
-        $validator->setAttributeNames($setAttributeNames);
+        $validator = Categories::validatePluginCategories($request);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -676,109 +570,19 @@ class LinklistsPlugin extends UserPluginBase
         /* カテゴリ追加
         ------------------------------------ */
 
-        // FAQ
-        // $faq_frame = $this->getFaqFrame($frame_id);
         // バケツから linklist_id 取得
         $linklist = $this->getPluginBucket($this->getBucketId());
 
-        // 追加項目アリ
-        if (!empty($request->add_display_sequence)) {
-            $add_category = Categories::create([
-                'classname'        => $request->add_classname,
-                'category'         => $request->add_category,
-                'color'            => $request->add_color,
-                'background_color' => $request->add_background_color,
-                'target'           => PluginName::getPluginName(PluginName::linklists),
-                'plugin_id'        => $linklist->id,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-            PluginCategory::create([
-                'target'           => PluginName::getPluginName(PluginName::linklists),
-                'target_id'        => $linklist->id,
-                'categories_id'    => $add_category->id,
-                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-        }
-
-        // 既存項目アリ
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // モデルオブジェクト取得
-                $category = Categories::where('id', $plugin_categories_id)->first();
-
-                // データのセット
-                $category->classname        = $request->plugin_classname[$plugin_categories_id];
-                $category->category         = $request->plugin_category[$plugin_categories_id];
-                $category->color            = $request->plugin_color[$plugin_categories_id];
-                $category->background_color = $request->plugin_background_color[$plugin_categories_id];
-                $category->target           = PluginName::getPluginName(PluginName::linklists);
-                $category->plugin_id        = $linklist->id;
-                $category->display_sequence = $request->plugin_display_sequence[$plugin_categories_id];
-
-                // 保存
-                $category->save();
-            }
-        }
-
-        /* 表示フラグ更新(共通カテゴリ)
-        ------------------------------------ */
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $general_categories_id) {
-                // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                PluginCategory::updateOrCreate(
-                    [
-                        'target' => PluginName::getPluginName(PluginName::linklists),
-                        'target_id' => $linklist->id,
-                        'categories_id' => $general_categories_id,
-                    ],
-                    [
-                        'target' => PluginName::getPluginName(PluginName::linklists),
-                        'target_id' => $linklist->id,
-                        'categories_id' => $general_categories_id,
-                        'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => $request->general_display_sequence[$general_categories_id],
-                    ]
-                );
-            }
-        }
-
-        /* 表示フラグ更新(自FAQのカテゴリ)
-        ------------------------------------ */
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                PluginCategory::updateOrCreate(
-                    [
-                        'target' => PluginName::getPluginName(PluginName::linklists),
-                        'target_id' => $linklist->id,
-                        'categories_id' => $plugin_categories_id,
-                    ],
-                    [
-                        'target' => PluginName::getPluginName(PluginName::linklists),
-                        'target_id' => $linklist->id,
-                        'categories_id' => $plugin_categories_id,
-                        'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
-                    ]
-                );
-            }
-        }
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $linklist->id);
 
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
     /**
-     *  カテゴリ削除処理
+     * カテゴリ削除処理
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 削除(プラグイン側プラグインのカテゴリ表示データ)
-        PluginCategory::where('categories_id', $id)->delete();
-
-        // 削除(カテゴリ)
-        Categories::where('id', $id)->delete();
-
-        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        Categories::deleteCategories($this->frame->plugin_name, $id);
     }
 }
