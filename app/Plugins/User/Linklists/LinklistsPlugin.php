@@ -11,6 +11,7 @@ use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Categories;
 use App\Models\User\Linklists\Linklist;
 use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
@@ -23,7 +24,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category リンクリスト・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class LinklistsPlugin extends UserPluginBase
 {
@@ -111,17 +112,36 @@ class LinklistsPlugin extends UserPluginBase
     private function getPosts($linklist_frame)
     {
         // データ取得
-        $posts_query = LinklistPost::select('linklist_posts.*')
-                                   ->join('linklists', function ($join) {
-                                       $join->on('linklists.id', '=', 'linklist_posts.linklist_id')
-                                          ->where('linklists.bucket_id', '=', $this->frame->bucket_id);
-                                   })
-                                   ->whereNull('linklist_posts.deleted_at')
-                                   ->orderBy('display_sequence', 'asc')
-                                   ->orderBy('created_at', 'asc');
+        $posts_query = LinklistPost::
+            select(
+                'linklist_posts.*',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag',
+                'plugin_categories.categories_id as plugin_categories_categories_id'
+            )
+            ->join('linklists', function ($join) {
+                $join->on('linklists.id', '=', 'linklist_posts.linklist_id')
+                    ->where('linklists.bucket_id', $this->frame->bucket_id)
+                    ->whereNull('linklists.deleted_at');
+            })
+            ->leftJoin('categories', function ($join) {
+                $join->on('categories.id', '=', 'linklist_posts.categories_id')
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->whereColumn('plugin_categories.target_id', 'linklists.id')
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            })
+            ->orderBy('plugin_categories.display_sequence', 'asc')
+            ->orderBy('linklist_posts.display_sequence', 'asc')
+            ->orderBy('linklist_posts.created_at', 'asc');
 
         // 取得
-        return $posts_query->paginate($linklist_frame->view_count);
+        return $posts_query->paginate($linklist_frame->view_count, ["*"], "frame_{$linklist_frame->id}_page");
     }
 
     /* スタティック関数 */
@@ -209,10 +229,14 @@ class LinklistsPlugin extends UserPluginBase
         // リンクリストデータ一覧の取得
         $posts = $this->getPosts($plugin_frame);
 
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-            'posts'        => $posts,
+            'posts' => $posts,
             'plugin_frame' => $plugin_frame,
+            'linklist' => $linklist,
         ]);
     }
 
@@ -241,9 +265,16 @@ class LinklistsPlugin extends UserPluginBase
         // 記事取得
         $post = $this->getPost($post_id);
 
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
+        // カテゴリ
+        $categories = Categories::getInputCategories($this->frame->plugin_name, $linklist->id);
+
         // 変更画面を呼び出す。
         return $this->view('edit', [
             'post' => $post,
+            'categories' => $categories,
         ]);
     }
 
@@ -289,6 +320,7 @@ class LinklistsPlugin extends UserPluginBase
         $post->url               = $request->url;
         $post->target_blank_flag = $request->target_blank_flag;
         $post->description       = $request->description;
+        $post->categories_id     = $request->categories_id;
         $post->display_sequence  = $display_sequence;
 
         // データ保存
@@ -456,6 +488,9 @@ class LinklistsPlugin extends UserPluginBase
         $linklist_post_ids = LinklistPost::where('linklist_id', $linklist->id)->pluck('id');
         LinklistPost::destroy($linklist_post_ids);
 
+        // カテゴリ削除
+        Categories::destroyBucketsCategories($this->frame->plugin_name, $linklist->id);
+
         // FrameのバケツIDの更新
         // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
         Frame::where('bucket_id', $linklist->bucket_id)->update(['bucket_id' => null]);
@@ -494,5 +529,60 @@ class LinklistsPlugin extends UserPluginBase
         // $linklist_frame->save();
 
         return;
+    }
+
+    /**
+     * カテゴリ表示関数
+     */
+    public function listCategories($request, $page_id, $frame_id, $id = null)
+    {
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($linklist->id);
+
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $linklist->id);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('list_categories', [
+            'general_categories' => $general_categories,
+            'plugin_categories' => $plugin_categories,
+            'linklist' => $linklist,
+        ]);
+    }
+
+    /**
+     * カテゴリ登録処理
+     */
+    public function saveCategories($request, $page_id, $frame_id, $id = null)
+    {
+        /* エラーチェック
+        ------------------------------------ */
+
+        $validator = Categories::validatePluginCategories($request);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        /* カテゴリ追加
+        ------------------------------------ */
+
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $linklist->id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * カテゴリ削除処理
+     */
+    public function deleteCategories($request, $page_id, $frame_id, $id = null)
+    {
+        Categories::deleteCategories($this->frame->plugin_name, $id);
     }
 }

@@ -19,12 +19,11 @@
 
 @if (empty($linklist->id))
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => $frame->plugin_name_full]) }}
     </div>
 @else
     <div class="alert alert-info">
-        <i class="fas fa-exclamation-circle"></i>
-        フレームごとの表示設定を変更します。
+        <i class="fas fa-exclamation-circle"></i> フレームごとの表示設定を変更します。
     </div>
 
     <form action="{{url('/')}}/redirect/plugin/linklists/saveView/{{$page->id}}/{{$frame_id}}/{{$linklist->id}}#frame-{{$frame->id}}" method="POST" class="">

@@ -29,6 +29,7 @@ final class PluginName extends EnumsBase
     const tabs = 'Tabs';
     const themechangers = 'Themechangers';
     const receives = 'Receives';
+    const linklists = 'Linklists';
 
     // key/valueの連想配列
     const enum = [
@@ -50,6 +51,7 @@ final class PluginName extends EnumsBase
         self::tabs => 'タブ',
         self::themechangers => 'テーマチェンジャー',
         self::receives => 'データ収集',
+        self::linklists => 'リンクリスト',
     ];
 
     /**

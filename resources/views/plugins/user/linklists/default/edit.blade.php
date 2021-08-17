@@ -68,6 +68,19 @@
         </div>
     </div>
 
+    <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">カテゴリ</label>
+        <div class="col-md-10">
+            <select class="form-control" name="categories_id" class="form-control">
+                <option value=""></option>
+                @foreach($categories as $category)
+                <option value="{{$category->id}}" @if(old('category', $post->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+                @endforeach
+            </select>
+            @if ($errors && $errors->has('category')) <div class="text-danger">{{$errors->first('category')}}</div> @endif
+        </div>
+    </div>
+
     <div class="form-group">
         <div class="row">
             @if (empty($post->id))
