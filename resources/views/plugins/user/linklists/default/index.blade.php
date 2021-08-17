@@ -132,7 +132,7 @@
     @endif
 
     {{-- ページング処理 --}}
-    @include('plugins.common.user_paginate', ['posts' => $posts, 'frame' => $frame, 'aria_label_name' => $plugin_frame->name, 'class' => 'mt-3'])
+    @include('plugins.common.user_paginate', ['posts' => $posts, 'frame' => $frame, 'aria_label_name' => $linklist->name, 'class' => 'mt-3'])
 
 @endif
 
