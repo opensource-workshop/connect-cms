@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use App\Models\Common\Buckets;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
+use App\Models\Common\PluginCategory;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
@@ -44,7 +45,6 @@ use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputCols;
 use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Faqs\Faqs;
-use App\Models\User\Faqs\FaqsCategories;
 use App\Models\User\Faqs\FaqsPosts;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
@@ -280,6 +280,7 @@ trait MigrationTrait
             Buckets::truncate();
             BucketsRoles::truncate();
             Categories::truncate();
+            PluginCategory::truncate();
             Page::truncate();
         }
 
@@ -304,6 +305,7 @@ trait MigrationTrait
         if ($target == 'categories' || $target == 'all') {
             // アップロードテーブルのtruncate とmigration_mappings のuploads の削除、アップロードファイルの削除
             Categories::truncate();
+            PluginCategory::truncate();
             MigrationMapping::where('target_source_table', 'categories')->delete();
         }
 
@@ -365,7 +367,8 @@ trait MigrationTrait
 
         if ($target == 'faqs' || $target == 'all') {
             Faqs::truncate();
-            FaqsCategories::truncate();
+            // FaqsCategories::truncate();
+            PluginCategory::where('target', 'faqs')->delete();
             FaqsPosts::truncate();
             Buckets::where('plugin_name', 'faqs')->delete();
             MigrationMapping::where('target_source_table', 'faqs')->delete();
@@ -1799,7 +1802,8 @@ trait MigrationTrait
             // FAQのカテゴリーテーブル作成（カテゴリーの使用on設定）
             $index = 1;
             foreach ($faq_categories as $faq_category) {
-                FaqsCategories::create(['faqs_id' => $faq_category->plugin_id, 'categories_id' => $faq_category->id, 'view_flag' => 1, 'display_sequence' => $index]);
+                // FaqsCategories::create(['faqs_id' => $faq_category->plugin_id, 'categories_id' => $faq_category->id, 'view_flag' => 1, 'display_sequence' => $index]);
+                PluginCategory::create(['target' => 'faqs', 'target_id' => $faq_category->plugin_id, 'categories_id' => $faq_category->id, 'view_flag' => 1, 'display_sequence' => $index]);
                 $index++;
             }
 

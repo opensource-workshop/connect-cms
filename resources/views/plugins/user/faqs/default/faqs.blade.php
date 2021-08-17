@@ -49,7 +49,7 @@
                         <span class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></span>{{$post->getNobrPostTitle()}}
 
                         {{-- カテゴリ --}}
-                        @if($post->category)
+                        @if($post->category_view_flag)
                             <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
                         @endif
 
@@ -88,12 +88,12 @@
                             @endif
 
                             {{-- 重要記事 --}}
-                            @if($post->important == 1)
+                            @if ($post->important == 1)
                                 <span class="badge badge-danger">重要</span>
                             @endif
 
                             {{-- カテゴリ --}}
-                            @if($post->category)
+                            @if ($post->category_view_flag)
                                 <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
                             @endif
 

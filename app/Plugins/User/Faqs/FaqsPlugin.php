@@ -13,9 +13,8 @@ use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
+// use App\Models\Common\Page;
 use App\Models\User\Faqs\Faqs;
-use App\Models\User\Faqs\FaqsCategories;
 use App\Models\User\Faqs\FaqsPosts;
 use App\Models\User\Faqs\FaqsPostsTags;
 
@@ -29,7 +28,7 @@ use App\Utilities\String\StringUtils;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class FaqsPlugin extends UserPluginBase
 {
@@ -99,20 +98,35 @@ class FaqsPlugin extends UserPluginBase
         // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
         $arg_post = FaqsPosts::where('id', $id)->first();
 
+        $plugin_name = $this->frame->plugin_name;
+
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = FaqsPosts::select(
-            'faqs_posts.*',
-            'categories.color as category_color',
-            'categories.background_color as category_background_color',
-            'categories.category as category'
-        )
-                                ->leftJoin('categories', 'categories.id', '=', 'faqs_posts.categories_id')
-                                ->where('contents_id', $arg_post->contents_id)
-                                ->where(function ($query) {
-                                      $query = $this->appendAuthWhere($query);
-                                })
-                                ->orderBy('id', 'desc')
-                                ->first();
+        $this->post = FaqsPosts::
+            select(
+                'faqs_posts.*',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag'
+            )
+            ->leftJoin('categories', function ($join) {
+                $join->on('categories.id', '=', 'faqs_posts.categories_id')
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->whereColumn('plugin_categories.target_id', 'faqs_posts.faqs_id')
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            })
+            ->where('faqs_posts.contents_id', $arg_post->contents_id)
+            ->where(function ($query) {
+                $query = $this->appendAuthWhere($query);
+            })
+            ->orderBy('faqs_posts.id', 'desc')
+            ->first();
+
         return $this->post;
     }
 
@@ -124,31 +138,11 @@ class FaqsPlugin extends UserPluginBase
     private function getFaqFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'faqs.id as faqs_id', 'faqs.faq_name', 'faqs.view_count', 'faqs.rss', 'faqs.rss_count', 'faqs.sequence_conditions', 'faqs.display_posted_at_flag')
-                 ->leftJoin('faqs', 'faqs.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::select('frames.*', 'faqs.id as faqs_id', 'faqs.faq_name', 'faqs.view_count', 'faqs.rss', 'faqs.rss_count', 'faqs.sequence_conditions', 'faqs.display_posted_at_flag')
+            ->leftJoin('faqs', 'faqs.bucket_id', '=', 'frames.bucket_id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
-    }
-
-    /**
-     *  カテゴリデータの取得
-     */
-    private function getFaqsCategories($faqs_id)
-    {
-        $faqs_categories = Categories::select('categories.*')
-                          ->join('faqs_categories', function ($join) use ($faqs_id) {
-                              $join->on('faqs_categories.categories_id', '=', 'categories.id')
-                                   ->where('faqs_categories.faqs_id', '=', $faqs_id)
-                                   ->where('faqs_categories.view_flag', 1);
-                          })
-                          ->whereNull('plugin_id')
-                          ->orWhere('plugin_id', $faqs_id)
-                          ->orderBy('target', 'asc')
-                          ->orderBy('display_sequence', 'asc')
-                          ->get();
-        return $faqs_categories;
     }
 
     /**
@@ -194,24 +188,25 @@ class FaqsPlugin extends UserPluginBase
         return $query;
     }
 
-    /**
-     *  表示条件に対するソート条件追加
-     */
-    private function appendOrder($query, $faq_frame)
-    {
-        if ($faq_frame->sequence_conditions == 0) {
-            // 最新順
-            $query->orderBy('posted_at', 'desc');
-        } elseif ($faq_frame->sequence_conditions == 1) {
-            // 投稿順
-            $query->orderBy('posted_at', 'asc');
-        } elseif ($faq_frame->sequence_conditions == 2) {
-            // 指定順
-            $query->orderBy('display_sequence', 'asc');
-        }
+    // delete: 使ってないprivateメソッド
+    // /**
+    //  *  表示条件に対するソート条件追加
+    //  */
+    // private function appendOrder($query, $faq_frame)
+    // {
+    //     if ($faq_frame->sequence_conditions == 0) {
+    //         // 最新順
+    //         $query->orderBy('posted_at', 'desc');
+    //     } elseif ($faq_frame->sequence_conditions == 1) {
+    //         // 投稿順
+    //         $query->orderBy('posted_at', 'asc');
+    //     } elseif ($faq_frame->sequence_conditions == 2) {
+    //         // 指定順
+    //         $query->orderBy('display_sequence', 'asc');
+    //     }
 
-        return $query;
-    }
+    //     return $query;
+    // }
 
     /**
      *  FAQ記事一覧取得
@@ -226,25 +221,39 @@ class FaqsPlugin extends UserPluginBase
             $count = $option_count;
         }
 
+        $plugin_name = $this->frame->plugin_name;
+
         // 削除されていないデータでグルーピングして、最新のIDで全件
-        $faqs_posts = FaqsPosts::select(
-            'faqs_posts.*',
-            'categories.color as category_color',
-            'categories.background_color as category_background_color',
-            'categories.category as category'
-        )
-                                 ->leftJoin('categories', 'categories.id', '=', 'faqs_posts.categories_id')
-                                 ->whereIn('faqs_posts.id', function ($query) use ($faq_frame) {
-                                     $query->select(DB::raw('MAX(id) As id'))
-                                           ->from('faqs_posts')
-                                           ->where('faqs_id', $faq_frame->faqs_id)
-                                           ->where('deleted_at', null)
-                                           // 権限を見てWhere を付与する。
-                                           ->where(function ($query_auth) {
-                                               $query_auth = $this->appendAuthWhere($query_auth);
-                                           })
-                                           ->groupBy('contents_id');
-                                 });
+        $faqs_posts = FaqsPosts::
+            select(
+                'faqs_posts.*',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag'
+            )
+            ->leftJoin('categories', function ($join) {
+                $join->on('categories.id', '=', 'faqs_posts.categories_id')
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->whereColumn('plugin_categories.target_id', 'faqs_posts.faqs_id')
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            })
+            ->whereIn('faqs_posts.id', function ($query) use ($faq_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                    ->from('faqs_posts')
+                    ->where('faqs_id', $faq_frame->faqs_id)
+                    ->where('deleted_at', null)
+                    // 権限を見てWhere を付与する。
+                    ->where(function ($query_auth) {
+                        $query_auth = $this->appendAuthWhere($query_auth);
+                    })
+                    ->groupBy('contents_id');
+            });
         // 表示条件に対するソート条件追加
 
         if ($faq_frame->sequence_conditions == 0) {
@@ -260,7 +269,7 @@ class FaqsPlugin extends UserPluginBase
 
        // 取得
         $faqs_posts_recored = $faqs_posts->orderBy('posted_at', 'desc')
-                           ->paginate($count, ["*"], "frame_{$faq_frame->id}_page");
+            ->paginate($count, ["*"], "frame_{$faq_frame->id}_page");
 
         return $faqs_posts_recored;
     }
@@ -414,10 +423,10 @@ class FaqsPlugin extends UserPluginBase
         }
 
         // Page データ
-        $page = Page::where('id', $page_id)->first();
+        // $page = Page::where('id', $page_id)->first();
 
         // 認証されているユーザの取得
-        $user = Auth::user();
+        // $user = Auth::user();
 
         // FAQデータ一覧の取得
         $faqs_posts = $this->getPosts($faq_frame);
@@ -445,12 +454,10 @@ class FaqsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'faqs', [
+        return $this->view('faqs', [
             'faqs_posts' => $faqs_posts,
             'faq_frame'  => $faq_frame,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -469,7 +476,7 @@ class FaqsPlugin extends UserPluginBase
         $faqs_posts->posted_at = date('Y-m-d H:i:00');
 
         // カテゴリ
-        $faqs_categories = $this->getFaqsCategories($faq_frame->faqs_id);
+        $faqs_categories = Categories::getInputCategories($this->frame->plugin_name, $faq_frame->faqs_id);
 
         // タグ
         $faqs_posts_tags = "";
@@ -557,7 +564,7 @@ class FaqsPlugin extends UserPluginBase
         }
 
         // カテゴリ
-        $faqs_categories = $this->getFaqsCategories($faq_frame->faqs_id);
+        $faqs_categories = Categories::getInputCategories($this->frame->plugin_name, $faq_frame->faqs_id);
 
         // タグ取得
         $faqs_posts_tags_array = FaqsPostsTags::where('faqs_posts_id', $faqs_post->id)->get();
@@ -756,9 +763,9 @@ class FaqsPlugin extends UserPluginBase
         return $this->index($request, $page_id, $frame_id);
     }
 
-   /**
-    * 承認
-    */
+    /**
+     * 承認
+     */
     public function approval($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新規オブジェクト生成
@@ -953,6 +960,9 @@ class FaqsPlugin extends UserPluginBase
             // 記事データを削除する。
             FaqsPosts::where('faqs_id', $faqs_id)->delete();
 
+            // カテゴリ削除
+            Categories::destroyBucketsCategories($this->frame->plugin_name, $faqs_id);
+
             // FAQ設定を削除する。
             Faqs::destroy($faqs_id);
 
@@ -971,14 +981,14 @@ class FaqsPlugin extends UserPluginBase
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+            ->update(['bucket_id' => $request->select_bucket]);
 
         // 表示FAQ選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
@@ -989,54 +999,14 @@ class FaqsPlugin extends UserPluginBase
      */
     public function listCategories($request, $page_id, $frame_id, $id = null)
     {
-        // セッション初期化などのLaravel 処理。
-        // $request->flash();
-
         // FAQ
         $faq_frame = $this->getFaqFrame($frame_id);
 
-        // カテゴリ（全体）
-        $general_categories = Categories::
-                select(
-                    'categories.*',
-                    'faqs_categories.view_flag',
-                    'faqs_categories.display_sequence as general_display_sequence'
-                )
-                ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
-                    $join->on('faqs_categories.categories_id', '=', 'categories.id')
-                            ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id)
-                            ->where('faqs_categories.deleted_at', null);
-                })
-                ->where('target', null)
-                ->orderBy('display_sequence', 'asc')
-                ->get();
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $faq_frame->faqs_id);
 
-        foreach ($general_categories as $general_categorie) {
-            // （初期登録時を想定）FAQカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
-            if (is_null($general_categorie->general_display_sequence)) {
-                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
-            }
-        }
-
-        // カテゴリ（このFAQ）
-        $plugin_categories = null;
-        if ($faq_frame->faqs_id) {
-            $plugin_categories = Categories::
-                    select(
-                        'categories.*',
-                        'faqs_categories.view_flag',
-                        'faqs_categories.display_sequence as plugin_display_sequence'
-                    )
-                    ->leftJoin('faqs_categories', function ($join) use ($faq_frame) {
-                        $join->on('faqs_categories.categories_id', '=', 'categories.id')
-                                ->where('faqs_categories.faqs_id', '=', $faq_frame->faqs_id)
-                                ->where('faqs_categories.deleted_at', null);
-                    })
-                    ->where('target', 'faqs')
-                    ->where('plugin_id', $faq_frame->faqs_id)
-                    ->orderBy('display_sequence', 'asc')
-                    ->get();
-        }
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $faq_frame->faqs_id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('faqs_list_categories', [
@@ -1054,54 +1024,7 @@ class FaqsPlugin extends UserPluginBase
         /* エラーチェック
         ------------------------------------ */
 
-        $rules = [];
-
-        // エラーチェックの項目名
-        $setAttributeNames = [];
-
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $rules['add_display_sequence'] = ['required'];
-            $rules['add_category'] = ['required'];
-            $rules['add_color'] = ['required'];
-            $rules['add_background_color'] = ['required'];
-
-            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
-            $setAttributeNames['add_category'] = '追加行のカテゴリ';
-            $setAttributeNames['add_color'] = '追加行の文字色';
-            $setAttributeNames['add_background_color'] = '追加行の背景色';
-        }
-
-        // 共通項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['general_display_sequence.'.$category_id] = ['required'];
-
-                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
-            }
-        }
-
-        // 既存項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['plugin_display_sequence.'.$category_id] = ['required'];
-                $rules['plugin_category.'.$category_id] = ['required'];
-                $rules['plugin_color.'.$category_id] = ['required'];
-                $rules['plugin_background_color.'.$category_id] = ['required'];
-
-                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
-                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
-                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
-                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
-            }
-        }
-
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), $rules);
-        $validator->setAttributeNames($setAttributeNames);
+        $validator = Categories::validatePluginCategories($request);
 
         if ($validator->fails()) {
             // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
@@ -1114,78 +1037,7 @@ class FaqsPlugin extends UserPluginBase
         // FAQ
         $faq_frame = $this->getFaqFrame($frame_id);
 
-        // 追加項目アリ
-        if (!empty($request->add_display_sequence)) {
-            $add_category = Categories::create([
-                'classname'        => $request->add_classname,
-                'category'         => $request->add_category,
-                'color'            => $request->add_color,
-                'background_color' => $request->add_background_color,
-                'target'           => 'faqs',
-                'plugin_id'        => $faq_frame->faqs_id,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-            FaqsCategories::create([
-                'faqs_id'         => $faq_frame->faqs_id,
-                'categories_id'    => $add_category->id,
-                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-        }
-
-        // 既存項目アリ
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // モデルオブジェクト取得
-                $category = Categories::where('id', $plugin_categories_id)->first();
-
-                // データのセット
-                $category->classname        = $request->plugin_classname[$plugin_categories_id];
-                $category->category         = $request->plugin_category[$plugin_categories_id];
-                $category->color            = $request->plugin_color[$plugin_categories_id];
-                $category->background_color = $request->plugin_background_color[$plugin_categories_id];
-                $category->target           = 'faqs';
-                $category->plugin_id        = $faq_frame->faqs_id;
-                $category->display_sequence = $request->plugin_display_sequence[$plugin_categories_id];
-
-                // 保存
-                $category->save();
-            }
-        }
-
-        /* 表示フラグ更新(共通カテゴリ)
-        ------------------------------------ */
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $general_categories_id) {
-                // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                FaqsCategories::updateOrCreate(
-                    ['categories_id' => $general_categories_id, 'faqs_id' => $faq_frame->faqs_id],
-                    [
-                        'faqs_id' => $faq_frame->faqs_id,
-                        'categories_id' => $general_categories_id,
-                        'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => $request->general_display_sequence[$general_categories_id],
-                    ]
-                );
-            }
-        }
-
-        /* 表示フラグ更新(自FAQのカテゴリ)
-        ------------------------------------ */
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                FaqsCategories::updateOrCreate(
-                    ['categories_id' => $plugin_categories_id, 'faqs_id' => $faq_frame->faqs_id],
-                    [
-                        'faqs_id' => $faq_frame->faqs_id,
-                        'categories_id' => $plugin_categories_id,
-                        'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => $request->plugin_display_sequence[$plugin_categories_id],
-                    ]
-                );
-            }
-        }
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $faq_frame->faqs_id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
@@ -1196,11 +1048,7 @@ class FaqsPlugin extends UserPluginBase
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 削除(FAQプラグインのカテゴリ表示データ)
-        FaqsCategories::where('categories_id', $id)->delete();
-
-        // 削除(カテゴリ)
-        Categories::where('id', $id)->delete();
+        Categories::deleteCategories($this->frame->plugin_name, $id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
