@@ -19,7 +19,7 @@
 
 @if (empty($linklist->id) && $action != 'createBuckets')
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => $frame->plugin_name_full]) }}
     </div>
 @else
     <div class="alert alert-info">

@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 @if ($plugin_buckets->isEmpty())
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => $frame->plugin_name_full]) }}
     </div>
 @else
     <form action="{{url('/')}}/redirect/plugin/linklists/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
