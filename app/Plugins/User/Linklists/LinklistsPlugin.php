@@ -540,7 +540,7 @@ class LinklistsPlugin extends UserPluginBase
         $linklist = $this->getPluginBucket($this->getBucketId());
 
         // 共通カテゴリ
-        $general_categories = Categories::getGeneralCategories($linklist->id);
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $linklist->id);
 
         // 個別カテゴリ（プラグイン）
         $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $linklist->id);

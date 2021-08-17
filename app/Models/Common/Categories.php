@@ -31,7 +31,8 @@ class Categories extends Model
                 $join->on('plugin_categories.categories_id', '=', 'categories.id')
                     ->where('plugin_categories.target', '=', $plugin_name)
                     ->where('plugin_categories.target_id', '=', $target_id)
-                    ->where('plugin_categories.view_flag', 1);
+                    ->where('plugin_categories.view_flag', 1)
+                    ->whereNull('plugin_categories.deleted_at');
             })
             ->whereNull('categories.plugin_id')
             ->orWhere('categories.plugin_id', $target_id)
@@ -45,7 +46,7 @@ class Categories extends Model
     /**
      * 共通カテゴリ（一般プラグイン-設定画面用）の取得
      */
-    public static function getGeneralCategories(?int $target_id)
+    public static function getGeneralCategories(?string $plugin_name, ?int $target_id)
     {
         // 共通カテゴリ
         $general_categories = Categories::
@@ -54,12 +55,13 @@ class Categories extends Model
                 'plugin_categories.view_flag',
                 'plugin_categories.display_sequence as general_display_sequence'
             )
-            ->leftJoin('plugin_categories', function ($join) use ($target_id) {
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name, $target_id) {
                 $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                        ->where('plugin_categories.target_id', '=', $target_id)
-                        ->where('plugin_categories.deleted_at', null);
+                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->where('plugin_categories.target_id', '=', $target_id)
+                    ->whereNull('plugin_categories.deleted_at');
             })
-            ->where('categories.target', null)
+            ->whereNull('categories.target')
             ->orderBy('plugin_categories.display_sequence', 'asc')
             ->orderBy('categories.display_sequence', 'asc')
             ->get();
@@ -91,7 +93,7 @@ class Categories extends Model
                 ->leftJoin('plugin_categories', function ($join) use ($target_id) {
                     $join->on('plugin_categories.categories_id', '=', 'categories.id')
                             ->where('plugin_categories.target_id', '=', $target_id)
-                            ->where('plugin_categories.deleted_at', null);
+                            ->whereNull('plugin_categories.deleted_at');
                 })
                 ->where('categories.target', $plugin_name)
                 ->where('categories.plugin_id', $target_id)
