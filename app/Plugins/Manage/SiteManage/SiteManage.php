@@ -21,7 +21,7 @@ use App\Enums\BaseLoginRedirectPage;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
- * @package Contoroller
+ * @package Controller
  */
 class SiteManage extends ManagePluginBase
 {
@@ -820,7 +820,7 @@ class SiteManage extends ManagePluginBase
         // 管理画面プラグインの戻り値の返し方
         return view('plugins.manage.site.wysiwyg', [
             "function" => __FUNCTION__,
-            "plugin_name" => "wysiwyg",
+            "plugin_name" => "site",
             "configs" => $configs,
         ]);
     }
