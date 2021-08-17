@@ -177,7 +177,7 @@
     $mobile_toolbar = "toolbar  : '" . $mobile_toolbar . "',";
 
     $pc_toolbar_mode = '';
-    if ($frame->isExpandNarrow()) {
+    if (!is_null($frame) && $frame->isExpandNarrow()) {
         // 左右エリアは、スマホ表示と同等にする
         $pc_toolbar_mode = 'floating';
         $toolbar = $mobile_toolbar;
