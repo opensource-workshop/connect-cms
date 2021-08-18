@@ -105,20 +105,34 @@ class BlogsPlugin extends UserPluginBase
             return null;
         }
 
+        $plugin_name = $this->frame->plugin_name;
+
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = BlogsPosts::select(
-            'blogs_posts.*',
-            'categories.color as category_color',
-            'categories.background_color as category_background_color',
-            'categories.category as category'
-        )
-                                ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
-                                ->where('contents_id', $arg_post->contents_id)
-                                ->where(function ($query) {
-                                      $query = $this->appendAuthWhere($query);
-                                })
-                                ->orderBy('id', 'desc')
-                                ->first();
+        $this->post = BlogsPosts::
+            select(
+                'blogs_posts.*',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag'
+            )
+            ->leftJoin('categories', function ($join) {
+                $join->on('categories.id', '=', 'blogs_posts.categories_id')
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->whereColumn('plugin_categories.target_id', 'blogs_posts.blogs_id')
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            })
+            ->where('contents_id', $arg_post->contents_id)
+            ->where(function ($query) {
+                $query = $this->appendAuthWhere($query);
+            })
+            ->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定
+            ->first();
 
         // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
         if (empty($this->post->read_more_button)) {
@@ -230,30 +244,44 @@ class BlogsPlugin extends UserPluginBase
             $count = 0;
         }
 
-        // 削除されていないデータでグルーピングして、最新のIDで全件
-        $blogs_query = BlogsPosts::select(
-            'blogs_posts.*',
-            'categories.color as category_color',
-            'categories.background_color as category_background_color',
-            'categories.category as category'
-        )
-                                 ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
-                                 ->whereIn('blogs_posts.id', function ($query) use ($blog_frame) {
-                                     $query->select(DB::raw('MAX(id) As id'))
-                                           ->from('blogs_posts')
-                                           ->where('blogs_id', $blog_frame->blogs_id)
+        $plugin_name = $this->frame->plugin_name;
 
-                                           ->where('deleted_at', null)
-                                           // 権限を見てWhere を付与する。
-                                           ->where(function ($query_auth) {
-                                               $query_auth = $this->appendAuthWhere($query_auth);
-                                           })
-                                           ->groupBy('contents_id');
-                                 })
-                                // 設定を見てWhere を付与する。
-                                ->where(function ($query_setting) use ($blog_frame) {
-                                    $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
-                                });
+        // 削除されていないデータでグルーピングして、最新のIDで全件
+        $blogs_query = BlogsPosts::
+            select(
+                'blogs_posts.*',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag'
+            )
+            ->leftJoin('categories', function ($join) {
+                $join->on('categories.id', '=', 'blogs_posts.categories_id')
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->whereColumn('plugin_categories.target_id', 'blogs_posts.blogs_id')
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            })
+            ->whereIn('blogs_posts.id', function ($query) use ($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                    ->from('blogs_posts')
+                    ->where('blogs_id', $blog_frame->blogs_id)
+
+                    ->where('deleted_at', null)
+                    // 権限を見てWhere を付与する。
+                    ->where(function ($query_auth) {
+                        $query_auth = $this->appendAuthWhere($query_auth);
+                    })
+                    ->groupBy('contents_id');
+            })
+            // 設定を見てWhere を付与する。
+            ->where(function ($query_setting) use ($blog_frame) {
+                $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+            });
 
         // フレームの重要記事の条件参照
         if ($blog_frame->important_view == 'important_only') {
@@ -269,8 +297,8 @@ class BlogsPlugin extends UserPluginBase
 
         // 続き
         $blogs_posts = $blogs_query->orderBy('posted_at', 'desc')
-                                   ->orderBy('contents_id', 'desc')
-                                   ->paginate($count, ["*"], "frame_{$blog_frame->id}_page");
+            ->orderBy('contents_id', 'desc')
+            ->paginate($count, ["*"], "frame_{$blog_frame->id}_page");
 
         foreach ($blogs_posts as &$blogs_post) {
             // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
