@@ -50,7 +50,7 @@ use App\Enums\RoleName;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class LearningtasksPlugin extends UserPluginBase
 {
@@ -213,36 +213,45 @@ class LearningtasksPlugin extends UserPluginBase
         // 履歴の廃止
         //$arg_post = LearningtasksPosts::where('id', $id)->first();
 
+        $plugin_name = $this->frame->plugin_name;
+
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
         $this->post = LearningtasksPosts::
-                select(
-                    'learningtasks_posts.*',
-                    'learningtasks.bucket_id',
-                    'categories.color as category_color',
-                    'categories.background_color as category_background_color',
-                    'categories.category as category'
-                )
-                // bugfix: 論理削除を考慮
-                // ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
-                ->join('learningtasks', function ($join) {
-                    $join->on('learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
-                            ->whereNull('learningtasks.deleted_at');
-                })
-                // bugfix: 論理削除を考慮
-                // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-                ->leftJoin('categories', function ($join) {
-                    $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
-                            ->whereNull('categories.deleted_at');
-                })
-
-                ->where('learningtasks_posts.id', $id)
-                // 履歴の廃止
-                //->where('contents_id', $arg_post->contents_id)
-                //->where(function ($query) {
-                //      $query = $this->appendAuthWhere($query);
-                //})
-                ->orderBy('id', 'desc')
-                ->first();
+            select(
+                'learningtasks_posts.*',
+                'learningtasks.bucket_id',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag'
+            )
+            // bugfix: 論理削除を考慮
+            // ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+            ->join('learningtasks', function ($join) {
+                $join->on('learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+                    ->whereNull('learningtasks.deleted_at');
+            })
+            // bugfix: 論理削除を考慮
+            // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+            ->leftJoin('categories', function ($join) {
+                $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->whereColumn('plugin_categories.target_id', 'learningtasks.id')
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            })
+            ->where('learningtasks_posts.id', $id)
+            // 履歴の廃止
+            //->where('contents_id', $arg_post->contents_id)
+            //->where(function ($query) {
+            //      $query = $this->appendAuthWhere($query);
+            //})
+            // ->orderBy('id', 'desc')
+            ->first();
         return $this->post;
     }
 
@@ -448,45 +457,55 @@ class LearningtasksPlugin extends UserPluginBase
             $count = $option_count;
         }
 
+        $plugin_name = $this->frame->plugin_name;
+
         // 削除されていないデータでグルーピングして、最新のIDで全件
         $learningtasks_posts = LearningtasksPosts::
-                select(
-                    'learningtasks_posts.*',
-                    'categories.id as category_id',
-                    'categories.color as category_color',
-                    'categories.background_color as category_background_color',
-                    'categories.category as category'
-                )
-                // bugfix: 論理削除を考慮
-                // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-                ->leftJoin('categories', function ($join) {
-                    $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
-                            ->whereNull('categories.deleted_at');
-                })
-                // 履歴の廃止
-                //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
-                //                             $query->select(DB::raw('MAX(id) As id'))
-                //                                   ->from('learningtasks_posts')
-                //                                   ->where('learningtasks_id', $learningtasks_frame->learningtasks_id)
-                //                                   ->where('deleted_at', null)
-                //                                   // 権限を見てWhere を付与する。
-                //                                   ->where(function ($query_auth) {
-                //                                       $query_auth = $this->appendAuthWhere($query_auth);
-                //                                   })
-                //                                   ->groupBy('categories.display_sequence')
-                //                                   ->groupBy('contents_id');
-                //                         });
-                // 表示している課題セット
-                ->where('learningtasks_id', $learningtasks_frame->id)
+            select(
+                'learningtasks_posts.*',
+                'categories.id as category_id',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag',
+            )
+            // bugfix: 論理削除を考慮
+            // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
+            ->leftJoin('categories', function ($join) {
+                $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->whereColumn('plugin_categories.target_id', 'learningtasks_posts.learningtasks_id')
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            })
+            // 履歴の廃止
+            //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
+            //                             $query->select(DB::raw('MAX(id) As id'))
+            //                                   ->from('learningtasks_posts')
+            //                                   ->where('learningtasks_id', $learningtasks_frame->learningtasks_id)
+            //                                   ->where('deleted_at', null)
+            //                                   // 権限を見てWhere を付与する。
+            //                                   ->where(function ($query_auth) {
+            //                                       $query_auth = $this->appendAuthWhere($query_auth);
+            //                                   })
+            //                                   ->groupBy('categories.display_sequence')
+            //                                   ->groupBy('contents_id');
+            //                         });
+            // 表示している課題セット
+            ->where('learningtasks_id', $learningtasks_frame->id)
 
-                // ユーザなど加味した対象のPOST
-                ->whereIn('learningtasks_posts.id', $target_post_ids)
+            // ユーザなど加味した対象のPOST
+            ->whereIn('learningtasks_posts.id', $target_post_ids)
 
-                // 有効なレコードのみ
-                ->where('status', 0);
+            // 有効なレコードのみ
+            ->where('status', 0);
 
         // カテゴリソート条件追加
-        $learningtasks_posts->orderBy('categories.display_sequence', 'asc');
+        $learningtasks_posts->orderBy('plugin_categories.display_sequence', 'asc');
 
         // 表示条件に対するソート条件追加
 
@@ -945,6 +964,11 @@ class LearningtasksPlugin extends UserPluginBase
         $categories_and_posts = array();
         $categories = array();
         foreach ($posts as $post) {
+            // 表示しないカテゴリは、カテゴリIDを空にする
+            if (! $post->category_view_flag) {
+                $post->categories_id = '';
+            }
+
             $categories_and_posts[$post->categories_id][] = $post;
             $categories[$post->categories_id] = $post;
         }
@@ -953,16 +977,14 @@ class LearningtasksPlugin extends UserPluginBase
         $teacher_tasks = $this->getTeacherTasks($tool, $posts);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'learningtasks', [
+        return $this->view('learningtasks', [
             'learningtask'         => $learningtask,
             'posts'                => $posts,
             'teacher_tasks'        => $teacher_tasks,
             'tool'                 => $tool,
             'categories_and_posts' => $categories_and_posts,
             'categories'           => $categories,
-            ]
-        );
+        ]);
     }
 
     /**
