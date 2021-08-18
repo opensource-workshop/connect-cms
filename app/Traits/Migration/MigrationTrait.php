@@ -3846,43 +3846,11 @@ trait MigrationTrait
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
 
-
-        // NC2 のshow_type
-        $show_type = $this->getArrayValue($counter_ini, 'counter_base', 'show_type', 'green');
-
-        // (NC2)show_type -> (Connect)design_type 変換
-        $convert_design_types = [
-            'black'       => CounterDesignType::badge_dark,
-            'black2'      => CounterDesignType::badge_dark,
-            'black3'      => CounterDesignType::badge_dark,
-            'color'       => CounterDesignType::badge_light,
-            'digit01'     => CounterDesignType::white_number_warning,
-            'digit02'     => CounterDesignType::white_number_warning,
-            'digit03'     => CounterDesignType::white_number_danger,
-            'digit04'     => CounterDesignType::white_number_danger,
-            'digit05'     => CounterDesignType::white_number_primary,
-            'digit06'     => CounterDesignType::white_number_info,
-            'digit07'     => CounterDesignType::white_number_dark,
-            'digit08'     => CounterDesignType::white_number_dark,
-            'digit09'     => CounterDesignType::white_number_dark,
-            'digit10'     => CounterDesignType::white_number_dark,
-            'digit11'     => CounterDesignType::white_number_success,
-            'digit12'     => CounterDesignType::white_number_success,
-            'gray'        => CounterDesignType::badge_light,
-            'gray2'       => CounterDesignType::badge_light,
-            'gray3'       => CounterDesignType::badge_light,
-            'gray_large'  => CounterDesignType::badge_light,
-            'green'       => CounterDesignType::badge_success,
-            'green_large' => CounterDesignType::badge_success,
-            'white'       => CounterDesignType::white_number,
-            'white_large' => CounterDesignType::circle_success,
-        ];
-
         // counter_frames 登録
         if (!empty($counter)) {
             CounterFrame::create([
                 'frame_id' => $frame->id,
-                'design_type' => isset($convert_design_types[$show_type]) ? $convert_design_types[$show_type] : CounterDesignType::numeric,
+                'design_type' => $this->getArrayValue($counter_ini, 'counter_base', 'design_type', CounterDesignType::numeric),
                 'use_total_count' => 1,
                 'use_today_count' => 1,
                 'use_yesterday_count' => 1,
@@ -6969,6 +6937,35 @@ trait MigrationTrait
                 continue;
             }
 
+            // (NC2)show_type -> (Connect)design_type 変換
+            $convert_design_types = [
+                'black'       => CounterDesignType::badge_dark,
+                'black2'      => CounterDesignType::badge_dark,
+                'black3'      => CounterDesignType::badge_dark,
+                'color'       => CounterDesignType::badge_light,
+                'digit01'     => CounterDesignType::white_number_warning,
+                'digit02'     => CounterDesignType::white_number_warning,
+                'digit03'     => CounterDesignType::white_number_danger,
+                'digit04'     => CounterDesignType::white_number_danger,
+                'digit05'     => CounterDesignType::white_number_primary,
+                'digit06'     => CounterDesignType::white_number_info,
+                'digit07'     => CounterDesignType::white_number_dark,
+                'digit08'     => CounterDesignType::white_number_dark,
+                'digit09'     => CounterDesignType::white_number_dark,
+                'digit10'     => CounterDesignType::white_number_dark,
+                'digit11'     => CounterDesignType::white_number_success,
+                'digit12'     => CounterDesignType::white_number_success,
+                'gray'        => CounterDesignType::badge_light,
+                'gray2'       => CounterDesignType::badge_light,
+                'gray3'       => CounterDesignType::badge_light,
+                'gray_large'  => CounterDesignType::badge_light,
+                'green'       => CounterDesignType::badge_success,
+                'green_large' => CounterDesignType::badge_success,
+                'white'       => CounterDesignType::white_number,
+                'white_large' => CounterDesignType::circle_success,
+            ];
+            $design_type = $convert_design_types[$nc2_counter->show_type] ?? CounterDesignType::numeric;
+
             // カウンター設定
             $ini = "";
             $ini .= "[counter_base]\n";
@@ -6976,8 +6973,9 @@ trait MigrationTrait
             $ini .= "counter_num = " . $nc2_counter->counter_num . "\n";
             // 表示する桁数
             // $ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
-            // 画像選択
-            $ini .= "show_type = " . $nc2_counter->show_type . "\n";
+
+            $ini .= "design_type = " . $design_type . "\n";
+
             // 文字(前)
             $ini .= "show_char_before = " . $nc2_counter->show_char_before . "\n";
             // 文字(後)
