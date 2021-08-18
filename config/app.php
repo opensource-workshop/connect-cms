@@ -280,6 +280,7 @@ $app_array = [
         'LayoutArea' => \App\Enums\LayoutArea::class,
         'CabinetFrameConfig' => \App\Enums\CabinetFrameConfig::class,
         'CabinetSort' => \App\Enums\CabinetSort::class,
+        'LinklistType' => \App\Enums\LinklistType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
