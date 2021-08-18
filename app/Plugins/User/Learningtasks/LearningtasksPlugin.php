@@ -19,13 +19,13 @@ use App\Plugins\User\Learningtasks\LearningtasksTool;
 use App\Models\Core\UsersRoles;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
+use App\Models\Common\PluginCategory;
 use App\Models\Common\Frame;
 use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\User\Learningtasks\Learningtasks;
-use App\Models\User\Learningtasks\LearningtasksCategories;
 use App\Models\User\Learningtasks\LearningtasksConfigs;
 use App\Models\User\Learningtasks\LearningtasksExaminations;
 use App\Models\User\Learningtasks\LearningtasksPosts;
@@ -272,26 +272,6 @@ class LearningtasksPlugin extends UserPluginBase
         //         ->where('frames.id', $frame_id)
         //         ->first();
         //return $frame;
-    }
-
-    /**
-     * カテゴリデータの取得
-     */
-    private function getLearningtasksCategories($learningtask_id)
-    {
-        $learningtasks_categories = Categories::select('categories.*')
-                          ->join('learningtasks_categories', function ($join) use ($learningtask_id) {
-                              $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
-                                   ->where('learningtasks_categories.learningtasks_id', '=', $learningtask_id)
-                                   ->where('learningtasks_categories.view_flag', 1)
-                                   ->whereNull('learningtasks_categories.deleted_at');
-                          })
-                          ->whereNull('plugin_id')
-                          ->orWhere('plugin_id', $learningtask_id)
-                          ->orderBy('target', 'asc')
-                          ->orderBy('display_sequence', 'asc')
-                          ->get();
-        return $learningtasks_categories;
     }
 
     // /**
@@ -1001,7 +981,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_posts->posted_at = date('Y-m-d H:i:00');
 
         // カテゴリ
-        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
+        $learningtasks_categories = Categories::getInputCategories($this->frame->plugin_name, $learningtask->id);
 
         // タグ
         // $learningtasks_posts_tags = "";
@@ -1195,9 +1175,7 @@ class LearningtasksPlugin extends UserPluginBase
         }
 
         // カテゴリ
-        // bugfix: カテゴリ選択が表示されないバグ修正
-        // $learningtasks_categories = $this->getLearningtasksCategories($learningtask->learningtasks_id);
-        $learningtasks_categories = $this->getLearningtasksCategories($learningtask->id);
+        $learningtasks_categories = Categories::getInputCategories($this->frame->plugin_name, $learningtask->id);
 
         // タグ取得
         // $learningtasks_posts_tags_array = LearningtasksPostsTags::where('learningtasks_posts_id', $learningtasks_post->id)->get();
@@ -2004,8 +1982,8 @@ class LearningtasksPlugin extends UserPluginBase
                 // ・learningtasks_use_settings (LearningtasksUseSettings). 課題の各設定コピー
                 // ・learningtasks_configs (LearningtasksConfigs). メール設定
                 // ・個別カテゴリコピー
-                // ・LearningtasksCategories 課題カテゴリの表示する/しない・表示順データコピー
-                //   ※ LearningtasksCategoriesの共通カテゴリの表示する/しない、表示順はコピーしない。もし必要になったら実装する。
+                // ・PluginCategory 課題カテゴリの表示する/しない・表示順データコピー
+                //   ※ PluginCategoryの共通カテゴリの表示する/しない、表示順はコピーしない。もし必要になったら実装する。
                 //
                 // [コピーしない]
                 // ・ファイル
@@ -2065,15 +2043,21 @@ class LearningtasksPlugin extends UserPluginBase
                     $category->save();
 
                     // 課題カテゴリデータ取得
-                    $copy_learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $request->copy_learningtask_id)
-                            ->where('categories_id', $origin_categories_id)
-                            ->get();
-                    foreach ($copy_learningtasks_categories as $copy_learningtasks_categorie) {
+                    // $copy_learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $request->copy_learningtask_id)
+                    //         ->where('categories_id', $origin_categories_id)
+                    //         ->get();
+                    $copy_learningtasks_categories = PluginCategory::where('target_id', $request->copy_learningtask_id)
+                        ->where('target', $this->frame->plugin_name)
+                        ->where('categories_id', $origin_categories_id)
+                        ->get();
+
+                    foreach ($copy_learningtasks_categories as $copy_learningtasks_category) {
                         // ID消して複製
-                        $learningtasks_categorie = $copy_learningtasks_categorie->replicate();
-                        $learningtasks_categorie->learningtasks_id = $learningtask->id;
-                        $learningtasks_categorie->categories_id = $category->id;
-                        $learningtasks_categorie->save();
+                        $learningtasks_category = $copy_learningtasks_category->replicate();
+                        $learningtasks_category->target = $this->frame->plugin_name;
+                        $learningtasks_category->target_id = $learningtask->id;
+                        $learningtasks_category->categories_id = $category->id;
+                        $learningtasks_category->save();
                     }
                 }
 
@@ -2153,18 +2137,7 @@ class LearningtasksPlugin extends UserPluginBase
         ////
         //// カテゴリ削除
         ////
-        // カテゴリデータ取得
-        $learningtasks_categories = LearningtasksCategories::where('learningtasks_id', $learningtask_id);
-        $learningtasks_categories_categories_ids = $learningtasks_categories->pluck('categories_id');
-        $learningtasks_categories_ids = $learningtasks_categories->pluck('id');
-
-        // カテゴリ削除. カテゴリは課題管理毎に別々に存在してるため、削除する
-        $categories_ids = Categories::whereIn('id', $learningtasks_categories_categories_ids)->where('target', 'learningtasks')->pluck('id');
-        Categories::destroy($categories_ids);
-
-        // [TODO] 今後、各プラグインのカテゴリテーブルは共通化した方がいいなぁ https://github.com/opensource-workshop/connect-cms/issues/790
-        // 課題管理カテゴリ削除
-        LearningtasksCategories::destroy($learningtasks_categories_ids);
+        Categories::destroyBucketsCategories($this->frame->plugin_name, $learningtask_id);
 
         ////
         //// 課題管理の設定削除
@@ -2405,50 +2378,12 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題管理
         $learningtask = $this->getLearningTask($frame_id);
 
-        // カテゴリ（全体）
-        $general_categories = Categories::
-                select(
-                    'categories.*',
-                    'learningtasks_categories.view_flag',
-                    'learningtasks_categories.display_sequence as general_display_sequence'
-                )
-                ->leftJoin('learningtasks_categories', function ($join) use ($learningtask) {
-                    $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
-                            ->where('learningtasks_categories.learningtasks_id', $learningtask->id)
-                            ->where('learningtasks_categories.deleted_at', null);
-                })
-                ->where('target', null)
-                ->orderBy('learningtasks_categories.display_sequence', 'asc')
-                ->orderBy('categories.display_sequence', 'asc')
-                ->get();
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $learningtask->id);
 
-        foreach ($general_categories as $general_categorie) {
-            // （初期登録時を想定）課題管理カテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
-            if (is_null($general_categorie->general_display_sequence)) {
-                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
-            }
-        }
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $learningtask->id);
 
-        // カテゴリ（この課題管理）
-        $plugin_categories = null;
-        if ($learningtask->id) {
-            $plugin_categories = Categories::
-                    select(
-                        'categories.*',
-                        'learningtasks_categories.view_flag',
-                        'learningtasks_categories.display_sequence as plugin_display_sequence'
-                    )
-                    ->leftJoin('learningtasks_categories', function ($join) use ($learningtask) {
-                        $join->on('learningtasks_categories.categories_id', '=', 'categories.id')
-                                ->where('learningtasks_categories.learningtasks_id', $learningtask->id)
-                                ->where('learningtasks_categories.deleted_at', null);
-                    })
-                    ->where('target', 'learningtasks')
-                    ->where('plugin_id', $learningtask->id)
-                    ->orderBy('learningtasks_categories.display_sequence', 'asc')
-                    ->orderBy('categories.display_sequence', 'asc')
-                    ->get();
-        }
 
         // 表示テンプレートを呼び出す。
         return $this->view('learningtasks_list_categories', [
@@ -2466,54 +2401,7 @@ class LearningtasksPlugin extends UserPluginBase
         /* エラーチェック
         ------------------------------------ */
 
-        $rules = [];
-
-        // エラーチェックの項目名
-        $setAttributeNames = [];
-
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $rules['add_display_sequence'] = ['required'];
-            $rules['add_category'] = ['required'];
-            $rules['add_color'] = ['required'];
-            $rules['add_background_color'] = ['required'];
-
-            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
-            $setAttributeNames['add_category'] = '追加行のカテゴリ';
-            $setAttributeNames['add_color'] = '追加行の文字色';
-            $setAttributeNames['add_background_color'] = '追加行の背景色';
-        }
-
-        // 共通項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['general_display_sequence.'.$category_id] = ['required'];
-
-                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
-            }
-        }
-
-        // 既存項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['plugin_display_sequence.'.$category_id] = ['required'];
-                $rules['plugin_category.'.$category_id] = ['required'];
-                $rules['plugin_color.'.$category_id] = ['required'];
-                $rules['plugin_background_color.'.$category_id] = ['required'];
-
-                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
-                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
-                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
-                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
-            }
-        }
-
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), $rules);
-        $validator->setAttributeNames($setAttributeNames);
+        $validator = Categories::validatePluginCategories($request);
 
         if ($validator->fails()) {
             // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
@@ -2526,78 +2414,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 課題管理
         $learningtask = $this->getLearningTask($frame_id);
 
-        // 追加項目アリ
-        if (!empty($request->add_display_sequence)) {
-            $add_category = Categories::create([
-                'classname'        => $request->add_classname,
-                'category'         => $request->add_category,
-                'color'            => $request->add_color,
-                'background_color' => $request->add_background_color,
-                'target'           => 'learningtasks',
-                'plugin_id'        => $learningtask->id,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-            LearningtasksCategories::create([
-                'learningtasks_id' => $learningtask->id,
-                'categories_id'    => $add_category->id,
-                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-        }
-
-        // 既存項目アリ
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // モデルオブジェクト取得
-                $category = Categories::where('id', $plugin_categories_id)->first();
-
-                // データのセット
-                $category->classname        = $request->plugin_classname[$plugin_categories_id];
-                $category->category         = $request->plugin_category[$plugin_categories_id];
-                $category->color            = $request->plugin_color[$plugin_categories_id];
-                $category->background_color = $request->plugin_background_color[$plugin_categories_id];
-                $category->target           = 'learningtasks';
-                $category->plugin_id        = $learningtask->id;
-                $category->display_sequence = intval($request->plugin_display_sequence[$plugin_categories_id]);
-
-                // 保存
-                $category->save();
-            }
-        }
-
-        /* 表示フラグ更新(共通カテゴリ)
-        ------------------------------------ */
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $general_categories_id) {
-                // 課題管理プラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                LearningtasksCategories::updateOrCreate(
-                    ['categories_id'    => $general_categories_id, 'learningtasks_id' => $learningtask->id],
-                    [
-                        'learningtasks_id' => $learningtask->id,
-                        'categories_id'    => $general_categories_id,
-                        'view_flag'        => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => intval($request->general_display_sequence[$general_categories_id]),
-                    ]
-                );
-            }
-        }
-
-        /* 表示フラグ更新(自課題管理のカテゴリ)
-        ------------------------------------ */
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // 課題管理プラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                LearningtasksCategories::updateOrCreate(
-                    ['categories_id'    => $plugin_categories_id, 'learningtasks_id' => $learningtask->id],
-                    [
-                        'learningtasks_id' => $learningtask->id,
-                        'categories_id'    => $plugin_categories_id,
-                        'view_flag'        => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => intval($request->plugin_display_sequence[$plugin_categories_id]),
-                    ]
-                );
-            }
-        }
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $learningtask->id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // saveCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
@@ -2608,16 +2425,7 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 削除(課題管理プラグインのカテゴリ表示データ)
-        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
-        // LearningtasksCategories::where('categories_id', $id)->delete();
-        $learningtasks_categories_id = LearningtasksCategories::where('categories_id', $id)->pluck('id');
-        LearningtasksCategories::destroy($learningtasks_categories_id);
-
-        // 削除(カテゴリ)
-        // Categories::where('id', $id)->delete();
-        $categories_id = Categories::where('id', $id)->where('target', 'learningtasks')->pluck('id');
-        Categories::destroy($categories_id);
+        Categories::deleteCategories($this->frame->plugin_name, $id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // deleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
