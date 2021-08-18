@@ -15,7 +15,6 @@ use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\User\Blogs\Blogs;
-use App\Models\User\Blogs\BlogsCategories;
 use App\Models\User\Blogs\BlogsFrames;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Blogs\BlogsPostsTags;
@@ -32,7 +31,7 @@ use App\Enums\BlogFrameConfig;
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class BlogsPlugin extends UserPluginBase
 {
@@ -147,25 +146,6 @@ class BlogsPlugin extends UserPluginBase
                  ->where('frames.id', $frame_id)
                  ->first();
         return $frame;
-    }
-
-    /**
-     *  カテゴリデータの取得
-     */
-    private function getBlogsCategories($blogs_id)
-    {
-        $blogs_categories = Categories::select('categories.*')
-                          ->join('blogs_categories', function ($join) use ($blogs_id) {
-                              $join->on('blogs_categories.categories_id', '=', 'categories.id')
-                                   ->where('blogs_categories.blogs_id', '=', $blogs_id)
-                                   ->where('blogs_categories.view_flag', 1);
-                          })
-                          ->whereNull('plugin_id')
-                          ->orWhere('plugin_id', $blogs_id)
-                          ->orderBy('target', 'asc')
-                          ->orderBy('display_sequence', 'asc')
-                          ->get();
-        return $blogs_categories;
     }
 
     /**
@@ -593,7 +573,7 @@ WHERE status = 0
         $blogs_posts->posted_at = date('Y-m-d H:i:00');
 
         // カテゴリ
-        $blogs_categories = $this->getBlogsCategories($blog_frame->blogs_id);
+        $blogs_categories = Categories::getInputCategories($this->frame->plugin_name, $blog_frame->blogs_id);
 
         // タグ
         $blogs_posts_tags = "";
@@ -719,7 +699,7 @@ WHERE status = 0
         }
 
         // カテゴリ
-        $blogs_categories = $this->getBlogsCategories($blog_frame->blogs_id);
+        $blogs_categories = Categories::getInputCategories($this->frame->plugin_name, $blog_frame->blogs_id);
 
         // タグ取得
         $blogs_posts_tags_array = BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->get();
@@ -1120,16 +1100,8 @@ WHERE status = 0
             // 記事データを削除する。
             BlogsPosts::destroy($blogs_posts_ids);
 
-            $blogs_categories = BlogsCategories::where('blogs_id', $blogs_id);
-            $blogs_categories_categories_ids = $blogs_categories->pluck('categories_id');
-            $blogs_categories_ids = $blogs_categories->pluck('id');
-
-            // カテゴリ削除. カテゴリはブログ毎に別々に存在してるため、削除する
-            $categories_ids = Categories::whereIn('id', $blogs_categories_categories_ids)->where('target', 'blogs')->pluck('id');
-            Categories::destroy($categories_ids);
-
-            // ブログカテゴリ削除
-            BlogsCategories::destroy($blogs_categories_ids);
+            // カテゴリ削除
+            Categories::destroyBucketsCategories($this->frame->plugin_name, $blogs_id);
 
 // Frame に紐づくBlog を削除した場合のみ、Frame の更新。（Frame に紐づかないBlog の削除もあるので、その場合はFrame は更新しない。）
 // 実装は後で。
@@ -1184,59 +1156,11 @@ WHERE status = 0
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
 
-        // カテゴリ（全体）
-        $general_categories = Categories::
-                select(
-                    'categories.*',
-                    'blogs_categories.id as blogs_categories_id',
-                    'blogs_categories.categories_id',
-                    'blogs_categories.view_flag',
-                    'blogs_categories.display_sequence as general_display_sequence'
-                )
-                ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
-                    $join->on('blogs_categories.categories_id', '=', 'categories.id')
-                            ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
-                            ->where('blogs_categories.deleted_at', null);
-                })
-                ->where('target', null)
-                ->orderBy('blogs_categories.display_sequence', 'asc')
-                ->orderBy('categories.display_sequence', 'asc')
-                ->get();
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $blog_frame->blogs_id);
 
-        foreach ($general_categories as $general_categorie) {
-            // （初期登録時を想定）ブログカテゴリのカテゴリIDが空なので、カテゴリのIDを初期値にセット
-            if (is_null($general_categorie->categories_id)) {
-                $general_categorie->categories_id = $general_categorie->id;
-            }
-
-            // （初期登録時を想定）ブログカテゴリの表示順が空なので、カテゴリの表示順を初期値にセット
-            if (is_null($general_categorie->general_display_sequence)) {
-                $general_categorie->general_display_sequence = $general_categorie->display_sequence;
-            }
-        }
-
-        // カテゴリ（このブログ）
-        $plugin_categories = null;
-        if ($blog_frame->blogs_id) {
-            $plugin_categories = Categories::
-                    select(
-                        'categories.*',
-                        'blogs_categories.id as blogs_categories_id',
-                        'blogs_categories.categories_id',
-                        'blogs_categories.view_flag',
-                        'blogs_categories.display_sequence as plugin_display_sequence'
-                    )
-                    ->leftJoin('blogs_categories', function ($join) use ($blog_frame) {
-                        $join->on('blogs_categories.categories_id', '=', 'categories.id')
-                                ->where('blogs_categories.blogs_id', $blog_frame->blogs_id)
-                                ->where('blogs_categories.deleted_at', null);
-                    })
-                    ->where('target', 'blogs')
-                    ->where('plugin_id', $blog_frame->blogs_id)
-                    ->orderBy('blogs_categories.display_sequence', 'asc')
-                    ->orderBy('categories.display_sequence', 'asc')
-                    ->get();
-        }
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $blog_frame->blogs_id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('blogs_list_categories', [
@@ -1254,58 +1178,7 @@ WHERE status = 0
         /* エラーチェック
         ------------------------------------ */
 
-        $rules = [];
-
-        // エラーチェックの項目名
-        $setAttributeNames = [];
-
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $rules['add_display_sequence'] = ['required'];
-            $rules['add_category'] = ['required'];
-            $rules['add_color'] = ['required'];
-            $rules['add_background_color'] = ['required'];
-
-            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
-            $setAttributeNames['add_category'] = '追加行のカテゴリ';
-            $setAttributeNames['add_color'] = '追加行の文字色';
-            $setAttributeNames['add_background_color'] = '追加行の背景色';
-        }
-
-        // \Log::debug(var_export($request->general_categories_id, true));
-        // \Log::debug(var_export($request->general_display_sequence, true));
-        // \Log::debug(var_export(old('general_view_flag'), true));
-
-        // 共通項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['general_display_sequence.'.$category_id] = ['required'];
-
-                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
-            }
-        }
-
-        // 既存項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['plugin_display_sequence.'.$category_id] = ['required'];
-                $rules['plugin_category.'.$category_id] = ['required'];
-                $rules['plugin_color.'.$category_id] = ['required'];
-                $rules['plugin_background_color.'.$category_id] = ['required'];
-
-                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
-                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
-                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
-                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
-            }
-        }
-
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), $rules);
-        $validator->setAttributeNames($setAttributeNames);
+        $validator = Categories::validatePluginCategories($request);
 
         if ($validator->fails()) {
             // return $this->listCategories($request, $page_id, $frame_id, $id, $validator->errors());
@@ -1318,78 +1191,7 @@ WHERE status = 0
         // ブログ
         $blog_frame = $this->getBlogFrame($frame_id);
 
-        // 追加項目アリ
-        if (!empty($request->add_display_sequence)) {
-            $add_category = Categories::create([
-                'classname'        => $request->add_classname,
-                'category'         => $request->add_category,
-                'color'            => $request->add_color,
-                'background_color' => $request->add_background_color,
-                'target'           => 'blogs',
-                'plugin_id'        => $blog_frame->blogs_id,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-            BlogsCategories::create([
-                'blogs_id'         => $blog_frame->blogs_id,
-                'categories_id'    => $add_category->id,
-                'view_flag'        => (isset($request->add_view_flag) && $request->add_view_flag == '1') ? 1 : 0,
-                'display_sequence' => intval($request->add_display_sequence),
-            ]);
-        }
-
-        // 既存項目アリ
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // モデルオブジェクト取得
-                $category = Categories::where('id', $plugin_categories_id)->first();
-
-                // データのセット
-                $category->classname        = $request->plugin_classname[$plugin_categories_id];
-                $category->category         = $request->plugin_category[$plugin_categories_id];
-                $category->color            = $request->plugin_color[$plugin_categories_id];
-                $category->background_color = $request->plugin_background_color[$plugin_categories_id];
-                $category->target           = 'blogs';
-                $category->plugin_id        = $blog_frame->blogs_id;
-                $category->display_sequence = intval($request->plugin_display_sequence[$plugin_categories_id]);
-
-                // 保存
-                $category->save();
-            }
-        }
-
-        /* 表示フラグ更新(共通カテゴリ)
-        ------------------------------------ */
-        if (!empty($request->general_categories_id)) {
-            foreach ($request->general_categories_id as $general_categories_id) {
-                // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                BlogsCategories::updateOrCreate(
-                    ['categories_id' => $general_categories_id, 'blogs_id' => $blog_frame->blogs_id],
-                    [
-                        'blogs_id' => $blog_frame->blogs_id,
-                        'categories_id' => $general_categories_id,
-                        'view_flag' => (isset($request->general_view_flag[$general_categories_id]) && $request->general_view_flag[$general_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => intval($request->general_display_sequence[$general_categories_id]),
-                    ]
-                );
-            }
-        }
-
-        /* 表示フラグ更新(自ブログのカテゴリ)
-        ------------------------------------ */
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $plugin_categories_id) {
-                // ブログプラグインのカテゴリー使用テーブルになければ追加、あれば更新
-                BlogsCategories::updateOrCreate(
-                    ['categories_id' => $plugin_categories_id, 'blogs_id' => $blog_frame->blogs_id],
-                    [
-                        'blogs_id' => $blog_frame->blogs_id,
-                        'categories_id' => $plugin_categories_id,
-                        'view_flag' => (isset($request->plugin_view_flag[$plugin_categories_id]) && $request->plugin_view_flag[$plugin_categories_id] == '1') ? 1 : 0,
-                        'display_sequence' => intval($request->plugin_display_sequence[$plugin_categories_id]),
-                    ]
-                );
-            }
-        }
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $blog_frame->blogs_id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
@@ -1400,16 +1202,7 @@ WHERE status = 0
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-        //
-        // 削除(ブログプラグインのカテゴリ表示データ). 万が一idがnullでも500エラーにならないようにfirstOrNew()を利用。
-        // BlogsCategories::where('categories_id', $id)->delete();
-        $blogs_categories = BlogsCategories::firstOrNew(['categories_id' => $id]);
-        $blogs_categories->delete();
-
-        // 削除(カテゴリ)
-        // Categories::where('id', $id)->delete();
-        Categories::destroy($id);
+        Categories::deleteCategories($this->frame->plugin_name, $id);
 
         // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
