@@ -88,6 +88,7 @@ use App\Models\Migration\Nc2\Nc2JournalPost;
 use App\Models\Migration\Nc2\Nc2Linklist;
 use App\Models\Migration\Nc2\Nc2LinklistBlock;
 use App\Models\Migration\Nc2\Nc2LinklistLink;
+use App\Models\Migration\Nc2\Nc2LinklistCategory;
 use App\Models\Migration\Nc2\Nc2MenuDetail;
 use App\Models\Migration\Nc2\Nc2Modules;
 use App\Models\Migration\Nc2\Nc2Multidatabase;
@@ -378,8 +379,10 @@ trait MigrationTrait
         if ($target == 'linklists' || $target == 'all') {
             Linklist::truncate();
             LinklistPost::truncate();
+            PluginCategory::where('target', 'linklists')->delete();
             Buckets::where('plugin_name', 'linklists')->delete();
             MigrationMapping::where('target_source_table', 'linklists')->delete();
+            MigrationMapping::where('target_source_table', 'categories_linklists')->delete();
         }
 
         if ($target == 'whatsnews' || $target == 'all') {
@@ -1829,7 +1832,7 @@ trait MigrationTrait
                     $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
 
                     // 記事のカテゴリID
-                    // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
+                    // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でFAQ単位のカテゴリを探してID 特定。
                     $categories_id = null;
                     if ($faq_categories->firstWhere('category', $faq_tsv_cols[0])) {
                         $categories_id = $faq_categories->firstWhere('category', $faq_tsv_cols[0])->id;
@@ -1916,6 +1919,19 @@ trait MigrationTrait
 
             // これ以降は追加も更新も同じロジック
 
+            // リンクリスト固有カテゴリ追加
+            $linklist_categories = collect();
+            if (array_key_exists('categories', $linklist_ini) && array_key_exists('original_categories', $linklist_ini['categories'])) {
+                $linklist_categories = $this->importCategories($linklist_ini['categories']['original_categories'], 'linklists', $linklist->id);
+            }
+
+            // リンクリストのカテゴリーテーブル作成（カテゴリーの使用on設定）
+            $index = 1;
+            foreach ($linklist_categories as $linklist_category) {
+                PluginCategory::create(['target' => 'linklists', 'target_id' => $linklist_category->plugin_id, 'categories_id' => $linklist_category->id, 'view_flag' => 1, 'display_sequence' => $index]);
+                $index++;
+            }
+
             // リンクリストの記事を取得（TSV）
             $linklist_tsv_filename = str_replace('ini', 'tsv', basename($linklists_ini_path));
             if (Storage::exists($this->getImportPath('linklists/') . $linklist_tsv_filename)) {
@@ -1932,8 +1948,16 @@ trait MigrationTrait
                     $linklist_tsv_cols = explode("\t", $linklist_tsv_line);
                     $linklist_tsv_cols[3] = isset($linklist_tsv_cols[3]) ? $linklist_tsv_cols[3] : '0';
                     $linklist_tsv_cols[4] = isset($linklist_tsv_cols[4]) ? $linklist_tsv_cols[4] : '0';
+
+                    // 記事のカテゴリID
+                    // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でリンクリスト単位のカテゴリを探してID 特定。
+                    $categories_id = null;
+                    if ($linklist_categories->firstWhere('category', $linklist_tsv_cols[5])) {
+                        $categories_id = $linklist_categories->firstWhere('category', $linklist_tsv_cols[5])->id;
+                    }
+
                     // リンクリストテーブル追加
-                    $linklists_posts = LinklistPost::create(['linklist_id' => $linklist->id, 'title' => $linklist_tsv_cols[0], 'url' => $linklist_tsv_cols[1], 'description' => $linklist_tsv_cols[2], 'target_blank_flag' => $linklist_tsv_cols[3], 'display_sequence' => $linklist_tsv_cols[4]]);
+                    $linklists_posts = LinklistPost::create(['linklist_id' => $linklist->id, 'title' => $linklist_tsv_cols[0], 'url' => $linklist_tsv_cols[1], 'description' => $linklist_tsv_cols[2], 'categories_id' => $categories_id, 'target_blank_flag' => $linklist_tsv_cols[3], 'display_sequence' => $linklist_tsv_cols[4]]);
 
                     // 更新
                     $linklists_posts->save();
@@ -6134,6 +6158,21 @@ trait MigrationTrait
             $linklists_ini .= "room_id = " . $nc2_linklist->room_id . "\n";
             $linklists_ini .= "module_name = \"linklist\"\n";
 
+            // NC2リンクリストのカテゴリ（linklist_category）を移行する。
+            $linklists_ini .= "\n";
+            $linklists_ini .= "[categories]\n";
+            // NC2リンクリストは自動的に「カテゴリなし」（名前変更不可）カテゴリが作成されるため、「カテゴリなし」は移行除外する。
+            // ※ また、NC2では「カテゴリなし」１個だけだと、カテゴリを表示しない仕様
+            $nc2_linklist_categories = Nc2LinklistCategory::where('linklist_id', $nc2_linklist->linklist_id)->where('category_name', '!=','カテゴリなし')->orderBy('category_sequence')->get();
+            $linklists_ini_originals = "";
+
+            foreach ($nc2_linklist_categories as $nc2_linklist_category) {
+                $linklists_ini_originals .= "original_categories[" . $nc2_linklist_category->category_id . "] = \"" . $nc2_linklist_category->category_name . "\"\n";
+            }
+            if (!empty($linklists_ini_originals)) {
+                $linklists_ini .= $linklists_ini_originals;
+            }
+
             // NC2リンクリストの記事（linklist_link）を移行する。
             $nc2_linklist_posts = Nc2LinklistLink::where('linklist_id', $nc2_linklist->linklist_id)->orderBy('link_sequence')->get();
 
@@ -6149,11 +6188,19 @@ trait MigrationTrait
                 if (!empty($linklists_tsv)) {
                     $linklists_tsv .= "\n";
                 }
+
+                $category_obj  = $nc2_linklist_categories->firstWhere('category_id', $nc2_linklist_post->category_id);
+                $category = "";
+                if (!empty($category_obj)) {
+                    $category  = $category_obj->category_name;
+                }
+
                 $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->title)              . "\t";
                 $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->url)                . "\t";
-                $linklists_tsv .= str_replace("\t", " ", $nc2_linklist_post->description)        . "\t";
-                $linklists_tsv .= $nc2_linklist_block->target_blank_flag . "\t";
-                $linklists_tsv .= $nc2_linklist_post->link_sequence;
+                $linklists_tsv .= str_replace("\t", " ", $nc2_linklist_post->description)       . "\t";
+                $linklists_tsv .= $nc2_linklist_block->target_blank_flag                        . "\t";
+                $linklists_tsv .= $nc2_linklist_post->link_sequence                             . "\t";
+                $linklists_tsv .= $category;
 
                 $linklists_ini .= "post_title[" . $nc2_linklist_post->link_id . "] = \"" . str_replace('"', '', $nc2_linklist_post->title) . "\"\n";
             }
