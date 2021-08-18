@@ -412,12 +412,10 @@ class CalendarsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'title'      => ['required'],
-            'body'       => ['required'],
             'start_date' => ['required', 'date'],
         ]);
         $validator->setAttributeNames([
             'title'      => 'タイトル',
-            'body'       => '本文',
             'start_date' => '開始日時',
         ]);
         // エラーがあった場合は入力画面に戻る。

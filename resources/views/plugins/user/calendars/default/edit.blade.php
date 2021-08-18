@@ -203,7 +203,7 @@
     </div>
 
     <div class="form-group form-row">
-        <label class="{{$label_class}}"><label class="badge badge-danger">必須</label> 本文</label>
+        <label class="{{$label_class}}">本文</label>
         <div class="{{$input_area_class}}">
             <div @if ($errors && $errors->has('body')) class="border border-danger" @endif>
                 @if (isset($reply) && $reply == true)
