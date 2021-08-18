@@ -250,7 +250,7 @@ class LearningtasksPlugin extends UserPluginBase
             //->where(function ($query) {
             //      $query = $this->appendAuthWhere($query);
             //})
-            // ->orderBy('id', 'desc')
+            ->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
             ->first();
         return $this->post;
     }
