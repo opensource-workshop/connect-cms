@@ -201,24 +201,25 @@ trait MigrationTrait
         'whatsnew'      => 'whatsnews',    // 新着情報
     ];
 
-    /**
-     * NC2 日誌のデフォルトカテゴリー
-     */
-    protected $nc2_default_categories = [
-        0   => '今日の出来事',
-        1   => '連絡事項',
-        2   => '報告事項',
-        3   => 'ミーティング',
-        4   => '本・雑誌',
-        5   => 'ニュース',
-        6   => '映画・テレビ',
-        7   => '音楽',
-        8   => 'スポーツ',
-        9   => 'パソコン・インターネット',
-        10  => 'ペット',
-        11  => '総合学習',
-        12  => 'アニメ・コミック',
-    ];
+    // delete: 全体カテゴリは作らない
+    // /**
+    //  * NC2 日誌のデフォルトカテゴリー
+    //  */
+    // protected $nc2_default_categories = [
+    //     0   => '今日の出来事',
+    //     1   => '連絡事項',
+    //     2   => '報告事項',
+    //     3   => 'ミーティング',
+    //     4   => '本・雑誌',
+    //     5   => 'ニュース',
+    //     6   => '映画・テレビ',
+    //     7   => '音楽',
+    //     8   => 'スポーツ',
+    //     9   => 'パソコン・インターネット',
+    //     10  => 'ペット',
+    //     11  => '総合学習',
+    //     12  => 'アニメ・コミック',
+    // ];
 
     /**
      * バッチの対象（処理する対象 all or uploads など）
@@ -333,9 +334,11 @@ trait MigrationTrait
             // blogs、blogs_posts のtruncate
             Blogs::truncate();
             BlogsPosts::truncate();
+            PluginCategory::where('target', 'blogs')->delete();
             Buckets::where('plugin_name', 'blogs')->delete();
             MigrationMapping::where('target_source_table', 'blogs')->delete();
             MigrationMapping::where('target_source_table', 'blogs_post')->delete();
+            MigrationMapping::where('target_source_table', 'categories_blogs')->delete();
 
             // bbs to blog 移行を指定されたら
             if ($this->plugin_name['bbs'] === 'blogs') {
@@ -736,9 +739,9 @@ trait MigrationTrait
         }
 
         // 共通カテゴリの取り込み
-        if ($this->isTarget('cc_import', 'categories')) {
-            $this->importCommonCategories($redo);
-        }
+        // if ($this->isTarget('cc_import', 'categories')) {
+        //     $this->importCommonCategories($redo);
+        // }
 
         // ユーザデータの取り込み
         if ($this->isTarget('cc_import', 'users')) {
@@ -1140,28 +1143,29 @@ trait MigrationTrait
         }
     }
 
-    /**
-     * Connect-CMS 移行形式のカテゴリをインポート
-     */
-    private function importCommonCategories($redo)
-    {
-        $this->putMonitor(3, "Categories import Start.");
+    // delete: 全体カテゴリは作らない
+    // /**
+    //  * Connect-CMS 移行形式のカテゴリをインポート
+    //  */
+    // private function importCommonCategories($redo)
+    // {
+    //     $this->putMonitor(3, "Categories import Start.");
 
-        // データクリア
-        if ($redo === true) {
-            // カテゴリテーブルのtruncate とmigration_mappings のcategories の削除
-            $this->clearData('categories');
-        }
+    //     // データクリア
+    //     if ($redo === true) {
+    //         // カテゴリテーブルのtruncate とmigration_mappings のcategories の削除
+    //         $this->clearData('categories');
+    //     }
 
-        // 共通カテゴリのファイル読み込み
-        $source_file_path = $this->getImportPath('categories/categories.ini');
-        if (Storage::exists($source_file_path)) {
-            $categories_ini = parse_ini_file(storage_path() . '/app/' . $source_file_path, true);
-            if (array_key_exists('categories', $categories_ini) && array_key_exists('categories', $categories_ini['categories'])) {
-                $this->importCategories($categories_ini['categories']['categories']);
-            }
-        }
-    }
+    //     // 共通カテゴリのファイル読み込み
+    //     $source_file_path = $this->getImportPath('categories/categories.ini');
+    //     if (Storage::exists($source_file_path)) {
+    //         $categories_ini = parse_ini_file(storage_path() . '/app/' . $source_file_path, true);
+    //         if (array_key_exists('categories', $categories_ini) && array_key_exists('categories', $categories_ini['categories'])) {
+    //             $this->importCategories($categories_ini['categories']['categories']);
+    //         }
+    //     }
+    // }
 
     /**
      * Connect-CMS 移行形式のカテゴリをインポート
@@ -1561,7 +1565,7 @@ trait MigrationTrait
         }
 
         // 共通カテゴリの取得
-        $common_categories = Categories::whereNull('target')->whereNull('plugin_id')->orderBy('id', 'asc')->get();
+        // $common_categories = Categories::whereNull('target')->whereNull('plugin_id')->orderBy('id', 'asc')->get();
 
         // ブログ定義の取り込み
         $blogs_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('blogs/blog_*.ini'));
@@ -1640,6 +1644,13 @@ trait MigrationTrait
                 $blog_categories = $this->importCategories($blog_ini['categories']['original_categories'], 'blogs', $blog->id);
             }
 
+            // ブログのカテゴリーテーブル作成（カテゴリーの使用on設定）
+            $index = 1;
+            foreach ($blog_categories as $blog_category) {
+                PluginCategory::create(['target' => 'blogs', 'target_id' => $blog_category->plugin_id, 'categories_id' => $blog_category->id, 'view_flag' => 1, 'display_sequence' => $index]);
+                $index++;
+            }
+
             // 記事のマッピングテーブル作成用に記事一覧（post_title）を使用する。
             // post_title のキーはNC2 の記事ID になっている。
             $post_source_keys = array();
@@ -1670,13 +1681,15 @@ trait MigrationTrait
                     $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
 
                     // 記事のカテゴリID
-                    // 共通カテゴリに同じ文言があれば、共通カテゴリを使用。
                     // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
                     $categories_id = null;
-                    if ($common_categories->firstWhere('category', $blog_tsv_cols[1])) {
-                        $categories_id = $common_categories->firstWhere('category', $blog_tsv_cols[1])->id;
-                    }
-                    if (empty($categories_id) && $blog_categories->firstWhere('category', $blog_tsv_cols[1])) {
+                    // if ($common_categories->firstWhere('category', $blog_tsv_cols[1])) {
+                    //     $categories_id = $common_categories->firstWhere('category', $blog_tsv_cols[1])->id;
+                    // }
+                    // if (empty($categories_id) && $blog_categories->firstWhere('category', $blog_tsv_cols[1])) {
+                    //     $categories_id = $blog_categories->firstWhere('category', $blog_tsv_cols[1])->id;
+                    // }
+                    if ($blog_categories->firstWhere('category', $blog_tsv_cols[1])) {
                         $categories_id = $blog_categories->firstWhere('category', $blog_tsv_cols[1])->id;
                     }
 
@@ -5077,9 +5090,9 @@ trait MigrationTrait
         }
 
         // 共通カテゴリデータのエクスポート
-        if ($this->isTarget('nc2_export', 'categories')) {
-            $this->nc2ExportCategories($redo);
-        }
+        // if ($this->isTarget('nc2_export', 'categories')) {
+        //     $this->nc2ExportCategories($redo);
+        // }
 
         // ユーザデータのエクスポート
         if ($this->isTarget('nc2_export', 'users')) {
@@ -5510,27 +5523,28 @@ trait MigrationTrait
         }
     }
 
-    /**
-     * NC2：カテゴリの移行
-     */
-    private function nc2ExportCategories($redo)
-    {
-        $this->putMonitor(3, "Start nc2ExportCategories.");
+    // delete: 全体カテゴリは作らない
+    // /**
+    //  * NC2：カテゴリの移行
+    //  */
+    // private function nc2ExportCategories($redo)
+    // {
+    //     $this->putMonitor(3, "Start nc2ExportCategories.");
 
-        // データクリア
-        if ($redo === true) {
-            // 移行用ファイルの削除
-            Storage::deleteDirectory($this->getImportPath('categories/'));
-        }
+    //     // データクリア
+    //     if ($redo === true) {
+    //         // 移行用ファイルの削除
+    //         Storage::deleteDirectory($this->getImportPath('categories/'));
+    //     }
 
-        // categories,ini ファイル
-        $uploads_ini = "[categories]";
-        foreach ($this->nc2_default_categories as $nc2_default_category_key => $nc2_default_category) {
-            $uploads_ini .= "\n" . "categories[" . $nc2_default_category_key . "] = \"" . $nc2_default_category . "\"";
-        }
-        //Storage::put($this->getImportPath('categories/categories.ini'), $uploads_ini);
-        $this->storagePut($this->getImportPath('categories/categories.ini'), $uploads_ini);
-    }
+    //     // categories,ini ファイル
+    //     $uploads_ini = "[categories]";
+    //     foreach ($this->nc2_default_categories as $nc2_default_category_key => $nc2_default_category) {
+    //         $uploads_ini .= "\n" . "categories[" . $nc2_default_category_key . "] = \"" . $nc2_default_category . "\"";
+    //     }
+    //     //Storage::put($this->getImportPath('categories/categories.ini'), $uploads_ini);
+    //     $this->storagePut($this->getImportPath('categories/categories.ini'), $uploads_ini);
+    // }
 
     /**
      * 半角 @ を全角 ＠ に変換する。
@@ -5770,25 +5784,42 @@ trait MigrationTrait
             $journals_ini .= "room_id = " . $nc2_journal->room_id . "\n";
             $journals_ini .= "module_name = \"journal\"\n";
 
-            // NC2日誌のカテゴリ（journal_category）を移行する。
+            // NC2日誌で使ってるカテゴリ（journal_category）のみ移行する。
             $journals_ini .= "\n";
             $journals_ini .= "[categories]\n";
-            $nc2_journal_categories = Nc2JournalCategory::where('journal_id', $nc2_journal->journal_id)->orderBy('display_sequence')->get();
+            $nc2_journal_categories = Nc2JournalCategory::
+                select(
+                    'journal_category.category_id',
+                    'journal_category.category_name'
+                )
+                ->where('journal_category.journal_id', $nc2_journal->journal_id)
+                ->join('journal_post', function ($join) {
+                    $join->on('journal_post.category_id', '=', 'journal_category.category_id')
+                         ->whereColumn('journal_post.journal_id', 'journal_category.journal_id');
+                })
+                ->groupBy(
+                    'journal_category.category_id',
+                    'journal_category.category_name',
+                    'journal_category.display_sequence'
+                )
+                ->orderBy('journal_category.display_sequence')
+                ->get();
             //Log::debug($nc2_journal_categories);
-            $journals_ini_commons = "";
+            // $journals_ini_commons = "";
             $journals_ini_originals = "";
 
             foreach ($nc2_journal_categories as $nc2_journal_category) {
-                if (in_array($nc2_journal_category->category_name, $this->nc2_default_categories)) {
-                    // 共通カテゴリにあるものは個別に作成しない。
-                    $journals_ini_commons .= "common_categories[" . array_search($nc2_journal_category->category_name, $this->nc2_default_categories) . "] = \"" . $nc2_journal_category->category_name . "\"\n";
-                } else {
-                    $journals_ini_originals .= "original_categories[" . $nc2_journal_category->category_id . "] = \"" . $nc2_journal_category->category_name . "\"\n";
-                }
+                // if (in_array($nc2_journal_category->category_name, $this->nc2_default_categories)) {
+                //     // 共通カテゴリにあるものは個別に作成しない。
+                //     $journals_ini_commons .= "common_categories[" . array_search($nc2_journal_category->category_name, $this->nc2_default_categories) . "] = \"" . $nc2_journal_category->category_name . "\"\n";
+                // } else {
+                //     $journals_ini_originals .= "original_categories[" . $nc2_journal_category->category_id . "] = \"" . $nc2_journal_category->category_name . "\"\n";
+                // }
+                $journals_ini_originals .= "original_categories[" . $nc2_journal_category->category_id . "] = \"" . $nc2_journal_category->category_name . "\"\n";
             }
-            if (!empty($journals_ini_commons)) {
-                $journals_ini .= $journals_ini_commons;
-            }
+            // if (!empty($journals_ini_commons)) {
+            //     $journals_ini .= $journals_ini_commons;
+            // }
             if (!empty($journals_ini_originals)) {
                 $journals_ini .= $journals_ini_originals;
             }
