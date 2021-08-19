@@ -6066,10 +6066,28 @@ trait MigrationTrait
             $faqs_ini .= "room_id = " . $nc2_faq->room_id . "\n";
             $faqs_ini .= "module_name = \"faq\"\n";
 
-            // NC2FAQのカテゴリ（faq_category）を移行する。
+            // NC2FAQで使ってるカテゴリ（faq_category）のみ移行する。
             $faqs_ini .= "\n";
             $faqs_ini .= "[categories]\n";
-            $nc2_faq_categories = Nc2FaqCategory::where('faq_id', $nc2_faq->faq_id)->orderBy('display_sequence')->get();
+            // $nc2_faq_categories = Nc2FaqCategory::where('faq_id', $nc2_faq->faq_id)->orderBy('display_sequence')->get();
+            $nc2_faq_categories = Nc2FaqCategory::
+                select(
+                    'faq_category.category_id',
+                    'faq_category.category_name'
+                )
+                ->where('faq_category.faq_id', $nc2_faq->faq_id)
+                ->join('faq_question', function ($join) {
+                    $join->on('faq_question.category_id', '=', 'faq_category.category_id')
+                         ->whereColumn('faq_question.faq_id', 'faq_category.faq_id');
+                })
+                ->groupBy(
+                    'faq_category.category_id',
+                    'faq_category.category_name',
+                    'faq_category.display_sequence'
+                )
+                ->orderBy('faq_category.display_sequence')
+                ->get();
+
             $faqs_ini_originals = "";
 
             foreach ($nc2_faq_categories as $nc2_faq_category) {
@@ -6079,37 +6097,37 @@ trait MigrationTrait
                 $faqs_ini .= $faqs_ini_originals;
             }
 
-            // NC2FAQの記事（faq_post）を移行する。
-            $nc2_faq_posts = Nc2FaqQuestion::where('faq_id', $nc2_faq->faq_id)->orderBy('display_sequence')->get();
+            // NC2FAQの記事（faq_question）を移行する。
+            $nc2_faq_questions = Nc2FaqQuestion::where('faq_id', $nc2_faq->faq_id)->orderBy('display_sequence')->get();
 
             // FAQの記事はTSV でエクスポート
             // カテゴリID{\t}表示順{\t}タイトル{\t}本文
             $faqs_tsv = "";
 
             // NC2FAQの記事をループ
-            $faqs_ini .= "\n";
-            $faqs_ini .= "[faq_post]\n";
-            foreach ($nc2_faq_posts as $nc2_faq_post) {
+            // $faqs_ini .= "\n";
+            // $faqs_ini .= "[faq_question]\n";
+            foreach ($nc2_faq_questions as $nc2_faq_question) {
                 // TSV 形式でエクスポート
                 if (!empty($faqs_tsv)) {
                     $faqs_tsv .= "\n";
                 }
 
-                $category_obj  = $nc2_faq_categories->firstWhere('category_id', $nc2_faq_post->category_id);
+                $category_obj  = $nc2_faq_categories->firstWhere('category_id', $nc2_faq_question->category_id);
                 $category = "";
                 if (!empty($category_obj)) {
                     $category  = $category_obj->category_name;
                 }
 
-                $question_answer = $this->nc2Wysiwyg(null, null, null, null, $nc2_faq_post->question_answer, 'faq', $nc2_page);
+                $question_answer = $this->nc2Wysiwyg(null, null, null, null, $nc2_faq_question->question_answer, 'faq', $nc2_page);
 
                 $faqs_tsv .= $category                       . "\t";
-                $faqs_tsv .= $nc2_faq_post->display_sequence . "\t";
-                $faqs_tsv .= $nc2_faq_post->insert_time      . "\t";
-                $faqs_tsv .= $nc2_faq_post->question_name    . "\t";
+                $faqs_tsv .= $nc2_faq_question->display_sequence . "\t";
+                $faqs_tsv .= $nc2_faq_question->insert_time      . "\t";
+                $faqs_tsv .= $nc2_faq_question->question_name    . "\t";
                 $faqs_tsv .= $question_answer                . "\t";
 
-                $faqs_ini .= "post_title[" . $nc2_faq_post->question_id . "] = \"" . str_replace('"', '', $nc2_faq_post->question_name) . "\"\n";
+                // $faqs_ini .= "post_title[" . $nc2_faq_question->question_id . "] = \"" . str_replace('"', '', $nc2_faq_question->question_name) . "\"\n";
             }
 
             // FAQ の設定
