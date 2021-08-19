@@ -153,12 +153,24 @@ class BlogsPlugin extends UserPluginBase
     private function getBlogFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'blogs.id as blogs_id', 'blogs.blog_name', 'blogs.view_count', 'blogs.rss', 'blogs.rss_count', 'blogs_frames.scope', 'blogs_frames.scope_value', 'blogs_frames.important_view')
-                 ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
-                 ->leftJoin('blogs_frames', 'blogs_frames.frames_id', '=', 'frames.id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::
+            select(
+                'frames.*',
+                'blogs.id as blogs_id',
+                'blogs.blog_name',
+                'blogs.view_count',
+                'blogs.rss',
+                'blogs.rss_count',
+                'blogs.use_like',
+                'blogs.like_button_name',
+                'blogs_frames.scope',
+                'blogs_frames.scope_value',
+                'blogs_frames.important_view',
+            )
+            ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
+            ->leftJoin('blogs_frames', 'blogs_frames.frames_id', '=', 'frames.id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
@@ -641,72 +653,72 @@ WHERE status = 0
         $after_post = null;
         if ($blogs_post) {
             // 1件前
-            $before_post = BlogsPosts::whereIn('id', function ($query1) use ($blogs_post) {
-                                           // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
-                                           $query1->select(DB::raw('MAX(id) as id'))
-                                                  ->from('blogs_posts')
-                                                  ->where('blogs_id', $blogs_post->blogs_id)
-                                                  ->where(function ($query2) {
-                                                      $query2 = $this->appendAuthWhere($query2);
-                                                  })
-                                                  ->groupBy('contents_id');
-            })
-                                       // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が小さい)で1件目)
-                                       // 一覧は 日付(desc), contents_id(desc) で表示するため
-                                       ->where(function ($query3) use ($blogs_post) {
-                                           $query3->where('posted_at', '<', $blogs_post->posted_at)
-                                                  ->orWhere(function ($query4) use ($blogs_post) {
-                                                      $query4->where('posted_at', '=', $blogs_post->posted_at)
-                                                             ->where('contents_id', '<', $blogs_post->contents_id);
-                                                  });
-                                       })
-                                        // 表示設定を見て抽出範囲のwhereを追加する
-                                        ->where(function ($query_setting) use ($blog_frame) {
-                                            $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
-                                        })
-                                       ->orderBy('posted_at', 'desc')
-                                       ->orderBy('contents_id', 'desc')
-                                       ->first();
+            $before_post = BlogsPosts::
+                whereIn('id', function ($query1) use ($blogs_post) {
+                    // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
+                    $query1->select(DB::raw('MAX(id) as id'))
+                            ->from('blogs_posts')
+                            ->where('blogs_id', $blogs_post->blogs_id)
+                            ->where(function ($query2) {
+                                $query2 = $this->appendAuthWhere($query2);
+                            })
+                            ->groupBy('contents_id');
+                })
+                // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が小さい)で1件目)
+                // 一覧は 日付(desc), contents_id(desc) で表示するため
+                ->where(function ($query3) use ($blogs_post) {
+                    $query3->where('posted_at', '<', $blogs_post->posted_at)
+                        ->orWhere(function ($query4) use ($blogs_post) {
+                            $query4->where('posted_at', '=', $blogs_post->posted_at)
+                                ->where('contents_id', '<', $blogs_post->contents_id);
+                        });
+                })
+                // 表示設定を見て抽出範囲のwhereを追加する
+                ->where(function ($query_setting) use ($blog_frame) {
+                    $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                })
+                ->orderBy('posted_at', 'desc')
+                ->orderBy('contents_id', 'desc')
+                ->first();
 
             // 1件後
-            $after_post = BlogsPosts::whereIn('id', function ($query1) use ($blogs_post) {
-                                           // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
-                                           $query1->select(DB::raw('MAX(id) as id'))
-                                                  ->from('blogs_posts')
-                                                  ->where('blogs_id', $blogs_post->blogs_id)
-                                                  ->where(function ($query2) {
-                                                      $query2 = $this->appendAuthWhere($query2);
-                                                  })
-                                                  ->groupBy('contents_id');
-            })
-                                       // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が大きい)で1件目)
-                                       // 一覧は 日付(desc), contents_id(desc) で表示するため
-                                       ->where(function ($query3) use ($blogs_post) {
-                                           $query3->where('posted_at', '>', $blogs_post->posted_at)
-                                                  ->orWhere(function ($query4) use ($blogs_post) {
-                                                      $query4->where('posted_at', '=', $blogs_post->posted_at)
-                                                             ->where('contents_id', '>', $blogs_post->contents_id);
-                                                  });
-                                       })
-                                        // 表示設定を見て抽出範囲のwhereを追加する
-                                        ->where(function ($query_setting) use ($blog_frame) {
-                                            $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
-                                        })
-                                       ->orderBy('posted_at', 'asc')
-                                       ->orderBy('contents_id', 'asc')
-                                       ->first();
+            $after_post = BlogsPosts::
+                whereIn('id', function ($query1) use ($blogs_post) {
+                    // 権限の条件で絞って、contents_id でグループ化した最後のid（権限を加味した記事のID 一覧）
+                    $query1->select(DB::raw('MAX(id) as id'))
+                        ->from('blogs_posts')
+                        ->where('blogs_id', $blogs_post->blogs_id)
+                        ->where(function ($query2) {
+                            $query2 = $this->appendAuthWhere($query2);
+                        })
+                        ->groupBy('contents_id');
+                })
+                // 同じ日付の記事があるので、(日付が小さい OR (日付が同じ＆contents_id が大きい)で1件目)
+                // 一覧は 日付(desc), contents_id(desc) で表示するため
+                ->where(function ($query3) use ($blogs_post) {
+                    $query3->where('posted_at', '>', $blogs_post->posted_at)
+                        ->orWhere(function ($query4) use ($blogs_post) {
+                            $query4->where('posted_at', '=', $blogs_post->posted_at)
+                                ->where('contents_id', '>', $blogs_post->contents_id);
+                        });
+                })
+                // 表示設定を見て抽出範囲のwhereを追加する
+                ->where(function ($query_setting) use ($blog_frame) {
+                    $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+                })
+                ->orderBy('posted_at', 'asc')
+                ->orderBy('contents_id', 'asc')
+                ->first();
         }
 
         // 詳細画面を呼び出す。
-        return $this->view(
-            'blogs_show', [
+        return $this->view('blogs_show', [
             'blog_frame'  => $blog_frame,
             'post'        => $blogs_post,
             'post_tags'   => $blogs_post_tags,
             'before_post' => $before_post,
             'after_post'  => $after_post,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -1090,6 +1102,8 @@ WHERE status = 0
         $blogs->view_count    = (intval($request->view_count) < 0) ? 0 : intval($request->view_count);
         $blogs->rss           = $request->rss;
         $blogs->rss_count     = $request->rss_count;
+        $blogs->use_like      = $request->use_like;
+        $blogs->like_button_name = $request->like_button_name;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
