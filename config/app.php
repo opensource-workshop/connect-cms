@@ -290,6 +290,7 @@ $app_array = [
         'Plugins' => \App\Models\Core\Plugins::class,
         'FrameConfig' => \App\Models\Core\FrameConfig::class,
         'Configs' => \App\Models\Core\Configs::class,
+        'Like' => \App\Models\Common\Like::class,
 
         // 画像処理
         'Image' => Intervention\Image\Facades\Image::class,
