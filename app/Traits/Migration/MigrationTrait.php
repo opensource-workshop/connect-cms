@@ -6228,12 +6228,31 @@ trait MigrationTrait
             $linklists_ini .= "room_id = " . $nc2_linklist->room_id . "\n";
             $linklists_ini .= "module_name = \"linklist\"\n";
 
-            // NC2リンクリストのカテゴリ（linklist_category）を移行する。
+            // NC2リンクリストで使っているカテゴリ（linklist_category）のみ移行する。
             $linklists_ini .= "\n";
             $linklists_ini .= "[categories]\n";
             // NC2リンクリストは自動的に「カテゴリなし」（名前変更不可）カテゴリが作成されるため、「カテゴリなし」は移行除外する。
             // ※ また、NC2では「カテゴリなし」１個だけだと、カテゴリを表示しない仕様
-            $nc2_linklist_categories = Nc2LinklistCategory::where('linklist_id', $nc2_linklist->linklist_id)->where('category_name', '!=','カテゴリなし')->orderBy('category_sequence')->get();
+            // $nc2_linklist_categories = Nc2LinklistCategory::where('linklist_id', $nc2_linklist->linklist_id)->where('category_name', '!=','カテゴリなし')->orderBy('category_sequence')->get();
+            $nc2_linklist_categories = Nc2LinklistCategory::
+                select(
+                    'linklist_category.category_id',
+                    'linklist_category.category_name'
+                )
+                ->where('linklist_category.linklist_id', $nc2_linklist->linklist_id)
+                ->where('category_name', '!=','カテゴリなし')
+                ->join('linklist_link', function ($join) {
+                    $join->on('linklist_link.category_id', '=', 'linklist_category.category_id')
+                         ->whereColumn('linklist_link.linklist_id', 'linklist_category.linklist_id');
+                })
+                ->groupBy(
+                    'linklist_category.category_id',
+                    'linklist_category.category_name',
+                    'linklist_category.category_sequence'
+                )
+                ->orderBy('linklist_category.category_sequence')
+                ->get();
+
             $linklists_ini_originals = "";
 
             foreach ($nc2_linklist_categories as $nc2_linklist_category) {
@@ -6244,35 +6263,35 @@ trait MigrationTrait
             }
 
             // NC2リンクリストの記事（linklist_link）を移行する。
-            $nc2_linklist_posts = Nc2LinklistLink::where('linklist_id', $nc2_linklist->linklist_id)->orderBy('link_sequence')->get();
+            $nc2_linklist_links = Nc2LinklistLink::where('linklist_id', $nc2_linklist->linklist_id)->orderBy('link_sequence')->get();
 
             // リンクリストの記事はTSV でエクスポート
             // タイトル{\t}URL{\t}説明{\t}新規ウィンドウflag{\t}表示順
             $linklists_tsv = "";
 
             // NC2リンクリストの記事をループ
-            $linklists_ini .= "\n";
-            $linklists_ini .= "[linklist_post]\n";
-            foreach ($nc2_linklist_posts as $nc2_linklist_post) {
+            // $linklists_ini .= "\n";
+            // $linklists_ini .= "[linklist_link]\n";
+            foreach ($nc2_linklist_links as $nc2_linklist_link) {
                 // TSV 形式でエクスポート
                 if (!empty($linklists_tsv)) {
                     $linklists_tsv .= "\n";
                 }
 
-                $category_obj  = $nc2_linklist_categories->firstWhere('category_id', $nc2_linklist_post->category_id);
+                $category_obj  = $nc2_linklist_categories->firstWhere('category_id', $nc2_linklist_link->category_id);
                 $category = "";
                 if (!empty($category_obj)) {
                     $category  = $category_obj->category_name;
                 }
 
-                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->title)              . "\t";
-                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_post->url)                . "\t";
-                $linklists_tsv .= str_replace("\t", " ", $nc2_linklist_post->description)       . "\t";
+                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_link->title)              . "\t";
+                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_link->url)                . "\t";
+                $linklists_tsv .= str_replace("\t", " ", $nc2_linklist_link->description)       . "\t";
                 $linklists_tsv .= $nc2_linklist_block->target_blank_flag                        . "\t";
-                $linklists_tsv .= $nc2_linklist_post->link_sequence                             . "\t";
+                $linklists_tsv .= $nc2_linklist_link->link_sequence                             . "\t";
                 $linklists_tsv .= $category;
 
-                $linklists_ini .= "post_title[" . $nc2_linklist_post->link_id . "] = \"" . str_replace('"', '', $nc2_linklist_post->title) . "\"\n";
+                // $linklists_ini .= "post_title[" . $nc2_linklist_link->link_id . "] = \"" . str_replace('"', '', $nc2_linklist_link->title) . "\"\n";
             }
 
             // リンクリストの設定
