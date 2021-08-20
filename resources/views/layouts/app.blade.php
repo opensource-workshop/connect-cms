@@ -157,16 +157,18 @@
     <!-- Polyfill -->
     {{-- ※IEが公式に消えたら（2022年6月16日）消したい。 --}}
     @php
-        $is_exist_whatsnews = false;
-        if(isset($plugin_instances)){
-            foreach($plugin_instances as $plugin_instance){
-                if($plugin_instance instanceof \App\Plugins\User\Whatsnews\WhatsnewsPlugin){
-                    $is_exist_whatsnews = true;
+        $is_exist_plugin = false;
+        if (isset($plugin_instances)) {
+            foreach ($plugin_instances as $plugin_instance){
+                if ($plugin_instance instanceof \App\Plugins\User\Whatsnews\WhatsnewsPlugin){
+                    $is_exist_plugin = true;
+                } elseif ($plugin_instance instanceof \App\Plugins\User\Blogs\BlogsPlugin) {
+                    $is_exist_plugin = true;
                 }
             }
         }
     @endphp
-    @if ($is_exist_whatsnews)
+    @if ($is_exist_plugin)
         {{-- IEで発生する「Promiseは定義されていません。」エラー回避＠新着プラグインの非同期処理 --}}
         <script>window.Promise || document.write('<script src="//www.promisejs.org/polyfills/promise-7.0.4.min.js"><\/script>');</script>
     @endif

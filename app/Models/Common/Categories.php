@@ -165,7 +165,7 @@ class Categories extends Model
     }
 
     /**
-     * 一般プラグイン-カテゴリ設定の入力エラーチェック
+     * 一般プラグイン-カテゴリ設定の保存
      */
     public static function savePluginCategories($request, string $plugin_name, int $target_id)
     {

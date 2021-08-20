@@ -765,7 +765,7 @@ class DefaultController extends ConnectController
         // $plugin_instance = new $class_name($this->page, $frame, $this->pages);
         $plugin_instance = new $class_name($page, $frame, $pages);
 
-        return $plugin_instance->invoke($plugin_instance, $request, $action, $page_id, $frame_id);
+        return $plugin_instance->invoke($plugin_instance, $request, $action, $page_id, $frame_id, $id);
     }
 
     /**
