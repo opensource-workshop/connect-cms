@@ -98,10 +98,9 @@ class FaqsPlugin extends UserPluginBase
         // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
         $arg_post = FaqsPosts::where('id', $id)->first();
 
-        $plugin_name = $this->frame->plugin_name;
-
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = FaqsPosts::
+        // $this->post = FaqsPosts::
+        $faq_query = FaqsPosts::
             select(
                 'faqs_posts.*',
                 'categories.color as category_color',
@@ -109,23 +108,17 @@ class FaqsPlugin extends UserPluginBase
                 'categories.category as category',
                 'plugin_categories.view_flag as category_view_flag'
             )
-            ->leftJoin('categories', function ($join) {
-                $join->on('categories.id', '=', 'faqs_posts.categories_id')
-                    ->whereNull('categories.deleted_at');
-            })
-            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', '=', $plugin_name)
-                    ->whereColumn('plugin_categories.target_id', 'faqs_posts.faqs_id')
-                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
-                    ->whereNull('plugin_categories.deleted_at');
-            })
             ->where('faqs_posts.contents_id', $arg_post->contents_id)
             ->where(function ($query) {
                 $query = $this->appendAuthWhere($query);
-            })
-            ->orderBy('faqs_posts.id', 'desc')
-            ->first();
+            });
+            // ->orderBy('faqs_posts.id', 'desc')
+            // ->first();
+
+        // カテゴリのleftJoin
+        $faq_query = Categories::appendCategoriesLeftJoin($faq_query, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
+
+        $this->post = $faq_query->orderBy('faqs_posts.id', 'desc')->first();
 
         return $this->post;
     }
@@ -221,8 +214,6 @@ class FaqsPlugin extends UserPluginBase
             $count = $option_count;
         }
 
-        $plugin_name = $this->frame->plugin_name;
-
         // 削除されていないデータでグルーピングして、最新のIDで全件
         $faqs_posts = FaqsPosts::
             select(
@@ -232,17 +223,6 @@ class FaqsPlugin extends UserPluginBase
                 'categories.category as category',
                 'plugin_categories.view_flag as category_view_flag'
             )
-            ->leftJoin('categories', function ($join) {
-                $join->on('categories.id', '=', 'faqs_posts.categories_id')
-                    ->whereNull('categories.deleted_at');
-            })
-            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', '=', $plugin_name)
-                    ->whereColumn('plugin_categories.target_id', 'faqs_posts.faqs_id')
-                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
-                    ->whereNull('plugin_categories.deleted_at');
-            })
             ->whereIn('faqs_posts.id', function ($query) use ($faq_frame) {
                 $query->select(DB::raw('MAX(id) As id'))
                     ->from('faqs_posts')
@@ -254,6 +234,10 @@ class FaqsPlugin extends UserPluginBase
                     })
                     ->groupBy('contents_id');
             });
+
+        // カテゴリのleftJoin
+        $faqs_posts = Categories::appendCategoriesLeftJoin($faqs_posts, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
+
         // 表示条件に対するソート条件追加
 
         if ($faq_frame->sequence_conditions == 0) {
