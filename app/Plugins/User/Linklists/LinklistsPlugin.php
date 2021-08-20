@@ -125,18 +125,12 @@ class LinklistsPlugin extends UserPluginBase
                 $join->on('linklists.id', '=', 'linklist_posts.linklist_id')
                     ->where('linklists.bucket_id', $this->frame->bucket_id)
                     ->whereNull('linklists.deleted_at');
-            })
-            ->leftJoin('categories', function ($join) {
-                $join->on('categories.id', '=', 'linklist_posts.categories_id')
-                    ->whereNull('categories.deleted_at');
-            })
-            ->leftJoin('plugin_categories', function ($join) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->whereColumn('plugin_categories.target_id', 'linklists.id')
-                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
-                    ->whereNull('plugin_categories.deleted_at');
-            })
-            ->orderBy('plugin_categories.display_sequence', 'asc')
+            });
+
+        // カテゴリのleftJoin
+        $posts_query = Categories::appendCategoriesLeftJoin($posts_query, $this->frame->plugin_name, 'linklist_posts.categories_id', 'linklists.id');
+
+        $posts_query->orderBy('plugin_categories.display_sequence', 'asc')
             ->orderBy('linklist_posts.display_sequence', 'asc')
             ->orderBy('linklist_posts.created_at', 'asc');
 
