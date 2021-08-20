@@ -19,6 +19,7 @@ class CreateLikeUsersTable extends Migration
             $table->integer('target_id')->comment('対象プラグイン内ID');
             $table->integer('target_contents_id')->comment('対象プラグイン内記事ID');
             $table->integer('likes_id')->unsigned();
+            $table->string('session_id', 191)->nullable();
             $table->integer('users_id')->nullable()->unsigned()->comment('users.id');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();

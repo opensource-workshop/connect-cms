@@ -23,6 +23,7 @@ class LikeUser extends Model
         'target_id',
         'target_contents_id',
         'likes_id',
+        'session_id',
         'users_id',
     ];
 }
