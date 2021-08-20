@@ -142,6 +142,9 @@ class Like extends Model
         if (!empty($like_users_id)) {
             // 自分のユーザIDでlike_users検索済み. それでlike_users.idあり = like_usersにデータあり = いいね済み
             return true;
+        } elseif (empty($like_id)) {
+            // like_id がない = likesテーブルにデータなしのo件いいね = 未いいね
+            return false;
         } elseif (in_array($like_id, $like_histories_array)) {
             // いいね済み
             return true;
