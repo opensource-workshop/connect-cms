@@ -24,7 +24,7 @@ class Like extends Model
     protected $fillable = [
         'target',
         'target_id',
-        'target_post_id',
+        'target_contents_id',
         'count',
     ];
 }
