@@ -38,11 +38,12 @@ class Like extends Model
         // $target_contents_id_column = 'blogs_posts.contents_id';
         // $target_id_column = 'blogs_posts.blogs_id';
 
-        $query->leftJoin('likes', function ($join) use ($plugin_name, $target_contents_id_column, $target_id_column) {
-            $join->on('likes.target_contents_id', '=', $target_contents_id_column)
-                ->where('likes.target', $plugin_name)
-                ->whereColumn('likes.target_id', $target_id_column)
-                ->whereNull('likes.deleted_at');
+        $query
+            ->leftJoin('likes', function ($join) use ($plugin_name, $target_contents_id_column, $target_id_column) {
+                $join->on('likes.target_contents_id', '=', $target_contents_id_column)
+                    ->where('likes.target', $plugin_name)
+                    ->whereColumn('likes.target_id', $target_id_column)
+                    ->whereNull('likes.deleted_at');
             })
             ->leftJoin('like_users', function ($join) use ($plugin_name) {
                 if (Auth::check()) {
@@ -148,5 +149,5 @@ class Like extends Model
             // 未いいね
             return false;
         }
-   }
+    }
 }
