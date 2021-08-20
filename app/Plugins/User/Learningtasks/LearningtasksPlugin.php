@@ -213,10 +213,9 @@ class LearningtasksPlugin extends UserPluginBase
         // 履歴の廃止
         //$arg_post = LearningtasksPosts::where('id', $id)->first();
 
-        $plugin_name = $this->frame->plugin_name;
-
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = LearningtasksPosts::
+        // $this->post = LearningtasksPosts::
+        $learningtasks_query = LearningtasksPosts::
             select(
                 'learningtasks_posts.*',
                 'learningtasks.bucket_id',
@@ -231,27 +230,21 @@ class LearningtasksPlugin extends UserPluginBase
                 $join->on('learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
                     ->whereNull('learningtasks.deleted_at');
             })
-            // bugfix: 論理削除を考慮
-            // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-            ->leftJoin('categories', function ($join) {
-                $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
-                    ->whereNull('categories.deleted_at');
-            })
-            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', '=', $plugin_name)
-                    ->whereColumn('plugin_categories.target_id', 'learningtasks.id')
-                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
-                    ->whereNull('plugin_categories.deleted_at');
-            })
-            ->where('learningtasks_posts.id', $id)
+            ->where('learningtasks_posts.id', $id);
             // 履歴の廃止
             //->where('contents_id', $arg_post->contents_id)
             //->where(function ($query) {
             //      $query = $this->appendAuthWhere($query);
             //})
-            ->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
-            ->first();
+            // ->orderBy('id', 'desc')
+            // ->first();
+
+        // カテゴリのleftJoin
+        $learningtasks_query = Categories::appendCategoriesLeftJoin($learningtasks_query, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks.id');
+
+        // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
+        $this->post = $learningtasks_query->orderBy('id', 'desc')->first();
+
         return $this->post;
     }
 
@@ -457,8 +450,6 @@ class LearningtasksPlugin extends UserPluginBase
             $count = $option_count;
         }
 
-        $plugin_name = $this->frame->plugin_name;
-
         // 削除されていないデータでグルーピングして、最新のIDで全件
         $learningtasks_posts = LearningtasksPosts::
             select(
@@ -467,21 +458,8 @@ class LearningtasksPlugin extends UserPluginBase
                 'categories.color as category_color',
                 'categories.background_color as category_background_color',
                 'categories.category as category',
-                'plugin_categories.view_flag as category_view_flag',
+                'plugin_categories.view_flag as category_view_flag'
             )
-            // bugfix: 論理削除を考慮
-            // ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
-            ->leftJoin('categories', function ($join) {
-                $join->on('categories.id', '=', 'learningtasks_posts.categories_id')
-                    ->whereNull('categories.deleted_at');
-            })
-            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', '=', $plugin_name)
-                    ->whereColumn('plugin_categories.target_id', 'learningtasks_posts.learningtasks_id')
-                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
-                    ->whereNull('plugin_categories.deleted_at');
-            })
             // 履歴の廃止
             //                         ->whereIn('learningtasks_posts.id', function ($query) use ($learningtasks_frame) {
             //                             $query->select(DB::raw('MAX(id) As id'))
@@ -503,6 +481,9 @@ class LearningtasksPlugin extends UserPluginBase
 
             // 有効なレコードのみ
             ->where('status', 0);
+
+        // カテゴリのleftJoin
+        $learningtasks_posts = Categories::appendCategoriesLeftJoin($learningtasks_posts, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks_posts.learningtasks_id');
 
         // カテゴリソート条件追加
         $learningtasks_posts->orderBy('plugin_categories.display_sequence', 'asc');
