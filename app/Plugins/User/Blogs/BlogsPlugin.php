@@ -106,8 +106,6 @@ class BlogsPlugin extends UserPluginBase
             return null;
         }
 
-        $plugin_name = $this->frame->plugin_name;
-
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
         // $this->post = BlogsPosts::
         $blogs_query = BlogsPosts::
@@ -121,17 +119,17 @@ class BlogsPlugin extends UserPluginBase
                 'likes.count as like_count',
                 'like_users.id as like_users_id'    // idあればいいね済み
             )
-            ->leftJoin('categories', function ($join) {
-                $join->on('categories.id', '=', 'blogs_posts.categories_id')
-                    ->whereNull('categories.deleted_at');
-            })
-            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', $plugin_name)
-                    ->whereColumn('plugin_categories.target_id', 'blogs_posts.blogs_id')
-                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
-                    ->whereNull('plugin_categories.deleted_at');
-            })
+            // ->leftJoin('categories', function ($join) {
+            //     $join->on('categories.id', '=', 'blogs_posts.categories_id')
+            //         ->whereNull('categories.deleted_at');
+            // })
+            // ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
+            //     $join->on('plugin_categories.categories_id', '=', 'categories.id')
+            //         ->where('plugin_categories.target', $plugin_name)
+            //         ->whereColumn('plugin_categories.target_id', 'blogs_posts.blogs_id')
+            //         ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+            //         ->whereNull('plugin_categories.deleted_at');
+            // })
             ->where('contents_id', $arg_post->contents_id)
             ->where(function ($query) {
                 $query = $this->appendAuthWhere($query);
@@ -139,8 +137,11 @@ class BlogsPlugin extends UserPluginBase
             // ->orderBy('id', 'desc')
             // ->first();
 
+        // カテゴリのleftJoin
+        $blogs_query =  Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
+
         // いいねのleftJoin
-        $blogs_query = Like::appendLikeLeftJoin($blogs_query, $plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
+        $blogs_query = Like::appendLikeLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
 
         $this->post = $blogs_query->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定
             ->first();
@@ -281,17 +282,6 @@ class BlogsPlugin extends UserPluginBase
                 'likes.count as like_count',
                 'like_users.id as like_users_id'    // idあればいいね済み
             )
-            ->leftJoin('categories', function ($join) {
-                $join->on('categories.id', '=', 'blogs_posts.categories_id')
-                    ->whereNull('categories.deleted_at');
-            })
-            ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
-                $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', '=', $plugin_name)
-                    ->whereColumn('plugin_categories.target_id', 'blogs_posts.blogs_id')
-                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
-                    ->whereNull('plugin_categories.deleted_at');
-            })
             ->whereIn('blogs_posts.id', function ($query) use ($blog_frame) {
                 $query->select(DB::raw('MAX(id) As id'))
                     ->from('blogs_posts')
@@ -308,6 +298,9 @@ class BlogsPlugin extends UserPluginBase
             ->where(function ($query_setting) use ($blog_frame) {
                 $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
             });
+
+        // カテゴリのleftJoin
+        $blogs_query =  Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
 
         // いいねのleftJoin
         $blogs_query = Like::appendLikeLeftJoin($blogs_query, $plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');

@@ -22,6 +22,30 @@ class Categories extends Model
     protected $fillable = ['classname', 'category', 'color', 'background_color', 'target', 'plugin_id', 'display_sequence'];
 
     /**
+     * カテゴリに対するleftJoin追加
+     */
+    public static function appendCategoriesLeftJoin($query, string $plugin_name, string $categories_id_column, string $target_id_column)
+    {
+        // $categories_id_column = 'blogs_posts.categories_id';
+        // $target_id_column = 'blogs_posts.blogs_id';
+
+        $query
+            ->leftJoin('categories', function ($join) use ($categories_id_column) {
+                $join->on('categories.id', '=', $categories_id_column)
+                    ->whereNull('categories.deleted_at');
+            })
+            ->leftJoin('plugin_categories', function ($join) use ($plugin_name, $target_id_column) {
+                $join->on('plugin_categories.categories_id', '=', 'categories.id')
+                    ->where('plugin_categories.target', $plugin_name)
+                    ->whereColumn('plugin_categories.target_id', $target_id_column)
+                    ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
+                    ->whereNull('plugin_categories.deleted_at');
+            });
+
+        return $query;
+    }
+
+    /**
      * カテゴリデータ（一般プラグイン-登録画面用）の取得
      */
     public static function getInputCategories(?string $plugin_name, ?int $target_id)
