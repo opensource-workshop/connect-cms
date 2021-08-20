@@ -14,6 +14,7 @@ use App\Models\Common\Buckets;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
+use App\Models\Common\Like;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsFrames;
 use App\Models\User\Blogs\BlogsPosts;
@@ -52,7 +53,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingBlogFrame'];
+        $functions['get']  = ['settingBlogFrame', 'saveLikeJson'];
         $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
@@ -108,13 +109,17 @@ class BlogsPlugin extends UserPluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        $this->post = BlogsPosts::
+        // $this->post = BlogsPosts::
+        $blogs_query = BlogsPosts::
             select(
                 'blogs_posts.*',
                 'categories.color as category_color',
                 'categories.background_color as category_background_color',
                 'categories.category as category',
-                'plugin_categories.view_flag as category_view_flag'
+                'plugin_categories.view_flag as category_view_flag',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
             )
             ->leftJoin('categories', function ($join) {
                 $join->on('categories.id', '=', 'blogs_posts.categories_id')
@@ -122,7 +127,7 @@ class BlogsPlugin extends UserPluginBase
             })
             ->leftJoin('plugin_categories', function ($join) use ($plugin_name) {
                 $join->on('plugin_categories.categories_id', '=', 'categories.id')
-                    ->where('plugin_categories.target', '=', $plugin_name)
+                    ->where('plugin_categories.target', $plugin_name)
                     ->whereColumn('plugin_categories.target_id', 'blogs_posts.blogs_id')
                     ->where('plugin_categories.view_flag', 1)   // 表示するカテゴリのみ
                     ->whereNull('plugin_categories.deleted_at');
@@ -130,8 +135,14 @@ class BlogsPlugin extends UserPluginBase
             ->where('contents_id', $arg_post->contents_id)
             ->where(function ($query) {
                 $query = $this->appendAuthWhere($query);
-            })
-            ->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定
+            });
+            // ->orderBy('id', 'desc')
+            // ->first();
+
+        // いいねのleftJoin
+        $blogs_query = Like::appendLikeLeftJoin($blogs_query, $plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
+
+        $this->post = $blogs_query->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定
             ->first();
 
         // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
@@ -265,7 +276,10 @@ class BlogsPlugin extends UserPluginBase
                 'categories.color as category_color',
                 'categories.background_color as category_background_color',
                 'categories.category as category',
-                'plugin_categories.view_flag as category_view_flag'
+                'plugin_categories.view_flag as category_view_flag',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
             )
             ->leftJoin('categories', function ($join) {
                 $join->on('categories.id', '=', 'blogs_posts.categories_id')
@@ -294,6 +308,9 @@ class BlogsPlugin extends UserPluginBase
             ->where(function ($query_setting) use ($blog_frame) {
                 $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
             });
+
+        // いいねのleftJoin
+        $blogs_query = Like::appendLikeLeftJoin($blogs_query, $plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
 
         // フレームの重要記事の条件参照
         if ($blog_frame->important_view == 'important_only') {
@@ -1415,5 +1432,19 @@ EOD;
                 ['value' => $request->$value]
             );
         }
+    }
+
+    /**
+     * いいねをJSON形式で返す
+     */
+    public function saveLikeJson($request, $page_id, $frame_id, $id = null)
+    {
+        $blog_frame = $this->getBlogFrame($frame_id);
+        if (empty($blog_frame)) {
+            return;
+        }
+
+        $count = Like::saveLike($this->frame->plugin_name, $blog_frame->blogs_id, $id);
+        return $count;
     }
 }

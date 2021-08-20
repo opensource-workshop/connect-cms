@@ -52,6 +52,16 @@
         </div>
     @endif
 
+    {{-- いいねボタン --}}
+    @include('plugins.common.like', [
+        'use_like' => $blog_frame->use_like,
+        'like_button_name' => $blog_frame->like_button_name,
+        'contents_id' => $post->contents_id,
+        'like_id' => $post->like_id,
+        'like_count' => $post->like_count,
+        'like_users_id' => $post->like_users_id,
+    ])
+
     {{-- タグ --}}
     @isset($post_tags)
         @foreach($post_tags as $tags)
