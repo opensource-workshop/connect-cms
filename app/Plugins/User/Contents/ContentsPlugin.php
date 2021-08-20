@@ -3,10 +3,9 @@
 namespace App\Plugins\User\Contents;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -99,7 +98,7 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // 認証されているユーザの取得
-        $user = Auth::user();
+        // $user = Auth::user();
 
         // buckets_id
         $buckets_id = null;
@@ -108,19 +107,25 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // Bucketsに応じたデータを返す。
-        $contents = Contents::select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
-                    ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
-                    ->join('frames', function ($join) {
-                        $join->on('frames.bucket_id', '=', 'buckets.id');
-                    })
-                    ->where('buckets.id', $buckets_id)
-                    ->where('contents.deleted_at', null)
-                    // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
-                    ->where(function ($query) {
-                          $query = $this->appendAuthWhere($query);
-                    })
-                    ->orderBy('id', 'desc')
-                    ->first();
+        $contents = Contents::
+            select(
+                'contents.*',
+                'buckets.id as bucket_id',
+                'buckets.bucket_name as bucket_name',
+                'frames.page_id as page_id'
+            )
+            ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
+            ->join('frames', function ($join) {
+                $join->on('frames.bucket_id', '=', 'buckets.id');
+            })
+            ->where('buckets.id', $buckets_id)
+            ->where('contents.deleted_at', null)
+            // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+            ->where(function ($query) {
+                    $query = $this->appendAuthWhere($query);
+            })
+            ->orderBy('id', 'desc')
+            ->first();
 
 //        // 管理者権限の場合は、一時保存も対象
 //        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
@@ -509,8 +514,8 @@ class ContentsPlugin extends UserPluginBase
         // バケツがまだ登録されていなかったら登録する。
         if (empty($this->buckets)) {
             $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'contents'
+                'bucket_name' => $request->bucket_name ?? '無題',
+                'plugin_name' => 'contents'
             ]);
         } else {
             $bucket_id = $this->buckets['id'];
@@ -568,6 +573,11 @@ class ContentsPlugin extends UserPluginBase
 
         // 変更のデータ保存
         $newrow->save();
+
+        // バケツのデータ名保存
+        $buckets = Buckets::find($oldrow->bucket_id);
+        $buckets->bucket_name = $request->bucket_name ?? '無題';
+        $buckets->save();
 
         return;
     }
