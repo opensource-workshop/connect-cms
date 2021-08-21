@@ -125,7 +125,7 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">いいねボタン名</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="like_button_name" value="{{old('like_button_name', $blog->like_button_name)}}" class="form-control col-sm-3 @if ($errors->has('like_button_name')) border-danger @endif">
+            <input type="text" name="like_button_name" value="{{old('like_button_name', $blog->like_button_name)}}" class="form-control @if ($errors->has('like_button_name')) border-danger @endif">
             @include('common.errors_inline', ['name' => 'like_button_name'])
             <small class="form-text text-muted">空の場合「{{Like::like_button_default}}」を表示します。</small>
         </div>
