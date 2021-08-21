@@ -43,9 +43,11 @@
     })
 </script>
 
-<form method="POST" class="" name="form_bbses_posts{{$frame_id}}">
+<form method="POST" name="form_bbses_posts{{$frame_id}}">
     {{csrf_field()}}
     <input type="hidden" name="redirect_path" value="">
+</form>
+
 <article>
     <header>
         {{-- タイトル --}}
@@ -60,7 +62,18 @@
 
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
     <footer class="row">
-        <div class="col-12 text-right mb-1">
+        <div class="col-sm-3 mb-1">
+            {{-- いいねボタン --}}
+            @include('plugins.common.like', [
+                'use_like' => $bbs->use_like,
+                'like_button_name' => $bbs->like_button_name,
+                'contents_id' => $post->id,
+                'like_id' => $post->like_id,
+                'like_count' => $post->like_count,
+                'like_users_id' => $post->like_users_id,
+            ])
+        </div>
+        <div class="col-sm-9 text-right mb-1">
             {{$post->getUpdatedAt()}}
         </div>
         <div class="col-12 text-right mb-1">
@@ -109,7 +122,6 @@
         </div>
     </footer>
 </article>
-</form>
 
 {{-- 一覧へ戻る --}}
 <nav class="row" aria-label="ページ移動">
@@ -195,6 +207,21 @@
                 </div>
                 <div class="card-body">
                     {!!$thread_root_post->body!!}
+
+                    @if ($post && $post->id == $thread_root_post->id)
+                        {{-- 自記事のため いいねボタン 表示しない --}}
+                    @else
+                        {{-- いいねボタン --}}
+                        @include('plugins.common.like', [
+                            'use_like' => $bbs->use_like,
+                            'like_button_name' => $bbs->like_button_name,
+                            'contents_id' => $thread_root_post->id,
+                            'like_id' => $thread_root_post->like_id,
+                            'like_count' => $thread_root_post->like_count,
+                            'like_users_id' => $thread_root_post->like_users_id,
+                        ])
+                    @endif
+
                     @foreach ($children_posts as $children_post)
                         <div class="card mt-3">
                             <div class="card-header">
@@ -202,6 +229,20 @@
                             </div>
                             <div class="card-body">
                                 {!!$children_post->body!!}
+
+                                @if ($post && $post->id == $children_post->id)
+                                    {{-- 自記事のため いいねボタン 表示しない --}}
+                                @else
+                                    {{-- いいねボタン --}}
+                                    @include('plugins.common.like', [
+                                        'use_like' => $bbs->use_like,
+                                        'like_button_name' => $bbs->like_button_name,
+                                        'contents_id' => $children_post->id,
+                                        'like_id' => $children_post->like_id,
+                                        'like_count' => $children_post->like_count,
+                                        'like_users_id' => $children_post->like_users_id,
+                                    ])
+                                @endif
                             </div>
                         </div>
                     @endforeach

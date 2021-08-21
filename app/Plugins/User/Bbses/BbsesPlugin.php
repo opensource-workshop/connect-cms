@@ -13,6 +13,7 @@ use App\Enums\UserStatus;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Like;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
 use App\Models\User\Bbses\BbsPost;
@@ -51,7 +52,7 @@ class BbsesPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
+        $functions['get']  = ['editView', 'saveLikeJson'];
         $functions['post'] = ['saveView', 'edit', 'reply'];
         return $functions;
     }
@@ -91,11 +92,23 @@ class BbsesPlugin extends UserPluginBase
         }
 
         // 権限によって表示する記事を絞る
-        $this->post = BbsPost::select('bbs_posts.*')
-                             ->where(function ($query) {
-                                 $query = $this->appendAuthWhere($query, 'bbs_posts');
-                             })
-                             ->firstOrNew(['id' => $id]);
+        // $this->post = BbsPost::select('bbs_posts.*')
+        $bbses_query = BbsPost::
+            select(
+                'bbs_posts.*',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
+            )
+            ->where(function ($query) {
+                $query = $this->appendAuthWhere($query, 'bbs_posts');
+            });
+            // ->firstOrNew(['id' => $id]);
+
+        // いいねのleftJoin
+        $bbses_query = Like::appendLikeLeftJoin($bbses_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
+
+        $this->post = $bbses_query->firstOrNew(['bbs_posts.id' => $id]);
 
         return $this->post;
     }
@@ -175,7 +188,13 @@ class BbsesPlugin extends UserPluginBase
     private function getRootPosts($bbs_frame, $frame_id)
     {
         // データ取得
-        $posts_query = BbsPost::select('bbs_posts.*')
+        $posts_query = BbsPost::
+            select(
+                'bbs_posts.*',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
+            )
             ->join('bbses', function ($join) {
                 $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
                     ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
@@ -185,6 +204,9 @@ class BbsesPlugin extends UserPluginBase
 
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
+
+        // いいねのleftJoin
+        $posts_query = Like::appendLikeLeftJoin($posts_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
 
         // 根記事の表示順
         if ($bbs_frame->thread_sort_flag == 1) {
@@ -205,16 +227,25 @@ class BbsesPlugin extends UserPluginBase
     private function getThreadPosts($bbs_frame, $thread_root_ids, $children_only = false)
     {
         // データ取得
-        $posts_query = BbsPost::select('bbs_posts.*')
-                                   ->join('bbses', function ($join) {
-                                       $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
-                                          ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
-                                   });
+        $posts_query = BbsPost::
+            select(
+                'bbs_posts.*',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
+            )
+            ->join('bbses', function ($join) {
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+            });
 
         // ルートのポストは含まない場合
         if ($children_only) {
             $posts_query->whereColumn('bbs_posts.id', '<>', 'bbs_posts.thread_root_id');
         }
+
+        // いいねのleftJoin
+        $posts_query = Like::appendLikeLeftJoin($posts_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
 
         // その他条件指定
         $posts_query->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
@@ -349,7 +380,16 @@ class BbsesPlugin extends UserPluginBase
         // 指定の記事がある場合
         if ($post) {
             // 根記事取得（getPost() はメインのPOST をシングルトンで保持するので、ここでは新たに取得する）
-            $thread_root_post = BbsPost::firstOrNew(['id' => $post->thread_root_id]);
+            // $thread_root_post = BbsPost::firstOrNew(['id' => $post->thread_root_id]);
+            $thread_root_post_query = BbsPost::
+                select(
+                    'bbs_posts.*',
+                    'likes.id as like_id',
+                    'likes.count as like_count',
+                    'like_users.id as like_users_id'    // idあればいいね済み
+                );
+            $thread_root_post_query = Like::appendLikeLeftJoin($thread_root_post_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
+            $thread_root_post = $thread_root_post_query->firstOrNew(['bbs_posts.id' => $post->thread_root_id]);
 
             // 表示対象のスレッドの記事一覧
             $children_posts = $this->getThreadPosts($plugin_frame, new Collection($post->thread_root_id), true);
@@ -357,6 +397,7 @@ class BbsesPlugin extends UserPluginBase
 
         // 詳細画面を呼び出す。
         return $this->view('show', [
+            'bbs' => $this->getPluginBucket($this->getBucketId()),
             'post' => $post,
             'thread_root_post' => $thread_root_post,
             'children_posts'   => $children_posts,
@@ -684,6 +725,8 @@ class BbsesPlugin extends UserPluginBase
         // プラグインバケツにデータを設定して保存
         $bbs = $this->getPluginBucket($bucket->id);
         $bbs->name = $request->name;
+        $bbs->use_like = $request->use_like;
+        $bbs->like_button_name = $request->like_button_name;
         $bbs->save();
 
         // プラグインフレームを作成 or 更新
@@ -744,5 +787,16 @@ class BbsesPlugin extends UserPluginBase
         $bbs_frame->save();
 
         return;
+    }
+
+    /**
+     * いいねをJSON形式で返す
+     */
+    public function saveLikeJson($request, $page_id, $frame_id, $id = null)
+    {
+        $bbs = $this->getPluginBucket($this->getBucketId());
+
+        $count = Like::saveLike($this->frame->plugin_name, $bbs->id, $id);
+        return $count;
     }
 }

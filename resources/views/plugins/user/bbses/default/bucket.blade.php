@@ -47,6 +47,30 @@
                 @if ($errors && $errors->has('name')) <div class="text-danger">{{$errors->first('name')}}</div> @endif
             </div>
         </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">いいねボタンの表示</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="use_like_on" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name:not(.show)" aria-expanded="false" aria-controls="collapse_like_button_name" @if (old('use_like', $bbs->use_like) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="use_like_on">表示する</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="0" id="use_like_off" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name.show" aria-expanded="false" aria-controls="collapse_like_button_name"  @if (old('use_like', $bbs->use_like) == 0) checked="checked" @endif>
+                    <label class="custom-control-label" for="use_like_off">表示しない</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group row collapse" id="collapse_like_button_name">
+            <label class="{{$frame->getSettingLabelClass()}}">いいねボタン名</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="like_button_name" value="{{old('like_button_name', $bbs->like_button_name)}}" class="form-control @if ($errors->has('like_button_name')) border-danger @endif">
+                @include('common.errors_inline', ['name' => 'like_button_name'])
+                <small class="form-text text-muted">空の場合「{{Like::like_button_default}}」を表示します。</small>
+            </div>
+        </div>
+
         {{-- Submitボタン --}}
         <div class="form-group text-center">
             <div class="row">
@@ -94,5 +118,13 @@
             </div>
         </div>
     </div>
+
+{{-- 初期状態で開くもの --}}
+@if(old('use_like', $bbs->use_like) == 1)
+    <script>
+        $('#collapse_like_button_name').collapse('show')
+    </script>
+@endif
+
 @endif
 @endsection
