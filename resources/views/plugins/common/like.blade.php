@@ -48,7 +48,7 @@
                 like: function () {
                     let self = this;
                     // 非同期
-                    axios.get("{{url('/')}}/json/{{$frame->plugin_name}}/saveLikeJson/{{$page->id}}/{{$frame_id}}/{{$contents_id}}/")
+                    axios.get("{{url('/')}}/json/{{$frame->plugin_name}}/saveLikeJson/{{$page->id}}/{{$frame_id}}/{{$contents_id}}")
                         .then(function(res){
                             self.like_count = res.data;
                             self.is_disabled = true;
