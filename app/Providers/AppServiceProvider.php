@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 //use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 use Illuminate\Queue\Events\JobFailed;
 
@@ -41,6 +42,11 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function boot()
     {
+        // varcharのデフォルト文字長は、191バイトにする対応を入れる。ただし、2024年6月30日以降はこの対応を消す可能性がある。
+        // これは、MySQL5.7.7 以上では必要ない対応であるが、Redhat7 デフォルトのMariaDB では必要なもののため、Redhat7 のセキュリティアップデートが終わる2024年6月30日を考慮したものである。
+        // see) https://readouble.com/laravel/6.x/ja/migrations.html#creating-indexes
+        Schema::defaultStringLength(191);
+
         // 認可サービス(Gate)利用の準備
         $this->registerPolicies();
 
