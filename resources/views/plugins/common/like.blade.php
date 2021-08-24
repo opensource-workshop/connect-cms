@@ -31,7 +31,7 @@
     <span id="app_like_{{$frame->id}}_{{$contents_id}}">
         <button class="btn btn-sm btn-link border font-weight-light" v-bind:disabled="is_disabled" v-on:click="like">
             {{-- JS描画でカウント数の初期表示がちょっと遅く一瞬消えるため、laraveの変数表示＆v-htmlでバインディング --}}
-            {{$like_button_name}} <span class="badge badge-light font-weight-light" v-html="like_count">{{$like_count}}</span>
+            {{$like_button_name}} <span class="badge badge-light font-weight-light" v-text="like_count">{{$like_count}}</span>
         </button>
     </span>
 
