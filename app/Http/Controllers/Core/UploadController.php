@@ -388,18 +388,26 @@ EOD;
                 $extension = strtolower($image_file->getClientOriginalExtension());
                 $is_resize = false;
 
+                // 画像のオリジナル縦横サイズを取得
+                list($original_width, $original_height, $type, $attr) = getimagesize($image_file->getPathname());
+                // \Log::debug(var_export($image_file->getPathname(), true));
+                // \Log::debug(var_export(getimagesize($image_file->getPathname()), true));
+
                 // GDが有効
                 if (function_exists('gd_info')) {
                     // 対象画像 jpg|png. gitはアニメーションgitが変換するとアニメーションしなくなる＆主要な画像形式ではないので外しました。
                     // if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'gif' || $extension == 'png') {
                     if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                        // 幅、高さが0より大きい
-                        if ((int)$request->width > 0 && (int)$request->height > 0) {
-                            // リサイズ
+                        // サイズ指定が原寸（画像の縦横サイズと同じ）なら、リサイズしない
+                        if ((int)$request->width === $original_width && (int)$request->height === $original_height) {
+                            // リサイズしない
+                        } elseif ((int)$request->width > 0 && (int)$request->height > 0) {
+                            // 幅、高さが0より大きい = リサイズ
                             $is_resize = true;
                         }
                     }
                 }
+                // \Log::debug(var_export($is_resize, true));
 
                 if ($is_resize) {
                     // リサイズ
