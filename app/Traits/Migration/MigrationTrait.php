@@ -412,6 +412,8 @@ trait MigrationTrait
         if ($target == 'bbses' || $target == 'all') {
             Bbs::truncate();
             BbsPost::truncate();
+            Like::where('target', 'bbses')->delete();
+            LikeUser::where('target', 'bbses')->delete();
             Buckets::where('plugin_name', 'bbses')->delete();
             MigrationMapping::where('target_source_table', 'bbses')->delete();
             MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
@@ -1762,6 +1764,7 @@ trait MigrationTrait
                                 'target_contents_id' => $blogs_posts->contents_id,
                                 'likes_id' => $like->id,
                                 'session_id' => $session_id,
+                                'users_id' => null,
                             ]);
                         }
                         // $like_users = LikeUser::insert($like_users_datas);
@@ -2800,9 +2803,15 @@ trait MigrationTrait
             }
             $bucket = Buckets::create(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
 
+            $use_like = 0;
+            if (array_key_exists('blog_base', $ini) && array_key_exists('use_like', $ini['blog_base'])) {
+                $use_like = $ini['blog_base']['use_like'];
+            }
+
             $bbs = Bbs::create([
                 'bucket_id' => $bucket->id,
                 'name' => $bbs_name,
+                'use_like' => $use_like,
             ]);
 
             // マッピングテーブルの追加
@@ -2851,6 +2860,30 @@ trait MigrationTrait
                         $bbs_post->thread_root_id = $bbs_post->id;
                         $bbs_post->save();
                     }
+
+                    // いいね数があれば likesテーブル保存
+                    if ($tsv_cols[13]) {
+
+                        $like = Like::create([
+                            'target' => 'bbses',
+                            'target_id' => $bbs->id,
+                            'target_contents_id' => $bbs_post->id,
+                            'count' => $tsv_cols[13],
+                        ]);
+
+                        // いいね数とlike_usersの件数を合わせるため、session_id & users_id 空のデータをいいね数分作成する。
+                        for ($i = 0; $tsv_cols[13] > $i; $i++) {
+                            $like_users = LikeUser::create([
+                                'target' => 'bbses',
+                                'target_id' => $bbs->id,
+                                'target_contents_id' => $bbs_post->id,
+                                'likes_id' => $like->id,
+                                'session_id' => null,   // nc2bbsは session_id を保持していないため、nullセット
+                                'users_id' => null,
+                            ]);
+                        }
+                    }
+
                     // マッピングテーブルの追加
                     if (array_key_exists($post_index, $post_source_keys)) {
                         $mapping = MigrationMapping::create([
@@ -5980,6 +6013,7 @@ trait MigrationTrait
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_bbs->bbs_name . "\"\n";
             $journals_ini .= "view_count = 10\n";
+            $journals_ini .= "use_like = " . $nc2_bbs->vote_flag . "\n";
 
             // NC2 情報
             $journals_ini .= "\n";
@@ -6024,6 +6058,8 @@ trait MigrationTrait
                 $journals_tsv .= $nc2_bbs_post->topic_id .    "\t"; // トピックID
                 $journals_tsv .= $nc2_bbs_post->newest_time . "\t"; // 最新投稿日時
                 $journals_tsv .= $nc2_bbs_post->insert_user_name . "\t"; // 投稿者名
+                $journals_tsv .= $nc2_bbs_post->vote_num    . "\t"; // いいね数
+                $journals_tsv .=                              "\t"; // いいねのsession_id & nc2 user_id
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
