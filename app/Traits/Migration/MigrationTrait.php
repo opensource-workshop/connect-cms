@@ -19,6 +19,8 @@ use App\Models\Common\PluginCategory;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
+use App\Models\Common\Like;
+use App\Models\Common\LikeUser;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\Permalink;
@@ -284,6 +286,8 @@ trait MigrationTrait
             BucketsRoles::truncate();
             Categories::truncate();
             PluginCategory::truncate();
+            Like::truncate();
+            LikeUser::truncate();
             Page::truncate();
         }
 
@@ -335,6 +339,8 @@ trait MigrationTrait
             Blogs::truncate();
             BlogsPosts::truncate();
             PluginCategory::where('target', 'blogs')->delete();
+            Like::where('target', 'blogs')->delete();
+            LikeUser::where('target', 'blogs')->delete();
             Buckets::where('plugin_name', 'blogs')->delete();
             MigrationMapping::where('target_source_table', 'blogs')->delete();
             MigrationMapping::where('target_source_table', 'blogs_post')->delete();
@@ -1626,7 +1632,12 @@ trait MigrationTrait
                         $view_count = 10;
                     }
                 }
-                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'view_count' => $view_count]);
+
+                $use_like = 0;
+                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('use_like', $blog_ini['blog_base'])) {
+                    $use_like = $blog_ini['blog_base']['use_like'];
+                }
+                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'view_count' => $view_count, 'use_like' => $use_like]);
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -1729,6 +1740,32 @@ trait MigrationTrait
                     // contents_id を初回はid と同じものを入れて、更新
                     $blogs_posts->contents_id = $blogs_posts->id;
                     $blogs_posts->save();
+
+                    // いいね数があれば likesテーブル保存
+                    if ($blog_tsv_cols[9]) {
+
+                        $like = Like::create([
+                            'target' => 'blogs',
+                            'target_id' => $blog->id,
+                            'target_contents_id' => $blogs_posts->contents_id,
+                            'count' => $blog_tsv_cols[9],
+                        ]);
+
+                        // 移行はsession_id でも nc2 user_id でも、全てセッションIDに格納で処理
+                        $session_ids = explode('|', $blog_tsv_cols[10]);
+                        // $like_users_datas = [];
+                        foreach ($session_ids as $session_id) {
+                            // $like_users_datas[] = [
+                            $like_users = LikeUser::create([
+                                'target' => 'blogs',
+                                'target_id' => $blog->id,
+                                'target_contents_id' => $blogs_posts->contents_id,
+                                'likes_id' => $like->id,
+                                'session_id' => $session_id,
+                            ]);
+                        }
+                        // $like_users = LikeUser::insert($like_users_datas);
+                    }
 
                     // マッピングテーブルの追加
                     if (array_key_exists($post_index, $post_source_keys)) {
@@ -5776,6 +5813,7 @@ trait MigrationTrait
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
             $journals_ini .= "view_count = 10\n";
+            $journals_ini .= "use_like = " . $nc2_journal->vote_flag . "\n";
 
             // NC2 情報
             $journals_ini .= "\n";
@@ -5852,6 +5890,8 @@ trait MigrationTrait
                     $category  = $category_obj->category_name;
                 }
 
+                $like_count = empty($nc2_journal_post->vote) ? 0 : count(explode('|', $nc2_journal_post->vote));
+
                 $journals_tsv .= $nc2_journal_post->journal_date    . "\t";
                 // $journals_tsv .= $nc2_journal_post->category_id     . "\t";
                 $journals_tsv .= $category                          . "\t";
@@ -5862,6 +5902,8 @@ trait MigrationTrait
                 $journals_tsv .= $more_content                      . "\t";
                 $journals_tsv .= $nc2_journal_post->more_title      . "\t";
                 $journals_tsv .= $nc2_journal_post->hide_more_title . "\t";
+                $journals_tsv .= $like_count                        . "\t";   // いいね数
+                $journals_tsv .= $nc2_journal_post->vote            . "\t";   // いいねのsession_id & nc2 user_id
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり

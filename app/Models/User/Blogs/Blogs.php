@@ -12,5 +12,10 @@ class Blogs extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['bucket_id', 'blog_name', 'view_count'];
+    protected $fillable = [
+        'bucket_id',
+        'blog_name',
+        'view_count',
+        'use_like',
+    ];
 }
