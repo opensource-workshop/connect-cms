@@ -25,6 +25,14 @@
                 @endif
                 </li>
 
+                <li role="presentation" class="nav-item">
+                @if ($function == "ldap")
+                    <span class="nav-link"><span class="active">LDAP認証</span></span>
+                @else
+                    <a href="{{url('/')}}/manage/auth/ldap" class="nav-link">LDAP認証</a></li>
+                @endif
+                </li>
+
             </ul>
         </div>
     </nav>

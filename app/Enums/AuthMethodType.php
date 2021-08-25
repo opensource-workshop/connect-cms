@@ -12,10 +12,12 @@ final class AuthMethodType extends EnumsBase
     // 定数メンバ
     const netcommons2 = 'netcommons2';
     const shibboleth = 'shibboleth';
+    const ldap = 'ldap';
 
     // key/valueの連想配列
     const enum = [
         self::netcommons2 => 'NetCommons2認証',
         self::shibboleth => 'Shibboleth認証',
+        self::ldap => 'LDAP認証',
     ];
 }
