@@ -538,6 +538,12 @@ trait ConnectCommonTrait
         } elseif ($auth_method_event->value == AuthMethodType::ldap) {
             // LDAP 認証
 
+            // php-ldapが有効でなければ、ここで戻す. 戻さないと、Call to undefined function App\\Traits\\ldap_connect()エラーでログインできなくなる。
+            if (! function_exists('ldap_connect')) {
+                Log::error('LDAP認証ONですがphp_ldapが無効なため、LDAP認証できませんでした。');
+                return;
+            }
+
             // 外部認証設定 取得
             $auth_method = Configs::firstOrNew(['name' => 'auth_method', 'value' => AuthMethodType::ldap]);
 
@@ -553,15 +559,20 @@ trait ConnectCommonTrait
 
                 if (! ldap_set_option($ldapconn, LDAP_OPT_PROTOCOL_VERSION, 3)) {
                     ldap_close($ldapconn);
-                    abort(403, "LDAPのプロトコルバージョンを 3 に設定できませんでした。");
+                    Log::error("LDAPのプロトコルバージョンを 3 に設定できませんでした。");
+                    return;
                 }
 
                 // ldap サーバーにバインドする
-                $ldapbind = ldap_bind($ldapconn, $ldaprdn, $request->password);
+                //   システム管理者等、LDAPにいないユーザだと ldap_bind(): Unable to bind to server: Invalid credentialsエラーが出るため @ でエラー抑止する。
+                $ldapbind = @ldap_bind($ldapconn, $ldaprdn, $request->password);
 
                 // バインド結果を検証する
                 if ($ldapbind) {
                     // LDAP認証OK
+
+                    // 以降でldap操作しないため、ここでクローズする。
+                    ldap_close($ldapconn);
 
                     // ログインするユーザの存在を確認
                     $user = User::where('userid', $request->userid)->first();
@@ -585,7 +596,6 @@ trait ConnectCommonTrait
                             return;
                         }
                     }
-                    ldap_close($ldapconn);
 
                     // ログイン
                     Auth::login($user, true);
@@ -596,7 +606,8 @@ trait ConnectCommonTrait
                 ldap_close($ldapconn);
 
             } else {
-                abort(403, "LDAPサーバに接続できませんでした。");
+                Log::error("LDAPサーバに接続できませんでした。");
+                return;
             }
         }
         return;
