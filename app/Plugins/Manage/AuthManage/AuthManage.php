@@ -175,7 +175,7 @@ class AuthManage extends ManagePluginBase
     public function ldap($request)
     {
         // Config データの取得
-        $config = Configs::where('name', 'auth_method')->where('value', AuthMethodType::ldap)->first();
+        $config = Configs::firstOrNew(['name' => 'auth_method', 'value' => AuthMethodType::ldap]);
 
         return view('plugins.manage.auth.ldap', [
             "function" => __FUNCTION__,

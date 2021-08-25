@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+// use Illuminate\Http\Request;
+// use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -17,13 +17,14 @@ use App\Models\Common\ConnectCarbon;
 use App\Models\Common\Frame;
 use App\Models\Common\Holiday;
 use App\Models\Common\Page;
-use App\Models\Common\PageRole;
+// use App\Models\Common\PageRole;
 use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersRoles;
 
 use App\Enums\UserStatus;
+use App\Enums\AuthMethodType;
 
 use Yasumi\Yasumi;
 
@@ -453,9 +454,9 @@ trait ConnectCommonTrait
         }
 
         // NetCommons2 認証
-        if ($auth_method_event->value == \AuthMethodType::netcommons2) {
+        if ($auth_method_event->value == AuthMethodType::netcommons2) {
             // 外部認証設定 取得
-            $auth_method = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
+            $auth_method = Configs::where('name', 'auth_method')->where('value', AuthMethodType::netcommons2)->first();
 
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
@@ -487,7 +488,7 @@ trait ConnectCommonTrait
                         $user->name = empty($check_result['handle']) ? $request['userid'] : $check_result['handle'];
                         $user->userid = $request['userid'];
                         $user->password = Hash::make($request['password']);
-                        $user->created_event = \AuthMethodType::netcommons2;
+                        $user->created_event = AuthMethodType::netcommons2;
                         $user->save();
 
                         // 追加権限設定があれば作成
@@ -533,6 +534,70 @@ trait ConnectCommonTrait
                     return redirect("/");
                 }
             }
+
+        } elseif ($auth_method_event->value == AuthMethodType::ldap) {
+            // LDAP 認証
+
+            // 外部認証設定 取得
+            $auth_method = Configs::firstOrNew(['name' => 'auth_method', 'value' => AuthMethodType::ldap]);
+
+            // ldap バインドを使用する
+            // $ldaprdn = "uid=" . $request->userid . "," . $ldap_domain;     // ldap rdn あるいは dn
+            $ldaprdn = "uid=" . $request->userid . "," . $auth_method->additional2;     // ldap rdn あるいは dn
+
+            // ldap サーバーに接続する
+            // $ldapconn = ldap_connect("ldap://localhost:389") or die("Could not connect to LDAP server.");
+            $ldapconn = ldap_connect($auth_method->additional1);
+
+            if ($ldapconn) {
+
+                if (! ldap_set_option($ldapconn, LDAP_OPT_PROTOCOL_VERSION, 3)) {
+                    ldap_close($ldapconn);
+                    abort(403, "LDAPのプロトコルバージョンを 3 に設定できませんでした。");
+                }
+
+                // ldap サーバーにバインドする
+                $ldapbind = ldap_bind($ldapconn, $ldaprdn, $request->password);
+
+                // バインド結果を検証する
+                if ($ldapbind) {
+                    // LDAP認証OK
+
+                    // ログインするユーザの存在を確認
+                    $user = User::where('userid', $request->userid)->first();
+
+                    // ユーザが存在しない
+                    if (empty($user)) {
+                        // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム
+                        $password = Hash::make(Str::random(20));
+
+                        // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                        $user = new User;
+                        $user->name = $request->userid;
+                        $user->userid = $request->userid;
+                        $user->password = $password;
+                        $user->created_event = AuthMethodType::ldap;
+                        $user->save();
+
+                    } else {
+                        // ユーザ登録が既にある場合、そのユーザが利用可能になっているかどうかをチェックし、利用不可になっている場合は処理を戻す
+                        if ($user->status != UserStatus::active) {
+                            return;
+                        }
+                    }
+                    ldap_close($ldapconn);
+
+                    // ログイン
+                    Auth::login($user, true);
+
+                    // トップページへ
+                    return redirect("/");
+                }
+                ldap_close($ldapconn);
+
+            } else {
+                abort(403, "LDAPサーバに接続できませんでした。");
+            }
         }
         return;
     }
@@ -550,7 +615,7 @@ trait ConnectCommonTrait
             return;
         }
 
-        if ($auth_method_event->value == \AuthMethodType::shibboleth) {
+        if ($auth_method_event->value == AuthMethodType::shibboleth) {
             // shibboleth 認証
             //
             // 必須
@@ -580,7 +645,7 @@ trait ConnectCommonTrait
                 $user->userid = $userid;
                 $user->email = $email;
                 $user->password = $password;
-                $user->created_event = \AuthMethodType::shibboleth;
+                $user->created_event = AuthMethodType::shibboleth;
                 $user->save();
 
                 // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生)
@@ -629,9 +694,9 @@ trait ConnectCommonTrait
         }
 
         // NetCommons2 認証
-        if ($auth_method_event->value == \AuthMethodType::netcommons2) {
+        if ($auth_method_event->value == AuthMethodType::netcommons2) {
             // 外部認証設定 取得
-            $auth_method = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
+            $auth_method = Configs::where('name', 'auth_method')->where('value', AuthMethodType::netcommons2)->first();
 
             // リクエストURLの組み立て
             $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_getuser&userid=' . $userid . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5($auth_method['additional5'] . $auth_method['additional3']);
