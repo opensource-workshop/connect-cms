@@ -2003,6 +2003,7 @@ trait MigrationTrait
                     $linklist_tsv_cols = explode("\t", $linklist_tsv_line);
                     $linklist_tsv_cols[3] = isset($linklist_tsv_cols[3]) ? $linklist_tsv_cols[3] : '0';
                     $linklist_tsv_cols[4] = isset($linklist_tsv_cols[4]) ? $linklist_tsv_cols[4] : '0';
+                    $linklist_tsv_cols[5] = isset($linklist_tsv_cols[5]) ? $linklist_tsv_cols[5] : '0';
 
                     // 記事のカテゴリID
                     // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でリンクリスト単位のカテゴリを探してID 特定。
@@ -6362,9 +6363,9 @@ trait MigrationTrait
                     $category  = $category_obj->category_name;
                 }
 
-                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_link->title)              . "\t";
-                $linklists_tsv .= str_replace("\t", "", $nc2_linklist_link->url)                . "\t";
-                $linklists_tsv .= str_replace("\t", " ", $nc2_linklist_link->description)       . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->title)              . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->url)                . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc2_linklist_link->description)       . "\t";
                 $linklists_tsv .= $nc2_linklist_block->target_blank_flag                        . "\t";
                 $linklists_tsv .= $nc2_linklist_link->link_sequence                             . "\t";
                 $linklists_tsv .= $category;
