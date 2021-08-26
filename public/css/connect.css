@@ -24,6 +24,13 @@ body {
     background-color: #ededee !important;
 }
 
+/* WYSIWYG のプレビューでGoogle Map が表示されない問題の対応
+   WYSIWYG のプレビュー時に、embed-responsive と iframe の間にspan が生成され、
+   そのspan の position が relative になっていることが原因のため、static に設定する。 */
+.embed-responsive span.mce-preview-object {
+    position: static;
+}
+
 /* WYSIWYG で設定できる記事の書式
 ------------------------------------- */
 /* 囲み(グレー) */
