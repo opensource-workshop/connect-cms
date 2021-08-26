@@ -59,7 +59,7 @@
                     {{-- ラジオのチェック判定 --}}
                     @php
                         $checked = null;
-                        if(old('auth_method_event', $auth_method_event) == $key){
+                        if (old('auth_method_event', $auth_method_event) == $key) {
                             // 設定値があればそれに応じてチェックON
                             $checked = 'checked';
                         }
