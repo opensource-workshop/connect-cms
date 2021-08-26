@@ -281,6 +281,7 @@ $app_array = [
         'CabinetFrameConfig' => \App\Enums\CabinetFrameConfig::class,
         'CabinetSort' => \App\Enums\CabinetSort::class,
         'LinklistType' => \App\Enums\LinklistType::class,
+        'AuthLdapDnType' => \App\Enums\AuthLdapDnType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

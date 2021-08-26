@@ -203,7 +203,8 @@ class AuthManage extends ManagePluginBase
             [
                 'category' => 'auth',
                 'additional1' => $request->auth_ldap_uri,
-                'additional2' => $request->auth_ldap_dn,
+                'additional2' => $request->auth_ldap_dn_type,
+                'additional3' => $request->auth_ldap_dn,
             ]
         );
 

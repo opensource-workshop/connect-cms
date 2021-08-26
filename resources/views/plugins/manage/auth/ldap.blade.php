@@ -36,13 +36,44 @@
                 </div>
             </div>
 
+            <div class="form-group">
+                <label class="col-form-label">DNタイプ</label>
+                <div class="row">
+
+                    @foreach (AuthLdapDnType::enum as $key => $value)
+                        {{-- ラジオのチェック判定 --}}
+                        @php
+                            $checked = null;
+                            if (AuthLdapDnType::dn == $key && empty(old('auth_ldap_dn_type', $config->additional2))) {
+                                // （初期値）DNで値空ならチェック
+                                $checked = 'checked';
+                            }
+                            if (old('auth_ldap_dn_type', $config->additional2) == $key) {
+                                // 設定値があればそれに応じてチェックON
+                                $checked = 'checked';
+                            }
+                        @endphp
+                        {{-- ラジオ表示 --}}
+                        <div class="col-md-3">
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" value="{{ $key }}" class="custom-control-input" id="auth_ldap_dn_type_{{ $key }}" name="auth_ldap_dn_type" {{ $checked }} >
+                                <label class="custom-control-label" for="auth_ldap_dn_type_{{ $key }}">
+                                    {!! $value !!}
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+
+                </div>
+            </div>
+
             <div class="form-group row">
                 <div class="col">
                     <label class="col-form-label">DN</label>
-                    <input type="text" name="auth_ldap_dn" value="{{old('auth_ldap_dn', $config->additional2)}}" class="form-control">
+                    <input type="text" name="auth_ldap_dn" value="{{old('auth_ldap_dn', $config->additional3)}}" class="form-control">
                     <small class="form-text text-muted">
-                        ※ <code>uid=[ユーザID],[DN]</code>形式（OpenLDAP形式）でLDAP認証をします。 <br />
-                        ※ 設定例）ou=People,dc=example,dc=com<br />
+                        ※ DNタイプ「DN」の設定例）ou=People,dc=example,dc=com<br />
+                        ※ DNタイプ「Active Directory」の設定例）example.com<br />
                     </small>
                 </div>
             </div>

@@ -25,6 +25,7 @@ use App\Models\Core\UsersRoles;
 
 use App\Enums\UserStatus;
 use App\Enums\AuthMethodType;
+use App\Enums\AuthLdapDnType;
 
 use Yasumi\Yasumi;
 
@@ -548,8 +549,13 @@ trait ConnectCommonTrait
             $auth_method = Configs::firstOrNew(['name' => 'auth_method', 'value' => AuthMethodType::ldap]);
 
             // ldap バインドを使用する
-            // $ldaprdn = "uid=" . $request->userid . "," . $ldap_domain;     // ldap rdn あるいは dn
-            $ldaprdn = "uid=" . $request->userid . "," . $auth_method->additional2;     // ldap rdn あるいは dn
+            if ($auth_method->additional2 == AuthLdapDnType::active_directory) {
+                // Active Directoryタイプ例：test001@example.com
+                $ldaprdn = $request->userid . "@" . $auth_method->additional3;     // ldap rdn あるいは dn
+            } else {
+                // DNタイプ例：uid=test001,ou=People,dc=example,dc=com
+                $ldaprdn = "uid=" . $request->userid . "," . $auth_method->additional3;
+            }
 
             // ldap サーバーに接続する
             // $ldapconn = ldap_connect("ldap://localhost:389") or die("Could not connect to LDAP server.");
