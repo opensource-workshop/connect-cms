@@ -32,20 +32,20 @@
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
                             <input
-                                type="radio" value="1" class="custom-control-input" id="use_auth_method_1"
-                                name="use_auth_method" @if(old('use_auth_method', $use_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_auth_method_1" id="label_use_auth_method_1">
-                                使用する
+                                type="radio" value="0" class="custom-control-input" id="use_auth_method_0"
+                                name="use_auth_method" @if(!old('use_auth_method', $use_auth_method)) checked @endif>
+                            <label class="custom-control-label" for="use_auth_method_0" id="label_use_auth_method_0">
+                                使用しない
                             </label>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
                             <input
-                                type="radio" value="0" class="custom-control-input" id="use_auth_method_0"
-                                name="use_auth_method" @if(!old('use_auth_method', $use_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_auth_method_0" id="label_use_auth_method_0">
-                                使用しない
+                                type="radio" value="1" class="custom-control-input" id="use_auth_method_1"
+                                name="use_auth_method" @if(old('use_auth_method', $use_auth_method)) checked @endif>
+                            <label class="custom-control-label" for="use_auth_method_1" id="label_use_auth_method_1">
+                                使用する
                             </label>
                         </div>
                     </div>
@@ -100,20 +100,20 @@
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
                             <input
-                                type="radio" value="1" class="custom-control-input" id="use_normal_login_along_with_auth_method_1"
-                                name="use_normal_login_along_with_auth_method" @if(old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_normal_login_along_with_auth_method_1">
-                                使用する
+                                type="radio" value="0" class="custom-control-input" id="use_normal_login_along_with_auth_method_0"
+                                name="use_normal_login_along_with_auth_method" @if(!old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
+                            <label class="custom-control-label" for="use_normal_login_along_with_auth_method_0">
+                                使用しない
                             </label>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="custom-control custom-radio custom-control-inline">
                             <input
-                                type="radio" value="0" class="custom-control-input" id="use_normal_login_along_with_auth_method_0"
-                                name="use_normal_login_along_with_auth_method" @if(!old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
-                            <label class="custom-control-label" for="use_normal_login_along_with_auth_method_0">
-                                使用しない
+                                type="radio" value="1" class="custom-control-input" id="use_normal_login_along_with_auth_method_1"
+                                name="use_normal_login_along_with_auth_method" @if(old('use_normal_login_along_with_auth_method', $use_normal_login_along_with_auth_method)) checked @endif>
+                            <label class="custom-control-label" for="use_normal_login_along_with_auth_method_1">
+                                使用する
                             </label>
                         </div>
                     </div>
