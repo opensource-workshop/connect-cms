@@ -571,6 +571,7 @@ trait ConnectCommonTrait
 
                 // ldap サーバーにバインドする
                 //   システム管理者等、LDAPにいないユーザだと ldap_bind(): Unable to bind to server: Invalid credentialsエラーが出るため @ でエラー抑止する。
+                //   LDAPサーバに繋げないエラー     Warning: ldap_bind(): Unable to bind to server: Can't contact LDAP server も @ で抑止され,falseが返ってくる。
                 $ldapbind = @ldap_bind($ldapconn, $ldaprdn, $request->password);
 
                 // バインド結果を検証する
@@ -608,8 +609,13 @@ trait ConnectCommonTrait
 
                     // トップページへ
                     return redirect("/");
+                } else {
+                    // Error 49: Invalid credentials（パスワード間違い）以外はログを出力する。
+                    if (ldap_errno($ldapconn) != 49) {
+                        Log::error("LDAP-Error " . ldap_errno($ldapconn) . ": " . ldap_error($ldapconn));
+                    }
+                    ldap_close($ldapconn);
                 }
-                ldap_close($ldapconn);
 
             } else {
                 Log::error("LDAPサーバに接続できませんでした。");
