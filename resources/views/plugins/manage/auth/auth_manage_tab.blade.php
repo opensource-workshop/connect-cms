@@ -18,18 +18,18 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                    @if ($function == "ldap")
+                        <span class="nav-link"><span class="active">LDAP認証</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/auth/ldap" class="nav-link">LDAP認証</a></li>
+                    @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "netcommons2")
                     <span class="nav-link"><span class="active">NetCommons2認証</span></span>
                 @else
                     <a href="{{url('/')}}/manage/auth/netcommons2" class="nav-link">NetCommons2認証</a></li>
-                @endif
-                </li>
-
-                <li role="presentation" class="nav-item">
-                @if ($function == "ldap")
-                    <span class="nav-link"><span class="active">LDAP認証</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/auth/ldap" class="nav-link">LDAP認証</a></li>
                 @endif
                 </li>
 

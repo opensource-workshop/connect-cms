@@ -82,11 +82,11 @@
                 <div class="card bg-light form-text">
                     <div class="card-body px-2 pt-1 pb-1">
                         <span class="small">
-                            ※ NetCommons2認証は <a href="{{url('/')}}/manage/auth/netcommons2">NetCommons2認証</a> 画面で設定します。<br>
+                            ※ LDAP認証は <a href="{{url('/')}}/manage/auth/ldap">LDAP認証</a> 画面で設定します。<br>
                             ※ Shibboleth認証を選択すると、画面上部のログインのリンク先がShibbolethログイン画面に変更されます。<br>
                             ※ Shibboleth認証はファイルで設定します。設定ファイル：<code>config/cc_shibboleth_config.php</code><br>
-                            ※ Shibboleth認証後、当サイトに該当ユーザがいない場合、自動作成されます。<br>
-                            ※ LDAP認証は <a href="{{url('/')}}/manage/auth/ldap">LDAP認証</a> 画面で設定します。<br>
+                            ※ NetCommons2認証は <a href="{{url('/')}}/manage/auth/netcommons2">NetCommons2認証</a> 画面で設定します。<br>
+                            ※ いずれの外部認証でも認証後、当サイトに該当ユーザがいない場合、自動作成されます。<br>
                         </span>
                     </div>
                 </div>
@@ -122,7 +122,7 @@
                     <div class="card-body px-2 pt-1 pb-1">
                         <span class="small">
                             ※ 「使用する」場合、外部認証毎に通常ログイン方法が異なります。<br>
-                            ※ NetCommons2認証またはLDAP認証で通常ログインも「使用する」場合、外部認証でログインできなかったら、連続して通常ログインを行います。<br>
+                            ※ LDAP認証またはNetCommons2認証で通常ログインも「使用する」場合、外部認証でログインできなかったら、連続して通常ログインを行います。<br>
                             ※ Shibboleth認証で通常ログインも「使用する」場合、ログインURL <code>{{url('/')}}/{{config('connect.LOGIN_PATH')}}</code> を直接入力して通常ログインを行います。<br>
                         </span>
                     </div>
