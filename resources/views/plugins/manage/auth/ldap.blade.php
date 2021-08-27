@@ -1,5 +1,5 @@
 {{--
- * 外部認証>NetCommons2認証
+ * 外部認証>LDAP認証
 --}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
