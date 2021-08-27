@@ -51,7 +51,7 @@ $(function(){
 
     {{-- フラッシュメッセージ表示 --}}
     @if (session('flash_message_for_header'))
-        <div class="alert alert-success text-center">
+        <div class="alert {{ session('flash_message_for_header_class') ?? 'alert-success' }} text-center">
             {{ session('flash_message_for_header') }}
         </div>
     @endif
