@@ -8,13 +8,15 @@ use App\Models\Core\Configs;
 
 use App\Plugins\Manage\ManagePluginBase;
 
+use App\Enums\AuthMethodType;
+
 /**
  * 外部認証クラス
  *
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 外部認証
- * @package Contoroller
+ * @package Controller
  */
 class AuthManage extends ManagePluginBase
 {
@@ -29,6 +31,9 @@ class AuthManage extends ManagePluginBase
         $role_ckeck_table["update"] = array('admin_site');
         $role_ckeck_table["netcommons2"] = array('admin_site');
         $role_ckeck_table["netcommons2Update"] = array('admin_site');
+        $role_ckeck_table["ldap"] = array('admin_site');
+        $role_ckeck_table["ldapUpdate"] = array('admin_site');
+        $role_ckeck_table["shibboleth"] = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -111,7 +116,7 @@ class AuthManage extends ManagePluginBase
         );
 
         // 画面に戻る
-        return redirect("/manage/auth");
+        return redirect("/manage/auth")->with('flash_message', '更新しました。');
     }
 
     /**
@@ -122,7 +127,7 @@ class AuthManage extends ManagePluginBase
     public function netcommons2($request)
     {
         // Config データの取得
-        $config = Configs::where('name', 'auth_method')->where('value', \AuthMethodType::netcommons2)->first();
+        $config = Configs::where('name', 'auth_method')->where('value', AuthMethodType::netcommons2)->first();
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
@@ -145,10 +150,12 @@ class AuthManage extends ManagePluginBase
 
         // 設定内容の保存
         $configs = Configs::updateOrCreate(
-            ['name' => 'auth_method'],
+            [
+                'name' => 'auth_method',
+                'value' => AuthMethodType::netcommons2,
+            ],
             [
                 'category' => 'auth',
-                'value' => \AuthMethodType::netcommons2,
                 'additional1' => $request->auth_netcomons2_site_url,
                 'additional2' => $request->auth_netcomons2_site_key,
                 'additional3' => $request->auth_netcomons2_salt,
@@ -158,6 +165,64 @@ class AuthManage extends ManagePluginBase
         );
 
         // システム管理画面に戻る
-        return redirect("/manage/auth/netcommons2");
+        return redirect("/manage/auth/netcommons2")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * LDAP認証表示
+     *
+     * @return view
+     */
+    public function ldap($request)
+    {
+        // Config データの取得
+        $config = Configs::firstOrNew(['name' => 'auth_method', 'value' => AuthMethodType::ldap]);
+
+        return view('plugins.manage.auth.ldap', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "auth",
+            "config" => $config,
+        ]);
+    }
+
+    /**
+     * LDAP認証設定の保存
+     */
+    public function ldapUpdate($request, $page_id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // 設定内容の保存
+        $configs = Configs::updateOrCreate(
+            [
+                'name' => 'auth_method',
+                'value' => AuthMethodType::ldap,
+            ],
+            [
+                'category' => 'auth',
+                'additional1' => $request->auth_ldap_uri,
+                'additional2' => $request->auth_ldap_dn_type,
+                'additional3' => $request->auth_ldap_dn,
+            ]
+        );
+
+        // システム管理画面に戻る
+        return redirect("/manage/auth/ldap")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * Shibboleth認証表示
+     *
+     * @return view
+     */
+    public function shibboleth($request)
+    {
+        return view('plugins.manage.auth.shibboleth', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "auth",
+        ]);
     }
 }
