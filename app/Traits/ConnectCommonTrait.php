@@ -541,9 +541,7 @@ trait ConnectCommonTrait
 
             // php-ldapが有効でなければ、ここで戻す. 戻さないと、Call to undefined function App\\Traits\\ldap_connect()エラーでログインできなくなる。
             if (! function_exists('ldap_connect')) {
-                $message = 'LDAP認証ONですがphp_ldapが無効なため、LDAP認証できませんでした。';
-                session()->flash('flash_message_for_header', $message);
-                Log::error($message);
+                $this->errorLogAndFlashMessageForHeader('LDAP認証ONですがphp_ldapが無効なため、LDAP認証できませんでした。');
                 return;
             }
 
@@ -567,9 +565,7 @@ trait ConnectCommonTrait
 
                 if (! ldap_set_option($ldapconn, LDAP_OPT_PROTOCOL_VERSION, 3)) {
                     ldap_close($ldapconn);
-                    $message = 'LDAPのプロトコルバージョンを 3 に設定できませんでした。';
-                    session()->flash('flash_message_for_header', $message);
-                    Log::error($message);
+                    $this->errorLogAndFlashMessageForHeader('LDAPのプロトコルバージョンを 3 に設定できませんでした。');
                     return;
                 }
 
@@ -616,21 +612,27 @@ trait ConnectCommonTrait
                 } else {
                     // Error 49: Invalid credentials（パスワード間違い）以外はログを出力する。
                     if (ldap_errno($ldapconn) != 49) {
-                        $message = "LDAP-Error " . ldap_errno($ldapconn) . ": " . ldap_error($ldapconn);
-                        session()->flash('flash_message_for_header', $message);
-                        Log::error($message);
+                        $this->errorLogAndFlashMessageForHeader("LDAP-Error " . ldap_errno($ldapconn) . ": " . ldap_error($ldapconn));
                     }
                     ldap_close($ldapconn);
                 }
 
             } else {
-                $message = "LDAPサーバに接続できませんでした。";
-                session()->flash('flash_message_for_header', $message);
-                Log::error($message);
+                $this->errorLogAndFlashMessageForHeader("LDAPサーバに接続できませんでした。");
                 return;
             }
         }
         return;
+    }
+
+    /**
+     * エラーメッセージを画面ヘッダー部分とログに出力
+     */
+    private function errorLogAndFlashMessageForHeader($message)
+    {
+        session()->flash('flash_message_for_header', $message);
+        session()->flash('flash_message_for_header_class', 'alert-danger');
+        Log::error($message);
     }
 
     /**
