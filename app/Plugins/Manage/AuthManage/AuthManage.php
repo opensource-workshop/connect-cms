@@ -33,6 +33,7 @@ class AuthManage extends ManagePluginBase
         $role_ckeck_table["netcommons2Update"] = array('admin_site');
         $role_ckeck_table["ldap"] = array('admin_site');
         $role_ckeck_table["ldapUpdate"] = array('admin_site');
+        $role_ckeck_table["shibboleth"] = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -211,4 +212,18 @@ class AuthManage extends ManagePluginBase
         // システム管理画面に戻る
         return redirect("/manage/auth/ldap")->with('flash_message', '更新しました。');
     }
+
+    /**
+     * Shibboleth認証表示
+     *
+     * @return view
+     */
+    public function shibboleth($request)
+    {
+        return view('plugins.manage.auth.shibboleth', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "auth",
+        ]);
+    }
+
 }

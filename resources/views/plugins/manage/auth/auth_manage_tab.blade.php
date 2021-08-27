@@ -26,6 +26,14 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                    @if ($function == "shibboleth")
+                        <span class="nav-link"><span class="active">Shibboleth認証</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/auth/shibboleth" class="nav-link">Shibboleth認証</a></li>
+                    @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "netcommons2")
                     <span class="nav-link"><span class="active">NetCommons2認証</span></span>
                 @else

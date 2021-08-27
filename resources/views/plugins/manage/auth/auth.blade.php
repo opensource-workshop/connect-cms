@@ -84,7 +84,7 @@
                         <span class="small">
                             ※ LDAP認証は <a href="{{url('/')}}/manage/auth/ldap">LDAP認証</a> 画面で設定します。<br>
                             ※ Shibboleth認証を選択すると、画面上部のログインのリンク先がShibbolethログイン画面に変更されます。<br>
-                            ※ Shibboleth認証はファイルで設定します。設定ファイル：<code>config/cc_shibboleth_config.php</code><br>
+                            ※ Shibboleth認証はファイルで設定します。設定ファイル：<code>config/cc_shibboleth_config.php</code>。設定内容は <a href="{{url('/')}}/manage/auth/shibboleth">Shibboleth認証</a> 画面で確認できます。<br>
                             ※ NetCommons2認証は <a href="{{url('/')}}/manage/auth/netcommons2">NetCommons2認証</a> 画面で設定します。<br>
                             ※ いずれの外部認証でも認証後、当サイトに該当ユーザがいない場合、自動作成されます。<br>
                         </span>
