@@ -225,5 +225,4 @@ class AuthManage extends ManagePluginBase
             "plugin_name" => "auth",
         ]);
     }
-
 }
