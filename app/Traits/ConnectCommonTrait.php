@@ -190,16 +190,24 @@ trait ConnectCommonTrait
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
         $file_path = base_path() . "/app/Plugins/Manage/" . ucfirst($plugin_name) . "Manage/" . ucfirst($plugin_name) . "Manage.php";
 
-        // ファイルの存在確認
+        /// インスタンスを生成して返す。
+        $class_name = "app\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
+
+        // テンプレート・ディレクトリがない場合はオプションプラグインのテンプレートディレクトリを探す
         if (!file_exists($file_path)) {
-            abort(404);
+            $file_path = base_path() . "/app/PluginsOption/Manage/" . ucfirst($plugin_name) . "Manage/" . ucfirst($plugin_name) . "Manage.php";
+
+            $class_name = "app\PluginsOption\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
+
+            // ファイルの存在確認
+            if (!file_exists($file_path)) {
+                abort(404);
+            }
         }
 
         // 指定されたプラグインファイルの読み込み
         require $file_path;
 
-        /// インスタンスを生成して返す。
-        $class_name = "app\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
         $plugin_instance = new $class_name;
         return $plugin_instance;
     }
