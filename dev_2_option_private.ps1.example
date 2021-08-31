@@ -32,7 +32,7 @@ robocopy "${src_root_dir}app\ModelsOption\User\${option_plugin_model_dir}" "${di
 robocopy "${src_root_dir}resources\views\plugins_option\user\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\user\${option_plugin_resources_dir}" /s
 robocopy "${src_root_dir}app\Console\CommandsOption\${option_plugin_command_dir}" "${dist_root_dir}${option_plugin}\app\Console\CommandsOption\${option_plugin_command_dir}" /s
 
-robocopy "${src_root_dir}database\migrations_option" "${dist_root_dir}${option_plugin}\database\migrations_option" /s
+robocopy "${src_root_dir}database\migrations_option" "${dist_root_dir}${option_plugin}\database\migrations_option" /s /xf _readme.txt
 robocopy "${src_root_dir}app\EnumsOption" "${dist_root_dir}${option_plugin}\app\EnumsOption" /s
 
 exit
