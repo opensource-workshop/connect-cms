@@ -98,14 +98,14 @@ class CodeManage extends ManagePluginBase
                     ->leftJoin('plugins', 'plugins.plugin_name', '=', 'codes.plugin_name')
                     ->leftJoin('codes_help_messages', 'codes_help_messages.alias_key', '=', 'codes.codes_help_messages_alias_key');
         $codes_query->orderBy('plugin_name')
+                    ->orderBy('display_sequence')
                     ->orderBy('buckets_id')
                     ->orderBy('prefix')
                     ->orderBy('type_code1')
                     ->orderBy('type_code2')
                     ->orderBy('type_code3')
                     ->orderBy('type_code4')
-                    ->orderBy('type_code5')
-                    ->orderBy('display_sequence');
+                    ->orderBy('type_code5');
 
         // $search_words = $request->input('search_words', '入退室');
         // 入力された検索ワード
