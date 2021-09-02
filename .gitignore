@@ -31,9 +31,17 @@ sync_dev_2_option_private.sh
 sync_option_private_2_dev.sh
 
 /app/ModelsOption/*
-!/app/ModelsOption/User\Optionsamples/*
+!/app/ModelsOption/User/
+/app/ModelsOption/User/*
+!/app/ModelsOption/User/Optionsamples/*
 /app/PluginsOption/*
+!/app/PluginsOption/User/
+/app/PluginsOption/User/*
+!/app/PluginsOption/User/UserPluginOptionBase.php
 !/app/PluginsOption/User/Optionsamples/*
+!/app/PluginsOption/Manage/
+/app/PluginsOption/Manage/*
+!/app/PluginsOption/Manage/ManagePluginOptionBase.php
 /app/EnumsOption/*
 /app/Console/CommandsOption/*
 /database/migrations_option/*
