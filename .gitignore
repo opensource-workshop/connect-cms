@@ -42,6 +42,9 @@ sync_option_private_2_dev.sh
 !/app/PluginsOption/Manage/
 /app/PluginsOption/Manage/*
 !/app/PluginsOption/Manage/ManagePluginOptionBase.php
+!/app/PluginsOption/Api/
+/app/PluginsOption/Api/*
+!/app/PluginsOption/Api/ApiPluginOptionBase.php
 /app/EnumsOption/*
 /app/Console/CommandsOption/*
 /database/migrations_option/*
