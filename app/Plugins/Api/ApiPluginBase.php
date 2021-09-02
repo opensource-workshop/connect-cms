@@ -9,13 +9,13 @@ use App\Plugins\PluginBase;
 use App\Traits\ConnectCommonTrait;
 
 /**
- * 管理プラグイン
+ * APIプラグイン
  *
- * 管理ページ用プラグインの基底クラス
+ * APIプラグインの基底クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category 管理プラグイン
+ * @category APIプラグイン
  * @package Controller
  */
 class ApiPluginBase extends PluginBase
