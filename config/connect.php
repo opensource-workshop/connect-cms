@@ -77,4 +77,7 @@ return [
     'cc_lang_ja_messages_search_results_empty' => env('cc_lang_ja_messages_search_results_empty'),
     'cc_lang_ja_messages_enter_same_email' => env('cc_lang_ja_messages_enter_same_email'),
     'cc_lang_ja_messages_input_user_name' => env('cc_lang_ja_messages_input_user_name'),
+
+    // csrfチェックの除外設定
+    'VERIFY_CSRF_TOKEN_EXCEPT' => env('VERIFY_CSRF_TOKEN_EXCEPT', ''),
 ];
