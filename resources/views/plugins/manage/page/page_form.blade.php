@@ -11,6 +11,13 @@
 {{-- 共通エラーメッセージ 呼び出し --}}
 @include('common.errors_form_line')
 
+<script>
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
 @if ($page->id)
 <form action="{{url('/manage/page/update')}}/{{$page->id}}" method="POST" class="form-horizontal">
 @else
@@ -46,20 +53,20 @@
                 <label class="custom-control-label" for="membership_flag_0">公開</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if ($page->membership_flag == 1)
-                    <input type="radio" value="1" id="membership_flag_1" name="membership_flag" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="membership_flag_1" name="membership_flag" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="membership_flag_1">メンバーシップページ</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
                 @if ($page->membership_flag == 2)
                     <input type="radio" value="2" id="membership_flag_2" name="membership_flag" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="2" id="membership_flag_2" name="membership_flag" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="membership_flag_2">ログインユーザ全員参加</label>
+                <label class="custom-control-label" for="membership_flag_2">ログインユーザ公開</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if ($page->membership_flag == 1)
+                    <input type="radio" value="1" id="membership_flag_1" name="membership_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="membership_flag_1" name="membership_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="membership_flag_1">メンバー限定公開 <i class="fas fa-info-circle" data-toggle="tooltip" title="指定グループのログインユーザのみに公開します。"></i></label>
             </div>
         </div>
     </div>
@@ -68,8 +75,10 @@
         <div class="col-md-3"></div>
         <div class="col mx-0">
             <small class="form-text text-muted">
-                ※ メンバーシップページの下層のページもメンバーシップページになります。<br />
-                ※ ページ及び、メンバーシップページの権限設定は「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」で設定できます。
+                ※ メンバー限定公開の場合、下層ページも同じ公開範囲になります。<br />
+                ※ ページの権限設定は「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」で設定できます。<br />
+                ※ メンバー限定公開ページを参照するには、「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」でグループに対して何らかの権限を設定してください。<br />
+                ※ ユーザのグループに対する参加は「<a href="{{ url('/manage/user') }}" target="_blank">ユーザ管理 <i class="fas fa-external-link-alt"></i></a>」のグループから設定できます。
             </small>
         </div>
     </div>
