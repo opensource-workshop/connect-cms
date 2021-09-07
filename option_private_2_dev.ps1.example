@@ -30,20 +30,23 @@ $src_root_dir = "C:\path_to_option_private_dir\"
 $dist_root_dir = "C:\path_to_dev_connect-cms\"
 
 # コピー対象のプラグインディレクトリ名
-$option_plugin = "pluginname"
-$option_plugin_controller_dir = "PluginName"
-$option_plugin_resources_dir = "pluginname"
+$option_plugin = "PluginName"
+$option_plugin_controller_dir = "User\PluginName"
+$option_plugin_resources_dir = "user\pluginname"
 $option_plugin_model_dir = $option_plugin_controller_dir
 $option_plugin_command_dir = $option_plugin_controller_dir
 
 
 ### コピー（robocopy <コピー元> <コピー先>）
-robocopy "${src_root_dir}${option_plugin}\app\PluginsOption\User\${option_plugin_controller_dir}" "${dist_root_dir}app\PluginsOption\User\${option_plugin_controller_dir}" /s
-robocopy "${src_root_dir}${option_plugin}\app\ModelsOption\User\${option_plugin_model_dir}" "${dist_root_dir}app\ModelsOption\User\${option_plugin_model_dir}" /s
-robocopy "${src_root_dir}${option_plugin}\resources\views\plugins_option\user\${option_plugin_resources_dir}" "${dist_root_dir}resources\views\plugins_option\user\${option_plugin_resources_dir}" /s
+robocopy "${src_root_dir}${option_plugin}\app\PluginsOption\${option_plugin_controller_dir}" "${dist_root_dir}app\PluginsOption\${option_plugin_controller_dir}" /s
+robocopy "${src_root_dir}${option_plugin}\app\ModelsOption\${option_plugin_model_dir}" "${dist_root_dir}app\ModelsOption\${option_plugin_model_dir}" /s
+robocopy "${src_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" "${dist_root_dir}resources\views\plugins_option\${option_plugin_resources_dir}" /s
 robocopy "${src_root_dir}${option_plugin}\app\Console\CommandsOption\${option_plugin_command_dir}" "${dist_root_dir}app\Console\CommandsOption\${option_plugin_command_dir}" /s
 
 robocopy "${src_root_dir}${option_plugin}\database\migrations_option" "${dist_root_dir}database\migrations_option" /s
 robocopy "${src_root_dir}${option_plugin}\app\EnumsOption" "${dist_root_dir}app\EnumsOption" /s
+
+# 1ファイルのみコピー例
+#Copy-Item -Path "${src_root_dir}${option_plugin}\resources\views\plugins_option\manage\menus_list.blade.php" -Destination "${dist_root_dir}resources\views\plugins_option\manage\"
 
 exit
