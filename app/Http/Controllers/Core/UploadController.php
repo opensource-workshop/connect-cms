@@ -407,13 +407,59 @@ EOD;
                         }
                     }
                 }
-                // \Log::debug(var_export($is_resize, true));
+                // \Log::debug(var_export($request->width, true));
+                // \Log::debug(var_export($original_width, true));
+                // \Log::debug(var_export($request->height, true));
+                // \Log::debug(var_export($original_height, true));
 
                 if ($is_resize) {
                     // リサイズ
 
                     // GDが無いとここで GD Library extension not available with this PHP installation. エラーになる
-                    $image = Image::make($image_file)->resize($request->width, $request->height);
+                    // $image = Image::make($image_file)->resize($request->width, $request->height);
+                    $image = Image::make($image_file);
+
+                    $resize_width = null;
+                    $resize_height = null;
+
+                    // [TODO] ※ 傾きがあるとウィジウィグが縦横サイズを逆にセットするため、結果的にリサイズ対象になる。（ウィジウィグ標準の画像プラグインで無理くりリサイズしている事の限界）
+                    // 下記の縦横サイズ入替も、ウィジウィグ標準の画像プラグインで無理くりやっているため、入れてる処理。
+                    // 今後独自でウィジウィグ画像プラグイン作成時は、縦横サイズ入替処理の見直し必要です。
+
+                    // see) https://www.php.net/manual/ja/function.exif-read-data.php#110894
+                    // see) https://qiita.com/yoshu/items/c83c239eb32ed295fca8
+                    switch($image->exif('Orientation')) {
+                        // iOS系は 3,6,8 入ってくる。
+                        case 5:     // 水平反転、反時計回りに270回転
+                        case 6:     // 反時計回りに270回転(傾きあり)
+                        case 7:     // 水平反転、反時計回りに90度回転
+                        case 8:     // 反時計回りに90度回転(傾きあり)
+
+                            // 縦横サイズを入れ替える（傾きあるとウィジウィグが縦横サイズを逆にセットするため）
+                            $resize_width = $request->height;
+                            $resize_height = $request->width;
+                            break;
+
+                        case 1:     // nothing
+                        case 2:     // 水平反転
+                        case 3:     // 180度回転
+                        case 4:     // 垂直反転
+                        default:    // それ以外
+                            // 通常通り
+                            $resize_width = $request->width;
+                            $resize_height = $request->height;
+                    }
+
+                    // 画像の歪み対応: fit().
+                    // ※ [注意] リサイズ時メモリ多めに使った。8MB画像＋memory_limit=128Mでエラー。memory_limit=256Mで解消。
+                    //           エラーメッセージ：ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) {"userId":1,"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) at /path_to_connect-cms/vendor/intervention/image/src/Intervention/Image/Gd/Commands/ResizeCommand.php:58)
+                    $image = $image->fit($resize_width, $resize_height, function($constraint) {
+                        // 小さい画像が大きくなってぼやけるのを防止
+                        $constraint->upsize();
+                    });
+
+                    // 画像の回転対応: orientate()
+                    $image = $image->orientate();
 
                     $upload = Uploads::create([
                         'client_original_name' => $image_file->getClientOriginalName(),
