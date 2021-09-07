@@ -26,7 +26,7 @@
                    </div>
                 </button>
                 <div id="search_collapse" class="collapse" aria-labelledby="app_log_search_condition" data-parent="#search_accordion">
-                    <div class="card-body">
+                    <div class="card-body border-bottom">
 
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/log/search">
                             {{ csrf_field() }}

@@ -57,7 +57,7 @@ use App\Models\Core\UsersColumns;
                 @else
                 <div id="search_collapse" class="collapse" aria-labelledby="user_search_condition" data-parent="#search_accordion">
                 @endif
-                    <div class="card-body">
+                    <div class="card-body border-bottom">
 
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/user/search">
                             {{ csrf_field() }}
