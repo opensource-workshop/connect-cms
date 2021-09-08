@@ -474,6 +474,10 @@ EOD;
                     $directory = $this->makeDirectory($upload->id);
 
                     $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $image_file->getClientOriginalExtension());
+
+                    // bugfix: リサイズ後のfilesizeは、$image->save()後でないと取得できないため、filesizeをupdate.
+                    $upload->size = $image->filesize();
+                    $upload->save();
                 } else {
                     // そのまま画像
 
