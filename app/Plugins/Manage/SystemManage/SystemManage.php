@@ -2,13 +2,10 @@
 
 namespace App\Plugins\Manage\SystemManage;
 
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Log;
-// use Illuminate\Support\Facades\Validator;
-
-// use App;
-// use DB;
-use Session;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Session;
 
 use App\Models\Core\Configs;
 
@@ -35,6 +32,8 @@ class SystemManage extends ManagePluginBase
         $role_ckeck_table["updateDebugmode"] = array('admin_system');
         $role_ckeck_table["log"]             = array('admin_system');
         $role_ckeck_table["updateLog"]       = array('admin_system');
+        $role_ckeck_table["server"]          = array('admin_system');
+        $role_ckeck_table["updateServer"]    = array('admin_system');
         return $role_ckeck_table;
     }
 
@@ -143,7 +142,44 @@ class SystemManage extends ManagePluginBase
              'value'    => $request->log_filename]
         );
 
-        // ページ管理画面に戻る
-        return redirect("/manage/system/log");
+        // ログ設定画面に戻る
+        return redirect("/manage/system/log")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * サーバ設定画面表示
+     *
+     * @return view
+     */
+    public function server($request, $page_id = null)
+    {
+        // Config データの取得
+        $configs = Configs::where('category', 'server')->get();
+
+        return view('plugins.manage.system.server', [
+            "function"           => __FUNCTION__,
+            "plugin_name"        => "system",
+            "configs"            => $configs,
+        ]);
+    }
+
+    /**
+     * サーバ設定更新
+     */
+    public function updateServer($request, $page_id = null, $errors = array())
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // 画像リサイズ時のPHPメモリ数
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'memory_limit_for_image_resize'],
+            ['category' => 'server',
+             'value'    => $request->memory_limit_for_image_resize]
+        );
+
+        return redirect("/manage/system/server")->with('flash_message', '更新しました。');
     }
 }

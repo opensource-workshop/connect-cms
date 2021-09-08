@@ -282,6 +282,7 @@ $app_array = [
         'CabinetSort' => \App\Enums\CabinetSort::class,
         'LinklistType' => \App\Enums\LinklistType::class,
         'AuthLdapDnType' => \App\Enums\AuthLdapDnType::class,
+        'MemoryLimitForImageResize' => \App\Enums\MemoryLimitForImageResize::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

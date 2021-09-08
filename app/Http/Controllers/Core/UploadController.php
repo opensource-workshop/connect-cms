@@ -450,9 +450,15 @@ EOD;
                             $resize_height = $request->height;
                     }
 
+                    // GDのリサイズでメモリを多く使うため、memory_limitセット
+                    $configs = Configs::getSharedConfigs();
+                    $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
+                    ini_set('memory_limit', $memory_limit_for_image_resize);
+
                     // 画像の歪み対応: fit().
                     // ※ [注意] リサイズ時メモリ多めに使った。8MB画像＋memory_limit=128Mでエラー。memory_limit=256Mで解消。
                     //           エラーメッセージ：ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) {"userId":1,"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) at /path_to_connect-cms/vendor/intervention/image/src/Intervention/Image/Gd/Commands/ResizeCommand.php:58)
+                    //           see) https://github.com/Intervention/image/issues/567#issuecomment-224230343
                     $image = $image->fit($resize_width, $resize_height, function($constraint) {
                         // 小さい画像が大きくなってぼやけるのを防止
                         $constraint->upsize();

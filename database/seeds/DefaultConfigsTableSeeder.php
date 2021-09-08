@@ -163,5 +163,14 @@ class DefaultConfigsTableSeeder extends Seeder
             ]);
         }
 
+        if (DB::table('configs')->where('name', 'memory_limit_for_image_resize')->count() == 0) {
+            // 画像リサイズ時のPHPメモリ数
+            $configs = Configs::create([
+                'name' => 'memory_limit_for_image_resize',
+                'category' => 'server',
+                'value' => '256M'
+            ]);
+        }
+
     }
 }

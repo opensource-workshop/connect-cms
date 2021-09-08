@@ -22,6 +22,14 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                @if ($function == "server")
+                    <span class="nav-link"><span class="active">サーバ設定</span></span>
+                @else
+                    <a href="{{url('/manage/system/server')}}" class="nav-link">サーバ設定</a></li>
+                @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "log")
                     <span class="nav-link"><span class="active">エラーログ設定</span></span>
                 @else
