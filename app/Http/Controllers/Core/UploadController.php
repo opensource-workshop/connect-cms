@@ -114,7 +114,7 @@ class UploadController extends ConnectController
             $uploads->increment('download_count', 1);
         }
 
-        // ファイルを返す(PDFの場合はinline)
+        // ファイルを返す
         //$content = '';
         $fullpath = storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension;
 
@@ -122,8 +122,19 @@ class UploadController extends ConnectController
         $content_disposition = 'inline; filename="'. $uploads['client_original_name'] .'"' .
             "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);
 
+        // インライン表示する拡張子
+        $inline_extensions = [
+            'pdf',
+            'png',
+            'jpg',
+            'jpe',
+            'jpeg',
+            'gif',
+        ];
+
         // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
-        if (strtolower($uploads->extension) == 'pdf') {
+        // if (strtolower($uploads->extension) == 'pdf') {
+        if (in_array(strtolower($uploads->extension), $inline_extensions)) {
             return response()
                     ->file(
                         // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
