@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -516,6 +516,114 @@ EOD;
             return array('location' => 'error');
         }
 
+        // pdf pluginのPDFアップロードの場合. リクエスト中にファイルが存在しているか
+        if ($request->hasFile('pdf')) {
+
+            // API URL取得
+            $api_url = config('connect.PDF_THUMBNAIL_API_URL');
+            if (empty($api_url)) {
+                return ['link_text' => 'error: PDFサムネイル自動作成APIのURLが設定されていません。'];
+            }
+
+            // アップロードに失敗したらエラー
+            if (! $request->file('pdf')->isValid()) {
+                return ['link_text' => 'error: アップロードに失敗しました。'];
+            }
+
+            if (strtolower($request->file('pdf')->getClientOriginalExtension()) != 'pdf') {
+                return ['link_text' => 'error: PDFをアップロードしてください。'];
+            }
+
+
+            // uploads テーブルに情報追加、ファイルのid を取得する
+            $upload = Uploads::create([
+                'client_original_name' => $request->file('pdf')->getClientOriginalName(),
+                'mimetype'             => $request->file('pdf')->getClientMimeType(),
+                'extension'            => $request->file('pdf')->getClientOriginalExtension(),
+                'size'                 => $request->file('pdf')->getSize(),
+                'page_id'              => $request->page_id,
+                'plugin_name'          => $request->plugin_name,
+            ]);
+
+            $directory = $this->getDirectory($upload->id);
+            $upload_path = $request->file('pdf')->storeAs($directory, $upload->id . '.' . $request->file('pdf')->getClientOriginalExtension());
+
+            $msg_array = array();
+            $msg_array['link_text'] = '<p><a href="' . url('/') . '/file/' . $upload->id . '"  target="_blank">' . $request->file('pdf')->getClientOriginalName() . '<br />';
+
+
+            // cURLセッションを初期化する
+            $ch = curl_init();
+
+            // 送信データを指定
+            $data = array(
+                'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
+                'pdf' => base64_encode($request->file('pdf')->get()),
+                'pdf_password' => $request->pdf_password,
+            );
+
+            // URLとオプションを指定する
+            curl_setopt($ch, CURLOPT_URL, $api_url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            // URLの情報を取得する
+            $res = curl_exec($ch);
+
+            $base64_thumbnails = json_decode($res, true);
+            // \Log::debug(var_export($base64_thumbnails, true));
+
+            // エラーメッセージが有ったら、メッセージを出力して終了
+            if (isset($base64_thumbnails['errors']['message'])) {
+                // セッションを終了する
+                curl_close($ch);
+
+                $msg_array['link_text'] .= '</a></p>';
+                $msg_array['link_text'] .= '<p>サムネイル作成エラー：' . $base64_thumbnails['errors']['message'] . '</p>';
+                return $msg_array;
+            }
+
+            $thumbnail_no = 1;
+            foreach ($base64_thumbnails as $base64_thumbnail) {
+
+                $thumbnail_name = $request->file('pdf')->getClientOriginalName() . 'の' . $thumbnail_no . 'ページ目のサムネイル';
+
+                $upload = Uploads::create([
+                    'client_original_name' => $thumbnail_name . '.png',
+                    'mimetype'             => 'image/png',
+                    'extension'            => 'png',
+                    'size'                 => 0,
+                    'page_id'              => $request->page_id,
+                    'plugin_name'          => $request->plugin_name,
+                ]);
+
+                $directory = $this->getDirectory($upload->id);
+                $thumbnail_path = storage_path('app/') . $directory . '/' . $upload->id . '.png';
+                // File::put($thumbnail_path, file_get_contents($base64_thumbnail));
+                File::put($thumbnail_path, base64_decode($base64_thumbnail));
+                // 下記はGDが必要なため、使わない。
+                // Image::make(file_get_contents($base64_thumbnail))->save(storage_path('app/') . $directory . '/' . $upload->id . '.png');
+
+                $msg_array['link_text'] .= '<img src="/file/'.$upload->id.'" width="150" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" /> ';
+
+                // sizeはファイルにしてから取得する
+                $upload->size = File::size($thumbnail_path);
+                $upload->save();
+
+                $thumbnail_no++;
+            }
+
+            // セッションを終了する
+            curl_close($ch);
+
+            $msg_array['link_text'] .= '</a></p>';
+            return $msg_array;
+        }
+
+
+        // ここまで来たら、file pluginとみなす
+        // (pdf pluginでPDFなしでアップロードした場合、ここを通り return []になる)
 
         // アップロードしたパスの配列
         //$upload_paths = array();

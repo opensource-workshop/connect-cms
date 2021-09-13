@@ -151,6 +151,9 @@
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
+    if (config('connect.PDF_THUMBNAIL_API_URL')) {
+        $plugins .= ' pdf';
+    }
     $plugins = "plugins  : '" . $plugins . "',";
 
     // 文字サイズの選択
@@ -162,17 +165,27 @@
     // toolbar
     // change: tinymce5対応
     // $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
-    $toolbar = "undo redo | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code ";
-    $mobile_toolbar = "undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview ";
+    $toolbar = "undo redo | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code";
+    $mobile_toolbar = "undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview";
     // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
     if (! empty($templates_file)) {
         $toolbar .= '| template ';
         $mobile_toolbar .= '| template ';
     }
-    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
-        $toolbar .= '| translate ';
-        $mobile_toolbar .= '| translate ';
+    // いずれかの外部サービスONの場合、頭に区切り文字 | を追加する
+    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true || config('connect.PDF_THUMBNAIL_API_URL')) {
+        $toolbar .= ' | ';
+        $mobile_toolbar .= ' | ';
     }
+    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
+        $toolbar .= ' translate ';
+        $mobile_toolbar .= ' translate ';
+    }
+    if (config('connect.PDF_THUMBNAIL_API_URL')) {
+        $toolbar .= ' pdf ';
+        $mobile_toolbar .= 'pdf ';
+    }
+
     $toolbar = "toolbar  : '" . $toolbar . "',";
     $mobile_toolbar = "toolbar  : '" . $mobile_toolbar . "',";
 
@@ -194,12 +207,15 @@
 <input type="hidden" name="page_id" value="{{$page_id}}">
 <input type="hidden" name="frame_id" value="{{$frame_id}}">
 
-{{-- 非表示のinput type file. file plugin用. see) public\js\tinymce5\plugins\file\plugin.min.js --}}
+{{-- 非表示のinput type file. file plugin用. see) public\js\tinymce\plugins\file\plugin.min.js --}}
 <input type="file" class="d-none" id="cc-file-upload-file1-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file2-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file3-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file4-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file5-{{$frame_id}}">
+
+{{-- 非表示のinput type file. pdf plugin用. see) public\js\tinymce\plugins\pdf\plugin.min.js --}}
+<input type="file" class="d-none" id="cc-pdf-upload-{{$frame_id}}">
 
 {{-- bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
     see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
@@ -223,7 +239,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.5',
+        cache_suffix: '?v=5.8.0.6',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -313,8 +329,21 @@
 
                 // file plugin. フィールド名の先頭がfileであれば. file1～5
                 if (meta.fieldname.startsWith('file')) {
-                    // see) public\js\tinymce5\plugins\file\plugin.min.js
+                    // see) public\js\tinymce\plugins\file\plugin.min.js
                     var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
+
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        callback(file.name);
+                    };
+
+                    input.click();
+                }
+                // pdf plugin. フィールド名の先頭がpdf
+                else if (meta.fieldname.startsWith('pdf')) {
+                    // see) public\js\tinymce\plugins\pdf\plugin.min.js
+                    var input = document.getElementById('cc-pdf-upload-{{$frame_id}}');
+                    input.setAttribute('accept', '.pdf');
 
                     input.onchange = function () {
                         var file = this.files[0];
@@ -679,6 +708,7 @@
         // Connect-CMS独自設定
         cc_config: {
             frame_id: '{{$frame_id}}',
+            plugin_name: '{{$frame->plugin_name ?? ''}}',
             upload_max_filesize_caption: '※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}',
         },
 
