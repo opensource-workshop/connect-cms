@@ -710,6 +710,8 @@
             frame_id: '{{$frame_id}}',
             plugin_name: '{{$frame->plugin_name ?? ''}}',
             upload_max_filesize_caption: '※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}',
+            number_of_pdf_thumbnails_items: {!!  NumberOfPdfThumbnail::getWysiwygListBoxItems()  !!},
+            number_of_pdf_thumbnails_initial: '4',
         },
 
         setup: function(editor) {

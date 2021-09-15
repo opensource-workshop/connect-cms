@@ -548,7 +548,7 @@ EOD;
             $directory = $this->getDirectory($upload->id);
             $upload_path = $request->file('pdf')->storeAs($directory, $upload->id . '.' . $request->file('pdf')->getClientOriginalExtension());
 
-            $msg_array = array();
+            $msg_array = [];
             $msg_array['link_text'] = '<p><a href="' . url('/') . '/file/' . $upload->id . '"  target="_blank">' . $request->file('pdf')->getClientOriginalName() . '<br />';
 
 
@@ -556,11 +556,12 @@ EOD;
             $ch = curl_init();
 
             // 送信データを指定
-            $data = array(
+            $data = [
                 'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
                 'pdf' => base64_encode($request->file('pdf')->get()),
                 'pdf_password' => $request->pdf_password,
-            );
+                'number_of_pdf_thumbnails' => $request->number_of_pdf_thumbnails,
+            ];
 
             // URLとオプションを指定する
             curl_setopt($ch, CURLOPT_URL, $api_url);

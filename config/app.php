@@ -283,6 +283,7 @@ $app_array = [
         'LinklistType' => \App\Enums\LinklistType::class,
         'AuthLdapDnType' => \App\Enums\AuthLdapDnType::class,
         'MemoryLimitForImageResize' => \App\Enums\MemoryLimitForImageResize::class,
+        'NumberOfPdfThumbnail' => \App\Enums\NumberOfPdfThumbnail::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
