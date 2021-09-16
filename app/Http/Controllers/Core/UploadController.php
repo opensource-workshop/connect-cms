@@ -524,7 +524,14 @@ EOD;
             // API URL取得
             $api_url = config('connect.PDF_THUMBNAIL_API_URL');
             if (empty($api_url)) {
-                return ['link_text' => 'error: PDFサムネイル自動作成APIのURLが設定されていません。'];
+                // API URLを設定しないとこの処理は通らないため、通常ここに入らない想定。そのためシステム的なメッセージを表示
+                return ['link_text' => 'error: 設定ファイル.envにPDF_THUMBNAIL_API_URLが設定されていません。'];
+            }
+
+            $configs = Configs::getSharedConfigs();
+            if (!Configs::getConfigsValue($configs, 'use_pdf_thumbnail')) {
+                // 通常ここに入らない想定。（入る場合の例：誰かがウィジウィグでPDFアップロードを使用中に、管理者がPDFを使用しないに設定変更して、PDFアップロードが行われた場合等）
+                return ['link_text' => 'error: PDFアップロードの使用設定がONになっていません。'];
             }
 
             // アップロードに失敗したらエラー

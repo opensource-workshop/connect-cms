@@ -151,7 +151,7 @@
     if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
         $plugins .= ' translate';
     }
-    if (config('connect.PDF_THUMBNAIL_API_URL')) {
+    if (Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $plugins .= ' pdf';
     }
     $plugins = "plugins  : '" . $plugins . "',";
@@ -173,7 +173,7 @@
         $mobile_toolbar .= '| template ';
     }
     // いずれかの外部サービスONの場合、頭に区切り文字 | を追加する
-    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true || config('connect.PDF_THUMBNAIL_API_URL')) {
+    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true || Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $toolbar .= ' | ';
         $mobile_toolbar .= ' | ';
     }
@@ -181,7 +181,7 @@
         $toolbar .= ' translate ';
         $mobile_toolbar .= ' translate ';
     }
-    if (config('connect.PDF_THUMBNAIL_API_URL')) {
+    if (Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $toolbar .= ' pdf ';
         $mobile_toolbar .= 'pdf ';
     }
