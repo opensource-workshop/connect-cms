@@ -284,6 +284,7 @@ $app_array = [
         'AuthLdapDnType' => \App\Enums\AuthLdapDnType::class,
         'MemoryLimitForImageResize' => \App\Enums\MemoryLimitForImageResize::class,
         'NumberOfPdfThumbnail' => \App\Enums\NumberOfPdfThumbnail::class,
+        'WidthOfPdfThumbnail' => \App\Enums\WidthOfPdfThumbnail::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

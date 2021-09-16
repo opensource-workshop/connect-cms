@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\Core\ConnectController;
 
+use App\Enums\WidthOfPdfThumbnail;
+
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
@@ -536,7 +538,7 @@ EOD;
 
 
             // uploads テーブルに情報追加、ファイルのid を取得する
-            $upload = Uploads::create([
+            $pdf_upload = Uploads::create([
                 'client_original_name' => $request->file('pdf')->getClientOriginalName(),
                 'mimetype'             => $request->file('pdf')->getClientMimeType(),
                 'extension'            => $request->file('pdf')->getClientOriginalExtension(),
@@ -545,11 +547,12 @@ EOD;
                 'plugin_name'          => $request->plugin_name,
             ]);
 
-            $directory = $this->getDirectory($upload->id);
-            $upload_path = $request->file('pdf')->storeAs($directory, $upload->id . '.' . $request->file('pdf')->getClientOriginalExtension());
+            $directory = $this->getDirectory($pdf_upload->id);
+            $pdf_upload_path = $request->file('pdf')->storeAs($directory, $pdf_upload->id . '.' . $request->file('pdf')->getClientOriginalExtension());
 
+            // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない
             $msg_array = [];
-            $msg_array['link_text'] = '<p><a href="' . url('/') . '/file/' . $upload->id . '"  target="_blank">' . $request->file('pdf')->getClientOriginalName() . '<br />';
+            $msg_array['link_text'] = '<p><a href="/file/' . $pdf_upload->id . '"  target="_blank">' . $request->file('pdf')->getClientOriginalName() . '</a><br />';
 
 
             // cURLセッションを初期化する
@@ -560,6 +563,7 @@ EOD;
                 'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
                 'pdf' => base64_encode($request->file('pdf')->get()),
                 'pdf_password' => $request->pdf_password,
+                'scale_of_pdf_thumbnails' => WidthOfPdfThumbnail::getScale($request->width_of_pdf_thumbnails),
                 'number_of_pdf_thumbnails' => $request->number_of_pdf_thumbnails,
             ];
 
@@ -590,7 +594,7 @@ EOD;
 
                 $thumbnail_name = $request->file('pdf')->getClientOriginalName() . 'の' . $thumbnail_no . 'ページ目のサムネイル';
 
-                $upload = Uploads::create([
+                $thumbnail_upload = Uploads::create([
                     'client_original_name' => $thumbnail_name . '.png',
                     'mimetype'             => 'image/png',
                     'extension'            => 'png',
@@ -599,18 +603,21 @@ EOD;
                     'plugin_name'          => $request->plugin_name,
                 ]);
 
-                $directory = $this->getDirectory($upload->id);
-                $thumbnail_path = storage_path('app/') . $directory . '/' . $upload->id . '.png';
+                $directory = $this->getDirectory($thumbnail_upload->id);
+                $thumbnail_path = storage_path('app/') . $directory . '/' . $thumbnail_upload->id . '.png';
                 // File::put($thumbnail_path, file_get_contents($base64_thumbnail));
                 File::put($thumbnail_path, base64_decode($base64_thumbnail));
                 // 下記はGDが必要なため、使わない。
-                // Image::make(file_get_contents($base64_thumbnail))->save(storage_path('app/') . $directory . '/' . $upload->id . '.png');
+                // Image::make(file_get_contents($base64_thumbnail))->save(storage_path('app/') . $directory . '/' . $thumbnail_upload->id . '.png');
 
-                $msg_array['link_text'] .= '<img src="/file/'.$upload->id.'" width="150" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" /> ';
+                $msg_array['link_text'] .= '<a href="/file/' . $pdf_upload->id . '"  target="_blank">';
+                // $msg_array['link_text'] .= '<a href="/file/' . $thumbnail_upload->id . '"  target="_blank">';
+                $msg_array['link_text'] .= '<img src="/file/'.$thumbnail_upload->id.'" width="'.$request->width_of_pdf_thumbnails.'" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" /> ';
+                $msg_array['link_text'] .= '</a>';
 
                 // sizeはファイルにしてから取得する
-                $upload->size = File::size($thumbnail_path);
-                $upload->save();
+                $thumbnail_upload->size = File::size($thumbnail_path);
+                $thumbnail_upload->save();
 
                 $thumbnail_no++;
             }
@@ -618,7 +625,7 @@ EOD;
             // セッションを終了する
             curl_close($ch);
 
-            $msg_array['link_text'] .= '</a></p>';
+            $msg_array['link_text'] .= '</p>';
             return $msg_array;
         }
 
