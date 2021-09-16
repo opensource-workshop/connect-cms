@@ -45,22 +45,18 @@
                 <label class="col-form-label">文字サイズの使用</label>
                 <div class="row">
                     <div class="col">
-                        <div class="custom-control custom-radio custom-control-inline">
-                            @if(Configs::getConfigsValueAndOld($configs, "fontsizeselect") == "0")
-                                <input type="radio" value="0" id="fontsizeselect_off" name="fontsizeselect" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="0" id="fontsizeselect_off" name="fontsizeselect" class="custom-control-input">
-                            @endif
-                            <label class="custom-control-label" for="fontsizeselect_off">使用しない</label>
-                        </div>
-                        <div class="custom-control custom-radio custom-control-inline">
-                            @if(Configs::getConfigsValueAndOld($configs, "fontsizeselect") == "1")
-                                <input type="radio" value="1" id="fontsizeselect_on" name="fontsizeselect" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="1" id="fontsizeselect_on" name="fontsizeselect" class="custom-control-input">
-                            @endif
-                            <label class="custom-control-label" for="fontsizeselect_on">使用する</label>
-                        </div>
+
+                        @foreach (UseType::getMembers() as $value => $display)
+                            <div class="custom-control custom-radio custom-control-inline">
+                                @if(Configs::getConfigsValueAndOld($configs, "fontsizeselect") == $value)
+                                    <input type="radio" value="{{$value}}" id="fontsizeselect_{{$value}}" name="fontsizeselect" class="custom-control-input" checked="checked">
+                                @else
+                                    <input type="radio" value="{{$value}}" id="fontsizeselect_{{$value}}" name="fontsizeselect" class="custom-control-input">
+                                @endif
+                                <label class="custom-control-label" for="fontsizeselect_{{$value}}">{{$display}}</label>
+                            </div>
+                        @endforeach
+
                     </div>
                 </div>
             </div>
