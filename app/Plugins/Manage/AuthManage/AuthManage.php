@@ -26,16 +26,16 @@ class AuthManage extends ManagePluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"] = array('admin_site');
-        $role_ckeck_table["update"] = array('admin_site');
-        $role_ckeck_table["netcommons2"] = array('admin_site');
-        $role_ckeck_table["netcommons2Update"] = array('admin_site');
-        $role_ckeck_table["ldap"] = array('admin_site');
-        $role_ckeck_table["ldapUpdate"] = array('admin_site');
-        $role_ckeck_table["shibboleth"] = array('admin_site');
+        $role_check_table = array();
+        $role_check_table["index"] = array('admin_site');
+        $role_check_table["update"] = array('admin_site');
+        $role_check_table["netcommons2"] = array('admin_site');
+        $role_check_table["netcommons2Update"] = array('admin_site');
+        $role_check_table["ldap"] = array('admin_site');
+        $role_check_table["ldapUpdate"] = array('admin_site');
+        $role_check_table["shibboleth"] = array('admin_site');
 
-        return $role_ckeck_table;
+        return $role_check_table;
     }
 
     /**
@@ -141,7 +141,7 @@ class AuthManage extends ManagePluginBase
     /**
      * NetCommons2認証設定の保存
      */
-    public function netcommons2Update($request, $page_id = null, $errors = array())
+    public function netcommons2Update($request, $id = null)
     {
         // httpメソッド確認
         if (!$request->isMethod('post')) {
@@ -188,7 +188,7 @@ class AuthManage extends ManagePluginBase
     /**
      * LDAP認証設定の保存
      */
-    public function ldapUpdate($request, $page_id = null)
+    public function ldapUpdate($request, $id = null)
     {
         // httpメソッド確認
         if (!$request->isMethod('post')) {
