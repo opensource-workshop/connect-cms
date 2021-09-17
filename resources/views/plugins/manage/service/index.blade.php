@@ -1,5 +1,5 @@
 {{--
- * 翻訳のメインテンプレート
+ * WYSIWYG設定のメインテンプレート
 --}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        <form name="form_message_first" method="post" action="{{url('/')}}/manage/service/update">
+        <form name="form_service" method="post" action="{{url('/')}}/manage/service/update">
             {{ csrf_field() }}
 
             {{-- 翻訳 --}}
@@ -49,7 +49,7 @@
                 <div class="row">
                     <div class="col">
 
-                        @if(!config('connect.PDF_THUMBNAIL_API_URL'))
+                        @if($pdf_api_disabled_label)
                             <input type="hidden" name="use_pdf_thumbnail" value="{{Configs::getConfigsValueAndOld($configs, "use_pdf_thumbnail")}}">
                         @endif
 
@@ -59,7 +59,7 @@
                                 <input
                                     type="radio" value="{{$value}}" class="custom-control-input" id="use_pdf_thumbnail_{{$value}}"
                                     name="use_pdf_thumbnail" @if(Configs::getConfigsValueAndOld($configs, "use_pdf_thumbnail") == $value) checked @endif
-                                    @if(!config('connect.PDF_THUMBNAIL_API_URL')) disabled @endif>
+                                    {{$pdf_api_disabled_label}}>
                                 <label class="custom-control-label" for="use_pdf_thumbnail_{{$value}}">
                                     {{$display}}
                                 </label>
@@ -88,4 +88,5 @@
 
     </div><!-- /.card-body -->
 </div><!-- /.card -->
+
 @endsection

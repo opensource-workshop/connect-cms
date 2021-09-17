@@ -285,6 +285,7 @@ $app_array = [
         'MemoryLimitForImageResize' => \App\Enums\MemoryLimitForImageResize::class,
         'NumberOfPdfThumbnail' => \App\Enums\NumberOfPdfThumbnail::class,
         'WidthOfPdfThumbnail' => \App\Enums\WidthOfPdfThumbnail::class,
+        'LinkOfPdfThumbnail' => \App\Enums\LinkOfPdfThumbnail::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

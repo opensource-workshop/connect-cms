@@ -712,10 +712,10 @@
             upload_max_filesize_caption: '※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}',
             // PDFサムネイルの大きさ 選択肢、初期値
             width_of_pdf_thumbnails_items: {!!  WidthOfPdfThumbnail::getWysiwygListBoxItems()  !!},
-            width_of_pdf_thumbnails_initial: '{{  WidthOfPdfThumbnail::thumbnail  }}',
+            width_of_pdf_thumbnails_initial: '{{  Configs::getConfigsValue($cc_configs, "width_of_pdf_thumbnails_initial", WidthOfPdfThumbnail::getDefault())  }}',
             // PDFサムネイルの数 選択肢、初期値
             number_of_pdf_thumbnails_items: {!!  NumberOfPdfThumbnail::getWysiwygListBoxItems()  !!},
-            number_of_pdf_thumbnails_initial: '{{  NumberOfPdfThumbnail::four  }}',
+            number_of_pdf_thumbnails_initial: '{{  Configs::getConfigsValue($cc_configs, "number_of_pdf_thumbnails_initial", NumberOfPdfThumbnail::getDefault())  }}',
         },
 
         setup: function(editor) {

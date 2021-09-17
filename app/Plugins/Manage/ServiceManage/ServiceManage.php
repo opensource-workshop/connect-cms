@@ -30,7 +30,7 @@ class ServiceManage extends ManagePluginBase
         $role_check_table["index"] = ['admin_site'];
         $role_check_table["update"] = ['admin_site'];
         $role_check_table["pdf"] = ['admin_site'];
-        $role_check_table["pdfUPdate"] = ['admin_site'];
+        $role_check_table["pdfUpdate"] = ['admin_site'];
 
         return $role_check_table;
     }
@@ -49,6 +49,7 @@ class ServiceManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "plugin_name" => "service",
             "configs" => $configs,
+            "pdf_api_disabled_label" => !config('connect.PDF_THUMBNAIL_API_URL') ? 'disabled' : '',
         ]);
     }
 
@@ -80,7 +81,8 @@ class ServiceManage extends ManagePluginBase
         return view('plugins.manage.service.pdf', [
             "function" => __FUNCTION__,
             "plugin_name" => "service",
-            "config" => $configs,
+            "configs" => $configs,
+            "pdf_api_disabled_label" => !config('connect.PDF_THUMBNAIL_API_URL') ? 'disabled' : '',
         ]);
     }
 
@@ -94,7 +96,23 @@ class ServiceManage extends ManagePluginBase
             abort(403, '権限がありません。');
         }
 
-        // [TODO] 作成中
+        // 初期に選択させるサムネイルの大きさ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'width_of_pdf_thumbnails_initial'],
+            ['category' => 'service', 'value' => $request->width_of_pdf_thumbnails_initial]
+        );
+
+        // 初期に選択させるサムネイルの数
+        $configs = Configs::updateOrCreate(
+            ['name' => 'number_of_pdf_thumbnails_initial'],
+            ['category' => 'service', 'value' => $request->number_of_pdf_thumbnails_initial]
+        );
+
+        // サムネイルのリンク
+        $configs = Configs::updateOrCreate(
+            ['name' => 'link_of_pdf_thumbnails'],
+            ['category' => 'service', 'value' => $request->link_of_pdf_thumbnails]
+        );
 
         // 画面に戻る
         return redirect("/manage/service/pdf")->with('flash_message', '更新しました。');

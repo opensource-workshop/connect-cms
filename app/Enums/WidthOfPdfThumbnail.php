@@ -51,4 +51,12 @@ final class WidthOfPdfThumbnail extends EnumsBase
 
         return $scales[$key];
     }
+
+    /**
+     * 初期値
+     */
+    public static function getDefault()
+    {
+        return self::thumbnail;
+    }
 }

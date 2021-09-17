@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\Core\ConnectController;
 
+use App\Enums\LinkOfPdfThumbnail;
 use App\Enums\WidthOfPdfThumbnail;
+use App\Enums\UseType;
 
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
@@ -528,8 +530,7 @@ EOD;
                 return ['link_text' => 'error: 設定ファイル.envにPDF_THUMBNAIL_API_URLが設定されていません。'];
             }
 
-            $configs = Configs::getSharedConfigs();
-            if (!Configs::getConfigsValue($configs, 'use_pdf_thumbnail')) {
+            if (Configs::getSharedConfigsValue('use_pdf_thumbnail', UseType::not_use) == UseType::not_use) {
                 // 通常ここに入らない想定。（入る場合の例：誰かがウィジウィグでPDFアップロードを使用中に、管理者がPDFを使用しないに設定変更して、PDFアップロードが行われた場合等）
                 return ['link_text' => 'error: PDFアップロードの使用設定がONになっていません。'];
             }
@@ -617,8 +618,14 @@ EOD;
                 // 下記はGDが必要なため、使わない。
                 // Image::make(file_get_contents($base64_thumbnail))->save(storage_path('app/') . $directory . '/' . $thumbnail_upload->id . '.png');
 
-                $msg_array['link_text'] .= '<a href="/file/' . $pdf_upload->id . '"  target="_blank">';
-                // $msg_array['link_text'] .= '<a href="/file/' . $thumbnail_upload->id . '"  target="_blank">';
+                if (Configs::getSharedConfigsValue('link_of_pdf_thumbnails') == LinkOfPdfThumbnail::image) {
+                    // サムネイルにリンク
+                    $msg_array['link_text'] .= '<a href="/file/' . $thumbnail_upload->id . '"  target="_blank">';
+                } else {
+                    // PDFにリンク
+                    $msg_array['link_text'] .= '<a href="/file/' . $pdf_upload->id . '"  target="_blank">';
+                }
+
                 $msg_array['link_text'] .= '<img src="/file/'.$thumbnail_upload->id.'" width="'.$request->width_of_pdf_thumbnails.'" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" /> ';
                 $msg_array['link_text'] .= '</a>';
 

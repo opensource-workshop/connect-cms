@@ -43,4 +43,12 @@ final class NumberOfPdfThumbnail extends EnumsBase
         $items .= ']';
         return $items;
     }
+
+    /**
+     * 初期値
+     */
+    public static function getDefault()
+    {
+        return self::four;
+    }
 }

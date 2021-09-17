@@ -123,6 +123,15 @@ class Configs extends Model
     }
 
     /**
+     * 全Configから設定の値取得
+     */
+    public static function getSharedConfigsValue($key, $default = false)
+    {
+        $configs = self::getSharedConfigs();
+        return self::getConfigsValue($configs, $key, $default);
+    }
+
+    /**
      * 全Configの取得（Middlewareでセットされたもの）
      * （ConnectController から移動してカスタマイズ）
      *
