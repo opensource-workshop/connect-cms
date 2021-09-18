@@ -623,8 +623,8 @@ EOD;
                     $msg_array['link_text'] .= '<a href="/file/' . $pdf_upload->id . '"  target="_blank">';
                 }
 
-                $msg_array['link_text'] .= '<img src="/file/'.$thumbnail_upload->id.'" width="'.$request->width_of_pdf_thumbnails.'" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" /> ';
-                $msg_array['link_text'] .= '</a>';
+                $msg_array['link_text'] .= '<img src="/file/'.$thumbnail_upload->id.'" width="'.$request->width_of_pdf_thumbnails.'" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" />';
+                $msg_array['link_text'] .= '</a> ';
 
                 // sizeはファイルにしてから取得する
                 $thumbnail_upload->size = File::size($thumbnail_path);
