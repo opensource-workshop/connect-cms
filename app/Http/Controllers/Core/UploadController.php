@@ -568,7 +568,7 @@ EOD;
 
             // 送信データを指定
             $data = [
-                'api_key' => sha1(config('connect.PDF_THUMBNAIL_API_KEY')),
+                'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
                 'pdf' => base64_encode($request->file('pdf')->get()),
                 'pdf_password' => $request->pdf_password,
                 'scale_of_pdf_thumbnails' => WidthOfPdfThumbnail::getScale($request->width_of_pdf_thumbnails),
