@@ -80,4 +80,8 @@ return [
 
     // csrfチェックの除外設定
     'VERIFY_CSRF_TOKEN_EXCEPT' => env('VERIFY_CSRF_TOKEN_EXCEPT', ''),
+
+    // APIを使ってPDFからサムネイルを自動作成
+    'PDF_THUMBNAIL_API_URL' => env('PDF_THUMBNAIL_API_URL', ''),
+    'PDF_THUMBNAIL_API_KEY' => env('PDF_THUMBNAIL_API_KEY', ''),
 ];

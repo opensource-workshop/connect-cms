@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\Core\ConnectController;
+
+use App\Enums\LinkOfPdfThumbnail;
+use App\Enums\WidthOfPdfThumbnail;
+use App\Enums\UseType;
 
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
@@ -114,7 +118,7 @@ class UploadController extends ConnectController
             $uploads->increment('download_count', 1);
         }
 
-        // ファイルを返す(PDFの場合はinline)
+        // ファイルを返す
         //$content = '';
         $fullpath = storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension;
 
@@ -122,8 +126,19 @@ class UploadController extends ConnectController
         $content_disposition = 'inline; filename="'. $uploads['client_original_name'] .'"' .
             "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);
 
+        // インライン表示する拡張子
+        $inline_extensions = [
+            'pdf',
+            'png',
+            'jpg',
+            'jpe',
+            'jpeg',
+            'gif',
+        ];
+
         // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
-        if (strtolower($uploads->extension) == 'pdf') {
+        // if (strtolower($uploads->extension) == 'pdf') {
+        if (in_array(strtolower($uploads->extension), $inline_extensions)) {
             return response()
                     ->file(
                         // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
@@ -428,13 +443,12 @@ EOD;
 
                     // see) https://www.php.net/manual/ja/function.exif-read-data.php#110894
                     // see) https://qiita.com/yoshu/items/c83c239eb32ed295fca8
-                    switch($image->exif('Orientation')) {
+                    switch ($image->exif('Orientation')) {
                         // iOS系は 3,6,8 入ってくる。
                         case 5:     // 水平反転、反時計回りに270回転
                         case 6:     // 反時計回りに270回転(傾きあり)
                         case 7:     // 水平反転、反時計回りに90度回転
                         case 8:     // 反時計回りに90度回転(傾きあり)
-
                             // 縦横サイズを入れ替える（傾きあるとウィジウィグが縦横サイズを逆にセットするため）
                             $resize_width = $request->height;
                             $resize_height = $request->width;
@@ -459,7 +473,7 @@ EOD;
                     // ※ [注意] リサイズ時メモリ多めに使った。8MB画像＋memory_limit=128Mでエラー。memory_limit=256Mで解消。
                     //           エラーメッセージ：ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) {"userId":1,"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) at /path_to_connect-cms/vendor/intervention/image/src/Intervention/Image/Gd/Commands/ResizeCommand.php:58)
                     //           see) https://github.com/Intervention/image/issues/567#issuecomment-224230343
-                    $image = $image->fit($resize_width, $resize_height, function($constraint) {
+                    $image = $image->fit($resize_width, $resize_height, function ($constraint) {
                         // 小さい画像が大きくなってぼやけるのを防止
                         $constraint->upsize();
                     });
@@ -505,6 +519,129 @@ EOD;
             return array('location' => 'error');
         }
 
+        // pdf pluginのPDFアップロードの場合. リクエスト中にファイルが存在しているか
+        if ($request->hasFile('pdf')) {
+
+            // API URL取得
+            $api_url = config('connect.PDF_THUMBNAIL_API_URL');
+            if (empty($api_url)) {
+                // API URLを設定しないとこの処理は通らないため、通常ここに入らない想定。そのためシステム的なメッセージを表示
+                return ['link_text' => 'error: 設定ファイル.envにPDF_THUMBNAIL_API_URLが設定されていません。'];
+            }
+
+            if (Configs::getSharedConfigsValue('use_pdf_thumbnail', UseType::not_use) == UseType::not_use) {
+                // 通常ここに入らない想定。（入る場合の例：誰かがウィジウィグでPDFアップロードを使用中に、管理者がPDFを使用しないに設定変更して、PDFアップロードが行われた場合等）
+                return ['link_text' => 'error: PDFアップロードの使用設定がONになっていません。'];
+            }
+
+            // アップロードに失敗したらエラー
+            if (! $request->file('pdf')->isValid()) {
+                return ['link_text' => 'error: アップロードに失敗しました。'];
+            }
+
+            if (strtolower($request->file('pdf')->getClientOriginalExtension()) != 'pdf') {
+                return ['link_text' => 'error: PDFをアップロードしてください。'];
+            }
+
+
+            // uploads テーブルに情報追加、ファイルのid を取得する
+            $pdf_upload = Uploads::create([
+                'client_original_name' => $request->file('pdf')->getClientOriginalName(),
+                'mimetype'             => $request->file('pdf')->getClientMimeType(),
+                'extension'            => $request->file('pdf')->getClientOriginalExtension(),
+                'size'                 => $request->file('pdf')->getSize(),
+                'page_id'              => $request->page_id,
+                'plugin_name'          => $request->plugin_name,
+            ]);
+
+            $directory = $this->getDirectory($pdf_upload->id);
+            $pdf_upload_path = $request->file('pdf')->storeAs($directory, $pdf_upload->id . '.' . $request->file('pdf')->getClientOriginalExtension());
+
+            // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない
+            $msg_array = [];
+            $msg_array['link_text'] = '<p><a href="/file/' . $pdf_upload->id . '"  target="_blank">' . $request->file('pdf')->getClientOriginalName() . '</a><br />';
+
+
+            // cURLセッションを初期化する
+            $ch = curl_init();
+
+            // 送信データを指定
+            $data = [
+                'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
+                'pdf' => base64_encode($request->file('pdf')->get()),
+                'pdf_password' => $request->pdf_password,
+                'scale_of_pdf_thumbnails' => WidthOfPdfThumbnail::getScale($request->width_of_pdf_thumbnails),
+                'number_of_pdf_thumbnails' => $request->number_of_pdf_thumbnails,
+            ];
+
+            // URLとオプションを指定する
+            curl_setopt($ch, CURLOPT_URL, $api_url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            // URLの情報を取得する
+            $res = curl_exec($ch);
+
+            $base64_thumbnails = json_decode($res, true);
+            // \Log::debug(var_export($base64_thumbnails, true));
+
+            // エラーメッセージが有ったら、メッセージを出力して終了
+            if (isset($base64_thumbnails['errors']['message'])) {
+                // セッションを終了する
+                curl_close($ch);
+
+                $msg_array['link_text'] .= '</a></p>';
+                $msg_array['link_text'] .= '<p>サムネイル作成エラー：' . $base64_thumbnails['errors']['message'] . '</p>';
+                return $msg_array;
+            }
+
+            $thumbnail_no = 1;
+            foreach ($base64_thumbnails as $base64_thumbnail) {
+
+                $thumbnail_name = $request->file('pdf')->getClientOriginalName() . 'の' . $thumbnail_no . 'ページ目のサムネイル';
+
+                $thumbnail_upload = Uploads::create([
+                    'client_original_name' => $thumbnail_name . '.png',
+                    'mimetype'             => 'image/png',
+                    'extension'            => 'png',
+                    'size'                 => 0,
+                    'page_id'              => $request->page_id,
+                    'plugin_name'          => $request->plugin_name,
+                ]);
+
+                $directory = $this->getDirectory($thumbnail_upload->id);
+                $thumbnail_path = storage_path('app/') . $directory . '/' . $thumbnail_upload->id . '.png';
+                File::put($thumbnail_path, base64_decode($base64_thumbnail));
+
+                if (Configs::getSharedConfigsValue('link_of_pdf_thumbnails') == LinkOfPdfThumbnail::image) {
+                    // サムネイルにリンク
+                    $msg_array['link_text'] .= '<a href="/file/' . $thumbnail_upload->id . '"  target="_blank">';
+                } else {
+                    // PDFにリンク
+                    $msg_array['link_text'] .= '<a href="/file/' . $pdf_upload->id . '"  target="_blank">';
+                }
+
+                $msg_array['link_text'] .= '<img src="/file/'.$thumbnail_upload->id.'" width="'.$request->width_of_pdf_thumbnails.'" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" />';
+                $msg_array['link_text'] .= '</a> ';
+
+                // sizeはファイルにしてから取得する
+                $thumbnail_upload->size = File::size($thumbnail_path);
+                $thumbnail_upload->save();
+
+                $thumbnail_no++;
+            }
+
+            // セッションを終了する
+            curl_close($ch);
+
+            $msg_array['link_text'] .= '</p>';
+            return $msg_array;
+        }
+
+
+        // ここまで来たら、file pluginとみなす
+        // (pdf pluginでPDFなしでアップロードした場合、ここを通り return []になる)
 
         // アップロードしたパスの配列
         //$upload_paths = array();
