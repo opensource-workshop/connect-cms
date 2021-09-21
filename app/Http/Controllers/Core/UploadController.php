@@ -443,13 +443,12 @@ EOD;
 
                     // see) https://www.php.net/manual/ja/function.exif-read-data.php#110894
                     // see) https://qiita.com/yoshu/items/c83c239eb32ed295fca8
-                    switch($image->exif('Orientation')) {
+                    switch ($image->exif('Orientation')) {
                         // iOS系は 3,6,8 入ってくる。
                         case 5:     // 水平反転、反時計回りに270回転
                         case 6:     // 反時計回りに270回転(傾きあり)
                         case 7:     // 水平反転、反時計回りに90度回転
                         case 8:     // 反時計回りに90度回転(傾きあり)
-
                             // 縦横サイズを入れ替える（傾きあるとウィジウィグが縦横サイズを逆にセットするため）
                             $resize_width = $request->height;
                             $resize_height = $request->width;
@@ -474,7 +473,7 @@ EOD;
                     // ※ [注意] リサイズ時メモリ多めに使った。8MB画像＋memory_limit=128Mでエラー。memory_limit=256Mで解消。
                     //           エラーメッセージ：ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) {"userId":1,"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) at /path_to_connect-cms/vendor/intervention/image/src/Intervention/Image/Gd/Commands/ResizeCommand.php:58)
                     //           see) https://github.com/Intervention/image/issues/567#issuecomment-224230343
-                    $image = $image->fit($resize_width, $resize_height, function($constraint) {
+                    $image = $image->fit($resize_width, $resize_height, function ($constraint) {
                         // 小さい画像が大きくなってぼやけるのを防止
                         $constraint->upsize();
                     });
