@@ -415,5 +415,7 @@ tinymce.addI18n('ja',{
 "Whole words": "\u5358\u8a9e\u5358\u4f4d\u3067\u691c\u7d22\u3059\u308b",
 "Spellcheck": "\u30b9\u30da\u30eb\u30c1\u30a7\u30c3\u30af",
 "Caption": "\u8868\u984c",
-"Insert template": "\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u306e\u633f\u5165"
+"Insert template": "\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u306e\u633f\u5165",
+// add: 画像プラグイン＞Alternative description
+"Alternative description": "代替テキスト",
 });
