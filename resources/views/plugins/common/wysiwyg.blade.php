@@ -445,9 +445,16 @@
                             var blobInfo = blobCache.create(id, file, base64);
                             blobCache.add(blobInfo);
 
+                            // 拡張子取り除き
+                            var file_name = new String(file.name).substring(file.name.lastIndexOf('/') + 1);
+                            if (file_name.lastIndexOf(".") != -1) {
+                                file_name = file_name.substring(0, file_name.lastIndexOf("."));
+                            }
+
                             /* call the callback and populate the Title field with the file name */
                             // callback(blobInfo.blobUri(), { title: file.name });
-                            callback(blobInfo.blobUri(), { alt: file.name });
+                            // callback(blobInfo.blobUri(), { alt: file.name });
+                            callback(blobInfo.blobUri(), { alt: file_name });
                             // callback(file.name);
                         };
                         reader.readAsDataURL(file);
