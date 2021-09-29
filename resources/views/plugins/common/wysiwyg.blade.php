@@ -720,7 +720,9 @@
             // see) events https://www.tiny.cloud/docs/advanced/events/
             // see) editor https://www.tiny.cloud/docs/api/tinymce/tinymce.editor/
 
-            editor.on('ExecCommand', (event) => {
+            // bugfix: IE11でウィジウィグが動作しないバグ修正
+            // editor.on('ExecCommand', (event) => {
+            editor.on('ExecCommand', function (event) {
                 const command = event.command;
                 // console.log(event.command);
                 // console.log(editor.settings.cc_config.upload_max_filesize_caption);
@@ -738,7 +740,9 @@
                 }
             });
 
-            editor.on('OpenWindow', (event) => {
+            // bugfix: IE11でウィジウィグが動作しないバグ修正
+            // editor.on('OpenWindow', (event) => {
+            editor.on('OpenWindow', function (event) {
                 // console.log(event);
                 // console.log('OpenWindow', event.dialog);
                 // console.log('OpenWindow', event.dialog.getData());
