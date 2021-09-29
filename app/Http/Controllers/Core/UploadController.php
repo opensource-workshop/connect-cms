@@ -358,7 +358,6 @@ EOD;
             if ($request->file('image')->isValid()) {
 
                 $image_file = $request->file('image');
-                $extension = strtolower($image_file->getClientOriginalExtension());
                 $is_resize = false;
 
                 // GDが有効
