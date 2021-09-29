@@ -227,10 +227,6 @@
 
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
-{{--
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
-<script type="text/javascript" src="{{url('/')}}/js/tinymce4.old/tinymce.min.js"></script>
---}}
 <script type="text/javascript">
     tinymce.init({
         @if(isset($target_class) && $target_class)
