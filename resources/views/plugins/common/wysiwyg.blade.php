@@ -232,7 +232,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.9',
+        cache_suffix: '?v=5.8.0.10',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -716,9 +716,11 @@
             // PDFサムネイルの数 選択肢、初期値
             number_of_pdf_thumbnails_items: {!!  NumberOfPdfThumbnail::getWysiwygListBoxItems()  !!},
             number_of_pdf_thumbnails_initial: '{{  Configs::getConfigsValue($cc_configs, "number_of_pdf_thumbnails_initial", NumberOfPdfThumbnail::getDefault())  }}',
-            // リサイズ画像サイズ 選択肢、初期値
+            // 画像プラグイン＞画像サイズ 選択肢、初期値
             resized_image_size_items: {!!  ResizedImageSize::getWysiwygListBoxItems()  !!},
             resized_image_size_initial: '{{  Configs::getConfigsValue($cc_configs, "resized_image_size_initial", ResizedImageSize::getDefault())  }}',
+            // 画像プラグイン＞画像サイズを表示するか
+            has_image_resize: {{  function_exists('gd_info') ? 'true' : 'false' }},
         },
 
         setup: function(editor) {

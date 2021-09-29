@@ -24,6 +24,12 @@
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
+        @if ($gd_disabled_label)
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-circle"></i>「初期に選択させる画像サイズ」を設定するには、別途PHPライブラリの <code>GD</code> を有効にする必要があります。<br />
+            </div>
+        @endif
+
         <div class="alert alert-info" role="alert">
             <i class="fas fa-exclamation-circle"></i> WYSIWYG設定をします。
         </div>
@@ -63,9 +69,14 @@
 
             {{-- 初期に選択させる画像サイズ --}}
             <div class="form-group row">
+
+                @if($gd_disabled_label)
+                    <input type="hidden" name="resized_image_size_initial" value="{{Configs::getConfigsValueAndOld($configs, "resized_image_size_initial", ResizedImageSize::getDefault())}}">
+                @endif
+
                 <div class="col">
                     <label class="col-form-label">初期に選択させる画像サイズ</label>
-                    <select name="resized_image_size_initial" class="form-control">
+                    <select name="resized_image_size_initial" class="form-control" {{$gd_disabled_label}}>
                         @foreach (ResizedImageSize::getMembers() as $enum_value => $enum_label)
                             <div class="custom-control custom-radio custom-control-inline">
                                 @if(Configs::getConfigsValueAndOld($configs, "resized_image_size_initial", ResizedImageSize::getDefault()) == $enum_value)
@@ -76,6 +87,7 @@
                             </div>
                         @endforeach
                     </select>
+                    <small class="text-muted">画像のリサイズで利用する設定です。</small>
                 </div>
             </div>
 

@@ -822,6 +822,7 @@ class SiteManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "plugin_name" => "site",
             "configs" => $configs,
+            "gd_disabled_label" => !function_exists('gd_info') ? 'disabled' : '',
         ]);
     }
 
