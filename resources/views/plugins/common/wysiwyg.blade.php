@@ -204,7 +204,6 @@
     $imagetools_toolbar = "imagetools_toolbar  : 'editimage imageoptions',";
 
 @endphp
-<input type="hidden" name="frame_id" value="{{$frame_id}}">
 
 {{-- 非表示のinput type file. file plugin用. see) public\js\tinymce\plugins\file\plugin.min.js --}}
 <input type="file" class="d-none" id="cc-file-upload-file1-{{$frame_id}}">
@@ -234,7 +233,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.7',
+        cache_suffix: '?v=5.8.0.8',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
