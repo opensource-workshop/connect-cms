@@ -5,7 +5,6 @@ namespace App\Plugins\User\Contents;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Gate;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
