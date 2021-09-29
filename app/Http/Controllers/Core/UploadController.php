@@ -363,7 +363,11 @@ EOD;
 
                 // GDが有効
                 if (function_exists('gd_info')) {
-                    if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'gif' || $extension == 'png') {
+
+                    // リサイズする拡張子
+                    $resize_extensions = ['png', 'jpg', 'jpe', 'jpeg', 'gif'];
+
+                    if (in_array(strtolower($image_file->getClientOriginalExtension()), $resize_extensions)) {
                         // 原寸以外はリサイズする
                         if ($request->resize != ResizedImageSize::asis) {
                             $is_resize = true;
