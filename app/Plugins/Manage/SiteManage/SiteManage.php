@@ -833,10 +833,13 @@ class SiteManage extends ManagePluginBase
         // wysiwygで文字サイズの使用
         $configs = Configs::updateOrCreate(
             ['name' => 'fontsizeselect'],
-            [
-                'category' => 'wysiwyg',
-                'value'    => $request->fontsizeselect
-            ]
+            ['category' => 'wysiwyg', 'value' => $request->fontsizeselect]
+        );
+
+        // 初期に選択させる画像サイズ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'resized_image_size_initial'],
+            ['category' => 'wysiwyg', 'value' => $request->resized_image_size_initial]
         );
 
         // WYSIWYG設定画面に戻る

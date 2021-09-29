@@ -61,6 +61,24 @@
                 </div>
             </div>
 
+            {{-- 初期に選択させる画像サイズ --}}
+            <div class="form-group row">
+                <div class="col">
+                    <label class="col-form-label">初期に選択させる画像サイズ</label>
+                    <select name="resized_image_size_initial" class="form-control">
+                        @foreach (ResizedImageSize::getMembers() as $enum_value => $enum_label)
+                            <div class="custom-control custom-radio custom-control-inline">
+                                @if(Configs::getConfigsValueAndOld($configs, "resized_image_size_initial", ResizedImageSize::getDefault()) == $enum_value)
+                                    <option value="{{$enum_value}}" selected>{{$enum_label}}</option>
+                                @else
+                                    <option value="{{$enum_value}}">{{$enum_label}}</option>
+                                @endif
+                            </div>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
