@@ -219,9 +219,8 @@
     see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
 <input type="file" class="d-none" id="cc-file-upload-file-{{$frame_id}}">
 
-{{-- 画像の幅と高さ. 登録時のリサイズ用 --}}
-<input type="text" class="d-none" id="cc-image-upload-width-{{$frame_id}}">
-<input type="text" class="d-none" id="cc-image-upload-height-{{$frame_id}}">
+{{-- 登録時のリサイズ用 --}}
+<input type="text" class="d-none" id="cc-resized-image-size-{{$frame_id}}">
 
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
@@ -233,7 +232,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.8',
+        cache_suffix: '?v=5.8.0.9',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -684,23 +683,19 @@
 
             // リサイズ用
             var frame_id = tinymce.activeEditor.settings.cc_config.frame_id;
-            var width = document.getElementById('cc-image-upload-width-' + frame_id).value;
-            var height = document.getElementById('cc-image-upload-height-' + frame_id).value;
+            var resize = document.getElementById('cc-resized-image-size-' + frame_id).value;
 
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);
-            // formData.append('file', blobInfo.blob(), fileName);
             formData.append('image', blobInfo.blob(), fileName);
-            formData.append('width', width);
-            formData.append('height', height);
+            formData.append('resize', resize);
             formData.append('page_id', {{$page_id}});
             formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
 
             xhr.send(formData);
 
             // クリア
-            document.getElementById('cc-image-upload-width-' + frame_id).value = '';
-            document.getElementById('cc-image-upload-height-' + frame_id).value = '';
+            document.getElementById('cc-resized-image-size-' + frame_id).value = '';
         },
 
         // Connect-CMS独自設定
@@ -714,6 +709,9 @@
             // PDFサムネイルの数 選択肢、初期値
             number_of_pdf_thumbnails_items: {!!  NumberOfPdfThumbnail::getWysiwygListBoxItems()  !!},
             number_of_pdf_thumbnails_initial: '{{  Configs::getConfigsValue($cc_configs, "number_of_pdf_thumbnails_initial", NumberOfPdfThumbnail::getDefault())  }}',
+            // リサイズ画像サイズ 選択肢、初期値
+            resized_image_size_items: {!!  ResizedImageSize::getWysiwygListBoxItems()  !!},
+            resized_image_size_initial: '{{  Configs::getConfigsValue($cc_configs, "resized_image_size_initial", ResizedImageSize::getDefault())  }}',
         },
 
         setup: function(editor) {
@@ -733,10 +731,12 @@
                     // console.log(jQuery('.tox-textfield')[3].value);
                     var frame_id = editor.settings.cc_config.frame_id;
 
-                    // リサイズ用の画像幅と高さをinput type=textに保持
-                    document.getElementById('cc-image-upload-width-' + frame_id).value = jQuery('.tox-textfield')[2].value;
-                    document.getElementById('cc-image-upload-height-' + frame_id).value = jQuery('.tox-textfield')[3].value;
+                    // [TODO] 画像プラグイン＞アップロード（タブ）で「保存」を押下すると、下記要素がとれずJSエラーになる。
+                    //        アップロード後は、画像プラグイン＞一般（タブ）に自動遷移するため、運用上の問題は発生しないと思われるため、JSエラーはとりあえずそのままにする。
+                    //        エラーが出ないように要素が無い場合、処理しない事を検討したが、その場合、リサイズされなくなるため、対応を見送った。
 
+                    // リサイズ画像サイズをinput type=textに保持
+                    document.getElementById('cc-resized-image-size-' + frame_id).value = jQuery('.tox-listbox--select')[0].dataset.value
                 }
             });
 
@@ -761,28 +761,6 @@
                     // 指定した要素の後に挿入
                     jQuery('.tox-form__controls-h-stack')[0].after(div);
                 }
-                // image plugin
-                if (title === '画像の挿入・編集') {
-                    // 新しいHTML要素を作成
-                    var div = document.createElement('div');
-                    div.setAttribute('style', 'font-size: 14px;');
-                    div.textContent = editor.settings.cc_config.upload_max_filesize_caption;
-
-                    // 指定した要素の中の末尾に挿入
-                    jQuery('.tox-form')[0].appendChild(div);
-
-                    @if (function_exists('gd_info'))
-                        var div2 = div.cloneNode(false);
-                        var div3 = div.cloneNode(false);
-
-                        div2.textContent = '※ この画面からアップロードするとjpeg, pngのリサイズができます。（アップロード(タブ)からはリサイズしません。）';
-                        div3.textContent = '※ リサイズは登録時のみ動き、「幅」と「高さ」の数字でリサイズします。';
-
-                        div.after(div2);
-                        div2.after(div3);
-                    @endif
-                }
-
             });
         }
     });

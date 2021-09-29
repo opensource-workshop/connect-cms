@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Core\ConnectController;
 
 use App\Enums\LinkOfPdfThumbnail;
+use App\Enums\ResizedImageSize;
 use App\Enums\WidthOfPdfThumbnail;
 use App\Enums\UseType;
 
@@ -302,36 +303,6 @@ EOD;
         exit;
     }
 
-    // delete: どこからも呼ばれてないprivateメソッドのため、コメントアウト
-    // /**
-    //  * ファイルのMIME Type 取得
-    //  */
-    // private function getMimetype($file_path)
-    // {
-    //     $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    //     $mimetype = finfo_file($finfo, $file_path);
-    //     finfo_close($finfo);
-    //     return $mimetype;
-    // }
-
-    /**
-     * 対象ディレクトリの取得
-     */
-    // private function getDirectory($file_id)
-    // {
-    //     // ファイルID がなければ0ディレクトリを返す。
-    //     if (empty($file_id)) {
-    //         return $this->directory_base . '0';
-    //     }
-    //     // 1000で割った余りがディレクトリ名
-    //     $quotient = floor($file_id / $this->directory_file_limit);
-    //     $remainder = $file_id % $this->directory_file_limit;
-    //     $sub_directory = ($remainder == 0) ? $quotient : $quotient + 1;
-    //     $directory = $this->directory_base . $sub_directory;
-
-    //     return $directory;
-    // }
-
     /**
      * 対象ディレクトリの取得、なければ作成も。
      */
@@ -390,29 +361,15 @@ EOD;
                 $extension = strtolower($image_file->getClientOriginalExtension());
                 $is_resize = false;
 
-                // 画像のオリジナル縦横サイズを取得
-                list($original_width, $original_height, $type, $attr) = getimagesize($image_file->getPathname());
-                // \Log::debug(var_export($image_file->getPathname(), true));
-                // \Log::debug(var_export(getimagesize($image_file->getPathname()), true));
-
                 // GDが有効
                 if (function_exists('gd_info')) {
-                    // 対象画像 jpg|png. gitはアニメーションgitが変換するとアニメーションしなくなる＆主要な画像形式ではないので外しました。
-                    // if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'gif' || $extension == 'png') {
-                    if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                        // サイズ指定が原寸（画像の縦横サイズと同じ）なら、リサイズしない
-                        if ((int)$request->width === $original_width && (int)$request->height === $original_height) {
-                            // リサイズしない
-                        } elseif ((int)$request->width > 0 && (int)$request->height > 0) {
-                            // 幅、高さが0より大きい = リサイズ
+                    if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'gif' || $extension == 'png') {
+                        // 原寸以外はリサイズする
+                        if ($request->resize != ResizedImageSize::asis) {
                             $is_resize = true;
                         }
                     }
                 }
-                // \Log::debug(var_export($request->width, true));
-                // \Log::debug(var_export($original_width, true));
-                // \Log::debug(var_export($request->height, true));
-                // \Log::debug(var_export($original_height, true));
 
                 if ($is_resize) {
                     // リサイズ
@@ -421,46 +378,22 @@ EOD;
                     // $image = Image::make($image_file)->resize($request->width, $request->height);
                     $image = Image::make($image_file);
 
-                    $resize_width = null;
+                    $resize_width = $request->resize;
                     $resize_height = null;
-
-                    // [TODO] ※ 傾きがあるとウィジウィグが縦横サイズを逆にセットするため、結果的にリサイズ対象になる。（ウィジウィグ標準の画像プラグインで無理くりリサイズしている事の限界）
-                    // 下記の縦横サイズ入替も、ウィジウィグ標準の画像プラグインで無理くりやっているため、入れてる処理。
-                    // 今後独自でウィジウィグ画像プラグイン作成時は、縦横サイズ入替処理の見直し必要です。
-
-                    // see) https://www.php.net/manual/ja/function.exif-read-data.php#110894
-                    // see) https://qiita.com/yoshu/items/c83c239eb32ed295fca8
-                    switch ($image->exif('Orientation')) {
-                        // iOS系は 3,6,8 入ってくる。
-                        case 5:     // 水平反転、反時計回りに270回転
-                        case 6:     // 反時計回りに270回転(傾きあり)
-                        case 7:     // 水平反転、反時計回りに90度回転
-                        case 8:     // 反時計回りに90度回転(傾きあり)
-                            // 縦横サイズを入れ替える（傾きあるとウィジウィグが縦横サイズを逆にセットするため）
-                            $resize_width = $request->height;
-                            $resize_height = $request->width;
-                            break;
-
-                        case 1:     // nothing
-                        case 2:     // 水平反転
-                        case 3:     // 180度回転
-                        case 4:     // 垂直反転
-                        default:    // それ以外
-                            // 通常通り
-                            $resize_width = $request->width;
-                            $resize_height = $request->height;
-                    }
 
                     // GDのリサイズでメモリを多く使うため、memory_limitセット
                     $configs = Configs::getSharedConfigs();
                     $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
                     ini_set('memory_limit', $memory_limit_for_image_resize);
 
-                    // 画像の歪み対応: fit().
                     // ※ [注意] リサイズ時メモリ多めに使った。8MB画像＋memory_limit=128Mでエラー。memory_limit=256Mで解消。
                     //           エラーメッセージ：ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) {"userId":1,"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) at /path_to_connect-cms/vendor/intervention/image/src/Intervention/Image/Gd/Commands/ResizeCommand.php:58)
                     //           see) https://github.com/Intervention/image/issues/567#issuecomment-224230343
-                    $image = $image->fit($resize_width, $resize_height, function ($constraint) {
+                    // $image = $image->fit($resize_width, $resize_height, function ($constraint) {
+                    $image = $image->resize($resize_width, $resize_height, function ($constraint) {
+                        // 横幅を指定する。高さは自動調整
+                        $constraint->aspectRatio();
+
                         // 小さい画像が大きくなってぼやけるのを防止
                         $constraint->upsize();
                     });

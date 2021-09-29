@@ -286,6 +286,7 @@ $app_array = [
         'NumberOfPdfThumbnail' => \App\Enums\NumberOfPdfThumbnail::class,
         'WidthOfPdfThumbnail' => \App\Enums\WidthOfPdfThumbnail::class,
         'LinkOfPdfThumbnail' => \App\Enums\LinkOfPdfThumbnail::class,
+        'ResizedImageSize' => \App\Enums\ResizedImageSize::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
