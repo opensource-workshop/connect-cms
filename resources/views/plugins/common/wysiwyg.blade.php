@@ -235,7 +235,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.6',
+        cache_suffix: '?v=5.8.0.7',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -394,6 +394,7 @@
                         var tokens = document.getElementsByName("csrf-token");
                         formData.append('_token', tokens[0].content);
                         formData.append('page_id', {{$page_id}});
+                        formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
                         xhr.send(formData);
                     };
 
@@ -495,6 +496,7 @@
                         var tokens = document.getElementsByName("csrf-token");
                         formData.append('_token', tokens[0].content);
                         formData.append('page_id', {{$page_id}});
+                        formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
                         xhr.send(formData);
                     };
                 }
@@ -558,6 +560,7 @@
                     var tokens = document.getElementsByName("csrf-token");
                     formData.append('_token', tokens[0].content);
                     formData.append('page_id', {{$page_id}});
+                    formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
                     xhr.send(formData);
                 };
 
@@ -693,6 +696,7 @@
             formData.append('width', width);
             formData.append('height', height);
             formData.append('page_id', {{$page_id}});
+            formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
 
             xhr.send(formData);
 

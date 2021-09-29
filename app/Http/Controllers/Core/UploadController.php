@@ -368,6 +368,7 @@ EOD;
                     'extension'            => $request->file('file')->getClientOriginalExtension(),
                     'size'                 => $request->file('file')->getSize(),
                     'page_id'              => $request->page_id,
+                    'plugin_name'          => $request->plugin_name,
                 ]);
 
                 $directory = $this->getDirectory($upload->id);
@@ -375,20 +376,6 @@ EOD;
                 // change: LaravelはArrayを返すだけで JSON形式になる
                 // echo json_encode(array('location' => url('/') . '/file/' . $upload->id));
                 return array('location' => url('/') . '/file/' . $upload->id);
-
-                /*
-                $id = DB::table('uploads')->insertGetId([
-                    'client_original_name' => $request->file('file')->getClientOriginalName(),
-                    'mimetype'             => $request->file('file')->getClientMimeType(),
-                    'extension'            => $request->file('file')->getClientOriginalExtension(),
-                    'size'                 => $request->file('file')->getClientSize(),
-                    'page_id'              => $request->page_id,
-                ]);
-
-                $directory = $this->getDirectory($id);
-                $upload_path = $request->file('file')->storeAs($directory, $id . '.' . $request->file('file')->getClientOriginalExtension());
-                echo json_encode(array('location' => url('/') . '/file/' . $id));
-                */
             }
             // change: LaravelはArrayを返すだけで JSON形式になる
             // return;
@@ -487,6 +474,7 @@ EOD;
                         'extension'            => $image_file->getClientOriginalExtension(),
                         'size'                 => $image->filesize(),
                         'page_id'              => $request->page_id,
+                        'plugin_name'          => $request->plugin_name,
                     ]);
 
                     // bugfix: 新規インストール時、画像アップロードでリサイズ時にUploadsフォルダがなく500エラーになるバグ対応
@@ -508,6 +496,7 @@ EOD;
                         'extension'            => $image_file->getClientOriginalExtension(),
                         'size'                 => $image_file->getSize(),
                         'page_id'              => $request->page_id,
+                        'plugin_name'          => $request->plugin_name,
                     ]);
 
                     $directory = $this->getDirectory($upload->id);
@@ -674,6 +663,7 @@ EOD;
                         'extension'            => $request->file($input_name)->getClientOriginalExtension(),
                         'size'                 => $request->file($input_name)->getSize(),
                         'page_id'              => $request->page_id,
+                        'plugin_name'          => $request->plugin_name,
                     ]);
 
                     $directory = $this->getDirectory($upload->id);
