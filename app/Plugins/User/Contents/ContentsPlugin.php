@@ -605,6 +605,11 @@ class ContentsPlugin extends UserPluginBase
             $newrow->content_text = $this->clean($request->contents);
             $newrow->status = 1; //（一時保存）
             $newrow->save();
+
+            // バケツのデータ名保存
+            $buckets = Buckets::find($oldrow->bucket_id);
+            $buckets->bucket_name = $request->bucket_name ?? '無題';
+            $buckets->save();
         }
         return;
     }
