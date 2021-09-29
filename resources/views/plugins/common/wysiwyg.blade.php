@@ -204,7 +204,6 @@
     $imagetools_toolbar = "imagetools_toolbar  : 'editimage imageoptions',";
 
 @endphp
-<input type="hidden" name="page_id" value="{{$page_id}}">
 <input type="hidden" name="frame_id" value="{{$frame_id}}">
 
 {{-- 非表示のinput type file. file plugin用. see) public\js\tinymce\plugins\file\plugin.min.js --}}
