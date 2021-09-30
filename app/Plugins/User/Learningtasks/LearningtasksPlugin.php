@@ -1075,9 +1075,11 @@ class LearningtasksPlugin extends UserPluginBase
             'redirect_path' => url('/') . "/plugin/" . $this->frame->plugin_name . "/show/" . $page_id . "/" . $frame_id . "/" . $post_id . "#frame-" . $frame_id
         ];
 
-        // 教員のみ
-        if (!$tool->isTeacher()) {
-            // 教員でない, 未ログイン（課題管理は基本メンバーシップぺージに配置するため、ログインしないと基本ページに到達しないのでほぼない想定）
+        // 教員 or 課題管理者
+        if ($tool->isTeacher() || $tool->isLearningtaskAdmin()) {
+            // 処理を進める
+        } else {
+            // 教員 or 課題管理者でない, 未ログイン（課題管理は基本メンバーシップぺージに配置するため、ログインしないと基本ページに到達しないのでほぼない想定）
             // リダイレクト
             return collect($redirect_path_array);
         }
