@@ -157,7 +157,7 @@
                         </div>
                     @endif
 
-                    @if ($tool->isStudent())
+                    @if ($tool->isStudent() || $tool->isLearningtaskAdmin())
                         @if ($tool->canReportUpload($post->id))
                             @if ($tool->checkFunction(LearningtaskUseFunction::use_report_file) || $tool->checkFunction(LearningtaskUseFunction::use_report_comment))
 
@@ -184,7 +184,7 @@
                                         <div class="form-group row mb-1">
                                             <label class="col-sm-3 text-sm-right">本文</label>
                                             <div class="col-sm-9">
-                                                <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                                                <textarea class="form-control mb-1" name="comment" rows="3">{{old('comment')}}</textarea>
                                             </div>
                                         </div>
                                     @endif
@@ -244,7 +244,7 @@
                                     <div class="form-group row mb-1">
                                         <label class="col-sm-3 text-sm-right">コメント</label>
                                         <div class="col-sm-9">
-                                            <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                                            <textarea class="form-control mb-1" name="comment" rows="3">{{old('comment')}}</textarea>
                                         </div>
                                     </div>
                                 @endif
@@ -359,7 +359,7 @@
 
                     {{-- 試験に申し込みまだ --}}
                     @else
-                        @if ($tool->isStudent())
+                        @if ($tool->isStudent() || $tool->isLearningtaskAdmin())
                             <h5><span class="badge badge-secondary">試験申し込み</span></h5>
 
                             @if ($tool->canExamination($post))
@@ -773,7 +773,7 @@
                                     <div class="form-group row mb-1">
                                         <label class="col-sm-3 text-sm-right">コメント</label>
                                         <div class="col-sm-9">
-                                            <textarea class="form-control mb-1" name="comment" rows="3"></textarea>
+                                            <textarea class="form-control mb-1" name="comment" rows="3">{{old('comment')}}</textarea>
                                         </div>
                                     </div>
                                 @endif

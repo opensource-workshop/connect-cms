@@ -850,7 +850,10 @@ class LearningtasksTool
      */
     public function canReportUpload($post_id)
     {
-        if (!$this->isStudent()) {
+        if ($this->isStudent() || $this->isLearningtaskAdmin()) {
+            // 処理続行
+        } else {
+            // 提出できない
             return false;
         }
 
@@ -1124,8 +1127,10 @@ class LearningtasksTool
     {
         $base_message = "試験に申し込む条件が不足しています。";
 
-        // 受講生でない場合は試験の申し込みはできない。
-        if (!$this->isStudent()) {
+        // 受講生 or 課題管理者でない場合は試験の申し込みはできない。
+        if ($this->isStudent() || $this->isLearningtaskAdmin()) {
+            // 処理続行
+        } else {
             return array(false, $base_message);
         }
 

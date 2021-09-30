@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Learningtasks;
 
 use Carbon\Carbon;
-// use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
@@ -12,10 +11,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-// use Session;
 use App\Plugins\User\Learningtasks\LearningtasksTool;
 
-// use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
@@ -3118,6 +3115,12 @@ class LearningtasksPlugin extends UserPluginBase
         // 進捗ステータスのユーザID（受講生のID）
         // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)、総合評価(8)の場合は、教員によるログイン操作のため、セッションから
         $student_user_id = $user->id;
+
+        // 課題管理者のみ、代理のレポート提出(1), 試験申し込み(4)させる
+        if ($tool->isLearningtaskAdmin() && ($task_status == 1 || $task_status == 4)) {
+            $student_user_id = $tool->getStudentId();
+        }
+
         if ($task_status == 2 || $task_status == 3 || $task_status == 6 || $task_status == 7 || $task_status == 8) {
             // bugfix: 管理者等で、教員＆受講生とありえない設定をして、評価する受講生を１度も切替ず評価した場合、student_user_id が nullでSQLエラーになるため修正
             // $student_user_id = session('student_id' . $frame_id);
