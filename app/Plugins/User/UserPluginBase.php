@@ -206,12 +206,18 @@ class UserPluginBase extends PluginBase
 
         // 関数定義メソッドの有無確認
         if (!method_exists($obj, $action)) {
+            // [TODO] DefaultController::invokePostRedirect() から「invokeを通して呼び出すことで権限チェックを実施」している関係で、この処理をいれていて、ちょっと無理くり対応している。
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            // Redirect時に権限エラー等で403のViewオブジェクトを返しても、リダイレクト処理が走り、エラー画面が表示されないため、ここでエラー時はリダイレクトしない設定をリクエストに入れる。
+            $request->merge(['return_mode' => 'asis']);
             return $this->view_error("403_inframe", null, "存在しないメソッド");
         }
 
         // メソッドの可視性チェック
         $objReflectionMethod = new \ReflectionMethod(get_class($obj), $action);
         if (!$objReflectionMethod->isPublic()) {
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            $request->merge(['return_mode' => 'asis']);
             return $this->view_error("403_inframe", null, "メソッドの可視性チェック");
         }
 
@@ -227,6 +233,8 @@ class UserPluginBase extends PluginBase
 
         // コアで定義しているHTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック の両方がエラーの場合、権限エラー
         if (!$this->checkHttpRequestMethod($request, $action) && !$this->checkPublicFunctions($obj, $request, $action)) {
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            $request->merge(['return_mode' => 'asis']);
             return $this->view_error("403_inframe", null, "HTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック");
         }
 
@@ -245,6 +253,8 @@ class UserPluginBase extends PluginBase
         $ret = $this->checkFunctionAuthority(config('cc_role.CC_METHOD_AUTHORITY'), $post);
         // 権限チェック結果。値があれば、エラーメッセージ用HTML
         if (!empty($ret)) {
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            $request->merge(['return_mode' => 'asis']);
             return $ret;
         }
 
@@ -258,6 +268,8 @@ class UserPluginBase extends PluginBase
 
             // 権限チェック結果。値があれば、エラーメッセージ用HTML
             if (!empty($ret)) {
+                // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+                $request->merge(['return_mode' => 'asis']);
                 return $ret;
             }
         }
