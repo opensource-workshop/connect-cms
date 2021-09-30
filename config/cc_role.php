@@ -108,7 +108,7 @@ return [
         // bugfix: 一般プラグインの 権限設定 で編集者とモデレータは別れているため、モデレータ（role_article）に 編集者（role_reporter）を持たせない
         // 'role_reporter'      => ['role_reporter', 'role_article', 'role_article_admin'],
         'role_reporter'      => ['role_reporter', 'role_article_admin'],
-        'role_guest'         => ['role_guest'],
+        'role_guest'         => ['role_guest', 'role_article_admin'],
 
         'admin_system'       => ['admin_system'],
         'admin_page'         => ['admin_page', 'admin_system'],
