@@ -167,6 +167,7 @@ class LearningtasksPlugin extends UserPluginBase
         $role_ckeck_table["deleteStatus"]     = array('role_article_admin');
 
         $role_ckeck_table["switchUser"]       = array('role_guest');
+        $role_ckeck_table["switchUserUrl"]    = array('role_guest');
         $role_ckeck_table["changeStatus1"]    = array('role_guest');
         $role_ckeck_table["changeStatus2"]    = array('role_guest');
         $role_ckeck_table["changeStatus3"]    = array('role_guest');
