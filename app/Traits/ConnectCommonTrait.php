@@ -50,7 +50,7 @@ trait ConnectCommonTrait
         }
 
         if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
-            return $this->view_error("403_inframe", null, "canメソッドチェック");
+            return $this->view_error("403_inframe", null, "canメソッドチェック:{$roll_or_auth}");
         }
     }
 
