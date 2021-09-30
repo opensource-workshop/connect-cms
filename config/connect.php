@@ -58,8 +58,9 @@ return [
     // ダウンロード時にカウントする拡張子
     'CC_COUNT_EXTENSION' => array('pdf', 'xls', 'xlsx', 'doc', 'docx', 'ppt', 'pptx', 'sb2', 'sb3', 'mp4'),
 
+    // delete: TRANSLATE_API_URL, TRANSLATE_API_KEYに設定見直し
     // OSWS 翻訳サービス使用の有無
-    'OSWS_TRANSLATE_AGREEMENT' => env('OSWS_TRANSLATE_AGREEMENT', false),
+    // 'OSWS_TRANSLATE_AGREEMENT' => env('OSWS_TRANSLATE_AGREEMENT', false),
 
     // Cache-Control
     'CACHE_CONTROL' => env('CACHE_CONTROL', 'no-store'),
@@ -81,11 +82,15 @@ return [
     // csrfチェックの除外設定
     'VERIFY_CSRF_TOKEN_EXCEPT' => env('VERIFY_CSRF_TOKEN_EXCEPT', ''),
 
-    // APIを使ってPDFからサムネイルを自動作成
+    // 外部APIを使って翻訳
+    'TRANSLATE_API_URL' => env('TRANSLATE_API_URL', ''),
+    'TRANSLATE_API_KEY' => env('TRANSLATE_API_KEY', ''),
+
+    // 外部APIを使ってPDFからサムネイルを自動作成
     'PDF_THUMBNAIL_API_URL' => env('PDF_THUMBNAIL_API_URL', ''),
     'PDF_THUMBNAIL_API_KEY' => env('PDF_THUMBNAIL_API_KEY', ''),
-    
-    // APIを使ってPDFから文字列を抽出
+
+    // 外部APIを使ってPDFから文字列を抽出
     'PDF_TO_TEXT_API_URL' => env('PDF_TO_TEXT_API_URL', ''),
     'PDF_TO_TEXT_API_KEY' => env('PDF_TO_TEXT_API_KEY', ''),
 ];

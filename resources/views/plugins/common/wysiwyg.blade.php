@@ -148,7 +148,7 @@
     // change: tinymce5対応. textcolorは coreに含まれたため除外
     // $plugins = 'file image imagetools media link autolink preview textcolor code table lists advlist template ';
     $plugins = 'file image imagetools media link autolink preview code table lists advlist template hr ';
-    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
+    if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use) {
         $plugins .= ' translate';
     }
     if (Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
@@ -173,11 +173,11 @@
         $mobile_toolbar .= '| template ';
     }
     // いずれかの外部サービスONの場合、頭に区切り文字 | を追加する
-    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true || Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
+    if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use || Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $toolbar .= ' | ';
         $mobile_toolbar .= ' | ';
     }
-    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
+    if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use) {
         $toolbar .= ' translate ';
         $mobile_toolbar .= ' translate ';
     }
