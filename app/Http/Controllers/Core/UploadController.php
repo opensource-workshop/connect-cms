@@ -367,8 +367,8 @@ EOD;
                     $resize_extensions = ['png', 'jpg', 'jpe', 'jpeg', 'gif'];
 
                     if (in_array(strtolower($image_file->getClientOriginalExtension()), $resize_extensions)) {
-                        // 原寸以外はリサイズする
-                        if ($request->resize != ResizedImageSize::asis) {
+                        // 値があって原寸以外はリサイズする
+                        if (!empty($request->resize) && $request->resize != ResizedImageSize::asis) {
                             $is_resize = true;
                         }
                     }
