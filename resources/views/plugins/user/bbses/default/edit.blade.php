@@ -143,4 +143,10 @@
         </div>
     </div>
 </div>
+
+@if (isset($reply_flag) && $reply_flag == true)
+    {{-- スレッドの投稿一覧 --}}
+    @include('plugins.user.bbses.default.thread_show')
+@endif
+
 @endsection

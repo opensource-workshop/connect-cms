@@ -363,19 +363,13 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     * 詳細表示関数
+     * 関連投稿の取得
      */
-    public function show($request, $page_id, $frame_id, $post_id)
+    public function getThreadPost($plugin_frame, $post)
     {
         // 変数準備
         $thread_root_post = null;
         $children_posts = null;
-
-        // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
-
-        // 記事取得
-        $post = $this->getPost($post_id);
 
         // 指定の記事がある場合
         if ($post) {
@@ -394,6 +388,24 @@ class BbsesPlugin extends UserPluginBase
             // 表示対象のスレッドの記事一覧
             $children_posts = $this->getThreadPosts($plugin_frame, new Collection($post->thread_root_id), true);
         }
+
+        // $thread_root_post, $children_posts を返す。
+        return array($thread_root_post, $children_posts);
+    }
+
+    /**
+     * 詳細表示関数
+     */
+    public function show($request, $page_id, $frame_id, $post_id)
+    {
+        // プラグインのフレームデータ
+        $plugin_frame = $this->getPluginFrame($frame_id);
+
+        // 記事取得
+        $post = $this->getPost($post_id);
+
+        // 関連投稿の取得
+        list($thread_root_post, $children_posts) = $this->getThreadPost($plugin_frame, $post);
 
         // 詳細画面を呼び出す。
         return $this->view('show', [
@@ -431,15 +443,25 @@ class BbsesPlugin extends UserPluginBase
      */
     public function reply($request, $page_id, $frame_id, $post_id)
     {
+        // プラグインのフレームデータ
+        $plugin_frame = $this->getPluginFrame($frame_id);
+
         // 記事取得
         $post = $this->getPost($post_id);
 
+        // 関連投稿の取得
+        list($thread_root_post, $children_posts) = $this->getThreadPost($plugin_frame, $post);
+
         // 変更画面を呼び出す。
         return $this->view('edit', [
+            'bbs' => $this->getPluginBucket($this->getBucketId()),
             'post'        => new BbsPost(),
             'parent_post' => $post,
             'reply'       => $request->get('reply'),
             'reply_flag'  => true,
+            'thread_root_post' => $thread_root_post,
+            'children_posts'   => $children_posts,
+            'plugin_frame'     => $plugin_frame,
         ]);
     }
 
