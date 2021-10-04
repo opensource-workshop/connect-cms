@@ -232,7 +232,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.10',
+        cache_suffix: '?v=5.8.0.11',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -602,6 +602,9 @@
         // delete: 不要なためコメントアウト
         // image_caption: true,
         // image_title: true,
+
+        // 画像プラグイン＞アップロード（タブ）非表示. アップロード（タブ）で画像アップロードすると即時アップロードされ、一般（タブ）のリサイズのパラメータが拾えず全て原寸でアップロードされるため、使わない。
+        image_uploadtab: false,
 
         image_class_list: [
             {title: 'Responsive', value: 'img-fluid'},
