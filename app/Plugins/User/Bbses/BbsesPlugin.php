@@ -472,8 +472,8 @@ class BbsesPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title' => ['required'],
-            'body'  => ['required'],
+            'title' => ['required', 'max:255'],
+            'body'  => ['required', 'wysiwyg_max'],
         ]);
         $validator->setAttributeNames([
             'title' => 'タイトル',

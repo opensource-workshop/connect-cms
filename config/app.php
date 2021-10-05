@@ -180,6 +180,8 @@ $app_array = [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+        // 独自バリデーション用に追加
+        App\Providers\ValidatorServiceProvider::class,
     ],
 
     /*

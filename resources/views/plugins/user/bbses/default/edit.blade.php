@@ -77,7 +77,15 @@
             @else
                 <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
             @endif
-            @if ($errors && $errors->has('body')) <div class="text-danger">{{$errors->first('body')}}</div> @endif
+            @if ($errors && $errors->has('body'))
+                <div class="text-danger">{{$errors->first('body')}}</div>
+                @if (stripos($errors->first('body'), 'バイト以下の文字列'))
+                <div class="alert alert-danger"><small>
+                    WYSIWYG のバイト数エラーの詳細については、Connect-CMS公式サイトを参照してください。<br />
+                    <a href="https://connect-cms.jp/manual/error" target="_blank">https://connect-cms.jp/manual/error</a>
+                </small></div>
+                @endif
+            @endif
         </div>
     </div>
 

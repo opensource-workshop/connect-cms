@@ -87,6 +87,7 @@ return [
     'unique'               => 'その:attributeはすでに使われています。',
     'uploaded'             => ':attributeのアップロードに失敗しました。',
     'url'                  => ':attributeには正しい形式のURLを指定してください。',
+    'wysiwyg_max'          => ':attributeには' . number_format(config('connect.WYSIWYG_MAX_BYTE')) . 'バイト以下の文字列を指定してください。',
 
     /*
     |--------------------------------------------------------------------------

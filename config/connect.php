@@ -84,8 +84,11 @@ return [
     // APIを使ってPDFからサムネイルを自動作成
     'PDF_THUMBNAIL_API_URL' => env('PDF_THUMBNAIL_API_URL', ''),
     'PDF_THUMBNAIL_API_KEY' => env('PDF_THUMBNAIL_API_KEY', ''),
-    
+
     // APIを使ってPDFから文字列を抽出
     'PDF_TO_TEXT_API_URL' => env('PDF_TO_TEXT_API_URL', ''),
     'PDF_TO_TEXT_API_KEY' => env('PDF_TO_TEXT_API_KEY', ''),
+
+    // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
+    'WYSIWYG_MAX_BYTE' => 65535,
 ];
