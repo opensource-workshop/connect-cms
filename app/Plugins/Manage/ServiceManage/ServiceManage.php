@@ -49,6 +49,7 @@ class ServiceManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "plugin_name" => "service",
             "configs" => $configs,
+            "translate_api_disabled_label" => !config('connect.TRANSLATE_API_URL') ? 'disabled' : '',
             "pdf_api_disabled_label" => !config('connect.PDF_THUMBNAIL_API_URL') ? 'disabled' : '',
         ]);
     }
@@ -58,6 +59,12 @@ class ServiceManage extends ManagePluginBase
      */
     public function update($request, $id = null)
     {
+        // 翻訳を使用
+        $configs = Configs::updateOrCreate(
+            ['name' => 'use_translate'],
+            ['category' => 'service', 'value' => $request->use_translate]
+        );
+
         // PDFアップロードを使用
         $configs = Configs::updateOrCreate(
             ['name' => 'use_pdf_thumbnail'],

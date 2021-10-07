@@ -3,16 +3,15 @@
 namespace App\Plugins\Api\Translate;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
-use App\Models\Core\UsersRoles;
-use App\User;
 use App\Plugins\Api\ApiPluginBase;
 use App\Traits\ConnectCommonTrait;
+
+use App\Enums\UseType;
+
+use App\Models\Core\Configs;
 
 /**
  * 翻訳サービス管理クラス
@@ -20,37 +19,45 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 翻訳サービス
- * @package Contoroller
+ * @package Controller
  */
 class Translate extends ApiPluginBase
 {
-
     use ConnectCommonTrait;
 
     /**
-     *  翻訳処理
+     * 翻訳処理
      */
     public function post($request)
     {
-
         // 戻り値
         $msg_array = array();
 
-        // [TODO] translate-apiのサーバサイドプラグラムも公開できなら、このURLは.envに持っていいってもよさそう。by mutaguchi@opensource-workshop.jp
-        $url = "https://translate-api.opensource-workshop.jp";
+        // API URL取得
+        $api_url = config('connect.TRANSLATE_API_URL');
+        if (empty($api_url)) {
+            // API URLを設定しないとこの処理は通らないため、通常ここに入らない想定。そのためシステム的なメッセージを表示
+            return ['return_texts' => ['error: 設定ファイル.envにTRANSLATE_API_URLが設定されていません。']];
+        }
+
+        if (Configs::getSharedConfigsValue('use_translate', UseType::not_use) == UseType::not_use) {
+            Log::debug('入った');
+            // 通常ここに入らない想定。（入る場合の例：誰かがウィジウィグで翻訳使用中に、管理者が翻訳を使用しないに設定変更して、翻訳が行われた場合等）
+            return ['return_texts' => ['error: 翻訳の使用設定がONになっていません。']];
+        }
 
         // cURLセッションを初期化する
         $ch = curl_init();
 
         // 送信データを指定
-        // $data = array('text' => $request->inline_text);
-        $data = array(
+        $data = [
+            'api_key' => config('connect.TRANSLATE_API_KEY'),
             'text' => $request->inline_text,
             'target_language' => $request->target_language,
-        );
+        ];
 
         // URLとオプションを指定する
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $api_url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -59,7 +66,6 @@ class Translate extends ApiPluginBase
         $res = curl_exec($ch);
 
         // 結果を表示する
-        //var_dump($res);
         //Log::debug($res);
         $msg_array['return_texts'][] = $res;
 
