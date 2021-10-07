@@ -61,23 +61,25 @@
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
             @if (isset($reply_flag) && $reply_flag == true)
-            <input type="text" name="title" value="{{old('title', $parent_post->getReplyTitle())}}" class="form-control">
+            <input type="text" name="title" value="{{old('title', $parent_post->getReplyTitle())}}" class="form-control @if ($errors->has('title')) border-danger @endif">
             @else
-            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control">
+            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control @if ($errors->has('title')) border-danger @endif">
             @endif
-            @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'title'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">本文 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
-            @if (isset($reply) && $reply == true)
-                <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
-            @else
-                <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
-            @endif
-            @if ($errors && $errors->has('body')) <div class="text-danger">{{$errors->first('body')}}</div> @endif
+            <div @if ($errors && $errors->has('body')) class="border border-danger" @endif>
+                @if (isset($reply) && $reply == true)
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
+                @else
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
+                @endif
+            </div>
+            @include('plugins.common.errors_inline_wysiwyg', ['name' => 'body'])
         </div>
     </div>
 
