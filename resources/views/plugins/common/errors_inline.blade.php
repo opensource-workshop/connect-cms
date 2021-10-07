@@ -1,6 +1,4 @@
 {{--
- * @deprecation [非推奨] resources\views\plugins\common\errors_inline.blade.php にコピー済み。当ソースは今後廃止予定。
- *
  * インライン エラー表示テンプレート
  *
  * @param $name inputのname
