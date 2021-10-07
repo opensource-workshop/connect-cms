@@ -51,4 +51,5 @@ return [
     'input_password_confirm' => 'Enter the same password.',
     'empty_bucket' => 'From the frame setting screen, select or create the :plugin_name to use.',
     'empty_bucket_setting' => 'From the selection screen, select or create the :plugin_name to use.',
+    'number_of_display' => 'number of display',
 ];

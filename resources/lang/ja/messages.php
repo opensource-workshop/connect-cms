@@ -51,6 +51,7 @@ $messages = [
     'input_password_confirm' => 'パスワードと同じものを入力してください。',
     'empty_bucket' => 'フレームの設定画面から、使用する:plugin_nameを選択するか、作成してください。',
     'empty_bucket_setting' => '選択画面から、使用する:plugin_nameを選択するか、作成してください。',
+    'number_of_display' => '表示件数',
 ];
 
 foreach ($messages as $key => $message) {
