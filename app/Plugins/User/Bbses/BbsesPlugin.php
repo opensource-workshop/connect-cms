@@ -18,6 +18,8 @@ use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
 use App\Models\User\Bbses\BbsPost;
 
+use App\Rules\CustomValiWysiwygMax;
+
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -473,7 +475,7 @@ class BbsesPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'title' => ['required', 'max:255'],
-            'body'  => ['required', 'wysiwyg_max'],
+            'body'  => ['required', new CustomValiWysiwygMax()],
         ]);
         $validator->setAttributeNames([
             'title' => 'タイトル',
