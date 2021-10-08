@@ -13,7 +13,6 @@ use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
-// use App\Models\Common\Page;
 use App\Models\User\Faqs\Faqs;
 use App\Models\User\Faqs\FaqsPosts;
 use App\Models\User\Faqs\FaqsPostsTags;
@@ -21,6 +20,8 @@ use App\Models\User\Faqs\FaqsPostsTags;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\String\StringUtils;
+
+use App\Rules\CustomValiWysiwygMax;
 
 /**
  * FAQプラグイン
@@ -145,14 +146,16 @@ class FaqsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'post_title' => ['required'],
+            'post_title' => ['required', 'max:255'],
             'posted_at'  => ['required', 'date_format:Y-m-d H:i'],
-            'post_text'  => ['required'],
+            'post_text'  => ['required', new CustomValiWysiwygMax()],
+            'tags' => ['nullable', 'max:255'],
         ]);
         $validator->setAttributeNames([
             'post_title' => 'タイトル',
             'posted_at'  => '投稿日時',
             'post_text'  => '本文',
+            'tags'  => 'タグ',
         ]);
         return $validator;
     }
@@ -677,6 +680,11 @@ class FaqsPlugin extends UserPluginBase
      */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     {
+        $request->merge([
+            // 表示順:  全角→半角変換
+            "display_sequence" => StringUtils::convertNumericAndMinusZenkakuToHankaku($request->display_sequence),
+        ]);
+
         // 項目のエラーチェック
         $validator = $this->makeValidator($request);
 
