@@ -25,7 +25,7 @@
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
             <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control @if ($errors->has('title')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'title'])
+            @include('plugins.common.errors_inline', ['name' => 'title'])
         </div>
     </div>
 
@@ -33,7 +33,7 @@
         <label class="col-md-2 control-label text-md-right">URL</label>
         <div class="col-md-10">
             <input type="text" name="url" value="{{old('url', $post->url)}}" class="form-control @if ($errors->has('url')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'url'])
+            @include('plugins.common.errors_inline', ['name' => 'url'])
         </div>
     </div>
 
@@ -55,7 +55,7 @@
         <label class="col-md-2 control-label text-md-right">説明</label>
         <div class="col-md-10">
             <textarea name="description" class="form-control @if ($errors->has('description')) border-danger @endif" rows=2>{!!old('description', $post->description)!!}</textarea>
-            @include('common.errors_inline', ['name' => 'description'])
+            @include('plugins.common.errors_inline', ['name' => 'description'])
         </div>
     </div>
 
@@ -63,7 +63,7 @@
         <label class="col-md-2 control-label text-md-right">表示順</label>
         <div class="col-md-10">
             <input type="text" name="display_sequence" value="{{old('display_sequence', $post->display_sequence)}}" class="form-control @if ($errors->has('display_sequence')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'display_sequence'])
+            @include('plugins.common.errors_inline', ['name' => 'display_sequence'])
             <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
         </div>
     </div>
@@ -77,7 +77,7 @@
                 <option value="{{$category->id}}" @if(old('category', $post->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
                 @endforeach
             </select>
-            @include('common.errors_inline', ['name' => 'category'])
+            @include('plugins.common.errors_inline', ['name' => 'category'])
         </div>
     </div>
 

@@ -38,7 +38,7 @@
                         <option value="{{$enum_value}}" @if(old('type', $linklist_frame->type) == $enum_value) selected="selected" @endif>{{$enum_label}}</option>
                     @endforeach
                 </select>
-                @include('common.errors_inline', ['name' => 'type'])
+                @include('plugins.common.errors_inline', ['name' => 'type'])
             </div>
         </div>
 
@@ -46,7 +46,7 @@
             <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="view_count" value="{{old('view_count', $linklist_frame->view_count)}}" class="form-control">
-                @include('common.errors_inline', ['name' => 'view_count'])
+                @include('plugins.common.errors_inline', ['name' => 'view_count'])
                 <small class="text-muted">※ 未設定時は10件</small>
             </div>
         </div>

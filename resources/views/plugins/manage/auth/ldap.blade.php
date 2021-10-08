@@ -28,7 +28,7 @@
                 <div class="col">
                     <label class="col-form-label">LDAP URI</label>
                     <input type="text" name="auth_ldap_uri" value="{{old('auth_ldap_uri', $config->additional1)}}" class="form-control @if ($errors->has('auth_ldap_uri')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'auth_ldap_uri'])
+                    @include('plugins.common.errors_inline', ['name' => 'auth_ldap_uri'])
                     <small class="form-text text-muted">
                         ※ <code>ldap://hostname:port</code> 形式、あるいは <code>ldaps://hostname:port</code> 形式が使えます。<br />
                         ※ 設定例）ldap://localhost:389<br />

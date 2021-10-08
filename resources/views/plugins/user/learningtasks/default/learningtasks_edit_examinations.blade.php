@@ -350,9 +350,9 @@
                         </tbody>
                     </table>
                     @foreach($examinations as $examination)
-                        @include('common.errors_inline', ['name' => 'edit_start_at.'.$examination->id])
-                        @include('common.errors_inline', ['name' => 'edit_end_at.'.$examination->id])
-                        @include('common.errors_inline', ['name' => 'edit_entry_end_at.'.$examination->id])
+                        @include('plugins.common.errors_inline', ['name' => 'edit_start_at.'.$examination->id])
+                        @include('plugins.common.errors_inline', ['name' => 'edit_end_at.'.$examination->id])
+                        @include('plugins.common.errors_inline', ['name' => 'edit_entry_end_at.'.$examination->id])
                     @endforeach
                     <small class="text-muted">
                         ※ 削除する場合はチェックします。<br />
@@ -374,7 +374,7 @@
                                 <div class="input-group-text @if ($errors->has('start_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
-                        @include('common.errors_inline', ['name' => 'start_at'])
+                        @include('plugins.common.errors_inline', ['name' => 'start_at'])
                     </div>
                     <div class="col-md-4">
                         <div class="input-group date" id="end_at" data-target-input="nearest">
@@ -383,7 +383,7 @@
                                 <div class="input-group-text @if ($errors->has('end_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
-                        @include('common.errors_inline', ['name' => 'end_at'])
+                        @include('plugins.common.errors_inline', ['name' => 'end_at'])
                     </div>
                     <div class="col-md-4">
                         <div class="input-group date" id="entry_end_at" data-target-input="nearest">
@@ -392,7 +392,7 @@
                                 <div class="input-group-text @if ($errors->has('entry_end_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                             </div>
                         </div>
-                        @include('common.errors_inline', ['name' => 'entry_end_at'])
+                        @include('plugins.common.errors_inline', ['name' => 'entry_end_at'])
                     </div>
                 </div>
             </div>
@@ -449,7 +449,7 @@
                 <div class="custom-file">
                     <input type="file" class="custom-file-input" id="add_task_file" name="add_task_file" accept=".pdf, .doc, .docx">
                     <label class="custom-file-label" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
-                    @include('common.errors_inline', ['name' => 'add_task_file'])
+                    @include('plugins.common.errors_inline', ['name' => 'add_task_file'])
                 </div>
             </div>
         </div>

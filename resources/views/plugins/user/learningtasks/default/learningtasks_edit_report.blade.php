@@ -174,7 +174,7 @@
                                 </div>
                             </div>
                         </div>
-                        @include('common.errors_inline', ['name' => $old_function2])
+                        @include('plugins.common.errors_inline', ['name' => $old_function2])
                     </div>
                 </div>
 

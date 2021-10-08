@@ -79,7 +79,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">課題管理名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="learningtasks_name" value="{{old('learningtasks_name', $learningtask->learningtasks_name)}}" class="form-control @if ($errors && $errors->has('learningtasks_name')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'learningtasks_name'])
+            @include('plugins.common.errors_inline', ['name' => 'learningtasks_name'])
         </div>
     </div>
 
@@ -87,7 +87,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="view_count" value="{{old('view_count', $learningtask->view_count)}}" class="form-control col-sm-3 @if ($errors && $errors->has('view_count')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'view_count'])
+            @include('plugins.common.errors_inline', ['name' => 'view_count'])
         </div>
     </div>
 
@@ -267,7 +267,7 @@
                         </div>
                     </div>
                 </div>
-                @include('common.errors_inline', ['name' => $old_function2])
+                @include('plugins.common.errors_inline', ['name' => $old_function2])
             </div>
         </div>
 

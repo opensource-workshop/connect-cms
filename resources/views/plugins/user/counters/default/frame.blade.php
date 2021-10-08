@@ -42,7 +42,7 @@
                     <option value="{{$enum_value}}" @if(old('design_type', $counter_frame->design_type) == $enum_value) selected="selected" @endif>{{$enum_label}}</option>
                 @endforeach
             </select>
-            @include('common.errors_inline', ['name' => 'design_type'])
+            @include('plugins.common.errors_inline', ['name' => 'design_type'])
         </div>
     </div>
 
@@ -70,7 +70,7 @@
                     <div class="col-md">
                         <label>累計カウントの項目名</label><br>
                         <input type="text" name="total_count_title" value="{{old('total_count_title', $counter_frame->total_count_title)}}" class="form-control" placeholder="（例）累計">
-                        @include('common.errors_inline', ['name' => 'total_count_title'])
+                        @include('plugins.common.errors_inline', ['name' => 'total_count_title'])
                     </div>
                 </div>
 
@@ -78,7 +78,7 @@
                     <div class="col-md">
                         <label>累計カウントの単位</label><br>
                         <input type="text" name="total_count_after" value="{{old('total_count_after', $counter_frame->total_count_after)}}" class="form-control" placeholder="（例）人">
-                        @include('common.errors_inline', ['name' => 'total_count_after'])
+                        @include('plugins.common.errors_inline', ['name' => 'total_count_after'])
                     </div>
                 </div>
 
@@ -110,7 +110,7 @@
                     <div class="col-md">
                         <label>本日のカウントの項目名</label><br>
                         <input type="text" name="today_count_title" value="{{old('today_count_title', $counter_frame->today_count_title)}}" class="form-control" placeholder="（例）本日">
-                        @include('common.errors_inline', ['name' => 'today_count_title'])
+                        @include('plugins.common.errors_inline', ['name' => 'today_count_title'])
                     </div>
                 </div>
 
@@ -118,7 +118,7 @@
                     <div class="col-md">
                         <label>本日のカウントの単位</label><br>
                         <input type="text" name="today_count_after" value="{{old('today_count_after', $counter_frame->today_count_after)}}" class="form-control" placeholder="（例）人">
-                        @include('common.errors_inline', ['name' => 'today_count_after'])
+                        @include('plugins.common.errors_inline', ['name' => 'today_count_after'])
                     </div>
                 </div>
 
@@ -150,7 +150,7 @@
                     <div class="col-md">
                         <label>昨日のカウントの項目名</label><br>
                         <input type="text" name="yesterday_count_title" value="{{old('yesterday_count_title', $counter_frame->yesterday_count_title)}}" class="form-control" placeholder="（例）昨日">
-                        @include('common.errors_inline', ['name' => 'yesterday_count_title'])
+                        @include('plugins.common.errors_inline', ['name' => 'yesterday_count_title'])
                     </div>
                 </div>
 
@@ -158,7 +158,7 @@
                     <div class="col-md">
                         <label>昨日のカウントの単位</label><br>
                         <input type="text" name="yesterday_count_after" value="{{old('yesterday_count_after', $counter_frame->yesterday_count_after)}}" class="form-control" placeholder="（例）人">
-                        @include('common.errors_inline', ['name' => 'yesterday_count_after'])
+                        @include('plugins.common.errors_inline', ['name' => 'yesterday_count_after'])
                     </div>
                 </div>
 
