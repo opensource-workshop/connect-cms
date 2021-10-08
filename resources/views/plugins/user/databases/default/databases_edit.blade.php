@@ -74,11 +74,6 @@
                 })
             </script>
 
-            {{-- キャンセル用のフォーム。キャンセル時はセッションをクリアするため、トークン付きでPOST でsubmit したい。 --}}
-            <form action="{{url('/')}}/redirect/plugin/databases/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="databases_cancel" method="POST" class="visible-lg-inline visible-md-inline visible-sm-inline visible-xs-inline">
-                {{ csrf_field() }}
-            </form>
-
             <!-- Add or Update Database Button -->
             <div class="form-group">
                 <form action="" id="database_columns" name="database_columns" method="POST">
@@ -150,12 +145,10 @@
 
                     {{-- ボタンエリア --}}
                     <div class="text-center mt-3 mt-md-0">
-
                         {{-- キャンセルボタン --}}
-                        <button type="button" class="btn btn-secondary mr-2" onclick="javascript:databases_cancel.submit();">
-                            <i class="fas fa-times"></i>
-                            <span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
-                        </button>
+                        <a class="btn btn-secondary" href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}">
+                            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
+                        </a>
                     </div>
                 </form>
             </div>
