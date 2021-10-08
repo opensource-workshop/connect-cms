@@ -21,6 +21,8 @@ use App\Models\User\Calendars\CalendarPost;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Rules\CustomValiWysiwygMax;
+
 /**
  * カレンダー・プラグイン
  *
@@ -411,11 +413,13 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title'      => ['required'],
+            'title'      => ['required', 'max:255'],
+            'body'       => ['nullable', new CustomValiWysiwygMax()],
             'start_date' => ['required', 'date'],
         ]);
         $validator->setAttributeNames([
             'title'      => 'タイトル',
+            'body'      => '本文',
             'start_date' => '開始日時',
         ]);
         // エラーがあった場合は入力画面に戻る。

@@ -212,7 +212,7 @@
                     <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
                 @endif
             </div>
-            @include('plugins.common.errors_inline', ['name' => 'body'])
+            @include('plugins.common.errors_inline_wysiwyg', ['name' => 'body'])
         </div>
     </div>
 
