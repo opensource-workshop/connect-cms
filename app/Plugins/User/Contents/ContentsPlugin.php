@@ -5,12 +5,15 @@ namespace App\Plugins\User\Contents;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\User\Contents\Contents;
 
 use App\Plugins\User\UserPluginBase;
+
+use App\Rules\CustomValiWysiwygMax;
 
 /**
  * コンテンツプラグイン
@@ -27,10 +30,11 @@ class ContentsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    // delete: どこからもセットしてない変数
     /**
      * POSTデータ
      */
-    public $post = null;
+    // public $post = null;
 
     /* コアから呼び出す関数 */
 
@@ -73,28 +77,15 @@ class ContentsPlugin extends UserPluginBase
 */
 
     /**
-     *  フレームとBuckets 取得
-     */
-/*
-    private function getBuckets_____________($frame_id)
-    {
-        $backets = Buckets::select('buckets.*', 'frames.id as frames_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'buckets.id')
-                      ->where('frames.id', $frame_id)
-                      ->first();
-        return $backets;
-    }
-*/
-    /**
      *  データ取得
      */
     private function getFrameContents($frame_id)
     {
-
+        // delete: どこからもセットしてない変数
         // 一度読んでいれば、そのPOSTを再利用する。
-        if (!empty($this->post)) {
-            return $this->post;
-        }
+        // if (!empty($this->post)) {
+        //     return $this->post;
+        // }
 
         // 認証されているユーザの取得
         // $user = Auth::user();
@@ -455,21 +446,12 @@ class ContentsPlugin extends UserPluginBase
         // データ取得
         $contents = $this->getFrameContents($frame_id);
 
-        // データがない場合は、新規登録用画面
-        if (empty($contents)) {
-            // 新規登録画面を呼び出す
-            return $this->view(
-                'contents_create', [
-                ]
-            );
-        } else {
-            // 編集画面テンプレートを呼び出す。
-            return $this->view(
-                'contents_edit', [
-                'contents' => $contents,
-                ]
-            );
-        }
+        // データがない場合
+        $contents = $contents ?? new Contents();
+
+        return $this->view('contents_edit', [
+            'contents' => $contents,
+        ]);
     }
 
     /**
@@ -510,6 +492,14 @@ class ContentsPlugin extends UserPluginBase
      */
     public function store($request, $page_id = null, $frame_id = null, $id = null, $status = 0)
     {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
         // バケツがまだ登録されていなかったら登録する。
         if (empty($this->buckets)) {
             $bucket_id = DB::table('buckets')->insertGetId([
@@ -550,6 +540,14 @@ class ContentsPlugin extends UserPluginBase
      */
     public function update($request, $page_id = null, $frame_id = null, $id = null)
     {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $oldrow = Contents::find($id);
 
@@ -591,6 +589,14 @@ class ContentsPlugin extends UserPluginBase
             $status = 1;
             $this->store($request, $page_id, $frame_id, $id, $status);
         } else {
+            // 項目のエラーチェック
+            $validator = $this->makeValidator($request);
+
+            // エラーがあった場合は入力画面に戻る。
+            if ($validator->fails()) {
+                return back()->withErrors($validator)->withInput();
+            }
+
             // 旧データ取得
             $oldrow = Contents::find($id);
 
@@ -612,6 +618,24 @@ class ContentsPlugin extends UserPluginBase
             $buckets->save();
         }
         return;
+    }
+
+    /**
+     * 入力チェック
+     */
+    private function makeValidator($request)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'contents'    => ['nullable', new CustomValiWysiwygMax()],
+            'bucket_name' => ['nullable', 'max:255'],
+        ]);
+        $validator->setAttributeNames([
+            'contents'    => '内容',
+            'bucket_name' => 'データ名',
+        ]);
+
+        return $validator;
     }
 
     /**
