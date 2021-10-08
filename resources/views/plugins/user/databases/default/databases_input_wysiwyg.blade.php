@@ -17,7 +17,7 @@
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg'])
 
-<textarea name="databases_columns_value[{{$database_obj->id}}]" class="form-control wysiwyg">{{old('databases_columns_value.'.$database_obj->id, $value)}}</textarea>
-@if ($errors && $errors->has("databases_columns_value.$database_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("databases_columns_value.$database_obj->id")}}</div>
-@endif
+<div @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) class="border border-danger" @endif>
+    <textarea name="databases_columns_value[{{$database_obj->id}}]" class="form-control wysiwyg">{{old('databases_columns_value.'.$database_obj->id, $value)}}</textarea>
+</div>
+@include('plugins.common.errors_inline_wysiwyg', ['name' => "databases_columns_value.$database_obj->id"])
