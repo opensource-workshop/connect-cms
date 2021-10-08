@@ -91,7 +91,7 @@
 <div class="card-body frame-setting-body">
     <form action="{{url('/')}}/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST">
         {{ csrf_field() }}
-        @include('common.errors_form_line')
+        @include('plugins.common.errors_form_line')
         <h5><span class="badge badge-secondary">デザイン設定</span></h5>
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}">フレームタイトル</label>

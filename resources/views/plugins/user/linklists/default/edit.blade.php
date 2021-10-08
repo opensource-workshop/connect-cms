@@ -10,7 +10,7 @@
 @section("plugin_contents_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))

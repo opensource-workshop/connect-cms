@@ -26,10 +26,10 @@
             {{-- バケツデータ作成済みの場合 --}}
 
             {{-- キャンセル用のフォーム --}}
-            <form 
-                action="{{url('/')}}/redirect/plugin/slideshows/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" 
-                name="slideshows_cancel" 
-                method="POST" 
+            <form
+                action="{{url('/')}}/redirect/plugin/slideshows/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}"
+                name="slideshows_cancel"
+                method="POST"
             >
                 {{ csrf_field() }}
             </form>
@@ -45,7 +45,7 @@
                     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/slideshows/editItem/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
                     {{-- エラーメッセージエリア ※共通blade呼び出し --}}
-                    @include('common.errors_form_line')
+                    @include('plugins.common.errors_form_line')
 
                     {{-- メッセージエリア --}}
                     <div class="alert alert-info mt-2">
@@ -86,18 +86,18 @@
                     {{-- ボタンエリア --}}
                     <div class="text-center mt-3 mt-md-0">
                         {{-- キャンセルボタン --}}
-                        <button 
-                            type="button" 
-                            class="btn btn-secondary mr-2" 
+                        <button
+                            type="button"
+                            class="btn btn-secondary mr-2"
                             onclick="javascript:slideshows_cancel.submit();"
                         >
                             <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                         </button>
                         @if ($items->count() > 0)
                             {{-- 更新ボタン --}}
-                            <button 
-                                type="submit" 
-                                class="btn btn-primary mr-2" 
+                            <button
+                                type="submit"
+                                class="btn btn-primary mr-2"
                                 onclick="javascript:return submit_update_items();"
                             >
                                 <i class="fas fa-check"></i> 更新
@@ -116,7 +116,7 @@
                 slideshow_items.action = "{{url('/')}}/redirect/plugin/slideshows/addItem/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
                 slideshow_items.submit();
             }
-        
+
             /**
              * 項目の削除ボタン押下
              */
@@ -128,7 +128,7 @@
                 }
                 return false;
             }
-        
+
             /**
              * 項目の更新ボタン押下
              */
@@ -139,7 +139,7 @@
                 }
                 return false;
             }
-        
+
             /**
              * 項目の表示順操作ボタン押下
              */
@@ -150,7 +150,7 @@
                 slideshow_items.display_sequence_operation.value = display_sequence_operation;
                 slideshow_items.submit();
             }
-        
+
             /**
              * ツールチップ
              */

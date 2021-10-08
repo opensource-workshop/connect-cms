@@ -12,7 +12,7 @@
 
 @section("plugin_contents_$frame->id")
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])

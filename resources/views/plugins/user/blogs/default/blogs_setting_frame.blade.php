@@ -22,7 +22,7 @@
 @else
 
     {{-- 共通エラーメッセージ 呼び出し --}}
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <div class="alert alert-info">
         <i class="fas fa-exclamation-circle"></i>

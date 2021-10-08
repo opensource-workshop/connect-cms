@@ -9,7 +9,7 @@
 --}}
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if ($page->id)
 <form action="{{url('/manage/page/update')}}/{{$page->id}}" method="POST" class="form-horizontal">

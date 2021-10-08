@@ -16,7 +16,7 @@
 
 @section("plugin_setting_$frame->id")
 
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     @if (($slideshow && $slideshow->id) || $is_create)
 
@@ -51,10 +51,10 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">スライドショー名 <label class="badge badge-danger">必須</label></label>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <input 
-                        type="text" 
-                        name="slideshows_name" 
-                        value="{{old('slideshows_name', $slideshow->slideshows_name)}}" 
+                    <input
+                        type="text"
+                        name="slideshows_name"
+                        value="{{old('slideshows_name', $slideshow->slideshows_name)}}"
                         class="form-control @if ($errors && $errors->has('slideshows_name')) border-danger @endif"
                         required
                     >
@@ -68,12 +68,12 @@
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     @foreach (ShowType::enum as $key => $value)
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" 
-                                value="{{ $key }}" 
+                            <input
+                                type="radio"
+                                value="{{ $key }}"
                                 id="{{ "control_display_flag_${key}" }}"
-                                name="control_display_flag" 
-                                class="custom-control-input" 
+                                name="control_display_flag"
+                                class="custom-control-input"
                                 {{ $slideshow->control_display_flag == $key ? 'checked' : '' }}
                             >
                             <label class="custom-control-label" for="{{ "control_display_flag_${key}" }}">
@@ -90,12 +90,12 @@
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     @foreach (ShowType::enum as $key => $value)
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" 
-                                value="{{ $key }}" 
+                            <input
+                                type="radio"
+                                value="{{ $key }}"
                                 id="{{ "indicators_display_flag_${key}" }}"
-                                name="indicators_display_flag" 
-                                class="custom-control-input" 
+                                name="indicators_display_flag"
+                                class="custom-control-input"
                                 {{ $slideshow->indicators_display_flag == $key ? 'checked' : '' }}
                             >
                             <label class="custom-control-label" for="{{ "indicators_display_flag_${key}" }}">
@@ -105,19 +105,19 @@
                     @endforeach
                 </div>
             </div>
-        
+
             {{-- フェードの使用 --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">フェードの使用</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     @foreach (UseType::enum as $key => $value)
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input 
-                                type="radio" 
-                                value="{{ $key }}" 
+                            <input
+                                type="radio"
+                                value="{{ $key }}"
                                 id="{{ "fade_use_flag_${key}" }}"
-                                name="fade_use_flag" 
-                                class="custom-control-input" 
+                                name="fade_use_flag"
+                                class="custom-control-input"
                                 {{ $slideshow->fade_use_flag == $key ? 'checked' : '' }}
                             >
                             <label class="custom-control-label" for="{{ "fade_use_flag_${key}" }}">
@@ -127,17 +127,17 @@
                     @endforeach
                 </div>
             </div>
-        
+
             {{-- 画像の静止時間 --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">
                     画像の静止時間（ミリ秒） <i class="fas fa-question-circle mr-2" data-toggle="tooltip" title="1000ミリ秒 = 1秒"></i>
                     <br><label class="badge badge-danger">必須</label></label>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <input 
-                        type="number" 
-                        name="image_interval" 
-                        value="{{old('image_interval', isset($slideshow->image_interval) ? $slideshow->image_interval : 5000)}}" 
+                    <input
+                        type="number"
+                        name="image_interval"
+                        value="{{old('image_interval', isset($slideshow->image_interval) ? $slideshow->image_interval : 5000)}}"
                         class="form-control @if ($errors && $errors->has('image_interval')) border-danger @endif"
                         required
                     >
@@ -153,7 +153,7 @@
                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
                             <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                         </button>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>
                             <span class="{{$frame->getSettingButtonCaptionClass()}}">
                                 {{ empty($slideshow) || $is_create ? '登録確定' : '変更確定' }}
                             </span>

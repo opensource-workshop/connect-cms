@@ -20,7 +20,7 @@
 <div class="card-body">
 
     {{-- 共通エラーメッセージ 呼び出し --}}
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <form action="{{url('/')}}/manage/site/update" method="POST">
         {{csrf_field()}}
