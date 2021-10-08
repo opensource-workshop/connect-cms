@@ -24,7 +24,5 @@
         </div>
     </div>
 @endif
-<input name="databases_columns_value[{{$database_obj->id}}]" class="" type="{{$database_obj->column_type}}">
-@if ($errors && $errors->has("databases_columns_value.$database_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("databases_columns_value.$database_obj->id")}}</div>
-@endif
+<input name="databases_columns_value[{{$database_obj->id}}]" type="{{$database_obj->column_type}}" @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) class="border border-danger" @endif>
+@include('plugins.common.errors_inline', ['name' => "databases_columns_value.$database_obj->id"])

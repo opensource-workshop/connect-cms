@@ -15,7 +15,7 @@
         }
 
     @endphp
-    <div class="container-fluid row">
+    <div class="container-fluid row @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border border-danger @endif">
         @foreach($databases_columns_id_select[$database_obj->id] as $select)
 
             @php
@@ -59,9 +59,5 @@
 
         @endforeach
     </div>
-    @if ($errors && $errors->has("databases_columns_value.$database_obj->id"))
-        <div class="d-block text-danger">
-            <i class="fas fa-exclamation-circle"></i> {{$errors->first("databases_columns_value.$database_obj->id")}}
-        </div>
-    @endif
+    @include('plugins.common.errors_inline', ['name' => "databases_columns_value.$database_obj->id"])
 @endif
