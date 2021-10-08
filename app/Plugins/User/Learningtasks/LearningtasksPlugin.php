@@ -41,6 +41,8 @@ use App\Enums\LearningtasksExaminationColumn;
 use App\Enums\LearningtaskUseFunction;
 use App\Enums\RoleName;
 
+use App\Rules\CustomValiWysiwygMax;
+
 /**
  * 課題管理プラグイン
  *
@@ -1565,9 +1567,9 @@ class LearningtasksPlugin extends UserPluginBase
         // 項目のエラーチェック
         // $validator = $this->makeValidator($request);
         $validate_value = [
-            'post_title' => ['required'],
+            'post_title' => ['required', 'max:255'],
             'posted_at' => ['required', 'date_format:Y-m-d H:i'],
-            'post_text' => ['required'],
+            'post_text' => ['required', new CustomValiWysiwygMax()],
         ];
 
         $validate_attribute = [

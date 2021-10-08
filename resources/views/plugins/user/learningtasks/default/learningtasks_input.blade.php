@@ -46,7 +46,7 @@
             <div class="@if ($errors->has('post_text')) border border-danger @endif">
                 <textarea name="post_text" class="wysiwyg{{$frame->id}}">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
             </div>
-            @include('plugins.common.errors_inline', ['name' => 'post_text'])
+            @include('plugins.common.errors_inline_wysiwyg', ['name' => 'post_text'])
         </div>
     </div>
 
