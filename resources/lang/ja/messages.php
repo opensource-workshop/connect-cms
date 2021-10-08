@@ -53,7 +53,9 @@ $messages = [
     'empty_bucket_setting' => '選択画面から、使用する:plugin_nameを選択するか、作成してください。',
     'number_of_display' => '表示件数',
     'full_name' => '氏名',
-    'affiliation' => '所属・部署・職名',
+    'affiliation' => '所属',
+    'department' => '部署',
+    'job_title' => '職名',
     'search_for_information_on_achievements' => '論文名、書籍名、著者名等の業績情報をあいまい検索可能です',
     'search' => '検索',
 ];
