@@ -10,7 +10,7 @@
 @section("plugin_contents_$frame->id")
 
     {{-- 未設定エラーメッセージの表示等 --}}
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     @if ($slideshows_items->count() > 0)
         {{-- インジケータの形状は標準だとクリックしづらいので、とりあえず丸型にしておきます。後々の改修でインジケータ形状のデザイン機能も入れられるといいと考えてます。 --}}
@@ -28,22 +28,22 @@
                     <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
                         @if ($item->link_url)
                             {{-- 画像＋リンク --}}
-                            <a 
+                            <a
                                 href="{{ $item->link_url }}"
                                 @if ($item->link_target)
                                     target="{{ $item->link_target }}"
                                 @endif
                             >
-                                <img 
-                                    src="{{url('/')}}/file/{{ $item->uploads_id }}" 
-                                    class="d-block w-100" 
+                                <img
+                                    src="{{url('/')}}/file/{{ $item->uploads_id }}"
+                                    class="d-block w-100"
                                 >
                             </a>
                         @else
                             {{-- 画像のみ --}}
-                            <img 
-                                src="{{url('/')}}/file/{{ $item->uploads_id }}" 
-                                class="d-block w-100" 
+                            <img
+                                src="{{url('/')}}/file/{{ $item->uploads_id }}"
+                                class="d-block w-100"
                             >
                         @endif
                         {{-- キャプション ※設定があれば表示 --}}
@@ -70,9 +70,9 @@
             @if ($slideshow->indicators_display_flag == ShowType::show)
                 <ol class="carousel-indicators">
                     @foreach ($slideshows_items as $item)
-                        <li 
-                            data-target="#carousel_{{ $frame_id }}" 
-                            data-slide-to="{{ $loop->iteration - 1 }}" 
+                        <li
+                            data-target="#carousel_{{ $frame_id }}"
+                            data-slide-to="{{ $loop->iteration - 1 }}"
                             @if ($loop->first)
                                 class="active"
                             @endif

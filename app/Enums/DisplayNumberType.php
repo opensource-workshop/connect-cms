@@ -17,9 +17,9 @@ final class DisplayNumberType extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::num_20 => '20件',
-        self::num_50 => '50件',
-        self::num_100 => '100件',
-        self::num_200 => '200件',
+        self::num_20 => '20',
+        self::num_50 => '50',
+        self::num_100 => '100',
+        self::num_200 => '200',
     ];
 }

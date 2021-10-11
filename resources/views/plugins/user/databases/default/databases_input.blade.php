@@ -15,7 +15,7 @@ use App\Models\User\Databases\DatabasesColumns;
 
 @section("plugin_contents_$frame->id")
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if (empty($setting_error_messages))
 
@@ -73,12 +73,12 @@ use App\Models\User\Databases\DatabasesColumns;
             <label class="col-sm-3 control-label">公開日時 <label class="badge badge-danger">必須</label></label>
             <div class="col-sm-9">
                 <div class="input-group date" id="posted_at{{$frame_id}}" data-target-input="nearest">
-                    <input type="text" name="posted_at" value="{{old('posted_at', $inputs->posted_at)}}" class="form-control datetimepicker-input" data-target="#posted_at{{$frame_id}}">
+                    <input type="text" name="posted_at" value="{{old('posted_at', $inputs->posted_at)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('posted_at')) border-danger @endif" data-target="#posted_at{{$frame_id}}">
                     <div class="input-group-append" data-target="#posted_at{{$frame_id}}" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="far fa-clock"></i></div>
+                        <div class="input-group-text @if ($errors && $errors->has('posted_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-                @if ($errors && $errors->has('posted_at')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('posted_at')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'posted_at'])
             </div>
         </div>
 
@@ -88,9 +88,9 @@ use App\Models\User\Databases\DatabasesColumns;
             <div class="form-group row">
                 <label class="col-sm-3 control-label">表示順</label>
                 <div class="col-sm-9">
-                    <input type="text" name="display_sequence" value="{{old('display_sequence', $inputs->display_sequence)}}" class="form-control">
+                    <input type="text" name="display_sequence" value="{{old('display_sequence', $inputs->display_sequence)}}" class="form-control @if ($errors && $errors->has('display_sequence')) border-danger @endif">
+                    @include('plugins.common.errors_inline', ['name' => 'display_sequence'])
                     <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
-                    @if ($errors && $errors->has('display_sequence')) <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first('display_sequence')}}</div> @endif
                 </div>
             </div>
         @endif

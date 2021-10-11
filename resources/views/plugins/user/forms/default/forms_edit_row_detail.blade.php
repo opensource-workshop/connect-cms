@@ -15,7 +15,7 @@
 
 @section("plugin_setting_$frame->id")
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 <script type="text/javascript">
 

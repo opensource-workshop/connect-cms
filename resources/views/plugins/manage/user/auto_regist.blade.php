@@ -16,7 +16,7 @@
 
     <div class="card-body">
 
-        @include('common.errors_form_line')
+        @include('plugins.common.errors_form_line')
 
         <form action="{{url('/')}}/manage/user/autoRegistUpdate" method="POST">
             {{csrf_field()}}

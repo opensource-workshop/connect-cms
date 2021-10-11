@@ -32,6 +32,7 @@ use App\Rules\CustomVali_CheckWidthForString;
 use App\Rules\CustomVali_DatesYm;
 use App\Rules\CustomVali_CsvImage;
 use App\Rules\CustomVali_CsvExtensions;
+use App\Rules\CustomValiWysiwygMax;
 
 // use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
@@ -1121,6 +1122,11 @@ class DatabasesPlugin extends UserPluginBase
         if ($databases_column->column_type == DatabaseColumnType::video) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'mimes:mp4';
+        }
+        // wysiwygチェック
+        if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = new CustomValiWysiwygMax();
         }
         // 単一選択チェック
         // 複数選択チェック

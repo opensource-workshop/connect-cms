@@ -19,7 +19,7 @@
 
 <div class="card-body">
 
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <div class="alert alert-info" role="alert">
         XSS対応のJavaScript等の制限を行います。

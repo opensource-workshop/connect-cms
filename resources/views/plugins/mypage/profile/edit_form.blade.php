@@ -2,7 +2,7 @@
  * copy by resources\views\auth\registe_form.blade.php
 --}}
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if ($errors->has('undelete'))
     <div class="alert alert-danger">
@@ -72,7 +72,7 @@
     <div class="form-group row text-center">
         <div class="col-sm-3"></div>
         <div class="col-sm-6">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>
                 更新
             </button>
         </div>

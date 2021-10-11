@@ -11,7 +11,7 @@
 
 @if ($tool->canPostView())
 
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <style>
     .custom-file {

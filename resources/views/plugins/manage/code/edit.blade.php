@@ -28,7 +28,7 @@
 </div>
 <div class="card-body">
 
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
