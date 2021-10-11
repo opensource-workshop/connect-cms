@@ -5,11 +5,10 @@ namespace App\Plugins\User\Reservations;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-
-use DB;
 
 use App\Models\User\Reservations\Reservations;
 use App\Models\User\Reservations\reservations_facilities;
@@ -26,7 +25,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ReservationsPlugin extends UserPluginBase
 {
@@ -50,13 +49,11 @@ class ReservationsPlugin extends UserPluginBase
         $functions['get']  = [
             'week',
             'month',
-            'editBucketsRoles',
             'editFacilities',
             'editColumns',
             'editColumnDetail',
         ];
         $functions['post'] = [
-            'saveBucketsRoles',
             'addFacility',
             'updateFacility',
             'updateFacilitySequence',
@@ -82,9 +79,27 @@ class ReservationsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["addFacility"] = ['role_article'];
+        $role_check_table["editFacilities"] = ['role_article'];
+        $role_check_table["updateFacility"] = ['role_article'];
+        $role_check_table["updateFacilitySequence"] = ['role_article'];
+
+        $role_check_table["addColumn"] = ['role_article'];
+        $role_check_table["editColumns"] = ['role_article'];
+        $role_check_table["editColumnDetail"] = ['role_article'];
+        $role_check_table["updateColumn"] = ['role_article'];
+        $role_check_table["updateColumnSequence"] = ['role_article'];
+
+        $role_check_table["addSelect"] = ['role_article'];
+        $role_check_table["updateSelect"] = ['role_article'];
+        $role_check_table["updateSelectSequence"] = ['role_article'];
+
+        $role_check_table["editBooking"] = ['role_article'];
+        $role_check_table["saveBooking"] = ['role_article'];
+        $role_check_table["destroyBooking"] = ['role_article'];
+
+        return $role_check_table;
     }
 
     /**
@@ -1146,19 +1161,20 @@ class ReservationsPlugin extends UserPluginBase
         return $this->editFacilities($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
+    // delete: どこからも呼び出されていないプライベートメソッド
     /**
      *  フレームIDに紐づく施設予約データを取得
      */
-    private function getReservation($frame_id)
-    {
-        $reservation = DB::table('reservations')
-            ->select('reservations.*')
-            ->join('frames', 'frames.bucket_id', '=', 'reservations.bucket_id')
-            ->where('frames.id', '=', $frame_id)
-            ->first();
+    // private function getReservation($frame_id)
+    // {
+    //     $reservation = DB::table('reservations')
+    //         ->select('reservations.*')
+    //         ->join('frames', 'frames.bucket_id', '=', 'reservations.bucket_id')
+    //         ->where('frames.id', '=', $frame_id)
+    //         ->first();
 
-        return $reservation;
-    }
+    //     return $reservation;
+    // }
 
     /**
      * 予約詳細項目（選択肢）の登録
