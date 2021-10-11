@@ -153,7 +153,7 @@ class ReservationsPlugin extends UserPluginBase
      */
     private function getFrame($frame_id)
     {
-        return DB::table('frames')->select('frames.*')->where('frames.id', $frame_id)->first();
+        return Frame::where('frames.id', $frame_id)->first();
     }
 
     /**
@@ -174,15 +174,6 @@ class ReservationsPlugin extends UserPluginBase
         ]);
         return $validator;
     }
-
-    // move: UserPluginBaseに移動
-    // /**
-    //  *  要承認の判断
-    //  */
-    // protected function isApproval($frame_id)
-    // {
-    //     return $this->buckets->needApprovalUser(Auth::user());
-    // }
 
     /* スタティック関数 */
 
@@ -777,12 +768,10 @@ class ReservationsPlugin extends UserPluginBase
         $reservations = $query->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'reservations_list_buckets', [
+        return $this->view('reservations_list_buckets', [
             'reservation_frame' => $reservation_frame,
             'reservations'      => $reservations,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -818,15 +807,13 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'reservations_edit', [
+        return $this->view('reservations_edit', [
             'reservation_frame'  => $reservation_frame,
             'reservation'        => $reservation,
             'create_flag'        => $create_flag,
             'message'            => $message,
             'errors'             => $errors,
-            ]
-        )->withInput($request->all);
+        ])->withInput($request->all);
     }
 
     /**
@@ -862,9 +849,9 @@ class ReservationsPlugin extends UserPluginBase
         if (empty($request->reservations_id)) {
             // 画面から渡ってくるid が空ならバケツと施設を新規登録
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => $request->reservation_name,
-                  'plugin_name' => 'reservations'
+            $bucket_id = Buckets::insertGetId([
+                'bucket_name' => $request->reservation_name,
+                'plugin_name' => 'reservations'
             ]);
 
             // 施設予約データ新規オブジェクト
@@ -996,15 +983,13 @@ class ReservationsPlugin extends UserPluginBase
         $facilities = reservations_facilities::query()->where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
 
         // 編集画面テンプレートを呼び出す。
-        return $this->view(
-            'reservations_facilities_edit', [
+        return $this->view('reservations_facilities_edit', [
             'reservations_id' => $reservations_id,
             'reservation'     => $reservation,
             'facilities'     => $facilities,
             'message'     => $message,
             'errors'     => $errors,
-            ]
-        );
+        ]);
     }
 
     /**

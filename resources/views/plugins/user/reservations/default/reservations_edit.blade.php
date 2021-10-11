@@ -13,6 +13,10 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('plugins.common.errors_form_line')
+
 {{-- メッセージエリア --}}
 @if (!$reservation_frame->bucket_id)
     <div class="alert alert-warning" style="margin-top: 10px;">
@@ -37,7 +41,21 @@
 
 @if (!$reservation->id && !$create_flag)
 @else
-<form action="{{url('/')}}/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
+
+{{--
+@if (empty($reservation->id))
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+@else
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}#frame-{{$frame->id}}" method="POST">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+@endif
+--}}
+@if (empty($reservation->id))
+<form action="{{url('/')}}/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
+@else
+<form action="{{url('/')}}/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}#frame-{{$frame->id}}" method="POST">
+@endif
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにreservations_id を空にする --}}
@@ -51,8 +69,8 @@
     <div class="form-group">
         {{-- 施設予約名 --}}
         <label class="control-label">コンテンツ名 <label class="badge badge-danger">必須</span></label></label>
-        <input type="text" name="reservation_name" value="{{old('reservation_name', $reservation->reservation_name)}}" class="form-control">
-        @if ($errors && $errors->has('reservation_name')) <div class="text-danger">{{$errors->first('reservation_name')}}</div> @endif
+        <input type="text" name="reservation_name" value="{{old('reservation_name', $reservation->reservation_name)}}" class="form-control @if ($errors && $errors->has('reservation_name')) border-danger @endif">
+        @include('plugins.common.errors_inline', ['name' => 'reservation_name'])
 
         {{-- 初期表示設定（月/週） --}}
         <label class="col-form-label">カレンダー初期表示 <label class="badge badge-danger">必須</span></label></label>
@@ -71,10 +89,10 @@
             <div class="col-md-1">
                 <div class="custom-control custom-radio custom-control-inline">
                     {{-- 週 --}}
-                    <input type="radio" value="{{ ReservationCalendarDisplayType::week }}" id="calendar_initial_display_type_on" name="calendar_initial_display_type" class="custom-control-input" 
-                    @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::week)
-                        checked="checked"
-                    @endif
+                    <input type="radio" value="{{ ReservationCalendarDisplayType::week }}" id="calendar_initial_display_type_on" name="calendar_initial_display_type" class="custom-control-input"
+                        @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::week)
+                            checked="checked"
+                        @endif
                     >
                     <label class="custom-control-label" for="calendar_initial_display_type_on">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::week) }}</label>
                 </div>
@@ -90,7 +108,7 @@
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link) . '#frame-' . $frame->id}}'">
                     <i class="fas fa-times"></i> キャンセル
                 </button>
-                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                 @if (empty($reservation) || $create_flag)
                     登録確定
                 @else
