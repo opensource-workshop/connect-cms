@@ -16,6 +16,9 @@ use App\Models\User\Linklists\Linklist;
 use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
 
+use App\Rules\CustomValiTextMax;
+use App\Rules\CustomValiUrlMax;
+
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -279,11 +282,15 @@ class LinklistsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title'            => ['required'],
+            'title'            => ['required', 'max:255'],
+            'url'              => ['required', new CustomValiUrlMax()],
+            'description'      => [new CustomValiTextMax()],
             'display_sequence' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'title'            => 'タイトル',
+            'url'              => 'URL',
+            'description'      => '説明',
             'display_sequence' => '表示順',
         ]);
 

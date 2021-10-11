@@ -64,6 +64,7 @@
             value="{{ old('link_url') }}"
             placeholder="例：https://connect-cms.jp/"
         >
+        @include('common.errors_inline', ['name' => 'link_url'])
     </td>
     {{-- キャプション --}}
     <td class="d-block d-xl-table-cell align-middle">
@@ -74,6 +75,7 @@
             class="form-control @if ($errors && $errors->has('caption')) border-danger @endif" 
             value="{{ old('caption') }}"
         >
+        @include('common.errors_inline', ['name' => 'caption'])
     </td>
     {{-- リンクターゲット --}}
     <td class="d-block d-xl-table-cell align-middle">
@@ -85,6 +87,7 @@
             value="{{ old('link_target') }}"
             placeholder="例：_blank、_self等"
         >
+        @include('common.errors_inline', ['name' => 'link_target'])
     </td>
     {{-- ＋ボタン --}}
     <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">

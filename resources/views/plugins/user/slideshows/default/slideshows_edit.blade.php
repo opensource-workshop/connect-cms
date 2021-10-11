@@ -25,15 +25,6 @@
         @else
             {{-- バケツデータ作成済みの場合 --}}
 
-            {{-- キャンセル用のフォーム --}}
-            <form 
-                action="{{url('/')}}/redirect/plugin/slideshows/cancel/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" 
-                name="slideshows_cancel" 
-                method="POST" 
-            >
-                {{ csrf_field() }}
-            </form>
-
             <div class="form-group" id="app_{{ $frame->id }}">
                 {{-- 項目の追加、削除等処理用の汎用フォーム --}}
                 <form action="" id="slideshow_items" name="slideshow_items" method="POST" enctype="multipart/form-data">
@@ -86,17 +77,16 @@
                     {{-- ボタンエリア --}}
                     <div class="text-center mt-3 mt-md-0">
                         {{-- キャンセルボタン --}}
-                        <button 
-                            type="button" 
-                            class="btn btn-secondary mr-2" 
-                            onclick="javascript:slideshows_cancel.submit();"
+                        <button type="button"
+                            class="btn btn-secondary mr-2"
+                            onclick="location.href='{{URL::to($page->permanent_link)}}'"
                         >
-                            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
+                            <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span>
                         </button>
                         @if ($items->count() > 0)
                             {{-- 更新ボタン --}}
                             <button 
-                                type="submit" 
+                                type="button" 
                                 class="btn btn-primary mr-2" 
                                 onclick="javascript:return submit_update_items();"
                             >

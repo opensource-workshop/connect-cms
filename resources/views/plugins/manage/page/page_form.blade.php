@@ -22,14 +22,15 @@
     <div class="form-group row @if ($errors && $errors->has('page_name')) has-error @endif">
         <label for="page_name" class="col-md-3 col-form-label text-md-right">ページ名 <span class="badge badge-danger">必須</span></label>
         <div class="col-md-9">
-            <input type="text" name="page_name" id="page_name" value="{{$page->page_name}}" class="form-control @if ($errors->has('page_name')) border-danger @endif">
+            <input type="text" name="page_name" id="page_name" value="{{old('page_name', $page->page_name)}}" class="form-control @if ($errors->has('page_name')) border-danger @endif">
             @include('common.errors_inline', ['name' => 'page_name'])
         </div>
     </div>
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">固定リンク</label>
         <div class="col-md-9">
-            <input type="text" name="permanent_link" id="permanent_link" value="{{$page->permanent_link}}" class="form-control">
+            <input type="text" name="permanent_link" id="permanent_link" value="{{old('permanent_link', $page->permanent_link)}}" class="form-control @if ($errors->has('permanent_link')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'permanent_link'])
         </div>
     </div>
 
@@ -86,7 +87,8 @@
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">パスワード</label>
         <div class="col-md-9">
-            <input type="text" name="password" id="password" value="{{$page->password}}" class="form-control">
+            <input type="text" name="password" id="password" value="{{old('password', $page->password)}}" class="form-control">
+            @include('common.errors_inline', ['name' => 'password'])
             <small class="form-text text-muted">※ ページにパスワードで閲覧制限を設ける場合に使用します。</small>
         </div>
     </div>
@@ -103,7 +105,8 @@
         <div class="form-group row">
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">背景色</label>
             <div class="col-md-9">
-                <input type="text" name="background_color" id="background_color" value="{{$page->background_color}}" class="form-control" v-model="v_background_color" placeholder="{{ $placeholder_message }}">
+                <input type="text" name="background_color" id="background_color" value="{{old('background_color', $page->background_color)}}" class="form-control" v-model="v_background_color" placeholder="{{ $placeholder_message }}">
+                @include('common.errors_inline', ['name' => 'background_color'])
                 @if (!$is_ie)
                     {{-- IEなら表示しない --}}
                     <input type="color" v-model="v_background_color">
@@ -114,7 +117,8 @@
         <div class="form-group row">
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーバーの背景色</label>
             <div class="col-md-9">
-                <input type="text" name="header_color" id="header_color" value="{{$page->header_color}}" class="form-control" v-model="v_header_color" placeholder="{{ $placeholder_message }}">
+                <input type="text" name="header_color" id="header_color" value="{{old('header_color', $page->header_color)}}" class="form-control" v-model="v_header_color" placeholder="{{ $placeholder_message }}">
+                @include('common.errors_inline', ['name' => 'header_color'])
                 @if (!$is_ie)
                     {{-- IEなら表示しない --}}
                     <input type="color" v-model="v_header_color">
@@ -334,21 +338,24 @@
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">IPアドレス制限</label>
         <div class="col-md-9">
-            <input type="text" name="ip_address" id="ip_address" value="{{$page->ip_address}}" class="form-control">
+            <input type="text" name="ip_address" id="ip_address" value="{{old('ip_address', $page->ip_address)}}" class="form-control">
+            @include('common.errors_inline', ['name' => 'ip_address'])
             <small class="form-text text-muted">※ カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
         </div>
     </div>
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">外部サイトURL</label>
         <div class="col-md-9">
-            <input type="text" name="othersite_url" id="othersite_url" value="{{$page->othersite_url}}" class="form-control">
+            <input type="text" name="othersite_url" id="othersite_url" value="{{old('othersite_url', $page->othersite_url)}}" class="form-control @if ($errors->has('othersite_url')) border-danger @endif">
+            @include('common.errors_inline', ['name' => 'othersite_url'])
             <small class="form-text text-muted">※ メニューから直接開く外部サイトURL</small>
         </div>
     </div>
     <div class="form-group row">
         <label for="permanent_link" class="col-md-3 col-form-label text-md-right">クラス名</label>
         <div class="col-md-9">
-            <input type="text" name="class" id="class" value="{{$page->class}}" class="form-control">
+            <input type="text" name="class" id="class" value="{{old('class', $page->class)}}" class="form-control">
+            @include('common.errors_inline', ['name' => 'class'])
             <small class="form-text text-muted">※ デザインで使用するためのclass名</small>
         </div>
     </div>
