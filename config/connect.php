@@ -96,4 +96,10 @@ return [
 
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,
+
+    // TEXT 型のバイト数チェックの数値（MySQLのtext型）
+    'TEXT_MAX_BYTE' => 65535,
+
+    // URL 項目のバイト数チェックの数値（MySQLのvarchar型で8190 バイトでチェック）
+    'URL_MAX_BYTE' => 8190,
 ];

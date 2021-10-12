@@ -15,6 +15,9 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
 
+use App\Rules\CustomValiTextMax;
+use App\Rules\CustomValiUrlMax;
+
 use App\Traits\Migration\MigrationTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -144,17 +147,41 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * ページ登録・変更時のエラーチェック
+     */
+    private function pageValidator($request)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'page_name'        => ['required', 'max:255'],
+            'permanent_link'   => ['nullable', new CustomValiUrlMax(true)],
+            'password'         => ['nullable', 'max:255'],
+            'background_color' => ['nullable', 'max:255'],
+            'header_color'     => ['nullable', 'max:255'],
+            'ip_address'       => ['nullable', new CustomValiTextMax()],
+            'othersite_url'    => ['nullable', new CustomValiUrlMax()],
+            'class'            => ['nullable', 'max:255'],
+        ]);
+        $validator->setAttributeNames([
+            'page_name'        => 'ページ名',
+            'permanent_link'   => '固定リンク',
+            'password'         => 'パスワード',
+            'background_color' => '背景色',
+            'header_color'     => 'ヘッダーバーの背景色',
+            'ip_address'       => 'IPアドレス制限',
+            'othersite_url'    => '外部サイトURL',
+            'class'            => 'クラス名',
+        ]);
+        return $validator;
+    }
+
+    /**
      * ページ登録処理
      */
     public function store($request)
     {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'page_name' => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'page_name' => 'ページ名',
-        ]);
+        // ページ登録・変更時のエラーチェック
+        $validator = $this->pageValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -194,13 +221,8 @@ class PageManage extends ManagePluginBase
      */
     public function update($request, $page_id)
     {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'page_name' => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'page_name' => 'ページ名',
-        ]);
+        // ページ登録・変更時のエラーチェック
+        $validator = $this->pageValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
