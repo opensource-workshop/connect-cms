@@ -15,7 +15,7 @@ use App\Models\User\Blogs\BlogsPosts;
 @section("plugin_contents_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
@@ -45,20 +45,20 @@ use App\Models\User\Blogs\BlogsPosts;
 
     <div class="form-group">
         <label class="control-label">タイトル <span class="badge badge-danger">必須</span></label>
-        <input type="text" name="post_title" value="{{old('post_title', $blogs_posts->post_title)}}" class="form-control">
-        @include('common.errors_inline', ['name' => 'post_title'])
+        <input type="text" name="post_title" value="{{old('post_title', $blogs_posts->post_title)}}" class="form-control @if ($errors && $errors->has('post_title')) border-danger @endif">
+        @include('plugins.common.errors_inline', ['name' => 'post_title'])
     </div>
 
     <div class="form-group">
         <label class="control-label">投稿日時 <span class="badge badge-danger">必須</span></label>
 
         <div class="input-group date" id="posted_at" data-target-input="nearest">
-            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datetimepicker-input col-md-3" data-target="#posted_at">
+            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datetimepicker-input col-md-3 @if ($errors && $errors->has('posted_at')) border-danger @endif" data-target="#posted_at">
             <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
-                <div class="input-group-text"><i class="far fa-clock"></i></div>
+                <div class="input-group-text @if ($errors && $errors->has('posted_at')) border-danger @endif"><i class="far fa-clock"></i></div>
             </div>
         </div>
-        @include('common.errors_inline', ['name' => 'posted_at'])
+        @include('plugins.common.errors_inline', ['name' => 'posted_at'])
     </div>
     <script type="text/javascript">
         $(function () {
@@ -82,10 +82,11 @@ use App\Models\User\Blogs\BlogsPosts;
 
     <div class="form-group">
         <label class="control-label">本文 <span class="badge badge-danger">必須</span></label>
-        <textarea name="post_text" class="wysiwyg{{$frame->id}}">{!!old('post_text', $blogs_posts->post_text)!!}</textarea>
-        @include('common.errors_inline', ['name' => 'post_text'])
+        <div @if ($errors && $errors->has('post_text')) class="border border-danger" @endif>
+            <textarea name="post_text" class="wysiwyg{{$frame->id}}">{!!old('post_text', $blogs_posts->post_text)!!}</textarea>
+        </div>
+        @include('plugins.common.errors_inline_wysiwyg', ['name' => 'post_text'])
     </div>
-
 
     <div class="form-row">
         <div class="form-group col-md">
@@ -98,39 +99,43 @@ use App\Models\User\Blogs\BlogsPosts;
 
         <div class="form-group col-md">
             <label class="control-label">続きを読むボタン名</label>
-            <input type="text" name="read_more_button" value="{{old('read_more_button', $blogs_posts->read_more_button)}}" class="form-control">
+            <input type="text" name="read_more_button" value="{{old('read_more_button', $blogs_posts->read_more_button)}}" class="form-control @if ($errors && $errors->has('read_more_button')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'read_more_button'])
             <small class="form-text text-muted">空の場合「{{BlogsPosts::read_more_button_default}}」を表示します。</small>
         </div>
 
         <div class="form-group col-md">
             <label class="control-label">続きを閉じるボタン名</label>
-            <input type="text" name="close_more_button" value="{{old('close_more_button', $blogs_posts->close_more_button)}}" class="form-control">
+            <input type="text" name="close_more_button" value="{{old('close_more_button', $blogs_posts->close_more_button)}}" class="form-control @if ($errors && $errors->has('close_more_button')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'close_more_button'])
             <small class="form-text text-muted">空の場合「{{BlogsPosts::close_more_button_default}}」を表示します。</small>
         </div>
     </div>
 
     <div class="form-group">
         <label class="control-label">続き本文</label>
-        <textarea name="post_text2" class="wysiwyg{{$frame->id}}">{!!old('post_text2', $blogs_posts->post_text2)!!}</textarea>
-        @include('common.errors_inline', ['name' => 'post_text2'])
+        <div @if ($errors && $errors->has('post_text2')) class="border border-danger" @endif>
+            <textarea name="post_text2" class="wysiwyg{{$frame->id}}">{!!old('post_text2', $blogs_posts->post_text2)!!}</textarea>
+        </div>
+        @include('plugins.common.errors_inline_wysiwyg', ['name' => 'post_text2'])
     </div>
 
     <div class="form-group">
         <label class="control-label">カテゴリ</label>
-        <select class="form-control" name="categories_id" class="form-control">
+        <select name="categories_id" class="form-control @if ($errors && $errors->has('category')) border-danger @endif">
             <option value=""></option>
             @foreach($blogs_categories as $category)
             <option value="{{$category->id}}" @if(old('categories_id', $blogs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
             @endforeach
         </select>
-        @include('common.errors_inline', ['name' => 'category'])
+        @include('plugins.common.errors_inline', ['name' => 'category'])
     </div>
 
     <div class="form-group">
         <label class="control-label">タグ</label>
-        <input type="text" name="tags" value="{{old('tags', $blogs_posts_tags)}}" class="form-control">
+        <input type="text" name="tags" value="{{old('tags', $blogs_posts_tags)}}" class="form-control @if ($errors && $errors->has('tags')) border-danger @endif">
+        @include('plugins.common.errors_inline', ['name' => 'tags'])
         <small class="form-text text-muted">カンマ区切りで複数指定可能</small>
-        @include('common.errors_inline', ['name' => 'tags'])
     </div>
 
     <div class="form-group">

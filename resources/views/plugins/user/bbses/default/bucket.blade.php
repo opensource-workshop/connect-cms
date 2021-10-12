@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if (empty($bbs->id) && $action != 'createBuckets')
     <div class="alert alert-warning">
@@ -66,7 +66,7 @@
             <label class="{{$frame->getSettingLabelClass()}}">いいねボタン名</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="like_button_name" value="{{old('like_button_name', $bbs->like_button_name)}}" class="form-control @if ($errors->has('like_button_name')) border-danger @endif">
-                @include('common.errors_inline', ['name' => 'like_button_name'])
+                @include('plugins.common.errors_inline', ['name' => 'like_button_name'])
                 <small class="form-text text-muted">空の場合「{{Like::like_button_default}}」を表示します。</small>
             </div>
         </div>

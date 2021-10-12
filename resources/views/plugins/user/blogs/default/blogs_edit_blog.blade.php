@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message')
@@ -58,7 +58,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">ブログ名 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control @if ($errors->has('blog_name')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'blog_name'])
+            @include('plugins.common.errors_inline', ['name' => 'blog_name'])
         </div>
     </div>
 
@@ -66,7 +66,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">表示件数 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3 @if ($errors->has('view_count')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'view_count'])
+            @include('plugins.common.errors_inline', ['name' => 'view_count'])
         </div>
     </div>
 
@@ -96,7 +96,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">RSS件数 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3 @if ($errors->has('rss_count')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'rss_count'])
+            @include('plugins.common.errors_inline', ['name' => 'rss_count'])
         </div>
     </div>
 
@@ -118,7 +118,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">いいねボタン名</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="like_button_name" value="{{old('like_button_name', $blog->like_button_name)}}" class="form-control @if ($errors->has('like_button_name')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'like_button_name'])
+            @include('plugins.common.errors_inline', ['name' => 'like_button_name'])
             <small class="form-text text-muted">空の場合「{{Like::like_button_default}}」を表示します。</small>
         </div>
     </div>

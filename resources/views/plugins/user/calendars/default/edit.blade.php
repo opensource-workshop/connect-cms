@@ -10,7 +10,7 @@
 @section("plugin_contents_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
@@ -95,7 +95,7 @@
         <label class="{{$label_class}}"><label class="badge badge-danger">必須</label> タイトル</label>
         <div class="{{$input_area_class}}">
             <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control @if ($errors && $errors->has('title')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'title'])
+            @include('plugins.common.errors_inline', ['name' => 'title'])
         </div>
     </div>
 
@@ -141,7 +141,7 @@
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                 </div>
             </div>
-            @include('common.errors_inline', ['name' => 'start_time'])
+            @include('plugins.common.errors_inline', ['name' => 'start_time'])
             <script type="text/javascript">
                 $(function () {
                     $('#start_time').datetimepicker({
@@ -153,7 +153,7 @@
         </div>
     </div>
     <div class="form-group form-row">
-        @include('common.errors_inline', ['name' => 'start_date', 'class' => $errors_div_class])
+        @include('plugins.common.errors_inline', ['name' => 'start_date', 'class' => $errors_div_class])
     </div>
 
     <div class="form-group form-row mb-0">
@@ -199,7 +199,7 @@
     </div>
 
     <div class="form-group form-row">
-        @include('common.errors_inline', ['name' => 'end_date', 'class' => $errors_div_class])
+        @include('plugins.common.errors_inline', ['name' => 'end_date', 'class' => $errors_div_class])
     </div>
 
     <div class="form-group form-row">
@@ -212,7 +212,7 @@
                     <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
                 @endif
             </div>
-            @include('common.errors_inline', ['name' => 'body'])
+            @include('plugins.common.errors_inline_wysiwyg', ['name' => 'body'])
         </div>
     </div>
 

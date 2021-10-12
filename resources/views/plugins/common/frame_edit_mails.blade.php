@@ -14,7 +14,7 @@
 
 @section("plugin_setting_$frame->id")
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 <div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i> メールの送信方法や送信内容を設定します。</div>
 
@@ -75,7 +75,7 @@
                 <span class="badge badge-secondary mt-3 mb-1">送信先メールアドレス</span>
                 <div class="pl-0">
                     <input type="text" name="notice_addresses" value="{{old('notice_addresses', $bucket_mail->notice_addresses)}}" class="form-control @if ($errors && $errors->has('notice_addresses')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'notice_addresses'])
+                    @include('plugins.common.errors_inline', ['name' => 'notice_addresses'])
                     <small class="text-muted">
                         ※ 複数のメールアドレスを指定する場合は、カンマで区切ります。
                     </small>
@@ -84,7 +84,7 @@
                 <span class="badge badge-secondary mt-3 mb-1">投稿通知の件名</span>
                 <div class="pl-0">
                     <input type="text" name="notice_subject" value="{{old('notice_subject', $bucket_mail->notice_subject)}}" class="form-control @if ($errors && $errors->has('notice_subject')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'notice_subject'])
+                    @include('plugins.common.errors_inline', ['name' => 'notice_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">投稿通知の本文</span>
@@ -122,7 +122,7 @@
                 <span class="badge badge-secondary mt-3 mb-1">関連記事通知の件名</span>
                 <div class="pl-0">
                     <input type="text" name="relate_subject" value="{{old('relate_subject', $bucket_mail->relate_subject)}}" class="form-control @if ($errors && $errors->has('relate_subject')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'relate_subject'])
+                    @include('plugins.common.errors_inline', ['name' => 'relate_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">関連記事通知の本文</span>
@@ -158,7 +158,7 @@
                 <span class="badge badge-secondary mt-3 mb-1">送信先メールアドレス</span>
                 <div class="pl-0">
                     <input type="text" name="approval_addresses" value="{{old('approval_addresses', $bucket_mail->approval_addresses)}}" class="form-control @if ($errors && $errors->has('approval_addresses')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'approval_addresses'])
+                    @include('plugins.common.errors_inline', ['name' => 'approval_addresses'])
                     <small class="text-muted">
                         ※ 複数のメールアドレスを指定する場合は、カンマで区切ります。
                     </small>
@@ -167,7 +167,7 @@
                 <span class="badge badge-secondary mt-3 mb-1">承認通知の件名</span>
                 <div class="pl-0">
                     <input type="text" name="approval_subject" value="{{old('approval_subject', $bucket_mail->approval_subject)}}" class="form-control @if ($errors && $errors->has('approval_subject')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'approval_subject'])
+                    @include('plugins.common.errors_inline', ['name' => 'approval_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">承認通知の本文</span>
@@ -211,7 +211,7 @@
                 <span class="badge badge-secondary mb-1">送信先メールアドレス</span>
                 <div class="pl-0">
                     <input type="text" name="approved_addresses" value="{{old('approved_addresses', $bucket_mail->approved_addresses)}}" class="form-control @if ($errors && $errors->has('approved_addresses')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'approved_addresses'])
+                    @include('plugins.common.errors_inline', ['name' => 'approved_addresses'])
                     <small class="text-muted">
                         ※ 投稿者以外に送る場合。複数のメールアドレスを指定する場合は、カンマで区切ります。
                     </small>
@@ -220,7 +220,7 @@
                 <span class="badge badge-secondary mt-3 mb-1">承認済み通知の件名</span>
                 <div class="pl-0">
                     <input type="text" name="approved_subject" value="{{old('approved_subject', $bucket_mail->approved_subject)}}" class="form-control @if ($errors && $errors->has('approved_subject')) border-danger @endif">
-                    @include('common.errors_inline', ['name' => 'approved_subject'])
+                    @include('plugins.common.errors_inline', ['name' => 'approved_subject'])
                 </div>
 
                 <span class="badge badge-secondary mt-3 mb-1">承認済み通知の本文</span>

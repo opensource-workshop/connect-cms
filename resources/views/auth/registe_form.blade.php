@@ -2,7 +2,7 @@
 use App\Models\Core\UsersColumns;
 @endphp
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if ($errors->has('undelete'))
     <div class="alert alert-danger">

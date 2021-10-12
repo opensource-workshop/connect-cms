@@ -51,4 +51,11 @@ return [
     'input_password_confirm' => 'Enter the same password.',
     'empty_bucket' => 'From the frame setting screen, select or create the :plugin_name to use.',
     'empty_bucket_setting' => 'From the selection screen, select or create the :plugin_name to use.',
+    'number_of_display' => 'number of display',
+    'full_name' => 'Name',
+    'affiliation' => 'Affiliation',
+    'department' => 'Department',
+    'job_title' => 'Job Title',
+    'search_for_information_on_achievements' => 'Search for information on achievements such as the names of papers, books, and authors.',
+    'search' => 'search',
 ];

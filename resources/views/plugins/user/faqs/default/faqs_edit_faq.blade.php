@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if (empty($faq) || !$faq->id)
     <div class="alert alert-warning" style="margin-top: 10px;">

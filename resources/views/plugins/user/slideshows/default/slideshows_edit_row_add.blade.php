@@ -17,15 +17,15 @@
                 <label class="badge badge-danger d-xl-none">必須</label>
             </span>
         </label>
-        @include('common.errors_inline', ['name' => 'image_file'])
+        @include('plugins.common.errors_inline', ['name' => 'image_file'])
 
         <div v-if="image_url_add" class="d-flex align-items-center justify-content-center">
             {{-- 画像プレビュー --}}
             <a href="#" data-toggle="modal" data-target="#modalPreviewAdd">
-                <img 
-                    :src="image_url_add" 
+                <img
+                    :src="image_url_add"
                     class="border"
-                    width="100px" 
+                    width="100px"
                     data-toggle="tooltip"
                     :title="file_name_add"
                 >
@@ -45,8 +45,8 @@
                     </div>
                     {{-- コンテンツ内容 --}}
                     <div class="modal-body">
-                        <img 
-                            :src="image_url_add" 
+                        <img
+                            :src="image_url_add"
                             class="border img-fluid"
                         >
                     </div>
@@ -57,10 +57,10 @@
     {{-- リンクURL --}}
     <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">リンクURL：</strong>
-        <input 
-            type="text" 
-            name="link_url" 
-            class="form-control @if ($errors && $errors->has('link_url')) border-danger @endif" 
+        <input
+            type="text"
+            name="link_url"
+            class="form-control @if ($errors && $errors->has('link_url')) border-danger @endif"
             value="{{ old('link_url') }}"
             placeholder="例：https://connect-cms.jp/"
         >
@@ -69,10 +69,10 @@
     {{-- キャプション --}}
     <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">キャプション：</strong>
-        <input 
-            type="text" 
-            name="caption" 
-            class="form-control @if ($errors && $errors->has('caption')) border-danger @endif" 
+        <input
+            type="text"
+            name="caption"
+            class="form-control @if ($errors && $errors->has('caption')) border-danger @endif"
             value="{{ old('caption') }}"
         >
         @include('common.errors_inline', ['name' => 'caption'])
@@ -80,10 +80,10 @@
     {{-- リンクターゲット --}}
     <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">リンクターゲット：</strong>
-        <input 
-            type="text" 
-            name="link_target" 
-            class="form-control @if ($errors && $errors->has('link_target')) border-danger @endif" 
+        <input
+            type="text"
+            name="link_target"
+            class="form-control @if ($errors && $errors->has('link_target')) border-danger @endif"
             value="{{ old('link_target') }}"
             placeholder="例：_blank、_self等"
         >
@@ -91,8 +91,8 @@
     </td>
     {{-- ＋ボタン --}}
     <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">
-        <button 
-            class="btn btn-success cc-font-90 text-nowrap" 
+        <button
+            class="btn btn-success cc-font-90 text-nowrap"
             onclick="javascript:submit_add_item();"
         >
             <i class="fas fa-plus"></i> 追加

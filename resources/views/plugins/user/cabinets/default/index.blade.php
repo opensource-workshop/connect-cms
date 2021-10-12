@@ -34,9 +34,9 @@
 
 
         @endcan
-        
+
         $('input[type="checkbox"][name="cabinet_content_id[]"]').on('change', function(){
-            
+
             $('#selected-contents').html('');
 
             if ($('input[type="checkbox"][name="cabinet_content_id[]"]:checked').length > 0){
@@ -61,7 +61,7 @@
         });
 
     });
-    
+
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     function deleteContents() {
         if (window.confirm('データを削除します。\nよろしいですか？')) {
@@ -74,8 +74,8 @@
 </script>
 @can('posts.create', [[null, $frame->plugin_name, $buckets]])
 <div class="p-2 text-right mb-2">
-    @include('common.errors_inline', ['name' => 'upload_file'])
-    @include('common.errors_inline', ['name' => 'file_name'])
+    @include('plugins.common.errors_inline', ['name' => 'upload_file'])
+    @include('plugins.common.errors_inline', ['name' => 'file_name'])
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}"><i class="fas fa-folder-plus"></i><span class="d-none d-sm-inline"> フォルダ作成</span></button>
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}" id="btn-upload-file"><i class="fas fa-file-upload"></i><span class="d-none d-sm-inline"> ファイル追加</span></button>
 </div>
@@ -83,12 +83,12 @@
 <form action="{{url('/')}}/redirect/plugin/cabinets/makeFolder/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{csrf_field()}}
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
-    <div class="collapse @if ($errors && $errors->has('folder_name')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_mkdir{{$frame->id}}"> 
+    <div class="collapse @if ($errors && $errors->has('folder_name')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_mkdir{{$frame->id}}">
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">フォルダ名</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="folder_name" value="{{old('folder_name')}}" class="form-control @if ($errors && $errors->has('folder_name')) border-danger @endif" id="folder_name">
-                @include('common.errors_inline', ['name' => 'folder_name'])
+                @include('plugins.common.errors_inline', ['name' => 'folder_name'])
             </div>
         </div>
         <div class="text-center">
@@ -100,7 +100,7 @@
 <form action="{{url('/')}}/redirect/plugin/cabinets/upload/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" enctype="multipart/form-data">
     {{csrf_field()}}
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
-    <div class="collapse @if ($errors && $errors->has('upload_file')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}"> 
+    <div class="collapse @if ($errors && $errors->has('upload_file')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}">
         <div class="form-group">
             <div class="custom-file">
                 <input type="file" name="upload_file" value="{{old('upload_file')}}" class="custom-file-input @if ($errors && $errors->has('upload_file')) border-danger @endif" id="upload_file">
@@ -126,7 +126,7 @@
 <form id="form-cabinet-contents" method="GET">
 {{csrf_field()}}
 <input type="hidden" name="parent_id" value="{{$parent_id}}">
-@include('common.errors_inline', ['name' => 'cabinet_content_id'])
+@include('plugins.common.errors_inline', ['name' => 'cabinet_content_id'])
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
@@ -156,7 +156,7 @@
                 <td colspan="4">ファイルがありません</td>
             </tr>
         @else
-            @foreach($cabinet_contents as $cabinet_content)          
+            @foreach($cabinet_contents as $cabinet_content)
                 <tr>
                     <td>
                         <div class="custom-control custom-checkbox">

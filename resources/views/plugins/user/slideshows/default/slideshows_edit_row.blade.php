@@ -21,12 +21,12 @@
     {{-- 表示フラグ--}}
     <td class="d-none d-xl-display d-xl-table-cell" style="text-align:center; vertical-align:middle;">
         <div class="custom-control custom-checkbox">
-            <input 
-                type="checkbox" 
-                class="custom-control-input" 
-                name="display_flags[{{ $item->id }}]" 
-                value="{{ ShowType::show }}" 
-                id="display_flag_{{ $item->id }}" 
+            <input
+                type="checkbox"
+                class="custom-control-input"
+                name="display_flags[{{ $item->id }}]"
+                value="{{ ShowType::show }}"
+                id="display_flag_{{ $item->id }}"
                 @if(isset($item->display_flag) && $item->display_flag == ShowType::show)
                     checked="checked"
                 @endif
@@ -43,14 +43,14 @@
                 <label class="badge badge-danger d-xl-none">必須</label>
             </span>
         </label>
-        @include('common.errors_inline', ['name' => 'image_files.' . $item->id])
+        @include('plugins.common.errors_inline', ['name' => 'image_files.' . $item->id])
 
         <div class="d-flex align-items-center justify-content-center">
             {{-- 画像プレビュー --}}
             <a href="#" data-toggle="modal" data-target="#modalPreviewRow{{ $item->id }}">
-                <img 
+                <img
                     :src="image_url_{{ $item->id }}"
-                    width="100px" 
+                    width="100px"
                 >
             </a>
         </div>
@@ -68,7 +68,7 @@
                     </div>
                     {{-- コンテンツ内容 --}}
                     <div class="modal-body">
-                        <img 
+                        <img
                             :src="image_url_{{ $item->id }}"
                             class="border img-fluid"
                         >
@@ -114,8 +114,8 @@
     </td>
     {{-- 削除ボタン --}}
     <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">
-        <button 
-            class="btn btn-danger cc-font-90 text-nowrap" 
+        <button
+            class="btn btn-danger cc-font-90 text-nowrap"
             onclick="javascript:return submit_delete_item({{ $item->id }});"
         >
             <i class="fas fa-trash-alt"></i> 削除

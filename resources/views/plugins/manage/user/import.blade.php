@@ -16,7 +16,7 @@
     <div class="card-body">
 
         {{-- 共通エラーメッセージ 呼び出し --}}
-        @include('common.errors_form_line')
+        @include('plugins.common.errors_form_line')
 
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
@@ -91,7 +91,7 @@
                     <small class="text-muted">
                         ※ UTF-8はBOM付・BOMなしどちらにも対応しています。
                     </small>
-                    @include('common.errors_inline', ['name' => 'character_code'])
+                    @include('plugins.common.errors_inline', ['name' => 'character_code'])
                 </div>
             </div>
 

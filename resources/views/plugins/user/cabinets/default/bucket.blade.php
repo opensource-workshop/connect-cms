@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if (empty($cabinet->id) && $action != 'createBuckets')
     <div class="alert alert-warning">
@@ -39,15 +39,15 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/cabinets/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
     @endif
         {{ csrf_field() }}
-        
+
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}">キャビネット名 <label class="badge badge-danger">必須</label></label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="name" value="{{old('name', $cabinet->name)}}" class="form-control @if ($errors && $errors->has('name')) border-danger @endif">
-                @include('common.errors_inline', ['name' => 'name'])
+                @include('plugins.common.errors_inline', ['name' => 'name'])
             </div>
         </div>
-    
+
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}" for="upload-max-size">ファイル最大サイズ</label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -58,7 +58,7 @@
                     </option>
                     @endforeach
                 </select>
-                @include('common.errors_inline', ['name' => 'upload_max_size'])
+                @include('plugins.common.errors_inline', ['name' => 'upload_max_size'])
                 <small id="upload-size-help" class="form-text text-muted">サーバの設定によるため、サイズを変更しても反映されない場合があります。</small>
                 <small id="upload-size-server-help" class="form-text text-muted">サーバ設定：アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{ini_get('upload_max_filesize')}}</span></small>
             </div>

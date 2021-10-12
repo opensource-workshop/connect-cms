@@ -24,7 +24,6 @@
             </div>
         @else
             {{-- バケツデータ作成済みの場合 --}}
-
             <div class="form-group" id="app_{{ $frame->id }}">
                 {{-- 項目の追加、削除等処理用の汎用フォーム --}}
                 <form action="" id="slideshow_items" name="slideshow_items" method="POST" enctype="multipart/form-data">
@@ -36,7 +35,7 @@
                     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/slideshows/editItem/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
                     {{-- エラーメッセージエリア ※共通blade呼び出し --}}
-                    @include('common.errors_form_line')
+                    @include('plugins.common.errors_form_line')
 
                     {{-- メッセージエリア --}}
                     <div class="alert alert-info mt-2">
@@ -106,7 +105,7 @@
                 slideshow_items.action = "{{url('/')}}/redirect/plugin/slideshows/addItem/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
                 slideshow_items.submit();
             }
-        
+
             /**
              * 項目の削除ボタン押下
              */
@@ -118,7 +117,7 @@
                 }
                 return false;
             }
-        
+
             /**
              * 項目の更新ボタン押下
              */
@@ -129,7 +128,7 @@
                 }
                 return false;
             }
-        
+
             /**
              * 項目の表示順操作ボタン押下
              */
@@ -140,7 +139,7 @@
                 slideshow_items.display_sequence_operation.value = display_sequence_operation;
                 slideshow_items.submit();
             }
-        
+
             /**
              * ツールチップ
              */

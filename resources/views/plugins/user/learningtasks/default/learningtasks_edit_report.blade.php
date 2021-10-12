@@ -44,7 +44,7 @@
         </div>
 
         <div class="mb-2">
-            @include('common.errors_form_line')
+            @include('plugins.common.errors_form_line')
         </div>
 
         <h5><span class="badge badge-secondary">使用項目の設定</span></h5>
@@ -174,7 +174,7 @@
                                 </div>
                             </div>
                         </div>
-                        @include('common.errors_inline', ['name' => $old_function2])
+                        @include('plugins.common.errors_inline', ['name' => $old_function2])
                     </div>
                 </div>
 

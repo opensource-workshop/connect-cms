@@ -25,6 +25,8 @@ use App\Plugins\User\UserPluginBase;
 use App\Enums\StatusType;
 use App\Enums\BlogFrameConfig;
 
+use App\Rules\CustomValiWysiwygMax;
+
 /**
  * ブログプラグイン
  *
@@ -193,14 +195,22 @@ class BlogsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'post_title' => ['required'],
+            'post_title' => ['required', 'max:255'],
             'posted_at'  => ['required', 'date_format:Y-m-d H:i'],
-            'post_text'  => ['required'],
+            'post_text'  => ['required', new CustomValiWysiwygMax()],
+            'post_text2'  => ['nullable', new CustomValiWysiwygMax()],
+            'read_more_button' => ['nullable', 'max:255'],
+            'close_more_button' => ['nullable', 'max:255'],
+            'tags' => ['nullable', 'max:255'],
         ]);
         $validator->setAttributeNames([
             'post_title' => 'タイトル',
             'posted_at'  => '投稿日時',
             'post_text'  => '本文',
+            'post_text2'  => '続き本文',
+            'read_more_button'  => '続きを読むボタン名',
+            'close_more_button'  => '続きを閉じるボタン名',
+            'tags'  => 'タグ',
         ]);
         return $validator;
     }

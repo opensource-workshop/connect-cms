@@ -33,7 +33,7 @@
         　 登録した注釈は、コード登録画面の注釈名に表示され、選択すると各項目下部に注釈が表示されます。
     </div>
 
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
