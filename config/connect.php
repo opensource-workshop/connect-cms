@@ -100,6 +100,6 @@ return [
     // TEXT 型のバイト数チェックの数値（MySQLのtext型）
     'TEXT_MAX_BYTE' => 65535,
 
-    // URL 項目のバイト数チェックの数値（MySQLのvarchar型で8190 バイトでチェック）
+    // URL 項目のバイト数チェックの数値（MySQLのTEXT型。MySQL の「最大行サイズは 65,535 バイト」の制約対応。8190 バイトでチェック）
     'URL_MAX_BYTE' => 8190,
 ];
