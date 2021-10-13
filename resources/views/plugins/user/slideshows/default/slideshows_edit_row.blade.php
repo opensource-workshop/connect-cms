@@ -80,34 +80,37 @@
     {{-- リンクURL --}}
     <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">リンクURL：</strong>
-        <input
-            type="text"
-            name="link_urls[{{ $item->id }}]"
-            class="form-control @if ($errors && $errors->has('link_url')) border-danger @endif"
-            value="{{ old('link_url', $item->link_url) }}"
+        <input 
+            type="text" 
+            name="link_urls[{{ $item->id }}]" 
+            class="form-control @if ($errors && $errors->has("link_urls.$item->id")) border-danger @endif" 
+            value="{{ old("link_urls.$item->id", $item->link_url) }}"
             placeholder="例：https://connect-cms.jp/"
         >
+        @include('common.errors_inline', ['name' => "link_urls.$item->id"])
     </td>
     {{-- キャプション --}}
     <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">キャプション：</strong>
-        <input
-            type="text"
-            name="captions[{{ $item->id }}]"
-            class="form-control @if ($errors && $errors->has('caption')) border-danger @endif"
-            value="{{ old('caption', $item->caption) }}"
+        <input 
+            type="text" 
+            name="captions[{{ $item->id }}]" 
+            class="form-control @if ($errors && $errors->has("captions.$item->id")) border-danger @endif" 
+            value="{{ old("captions.$item->id", $item->caption) }}"
         >
+        @include('common.errors_inline', ['name' => "captions.$item->id"])
     </td>
     {{-- リンクターゲット --}}
     <td class="d-block d-xl-table-cell align-middle">
         <strong class="d-xl-none">リンクターゲット：</strong>
-        <input
-            type="text"
-            name="link_targets[{{ $item->id }}]"
-            class="form-control @if ($errors && $errors->has('link_target')) border-danger @endif"
-            value="{{ old('link_target', $item->link_target) }}"
+        <input 
+            type="text" 
+            name="link_targets[{{ $item->id }}]" 
+            class="form-control @if ($errors && $errors->has("link_targets.$item->id")) border-danger @endif" 
+            value="{{ old("link_targets.$item->id", $item->link_target) }}"
             placeholder="例：_blank、_self等"
         >
+        @include('common.errors_inline', ['name' => "link_targets.$item->id"])
     </td>
     {{-- 削除ボタン --}}
     <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">

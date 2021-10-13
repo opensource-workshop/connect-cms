@@ -13,6 +13,8 @@ use App\Models\Common\Uploads;
 use App\Models\User\Slideshows\Slideshows;
 use App\Models\User\Slideshows\SlideshowsItems;
 
+use App\Rules\CustomValiUrlMax;
+
 use App\Enums\ShowType;
 
 use App\Plugins\User\UserPluginBase;
@@ -20,7 +22,7 @@ use App\Plugins\User\UserPluginBase;
 /**
  * スライドショー・プラグイン
  *
- * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>, 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category スライドショー・プラグイン
  * @package Contoroller
@@ -415,7 +417,10 @@ class SlideshowsPlugin extends UserPluginBase
     {
         // エラーチェック
         $request->validate([
-            'image_file' => 'required|image',
+            'image_file'  => 'required|image',
+            'link_url'    => [new CustomValiUrlMax()],
+            'caption'     => 'max:9',
+            'link_target' => 'max:9',
         ]);
 
         if ($request->hasFile('image_file')) {
@@ -493,6 +498,24 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function updateItems($request, $page_id, $frame_id)
     {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'link_urls.*'    => [new CustomValiUrlMax()],
+            'captions.*'     => ['max:255'],
+            'link_targets.*' => ['max:255'],
+        ]);
+        $validator->setAttributeNames([
+            'link_urls.*'    => "リンクURL",
+            'captions.*'     => "キャプション",
+            'link_targets.*' => "リンクターゲット	",
+        ]);
+
+        $errors = array();
+        if ($validator->fails()) {
+            $request->merge(['validator' => $validator]);
+            return;
+        }
+
         foreach (array_keys($request->link_urls) as $item_id) {
 
             $upload_image_path = null;
