@@ -532,7 +532,9 @@ class ContentsPlugin extends UserPluginBase
         Frame::where('id', $frame_id)
             ->update(['bucket_id' => $bucket_id]);
 
-        return;
+        // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+        // return;
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**
@@ -576,7 +578,9 @@ class ContentsPlugin extends UserPluginBase
         $buckets->bucket_name = $request->bucket_name ?? '無題';
         $buckets->save();
 
-        return;
+        // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+        // return;
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**
@@ -587,7 +591,7 @@ class ContentsPlugin extends UserPluginBase
         // 新規で一時保存しようとしたときは id、レコードがまだない。
         if (empty($id)) {
             $status = 1;
-            $this->store($request, $page_id, $frame_id, $id, $status);
+            return $this->store($request, $page_id, $frame_id, $id, $status);
         } else {
             // 項目のエラーチェック
             $validator = $this->makeValidator($request);
@@ -616,8 +620,11 @@ class ContentsPlugin extends UserPluginBase
             $buckets = Buckets::find($oldrow->bucket_id);
             $buckets->bucket_name = $request->bucket_name ?? '無題';
             $buckets->save();
+
+            // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
-        return;
+        // return;
     }
 
     /**
