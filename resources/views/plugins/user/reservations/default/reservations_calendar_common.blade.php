@@ -73,6 +73,18 @@
                                     </button>
                                 </a>
                             </form>
+                        @endauth
+
+                        {{-- 詳細画面 --}}
+                        <form action="" name="form_show_booking{{$frame_id}}" method="get" class="form-horizontal">
+                            {{-- input_id(予約ID) --}}
+                            <input type="hidden" name="booking_id" value="">
+                            <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/' + form_show_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
+                                {{ __('messages.detail') }}  <i class="fas fa-angle-right"></i>
+                            </button>
+                        </form>
+
+                        @auth
                             <form action="{{URL::to('/')}}/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_destroy_booking" method="POST" class="form-horizontal">
                                 {{ csrf_field() }}
 
@@ -113,7 +125,7 @@
         <ul class="nav nav-tabs">
             <li class="nav-item">
                 {{-- 月タブ --}}
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}" 
+                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}"
                     class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}"
                 >
                     {{ __('messages.month') }}
@@ -121,7 +133,7 @@
             </li>
             <li class="nav-item">
                 {{-- 週タブ --}}
-                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" 
+                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}"
                     class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}"
                 >
                     {{ __('messages.week') }}

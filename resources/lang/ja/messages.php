@@ -17,6 +17,7 @@ $messages = [
     'month' => '月',
     'week' => '週',
     'reservation_details' => '予約詳細',
+    'detail' => '詳細',
     'day_of_use' => '利用日',
     'time_of_use' => '利用時間',
     'close' => '閉じる',
