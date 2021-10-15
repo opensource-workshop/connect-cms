@@ -58,4 +58,6 @@ return [
     'job_title' => 'Job Title',
     'search_for_information_on_achievements' => 'Search for information on achievements such as the names of papers, books, and authors.',
     'search' => 'search',
+    'photo' => 'Photo',
+    'research_seeds' => 'Research Seeds',
 ];
