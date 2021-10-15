@@ -717,7 +717,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * 権限設定 保存処理
+     * メール設定 保存処理
      */
     public function saveBucketsMails($request, $page_id, $frame_id, $block_id)
     {
@@ -736,10 +736,9 @@ class UserPluginBase extends PluginBase
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on)],
-            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on)],
-            'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on)],
-
+            'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on == 1)],
+            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on == 1)],
+            'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on == 1)],
         ]);
         $validator->setAttributeNames([
             'notice_addresses' => '送信先メールアドレス',
