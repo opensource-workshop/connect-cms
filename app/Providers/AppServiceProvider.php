@@ -440,7 +440,8 @@ class AppServiceProvider extends AuthServiceProvider
                     //     return true;
                     // }
                     if ($authority == 'posts.approval') {
-                        if ($user_role == 'role_approval') {
+                        // bugfix: コンテンツ管理者（role_article_admin）で承認ボタンが表示されなかったため、role_article_adminを追加
+                        if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
                             return true;
                         }
                     } else {
@@ -450,9 +451,10 @@ class AppServiceProvider extends AuthServiceProvider
                             //        ここで role_article モデレータ（他ユーザの記事も更新）を許可すると、
                             //        固定記事の権限設定で モデレータ を 投稿できるOFF でも設定を無視して、投稿できてしまう。
                             // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                            if (($user_role == 'role_article_admin') ||
-                                // ($user_role == 'role_article') ||
-                                ($user_role == 'role_approval')) {
+                            // if (($user_role == 'role_article_admin') ||
+                            //     ($user_role == 'role_article') ||
+                            //     ($user_role == 'role_approval')) {
+                            if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
                                 return true;
                             }
 
