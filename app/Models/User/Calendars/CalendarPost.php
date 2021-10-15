@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 
-use App\Userable;
+use App\UserableNohistory;
 
 /**
  * カレンダー・記事
@@ -21,8 +21,8 @@ class CalendarPost extends Model
     // 論理削除
     use SoftDeletes;
 
-    // 保存時のユーザー関連データの保持
-    use Userable;
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
 
     // 更新する項目の定義
     protected $fillable = ['calendar_id', 'allday_flag', 'start_date', 'start_time', 'end_date', 'end_time', 'title', 'body'];

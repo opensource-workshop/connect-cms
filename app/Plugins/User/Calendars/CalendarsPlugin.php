@@ -459,10 +459,11 @@ class CalendarsPlugin extends UserPluginBase
         $post->title       = $request->title;
         $post->body        = $this->clean($request->body);   // wysiwygのXSS対応のJavaScript等の制限
 
+        // bugfix: 【カレンダー】承認機能ONで一般が書き込んだ内容を、管理者が編集すると、以後その予定が一般で編集できなくなるバグ修正. created_idは UserableNohistory で自動セットするよう修正
         // 投稿者をセット
-        if (Auth::check()) {
-            $post->created_id = Auth::user()->id;
-        }
+        // if (Auth::check()) {
+        //     $post->created_id = Auth::user()->id;
+        // }
 
         // 承認の要否確認とステータス処理
         if ($request->status == "1") {
