@@ -482,9 +482,9 @@ EOD;
             $directory = $this->getDirectory($pdf_upload->id);
             $pdf_upload_path = $request->file('pdf')->storeAs($directory, $pdf_upload->id . '.' . $request->file('pdf')->getClientOriginalExtension());
 
-            // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない
+            // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない => ディレクトリインストールの場合はディレクトリが必要なので、url 追加
             $msg_array = [];
-            $msg_array['link_text'] = '<p><a href="/file/' . $pdf_upload->id . '"  target="_blank">' . $request->file('pdf')->getClientOriginalName() . '</a><br />';
+            $msg_array['link_text'] = '<p><a href="' . url('/') . '/file/' . $pdf_upload->id . '"  target="_blank">' . $request->file('pdf')->getClientOriginalName() . '</a><br />';
 
 
             // cURLセッションを初期化する
@@ -541,13 +541,13 @@ EOD;
 
                 if (Configs::getSharedConfigsValue('link_of_pdf_thumbnails') == LinkOfPdfThumbnail::image) {
                     // サムネイルにリンク
-                    $msg_array['link_text'] .= '<a href="/file/' . $thumbnail_upload->id . '"  target="_blank">';
+                    $msg_array['link_text'] .= '<a href="' . url('/') . '/file/' . $thumbnail_upload->id . '"  target="_blank">';
                 } else {
                     // PDFにリンク
-                    $msg_array['link_text'] .= '<a href="/file/' . $pdf_upload->id . '"  target="_blank">';
+                    $msg_array['link_text'] .= '<a href="' . url('/') . '/file/' . $pdf_upload->id . '"  target="_blank">';
                 }
 
-                $msg_array['link_text'] .= '<img src="/file/'.$thumbnail_upload->id.'" width="'.$request->width_of_pdf_thumbnails.'" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" />';
+                $msg_array['link_text'] .= '<img src="' . url('/') . '/file/'.$thumbnail_upload->id.'" width="'.$request->width_of_pdf_thumbnails.'" class="img-fluid img-thumbnail" alt="'.$thumbnail_name.'" />';
                 $msg_array['link_text'] .= '</a> ';
 
                 // sizeはファイルにしてから取得する

@@ -59,6 +59,8 @@ $messages = [
     'job_title' => '職名',
     'search_for_information_on_achievements' => '論文名、書籍名、著者名等の業績情報をあいまい検索可能です',
     'search' => '検索',
+    'photo' => '写真',
+    'research_seeds' => '研究シーズ',
 ];
 
 foreach ($messages as $key => $message) {
