@@ -24,6 +24,8 @@ use HTMLPurifier;
 use HTMLPurifier_Config;
 use Request;
 
+use Carbon\Carbon;
+
 use App\Jobs\ApprovalNoticeJob;
 use App\Jobs\ApprovedNoticeJob;
 use App\Jobs\DeleteNoticeJob;
@@ -37,6 +39,7 @@ use App\Models\Common\Frame;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
+use App\Enums\StatusType;
 use App\Enums\SendMailTiming;
 
 use App\Plugins\PluginBase;
@@ -811,6 +814,10 @@ class UserPluginBase extends PluginBase
 
     /**
      * 投稿通知の送信
+     *
+     * 基本：
+     *   - 投稿通知を実装するには指定したデータ（$post_row, $before_row）のテーブルに status, first_committed_at カラムがある事
+     *   - 指定したデータのテーブルのモデルで trait UserableNohistory を使ってる事。（[TODO] 2021/10/15時点 Userableは first_committed_at の自動セット未対応）
      */
     public function sendPostNotice($post_row, $before_row, $show_method)
     {
@@ -1304,6 +1311,75 @@ class UserPluginBase extends PluginBase
             return false;
         }
         return $this->buckets->needApprovalUser(Auth::user(), $this->frame);
+    }
+
+    /**
+     * 権限によって表示する記事を絞る
+     *
+     * 基本：
+     *   - 承認機能を実装するには指定したテーブル($table_name)に status, created_id カラムがある事
+     * オプション：
+     *   - テーブルに posted_at(投稿日時) カラムがある場合、投稿日時前＋権限なし or 未ログインなら表示しない
+     *
+     * status = 0:公開(Active)
+     * status = 1:Temporary（一時保存）
+     * status = 2:Approval pending（承認待ち）
+     * status = 9:History（履歴・データ削除）
+     * 参考) https://github.com/opensource-workshop/connect-cms/wiki/Data-history-policy（データ履歴の方針）
+     *
+     * コンテンツ管理者(role_article_admin): 無条件に全記事見れる
+     * モデレータ(role_article):            無条件に全記事見れる
+     * 承認者(role_approval):               0:公開(Active) or 2:承認待ち の全記事見れる
+     * 編集者(role_reporter):               0:公開(Active) or 自分の作成した記事 見れる
+     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) 記事見れる
+     *
+     * [オプション：posted_at(投稿日時) カラムがある]
+     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) and 投稿日時前 記事見れる
+     *
+     * 例) $table_name = 'blogs_posts';
+     * 例) $table_name = 'databases_inputs';
+     */
+    protected function appendAuthWhereBase($query, $table_name)
+    {
+        if (empty($query)) {
+            // 空なら何もしない
+            return $query;
+        }
+
+        // モデレータ(記事修正, role_article)権限
+        // コンテンツ管理者(role_article_admin)   = 全記事の取得
+        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+            // 全件取得のため、追加条件なしで戻る。
+            return $query;
+        }
+
+        if ($this->isCan('role_approval')) {
+            //
+            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
+            //
+            $query->Where($table_name . '.status', '=', StatusType::active)
+                    ->orWhere($table_name . '.status', '=', StatusType::approval_pending);
+        } elseif ($this->isCan('role_reporter')) {
+            //
+            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
+            //
+            $query->where(function ($tmp_query) use ($table_name) {
+                    $tmp_query->where($table_name . '.status', '=', StatusType::active)
+                    ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+            });
+        } else {
+            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
+            // 未ログイン
+            $query->where($table_name . '.status', StatusType::active);
+
+            // DBカラム posted_at(投稿日時) 存在するか
+            if (Schema::hasColumn($table_name, 'posted_at')) {
+                $query->where($table_name . '.posted_at', '<=', Carbon::now());
+            }
+        }
+
+        // var_dump($query->get());
+        return $query;
     }
 
     /**
