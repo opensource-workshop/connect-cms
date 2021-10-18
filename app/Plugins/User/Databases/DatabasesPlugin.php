@@ -48,6 +48,7 @@ use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
+use App\Enums\SendMailTiming;
 use App\Enums\StatusType;
 
 /**
@@ -1621,8 +1622,8 @@ class DatabasesPlugin extends UserPluginBase
             $delete_comment .= "「" . $notice_cols_first->column_name . "：" . $notice_cols_first->value . "」の行を削除しました。";
         }
 
-        // メール送信 引数(削除した行ID, 詳細表示メソッド, 削除データを表すメッセージ)
-        $this->sendDeleteNotice($delete_input, 'detail', $delete_comment);
+        // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, メール送信方法)
+        $this->sendDeleteNotice($delete_input, 'detail', $delete_comment, SendMailTiming::sync);
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
