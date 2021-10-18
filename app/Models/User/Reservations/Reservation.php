@@ -3,11 +3,18 @@
 namespace App\Models\User\Reservations;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+
+use App\UserableNohistory;
 
 class Reservation extends Model
 {
-    use SoftDeletes;
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
 
-    protected $dates = ['deleted_at'];
+    // 更新する項目の定義
+    protected $fillable = [
+        'bucket_id',
+        'reservation_name',
+        'calendar_initial_display_type',
+    ];
 }
