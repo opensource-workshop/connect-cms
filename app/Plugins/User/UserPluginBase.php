@@ -37,6 +37,8 @@ use App\Models\Common\Frame;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
+use App\Enums\SendMailTiming;
+
 use App\Plugins\PluginBase;
 
 use App\Traits\ConnectCommonTrait;
@@ -970,8 +972,10 @@ class UserPluginBase extends PluginBase
 
     /**
      * 削除通知の送信
+     *
+     * $timing = 1:スケジュール送信（非同期送信、デフォルト), 0:即時送信（同期送信）
      */
-    public function sendDeleteNotice($post, $show_method, $delete_comment)
+    public function sendDeleteNotice($post, $show_method, $delete_comment, $timing = SendMailTiming::async)
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -994,18 +998,19 @@ class UserPluginBase extends PluginBase
             return;
         }
 
-        // // 送信方法の確認
+        // 送信方法の確認
         // if ($bucket_mail->timing == 0) {
-        //     // 即時送信
-        //     dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $show_method, $delete_comment));
-        // } else {
-        //     // スケジュール送信
-        //     DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
-        // }
-        DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
+        if ($timing == SendMailTiming::sync) {
+            // 同期送信
+            // （物理削除時は、非同期だとメール送信前にデータが消えてしまいModelNotFoundExceptionエラーになるため、同期でメール送信）
+            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $show_method, $delete_comment));
+        } else {
+            // スケジュール送信
+            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
 
-        // 非同期でキューワーカ実行
-        $this->asyncQueueWork();
+            // 非同期でキューワーカ実行
+            $this->asyncQueueWork();
+        }
     }
 
     /**
