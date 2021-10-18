@@ -1010,9 +1010,7 @@ class ReservationsPlugin extends UserPluginBase
             ->where('reservations_columns.reservations_id', $reservations_id)
             // 予約項目の子データ（選択肢）
             ->leftjoin('reservations_columns_selects', function ($join) {
-                // 論理削除を考慮
-                $join->on('reservations_columns.id', '=', 'reservations_columns_selects.column_id')
-                    ->whereNull('reservations_columns_selects.deleted_at');
+                $join->on('reservations_columns.id', '=', 'reservations_columns_selects.column_id');
             })
             ->groupby(
                 'reservations_columns.id',
